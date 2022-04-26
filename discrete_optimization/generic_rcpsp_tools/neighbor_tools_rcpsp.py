@@ -1440,11 +1440,11 @@ class ConstraintHandlerScheduling(ConstraintHandler):
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
-        eval = self.problem.evaluate(current_solution)
+        evaluation = self.problem.evaluate(current_solution)
         if self.verbose:
             print("logging ", self.__class__.__name__)
-            print("Current Eval :", eval)
-        if eval.get("constraint_penalty", 0) == 0:
+            print("Current Eval :", evaluation)
+        if evaluation.get("constraint_penalty", 0) == 0:
             p = self.params_list[0]
         else:
             # Allow for some tricks. multistage optim
@@ -1460,9 +1460,9 @@ class ConstraintHandlerScheduling(ConstraintHandler):
         )
         for s in list_strings:
             child_instance.add_string(s)
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             child_instance.add_string(
-                "constraint objective=" + str(eval["makespan"]) + ";\n"
+                "constraint objective=" + str(evaluation["makespan"]) + ";\n"
             )
             # We ignore this part of objective.
         else:
@@ -1472,17 +1472,17 @@ class ConstraintHandlerScheduling(ConstraintHandler):
                 sign=SignEnum.LEQ,
             )
             child_instance.add_string(string)
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             child_instance.add_string(
                 "constraint sec_objective<="
-                + str(int(1.01 * 100 * eval.get("constraint_penalty", 0)) + 1000)
+                + str(int(1.01 * 100 * evaluation.get("constraint_penalty", 0)) + 1000)
                 + ";\n"
             )
         child_instance.add_string("constraint sec_objective>=0;\n")
-        if "constraint_penalty" not in eval:
+        if "constraint_penalty" not in evaluation:
             # WARNING
             child_instance.add_string("constraint sec_objective==0;\n")
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             strings = []
         else:
             try:
@@ -1583,7 +1583,7 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution = current_solution
-        eval = self.problem.evaluate(current_solution)
+        evaluation = self.problem.evaluate(current_solution)
         list_strings = constraints_strings(
             current_solution=current_solution,
             cp_solver=cp_solver,
@@ -1669,7 +1669,7 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution = current_solution
-        eval = current_solution.problem.evaluate(current_solution)
+        evaluation = current_solution.problem.evaluate(current_solution)
         s = """array[Units] of var 0..max_time: res_load = [sum(a in Tasks)( adur[a] * unit_used[w,a] )| w in Units ];\n"""
         ss = """array[Tasks] of var int: overskill = [sum(sk in Skill where array_skills_required[sk, i]>0)(sum(w in Units)(unit_used[w, i]*skillunits[w, sk])-array_skills_required[sk, i])|i in Tasks];\n"""
         child_instance.add_string(s)
@@ -1703,7 +1703,7 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
         for s in list_strings:
             child_instance.add_string(s)
         if random.random() < 0.999:
-            if eval.get("constraint_penalty", 0) == 0:
+            if evaluation.get("constraint_penalty", 0) == 0:
                 child_instance.add_string("constraint sec_objective>=sum(res_load);\n")
             else:
                 child_instance.add_string(
@@ -1760,7 +1760,7 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution = current_solution
-        eval = current_solution.problem.evaluate(current_solution)
+        evaluation = current_solution.problem.evaluate(current_solution)
         overskill = compute_overskill(
             problem=current_solution.problem, solution=current_solution
         )
@@ -1801,7 +1801,7 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
         for s in list_strings:
             child_instance.add_string(s)
         if random.random() < 0.999:
-            if eval.get("constraint_penalty", 0) == 0:
+            if evaluation.get("constraint_penalty", 0) == 0:
                 child_instance.add_string(
                     "constraint sec_objective==100*sum(overskill)+10*sum(res_load)+max(res_load)-min(res_load);\n"
                 )

@@ -516,9 +516,9 @@ class NeighborRepairProblems(ConstraintHandler):
         print(current_solution.get_nb_task_preemption(), " task preempted ")
         print(current_solution.get_max_preempted(), " most preempted task ")
         print(current_solution.total_number_of_cut(), " total number of cut ")
-        eval = self.problem.evaluate(current_solution)
-        print("Current Eval :", eval)
-        if eval.get("constraint_penalty", 0) == 0:
+        evaluation = self.problem.evaluate(current_solution)
+        print("Current Eval :", evaluation)
+        if evaluation.get("constraint_penalty", 0) == 0:
             p = self.params_list[1]
         else:
             p = self.params_list[1]
@@ -539,9 +539,9 @@ class NeighborRepairProblems(ConstraintHandler):
         )
         for s in list_strings:
             child_instance.add_string(s)
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             child_instance.add_string(
-                "constraint objective=" + str(eval["makespan"]) + ";\n"
+                "constraint objective=" + str(evaluation["makespan"]) + ";\n"
             )
         else:
             string = cp_solver.constraint_start_time_string(
@@ -568,10 +568,10 @@ class NeighborRepairProblems(ConstraintHandler):
             "constraint "
             + sum_string
             + "<="
-            + str(int(1.01 * 100 * eval.get("constraint_penalty", 0)))
+            + str(int(1.01 * 100 * evaluation.get("constraint_penalty", 0)))
             + ";\n"
         )
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             strings = []
         else:
             strings = cp_solver.constraint_objective_equal_makespan(

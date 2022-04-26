@@ -720,14 +720,14 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
         and not unfeasible_in_horizon
     ):
         act_id = None
-        for id in perm_extended:
+        for id_successor in perm_extended:
             respected = True
-            for pred in problem.predecessors.get(id, set()):
+            for pred in problem.predecessors.get(id_successor, set()):
                 if pred not in scheduled:
                     respected = False
                     break
             if respected:
-                act_id = id
+                act_id = id_successor
                 break
         current_min_time = minimum_starting_time[act_id]
         valid = False
@@ -1025,14 +1025,14 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
         and not unfeasible_in_horizon
     ):
         act_id = None
-        for id in perm_extended:
+        for id_successor in perm_extended:
             respected = True
-            for pred in problem.predecessors.get(id, set()):
+            for pred in problem.predecessors.get(id_successor, set()):
                 if pred not in scheduled:
                     respected = False
                     break
             if respected:
-                act_id = id
+                act_id = id_successor
                 break
         current_min_time = minimum_starting_time[act_id]
         valid = False
@@ -1361,14 +1361,14 @@ def sgs_multi_skill_preemptive_partial_schedule(
         and not unfeasible_in_horizon
     ):
         act_id = None
-        for id in perm_extended:
+        for id_successor in perm_extended:
             respected = True
-            for pred in problem.predecessors.get(id, set()):
+            for pred in problem.predecessors.get(id_successor, set()):
                 if pred not in scheduled:
                     respected = False
                     break
             if respected:
-                act_id = id
+                act_id = id_successor
                 break
         current_min_time = minimum_starting_time[act_id]
         valid = False
@@ -1617,14 +1617,14 @@ def sgs_multi_skill_partial_schedule(
         and not unfeasible_in_horizon
     ):
         act_id = None
-        for id in perm_extended:
+        for id_successor in perm_extended:
             respected = True
-            for pred in problem.predecessors.get(id, set()):
+            for pred in problem.predecessors.get(id_successor, set()):
                 if pred not in scheduled:
                     respected = False
                     break
             if respected:
-                act_id = id
+                act_id = id_successor
                 break
         current_min_time = minimum_starting_time[act_id]
         valid = False

@@ -108,9 +108,9 @@ class NeighborSubproblem(ConstraintHandler):
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
-        eval = self.problem.evaluate(current_solution)
-        print("Current Eval :", eval)
-        if eval.get("constraint_penalty", 0) == 0:
+        evaluation = self.problem.evaluate(current_solution)
+        print("Current Eval :", evaluation)
+        if evaluation.get("constraint_penalty", 0) == 0:
             p = self.params_list[min(1, len(self.params_list) - 1)]
         else:
             p = self.params_list[min(1, len(self.params_list) - 1)]
@@ -125,9 +125,9 @@ class NeighborSubproblem(ConstraintHandler):
         )
         for s in list_strings:
             child_instance.add_string(s)
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             child_instance.add_string(
-                "constraint objective=" + str(eval["makespan"]) + ";\n"
+                "constraint objective=" + str(evaluation["makespan"]) + ";\n"
             )
         else:
             string = cp_solver.constraint_start_time_string(
@@ -138,10 +138,10 @@ class NeighborSubproblem(ConstraintHandler):
             child_instance.add_string(string)
         child_instance.add_string(
             "constraint sec_objective<="
-            + str(int(1.01 * 100 * eval.get("constraint_penalty", 0)) + 1000)
+            + str(int(1.01 * 100 * evaluation.get("constraint_penalty", 0)) + 1000)
             + ";\n"
         )
-        if eval.get("constraint_penalty", 0) > 0:
+        if evaluation.get("constraint_penalty", 0) > 0:
             strings = []
         else:
             strings = cp_solver.constraint_objective_max_time_set_of_jobs(subtasks_1)
