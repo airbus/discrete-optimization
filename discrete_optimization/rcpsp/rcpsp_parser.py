@@ -74,8 +74,8 @@ def parse_psplib(input_data):
 
     # Parsing mode and duration information
     mode_details = {}
-    for i in range(duration_start_line_index, duration_end_line_index + 1):
-        tmp = lines[i].split()
+    for i_line in range(duration_start_line_index, duration_end_line_index + 1):
+        tmp = lines[i_line].split()
         if len(tmp) == 3 + n_resources:
             task_id = int(tmp[0])
             mode_id = int(tmp[1])
