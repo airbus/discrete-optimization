@@ -236,9 +236,7 @@ class LinearFlowSolver(SolverDO):
                         r
                     ]
                 )
-        index = 0
         all_origin = set(self.problem.origin_vehicle.values())
-        all_target = set(self.problem.target_vehicle.values())
         for r in resources_variable_coming:
             for node in resources_variable_coming[r]:
                 for vehicle, edge in edges_in_all_vehicles[node]:
@@ -326,9 +324,7 @@ class LinearFlowSolver(SolverDO):
         }
         for v in self.problem.origin_vehicle:
             model.add_constr(time_coming[self.problem.origin_vehicle[v]] == 0)
-        index = 0
         all_origin = set(self.problem.origin_vehicle.values())
-        all_target = set(self.problem.target_vehicle.values())
         for node in time_leaving:
             for vehicle, edge in edges_in_all_vehicles[node]:
                 if edge[0] == edge[1]:
@@ -826,7 +822,7 @@ class LinearFlowSolver(SolverDO):
         ):
             finished = True
             return solutions
-        constraints_added = subtour.adding_component_constraints([solutions[0]])
+        subtour.adding_component_constraints([solutions[0]])
         all_solutions = solutions
         nb_iteration = 0
         while not finished:
@@ -848,7 +844,7 @@ class LinearFlowSolver(SolverDO):
                     problem=self.problem, linear_solver=self
                 )
             print(len(solutions[0].component_global))
-            constraints_added = subtour.adding_component_constraints([solutions[0]])
+            subtour.adding_component_constraints([solutions[0]])
             if (
                 max(
                     [
@@ -999,9 +995,7 @@ class LinearFlowSolverVehicleType(SolverDO):
         }
         for v in self.problem.origin_vehicle:
             model.add_constr(time_coming[self.problem.origin_vehicle[v]] == 0)
-        index = 0
         all_origin = set(self.problem.origin_vehicle.values())
-        all_target = set(self.problem.target_vehicle.values())
         for node in time_leaving:
             for vehicle, edge in edges_in_all_vehicles[node]:
                 model.add_constr(
@@ -1023,10 +1017,6 @@ class LinearFlowSolverVehicleType(SolverDO):
         model: mip.Model = mip.Model(
             "GPDP-flow", sense=mip.MINIMIZE, solver_name=mip.CBC
         )
-        include_backward = kwargs.get("include_backward", True)
-        include_triangle = kwargs.get("include_triangle", False)
-        include_subtour = kwargs.get("include_subtour", False)
-        include_resources = kwargs.get("include_resources", False)
         include_capacity = kwargs.get("include_capacity", False)
         include_time_evolution = kwargs.get("include_time_evolution", False)
         one_visit_per_node = kwargs.get("one_visit_per_node", True)
@@ -1338,7 +1328,6 @@ class LinearFlowSolverVehicleType(SolverDO):
             max_solutions=parameters_milp.PoolSolutions,
         )
         nSolutions = self.model.num_solutions
-        objective = self.model.objective
         print("Solver found", nSolutions, "solutions")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
@@ -1619,10 +1608,6 @@ def rebuild_routine(
             min_index_in_path = None
             min_component = None
             min_dist = float("inf")
-            backup_min_out_edge = None
-            backup_min_in_edge = None
-            backup_min_index_in_path = None
-            backup_min_component = None
             backup_min_dist = float("inf")
             for e in edge_out_of_interest:
                 index_in = index_path[e[0]][0]
@@ -1659,10 +1644,6 @@ def rebuild_routine(
                 else:
                     cost = graph[e[0]][e[1]]["distance"]
                     if cost < backup_min_dist:
-                        backup_min_component = node_to_component[e[1]]
-                        backup_min_out_edge = e
-                        backup_min_in_edge = (next_node_component_e1, next_node_1)
-                        backup_min_index_in_path = index_in
                         backup_min_dist = cost
             if len(edge_out_of_interest) == 0:
                 return None
@@ -1724,9 +1705,7 @@ def reevaluate_result(temporary_result: TemporaryResult, problem: GPDP):
     paths_component = {v: {} for v in vehicle_keys}
     indexes_component = {v: {} for v in temporary_result.graph_vehicle}
     node_to_component = {v: {} for v in temporary_result.graph_vehicle}
-    nb_component = len(sorted_connected_component)
     rebuilt_dict = {}
-    objective_dict = {}
     component_global = [
         (set(e), len(e))
         for e in nx.weakly_connected_components(temporary_result.graph_merge)

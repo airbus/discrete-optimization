@@ -210,11 +210,8 @@ class GPHH(SolverDO):
     def init_model(self):
         tournament_ratio = self.params_gphh.tournament_ratio
         pop_size = self.params_gphh.pop_size
-        n_gen = self.params_gphh.n_gen
         min_tree_depth = self.params_gphh.min_tree_depth
         max_tree_depth = self.params_gphh.max_tree_depth
-        crossover_rate = self.params_gphh.crossover_rate
-        mutation_rate = self.params_gphh.mutation_rate
 
         creator.create("FitnessMin", Fitness, weights=(self.weight,))
         creator.create("Individual", PrimitiveTree, fitness=creator.FitnessMin)

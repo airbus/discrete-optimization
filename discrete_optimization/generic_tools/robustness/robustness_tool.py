@@ -131,7 +131,6 @@ class RobustnessTool:
         return results
 
     def plot(self, results, image_tag=""):
-        feasible = np.sum(results[:, :, 0], axis=1)
         mean_makespan = np.mean(results[:, :, 1], axis=1)
         max_makespan = np.max(results[:, :, 1], axis=1)
         print(self.tags)

@@ -221,7 +221,6 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
         constraints_dict = {}
         current_solution, fit = result_storage.get_best_solution_fit()
         # Starting point :
-        start = []
         current_solution: RCPSPSolution = current_solution
         # Starting point :
         start = []

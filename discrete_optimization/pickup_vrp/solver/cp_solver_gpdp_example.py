@@ -418,7 +418,6 @@ def init_model_resources():
     total_node = number_of_nodes_transportation + 2 * n_vehicles
     coordinates = np.random.randint(-20, 20, size=(total_node, 2))
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
-    index_end = {v: index_start[v] + n_vehicles for v in index_start}
     import scipy.spatial.distance as dist
 
     distance_delta = dist.cdist(coordinates, coordinates)
@@ -427,7 +426,6 @@ def init_model_resources():
         distance_delta[i, i] = 0
     time_delta = distance_delta / 2
     instance = {}
-    nodes_range = list(range(1, total_node + 1))
     nodes_transportation = list(range(1, number_of_nodes_transportation + 1))
     instance["number_vehicle"] = n_vehicles
     instance["number_of_nodes_transportation"] = number_of_nodes_transportation
@@ -912,7 +910,6 @@ def init_model_ortools():
     ]
     instance["weight_objective"] = [10, 1]
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
-    index_end = {v: index_start[v] + n_vehicles for v in index_start}
     for v in range(n_vehicles):
         instance["resource_flow_node"][
             index_start[v], 0
@@ -1354,7 +1351,6 @@ def init_model_ortools_tsp():
     ]
     instance["weight_objective"] = [10, 1]
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
-    index_end = {v: index_start[v] + n_vehicles for v in index_start}
     for v in range(n_vehicles):
         instance["resource_flow_node"][
             index_start[v], 0

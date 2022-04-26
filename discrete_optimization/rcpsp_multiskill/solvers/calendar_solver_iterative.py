@@ -160,7 +160,6 @@ def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolu
                 first_possible_start_future,
             )
 
-    index_employee = {}
     constraints_employee = {}
     for emp in employees_arrays:
         index = np.argwhere(
@@ -334,7 +333,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
             self.problem_calendar, solution
         )
         list_strings = []
-        max_time = max([solution.schedule[x]["end_time"] for x in solution.schedule])
         tasks = sorted(self.problem_calendar.mode_details.keys())
         for r in constraints:
             for t in constraints[r]:
@@ -554,7 +552,6 @@ class SolverWithCalendarIterative(SolverDO):
                 float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
             )
             best_solution = None
-            constraint_iterable = {"empty": []}
             store_lns = None
             store_with_all = None
         constraint_to_keep = set()

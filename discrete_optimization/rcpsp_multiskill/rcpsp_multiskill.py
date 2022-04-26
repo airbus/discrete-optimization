@@ -895,13 +895,10 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
         )
         rcpsp_schedule[act_id]["end_time"] = activity_end_times[act_id]
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
-        rcpsp_schedule_feasible = False
         last_act_id = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {}
         rcpsp_schedule[last_act_id]["start_time"] = 99999999
         rcpsp_schedule[last_act_id]["end_time"] = 9999999
-    else:
-        rcpsp_schedule_feasible = True
     return rcpsp_schedule, [], employee_usage, modes_dict
 
 
@@ -1152,7 +1149,6 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
                 minimum_starting_time[s] = max(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
-        worker_ids = None
     rcpsp_schedule = schedules
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False

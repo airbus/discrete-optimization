@@ -107,15 +107,6 @@ def get_ressource_breaks(
             )
             first_possible_start_before = next(
                 (
-                    st
-                    for st in range(current_start, -1, -1)
-                    if problem_calendar.resources[r][st]
-                    >= problem_calendar.mode_details[t][1][r]
-                ),
-                None,
-            )
-            first_possible_start_before = next(
-                (
                     st - problem_calendar.mode_details[t][1]["duration"] + 1
                     for st in range(solution.rcpsp_schedule[t]["end_time"], -1, -1)
                     if problem_calendar.resources[r][st - 1]

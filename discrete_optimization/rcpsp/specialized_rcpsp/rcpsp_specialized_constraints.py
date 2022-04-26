@@ -1032,7 +1032,6 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
             False  # we force the starting of all act_id to be the same current time
         )
         while not valid:
-            reached_t = None
             if all(expected_durations_task[act_id] for act_id in act_ids) == 0:
                 for act_id in act_ids:
                     starts[act_id] += [current_min_time]
@@ -1425,7 +1424,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
             False  # we force the starting of all act_id to be the same current time
         )
         while not valid:
-            reached_t = None
             if all(expected_durations_task[act_id] for act_id in act_ids) == 0:
                 for act_id in act_ids:
                     starts[act_id] += [current_min_time]

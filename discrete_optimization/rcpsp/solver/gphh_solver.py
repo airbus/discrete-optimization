@@ -526,11 +526,8 @@ class GPHH(SolverDO):
     def init_model(self):
         tournament_ratio = self.params_gphh.tournament_ratio
         pop_size = self.params_gphh.pop_size
-        n_gen = self.params_gphh.n_gen
         min_tree_depth = self.params_gphh.min_tree_depth
         max_tree_depth = self.params_gphh.max_tree_depth
-        crossover_rate = self.params_gphh.crossover_rate
-        mutation_rate = self.params_gphh.mutation_rate
 
         creator.create("FitnessMin", Fitness, weights=(self.weight,))
         creator.create("Individual", PrimitiveTree, fitness=creator.FitnessMin)
@@ -665,12 +662,10 @@ class GPHH(SolverDO):
                 ],
                 modes_vector=modes,
             )
-            do_makespan = solution.get_end_time(d.sink_task)
         else:
             solution = RCPSPSolution(
                 problem=d, rcpsp_permutation=normalized_values_for_do, rcpsp_modes=modes
             )
-            do_makespan = solution.get_end_time(d.sink_task)
         return solution
 
     def evaluate_heuristic(self, individual, domains) -> float:

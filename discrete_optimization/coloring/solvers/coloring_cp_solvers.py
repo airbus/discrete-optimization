@@ -239,7 +239,6 @@ class ColoringCP(CPSolver):
         nb_colors = first_solution.nb_color
         kwargs["nb_colors"] = nb_colors
         self.init_model(**kwargs)
-        limit_time_s = kwargs.get("limit_time_s", 100)
         range_node = range(1, self.number_of_nodes + 1)
         iteration = 0
         current_solution = first_solution
