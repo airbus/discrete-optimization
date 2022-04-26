@@ -301,7 +301,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
                 self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
             )
             params_cp = ParametersCP.default()
-            params_cp.time_limit = 1
+            params_cp.TimeLimit = 1
             params_cp.pool_solutions = 10000
             params_cp.nr_solutions = 1
             # params_cp.nr_solutions = float("inf")
