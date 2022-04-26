@@ -304,7 +304,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
         for s in range(nb_solution):
             rcpsp_schedule = {}
             modes = {}
-            objective = self.model.objective_values[s]
             results = {}
             employee_usage = {}
             employee_usage_solution = {}

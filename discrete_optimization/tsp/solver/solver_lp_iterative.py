@@ -585,7 +585,6 @@ def rebuild_tsp_routine(
     rebuilded_path = list(paths_component[node_to_component[start_index]])
     component_end = node_to_component[end_index]
     component_reconnected = {node_to_component[start_index]}
-    current_component = sorted_connected_component[node_to_component[start_index]]
     path_set = set(rebuilded_path)
     total_length_path = len(rebuilded_path)
     while len(component_reconnected) < len(sorted_connected_component):
@@ -662,11 +661,6 @@ def rebuild_tsp_routine(
                 min_in_edge = backup_min_in_edge
                 min_index_in_path = backup_min_index_in_path
                 min_component = backup_min_component
-                min_dist = (
-                    backup_min_dist
-                    + graph[e[0]][e[1]]["weight"]
-                    - graph[min_in_edge[0]][e[1]]["weight"]
-                )
             len_this_component = len(paths_component[min_component])
             if verbose:
                 print(list(range(0, -len_this_component, -1)))

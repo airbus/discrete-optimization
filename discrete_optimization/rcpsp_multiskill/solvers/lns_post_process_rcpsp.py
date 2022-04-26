@@ -124,7 +124,6 @@ class PostProMSRCPSPPreemptive(PostProcessSolution):
 
 
 def sgs_variant(solution: MS_RCPSPSolution, problem: MS_RCPSPModel, predecessors_dict):
-    task_that_be_shifted_left = []
     new_proposed_schedule = {}
     resource_avail_in_time = {}
     new_horizon = min(solution.get_end_time(problem.sink_task), problem.horizon)
@@ -219,7 +218,6 @@ def sgs_variant_preemptive(
     solution: MS_RCPSPSolution_Preemptive, problem: MS_RCPSPModel, predecessors_dict
 ):
     new_proposed_schedule = {}
-    task_that_be_shifted_left = []
     new_proposed_schedule = {}
     resource_avail_in_time = {}
     modes_dict = solution.modes

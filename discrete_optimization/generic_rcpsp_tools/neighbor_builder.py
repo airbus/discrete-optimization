@@ -492,12 +492,6 @@ def build_neighbor_mixing_cut_parts(
         NeighborBuilderSubPart(problem=rcpsp_model, graph=graph, nb_cut_part=c_part)
         for c_part in [4, 5, 6, 7]
     ]  # 2
-    n2_s = [
-        NeighborRandomAndNeighborGraph(
-            problem=rcpsp_model, graph=graph, fraction_subproblem=fs
-        )
-        for fs in [0.3, 0.4, 0.5, 0.6]
-    ]
     n2_s = []
     n_mix = NeighborBuilderMix(
         list_neighbor=n1_s + n2_s,
@@ -541,13 +535,6 @@ def mix_both(
     graph: GraphRCPSP = None,
     **kwargs
 ):
-    a_s = [
-        build_neighbor_random(
-            option_neighbor=option_neighbor_random, rcpsp_model=rcpsp_model
-        )
-        for option_neighbor_random in [OptionNeighborRandom.MIX_FAST]
-    ]
-
     a_s = [
         build_neighbor_random(
             option_neighbor=option_neighbor_random, rcpsp_model=rcpsp_model

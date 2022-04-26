@@ -1631,7 +1631,6 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
 
 def stick_to_solution(solution: RCPSPSolution, cp_solver: CP_MS_MRCPSP_MZN):
     list_strings = []
-    modes_dict = solution.problem.build_mode_dict(solution.rcpsp_modes)
     for task in solution.rcpsp_schedule:
         start = solution.rcpsp_schedule[task]["start_time"]
         list_strings += [
@@ -1646,7 +1645,6 @@ def stick_to_solution_preemptive(
     solution: RCPSPSolutionPreemptive, cp_solver: CP_MS_MRCPSP_MZN_PREEMPTIVE
 ):
     list_strings = []
-    modes_dict = solution.problem.build_mode_dict(solution.rcpsp_modes)
     for task in solution.rcpsp_schedule:
         starts = solution.rcpsp_schedule[task]["starts"]
         ends = solution.rcpsp_schedule[task]["ends"]
@@ -2393,9 +2391,6 @@ class PrecomputeEmployeesForTasks:
         self, result, parameters_cp: ParametersCP = ParametersCP.default()
     ):
         intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
         units_used = []
         workers_type_used = []
         overskills_units = []

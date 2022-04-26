@@ -582,16 +582,6 @@ class RCPSPModelPreemptive(Problem):
             modes_dict = self.build_mode_dict(
                 rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
             )
-            if not self.is_varying_resource():
-                start_times = [
-                    rcpsp_sol.rcpsp_schedule[t]["starts"][k]
-                    for t in rcpsp_sol.rcpsp_schedule
-                    for k in range(len(rcpsp_sol.rcpsp_schedule[t]["starts"]))
-                ]
-            else:
-                start_times = range(
-                    rcpsp_sol.rcpsp_schedule[self.sink_task]["ends"][-1]
-                )
             resource_avail_in_time = compute_resource(
                 solution=rcpsp_sol, rcpsp_problem=self
             )

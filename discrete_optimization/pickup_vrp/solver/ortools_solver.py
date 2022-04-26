@@ -145,13 +145,6 @@ class ORToolsGPDP(SolverDO):
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
 
     def init_model(self, **kwargs):
-        first_solution_strategy = kwargs.get(
-            "first_solution_strategy", first_solution_strategy_enum.SAVINGS
-        )
-        local_search_metaheuristic = kwargs.get(
-            "local_search_metaheuristic",
-            local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        )
         include_time_windows = kwargs.get("include_time_windows", False)
         include_time_windows_cluster = kwargs.get("include_time_windows_cluster", False)
         include_cumulative = kwargs.get("include_cumulative", False)
@@ -160,7 +153,6 @@ class ORToolsGPDP(SolverDO):
         include_resource_dimension = kwargs.get("include_resource_dimension", False)
         include_time_dimension = kwargs.get("include_time_dimension", True)
         list_parameters_cost = kwargs.get("parameters_cost", [ParametersCost.default()])
-        one_visit_per_node = kwargs.get("one_visit_per_node", True)
         one_visit_per_cluster = kwargs.get("one_visit_per_cluster", False)
         include_pickup_and_delivery = kwargs.get("include_pickup_and_delivery", False)
         include_pickup_and_delivery_per_cluster = kwargs.get(
@@ -871,7 +863,6 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
 def plot_ortools_solution(result, problem: GPDP):
     fig, ax = plt.subplots(1)
     nb_colors = problem.number_vehicle
-    colors = plt.cm.get_cmap("hsv", 2 * nb_colors)
     nb_colors_clusters = len(problem.clusters_set)
     colors_nodes = plt.cm.get_cmap("hsv", nb_colors_clusters)
     ax.scatter(

@@ -91,13 +91,6 @@ class CPM(SolverDO):
     def run_classic_cpm(self):
         done_forward = set()
         done_backward = set()
-        current_succ = {
-            k: {
-                "succs": set(self.successors_map[k]["succs"]),
-                "nb": self.successors_map[k]["nb"],
-            }
-            for k in self.successors_map
-        }
         current_pred = {
             k: {
                 "succs": set(self.predecessors_map[k]["succs"]),
@@ -277,7 +270,6 @@ class CPM(SolverDO):
                         if not valid:
                             break
                     if valid:
-                        real_start = time
                         if delayed_du_to_ressource:
                             ressource_blocking = [
                                 res
@@ -334,9 +326,6 @@ class CPM(SolverDO):
                                 # at least because of j
                         break
             if cut_sgs_by_critical:
-                actual_time = current_schedule[cur_critical_task_to_schedule][
-                    "start_time"
-                ]
                 index_critical += 1
                 if index_critical == len(critical_path):
                     break
@@ -401,7 +390,6 @@ class CPM(SolverDO):
         # 1, 2
         if total_order is None:
             total_order = self.return_order_cpm()
-        index_in_order = {total_order[i]: i for i in range(len(total_order))}
         resource_avail_in_time = {}
         for res in list(self.rcpsp_model.resources.keys()):
             if isinstance(self.rcpsp_model, RCPSPModelCalendar):
@@ -530,7 +518,6 @@ class CPM(SolverDO):
         # TODO : make this more generic. here we return some serial and parallel
         #  sgs results based on priority queue found by CPM method
         cpath = self.run_classic_cpm()
-        order = self.return_order_cpm()
         order = sorted(
             self.map_node,
             key=lambda x: (
@@ -580,13 +567,6 @@ class CPM(SolverDO):
 def run_partial_classic_cpm(partial_schedule, cpm_solver):
     done_forward = set()
     done_backward = set()
-    current_succ = {
-        k: {
-            "succs": set(cpm_solver.successors_map[k]["succs"]),
-            "nb": cpm_solver.successors_map[k]["nb"],
-        }
-        for k in cpm_solver.successors_map
-    }
     current_pred = {
         k: {
             "succs": set(cpm_solver.predecessors_map[k]["succs"]),

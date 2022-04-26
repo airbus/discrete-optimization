@@ -12,7 +12,6 @@ from discrete_optimization.tsp.tsp_model import (
 def plot_tsp_solution(tsp_model: TSPModel, solution: SolutionTSP, fig=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots(1, figsize=(10, 5))
-    ll = []
     ax.plot(
         [
             tsp_model.list_points[n].x

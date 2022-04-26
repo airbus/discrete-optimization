@@ -68,8 +68,6 @@ def build_matrice_distance_np(nodeCount: int, points: List[Point2D]):
     matrix_x = np.ones((nodeCount, nodeCount), dtype=np.int32)
     matrix_y = np.ones((nodeCount, nodeCount), dtype=np.int32)
     print("matrix init")
-    id_x = np.zeros((nodeCount, nodeCount), dtype=np.int32)
-    id_y = np.zeros((nodeCount, nodeCount), dtype=np.int32)
     for i in range(nodeCount):
         matrix_x[i, :] *= int(points[i].x)
         matrix_y[i, :] *= int(points[i].y)
@@ -84,7 +82,6 @@ def build_matrice_distance_np(nodeCount: int, points: List[Point2D]):
 
 def closest_greedy(nodeCount: int, points: List[Point2D]):
     sd, d = build_matrice_distance_np(nodeCount, points)
-    g = nx.DiGraph()
     sol = [0]
     length_circuit = 0.0
     index_in_sol = {0}
@@ -110,7 +107,7 @@ def testing():
         nodeCount, points = parse(input_data)
         sol, length_circuit, opt = closest_greedy(nodeCount, points)
         fig, ax = plt.subplots(1)
-        (pp,) = ax.plot([points[jj].x for jj in sol], [points[jj].y for jj in sol])
+        ax.plot([points[jj].x for jj in sol], [points[jj].y for jj in sol])
         plt.show()
 
 

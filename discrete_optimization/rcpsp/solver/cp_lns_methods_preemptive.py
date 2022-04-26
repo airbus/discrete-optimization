@@ -451,11 +451,6 @@ class NeighborFixStart(ConstraintHandler):
         current_solution, fit = result_storage.get_best_solution_fit()
         current_solution: RCPSPSolutionPreemptive = current_solution
         max_time = get_max_time_solution(solution=current_solution)
-        last_jobs = get_tasks_ending_between_two_times(
-            solution=current_solution,
-            time_1=max_time - self.delta_time_from_makepan_to_not_fix,
-            time_2=max_time,
-        )
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
@@ -579,7 +574,6 @@ class NeighborFixStartSubproblem(ConstraintHandler):
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
-        max_time = get_max_time_solution(solution=current_solution)
         method = random.choices([0, 1, 2], weights=[0.5, 0.1, 0.4], k=1)[0]
         if method == 0:
             subtasks = create_subproblem_cut_time(
@@ -687,7 +681,6 @@ def create_subproblem_cut_time(
 def create_subproblems_random_and_predecessors(
     current_solution, neighbor_fix_problem: NeighborFixStartSubproblem, subtasks=None
 ):
-    nb_jobs = neighbor_fix_problem.problem.n_jobs
     if subtasks is None:
         subtasks = set()
         len_subtask = 0
@@ -952,15 +945,6 @@ def get_ressource_breaks(
                 (
                     st
                     for st in range(current_start, problem_calendar.horizon)
-                    if problem_calendar.get_resource_available(r, st)
-                    >= problem_calendar.mode_details[t][modes[t]][r]
-                ),
-                None,
-            )
-            first_possible_start_before = next(
-                (
-                    st
-                    for st in range(current_start, -1, -1)
                     if problem_calendar.get_resource_available(r, st)
                     >= problem_calendar.mode_details[t][modes[t]][r]
                 ),
@@ -1298,7 +1282,6 @@ class ConstraintHandlerMix(ConstraintHandler):
 
 
 def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
-    params_om = [Params(fraction_to_fix=0.98, minus_delta=0, plus_delta=0)]
     params_om = [Params(fraction_to_fix=0.75, minus_delta=100, plus_delta=100)]
     params_all = [
         Params(fraction_to_fix=0.9, minus_delta=1, plus_delta=1),

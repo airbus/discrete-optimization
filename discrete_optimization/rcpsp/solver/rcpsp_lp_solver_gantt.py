@@ -203,11 +203,8 @@ class LP_MRCPSP_GANTT(MilpSolver):
         nb_solution = min(nb_solutions_max, self.model.num_solutions)
         if not retrieve_all_solution:
             nb_solution = 1
-        list_solution_fits = []
         print(nb_solution, " solutions found")
         for s in range(nb_solution):
-            rcpsp_schedule = {}
-            modes = {}
             objective = self.model.objective_values[s]
             resource_id_usage = {
                 k: {
@@ -441,8 +438,6 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
             self.model.update()
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        retrieve_all_solution = parameters_milp.retrieve_all_solution
-        nb_solutions_max = parameters_milp.n_solutions_max
         nb_solution = self.model.getAttr("SolCount")
         print(nb_solution, " solutions found")
         solutions = []

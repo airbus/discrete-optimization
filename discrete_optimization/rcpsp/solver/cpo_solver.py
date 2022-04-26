@@ -42,9 +42,6 @@ class CPOptSolver(CPSolver):
         )
 
     def init_model(self, **args):
-        filename = (
-            os.path.dirname(os.path.abspath(__file__)) + "/data/rcpsp_default.data"
-        )
         NB_TASKS, NB_RESOURCES = self.rcpsp_model.n_jobs, len(
             self.rcpsp_model.resources_list
         )
@@ -110,7 +107,6 @@ class CPOptSolver(CPSolver):
         self.variables = {"tasks": tasks}
 
     def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        list_solution_fit = []
         schedule = {}
         for i in range(len(self.variables["tasks"])):
             itv = result.get_var_solution(self.variables["tasks"][i])

@@ -772,12 +772,10 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
 
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
-        index_id = 0
         found = False
         for i in range(nb_task):
             if pred_links[i] == 0 and done_np[permutation_task[i]] == 0:
                 act_id = permutation_task[i]
-                index_id = i
                 found = True
                 break
         if not found:

@@ -53,7 +53,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
         result_storage: ResultStorage,
         last_result_store: ResultStorage = None,
     ) -> Iterable[Any]:
-        constraints_dict = {}
         r = random.random()
         if r <= 0.2:
             current_solution, fit = result_storage.get_last_best_solution()
@@ -109,14 +108,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
                 if emp in current_solution.employee_usage[task]
             ]
             for emp in self.problem.employees
-        }
-        employee_usage_max_time = {
-            emp: max(
-                [current_solution.schedule[t]["end_time"] for t in employee_usage[emp]]
-            )
-            if len(employee_usage[emp]) > 0
-            else 0
-            for emp in employee_usage
         }
 
         for i in range(1, len(self.employees_position) + 1):

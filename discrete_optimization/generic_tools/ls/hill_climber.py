@@ -176,7 +176,6 @@ class HillClimberPareto(HillClimber):
             nb_best_store=1000,
         )
         cur_variable = initial_variable.copy()
-        cur_best_variable = initial_variable.copy()
         cur_objective = objective
         cur_best_objective = objective
         self.restart_handler.best_fitness = objective
@@ -229,7 +228,6 @@ class HillClimberPareto(HillClimber):
                 print("iter ", iteration)
                 print("new obj ", objective, " better than ", cur_best_objective)
                 cur_best_objective = objective
-                cur_best_variable = cur_variable.copy()
             # Update the temperature
             self.restart_handler.update(
                 nv, objective, global_improvement, local_improvement

@@ -393,12 +393,6 @@ def problem_constraints(
         )
         sorted_employee = np.argsort(sum_usage)
         set_employees_to_fix = set(
-            [
-                current_solution.problem.employees_list[i]
-                for i in sorted_employee[: int(len(sorted_employee) / 2)]
-            ]
-        )
-        set_employees_to_fix = set(
             random.sample(
                 current_solution.problem.employees_list,
                 int(len(current_solution.problem.employees_list) - 2),

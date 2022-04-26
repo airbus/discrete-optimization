@@ -124,11 +124,9 @@ class LNS_MILP(SolverDO):
                     milp_solver=self.milp_solver, result_storage=store_lns
                 )
             )
-            best_solution = init_solution.copy()
             best_objective = objective
         else:
             best_objective = float("inf")
-            best_solution = None
             constraint_iterable = {"empty": []}
             store_lns = None
         for iteration in range(nb_iteration_lns):
@@ -147,14 +145,12 @@ class LNS_MILP(SolverDO):
                     current_nb_iteration_no_improvement = 0
                 else:
                     current_nb_iteration_no_improvement += 1
-                best_solution = bsol
                 best_objective = fit
             if sense == ModeOptim.MINIMIZATION and fit <= best_objective:
                 if fit < best_objective:
                     current_nb_iteration_no_improvement = 0
                 else:
                     current_nb_iteration_no_improvement += 1
-                best_solution = bsol
                 best_objective = fit
             if skip_first_iteration and iteration == 0:
                 store_lns = result_store
