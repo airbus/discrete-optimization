@@ -723,29 +723,32 @@ class LinearFlowSolver(SolverDO):
                 edges_out_all_vehicles=edges_out_all_vehicles,
             )
         if include_capacity:
-            vars = self.simple_capacity_constraint(
-                model=model,
-                variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
+            all_variables.update(
+                self.simple_capacity_constraint(
+                    model=model,
+                    variables_edges=variables_edges,
+                    edges_in_all_vehicles=edges_in_all_vehicles,
+                    edges_out_all_vehicles=edges_out_all_vehicles,
+                )
             )
-            all_variables.update(vars)
         if include_resources:
-            vars = self.resources_constraint(
-                model=model,
-                variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
+            all_variables.update(
+                self.resources_constraint(
+                    model=model,
+                    variables_edges=variables_edges,
+                    edges_in_all_vehicles=edges_in_all_vehicles,
+                    edges_out_all_vehicles=edges_out_all_vehicles,
+                )
             )
-            all_variables.update(vars)
         if include_time_evolution:
-            vars = self.time_evolution(
-                model=model,
-                variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
+            all_variables.update(
+                self.time_evolution(
+                    model=model,
+                    variables_edges=variables_edges,
+                    edges_in_all_vehicles=edges_in_all_vehicles,
+                    edges_out_all_vehicles=edges_out_all_vehicles,
+                )
             )
-            all_variables.update(vars)
         model.max_mip_gap = 0.003
         model.sol_pool_size = 10000
         model.max_mip_gap_abs = 0.01
@@ -1270,22 +1273,24 @@ class LinearFlowSolverVehicleType(SolverDO):
                 edges_out_all_vehicles=edges_out_all_vehicles,
             )
         if include_capacity:
-            vars = self.simple_capacity_constraint(
-                model=model,
-                variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
+            all_variables.update(
+                self.simple_capacity_constraint(
+                    model=model,
+                    variables_edges=variables_edges,
+                    edges_in_all_vehicles=edges_in_all_vehicles,
+                    edges_out_all_vehicles=edges_out_all_vehicles,
+                )
             )
-            all_variables.update(vars)
 
         if include_time_evolution:
-            vars = self.time_evolution(
-                model=model,
-                variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
+            all_variables.update(
+                self.time_evolution(
+                    model=model,
+                    variables_edges=variables_edges,
+                    edges_in_all_vehicles=edges_in_all_vehicles,
+                    edges_out_all_vehicles=edges_out_all_vehicles,
+                )
             )
-            all_variables.update(vars)
         model.max_seconds = 800
         model.threads = 4
         model.max_mip_gap = 0.003

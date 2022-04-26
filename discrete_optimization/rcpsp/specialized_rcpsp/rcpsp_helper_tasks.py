@@ -82,16 +82,16 @@ class RCPSP_H_Model(SingleModeRCPSPModel):
         ]
 
         # for each pre_helper, try to start as late as possible
-        for id in sorted_pre_helper_ids:
+        for id_successor in sorted_pre_helper_ids:
             # Latest possible cannot be later than the earliest start of its successors
             all_successor_starts = [
                 corrected_sol.rcpsp_schedule[s_id]["start_time"]
-                for s_id in self.successors[id]
+                for s_id in self.successors[id_successor]
             ]
             latest_end = min(all_successor_starts)
             duration = (
-                corrected_sol.rcpsp_schedule[id]["end_time"]
-                - corrected_sol.rcpsp_schedule[id]["start_time"]
+                corrected_sol.rcpsp_schedule[id_successor]["end_time"]
+                - corrected_sol.rcpsp_schedule[id_successor]["start_time"]
             )
             latest_start = latest_end - duration
             # Then iteratively check if the latest time is suitable resource-wise
@@ -102,10 +102,10 @@ class RCPSP_H_Model(SingleModeRCPSPModel):
             for i in range(len(list(self.resources.keys()))):
                 res_str = list(self.resources.keys())[i]
                 for t in range(
-                    corrected_sol.rcpsp_schedule[id]["start_time"],
-                    corrected_sol.rcpsp_schedule[id]["end_time"],
+                    corrected_sol.rcpsp_schedule[id_successor]["start_time"],
+                    corrected_sol.rcpsp_schedule[id_successor]["end_time"],
                 ):
-                    consumption[i, t + 1] -= self.mode_details[id][1][res_str]
+                    consumption[i, t + 1] -= self.mode_details[id_successor][1][res_str]
 
             # then start trying iteratively to fit the pre_helper activity as late as possible
             stop = False
@@ -115,14 +115,17 @@ class RCPSP_H_Model(SingleModeRCPSPModel):
                     for i in range(len(list(self.resources.keys()))):
                         res_str = list(self.resources.keys())[i]
                         if (
-                            consumption[i, t + 1] + self.mode_details[id][1][res_str]
+                            consumption[i, t + 1]
+                            + self.mode_details[id_successor][1][res_str]
                             > self.resources[res_str]
                         ):
                             all_good = False
                             break
                 if all_good:
-                    corrected_sol.rcpsp_schedule[id]["start_time"] = latest_start
-                    corrected_sol.rcpsp_schedule[id]["end_time"] = (
+                    corrected_sol.rcpsp_schedule[id_successor][
+                        "start_time"
+                    ] = latest_start
+                    corrected_sol.rcpsp_schedule[id_successor]["end_time"] = (
                         latest_start + duration
                     )
                     stop = True

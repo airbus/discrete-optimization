@@ -257,18 +257,18 @@ class CP_MULTISCENARIO(CPSolver):
                 RCPSPSolution(problem=self.list_rcpsp_model[i], rcpsp_permutation=oo)
                 for i in range(len(self.list_rcpsp_model))
             ]
-            eval = [
+            evaluation = [
                 self.aggreg_from_dict_values(self.list_rcpsp_model[i].evaluate(ll[i]))
                 for i in range(len(self.list_rcpsp_model))
             ]
-            sum_eval = sum(eval)
+            sum_eval = sum(evaluation)
             if sum_eval > best_makespan:
                 best_solution = tuple(ll)
                 best_makespan = sum_eval
             print("starts found : ", start[-1])
             print(
                 "Sum of makespan : ",
-                eval,
+                evaluation,
                 sum_eval / len(self.list_rcpsp_model),
                 order,
                 obj,

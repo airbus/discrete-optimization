@@ -595,7 +595,7 @@ class NeighborFixStartSubproblem(ConstraintHandler):
             )
         subtasks = set(subtasks)
         print(len(subtasks), " Tasks ")
-        eval = self.problem.evaluate(current_solution)
+        evaluation = self.problem.evaluate(current_solution)
         if method == 0 and False:
             list_strings = constraints_strings(
                 current_solution=current_solution,
@@ -609,7 +609,7 @@ class NeighborFixStartSubproblem(ConstraintHandler):
                 constraint_max_time=False,
             )
         else:
-            if eval["constraint_penalty"] == 0:
+            if evaluation["constraint_penalty"] == 0:
                 list_strings = constraints_strings(
                     current_solution=current_solution,
                     subtasks=subtasks,
@@ -636,9 +636,11 @@ class NeighborFixStartSubproblem(ConstraintHandler):
         for s in list_strings:
             child_instance.add_string(s)
         child_instance.add_string(
-            "constraint sec_objective<=" + str(100 * eval["constraint_penalty"]) + ";\n"
+            "constraint sec_objective<="
+            + str(100 * evaluation["constraint_penalty"])
+            + ";\n"
         )
-        if eval["constraint_penalty"] > 0:
+        if evaluation["constraint_penalty"] > 0:
             strings = cp_solver.constraint_objective_max_time_set_of_jobs(
                 [self.problem.sink_task]
             )
