@@ -29,8 +29,8 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 )
 
 
-def if_then_else(input, output1, output2):
-    if input:
+def if_then_else(input1, output1, output2):
+    if input1:
         return output1
     else:
         return output2

@@ -805,14 +805,17 @@ def generate_schedule_from_permutation_serial_sgs(
     }
     schedules = {}
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
-        for id in perm_extended:
+        for id_successor in perm_extended:
             respected = True
             for pred in rcpsp_problem.successors:
-                if id in rcpsp_problem.successors[pred] and pred in perm_extended:
+                if (
+                    id_successor in rcpsp_problem.successors[pred]
+                    and pred in perm_extended
+                ):
                     respected = False
                     break
             if respected:
-                act_id = id
+                act_id = id_successor
                 break
         current_min_time = minimum_starting_time[act_id]  # 5
         starts = []
@@ -1013,14 +1016,17 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             modes_dict[ac] = 1
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
         # get first activity in perm with precedences respected
-        for id in perm_extended:
+        for id_successor in perm_extended:
             respected = True
             for pred in rcpsp_problem.successors.keys():
-                if id in rcpsp_problem.successors[pred] and pred in perm_extended:
+                if (
+                    id_successor in rcpsp_problem.successors[pred]
+                    and pred in perm_extended
+                ):
                     respected = False
                     break
             if respected:
-                act_id = id
+                act_id = id_successor
                 break
         current_min_time = minimum_starting_time[act_id]
         valid = False

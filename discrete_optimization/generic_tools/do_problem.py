@@ -283,12 +283,12 @@ def build_evaluate_function_aggregated(
     objectives = params_objective_function.objectives
     weights = params_objective_function.weights
     objective_handling = params_objective_function.objective_handling
-    eval = None
+    eval_sol = None
     eval_from_dict_values = None
     if objective_handling == ObjectiveHandling.AGGREGATE:
         length = len(objectives)
 
-        def eval(solution: Solution):
+        def eval_sol(solution: Solution):
             dict_values = problem.evaluate(solution)
             val = sum([dict_values[objectives[i]] * weights[i] for i in range(length)])
             return sign * val
@@ -300,7 +300,7 @@ def build_evaluate_function_aggregated(
     if objective_handling == ObjectiveHandling.SINGLE:
         length = len(objectives)
 
-        def eval(solution: Solution):
+        def eval_sol(solution: Solution):
             dict_values = problem.evaluate(solution)
             return sign * dict_values[objectives[0]] * weights[0]
 
@@ -310,7 +310,7 @@ def build_evaluate_function_aggregated(
     if objective_handling == ObjectiveHandling.MULTI_OBJ:
         length = len(objectives)
 
-        def eval(solution: Solution):
+        def eval_sol(solution: Solution):
             d = problem.evaluate(solution)
             return (
                 TupleFitness(
@@ -331,4 +331,4 @@ def build_evaluate_function_aggregated(
                 * sign
             )
 
-    return eval, eval_from_dict_values
+    return eval_sol, eval_from_dict_values
