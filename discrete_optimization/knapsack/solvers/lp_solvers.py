@@ -137,7 +137,6 @@ class LPKnapsackGurobi(SolverDO):
         self.model.optimize()
         nSolutions = self.model.SolCount
         nObjectives = self.model.NumObj
-        objective = self.model.getObjective().getValue()
         print("Problem has", nObjectives, "objectives")
         print("Gurobi found", nSolutions, "solutions")
         if parameter_gurobi.retrieve_all_solution:
@@ -163,7 +162,6 @@ class LPKnapsackGurobi(SolverDO):
         constraints = {}
         list_solutions = [current_solution]
         list_objective = [current_solution.value]
-        objective = init_solution.value
         for k in trange(nb_iteration_max):
             for c in constraints:
                 self.model.remove(constraints[c])
@@ -177,8 +175,6 @@ class LPKnapsackGurobi(SolverDO):
             constraints = self.fix_decision(current_solution, fixed_variable)
             self.model.optimize()
             nSolutions = self.model.SolCount
-            nObjectives = self.model.NumObj
-            objective = self.model.getObjective().getValue()
             if parameter_gurobi.retrieve_all_solution:
                 solutions = self.retrieve_solutions(list(range(nSolutions)))
             else:
@@ -387,7 +383,6 @@ class LPKnapsack(MilpSolver):
         for s in range_solutions:
             weight = 0
             xs = {}
-            obj = self.model.objective_values[s]
             value_kp = 0
             for e in self.variable_decision["x"]:
                 value = self.variable_decision["x"][e].xi(s)
@@ -444,7 +439,6 @@ class LPKnapsack(MilpSolver):
         constraints = {}
         list_solutions = [current_solution]
         list_objective = [current_solution.value]
-        objective = init_solution.value
         for k in trange(nb_iteration_max):
             for c in constraints:
                 self.model.remove(constraints[c])
@@ -461,7 +455,6 @@ class LPKnapsack(MilpSolver):
                 max_solutions=parameter_gurobi.PoolSolutions,
             )
             nSolutions = self.model.num_solutions
-            objective = self.model.objective_value
             if parameter_gurobi.retrieve_all_solution:
                 solutions = self.retrieve_solutions(list(range(nSolutions)))
             else:

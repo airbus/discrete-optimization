@@ -330,12 +330,6 @@ def build_pruned_problem(problem: GPDP, undirected=True):
             if edge[1] not in graph_nx:
                 graph_nx.add_node(edge[1])
             graph_nx.add_edge(edge[0], edge[1])
-        connected_components = [
-            (len(c), c)
-            for c in sorted(
-                nx.strongly_connected_components(graph_nx), key=len, reverse=True
-            )
-        ]
 
     return GPDP(
         number_vehicle=problem.number_vehicle,
@@ -618,7 +612,6 @@ class ProxyClass:
             resources_flow_node[node] = {}
         for v in range(nb_vehicle):
             resources_flow_node[origin_vehicle[v]] = {}
-        resources_set = {}
         nodes_transportation = set(real_client_to_initial.keys())
         nodes_origin = set(virtual_to_initial.keys())
         nodes_target = set(virtual_to_end.keys())

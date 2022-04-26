@@ -131,11 +131,7 @@ class CP_MULTISCENARIO(CPSolver):
         )  # to modelize varying quantity of resource.
         add_objective_makespan = args.get("add_objective_makespan", True)
         ignore_sec_objective = args.get("ignore_sec_objective", True)
-        add_partial_solution_hard_constraint = args.get(
-            "add_partial_solution_hard_constraint", True
-        )
         custom_output_type = args.get("output_type", False)
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
 
         model = Model(files_mzn[model_type])
         if custom_output_type:
@@ -243,7 +239,6 @@ class CP_MULTISCENARIO(CPSolver):
                 starts = [result["s"]]
                 orderings += [result["ordering"]]
                 objectives += [result.objective]
-        l = []
         for order, obj, start in zip(orderings, objectives, starts):
             oo = [
                 self.base_rcpsp_model.index_task_non_dummy[

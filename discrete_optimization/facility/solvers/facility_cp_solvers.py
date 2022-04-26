@@ -173,7 +173,6 @@ class FacilityCP(SolverDO):
             self.init_model(**kwargs)
         limit_time_s = parameters_cp.TimeLimit
         result = self.instance.solve(timeout=timedelta(seconds=limit_time_s))
-        opt: Status = result.status
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def get_solution(self, **kwargs):
@@ -235,7 +234,7 @@ class FacilityCP(SolverDO):
                         self.facility_problem,
                         [f - 1 for f in res["facility_for_customer"]],
                     )
-                    fit = self.facility_problem.evaluate(current_best_solution)
+                    self.facility_problem.evaluate(current_best_solution)
                     dict_color = {
                         i + 1: current_best_solution.facility_for_customers[i] + 1
                         for i in range(self.facility_problem.customer_count)

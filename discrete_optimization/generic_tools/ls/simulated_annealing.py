@@ -102,7 +102,6 @@ class SimulatedAnnealing:
         while iteration < nb_iteration_max:
             local_improvement = False
             global_improvement = False
-            local_move_accepted = False
             if self.mode_mutation == ModeMutation.MUTATE:
                 nv, move = self.mutator.mutate(cur_variable)
                 objective = self.aggreg_from_dict_values(self.evaluator.evaluate(nv))
@@ -130,7 +129,6 @@ class SimulatedAnnealing:
                     / self.temperature_handler.temperature
                 )
                 accept = p > r
-                local_move_accepted = accept
             if accept:
                 cur_objective = objective
                 cur_variable = nv

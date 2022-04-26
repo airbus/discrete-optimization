@@ -371,7 +371,6 @@ class LP_MRCPSP(MilpSolver):
             for key in sorted_tasks
         ]
         resources = self.rcpsp_model.resources_list
-        c = [self.rcpsp_model.resources[x] for x in resources]
         renewable = {
             r: self.rcpsp_model.resources[r]
             for r in self.rcpsp_model.resources
@@ -658,7 +657,6 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             )
             for key in sorted_tasks
         ]
-        c = [self.rcpsp_model.resources[r] for r in resources]
         renewable = {
             r: self.rcpsp_model.resources[r]
             for r in self.rcpsp_model.resources

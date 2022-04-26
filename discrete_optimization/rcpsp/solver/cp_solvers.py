@@ -2158,9 +2158,6 @@ class CP_MRCPSP_MZN_MODES:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
         mruns = []
         if intermediate_solutions:
             for i in range(len(result)):

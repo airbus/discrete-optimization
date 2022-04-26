@@ -275,7 +275,6 @@ def compute_schedule_per_resource_individual(
     resource_types_to_consider: List[str] = None,
     verbose=False,
 ):
-    nb_ressources = len(rcpsp_model.resources_list)
     modes_dict = rcpsp_model.build_mode_dict(
         rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
     )

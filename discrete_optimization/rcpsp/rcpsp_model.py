@@ -1630,8 +1630,6 @@ class SGSWithoutArray:
     @staticmethod
     def create_delta_dict(vector):
         v = np.array(vector)
-        max_capacity = np.max(v)
-        fake_tasks = []
         delta = v[:-1] - v[1:]
         index_non_zero = np.nonzero(delta)[0]
         l = {0: v[0]}
@@ -1644,8 +1642,6 @@ class SGSWithoutArray:
     @staticmethod
     def create_absolute_dict(vector):
         v = np.array(vector)
-        max_capacity = np.max(v)
-        fake_tasks = []
         delta = v[:-1] - v[1:]
         index_non_zero = np.nonzero(delta)[0]
         l = {0: v[0]}

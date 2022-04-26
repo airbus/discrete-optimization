@@ -106,7 +106,6 @@ class Mutation2Opt(Mutation):
             self.nb_test = max(1, self.node_count // 10)
 
     def get_points(self, it, jt, variable: SolutionTSP):
-        point_before_i = None
         perm = variable.permutation
         if it == 0:
             point_before_i = self.points[variable.start_index]
@@ -114,7 +113,6 @@ class Mutation2Opt(Mutation):
             point_before_i = self.points[perm[it - 1]]
         point_i = self.points[perm[it]]
         point_j = self.points[perm[jt]]
-        point_after_j = None
         if jt == self.length_permutation - 1:
             point_after_j = self.points[variable.end_index]
         else:
@@ -122,8 +120,6 @@ class Mutation2Opt(Mutation):
         return point_before_i, point_i, point_j, point_after_j
 
     def get_points_index(self, it, jt, variable: SolutionTSP):
-        i_before = None
-        j_after = None
         perm = variable.permutation
         i = perm[it]
         j = perm[jt]
@@ -140,9 +136,6 @@ class Mutation2Opt(Mutation):
     def mutate_and_compute_obj(self, variable: SolutionTSP):
         it = random.randint(0, self.length_permutation - 2)
         jt = random.randint(it + 1, self.length_permutation - 1)
-        point_before_it, point_it, point_jt, point_after_jt = self.get_points(
-            it, jt, variable
-        )
         min_change = float("inf")
         range_its = (
             range(self.length_permutation)
@@ -251,7 +244,6 @@ class Mutation2OptIntersection(Mutation2Opt):
                 {"length": variable.length},
             )
         min_change = float("inf")
-        perm = variable.permutation
         for i, j in self.i_j_pairs:
             i_before, i_, j_, j_after = self.get_points_index(i, j, variable)
             change = (

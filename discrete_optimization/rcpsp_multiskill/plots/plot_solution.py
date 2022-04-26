@@ -14,7 +14,6 @@ from shapely.geometry import Polygon
 def compute_schedule_per_resource_individual_preemptive(
     rcpsp_model: MS_RCPSPModel, rcpsp_sol: MS_RCPSPSolution_Preemptive
 ):
-    modes = rcpsp_sol.modes
     sorted_task_by_start = sorted(
         rcpsp_sol.schedule,
         key=lambda x: 100000 * rcpsp_sol.get_start_time(x) + rcpsp_model.index_task[x],
@@ -36,13 +35,11 @@ def compute_schedule_per_resource_individual_preemptive(
         }
         for employee in rcpsp_model.employees
     }
-    total_time = max_time - min_time + 1
     index_to_time = {i: min_time + i for i in range(max_time - min_time + 1)}
     time_to_index = {index_to_time[i]: i for i in index_to_time}
     sorted_employees = list(sorted(rcpsp_model.employees))
     for activity in sorted_task_by_start:
         for i in range(len(rcpsp_sol.employee_usage.get(activity, []))):
-            employees_i = None
             if isinstance(rcpsp_sol.employee_usage[activity], dict):
                 employees_i = rcpsp_sol.employee_usage[activity].keys()
             else:
@@ -99,12 +96,10 @@ def compute_schedule_per_resource_individual(
         }
         for employee in rcpsp_model.employees
     }
-    total_time = max_time - min_time + 1
     index_to_time = {i: min_time + i for i in range(max_time - min_time + 1)}
     time_to_index = {index_to_time[i]: i for i in index_to_time}
     sorted_employees = list(sorted(rcpsp_model.employees))
     for activity in sorted_task_by_start:
-        mode = modes[activity]
         start_time = rcpsp_sol.get_start_time(activity)
         end_time = rcpsp_sol.get_end_time(activity)
         for employee in rcpsp_sol.employee_usage.get(activity, {}):

@@ -70,8 +70,6 @@ class MS_RCPSPSolCP:
 def create_usefull_res_data(rcpsp_model: MS_RCPSPModel):
     # USEFUL_RES  : array[ACT] of set of RESOURCE
     # POTENTIAL_ACT : array[RESOURCE] of set of ACT
-    employees = rcpsp_model.employees_list
-    skills_set = sorted(list(rcpsp_model.skills_set))
     employees_position = {
         rcpsp_model.employees_list[i]: i + 1 for i in range(rcpsp_model.nb_employees)
     }
@@ -239,7 +237,6 @@ class CP_MSPSP_MZN(CPSolver):
         self.graph = build_graph_rcpsp_object(rcpsp_problem=self.rcpsp_model)
         _, unrelated = build_unrelated_task(self.graph)
         dict_data["nUnrels"] = len(unrelated)
-        sorted_unrelated = sorted(unrelated)
         dict_data["unpred"] = [self.index_in_minizinc[x[0]] for x in unrelated]
         dict_data["unsucc"] = [self.index_in_minizinc[x[1]] for x in unrelated]
         useful_res, potential_act = create_usefull_res_data(self.rcpsp_model)

@@ -41,7 +41,6 @@ class KnapsackDynProg(SolverDO):
 
     def solve(self, **args):
         start_by_most_promising = args.get("greedy_start", False)
-        stop_after_n_item = args.get("stop_after_n_item", False)
         max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
         max_items = min(self.knapsack_model.nb_items + 1, max_items)
         max_time_seconds = args.get("max_time_seconds", None)
@@ -119,7 +118,6 @@ class KnapsackDynProg(SolverDO):
 
     def solve_np(self, **args):
         start_by_most_promising = args.get("greedy_start", False)
-        stop_after_n_item = args.get("stop_after_n_item", False)
         max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
         max_time_seconds = args.get("max_time_seconds", None)
         if max_time_seconds is None:

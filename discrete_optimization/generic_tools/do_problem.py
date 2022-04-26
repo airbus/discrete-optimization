@@ -278,7 +278,6 @@ def build_evaluate_function_aggregated(
 ):
     if params_objective_function is None:
         params_objective_function = get_default_objective_setup(problem)
-    sense_problem = problem.get_objective_register().objective_sense
     sign = 1  # if sense_problem == params_objective_function.sense_function else -1
     objectives = params_objective_function.objectives
     weights = params_objective_function.weights
