@@ -176,8 +176,7 @@ class CPKnapsackMZN2(CPSolver):
         else:
             l_items_taken += [result["taken"]]
         list_solution_fits = []
-        for i in range(len(l_items_taken)):
-            items_taken = l_items_taken[i]
+        for items_taken in l_items_taken:
             taken = [0] * self.knapsack_model.nb_items
             weight = 0
             value = 0

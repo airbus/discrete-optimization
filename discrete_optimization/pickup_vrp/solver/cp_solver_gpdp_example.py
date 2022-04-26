@@ -370,8 +370,8 @@ def script_example_flow():
     )
     results = []
     paths = []
-    for i in range(len(result)):
-        results += [(result[i].dict["flow"], result[i].objective)]
+    for subresult in result:
+        results += [(subresult.dict["flow"], subresult.objective)]
         flow = results[-1][0]
         path_dict = {}
         for vehicle in range(len(flow)):
