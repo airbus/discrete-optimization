@@ -340,7 +340,8 @@ class RCPSPModel(Problem):
         Dict[str, int], Dict[str, List[int]]
     ]  # {resource_name: number_of_resource}
     non_renewable_resources: List[str]  # e.g. [resource_name3, resource_name4]
-    n_jobs: int  # excluding dummy activities Start (0) and End (n)
+    n_jobs: int
+    n_jobs_non_dummy: int  # excluding dummy activities Start (0) and End (n)
     mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
     # e.g. {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}
     # one key being "duration"
