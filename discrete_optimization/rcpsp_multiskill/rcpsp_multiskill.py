@@ -3095,21 +3095,21 @@ def create_np_data_and_jit_functions(
     consider_partial_preemptive = False
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
+        task_mode_details = rcpsp_problem.mode_details[task]
         index_mode = 0
-        for mode in sorted(
-            rcpsp_problem.mode_details[rcpsp_problem.tasks_list[i]].keys()
-        ):
+
+        for mode in sorted(task_mode_details):
             for k in range(len(rcpsp_problem.resources_list)):
-                consumption_array[i, index_mode, k] = rcpsp_problem.mode_details[task][
-                    mode
-                ].get(rcpsp_problem.resources_list[k], 0)
-                is_releasable_array[i, index_mode, k] = (
-                    1
-                    if rcpsp_problem.partial_preemption_data[task][mode].get(
-                        rcpsp_problem.resources_list[k], True
-                    )
-                    else 0
+                resource = rcpsp_problem.resources_list[k]
+                consumption_array[i, index_mode, k] = task_mode_details[mode].get(
+                    resource, 0
                 )
+                if rcpsp_problem.partial_preemption_data[task][mode].get(
+                    resource, True
+                ):
+                    is_releasable_array[i, index_mode, k] = 1
+                else:
+                    is_releasable_array[i, index_mode, k] = 0
                 if not is_releasable_array[i, index_mode, k]:
                     consider_partial_preemptive = True
             for s in range(len(rcpsp_problem.skills_list)):
