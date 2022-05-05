@@ -34,11 +34,6 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
     Mutation2OptIntersection,
     MutationSwapTSP,
 )
-from discrete_optimization.vrp.mutation.mutation_vrp import (
-    MutationRelocate,
-    MutationSwap,
-    MutationTwoOptVRP,
-)
 
 dictionnary_mutation = {
     TypeAttribute.PERMUTATION: {
@@ -90,11 +85,6 @@ dictionnary_mutation = {
             PermutationMutationRCPSP,
             {"other_mutation": MutationIntegerSpecificArrity, "probability_flip": 0.1},
         ),
-    },
-    TypeAttribute.VRP_PATHS: {
-        "relocate": (MutationRelocate, {}),
-        "swap": (MutationSwap, {}),
-        "2opt": (MutationTwoOptVRP, {"test_all": False, "nb_test": 200}),
     },
 }
 
