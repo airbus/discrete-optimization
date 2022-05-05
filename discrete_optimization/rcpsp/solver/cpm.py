@@ -315,8 +315,6 @@ class CPM(SolverDO):
                                     ressource_usage[res][t][j] = ressource_consumption[
                                         res
                                     ]
-                        # if not (self.map_node[j]._ESD <= time <= self.map_node[j]._LSD):
-                        #    print("This task was delayed :(")
                         for task in self.successors_map[j]["succs"]:
                             prev = min_time_to_schedule[task]
                             min_time_to_schedule[task] = max(
@@ -328,7 +326,6 @@ class CPM(SolverDO):
                                 and min_time_to_schedule[task]
                                 > self.map_node[task]._LSD
                             ):
-                                # print("it is delayed.")
                                 if task not in effects_on_delay:
                                     effects_on_delay[task] = {"task_causes": set()}
                                 effects_on_delay[task]["task_causes"].add(
@@ -337,19 +334,9 @@ class CPM(SolverDO):
                                 # at least because of j
                         break
             if cut_sgs_by_critical:
-                # print("On critical path : ")
                 actual_time = current_schedule[cur_critical_task_to_schedule][
                     "start_time"
                 ]
-                if not (
-                    self.map_node[cur_critical_task_to_schedule]._ESD
-                    <= actual_time
-                    <= self.map_node[cur_critical_task_to_schedule]._LSD
-                ):
-                    pass
-                    # print("This task was delayed :(")
-                    # print("Actual schedule : ", current_schedule[cur_critical_task_to_schedule])
-                    # print("Expected one : ", self.map_node[cur_critical_task_to_schedule])
                 index_critical += 1
                 if index_critical == len(critical_path):
                     break

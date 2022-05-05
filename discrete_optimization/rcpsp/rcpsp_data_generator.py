@@ -106,7 +106,6 @@ def generate_rcpsp_with_helper_tasks_data(
     for i in range(n_assisted_activities):
         the_model.successors[old_sink_activity_id + i] = [assisted_activities[i]]
         # original activity as successor of pre-helper
-        # pre_helper_activities[old_sink_activity_id + i] = [assisted_activities[i]]
         pre_helper_activities[assisted_activities[i]] = [old_sink_activity_id + i]
 
         the_model.successors[assisted_activities[i]].append(
@@ -114,7 +113,6 @@ def generate_rcpsp_with_helper_tasks_data(
         )
         # post-helper as successor of original activity
         the_model.successors[(old_sink_activity_id + n_assisted_activities + i)] = []
-        # post_helper_activities[(old_sink_activity_id + n_assisted_activities + i)] = [assisted_activities[i]]
         post_helper_activities[assisted_activities[i]] = [
             (old_sink_activity_id + n_assisted_activities + i)
         ]

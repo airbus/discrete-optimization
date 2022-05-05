@@ -182,7 +182,6 @@ class FacilityCP(SolverDO):
         if greedy_start:
             if verbose:
                 print("Computing greedy solution")
-            # greedy_solver = GreedySolverFacility(self.facility_problem)
             greedy_solver = GreedySolverDistanceBased(self.facility_problem)
             result = greedy_solver.solve()
             solution = result.get_best_solution()
@@ -216,7 +215,6 @@ class FacilityCP(SolverDO):
                 )
                 for i in range_node:
                     if i in subpart_color:
-                        # print("constraint color_graph["+str(i)+"] == "+ str(dict_color[i])+";\n")
                         child.add_string(
                             "constraint facility_for_customer["
                             + str(i)
@@ -249,7 +247,6 @@ class FacilityCP(SolverDO):
                         print(iteration, " :  ", res["objective"])
                     except:
                         print(iteration, " failed ")
-                    # print({i: res["color_graph"][i-1] for i in range_node})
                 iteration += 1
         fit = self.facility_problem.evaluate(current_best_solution)
         return current_best_solution, fit

@@ -165,8 +165,6 @@ class Mutation2Opt(Mutation):
                     )
                 )
             for j in range_jts:
-                # print("i ", i, "j ", j, "i+1", i+1, "j+1", j+1)
-                # print((i,j), (i+1, j+1), (i, i+1), (j, j+1))
                 i_before, i_, j_, j_after = self.get_points_index(i, j, variable)
                 change = (
                     self.evaluate_function_indexes(i_before, j_)
@@ -174,10 +172,6 @@ class Mutation2Opt(Mutation):
                     - self.evaluate_function_indexes(j_, j_after)
                     + self.evaluate_function_indexes(i_, j_after)
                 )
-                # change = length(point_before_i, point_j)-\
-                #          length(point_before_i, point_i) - \
-                #          length(point_j, point_after_j)+\
-                #          length(point_i, point_after_j)
                 if change < min_change:
                     it = i
                     jt = j
@@ -197,18 +191,6 @@ class Mutation2Opt(Mutation):
         lengths += [self.evaluate_function_indexes(i_, j_after)]
         if jt < self.length_permutation - 1:
             lengths += variable.lengths[jt + 2 :]
-        if False:
-            print(len(variable.lengths))
-            print(len(lengths))
-            print(variable.lengths)
-            print(min_change)
-            print("original perm ; ", variable.permutation)
-            print("New : ", permut)
-            print("original lengths ; ", variable.lengths)
-            print("New : ", lengths)
-            print("original , ", sum(variable.lengths), variable.length)
-            print("New : ", sum(lengths), fitness)
-            print(len(permut))
         if min_change < 0 or not self.return_only_improvement:
             v = SolutionTSP(
                 start_index=variable.start_index,
@@ -257,19 +239,17 @@ class Mutation2OptIntersection(Mutation2Opt):
             self.i_j_pairs = None
 
     def mutate_and_compute_obj(self, variable: SolutionTSP):
-        reset_end = False
-        if True:
-            reset_end = True
-            ints = find_intersection(
-                variable, self.points, nb_tests=min(3000, self.node_count - 2)
+        reset_end = True
+        ints = find_intersection(
+            variable, self.points, nb_tests=min(3000, self.node_count - 2)
+        )
+        self.i_j_pairs = ints
+        if len(self.i_j_pairs) == 0:
+            return (
+                variable,
+                LocalMoveDefault(variable, variable),
+                {"length": variable.length},
             )
-            self.i_j_pairs = ints
-            if len(self.i_j_pairs) == 0:
-                return (
-                    variable,
-                    LocalMoveDefault(variable, variable),
-                    {"length": variable.length},
-                )
         min_change = float("inf")
         perm = variable.permutation
         for i, j in self.i_j_pairs:
@@ -299,18 +279,6 @@ class Mutation2OptIntersection(Mutation2Opt):
         lengths += [self.evaluate_function_indexes(i_, j_after)]
         if jt < self.length_permutation - 1:
             lengths += variable.lengths[jt + 2 :]
-        if False:
-            print(len(variable.lengths))
-            print(len(lengths))
-            print(variable.lengths)
-            print(min_change)
-            print("original perm ; ", variable.permutation)
-            print("New : ", permut)
-            print("original lengths ; ", variable.lengths)
-            print("New : ", lengths)
-            print("original , ", sum(variable.lengths), variable.length)
-            print("New : ", sum(lengths), fitness)
-            print(len(permut))
         if reset_end:
             self.i_j_pairs = None
         if min_change < 0 or not self.return_only_improvement:
@@ -364,13 +332,6 @@ class SwapTSPMove(LocalMove):
         solution.lengths[i2 + 1] = self.tsp_model.evaluate_function_indexes(
             current[i2], j_after
         )
-        # if False:
-        #     print(i_before, current[i1])
-        #     print(current[i1], current[i1+1])
-        #     print(current[i2-1], current[i2])
-        #     print(current[i2], j_after)
-        #     print(solution.lengths[i1]+solution.lengths[i1+1]+solution.lengths[i2]+solution.lengths[i2+1]+\
-        #           -sum(previous))
         solution.length = (
             solution.length
             + solution.lengths[i1]
@@ -379,14 +340,6 @@ class SwapTSPMove(LocalMove):
             + solution.lengths[i2 + 1]
             - sum(previous)
         )
-        # if sum(solution.lengths)!=solution.length:
-        #     print(sum(solution.lengths), solution.length)
-        #     print("delta : ",
-        #           solution.lengths[i1]+solution.lengths[i1+1]+solution.lengths[i2]+solution.lengths[i2+1]+\
-        #                   - sum(previous))
-        #     print('Problem')
-        # else:
-        #     print("no problem")
         return solution
 
     def backtrack_local_move(self, solution: SolutionTSP) -> SolutionTSP:
@@ -422,12 +375,10 @@ if __name__ == "__main__":
     files = get_data_available()
     files = [f for f in files if "tsp_51_1" in f]
     model = parse_file(files[0])
-    mutation = Mutation2Opt(model, False, 100, False)
     mutation = MutationSwapTSP(model)
     solution = model.get_dummy_solution()
     print("Initial : ", solution.length)
     sol = mutation.mutate_and_compute_obj(solution)
-    # print(sol[0].permutation)
     lengths, obj = compute_length(
         model.start_index,
         model.end_index,

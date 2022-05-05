@@ -103,8 +103,6 @@ def return_pauses_and_active_times(
         if len(starts) > 1:
             diff = [starts[i + 1] - ends[i] for i in range(len(starts) - 1)]
             dictionnary[task]["diff_start_end"] = diff
-            # for j in range(len(diff)):
-            #     if diff[j]<int(durations[j]/10) or diff[j]==1:
     return dictionnary
 
 
@@ -169,7 +167,6 @@ def problem_constraints(
     minus_delta_2=0,
     plus_delta_2=0,
 ):
-    # max_time = get_max_time_solution(solution=current_solution)
     max_time = current_solution.get_end_time(task=current_solution.problem.sink_task)
     multimode = isinstance(cp_solver, (CP_MRCPSP_MZN_PREEMMPTIVE, CP_MS_MRCPSP_MZN))
     if multimode:
@@ -274,9 +271,6 @@ def problem_constraints(
                 )
             list_strings += [string1_dur]
     for job in jobs_to_fix:
-        # continue
-        # sif job in subtasks:
-        #   continue
         is_paused = len(current_solution.get_start_times_list(job)) > 1
         is_paused_str = "true" if is_paused else "false"
         list_strings += [
@@ -361,7 +355,6 @@ def problem_constraints(
                     sign=SignEnum.LEQ,
                     part_id=k + 1,
                 )
-                # list_strings += [string2_start]
                 list_strings += [string2_start, string1_start]
             string1_dur = cp_solver.constraint_duration_string_preemptive_i(
                 task=job, duration=0, sign=SignEnum.EQUAL, part_id=k + 1
@@ -375,7 +368,6 @@ def problem_constraints(
                 exceptions += [(task, l[1]), (task, l[2])]
             else:
                 exceptions += [(task, l[1])]
-    # exceptions = random.sample(exceptions, int(0.1*len(exceptions)))
     if random.random() < 0.99:
         print("Method 1")
         print(len(exceptions))
@@ -518,9 +510,7 @@ class NeighborRepairProblems(ConstraintHandler):
                 ],
             )
 
-        if (
-            current_solution is None
-        ):  # or fit != result_storage.get_best_solution_fit()[1]:
+        if current_solution is None:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
         print(current_solution.get_nb_task_preemption(), " task preempted ")
@@ -582,10 +572,8 @@ class NeighborRepairProblems(ConstraintHandler):
             + ";\n"
         )
         if eval.get("constraint_penalty", 0) > 0:
-            # strings = cp_solver.constraint_objective_max_time_set_of_jobs([self.problem.sink_task])
             strings = []
         else:
-            # strings = cp_solver.constraint_objective_max_time_set_of_jobs(set(self.problem.get_tasks_list()))
             strings = cp_solver.constraint_objective_equal_makespan(
                 self.problem.sink_task
             )

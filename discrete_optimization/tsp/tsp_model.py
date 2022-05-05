@@ -41,8 +41,6 @@ class SolutionTSP(Solution):
         permutation_from0=None,
     ):
         assert permutation is not None or permutation_from0 is not None
-        # if permutation is not None and permutation_from0 is None:
-        #     assert(start_index is not None and end_index is not None and lengths is not None and length is not None)
         self.start_index = start_index
         self.end_index = end_index
         self.permutation = permutation
@@ -63,8 +61,6 @@ class SolutionTSP(Solution):
             self.permutation_from0 = self.problem.convert_original_perm_to_perm_from0(
                 self.permutation
             )
-        # print('problem__:', problem)
-        # print('permutation_from0__:', self.permutation_from0)
         # TODO: Think about moving this into another function (to prevent unecessary calls to evaluate()
         if self.length is None:
             self.problem.evaluate(self)
@@ -136,8 +132,6 @@ class TSPModel(Problem):
             if i != self.start_index and i != self.end_index
         ]
         self.length_permutation = len(self.ind_in_permutation)
-        # print('start_index: ', start_index)
-        # print('end_index: ', end_index)
         self.original_indices_to_permutation_indices = [
             i
             for i in range(self.node_count)
@@ -149,8 +143,6 @@ class TSPModel(Problem):
             if i != self.start_index and i != self.end_index:
                 self.original_indices_to_permutation_indices_dict[i] = counter
                 counter += 1
-
-        # print('original_indices_to_permutation_indices: ', self.original_indices_to_permutation_indices)
 
     # for a given tsp kind of problem, you should provide a custom evaluate function, for now still abstract.
     @abstractmethod
@@ -192,7 +184,6 @@ class TSPModel(Problem):
         var_tsp.length = obj
         var_tsp.lengths = lengths
         return {"length": obj}
-        # return obj
 
     def satisfy(self, var_tsp: SolutionTSP) -> bool:
         b = (
@@ -240,8 +231,6 @@ class TSPModel(Problem):
         return perm
 
     def convert_original_perm_to_perm_from0(self, perm):
-        # print('mapping: ', self.original_indices_to_permutation_indices_dict)
-        # print('original: ', perm)
         perm_from0 = [
             self.original_indices_to_permutation_indices_dict[i] for i in perm
         ]
@@ -251,18 +240,19 @@ class TSPModel(Problem):
         return SolutionTSP
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        dict_register["permutation_from0"] = {
-            "name": "permutation_from0",
-            "type": [TypeAttribute.PERMUTATION],
-            "range": range(len(self.original_indices_to_permutation_indices)),
-            "n": len(self.original_indices_to_permutation_indices),
-        }
-        dict_register["permutation"] = {
-            "name": "permutation",
-            "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_TSP],
-            "range": self.ind_in_permutation,
-            "n": self.length_permutation,
+        dict_register = {
+            "permutation_from0": {
+                "name": "permutation_from0",
+                "type": [TypeAttribute.PERMUTATION],
+                "range": range(len(self.original_indices_to_permutation_indices)),
+                "n": len(self.original_indices_to_permutation_indices),
+            },
+            "permutation": {
+                "name": "permutation",
+                "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_TSP],
+                "range": self.ind_in_permutation,
+                "n": self.length_permutation,
+            },
         }
         return EncodingRegister(dict_register)
 

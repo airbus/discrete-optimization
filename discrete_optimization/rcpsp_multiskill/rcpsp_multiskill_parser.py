@@ -67,7 +67,6 @@ def parse_imopse(
     input_data, max_horizon=None, one_unit_per_task=True, preemptive=False
 ):
     # parse the input
-    # print('input_data\n',input_data)
     lines = input_data.split("\n")
 
     # "General characteristics:
@@ -162,8 +161,6 @@ def parse_imopse(
                         task_dict[int(words[i])]["successors"] = []
                     task_dict[int(words[i])]["successors"] += [task_id]
                     i += 1
-    # print(resource_dict)
-    # print(task_dict)
     sorted_task_names = sorted(task_dict.keys())
     task_id_to_new_name = {
         sorted_task_names[i]: i + 2 for i in range(len(sorted_task_names))
@@ -176,7 +173,6 @@ def parse_imopse(
         for task_id in task_dict
     }
     resource_dict = {int(i): resource_dict[i] for i in resource_dict}
-    # skills = set(["Q"+str(i) for i in range(nb_skills)])
     skills = real_skills_found
     for task_id in task_dict:
         for skill in skills:
@@ -236,9 +232,6 @@ def parse_imopse(
 
 
 def parse_results(input_data):
-    # if isinstance(input_data, str):
-    #    with open(input_data, 'r') as input_data_file:
-    #        return parse_results(input_data_file.read())
     lines = input_data.split("\n")
     schedule = {}
     assignation = {}

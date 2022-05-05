@@ -46,72 +46,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
         self.plus_delta = plus_delta
         self.fraction_task_to_fix_employee = fraction_task_to_fix_employee
 
-    # def adding_constraint_from_results_store(self, cp_solver: CP_MS_MRCPSP_MZN,
-    #                                          child_instance,
-    #                                          result_storage: ResultStorage) -> Iterable[Any]:
-    #     constraints_dict = {}
-    #     current_solution, fit = result_storage.get_best_solution_fit()
-    #     current_solution: MS_RCPSPSolution = current_solution
-    #     max_time = max([current_solution.schedule[x]["end_time"]
-    #                     for x in current_solution.schedule])
-    #     last_jobs = [x for x in current_solution.schedule
-    #                  if current_solution.schedule[x]["end_time"] >= max_time-5]
-    #     last_jobs = []
-    #     nb_jobs = self.problem.n_jobs_non_dummy + 2
-    #     jobs_to_fix = set(random.sample(current_solution.schedule.keys(),
-    #                                     int(self.fraction_to_fix * nb_jobs)))
-    #     for lj in last_jobs:
-    #         if lj in jobs_to_fix:
-    #             jobs_to_fix.remove(lj)
-    #     list_strings = []
-    #     #array[Units, Act] of var bool: unit_used;
-    #     self.employees_position = sorted(self.problem.employees)
-    #     print(self.employees_position, " employee possitions in consstraint hand")
-    #     employee_usage = {i: [] for i in self.problem.employees}
-    #     unit_used = np.zeros((len(self.employees_position), len(current_solution.schedule)))
-    #     if False:
-    #         for i in range(1, len(self.employees_position)+1):
-    #             rand = random.random()
-    #             # if rand<0.2:
-    #             #     continue
-    #             for task in current_solution.schedule:
-    #                 emp = self.employees_position[i-1]
-    #                 if task in current_solution.employee_usage and emp in current_solution.employee_usage[task] and \
-    #                         len(current_solution.employee_usage[task][emp]) > 0:
-    #                     employee_usage[emp] += [t for t in
-    #                                             range(current_solution.schedule[task]["start_time"],
-    #                                                   current_solution.schedule[task]["end_time"])]
-    #                     string1 = "constraint unit_used["+str(i)+"," + str(task) + "] == 1;\n"
-    #                     unit_used[i-1, task-1] = 1
-    #                 else:
-    #                     string1 = "constraint unit_used["+str(i)+"," + str(task) + "] == 0;\n"
-    #                     unit_used[i - 1, task - 1] = 0
-    #                 child_instance.add_string(string1)
-    #                 list_strings += [string1]
-    #         print(np.sum(unit_used, axis=0))
-    #         print(np.sum(unit_used, axis=1))
-    #         for emp in employee_usage:
-    #             print(len(employee_usage[emp]), len(set(employee_usage[emp])))
-    #             if len(employee_usage[emp]) != len(set(employee_usage[emp])):
-    #                 print("HEY")
-    #     for job in [self.problem.sink_task]:
-    #         start_time_j = current_solution.schedule[job]["start_time"]
-    #         string1 = "constraint start[" + str(job) + "] <= " + str(start_time_j) + ";\n"
-    #         list_strings += [string1]
-    #         child_instance.add_string(string1)
-    #
-    #     for job in jobs_to_fix:
-    #         start_time_j = current_solution.schedule[job]["start_time"]
-    #         min_st = max(start_time_j-self.minus_delta, 0)
-    #         max_st = min(start_time_j+self.plus_delta, max_time)
-    #         string1 = "constraint start[" + str(job) + "] <= " + str(max_st) + ";\n"
-    #         string2 = "constraint start[" + str(job) + "] >= " + str(min_st) + ";\n"
-    #         list_strings += [string1]
-    #         list_strings += [string2]
-    #         child_instance.add_string(string1)
-    #         child_instance.add_string(string2)
-    #     return list_strings
-    #
     def adding_constraint_from_results_store(
         self,
         cp_solver: CP_MS_MRCPSP_MZN,
@@ -139,7 +73,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             for x in current_solution.schedule
             if current_solution.get_end_time(x) >= max_time - 20
         ]
-        # last_jobs = []
         nb_jobs = self.problem.n_jobs_non_dummy + 2
         jobs_to_fix = set(
             random.sample(
@@ -185,26 +118,10 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             else 0
             for emp in employee_usage
         }
-        # employee_usage_time = {emp: sum([current_solution.schedule[t]["end_time"] -
-        #                                  current_solution.schedule[t]["start_time"]
-        #                                  for t in employee_usage[emp]])
-        #                        for emp in employee_usage}
-        # if False:
-        #     sorted_employee = list(sorted(employee_usage, key=lambda x: employee_usage_max_time[x]))
-        #     for i in range(int(len(employee_usage)/4)):
-        #         index = self.employees_position.index(sorted_employee[i])+1
-        #         string1 = "constraint sum(task in Act)(unit_used[" + str(index) + ", task] >= "\
-        #                   + str(int(len(employee_usage[sorted_employee[i]]))) +";\n"
-        #     for i in range(int(len(employee_usage)/4)):
-        #         index = self.employees_position.index(sorted_employee[len(sorted_employee)-1-i])+1
-        #         string1 = "constraint sum(task in Act)(unit_used[" + str(index) + ", task] <= "\
-        #                    + str(int(len(employee_usage[sorted_employee[len(sorted_employee)-1-i]]))) +";\n"
 
         for i in range(1, len(self.employees_position) + 1):
             if i in employee_to_not_fix:
                 continue
-            # if True:
-            #     continue
             for task in task_to_fix:
                 emp = self.employees_position[i - 1]
                 if (
@@ -241,17 +158,9 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
         for job in current_solution.schedule.keys():
             if job in jobs_to_fix:
                 continue
-            # start_time_j = current_solution.schedule[job]["start_time"]
-            # min_st = max(start_time_j-100, 0)
-            # max_st = min(start_time_j+100, max_time)
             string1 = "constraint start[" + str(job) + "] <= " + str(max_time) + ";\n"
             child_instance.add_string(string1)
             list_strings += [string1]
-            # string2 = "constraint start[" + str(job) + "] >= " + str(min_st) + ";\n"
-            # list_strings += [string1]
-            # list_strings += [string2]
-            # child_instance.add_string(string1)
-            # child_instance.add_string(string2)
         return list_strings
 
     def remove_constraints_from_previous_iteration(
@@ -666,10 +575,6 @@ def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
     if option_neighbor == OptionNeighbor.OM:
         params = params_om
     probas = [1 / len(params)] * len(params)
-    # self.constraint_handler = ConstraintHandlerStartTimeInterval_CP(problem=self.rcpsp_model,
-    #                                                                 fraction_to_fix=0.5,
-    #                                                                 minus_delta=1,
-    #                                                                 plus_delta=1)
     constraint_handler = ConstraintHandlerMix(
         problem=rcpsp_model, list_params=params, list_proba=probas
     )

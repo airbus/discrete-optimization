@@ -85,7 +85,7 @@ feature_function_map = {
     FeatureEnum.CAPACITIES: get_capacities,
     FeatureEnum.RES_CONSUMPTION_ARRAY: get_res_consumption,
     FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY: get_avg_res_consumption_delta_capacity,
-}  #
+}
 
 
 class ParametersGPHH:
@@ -128,53 +128,6 @@ class ParametersGPHH:
     def default():
         set_feature = [
             FeatureEnum.PROFIT,
-            FeatureEnum.RES_CONSUMPTION_ARRAY,
-            FeatureEnum.CAPACITIES,
-            FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY,
-        ]
-        pset = PrimitiveSetTyped("main", [float, list, list, float], float)
-        # take profit, list of ressource consumption, avearage delta consumption
-        pset.addPrimitive(operator.add, [float, float], float)
-        pset.addPrimitive(operator.sub, [float, float], float)
-        pset.addPrimitive(operator.mul, [float, float], float)
-        pset.addPrimitive(protected_div, [float, float], float)
-        pset.addPrimitive(max_operator, [float, float], float)
-        pset.addPrimitive(min_operator, [float, float], float)
-        pset.addPrimitive(operator.neg, [float], float)
-        pset.addPrimitive(max_operator_list, [list], float, name="max_operator_list")
-        pset.addPrimitive(min_operator_list, [list], float, name="min_operator_list")
-        pset.addPrimitive(lambda x: sum(x) / len(x), [list], float, name="mean_list")
-        pset.addPrimitive(
-            lambda x, y: [xx - yy for xx, yy in zip(x, y)],
-            [list, list],
-            list,
-            name="sub_list",
-        )
-        pset.addPrimitive(
-            lambda x, y: [xx + yy for xx, yy in zip(x, y)],
-            [list, list],
-            list,
-            name="plus_list",
-        )
-        # pset.addPrimitive(if_then_else, 3)
-        # pset.addPrimitive(operator.xor, 2)
-        return ParametersGPHH(
-            set_feature=set_feature,
-            set_primitves=pset,
-            tournament_ratio=0.1,
-            pop_size=10,
-            n_gen=2,
-            min_tree_depth=1,
-            max_tree_depth=4,
-            crossover_rate=0.7,
-            mutation_rate=0.3,
-            deap_verbose=True,
-        )
-
-    @staticmethod
-    def default():
-        set_feature = [
-            FeatureEnum.PROFIT,
             FeatureEnum.CAPACITIES,
             FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY,
         ]
@@ -202,8 +155,6 @@ class ParametersGPHH:
             list,
             name="plus_list",
         )
-        # pset.addPrimitive(if_then_else, 3)
-        # pset.addPrimitive(operator.xor, 2)
         return ParametersGPHH(
             set_feature=set_feature,
             set_primitves=pset,
@@ -240,15 +191,8 @@ class GPHH(SolverDO):
         self.params_gphh = params_gphh
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
-        # self.set_feature = set_feature
         self.set_feature = self.params_gphh.set_feature
         print("self.set_feature: ", self.set_feature)
-        # if set_feature is None:
-        #     self.set_feature = {FeatureEnum.RESSOURCE_TOTAL,
-        #                         FeatureEnum.TASK_DURATION,
-        #                         FeatureEnum.N_SUCCESSORS,
-        #                         FeatureEnum.N_SUCCESSORS,
-        #                         FeatureEnum.RESSOURCE_AVG}
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.verbose = verbose
@@ -307,8 +251,6 @@ class GPHH(SolverDO):
         self.toolbox.decorate(
             "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17)
         )
-        # nobj = 2
-        # ref_points = tools.uniform_reference_points(nobj=nobj)
 
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values)
         stats_size = tools.Statistics(len)
@@ -373,7 +315,6 @@ class GPHH(SolverDO):
         d: MultidimensionalKnapsack = domain
         raw_values = []
         for j in range(len(d.list_items)):
-            # print('task_id: ', task_id)
             input_features = [
                 feature_function_map[lf](problem=domain, item_index=j)
                 for lf in self.list_feature

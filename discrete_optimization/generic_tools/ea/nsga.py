@@ -141,8 +141,6 @@ class Nsga:
                     self.arrities = register_solution.dict_attribute_to_type[
                         self._encoding_name
                     ]["arrities"]
-                # else:
-                #     self.arrities = None
 
         if encoding is not None and isinstance(encoding, Dict):
             # check there is a type key and a n key
@@ -200,8 +198,6 @@ class Nsga:
                 self.arrities = register_solution.dict_attribute_to_type[
                     self._encoding_name
                 ]["arrities"]
-            # else:
-            #     self.arrities = None
 
         if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
             self.arrity = 2
@@ -307,14 +303,12 @@ class Nsga:
         else:
             self._crossover = crossover
 
-        # if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
         if self._crossover == DeapCrossover.CX_UNIFORM:
             self._toolbox.register("mate", tools.cxUniform, indpb=self._crossover_rate)
         elif self._crossover == DeapCrossover.CX_ONE_POINT:
             self._toolbox.register("mate", tools.cxOnePoint)
         elif self._crossover == DeapCrossover.CX_TWO_POINT:
             self._toolbox.register("mate", tools.cxTwoPoint)
-        # elif self._encoding_type == TypeAttribute.PERMUTATION:
         elif self._crossover == DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED:
             self._toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
         elif self._crossover == DeapCrossover.CX_ORDERED:
@@ -350,7 +344,6 @@ class Nsga:
                     "mutate", tools.mutShuffleIndexes, indpb=self._mut_rate
                 )  # Choice of mutation operator
             elif self._mutation == DeapMutation.MUT_UNIFORM_INT:
-                # self._toolbox.register("mutate", tools.mutUniformInt, low=0, up=self.arrity-1, indpb=self._mut_rate)
                 self._toolbox.register(
                     "mutate",
                     tools.mutUniformInt,
@@ -366,8 +359,6 @@ class Nsga:
         objective_values = self.problem.evaluate_from_encoding(
             int_vector, self._encoding_variable_name
         )
-        # print('objective_values:', objective_values)
-        # val = tuple([objective_values[obj_name] for obj_name in objective_values.keys()])
         val = tuple([objective_values[obj_name] for obj_name in self._objectives])
 
         return val
@@ -425,7 +416,6 @@ class Nsga:
             kwargs = {self._encoding_variable_name: s_pure_int, "problem": self.problem}
             problem_sol = self.problem.get_solution_type()(**kwargs)
             fits = self.evaluate_sol(problem_sol)
-            # fits = TupleFitness(np.array(s.fitness.values), len(s.fitness.values))
             sols.append((problem_sol, fits))
         rs = ResultStorage(
             list_solution_fits=sols,

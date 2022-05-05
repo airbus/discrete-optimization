@@ -36,12 +36,7 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
         special_constraints: SpecialConstraintsDescription,
         params_objective_function: ParamsObjectiveFunction = None,
         initial_method: InitialMethodRCPSP = InitialMethodRCPSP.DUMMY,
-        type_of_merges={
-            "start_at_end": True,
-            "start_together": True,
-            "start_at_end_plus_offset": False,
-            "start_after_nunit": False,
-        },
+        type_of_merges=None,
         generate_only_feasible_solutions=True,
     ):
         self.problem = problem
@@ -50,6 +45,13 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
             self.params_objective_function = get_default_objective_setup(
                 problem=self.problem
             )
+        if type_of_merges is None:
+            type_of_merges = {
+                "start_at_end": True,
+                "start_together": True,
+                "start_at_end_plus_offset": False,
+                "start_after_nunit": False,
+            }
         self.initial_method = initial_method
         self.special_constraints = special_constraints
         self.type_of_merges = type_of_merges
@@ -81,7 +83,6 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
         for l in range(0, len(has_loop) + 1):
             for subset in itertools.combinations(has_loop, l):
                 simplified_rcpsp_model_relaxed = self.simplified_rcpsp_model.copy()
-                # print('\ndropping precedence constraints: ', subset)
                 for pc in subset:
                     simplified_rcpsp_model_relaxed.successors[pc[0]].remove(pc[1])
                     simplified_rcpsp_model_relaxed.predecessors[pc[1]].remove(pc[0])
@@ -93,10 +94,6 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
                                 random_perm=True
                             )
                         )
-                        # print('sgs_func: ', simplified_rcpsp_model_relaxed.sgs_func)
-                        # print('sgs_func_partial: ', simplified_rcpsp_model_relaxed.sgs_func_partial)
-                        # print('func_sgs: ', simplified_rcpsp_model_relaxed.func_sgs)
-                        # print('func_sgs_2: ', simplified_rcpsp_model_relaxed.func_sgs_2)
                         sgs_success = True
                     except:
                         sgs_success = False
@@ -109,11 +106,6 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
                             self.original_to_simplified_tasks_dict,
                             self.simplified_to_original_tasks_dict,
                         )
-
-                        # print('simplified - satisfy: ', self.simplified_rcpsp_model.satisfy(simplified_solution))
-                        # print('simplified - evaluate', self.simplified_rcpsp_model.evaluate(simplified_solution))
-                        # print('decoded - evaluate', self.problem.evaluate(decoded_solution))
-                        # print('decoded - satisfy: ', self.problem.satisfy(decoded_solution))
 
                         if self.problem.satisfy(decoded_solution):
                             list_solution_fits += [
@@ -189,15 +181,15 @@ def merge_tasks(
 
                 original_to_simplified_tasks_dict[st[0]] = {
                     "new_id": next_id,
-                    "simplification": set(["start_at_end"]),
+                    "simplification": {"start_at_end"},
                 }
                 original_to_simplified_tasks_dict[st[1]] = {
                     "new_id": next_id,
-                    "simplification": set(["start_at_end"]),
+                    "simplification": {"start_at_end"},
                 }
                 simplified_to_original_tasks_dict[next_id] = {
-                    "original_id": set([st[0], st[1]]),
-                    "simplification": set(["start_at_end"]),
+                    "original_id": {st[0], st[1]},
+                    "simplification": {"start_at_end"},
                 }
 
                 next_id += 1
@@ -233,11 +225,10 @@ def merge_tasks(
                     1: new_mode
                 }
 
-                # original_to_simplified_tasks_dict[st[0]] = {'new_id': existing_simplified_id, 'simplification': set(['start_at_end'])}
                 if st[0] == unseen_task:
                     original_to_simplified_tasks_dict[st[0]] = {
                         "new_id": existing_simplified_id,
-                        "simplification": set(["start_at_end"]),
+                        "simplification": {"start_at_end"},
                     }
                 else:
                     original_to_simplified_tasks_dict[st[0]]["simplification"].add(
@@ -246,7 +237,7 @@ def merge_tasks(
                 if st[1] == unseen_task:
                     original_to_simplified_tasks_dict[st[1]] = {
                         "new_id": existing_simplified_id,
-                        "simplification": set(["start_at_end"]),
+                        "simplification": {"start_at_end"},
                     }
                 else:
                     original_to_simplified_tasks_dict[st[1]]["simplification"].add(
@@ -299,15 +290,15 @@ def merge_tasks(
 
                 original_to_simplified_tasks_dict[st[0]] = {
                     "new_id": next_id,
-                    "simplification": set(["start_together"]),
+                    "simplification": {"start_together"},
                 }
                 original_to_simplified_tasks_dict[st[1]] = {
                     "new_id": next_id,
-                    "simplification": set(["start_together"]),
+                    "simplification": {"start_together"},
                 }
                 simplified_to_original_tasks_dict[next_id] = {
-                    "original_id": set([st[0], st[1]]),
-                    "simplification": set(["start_together"]),
+                    "original_id": {st[0], st[1]},
+                    "simplification": {"start_together"},
                 }
 
                 next_id += 1
@@ -335,8 +326,6 @@ def merge_tasks(
                     new_duration = simplified_rcpsp_model.mode_details[
                         existing_simplified_id
                     ][1]["duration"]
-                # new_duration = max([simplified_rcpsp_model.mode_details[unseen_task][1]['duration'],
-                #                    simplified_rcpsp_model.mode_details[existing_simplified_id][1]['duration']])
                 new_mode = {"duration": new_duration}
                 all_keys = simplified_to_original_tasks_dict[existing_simplified_id][
                     "original_id"
@@ -361,7 +350,7 @@ def merge_tasks(
                 if st[0] == unseen_task:
                     original_to_simplified_tasks_dict[st[0]] = {
                         "new_id": existing_simplified_id,
-                        "simplification": set(["start_together"]),
+                        "simplification": {"start_together"},
                     }
                 else:
                     original_to_simplified_tasks_dict[st[0]]["simplification"].add(
@@ -370,16 +359,13 @@ def merge_tasks(
                 if st[1] == unseen_task:
                     original_to_simplified_tasks_dict[st[1]] = {
                         "new_id": existing_simplified_id,
-                        "simplification": set(["start_together"]),
+                        "simplification": {"start_together"},
                     }
                 else:
                     original_to_simplified_tasks_dict[st[1]]["simplification"].add(
                         "start_together"
                     )
 
-                # original_to_simplified_tasks_dict[st[0]]['simplification'].add('start_together')
-                # original_to_simplified_tasks_dict[st[1]]['simplification'].add('start_together')
-                # original_to_simplified_tasks_dict[st[1]] = {'new_id': existing_simplified_id}
                 simplified_to_original_tasks_dict[existing_simplified_id][
                     "original_id"
                 ].update((st[0], st[1]))
@@ -416,7 +402,6 @@ def merge_tasks(
     # Fix loops in precedence graph
     gg = simplified_rcpsp_model.compute_graph()
     has_loop = gg.check_loop()
-    # print('has_loop- in task merger: ', has_loop)
     if has_loop is None:
         has_loop = []
     for c in has_loop:
@@ -428,7 +413,7 @@ def merge_tasks(
             simplified_to_original_tasks_dict[c[1]]["simplification"].add("loop_fix")
             original_to_simplified_tasks_dict[c[0]] = {
                 "new_id": c[1],
-                "simplification": set(["loop_fix"]),
+                "simplification": {"loop_fix"},
             }
 
         elif (
@@ -439,7 +424,7 @@ def merge_tasks(
             simplified_to_original_tasks_dict[c[0]]["simplification"].add("loop_fix")
             original_to_simplified_tasks_dict[c[1]] = {
                 "new_id": c[0],
-                "simplification": set(["loop_fix"]),
+                "simplification": {"loop_fix"},
             }
 
     # Fix precedence links again !
@@ -463,10 +448,6 @@ def merge_tasks(
             if key2 in simplified_rcpsp_model.successors[key2]:
                 simplified_rcpsp_model.successors[key2].remove(key2)
 
-    # gg = simplified_rcpsp_model.compute_graph()
-    # has_loop = gg.check_loop()
-    # print('final has_loop- in task merger: ', has_loop)
-
     # upper bound need
     for new_task in simplified_to_original_tasks_dict.keys():
         for r in [
@@ -477,7 +458,6 @@ def merge_tasks(
             if simplified_rcpsp_model.mode_details[new_task][1][r] > max(
                 simplified_rcpsp_model.resources[r]
             ):
-                # print('Fixing capacity for task ', new_task, 'from ', simplified_rcpsp_model.mode_details[new_task][1][r], ' to ', max(simplified_rcpsp_model.resources[r]))
                 simplified_rcpsp_model.mode_details[new_task][1][r] = max(
                     simplified_rcpsp_model.resources[r]
                 )
@@ -596,15 +576,6 @@ def decode_merged_task_solution(
     original_to_simplified_tasks_dict,
     simplified_to_original_tasks_dict,
 ):
-
-    # max_d = max([simplified_rcpsp_model.mode_details[t][1]['duration'] for t in simplified_rcpsp_model.mode_details.keys()])
-    # longest_tasks = [t for t in simplified_rcpsp_model.mode_details.keys() if simplified_rcpsp_model.mode_details[t][1]['duration'] == max_d]
-    # print('max_d: ', max_d)
-    # print('longest_tasks: ', longest_tasks)
-    # print('mode of longest task: ', simplified_rcpsp_model.mode_details[longest_tasks[0]][1])
-    # res_7918 = simplified_rcpsp_model.resources['7918']
-    # print('resource_check_count>0: ', len([x for x in res_7918 if x > 0]))
-
     all_start_at_end_second_tasks = [
         x[1] for x in original_rcpsp_model.special_constraints.start_at_end
     ]
@@ -619,15 +590,11 @@ def decode_merged_task_solution(
         )
     )
 
-    # print('all_start_at_end_second_tasks: ', all_start_at_end_second_tasks)
-
     decoded_schedule = {}
     for sim_task in simplified_to_original_tasks_dict.keys():
         done = []
         to_explore = []
-        # print(sim_task, ': ', simplified_to_original_tasks_dict[sim_task])
         original_tasks = simplified_to_original_tasks_dict[sim_task]["original_id"]
-        # print(original_tasks)
         for t in original_tasks:
             if t not in all_start_at_end_second_tasks:
                 cur_task = t
@@ -657,8 +624,6 @@ def decode_merged_task_solution(
                     if x[1] == cur_task
                 ]
                 to_explore = set(next_start_at_end + next_start_together)
-                # print('next_start_at_end: ', next_start_at_end)
-                # print('next_start_together: ', next_start_together)
         stop = False
         while not stop:
             cur_task = list(to_explore)[0]
@@ -670,8 +635,6 @@ def decode_merged_task_solution(
                 ][
                     0
                 ]  # Retrieve previous task from all_start_at_end_second_tasks (at index 1)
-                # print('previous_task: ', previous_task)
-                # print('tttestttt: ', decoded_schedule)
                 cur_t_start = decoded_schedule[previous_task]["ends"][-1]
                 cur_t_end = (
                     cur_t_start
@@ -713,7 +676,6 @@ def decode_merged_task_solution(
             ]
             to_explore.update(next_start_at_end + next_start_together)
             to_explore.remove(cur_task)
-            # print('to_explore: ', to_explore)
             if len(to_explore) == 0:
                 stop = True
 
@@ -722,12 +684,6 @@ def decode_merged_task_solution(
             cur_t_start = simplified_solution.rcpsp_schedule[t]["starts"]
             cur_t_end = simplified_solution.rcpsp_schedule[t]["ends"]
             decoded_schedule[t] = {"starts": cur_t_start, "ends": cur_t_end}
-
-    # print('DECODING DONE')
-    # print('final decoded_schedule: ', decoded_schedule)
-    #
-    # print('n_keys in decoded schedule: ', len(decoded_schedule.keys()))
-    # print('should be: ', len(original_rcpsp_model.tasks_list))
 
     decoded_solution = RCPSPSolutionPreemptive(
         problem=original_rcpsp_model,

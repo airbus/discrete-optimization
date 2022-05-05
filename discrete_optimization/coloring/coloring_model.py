@@ -19,28 +19,18 @@ class ColoringSolution(Solution):
         self,
         problem: Problem,
         colors: Union[List[int], np.array] = None,
-        # colors_from0: Union[List[int], np.array] = None,
         nb_color: int = None,
         nb_violations: int = None,
     ):
-        # assert(colors is not None or colors_from0 is not None)
-
         self.problem = problem
         self.colors = colors
-        # self.colors_from0 = colors_from0
         self.nb_color = nb_color
         self.nb_violations = nb_violations
-
-        # if self.colors is None:
-        #     self.colors = self.problem.convert_list_from0_to_original_node_list(self.colors_from0)
-        # if self.colors_from0 is None:
-        #     self.colors_from0 = self.problem.convert_original_node_list_to_list_from0(self.colors)
 
     def copy(self):
         return ColoringSolution(
             problem=self.problem,
             colors=list(self.colors),
-            # colors_from0=list(self.colors_from0),
             nb_color=self.nb_color,
             nb_violations=self.nb_violations,
         )
@@ -49,7 +39,6 @@ class ColoringSolution(Solution):
         return ColoringSolution(
             problem=self.problem,
             colors=self.colors,
-            # colors_from0=list(self.colors_from0),
             nb_color=self.nb_color,
             nb_violations=self.nb_violations,
         )
@@ -79,7 +68,6 @@ class ColoringSolution(Solution):
         self.__init__(
             problem=new_problem,
             colors=list(self.colors),
-            # colors_from0=list(self.colors_from0),
             nb_color=self.nb_color,
             nb_violations=self.nb_violations,
         )
@@ -109,13 +97,6 @@ class ColoringProblem(Problem):
             i: self.nodes_name[i] for i in range(self.number_of_nodes)
         }
 
-        # self.list_from0_to_original_nodes = graph.nodes_name
-        # self.original_nodes_name_to_list_from0 = {}
-        # counter = 0
-        # for i in graph.nodes_name:
-        #     self.original_nodes_name_to_list_from0[i] = counter
-        #     counter += 1
-
     def evaluate(self, variable: ColoringSolution) -> Dict[str, float]:
         if variable.nb_color is None:
             variable.nb_color = len(set(variable.colors))
@@ -134,8 +115,6 @@ class ColoringProblem(Problem):
     # TODO: We need to allow a user to change the arrity (or the range_value) of the encoding (test with GA)
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {
-            # "colors": {"type": [TypeAttribute.LIST_INTEGER],
-            #             "range_value": [0, self.number_of_nodes-1]},
             "colors": {
                 "name": "colors",
                 "type": [TypeAttribute.LIST_INTEGER],
@@ -176,30 +155,13 @@ class ColoringProblem(Problem):
                 val += 1
         return val
 
-    # def convert_list_from0_to_original_node_list(self, list_from0):
-    #     the_list = [self.list_from0_to_original_nodes[x] for x in list_from0]
-    #     return the_list
-    #
-    # def convert_original_node_list_to_list_from0(self, the_list):
-    #     list_from0 = [self.original_nodes_name_to_list_from0[i] for i in the_list]
-    #     return list_from0
-
     def evaluate_from_encoding(self, int_vector, encoding_name):
         coloring_sol = None
         if encoding_name == "colors":
-            coloring_sol = ColoringSolution(
-                problem=self,
-                colors=int_vector
-                # colors=self.convert_list_from0_to_original_node_list(int_vector)
-            )
+            coloring_sol = ColoringSolution(problem=self, colors=int_vector)
         elif encoding_name == "custom":
             kwargs = {encoding_name: int_vector, "problem": self}
             coloring_sol = ColoringSolution(**kwargs)
 
-            # raise Exception("Decoding from custom encoding not implemented for coloring problem")
-        # else:
-        #     raise Exception('Encoding name not matching any suitable encoding for this problem - '
-        #                     'Existing encoding for coloring problem are: ' +
-        #                     str(self.get_attribute_register().dict_attribute_to_type.keys()))
         objectives = self.evaluate(coloring_sol)
         return objectives

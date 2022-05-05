@@ -28,6 +28,3 @@ def plot_tsp_solution(tsp_model: TSPModel, solution: SolutionTSP, fig=None, ax=N
         ],
         color="orange",
     )
-    # fig.savefig(os.path.join(folder_image, 'tsp_'+str(i)+".png"))
-    # plt.draw()
-    # plt.pause(1)

@@ -104,11 +104,6 @@ class GraphRCPSPSpecialConstraints(GraphRCPSP):
             problem.special_constraints
         )
         self.graph_constraints = nx.DiGraph()
-        # start_together: List[Tuple[Hashable, Hashable]] = None,
-        # start_at_end: List[Tuple[Hashable, Hashable]] = None,
-        # start_at_end_plus_offset: List[Tuple[Hashable, Hashable, int]] = None,
-        # start_after_nunit: List[Tuple[Hashable, Hashable, int]] = None,
-        # disjunctive_tasks: List[Tuple[Hashable, Hashable]
         for K in (
             self.special_constraints.start_together
             + self.special_constraints.start_at_end

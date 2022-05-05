@@ -117,7 +117,6 @@ class GreedySolverDistanceBased(SolverDO):
             problem=self.facility_problem, facility_for_customers=solution
         )
         fit = self.aggreg_sol(sol)
-        # print(self.facility_problem.evaluate(sol)['capacity_constraint_violation'])
         return ResultStorage(
             list_solution_fits=[(sol, fit)],
             best_solution=sol,

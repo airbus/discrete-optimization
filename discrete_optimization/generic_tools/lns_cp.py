@@ -124,7 +124,6 @@ class LNS_CP(SolverDO):
                             else result_store,
                         )
                     )
-                # if True:
                 try:
                     if iteration == 0:
                         result = child.solve(
@@ -192,7 +191,6 @@ class LNS_CP(SolverDO):
                     ):
                         print("Finish LNS because found optimal solution")
                         break
-                # else:
                 except Exception as e:
                     current_nb_iteration_no_improvement += 1
                     print("Failed ! reason : ", e)
@@ -344,7 +342,6 @@ class LNS_CPlex(SolverDO):
                 ):
                     print("Finish LNS because found optimal solution")
                     break
-                # else:
             except Exception as e:
                 current_nb_iteration_no_improvement += 1
                 print("Failed ! reason : ", e)

@@ -42,7 +42,6 @@ class PermutationMutationRCPSP(Mutation):
             s._schedule_to_recompute = True
         except:
             s._schedule_to_recompute = True
-            pass
         return s, lm
 
     def mutate_and_compute_obj(
@@ -54,7 +53,6 @@ class PermutationMutationRCPSP(Mutation):
             s.standardised_permutation = s.generate_permutation_from_schedule()
         except:
             s._schedule_to_recompute = True
-            pass
         return s, lm, fit
 
 
@@ -98,33 +96,26 @@ class DeadlineMutationRCPSP(Mutation):
             if len(ls) > 0:
                 x = random.choice(ls)
                 t = x[0]
-                if True:
-                    pred = [tt for tt in self.full_predecessors[t]] + [t]
-                    previous = list(getattr(solution, self.attribute))
-                    new = [
-                        self.problem.index_task_non_dummy[tt]
-                        for tt in pred
-                        if tt in self.problem.index_task_non_dummy
-                    ]
-                    for x in previous:
-                        if x not in new:
-                            new += [x]
-                    sol = solution.lazy_copy()
-                    setattr(sol, self.attribute, new)
-                    return (
-                        sol,
-                        ShuffleMove(
-                            self.attribute,
-                            new_permutation=new,
-                            prev_permutation=previous,
-                        ),
-                    )
-                index_in = getattr(solution, self.attribute).index(
-                    self.problem.index_task_non_dummy[x[0]]
+                pred = [tt for tt in self.full_predecessors[t]] + [t]
+                previous = list(getattr(solution, self.attribute))
+                new = [
+                    self.problem.index_task_non_dummy[tt]
+                    for tt in pred
+                    if tt in self.problem.index_task_non_dummy
+                ]
+                for x in previous:
+                    if x not in new:
+                        new += [x]
+                sol = solution.lazy_copy()
+                setattr(sol, self.attribute, new)
+                return (
+                    sol,
+                    ShuffleMove(
+                        self.attribute,
+                        new_permutation=new,
+                        prev_permutation=previous,
+                    ),
                 )
-                move = SwapsLocalMove(self.attribute, [(2, index_in)])
-                next_sol = move.apply_local_move(solution)
-                return (next_sol, move)
         swaps = np.random.randint(low=0, high=self.length - 1, size=(1, 2))
         move = SwapsLocalMove(
             self.attribute, [(swaps[i, 0], swaps[i, 1]) for i in range(1)]

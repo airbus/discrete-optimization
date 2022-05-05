@@ -130,9 +130,6 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
         constraint_handler = None
         option = kwargs.get("option_neighbor_operator", 2)
         if option == 0:
-            # constraint_handler = build_neighbor_operator(option_neighbor=
-            #                                              kwargs.get("option_neighbor", OptionNeighbor.MIX_ALL),
-            #                                              rcpsp_model=self.rcpsp_problem)
             constraint_handler = build_neighbor_random(
                 option_neighbor=kwargs.get(
                     "option_neighbor_random", OptionNeighborRandom.MIX_ALL
@@ -173,10 +170,6 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
                     ],
                 ),
             )
-            # constraint_handler = NeighborFixStartSubproblem(problem=self.rcpsp_problem,
-            #                                                 nb_cut_part=20,
-            #                                                 fraction_size_subproblem=0.2,
-            #                                                 method=MethodSubproblem.BLOCK_TIME) #TODO Remove
         if option == 2:
             from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
                 build_neighbor_mixing_methods,
@@ -235,40 +228,6 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
                     ],
                 ),
             )
-            # n1 = NeighborBuilderSubPart(problem=self.rcpsp_problem,
-            #                             graph=graph,
-            #                             nb_cut_part=kwargs.get("cut_part", 10))  # 2
-            # n2 = NeighborRandomAndNeighborGraph(problem=self.rcpsp_problem,
-            #                                     graph=graph,
-            #                                     fraction_subproblem=kwargs.get("fraction_subproblem", 0.05))
-            # n3 = NeighborConstraintBreaks(problem=self.rcpsp_problem,
-            #                               graph=graph,
-            #                               fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),  # 0.25
-            #                               other_constraint_handler=n1)
-            # n_mix = NeighborBuilderMix(list_neighbor=[n1, n2, n3],
-            #                            weight_neighbor=[0.3, 0.3, 0.4])
-            # basic_constraint_builder = BasicConstraintBuilder(params_constraint_builder=
-            #                                                   ParamsConstraintBuilder(plus_delta=6000,
-            #                                                                           minus_delta=6000,
-            #                                                                           plus_delta_2=400,
-            #                                                                           minus_delta_2=400,
-            #                                                                           constraint_max_time=False),
-            #                                                   neighbor_builder=n_mix,
-            #                                                   preemptive=self.rcpsp_problem.is_preemptive(),
-            #                                                   multiskill=False)
-            # params_list = kwargs.get("params_list", [ParamsConstraintBuilder(plus_delta=6000,
-            #                                                                  minus_delta=6000,
-            #                                                                  plus_delta_2=400,
-            #                                                                  minus_delta_2=400,
-            #                                                                  constraint_max_time=False),
-            #                                          ParamsConstraintBuilder(plus_delta=6000,
-            #                                                                  minus_delta=6000,
-            #                                                                  plus_delta_2=0,
-            #                                                                  minus_delta_2=0,
-            #                                                                  constraint_max_time=False)])
-            # constraint_handler = NeighborSubproblem(problem=self.rcpsp_problem,
-            #                                         basic_constraint_builder=basic_constraint_builder,
-            #                                         params_list=params_list)
         initial_solution_provider = kwargs.get("initial_solution_provider", None)
         if initial_solution_provider is None:
             initial_solution_provider = InitialSolutionRCPSP(

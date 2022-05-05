@@ -2,7 +2,6 @@ import numpy as np
 from numba import jit, njit
 
 
-# @jit(nopython=False, forceobj=True)
 @njit
 def sgs_fast_ms(
     permutation_task,  # permutation_task=array(task)->task index
@@ -70,8 +69,6 @@ def sgs_fast_ms(
             if valid:
                 skills = skills_needs[act_id, modes_array[act_id]]
                 if end_time - current_min_time > 0 and np.max(skills) > 0:
-                    # indexes_worker = np.min(worker_avail_in_time[:, current_min_time:end_time], axis=1)
-                    # indexes_present_worker = np.nonzeros(indexes_worker)[0]
                     indexes_present_worker = np.array(
                         [
                             priority_worker_per_task[act_id, i]
@@ -131,40 +128,28 @@ def sgs_fast_ms(
             skills_usage_i = np.zeros(
                 (worker_avail_in_time.shape[0], skills_needs.shape[2])
             )
-            if False:
-                if np.max(skills) > 0:
-                    for employee in indexes_present_worker:
-                        nz = np.nonzero(worker_skills[employee, :] * skills > 0)[0]
-                        if len(nz) > 0:
-                            for nnz in nz:
-                                skills_usage_i[employee, nnz] = 1
-                                skills_done[nnz] += worker_skills[employee, nnz]
-                            worker_avail_in_time[employee, current_min_time:end_t] = 0
-                        if np.all(skills_done >= skills):
-                            break
-            else:
-                used = [0]
-                if np.max(skills) > 0:
-                    while True:
-                        score = [
-                            np.sum(worker_skills[p, :] * ((skills - skills_done) > 0))
-                            for p in indexes_present_worker
-                        ]
-                        sort = [
-                            indexes_present_worker[p]
-                            for p in np.argsort(-np.array(score))
-                            if indexes_present_worker[p] not in used[1:]
-                        ]
-                        j = sort[0]
-                        nz = np.nonzero(worker_skills[j, :] * skills > 0)[0]
-                        if len(nz) > 0:
-                            for nnz in nz:
-                                skills_usage_i[j, nnz] = 1
-                                skills_done[nnz] += worker_skills[j, nnz]
-                            worker_avail_in_time[j, current_min_time:end_t] = 0
-                            used += [j]
-                        if np.all(skills_done >= skills):
-                            break
+            used = [0]
+            if np.max(skills) > 0:
+                while True:
+                    score = [
+                        np.sum(worker_skills[p, :] * ((skills - skills_done) > 0))
+                        for p in indexes_present_worker
+                    ]
+                    sort = [
+                        indexes_present_worker[p]
+                        for p in np.argsort(-np.array(score))
+                        if indexes_present_worker[p] not in used[1:]
+                    ]
+                    j = sort[0]
+                    nz = np.nonzero(worker_skills[j, :] * skills > 0)[0]
+                    if len(nz) > 0:
+                        for nnz in nz:
+                            skills_usage_i[j, nnz] = 1
+                            skills_done[nnz] += worker_skills[j, nnz]
+                        worker_avail_in_time[j, current_min_time:end_t] = 0
+                        used += [j]
+                    if np.all(skills_done >= skills):
+                        break
 
             if unfeasible_non_renewable_resources:
                 break
@@ -316,8 +301,6 @@ def sgs_fast_ms_partial_schedule(
             if valid:
                 skills = skills_needs[act_id, modes_array[act_id]]
                 if end_time - current_min_time > 0 and np.max(skills) > 0:
-                    # indexes_worker = np.min(worker_avail_in_time[:, current_min_time:end_time], axis=1)
-                    # indexes_present_worker = np.nonzeros(indexes_worker)[0]
                     indexes_present_worker = np.array(
                         [
                             priority_worker_per_task[act_id, i]
@@ -657,9 +640,6 @@ def sgs_fast_ms_preemptive(
                                     break
                     if to_break:
                         break
-        # if unfeasible_non_renewable_resources:
-        #     print("je")
-        # print(done, unfeasible_non_renewable_resources)
         if not unfeasible_non_renewable_resources:
             end_t = ends[-1]
             skills_act_id = np.zeros(
@@ -707,12 +687,6 @@ def sgs_fast_ms_preemptive(
                 skills_done = np.zeros((skills.shape[0]))
                 if need_worker and duration_array[act_id, modes_array[act_id]] > 0:
                     used = [0]
-                    # sort = [workers_av[i][p]
-                    #         for p in np.argsort(worker_usage[workers_av[i]])]
-                    # score = [np.sum(worker_skills[p, :]*skills) for p in workers_av[i]]
-                    # sort = [workers_av[i][p]
-                    #         for p in np.argsort(-np.array(score))] #worker_skills[workers_av[i]]*skills)]
-                    # for j in sort:
                     while True:
                         score = [
                             np.sum(worker_skills[p, :] * ((skills - skills_done) > 0))
@@ -731,7 +705,6 @@ def sgs_fast_ms_preemptive(
                                 skills_done[nnz] += worker_skills[j, nnz]
                             worker_avail_in_time[j, starts[i] : ends[i]] = 0
                             used += [j]
-                            # worker_usage[j] += ends[i]-starts[i]
                         if np.all(skills_done >= skills):
                             break
                     for w in used[1:]:
@@ -744,7 +717,6 @@ def sgs_fast_ms_preemptive(
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
-            # print('scheduled to complete at: ', activity_end_times[act_id])
             for s in range(successors.shape[1]):
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(
@@ -798,38 +770,12 @@ def sgs_fast_ms_preemptive_some_special_constraints(
     done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
     done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
 
-    # start_at_end_plus_offset_dict = {}
-    # start_at_end_plus_offset_dict_rev = {}
-    #
-    # for j in range(start_at_end_plus_offset.shape[0]):
-    #     if start_at_end_plus_offset[j, 1] not in start_at_end_plus_offset_dict:
-    #         start_at_end_plus_offset_dict[start_at_end_plus_offset[j, 1]] = np.array([], dtype=int)
-    #     if start_at_end_plus_offset[j, 0] not in start_at_end_plus_offset_dict_rev:
-    #         start_at_end_plus_offset_dict_rev[start_at_end_plus_offset[j, 0]] = np.array([], dtype=int)
-    #     start_at_end_plus_offset_dict[start_at_end_plus_offset[j, 1]].concatenate((start_at_end_plus_offset[j, 0],
-    #                                                                           start_at_end_plus_offset[j, 2]))
-    #     start_at_end_plus_offset_dict_rev[start_at_end_plus_offset[j, 0]].concatenate((start_at_end_plus_offset[j, 1],
-    #                                                                               start_at_end_plus_offset[j, 2]))
-    # start_after_nunit_dict = {}
-    # start_after_nunit_dict_rev = {}
-    # for j in range(start_after_nunit.shape[0]):
-    #     if start_after_nunit[j, 1] not in start_after_nunit_dict:
-    #         start_after_nunit_dict[start_after_nunit[j, 1]] = []
-    #     if start_after_nunit[j, 0] not in start_after_nunit_dict_rev:
-    #         start_after_nunit_dict_rev[start_after_nunit[j, 0]] = []
-    #     start_after_nunit_dict[start_after_nunit[j, 1]].append((start_after_nunit[j, 0],
-    #                                                             start_after_nunit[j, 2]))
-    #     start_after_nunit_dict_rev[start_after_nunit[j, 0]].append((start_after_nunit[j, 1],
-    #                                                                 start_after_nunit[j, 2]))
-
     start_after_nunit_links = np.zeros((nb_task))
     for task in range(nb_task):
-        # start_after_nunit_links[task] = len(start_after_nunit_dict[task])
         start_after_nunit_links[task] = np.sum(start_after_nunit[:, 1] == task)
 
     start_at_end_plus_offset_links = np.zeros((nb_task))
     for task in range(nb_task):
-        # start_at_end_plus_offset_links[task] = len(start_at_end_plus_offset_dict[task])
         start_at_end_plus_offset_links[task] = np.sum(
             start_at_end_plus_offset[:, 1] == task
         )
@@ -953,10 +899,6 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                             else:
                                 reached_end = False
                                 break
-                    # if t >= new_horizon:
-                    #    reached_end = False
-                    #    unfeasible_non_renewable_resources = True
-                    #    break
                     for res in range(ressource_available.shape[0]):
                         if t < new_horizon:
                             if (
@@ -1012,7 +954,6 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                     for res in range(ressource_available.shape[0]):
                         if consumption_array[act_id, modes_array[act_id], res] > 0:
                             if is_releasable[act_id, modes_array[act_id], res] == 0:
-                                # print(ends[-1])
                                 if (
                                     np.min(
                                         ressource_available[res][starts[0] : ends[-1]]
@@ -1071,7 +1012,6 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                                 skills_done[nnz] += worker_skills[j, nnz]
                             worker_avail_in_time[j, starts[i] : ends[i]] = 0
                             used += [j]
-                            # worker_usage[j] += ends[i]-starts[i]
                         if np.all(skills_done >= skills):
                             break
                     for w in used[1:]:
@@ -1084,7 +1024,6 @@ def sgs_fast_ms_preemptive_some_special_constraints(
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
-            # print('scheduled to complete at: ', activity_end_times[act_id])
             for s in range(successors.shape[1]):
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(
@@ -1108,18 +1047,7 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                         activity_end_times[act_id] + off,
                     )
                     start_at_end_plus_offset_links[task] -= 1
-            # for X in start_after_nunit_dict_rev.get(act_id, []):
-            #     task = X[0]
-            #     off = X[1]
-            #     minimum_starting_time[task] = max(int(minimum_starting_time[task]),
-            #                                       starts_dict[act_id][0]+off)
-            #     start_after_nunit_links[task] -= 1
-            # for X in start_at_end_plus_offset_dict_rev.get(act_id, []):
-            #     task = X[0]
-            #     off = X[1]
-            #     minimum_starting_time[task] = max(int(minimum_starting_time[task]),
-            #                                       activity_end_times[act_id]+off)
-            #     start_at_end_plus_offset_links[task] -= 1
+
     return starts_dict, ends_dict, skills_usage, unfeasible_non_renewable_resources
 
 
@@ -1445,7 +1373,6 @@ def sgs_fast_ms_preemptive_partial_schedule(
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
-            # print('scheduled to complete at: ', activity_end_times[act_id])
             for s in range(successors.shape[1]):
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(

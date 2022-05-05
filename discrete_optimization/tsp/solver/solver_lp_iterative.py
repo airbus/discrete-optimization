@@ -1,7 +1,6 @@
 import os
 from enum import Enum
 
-# from numba import jit
 import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -200,8 +199,6 @@ class LP_TSP_Iterative(SolverDO):
                 )
                 cnt_tour += 1
         tsp_model.update()
-        # constraint_flow_in = {}
-        # constraint_flow_out = {}
         constraint_flow = {}
         for n in flow_in:
             if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
@@ -255,7 +252,6 @@ class LP_TSP_Iterative(SolverDO):
         tsp_model = pywraplp.Solver(
             "TSP-master", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING
         )
-        # S.EnableOutput()
         edges = set(g.edges())
         self.edges = edges
         self.g = g
@@ -291,8 +287,6 @@ class LP_TSP_Iterative(SolverDO):
                     x_var[edge] + x_var[(edge[1], edge[0])] <= 1
                 )
                 cnt_tour += 1
-        # constraint_flow_in = {}
-        # constraint_flow_out = {}
         constraint_flow = {}
         for n in flow_in:
             if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
@@ -425,7 +419,6 @@ class LP_TSP_Iterative(SolverDO):
                 edge_out_of_interest = [
                     e for e in self.edges if e[0] in s[0] and e[1] not in s[0]
                 ]
-                # if i <= len(sorted_connected_component)//2:
                 if self.method == MILPSolver.GUROBI:
                     tsp_model.addConstr(
                         quicksum([x_var[e] for e in edge_in_of_interest]) >= 1
@@ -465,7 +458,6 @@ class LP_TSP_Iterative(SolverDO):
             if len(sorted_connected_component) > 1:
                 edges_to_add = {(e0, e1) for e0, e1 in zip(rebuilt[:-1], rebuilt[1:])}
                 print("len rebuilt : ", len(rebuilt))
-                # print(rebuilt[0], rebuilt[-1])
                 print("len set rebuilt (debug) ", len(set(rebuilt)))
                 if all((e in self.edges) for e in edges_to_add):
                     print("setting default value")

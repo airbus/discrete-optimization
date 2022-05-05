@@ -244,8 +244,6 @@ class HillClimberPareto(HillClimber):
             if use_max_time_cut and iteration % 1000 == 0:
                 if time.time() - init_time > max_time_seconds:
                     break
-            # if pickle_result and iteration % 20000 == 0:
-            #    pickle.dump(cur_best_variable, open(pickle_name + ".pk", "wb"))
 
         pareto_front.finalize()
         return pareto_front

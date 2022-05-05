@@ -147,8 +147,6 @@ class ResultStorage:
             sol1 = getattr(self.list_solution_fits[i][0], var_name)
             for j in range(i + 1, len(self.list_solution_fits)):
                 sol2 = getattr(self.list_solution_fits[j][0], var_name)
-                # print('sol1: ', sol1)
-                # print('sol2: ', sol2)
                 all_similar = True
                 for k in range(len(sol1)):
                     if sol1[k] != sol2[k]:
@@ -235,10 +233,8 @@ class ParetoFront(ResultStorage):
 
     def add_solution(self, solution: Solution, fitness: fitness_class):
         super().add_solution(solution=solution, fitness=fitness)
-        # self.add_point(solution, fitness)
 
     def add_point(self, solution, tuple_fitness: TupleFitness):
-        # self.list_solution_fits += [(solution, tuple_fitness)]
         if self.maximize:
             if all(tuple_fitness >= t[1] for t in self.paretos):
                 self.paretos += [(solution, tuple_fitness)]
@@ -265,10 +261,7 @@ class ParetoFront(ResultStorage):
 
     def finalize(self):
         super().finalize()
-        # print("Number of solutions : ",
-        #       len(self.map_solutions))
         self.paretos = []
-        # print("Number : ", len(self.list_solution_fits))
         for s, t in self.list_solution_fits:
             self.add_point(solution=s, tuple_fitness=t)
 
@@ -306,7 +299,6 @@ def plot_pareto_2d(pareto_front: ParetoFront, name_axis: List[str], ax=None, col
     )
     ax.set_xlabel(name_axis[0])
     ax.set_ylabel(name_axis[1])
-    # plt.show()
 
 
 def plot_fitness(result_storage: ResultStorage, ax=None, color="b", title=""):

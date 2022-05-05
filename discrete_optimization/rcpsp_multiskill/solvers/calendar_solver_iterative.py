@@ -118,7 +118,6 @@ def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolu
             ressource_arrays[r] > problem_calendar.resources_availability[r]
         )
         index_ressource[r] = index
-        # print("Constraints broken : ", r, index)
         task_concerned[r] = [
             j
             for j in range(ressource_arrays_usage[r].shape[1])
@@ -128,7 +127,6 @@ def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolu
                 if problem_calendar.resources_availability[r][ind[0]] == 0
             )
         ]
-        # print("Concerned : ", task_concerned[r])
         task_concerned[r] = [sorted_keys_schedule[rr] for rr in task_concerned[r]]
         constraints[r] = {}
         for t in task_concerned[r]:
@@ -157,25 +155,18 @@ def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolu
                 ),
                 None,
             )
-            # if first_possible_start_before is not None:
-            #     first_possible_start_before = \
-            #         max(0,
-            #            first_possible_start_before-problem_calendar.mode_details[t][1]["duration"]+1)
             constraints[r][t] = (
                 first_possible_start_before,
                 first_possible_start_future,
             )
 
     index_employee = {}
-    # task_concerned = {}
     constraints_employee = {}
     for emp in employees_arrays:
         index = np.argwhere(
             employees_arrays[emp]
             > 1 * problem_calendar.employees[emp].calendar_employee
         )
-        # print([employees_arrays[emp][i[0]] for i in index],
-        #       [problem_calendar.employees[emp].calendar_employee[i[0]] for i in index])
         index_ressource[emp] = index
         task_concerned[emp] = [
             j
@@ -186,7 +177,6 @@ def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolu
                 if not problem_calendar.employees[emp].calendar_employee[ind[0]]
             )
         ]
-        # print("Concerned : ", task_concerned[r])
         task_concerned[emp] = [sorted_keys_schedule[rr] for rr in task_concerned[emp]]
         constraints_employee[emp] = {}
         for t in task_concerned[emp]:
@@ -210,10 +200,6 @@ def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolu
                 ),
                 None,
             )
-            # if first_possible_start_before is not None:
-            #     first_possible_start_before = \
-            #         max(0,
-            #            first_possible_start_before-problem_calendar.mode_details[t][1]["duration"]+1)
             constraints_employee[emp] = (
                 first_possible_start_before,
                 first_possible_start_future,
@@ -312,8 +298,6 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                             -self.problem_calendar.evaluate(solution)["makespan"],
                         )
                     ]
-        # result_storage.list_solution_fits = [r for r in result_storage.list_solution_fits
-        #                                      if r[0].satisfy]
         return result_storage
 
 
@@ -352,70 +336,53 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
         list_strings = []
         max_time = max([solution.schedule[x]["end_time"] for x in solution.schedule])
         tasks = sorted(self.problem_calendar.mode_details.keys())
-        if True:
-            for r in constraints:
-                for t in constraints[r]:
-                    index = tasks.index(t)
-                    s = None
-                    if isinstance(cp_solver, CP_MS_MRCPSP_MZN):
-                        if (
-                            constraints[r][t][0] is not None
-                            and constraints[r][t][1] is not None
-                        ):
-                            s = (
-                                """constraint start["""
-                                + str(index + 1)
-                                + """]<="""
-                                + str(constraints[r][t][0])
-                                + " \/ "
-                                "start["
-                                ""
-                                + str(index + 1)
-                                + """]>="""
-                                + str(constraints[r][t][1])
-                                + """;\n"""
-                            )
-                        elif (
-                            constraints[r][t][0] is None
-                            and constraints[r][t][1] is not None
-                        ):
-                            s = (
-                                """constraint start["""
-                                + str(index + 1)
-                                + """]>="""
-                                + str(constraints[r][t][1])
-                                + """;\n"""
-                            )
-                        elif (
-                            constraints[r][t][0] is not None
-                            and constraints[r][t][1] is None
-                        ):
-                            s = (
-                                """constraint start["""
-                                + str(index + 1)
-                                + """]<="""
-                                + str(constraints[r][t][0])
-                                + """;\n"""
-                            )
-                    if s is not None:
-                        child_instance.add_string(s)
-                        list_strings += [s]
-        # for r in ressource_breaks:
-        #     index_ressource = cp_solver.resources_index.index(r)
-        #     for t in range(len(self.problem_calendar.resources[r])):
-        #         rq = self.problem_calendar.resources[r][t]
-        #         if t<max_time:
-        #             if isinstance(cp_solver, CP_MRCPSP_MZN):
-        #                 s = """constraint """ + str(rq) + """>=sum( i in Act ) (
-        #                                 bool2int(start[i] <=""" + str(t) + """ /\ """ + str(t) \
-        #                     + """< start[i] + adur[i]) * arreq[""" + str(index_ressource + 1) + """,i]);\n"""
-        #             elif isinstance(cp_solver, CP_RCPSP_MZN):
-        #                 s = """constraint """ + str(rq) + """>=sum( i in Tasks ) (
-        #                                                     bool2int(s[i] <=""" + str(t) + """ /\ """ + str(t) \
-        #                     + """< s[i] + d[i]) * rr[""" + str(index_ressource + 1) + """,i]);\n"""
-        #             child_instance.add_string(s)
-        #             list_strings += [s]
-
+        for r in constraints:
+            for t in constraints[r]:
+                index = tasks.index(t)
+                s = None
+                if isinstance(cp_solver, CP_MS_MRCPSP_MZN):
+                    if (
+                        constraints[r][t][0] is not None
+                        and constraints[r][t][1] is not None
+                    ):
+                        s = (
+                            """constraint start["""
+                            + str(index + 1)
+                            + """]<="""
+                            + str(constraints[r][t][0])
+                            + " \/ "
+                            "start["
+                            ""
+                            + str(index + 1)
+                            + """]>="""
+                            + str(constraints[r][t][1])
+                            + """;\n"""
+                        )
+                    elif (
+                        constraints[r][t][0] is None
+                        and constraints[r][t][1] is not None
+                    ):
+                        s = (
+                            """constraint start["""
+                            + str(index + 1)
+                            + """]>="""
+                            + str(constraints[r][t][1])
+                            + """;\n"""
+                        )
+                    elif (
+                        constraints[r][t][0] is not None
+                        and constraints[r][t][1] is None
+                    ):
+                        s = (
+                            """constraint start["""
+                            + str(index + 1)
+                            + """]<="""
+                            + str(constraints[r][t][0])
+                            + """;\n"""
+                        )
+                if s is not None:
+                    child_instance.add_string(s)
+                    list_strings += [s]
         for r in ressource_breaks:
             for index in ressource_breaks[r]:
                 if random.random() < 0.3:
@@ -424,8 +391,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                 if r in self.problem_calendar.resources_availability:
                     index_ressource = cp_solver.resources_index.index(r)
                     rq = self.problem_calendar.resources_availability[r][ind]
-                    # if random.random() <= 0.3:
-                    #    continue
                     s = (
                         """constraint """
                         + str(rq)
@@ -440,14 +405,9 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                     )
                     child_instance.add_string(s)
                     list_strings += [s]
-                    # print(s)
-                    # print("Res", r)
-                    # print("Time", index)
                 if r in self.problem_calendar.employees:
                     index_ressource = cp_solver.employees_position.index(r)
                     rq = int(self.problem_calendar.employees[r].calendar_employee[ind])
-                    # if random.random() <= 0.3:
-                    #    continue
                     s = (
                         """constraint """
                         + str(rq)
@@ -462,9 +422,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                     )
                     child_instance.add_string(s)
                     list_strings += [s]
-                    # print(s)
-                    # print("Res", r)
-                    # print("Time", index)
 
         satisfiable = [
             (s, f)
@@ -544,8 +501,6 @@ class SolverWithCalendarIterative(SolverDO):
         params_objective_function = get_default_objective_setup(
             problem=self.problem_no_calendar
         )
-        # constraint_handler = ConstraintHandlerFixStartTime(problem=rcpsp_problem,
-        #                                                    fraction_fix_start_time=0.5)
         constraint_handler = build_neighbor_operator(
             option_neighbor=option_neighbor, rcpsp_model=self.problem_no_calendar
         )
@@ -697,7 +652,6 @@ class SolverWithCalendarIterative(SolverDO):
                         for s, f in store_with_all.list_solution_fits:
                             if s.satisfy:
                                 store_lns.list_solution_fits += [(s, f)]
-                        # print("Satisfy : ", self.problem_calendar.satisfy(best_solution))
                     else:
                         current_nb_iteration_no_improvement += 1
                     if (
@@ -708,7 +662,6 @@ class SolverWithCalendarIterative(SolverDO):
                     ):
                         print("Finish LNS because found optimal solution")
                         break
-                # else:
                 except Exception as e:
                     current_nb_iteration_no_improvement += 1
                     print("Failed ! reason : ", e)

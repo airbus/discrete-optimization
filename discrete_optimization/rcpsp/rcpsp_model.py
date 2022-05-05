@@ -86,8 +86,6 @@ class RCPSPSolution(Solution):
         if rcpsp_schedule is None:
             if not isinstance(problem, Aggreg_RCPSPModel):
                 self.generate_schedule_from_permutation_serial_sgs(do_fast=fast)
-            # if isinstance(problem, RCPSP_H_Model):
-            #     self.rcpsp_schedule = problem.rcpsp_pre_helper_correction(self)
         if self.standardised_permutation is None:
             if not isinstance(problem, Aggreg_RCPSPModel):
                 self.standardised_permutation = (
@@ -218,11 +216,6 @@ class RCPSPSolution(Solution):
         if scheduled_tasks_start_times is None:
             scheduled_tasks_start_times = None
         if do_fast:
-            # test_scheduled_task = np.array([scheduled_tasks_start_times[self.problem.tasks_list[i]]
-            #                                                      if self.problem.tasks_list[i]
-            #                                                      in scheduled_tasks_start_times
-            #                                                      else -1 for i in range(self.problem.n_jobs)])
-
             schedule, feasible = self.problem.func_sgs_2(
                 current_time=current_t,
                 completed_task_indicator=np.array(
@@ -348,7 +341,6 @@ class RCPSPModel(Problem):
     ]  # {resource_name: number_of_resource}
     non_renewable_resources: List[str]  # e.g. [resource_name3, resource_name4]
     n_jobs: int  # excluding dummy activities Start (0) and End (n)
-    # possible_modes: Dict[int, List[int]]  # {task_id: list_of_mode_ids}
     mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
     # e.g. {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}
     # one key being "duration"
@@ -634,15 +626,15 @@ class RCPSPModel(Problem):
         return RCPSPSolution
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        dict_register["rcpsp_permutation"] = {
-            "name": "rcpsp_permutation",
-            "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
-            "range": range(self.n_jobs_non_dummy),
-            "n": self.n_jobs_non_dummy,
+        dict_register = {
+            "rcpsp_permutation": {
+                "name": "rcpsp_permutation",
+                "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
+                "range": range(self.n_jobs_non_dummy),
+                "n": self.n_jobs_non_dummy,
+            }
         }
         max_number_modes = max([len(self.mode_details[x]) for x in self.mode_details])
-        # print('max_number_modes: ', max_number_modes)
         dict_register["rcpsp_modes"] = {
             "name": "rcpsp_modes",
             "type": [TypeAttribute.LIST_INTEGER],
@@ -1289,13 +1281,10 @@ def generate_schedule_from_permutation_serial_sgs(
             if respected:
                 act_id = id
                 break
-        # print('next act_id respecting precedences :', act_id)
         # for act_id in perm_extended:  # 4
         current_min_time = minimum_starting_time[act_id]  # 5
-        # print('current_min_time_0: ', current_min_time)
         valid = False  # 6
         while not valid:  # 7
-            # print('current_min_time: ', current_min_time)
             valid = True  # 8
             for t in range(
                 current_min_time,
@@ -1441,7 +1430,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
         if modes_dict[ac] not in rcpsp_problem.mode_details[ac]:
             modes_dict[ac] = 1
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
-        # print('perm_extended: ', perm_extended)
         # get first activity in perm with precedences respected
         for id in perm_extended:
             respected = True
@@ -1632,19 +1620,6 @@ class SGSWithoutArray:
         i = sdict.bisect_right(time_end)
         if time_end not in sdict:
             sdict[time_end] = sdict.peekitem(i - 1)[1] - delta
-        if False:
-            i = sdict.bisect_right(time_start)
-            j = sdict.bisect_right(time_end)
-            for ind in range(i, j):
-                sdict[sdict.peekitem(ind)[0]] += delta
-            if time_start not in sdict:
-                sdict.update({time_start: sdict.peekitem(i - 1)[1] + delta})
-            else:
-                if i == j:
-                    sdict[time_start] = sdict[time_start] + delta
-            j = sdict.bisect_right(time_end)
-            if time_end not in sdict:
-                sdict.update({time_end: sdict.peekitem(j - 1)[1] - delta})
 
     @staticmethod
     def create_delta_dict(vector):
@@ -1653,8 +1628,7 @@ class SGSWithoutArray:
         fake_tasks = []
         delta = v[:-1] - v[1:]
         index_non_zero = np.nonzero(delta)[0]
-        l = {}
-        l[0] = v[0]
+        l = {0: v[0]}
         for j in range(len(index_non_zero)):
             ind = index_non_zero[j]
             l[ind + 1] = -delta[ind]
@@ -1668,8 +1642,7 @@ class SGSWithoutArray:
         fake_tasks = []
         delta = v[:-1] - v[1:]
         index_non_zero = np.nonzero(delta)[0]
-        l = {}
-        l[0] = v[0]
+        l = {0: v[0]}
         for j in range(len(index_non_zero)):
             ind = index_non_zero[j]
             l[ind + 1] = v[ind + 1]

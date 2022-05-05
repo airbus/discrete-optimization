@@ -464,11 +464,7 @@ def build_neighbor_mixing_methods(
     )
     params_list = kwargs.get(
         "params_list",
-        [  # ParamsConstraintBuilder(plus_delta=6000,
-            #                         minus_delta=6000,
-            #                         plus_delta_2=400,
-            #                         minus_delta_2=400,
-            #                         constraint_max_time=False),
+        [
             ParamsConstraintBuilder(
                 minus_delta_primary=6000,
                 plus_delta_primary=6000,
@@ -521,11 +517,7 @@ def build_neighbor_mixing_cut_parts(
     )
     params_list = kwargs.get(
         "params_list",
-        [  # ParamsConstraintBuilder(plus_delta=6000,
-            #                         minus_delta=6000,
-            #                         plus_delta_2=400,
-            #                         minus_delta_2=400,
-            #                         constraint_max_time=False),
+        [
             ParamsConstraintBuilder(
                 minus_delta_primary=6000,
                 plus_delta_primary=6000,
@@ -553,13 +545,8 @@ def mix_both(
         build_neighbor_random(
             option_neighbor=option_neighbor_random, rcpsp_model=rcpsp_model
         )
-        for option_neighbor_random in [  # OptionNeighborRandom.MIX_ALL,
-            OptionNeighborRandom.MIX_FAST
-        ]
+        for option_neighbor_random in [OptionNeighborRandom.MIX_FAST]
     ]
-    # OptionNeighborRandom.MIX_LARGE_NEIGH]
-    # getattr(OptionNeighborRandom, option_neighbor_random) for option_neighbor_random
-    # in OptionNeighborRandom.__members__
 
     a_s = [
         build_neighbor_random(
@@ -716,12 +703,8 @@ def mix_lot(rcpsp_model, nb_cut_parts, fraction_subproblems, **kwargs):
         random_neigh(rcpsp_model, fraction_subproblem=fraction_subproblem, **kwargs)
         for fraction_subproblem in fraction_subproblems
     ]
-    # c2 += [build_basic_random_and_neighbor(rcpsp_model,
-    #                                        graph=build_graph_rcpsp_object(rcpsp_model),
-    #                                        fraction_subproblem=0.2,
-    #                                        **kwargs)]
     tags = ["cut_parts_" + str(c) for c in nb_cut_parts]
-    tags += ["random_" + str(f) for f in fraction_subproblems]  # +["random_neighbor"]
+    tags += ["random_" + str(f) for f in fraction_subproblems]
     if (
         "generalized_precedence_constraint" in kwargs
         and kwargs["generalized_precedence_constraint"]

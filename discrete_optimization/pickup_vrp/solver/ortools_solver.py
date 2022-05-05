@@ -269,7 +269,6 @@ class ORToolsGPDP(SolverDO):
                 True,
                 "charge",
             )
-            # routing.AddConstantDimension(1, len(self.problem.all_nodes), True, "charge")
             charge_dimension = routing.GetDimensionOrDie("charge")
             self.dimension_names += ["charge"]
             for i in range(self.problem.number_vehicle):
@@ -283,7 +282,6 @@ class ORToolsGPDP(SolverDO):
                     else:
                         charge_dimension.CumulVar(index).SetMin(constraint[0])
                 if constraint[1] is not None:
-                    # charge_dimension.CumulVar(index).SetMax(constraint[1])
                     if not hard_equilibrate:
                         charge_dimension.SetCumulVarSoftUpperBound(
                             index, constraint[1], 100000000
@@ -479,10 +477,6 @@ class ORToolsGPDP(SolverDO):
                         pickup = routing.AddDisjunction(pp)
                         deliver = routing.AddDisjunction(dd)
                         routing.AddPickupAndDeliverySets(pickup, deliver)
-                        # routing.solver().Add(routing.solver().Sum([routing.VehicleVar(i)
-                        #                                            for i in pp]) ==
-                        #                      routing.solver().Sum([routing.VehicleVar(i)
-                        #                                            for i in dd]))
                         routing.solver().Add(
                             routing.solver().Sum(
                                 [
@@ -500,7 +494,6 @@ class ORToolsGPDP(SolverDO):
                         )
         if include_cumulative:
             starts = {}
-            # ends = {}
             intervals = {}
             time_dimension = routing.GetDimensionOrDie("Time")
             i = 0
@@ -513,7 +506,6 @@ class ORToolsGPDP(SolverDO):
                 for task, tdelta in zip(index_tasks, time_delta):
                     if task not in starts:
                         starts[task] = time_dimension.CumulVar(task)
-                        # ends[task] = time_dimension.CumulVar(task)+tdelta
                         intervals[task] = routing.solver().IntervalVar(
                             0,
                             10000000,
@@ -524,8 +516,6 @@ class ORToolsGPDP(SolverDO):
                             False,
                             "interval_%i" % task,
                         )
-                        # intervals[task] = routing.solver().FixedDurationIntervalVar(starts[task], tdelta,
-                        #                                                             "interval_"+str(task))
                         routing.solver().Add(
                             intervals[task].StartExpr() == starts[task]
                         )
@@ -538,7 +528,6 @@ class ORToolsGPDP(SolverDO):
                             intervals[task].DurationExpr()
                             == time_dimension.SlackVar(task)
                         )
-                # routing.solver().Add(DisjunctiveConstraint([intervals[t] for t in index_tasks], "asset_"+str(i))
                 routing.solver().Add(
                     routing.solver().Cumulative(
                         [intervals[t] for t in index_tasks],
@@ -548,13 +537,6 @@ class ORToolsGPDP(SolverDO):
                     )
                 )
                 i += 1
-                # if len(index_tasks) <= self.problem.number_vehicle:
-                #     for t in index_tasks:
-                #         for t2 in index_tasks:
-                #             if t == t2:
-                #                 continue
-                #             routing.solver().Add(routing.VehicleVar(t) != routing.VehicleVar(t2))
-                # # routing.solver().AllDifferent([routing.VehicleVar(n) for n in index_tasks])
         print("cumulative done")
         if include_mandatory:
             mandatory_nodes = [
@@ -602,8 +584,6 @@ class ORToolsGPDP(SolverDO):
         if include_node_vehicle:
             if self.problem.node_vehicle is not None:
                 for n in self.problem.node_vehicle:
-                    # routing.solver().Add(routing.VehicleVar(self.problem.index_nodes[n]) ==
-                    #                      self.problem.node_vehicle[n][0])
                     routing.SetAllowedVehiclesForIndex(
                         self.problem.node_vehicle[n],
                         manager.NodeToIndex(self.problem.index_nodes[n]),
@@ -631,8 +611,6 @@ class ORToolsGPDP(SolverDO):
                 if node in self.problem.time_windows_nodes:
                     mini, maxi = self.problem.time_windows_nodes[node]
                     if mini is not None and maxi is not None:
-                        # time_dimension.CumulVar(index).SetRange(self.factor_multiplier_time*mini,
-                        #                                         self.factor_multiplier_time*maxi)
                         time_dimension.SetCumulVarSoftLowerBound(
                             index, self.factor_multiplier_time * mini, 10000
                         )
@@ -640,12 +618,10 @@ class ORToolsGPDP(SolverDO):
                             index, self.factor_multiplier_time * maxi, 10000
                         )
                     elif mini is not None:
-                        # time_dimension.CumulVar(index).SetMin(self.factor_multiplier_time*mini)
                         time_dimension.SetCumulVarSoftLowerBound(
                             index, self.factor_multiplier_time * mini, 10000
                         )
                     elif maxi is not None:
-                        # time_dimension.CumulVar(index).SetMax(self.factor_multiplier_time*maxi)
                         time_dimension.SetCumulVarSoftUpperBound(
                             index, self.factor_multiplier_time * maxi, 10000
                         )
@@ -688,12 +664,9 @@ class ORToolsGPDP(SolverDO):
                         )
         if include_time_windows_cluster:
             time_dimension = routing.GetDimensionOrDie("Time")
-            # arrival_cluster_variable = {}
             for cluster in list(self.problem.clusters_to_node):
                 mini, maxi = self.problem.time_windows_cluster[cluster]
                 if mini is not None or maxi is not None:
-                    # arrival_cluster_variable[cluster] = routing.solver().IntVar(0, 100000,
-                    #                                                            "arrival_cluster_"+str(cluster))
                     nodes = [
                         manager.NodeToIndex(n)
                         for n in self.problem.clusters_to_node[cluster]
@@ -739,22 +712,6 @@ class ORToolsGPDP(SolverDO):
                 dimension_name,
             )
             self.dimension_names += ["Distance"]
-        # Cost stuff :
-        # time_dimension.SetGlobalSpanCostCoefficient(200)
-        # distance_dimension = routing.GetDimensionOrDie("Distance")
-        # distance_dimension.SetGlobalSpanCostCoefficient(100)
-        # distance_dimension.SetSpanCostCoefficientForAllVehicles(1)
-        # if True:
-        if False:
-            for i in range(self.problem.number_vehicle):
-                dimension_name = "Distance"
-                distance_dimension = routing.GetDimensionOrDie(dimension_name)
-                routing.AddVariableMinimizedByFinalizer(
-                    distance_dimension.CumulVar(routing.Start(i))
-                )
-                routing.AddVariableMinimizedByFinalizer(
-                    distance_dimension.CumulVar(routing.End(i))
-                )
         apply_cost(list_parameters_cost=list_parameters_cost, routing=routing)
         self.manager = manager
         self.routing = routing
@@ -777,19 +734,16 @@ class ORToolsGPDP(SolverDO):
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
         search_parameters.first_solution_strategy = first_solution_strategy
         search_parameters.local_search_metaheuristic = local_search_metaheuristic
-        # search_parameters.lns_time_limit.seconds = 1
         if use_lns:
             if one_visit_per_cluster:
                 search_parameters.local_search_operators.use_inactive_lns = BOOL_TRUE
             search_parameters.local_search_operators.use_path_lns = BOOL_TRUE
-            # search_parameters.local_search_operators.use_full_path_lns = BOOL_TRUE
             if one_visit_per_cluster:
                 search_parameters.local_search_operators.use_extended_swap_active = (
                     BOOL_TRUE
                 )
         search_parameters.use_cp = BOOL_TRUE if use_cp else BOOL_FALSE
         search_parameters.use_cp_sat = BOOL_TRUE if use_cp_sat else BOOL_FALSE
-        # search_parameters.local_search_operators.use_exchange_subtrip = BOOL_TRUE
         search_parameters.number_of_solutions_to_collect = kwargs.get(
             "n_solutions", 100
         )
@@ -827,16 +781,10 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                 )
                 print(status_description[self.model.status()])
             if self.nb_solutions % 100 == 0:
-                if True:
-                    self.retrieve_current_solution()
-                else:
-                    print("Error Retrieving solution...", e)
+                self.retrieve_current_solution()
             if self.model.CostVar().Max() < self._best_objective:
                 self._best_objective = self.model.CostVar().Max()
-                if True:
-                    self.retrieve_current_solution()
-                else:
-                    print("Error Retrieving solution...", e)
+                self.retrieve_current_solution()
                 self._counter = 0
             else:
                 self._counter += 1
@@ -855,7 +803,6 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
             route_distance = 0
             for vehicle_id in range(vehicle_count):
                 index = self.model.Start(vehicle_id)
-                # plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
                 route_load = {r: 0.0 for r in self.problem.resources_set}
                 cnt = 0
                 while not self.model.IsEnd(index) or cnt > 10000:
@@ -876,7 +823,6 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                     cnt += 1
                     for r in route_load:
                         route_load[r] += self.solver.demands[r][node_index]
-                    # plan_output += ' {0} Load({1}) -> '.format(node_index, route_load)
                     previous_index = index
                     try:
                         index = self.model.NextVar(index).Value()
@@ -908,8 +854,6 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                         except Exception as e:
                             print("2,", e)
                             break
-                    # print(node_index, self.solver.manager.IndexToNode(index))
-                    # objective += self.problem.distance_delta[node_index][self.solver.manager.IndexToNode(index)]
             postpro_sol += [
                 (
                     vehicle_tours,
@@ -919,9 +863,6 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                     self.model.CostVar().Max(),
                 )
             ]
-            # print("Route distance : ", route_distance)
-            # print("Vehicle tours : ", vehicle_tours)
-            # print("Objective : ", objective)
             self.sols += postpro_sol
 
     return RoutingMonitor(solver, verbose=verbose)
@@ -947,7 +888,6 @@ def plot_ortools_solution(result, problem: GPDP):
             [problem.coordinates_2d[problem.list_nodes[n]][1] for n in result[0][v]],
             label="vehicle n°" + str(v),
         )
-        # for n in result[0][v]:
         ax.scatter(
             [problem.coordinates_2d[problem.list_nodes[n]][0] for n in result[0][v]],
             [problem.coordinates_2d[problem.list_nodes[n]][1] for n in result[0][v]],
