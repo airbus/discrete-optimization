@@ -336,21 +336,28 @@ class MS_RCPSPSolution_Variant(MS_RCPSPSolution):
             self.employee_usage = employee_usage
             self._schedule_to_recompute = False
         else:
-            self.employee_usage = {}
-            (
-                rcpsp_schedule,
-                skills_usage,
-                unfeasible_non_renewable_resources,
-            ) = self.problem.func_sgs(
-                permutation_task=permutation_do_to_permutation_sgs_fast(
-                    rcpsp_problem=self.problem, permutation_do=self.priority_list_task
-                ),  # permutation_task=array(task)->task index
-                priority_worker_per_task=priority_worker_per_task_do_to_permutation_sgs_fast(
-                    rcpsp_problem=self.problem,
-                    priority_worker_per_task=self.priority_worker_per_task,
-                ),  # array(task, worker)
-                modes_array=np.array([0] + self.modes_vector_from0 + [0]),
-            )
+            #  check modes not out-of-bound
+            if max(self.modes_vector_from0) >= self.problem.max_number_of_mode:
+                rcpsp_schedule = None
+                skills_usage = None
+                unfeasible_non_renewable_resources = True
+            else:
+                self.employee_usage = {}
+                (
+                    rcpsp_schedule,
+                    skills_usage,
+                    unfeasible_non_renewable_resources,
+                ) = self.problem.func_sgs(
+                    permutation_task=permutation_do_to_permutation_sgs_fast(
+                        rcpsp_problem=self.problem,
+                        permutation_do=self.priority_list_task,
+                    ),  # permutation_task=array(task)->task index
+                    priority_worker_per_task=priority_worker_per_task_do_to_permutation_sgs_fast(
+                        rcpsp_problem=self.problem,
+                        priority_worker_per_task=self.priority_worker_per_task,
+                    ),  # array(task, worker)
+                    modes_array=np.array([0] + self.modes_vector_from0 + [0]),
+                )
             self.update_infos_from_numba_output(
                 rcpsp_schedule=rcpsp_schedule,
                 skills_usage=skills_usage,
@@ -381,36 +388,43 @@ class MS_RCPSPSolution_Variant(MS_RCPSPSolution):
             self.employee_usage = employee_usage
             self._schedule_to_recompute = False
         else:
-            self.employee_usage = {}
-            (
-                scheduled_task_indicator,
-                scheduled_tasks_start_times_vector,
-                scheduled_tasks_end_times_vector,
-                worker_used,
-            ) = build_partial_vectors(
-                problem=self.problem,
-                completed_tasks=completed_tasks,
-                scheduled_tasks_start_times=scheduled_tasks_start_times,
-            )
-            (
-                rcpsp_schedule,
-                skills_usage,
-                unfeasible_non_renewable_resources,
-            ) = self.problem.func_sgs_partial(
-                permutation_task=permutation_do_to_permutation_sgs_fast(
-                    rcpsp_problem=self.problem, permutation_do=self.priority_list_task
-                ),
-                priority_worker_per_task=priority_worker_per_task_do_to_permutation_sgs_fast(
-                    rcpsp_problem=self.problem,
-                    priority_worker_per_task=self.priority_worker_per_task,
-                ),
-                modes_array=np.array([0] + self.modes_vector_from0 + [0]),
-                scheduled_task_indicator=scheduled_task_indicator,
-                scheduled_start_task_times=scheduled_tasks_start_times_vector,
-                scheduled_end_task_times=scheduled_tasks_end_times_vector,
-                worker_used=worker_used,
-                current_time=current_t,
-            )
+            #  check modes not out-of-bound
+            if max(self.modes_vector_from0) >= self.problem.max_number_of_mode:
+                rcpsp_schedule = None
+                skills_usage = None
+                unfeasible_non_renewable_resources = True
+            else:
+                self.employee_usage = {}
+                (
+                    scheduled_task_indicator,
+                    scheduled_tasks_start_times_vector,
+                    scheduled_tasks_end_times_vector,
+                    worker_used,
+                ) = build_partial_vectors(
+                    problem=self.problem,
+                    completed_tasks=completed_tasks,
+                    scheduled_tasks_start_times=scheduled_tasks_start_times,
+                )
+                (
+                    rcpsp_schedule,
+                    skills_usage,
+                    unfeasible_non_renewable_resources,
+                ) = self.problem.func_sgs_partial(
+                    permutation_task=permutation_do_to_permutation_sgs_fast(
+                        rcpsp_problem=self.problem,
+                        permutation_do=self.priority_list_task,
+                    ),
+                    priority_worker_per_task=priority_worker_per_task_do_to_permutation_sgs_fast(
+                        rcpsp_problem=self.problem,
+                        priority_worker_per_task=self.priority_worker_per_task,
+                    ),
+                    modes_array=np.array([0] + self.modes_vector_from0 + [0]),
+                    scheduled_task_indicator=scheduled_task_indicator,
+                    scheduled_start_task_times=scheduled_tasks_start_times_vector,
+                    scheduled_end_task_times=scheduled_tasks_end_times_vector,
+                    worker_used=worker_used,
+                    current_time=current_t,
+                )
             self.update_infos_from_numba_output(
                 rcpsp_schedule=rcpsp_schedule,
                 skills_usage=skills_usage,
