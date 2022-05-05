@@ -293,23 +293,31 @@ class MS_RCPSPSolution_Variant(MS_RCPSPSolution):
         if self.modes_vector_from0 is None:
             self.modes_vector_from0 = [x - 1 for x in self.modes_vector]
         if self.priority_list_task is None:
-            sorted_task = [
-                self.problem.index_task_non_dummy[i]
-                for i in sorted(
-                    self.schedule, key=lambda x: self.schedule[x]["start_time"]
-                )
-                if i in self.problem.index_task_non_dummy
-            ]
-            self.priority_list_task = sorted_task
+            if self.schedule is None:
+                self.priority_list_task = self.problem.fixed_permutation
+            else:
+                sorted_task = [
+                    self.problem.index_task_non_dummy[i]
+                    for i in sorted(
+                        self.schedule, key=lambda x: self.schedule[x]["start_time"]
+                    )
+                    if i in self.problem.index_task_non_dummy
+                ]
+                self.priority_list_task = sorted_task
         if self.priority_worker_per_task is None:
-            workers = []
-            for i in sorted(self.problem.tasks)[1:-1]:
-                w = []
-                if len(self.employee_usage.get(i, {})) > 0:
-                    w = [w for w in self.employee_usage.get(i)]
-                w += [wi for wi in self.problem.employees if wi not in w]
-                workers += [w]
-            self.priority_worker_per_task = workers
+            if self.employee_usage is None:
+                self.priority_worker_per_task = (
+                    self.problem.fixed_priority_worker_per_task
+                )
+            else:
+                workers = []
+                for i in sorted(self.problem.tasks)[1:-1]:
+                    w = []
+                    if len(self.employee_usage.get(i, {})) > 0:
+                        w = [w for w in self.employee_usage.get(i)]
+                    w += [wi for wi in self.problem.employees if wi not in w]
+                    workers += [w]
+                self.priority_worker_per_task = workers
         self._schedule_to_recompute = self.schedule is None
         self.fast = fast
         if self._schedule_to_recompute:
