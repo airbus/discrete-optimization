@@ -2790,12 +2790,8 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
 
     def set_fixed_attributes(self, encoding_str: str, sol: MS_RCPSPSolution_Variant):
         att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
-        if att == "modes_vector":
+        if att == "modes_vector" or att == "modes_vector_from0":
             self.set_fixed_modes(sol.modes_vector)
-            print("self.fixed_modes:", self.fixed_modes)
-        elif att == "modes_vector_from0":
-            modes_corrected = [x + 1 for x in sol.modes_vector]
-            self.set_fixed_modes(modes_corrected)
             print("self.fixed_modes:", self.fixed_modes)
         elif att == "priority_worker_per_task":
             self.set_fixed_priority_worker_per_task(sol.priority_worker_per_task)
