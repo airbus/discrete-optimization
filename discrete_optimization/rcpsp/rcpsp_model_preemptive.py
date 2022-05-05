@@ -76,8 +76,6 @@ class RCPSPSolutionPreemptive(Solution):
 
         if rcpsp_schedule is None:
             self.generate_schedule_from_permutation_serial_sgs()
-            # if isinstance(problem, RCPSP_H_Model):
-            #     self.rcpsp_schedule = problem.rcpsp_pre_helper_correction(self)
 
         if self.standardised_permutation is None:
             self.standardised_permutation = self.generate_permutation_from_schedule()
@@ -227,10 +225,11 @@ class RCPSPSolutionPreemptive(Solution):
                 - 1,
             )
             self.rcpsp_schedule_feasible = not unfeasible
-            self.rcpsp_schedule = {}
-            self.rcpsp_schedule[self.problem.sink_task] = {
-                "starts": [99999999],
-                "ends": [99999999],
+            self.rcpsp_schedule = {
+                self.problem.sink_task: {
+                    "starts": [99999999],
+                    "ends": [99999999],
+                }
             }
             for k in starts_dict:
                 self.rcpsp_schedule[self.problem.tasks_list[k]] = {
@@ -376,7 +375,6 @@ class RCPSPModelPreemptive(Problem):
     ]  # {resource_name: number_of_resource}
     non_renewable_resources: List[str]  # e.g. [resource_name3, resource_name4]
     n_jobs: int  # excluding dummy activities Start (0) and End (n)
-    # possible_modes: Dict[int, List[int]]  # {task_id: list_of_mode_ids}
     mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
     # e.g. {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}
     # one key being "duration"
@@ -527,7 +525,6 @@ class RCPSPModelPreemptive(Problem):
         if rcpsp_sol._schedule_to_recompute:
             rcpsp_sol.generate_schedule_from_permutation_serial_sgs()
         makespan = rcpsp_sol.rcpsp_schedule[self.sink_task]["ends"][-1]
-        # obj_mean_resource_reserve = rcpsp_sol.compute_mean_resource_reserve()
         return makespan, 0.0
 
     def evaluate_from_encoding(self, int_vector, encoding_name):
@@ -595,42 +592,12 @@ class RCPSPModelPreemptive(Problem):
                 start_times = range(
                     rcpsp_sol.rcpsp_schedule[self.sink_task]["ends"][-1]
                 )
-
-            if False:
-                for t in start_times:
-                    resource_usage = {}
-                    for res in self.resources_list:
-                        resource_usage[res] = 0
-                    for act_id in rcpsp_sol.rcpsp_schedule:
-                        start = rcpsp_sol.rcpsp_schedule[act_id]["starts"]
-                        end = rcpsp_sol.rcpsp_schedule[act_id]["ends"]
-                        mode = modes_dict[act_id]
-                        for s, e in zip(start, end):
-                            for res in self.resources_list:
-                                if s <= t < e:
-                                    resource_usage[res] += self.mode_details[act_id][
-                                        mode
-                                    ].get(res, 0)
-                    for res in self.resources.keys():
-                        if resource_usage[res] > self.get_resource_available(res, t):
-                            print(
-                                "Time step resource violation: time: ",
-                                t,
-                                "res",
-                                res,
-                                "res_usage: ",
-                                resource_usage[res],
-                                "res_avail: ",
-                                self.resources[res],
-                            )
-                            return False
-            else:
-                resource_avail_in_time = compute_resource(
-                    solution=rcpsp_sol, rcpsp_problem=self
-                )
-                for r in resource_avail_in_time:
-                    if np.any(resource_avail_in_time[r] < 0):
-                        return False
+            resource_avail_in_time = compute_resource(
+                solution=rcpsp_sol, rcpsp_problem=self
+            )
+            for r in resource_avail_in_time:
+                if np.any(resource_avail_in_time[r] < 0):
+                    return False
             # Check for non-renewable resource violation
             for res in self.non_renewable_resources:
                 usage = 0
@@ -673,15 +640,15 @@ class RCPSPModelPreemptive(Problem):
         return RCPSPSolutionPreemptive
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        dict_register["rcpsp_permutation"] = {
-            "name": "rcpsp_permutation",
-            "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
-            "range": range(self.n_jobs_non_dummy),
-            "n": self.n_jobs_non_dummy,
+        dict_register = {
+            "rcpsp_permutation": {
+                "name": "rcpsp_permutation",
+                "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
+                "range": range(self.n_jobs_non_dummy),
+                "n": self.n_jobs_non_dummy,
+            }
         }
         max_number_modes = max([len(self.mode_details[x]) for x in self.mode_details])
-        # print('max_number_modes: ', max_number_modes)
         dict_register["rcpsp_modes"] = {
             "name": "rcpsp_modes",
             "type": [TypeAttribute.LIST_INTEGER],
@@ -828,7 +795,6 @@ def generate_schedule_from_permutation_serial_sgs(
     ]
     perm_extended.insert(0, rcpsp_problem.source_task)
     perm_extended.append(rcpsp_problem.sink_task)
-    # print('perm_extended: ', perm_extended)
     modes_dict = rcpsp_problem.build_mode_dict(solution.rcpsp_modes)
 
     for k in modes_dict:
@@ -839,8 +805,6 @@ def generate_schedule_from_permutation_serial_sgs(
     }
     schedules = {}
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
-        # print('perm_extended: ', perm_extended)
-        # get first activity in perm with precedences respected
         for id in perm_extended:
             respected = True
             for pred in rcpsp_problem.successors:
@@ -854,10 +818,8 @@ def generate_schedule_from_permutation_serial_sgs(
         starts = []
         ends = []
         cur_duration = 0
-        # print('current_min_time_0: ', current_min_time)
         valid = False  # 6
         while not valid:  # 7ok
-            # print('current_min_time: ', current_min_time)
             reached_t = None
             if expected_durations_task[act_id] == 0:
                 starts += [current_min_time]
@@ -1050,7 +1012,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
         if modes_dict[ac] not in rcpsp_problem.mode_details[ac]:
             modes_dict[ac] = 1
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
-        # print('perm_extended: ', perm_extended)
         # get first activity in perm with precedences respected
         for id in perm_extended:
             respected = True
@@ -1063,8 +1024,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                 break
         current_min_time = minimum_starting_time[act_id]
         valid = False
-        # starts = schedules.get(act_id, {}).get("starts", [])
-        # ends = schedules.get(act_id, {}).get("ends", [])
         starts = []
         ends = []
         while not valid:

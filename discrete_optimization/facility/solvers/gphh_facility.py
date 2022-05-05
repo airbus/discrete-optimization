@@ -146,7 +146,6 @@ class ParametersGPHH:
     def default():
         set_feature = [
             FeatureEnum.DISTANCE,
-            # FeatureEnum.CAPACITIES,
             FeatureEnum.DEMAND_MINUS_CAPACITY,
         ]
         pset = PrimitiveSetTyped("main", [list, list], list)
@@ -163,18 +162,12 @@ class ParametersGPHH:
             list,
             name="min_element",
         )
-        # pset.addPrimitive(index_min, [list], int, name="argmin")
-        # pset.addPrimitive(index_max, [list], int, name="argmax")
-        # pset.addPrimitive(argsort, [list], list, name="argsort")
         pset.addPrimitive(
             lambda x, y: [protected_div(xx, yy) for xx, yy in zip(x, y)],
             [list, list],
             list,
             name="protected_div_list",
         )
-        # pset.addPrimitive(max_operator_list, [list], float, name="max_operator_list")
-        # pset.addPrimitive(min_operator_list, [list], float, name="min_operator_list")
-        # pset.addPrimitive(lambda x: sum(x)/len(x), [list], float, name="mean_list")
         pset.addPrimitive(
             lambda x, y: [xx - yy for xx, yy in zip(x, y)],
             [list, list],
@@ -188,8 +181,6 @@ class ParametersGPHH:
             name="plus_list",
         )
         pset.addTerminal(1, int, name="dummy")
-        # pset.addPrimitive(if_then_else, 3)
-        # pset.addPrimitive(operator.xor, 2)
         return ParametersGPHH(
             set_feature=set_feature,
             set_primitves=pset,
@@ -226,15 +217,8 @@ class GPHH(SolverDO):
         self.params_gphh = params_gphh
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
-        # self.set_feature = set_feature
         self.set_feature = self.params_gphh.set_feature
         print("self.set_feature: ", self.set_feature)
-        # if set_feature is None:
-        #     self.set_feature = {FeatureEnum.RESSOURCE_TOTAL,
-        #                         FeatureEnum.TASK_DURATION,
-        #                         FeatureEnum.N_SUCCESSORS,
-        #                         FeatureEnum.N_SUCCESSORS,
-        #                         FeatureEnum.RESSOURCE_AVG}
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.verbose = verbose
@@ -296,8 +280,6 @@ class GPHH(SolverDO):
         self.toolbox.decorate(
             "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17)
         )
-        # nobj = 2
-        # ref_points = tools.uniform_reference_points(nobj=nobj)
 
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values)
         stats_size = tools.Statistics(len)
@@ -360,7 +342,6 @@ class GPHH(SolverDO):
         raw_values = []
 
         for j in range(d.customer_count):
-            # print('task_id: ', task_id)
             input_features = [
                 feature_function_map[lf](problem=domain, customer_index=j)
                 for lf in self.list_feature

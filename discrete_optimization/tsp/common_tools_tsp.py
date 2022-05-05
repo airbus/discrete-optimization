@@ -87,11 +87,8 @@ def closest_greedy(nodeCount: int, points: List[Point2D]):
     g = nx.DiGraph()
     sol = [0]
     length_circuit = 0.0
-    index_in_sol = set([0])
+    index_in_sol = {0}
     s = sd[:, 1:]
-    # print(matrix.shape)
-    # print(s.shape)
-    # print(s)
     cur_point = 0
     nb_point = 1
     while nb_point < nodeCount:
@@ -107,7 +104,6 @@ def closest_greedy(nodeCount: int, points: List[Point2D]):
 
 def testing():
     file_location = "./data/tsp_574_1"
-    # file_location = "./data/vrp_200_16_1"
     print(file_location)
     with open(file_location, "r") as input_data_file:
         input_data = input_data_file.read()

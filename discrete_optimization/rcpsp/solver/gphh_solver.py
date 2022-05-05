@@ -81,12 +81,10 @@ def get_resource_requirements_across_duration(
     duration = mode_consumption["duration"]
     if duration > 0:
         for res in problem.resources_list:
-            # tmp = 0
             need = mode_consumption.get(res, 0) / problem.get_max_resource_capacity(res)
             values.append(need / duration)
     else:
         values = [0.0]
-    # print(task_id,':', values)
     return values
 
 
@@ -192,7 +190,6 @@ class FeatureEnum(Enum):
     RESSOURCE_NZ_MIN = "nz_min_res_requ"
     RESSOURCE_MAX = "max_res_requ"
     ALL_DESCENDANTS = "all_descendants"
-    # PRECEDENCE_DONE = "precedence_done"
     EARLIEST_START_DATE = "ESD"
     LATEST_START_DATE = "LSD"
     EARLIEST_FINISH_DATE = "EFD"
@@ -211,13 +208,12 @@ feature_function_map = {
     FeatureEnum.RESSOURCE_NZ_MIN: feature_non_zero_minimum_resource_requirements,  #
     FeatureEnum.RESSOURCE_MAX: feature_maximum_resource_requirements,  #
     FeatureEnum.ALL_DESCENDANTS: feature_all_descendants,  #
-    # FeatureEnum.PRECEDENCE_DONE: feature_precedence_done,
     FeatureEnum.EARLIEST_START_DATE: feature_esd,  #
     FeatureEnum.EARLIEST_FINISH_DATE: feature_efd,  #
     FeatureEnum.LATEST_START_DATE: feature_lsd,  #
     FeatureEnum.LATEST_FINISH_DATE: feature_lfd,  #
     FeatureEnum.DUMMY: get_dummy,
-}  #
+}
 
 feature_static_map = {
     FeatureEnum.TASK_DURATION: True,
@@ -230,7 +226,6 @@ feature_static_map = {
     FeatureEnum.RESSOURCE_NZ_MIN: True,
     FeatureEnum.RESSOURCE_MAX: True,
     FeatureEnum.ALL_DESCENDANTS: True,
-    # FeatureEnum.PRECEDENCE_DONE: False,
     FeatureEnum.EARLIEST_START_DATE: True,
     FeatureEnum.EARLIEST_FINISH_DATE: True,
     FeatureEnum.LATEST_START_DATE: True,
@@ -242,7 +237,6 @@ feature_static_map = {
 class EvaluationGPHH(Enum):
     SGS = 0
     PERMUTATION_DISTANCE = 1
-    # SGS_DEVIATION = 2
 
 
 class PermutationDistance(Enum):
@@ -306,7 +300,6 @@ class ParametersGPHH:
             FeatureEnum.RESSOURCE_REQUIRED,
             FeatureEnum.RESSOURCE_AVG,
             FeatureEnum.RESSOURCE_MAX,
-            # FeatureEnum.RESSOURCE_MIN
             FeatureEnum.RESSOURCE_NZ_MIN,
         }
 
@@ -318,8 +311,6 @@ class ParametersGPHH:
         pset.addPrimitive(max_operator, 2)
         pset.addPrimitive(min_operator, 2)
         pset.addPrimitive(operator.neg, 1)
-        # pset.addPrimitive(if_then_else, 3)
-        # pset.addPrimitive(operator.xor, 2)
 
         return ParametersGPHH(
             set_feature=set_feature,
@@ -331,11 +322,7 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.3,
-            # base_policy_method=BasePolicyMethod.FOLLOW_GANTT,
-            # delta_index_freedom=0,
-            # delta_time_freedom=0,
             deap_verbose=True,
-            # evaluation=EvaluationGPHH.PERMUTATION_DISTANCE,
             evaluation=EvaluationGPHH.SGS,
             permutation_distance=PermutationDistance.KTD,
         )
@@ -353,7 +340,6 @@ class ParametersGPHH:
             FeatureEnum.RESSOURCE_REQUIRED,
             FeatureEnum.RESSOURCE_AVG,
             FeatureEnum.RESSOURCE_MAX,
-            # FeatureEnum.RESSOURCE_MIN
             FeatureEnum.RESSOURCE_NZ_MIN,
         }
 
@@ -381,12 +367,8 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.3,
-            # base_policy_method=BasePolicyMethod.FOLLOW_GANTT,
-            # delta_index_freedom=0,
-            # delta_time_freedom=0,
             deap_verbose=True,
             evaluation=EvaluationGPHH.SGS,
-            # evaluation=EvaluationGPHH.PERMUTATION_DISTANCE,
             permutation_distance=PermutationDistance.KTD,
         )
 
@@ -400,11 +382,6 @@ class ParametersGPHH:
             FeatureEnum.N_PREDECESSORS,
             FeatureEnum.N_SUCCESSORS,
             FeatureEnum.ALL_DESCENDANTS,
-            # FeatureEnum.RESSOURCE_REQUIRED,
-            # FeatureEnum.RESSOURCE_AVG,
-            # FeatureEnum.RESSOURCE_MAX,
-            # # FeatureEnum.RESSOURCE_MIN
-            # FeatureEnum.RESSOURCE_NZ_MIN
         }
 
         pset = PrimitiveSet("main", len(set_feature))
@@ -426,12 +403,8 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.3,
-            # base_policy_method=BasePolicyMethod.FOLLOW_GANTT,
-            # delta_index_freedom=0,
-            # delta_time_freedom=0,
             deap_verbose=True,
             evaluation=EvaluationGPHH.SGS,
-            # evaluation=EvaluationGPHH.PERMUTATION_DISTANCE,
             permutation_distance=PermutationDistance.KTD,
         )
 
@@ -445,11 +418,6 @@ class ParametersGPHH:
             FeatureEnum.N_PREDECESSORS,
             FeatureEnum.N_SUCCESSORS,
             FeatureEnum.ALL_DESCENDANTS,
-            # FeatureEnum.RESSOURCE_REQUIRED,
-            # FeatureEnum.RESSOURCE_AVG,
-            # FeatureEnum.RESSOURCE_MAX,
-            # # FeatureEnum.RESSOURCE_MIN
-            # FeatureEnum.RESSOURCE_NZ_MIN
         }
 
         pset = PrimitiveSet("main", len(set_feature))
@@ -471,12 +439,8 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.3,
-            # base_policy_method=BasePolicyMethod.FOLLOW_GANTT,
-            # delta_index_freedom=0,
-            # delta_time_freedom=0,
             deap_verbose=True,
             evaluation=EvaluationGPHH.SGS,
-            # evaluation=EvaluationGPHH.PERMUTATION_DISTANCE,
             permutation_distance=PermutationDistance.KTD,
         )
 
@@ -486,7 +450,6 @@ class ParametersGPHH:
         pset.addPrimitive(operator.add, 2)
         pset.addPrimitive(operator.sub, 2)
         pset.addPrimitive(operator.mul, 2)
-        # pset.addPrimitive(protected_div, 2)
         pset.addPrimitive(max_operator, 2)
         pset.addPrimitive(min_operator, 2)
         pset.addPrimitive(operator.neg, 1)
@@ -501,9 +464,6 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.1,
-            # base_policy_method=BasePolicyMethod.SGS_READY,
-            # delta_index_freedom=0,
-            # delta_time_freedom=0,
             deap_verbose=True,
             evaluation=EvaluationGPHH.PERMUTATION_DISTANCE,
             permutation_distance=PermutationDistance.KTD,
@@ -516,9 +476,7 @@ class GPHH(SolverDO):
     weight: int
     pset: PrimitiveSet
     toolbox: Toolbox
-    # policy: DeterministicPolicies
     params_gphh: ParametersGPHH
-    # policy: GPHHPolicy
     evaluation_method: EvaluationGPHH
     reference_permutations: Dict
     permutation_distance: PermutationDistance
@@ -537,16 +495,9 @@ class GPHH(SolverDO):
         self.params_gphh = params_gphh
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
-        # self.set_feature = set_feature
         self.set_feature = self.params_gphh.set_feature
         print("self.set_feature: ", self.set_feature)
         print("Evaluation: ", self.params_gphh.evaluation)
-        # if set_feature is None:
-        #     self.set_feature = {FeatureEnum.RESSOURCE_TOTAL,
-        #                         FeatureEnum.TASK_DURATION,
-        #                         FeatureEnum.N_SUCCESSORS,
-        #                         FeatureEnum.N_SUCCESSORS,
-        #                         FeatureEnum.RESSOURCE_AVG}
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.verbose = verbose
@@ -571,58 +522,6 @@ class GPHH(SolverDO):
             params_objective_function=params_objective_function,
         )
         self.toolbox = None
-
-    # def init_reference_permutations(self, reference_permutations={}, training_domains_names=[]) -> None:
-    #     self.reference_permutations = {}
-    #     for i in range(len(self.training_domains)):
-    #         td = self.training_domains[i]
-    #         td_name = training_domains_names[i]
-    #         if td_name not in reference_permutations.keys():
-    #             # Run CP
-    #             td.set_inplace_environment(False)
-    #             solver = DOSolver(policy_method_params=PolicyMethodParams(base_policy_method=BasePolicyMethod.SGS_PRECEDENCE,
-    #                                                           delta_index_freedom=0,
-    #                                                           delta_time_freedom=0),
-    #                               method=SolvingMethod.CP)
-    #             solver.solve(domain_factory=lambda: td)
-    #             raw_permutation = solver.best_solution.rcpsp_permutation
-    #             full_permutation = [x+2 for x in raw_permutation]
-    #             full_permutation.insert(0, 1)
-    #             full_permutation.append(np.max(full_permutation)+1)
-    #             print('full_perm: ', full_permutation)
-    #             self.reference_permutations[td] = full_permutation
-    #         else:
-    #             self.reference_permutations[td] = reference_permutations[td_name]
-
-    # def init_reference_makespans(self, reference_makespans={}, training_domains_names=[]) -> None:
-    #     self.reference_makespans = {}
-    #     for i in range(len(self.training_domains)):
-    #         td = self.training_domains[i]
-    #         td_name = training_domains_names[i]
-    #     # for td in self.training_domains:
-    #         print('td:',td)
-    #         if td_name not in reference_makespans.keys():
-    #             # Run CP
-    #             td.set_inplace_environment(False)
-    #             solver = DOSolver(policy_method_params=PolicyMethodParams(base_policy_method=BasePolicyMethod.FOLLOW_GANTT,
-    #                                                           delta_index_freedom=0,
-    #                                                           delta_time_freedom=0),
-    #                               method=SolvingMethod.CP)
-    #             solver.solve(domain_factory=lambda: td)
-    #
-    #             state = td.get_initial_state()
-    #             states, actions, values = rollout_episode(domain=td,
-    #                                                       max_steps=1000,
-    #                                                       solver=solver,
-    #                                                       from_memory=state,
-    #                                                       verbose=False,
-    #                                                       outcome_formatter=lambda
-    #                                                           o: f'{o.observation} - cost: {o.value.cost:.2f}')
-    #
-    #             makespan = sum([v.cost for v in values])
-    #             self.reference_makespans[td] = makespan
-    #         else:
-    #             self.reference_makespans[td] = reference_makespans[td_name]
 
     def init_model(self):
         tournament_ratio = self.params_gphh.tournament_ratio
@@ -656,15 +555,12 @@ class GPHH(SolverDO):
             self.toolbox.register(
                 "evaluate", self.evaluate_heuristic, domains=self.training_domains
             )
-        # if self.evaluation_method == EvaluationGPHH.SGS_DEVIATION:
-        #     self.toolbox.register("evaluate", self.evaluate_heuristic_sgs_deviation, domains=self.training_domains)
         elif self.evaluation_method == EvaluationGPHH.PERMUTATION_DISTANCE:
             self.toolbox.register(
                 "evaluate",
                 self.evaluate_heuristic_permutation,
                 domains=self.training_domains,
             )
-        # self.toolbox.register("evaluate", self.evaluate_heuristic, domains=[self.training_domains[1]])
         self.toolbox.register(
             "select", tools.selTournament, tournsize=int(tournament_ratio * pop_size)
         )
@@ -736,7 +632,6 @@ class GPHH(SolverDO):
         cpm_esd = self.cpm_data[domain]["cpm_esd"]
         raw_values = []
         for task_id in d.tasks_list:
-            # print('task_id: ', task_id)
             input_features = [
                 feature_function_map[lf](
                     problem=domain,
@@ -761,9 +656,7 @@ class GPHH(SolverDO):
             for t in normalized_values
             if t in d.index_task_non_dummy
         ]
-        # if isinstance(domain, MSRCPSP):
         if isinstance(domain, MS_RCPSPModel):
-            # print('modes: ', len(modes))
             solution = MS_RCPSPSolution_Variant(
                 problem=d,
                 priority_list_task=normalized_values_for_do,

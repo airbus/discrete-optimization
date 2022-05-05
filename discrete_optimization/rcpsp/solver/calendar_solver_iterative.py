@@ -127,10 +127,6 @@ def get_ressource_breaks(
                 ),
                 None,
             )
-            # if first_possible_start_before is not None:
-            #     first_possible_start_before = \
-            #         max(0,
-            #             first_possible_start_before-problem_calendar.mode_details[t][1]["duration"]+1)
             constraints[r][t] = (
                 first_possible_start_before,
                 first_possible_start_future,
@@ -193,9 +189,7 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
         self.check_sol = check_solution
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        for sol in list(
-            result_storage.list_solution_fits
-        ):  # [-min(2, len(result_storage.list_solution_fits)):]:
+        for sol in list(result_storage.list_solution_fits):
             if "satisfy" not in sol[0].__dict__.keys():
                 rb, constraints = get_ressource_breaks(
                     self.problem_calendar, self.problem_no_calendar, sol[0]
@@ -216,8 +210,6 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                             -self.problem_calendar.evaluate(solution)["makespan"],
                         )
                     ]
-        # result_storage.list_solution_fits = [r for r in result_storage.list_solution_fits
-        #                                      if r[0].satisfy]
         return result_storage
 
 
@@ -240,7 +232,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
         result_storage: ResultStorage,
         last_result_store: ResultStorage = None,
     ) -> Iterable[Any]:
-        # solution, fit = result_storage.get_best_solution_fit()
         for s, f in list(result_storage.list_solution_fits):
             if "satisfy" in s.__dict__.keys() and s.satisfy:
                 last_result_store.list_solution_fits += [(s, f)]
@@ -265,115 +256,10 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
             self.problem_calendar, self.problem_no_calendar, solution
         )
         list_strings = []
-        if False:
-            for r in constraints:
-                for t in constraints[r]:
-                    s = None
-                    if isinstance(cp_solver, CP_MRCPSP_MZN):
-                        if (
-                            constraints[r][t][0] is not None
-                            and constraints[r][t][1] is not None
-                        ):
-                            s = (
-                                """constraint start["""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]<="""
-                                + str(constraints[r][t][0])
-                                + " \/ "
-                                "start["
-                                ""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]>="""
-                                + str(constraints[r][t][1])
-                                + """;\n"""
-                            )
-                        elif (
-                            constraints[r][t][0] is None
-                            and constraints[r][t][1] is not None
-                        ):
-                            s = (
-                                """constraint start["""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]>="""
-                                + str(constraints[r][t][1])
-                                + """;\n"""
-                            )
-                        elif (
-                            constraints[r][t][0] is not None
-                            and constraints[r][t][1] is None
-                        ):
-                            s = (
-                                """constraint start["""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]<="""
-                                + str(constraints[r][t][0])
-                                + """;\n"""
-                            )
-                    elif isinstance(cp_solver, CP_RCPSP_MZN):
-                        if (
-                            constraints[r][t][0] is not None
-                            and constraints[r][t][1] is not None
-                        ):
-                            s = (
-                                """constraint s["""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]<="""
-                                + str(constraints[r][t][0])
-                                + " \/ "
-                                "s["
-                                ""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]>="""
-                                + str(constraints[r][t][1])
-                                + """;\n"""
-                            )
-                        elif (
-                            constraints[r][t][0] is None
-                            and constraints[r][t][1] is not None
-                        ):
-                            s = (
-                                """constraint s["""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]>="""
-                                + str(constraints[r][t][1])
-                                + """;\n"""
-                            )
-                        elif (
-                            constraints[r][t][0] is not None
-                            and constraints[r][t][1] is None
-                        ):
-                            s = (
-                                """constraint s["""
-                                + str(cp_solver.index_in_minizinc[t])
-                                + """]<="""
-                                + str(constraints[r][t][0])
-                                + """;\n"""
-                            )
-                    if s is not None:
-                        child_instance.add_string(s)
-                        list_strings += [s]
-        # for r in ressource_breaks:
-        #     index_ressource = cp_solver.resources_index.index(r)
-        #     for t in range(len(self.problem_calendar.resources[r])):
-        #         rq = self.problem_calendar.resources[r][t]
-        #         if t<max_time:
-        #             if isinstance(cp_solver, CP_MRCPSP_MZN):
-        #                 s = """constraint """ + str(rq) + """>=sum( i in Act ) (
-        #                                 bool2int(start[i] <=""" + str(t) + """ /\ """ + str(t) \
-        #                     + """< start[i] + adur[i]) * arreq[""" + str(index_ressource + 1) + """,i]);\n"""
-        #             elif isinstance(cp_solver, CP_RCPSP_MZN):
-        #                 s = """constraint """ + str(rq) + """>=sum( i in Tasks ) (
-        #                                                     bool2int(s[i] <=""" + str(t) + """ /\ """ + str(t) \
-        #                     + """< s[i] + d[i]) * rr[""" + str(index_ressource + 1) + """,i]);\n"""
-        #             child_instance.add_string(s)
-        #             list_strings += [s]
-
         for r in ressource_breaks:
             index_ressource = cp_solver.resources_index.index(r)
             if len(ressource_breaks[r]) == 0:
                 continue
-            # for index in [ressource_breaks[r][0],
-            #               ressource_breaks[r][-1]]:
             for index in [
                 ressource_breaks[r][i] for i in range(0, len(ressource_breaks[r]), 20)
             ] + [ressource_breaks[r][-1]]:
@@ -408,8 +294,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                     )
                 child_instance.add_string(s)
                 list_strings += [s]
-                # print("Res", r)
-                # print("Time", index)
         satisfiable = [
             (s, f)
             for s, f in last_result_store.list_solution_fits

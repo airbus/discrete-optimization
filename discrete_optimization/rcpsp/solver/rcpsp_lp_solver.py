@@ -57,8 +57,7 @@ class LP_RCPSP(MilpSolver):
         elif lp_solver == LP_RCPSP_Solver.CBC:
             self.lp_solver = CBC
         self.variable_decision = {}
-        self.constraints_dict = {}
-        self.constraints_dict["lns"] = []
+        self.constraints_dict = {"lns": []}
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
@@ -67,8 +66,6 @@ class LP_RCPSP(MilpSolver):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-        # self.description_variable_description = {}
-        # self.description_constraint = {}
 
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
@@ -109,10 +106,8 @@ class LP_RCPSP(MilpSolver):
         for task in sorted_tasks:
             for suc in self.rcpsp_model.successors[task]:
                 S.append([task, suc])
-        # print('S: ', S)
         # we have a better self.T to limit the number of variables :
         self.index_time = range(int(makespan + 1))
-        # model = Model()
         self.model = Model(sense=MINIMIZE, solver_name=self.lp_solver)
         self.x: List[List[Var]] = [
             [
@@ -275,7 +270,6 @@ class LP_RCPSP(MilpSolver):
         print(nb_solution, " solutions found")
         for s in range(nb_solution):
             rcpsp_schedule = {}
-            # objective = self.model.objective_values[s]
             for (task_index, time) in product(self.index_task, self.index_time):
                 value = self.x[task_index][time].xi(s)
                 if value >= 0.5:
@@ -330,8 +324,7 @@ class LP_MRCPSP(MilpSolver):
         elif lp_solver == LP_RCPSP_Solver.CBC:
             self.lp_solver = CBC
         self.variable_decision = {}
-        self.constraints_dict = {}
-        self.constraints_dict["lns"] = []
+        self.constraints_dict = {"lns": []}
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
@@ -340,8 +333,6 @@ class LP_MRCPSP(MilpSolver):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-        # self.description_variable_description = {}
-        # self.description_constraint = {}
 
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
@@ -379,7 +370,6 @@ class LP_MRCPSP(MilpSolver):
             )
             for key in sorted_tasks
         ]
-        # c = [6, 8]
         resources = self.rcpsp_model.resources_list
         c = [self.rcpsp_model.resources[x] for x in resources]
         renewable = {
@@ -395,7 +385,6 @@ class LP_MRCPSP(MilpSolver):
         for task in sorted_tasks:
             for suc in self.rcpsp_model.successors[task]:
                 S.append([task, suc])
-        # print('S: ', S)
         self.index_time = range(sum(p))
         self.index_task = range(self.rcpsp_model.n_jobs)
         self.index_resource = range(len(resources))
@@ -619,8 +608,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
         elif lp_solver == LP_RCPSP_Solver.CBC:
             self.lp_solver = CBC
         self.variable_decision = {}
-        self.constraints_dict = {}
-        self.constraints_dict["lns"] = []
+        self.constraints_dict = {"lns": []}
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
@@ -629,8 +617,6 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-        # self.description_variable_description = {}
-        # self.description_constraint = {}
 
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
@@ -693,7 +679,6 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             self.index_time = list(range(int(makespan + 1)))
         if max_horizon is not None:
             self.index_time = list(range(max_horizon + 1))
-        # model = Model()
         self.model = gurobi.Model("MRCPSP")
         self.x: Dict[gurobi.Var] = {}
         last_task = self.rcpsp_model.sink_task
@@ -739,12 +724,6 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             non_renewable_quantity = {
                 r: [non_renewable[r]] * len(self.index_time) for r in non_renewable
             }
-
-        # for r, t in product(renewable, self.T):
-        #    self.model.addConstr(gurobi.quicksum(int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
-        #                                          for key in keys_for_t[t])
-        #                          <= renewable_quantity[r][t])
-        #    print(r, t)
 
         self.model.addConstrs(
             gurobi.quicksum(
@@ -823,7 +802,6 @@ class LP_MRCPSP_GUROBI(MilpSolver):
                     start += [(self.x[k], 0)]
                     self.x[k].start = 0
 
-        # self.model.start = start
         p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
         self.constraints_partial_solutions = []
         self.model.update()

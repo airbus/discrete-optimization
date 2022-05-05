@@ -422,22 +422,21 @@ class MS_RCPSPSolution_Variant(MS_RCPSPSolution):
                 "start_time": rcpsp_schedule[k][0],
                 "end_time": rcpsp_schedule[k][1],
             }
-        if True:
-            for act_id in skills_usage:
-                non_z = np.nonzero(skills_usage[act_id])
-                for i, j in zip(non_z[0], non_z[1]):
-                    if self.problem.tasks_list[act_id] not in self.employee_usage:
-                        self.employee_usage[self.problem.tasks_list[act_id]] = {}
-                    if (
-                        self.problem.employees_list[i]
-                        not in self.employee_usage[self.problem.tasks_list[act_id]]
-                    ):
-                        self.employee_usage[self.problem.tasks_list[act_id]][
-                            self.problem.employees_list[i]
-                        ] = set()
+        for act_id in skills_usage:
+            non_z = np.nonzero(skills_usage[act_id])
+            for i, j in zip(non_z[0], non_z[1]):
+                if self.problem.tasks_list[act_id] not in self.employee_usage:
+                    self.employee_usage[self.problem.tasks_list[act_id]] = {}
+                if (
+                    self.problem.employees_list[i]
+                    not in self.employee_usage[self.problem.tasks_list[act_id]]
+                ):
                     self.employee_usage[self.problem.tasks_list[act_id]][
                         self.problem.employees_list[i]
-                    ].add(self.problem.skills_list[j])
+                    ] = set()
+                self.employee_usage[self.problem.tasks_list[act_id]][
+                    self.problem.employees_list[i]
+                ].add(self.problem.skills_list[j])
         self.modes = {
             self.problem.tasks_list_non_dummy[i]: self.modes_vector[i]
             for i in range(self.problem.n_jobs_non_dummy)
@@ -746,7 +745,6 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
                 unfeasible_in_horizon = True
                 break
             for t in range_time:  # 9
-                # print(act_id, t)
                 for res in resource_avail_in_time.keys():  # 10
                     if t < new_horizon:
                         if resource_avail_in_time[res][t] < problem.mode_details[
@@ -888,7 +886,6 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
         worker_ids = None
-    # print('activity_end_times: ', activity_end_times)
     rcpsp_schedule = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
@@ -900,14 +897,11 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False
         last_act_id = max(problem.successors.keys())
-        # if last_act_id not in rcpsp_schedule.keys():
         rcpsp_schedule[last_act_id] = {}
         rcpsp_schedule[last_act_id]["start_time"] = 99999999
         rcpsp_schedule[last_act_id]["end_time"] = 9999999
     else:
         rcpsp_schedule_feasible = True
-    # print("unfeasible in horizon", unfeasible_in_horizon)
-    # print(rcpsp_schedule[problem.sink_task]["end_time"])
     return rcpsp_schedule, [], employee_usage, modes_dict
 
 
@@ -1097,10 +1091,6 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
                     ends += [reached_t + 1]
                     workers += [worker_used]
                     cur_duration += ends[-1] - starts[-1]
-                # if reached_end and not rcpsp_problem.can_be_preempted(act_id):
-                #     starts += [current_min_time]
-                #     ends += [reached_t+1]
-                #     cur_duration += ends[-1] - starts[-1]
             valid = cur_duration == expected_durations_task[act_id]
             if not valid:
                 current_min_time = next(
@@ -1163,12 +1153,10 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
         worker_ids = None
-    # print('activity_end_times: ', activity_end_times)
     rcpsp_schedule = schedules
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False
         last_act_id = max(problem.successors.keys())
-        # if last_act_id not in rcpsp_schedule.keys():
         rcpsp_schedule[last_act_id] = {}
         rcpsp_schedule[last_act_id]["starts"] = [99999999]
         rcpsp_schedule[last_act_id]["ends"] = [9999999]
@@ -1439,10 +1427,6 @@ def sgs_multi_skill_preemptive_partial_schedule(
                     ends += [reached_t + 1]
                     workers += [worker_used]
                     cur_duration += ends[-1] - starts[-1]
-                # if reached_end and not rcpsp_problem.can_be_preempted(act_id):
-                #     starts += [current_min_time]
-                #     ends += [reached_t+1]
-                #     cur_duration += ends[-1] - starts[-1]
             valid = cur_duration == expected_durations_task[act_id]
             if not valid:
                 current_min_time = next(
@@ -1505,12 +1489,10 @@ def sgs_multi_skill_preemptive_partial_schedule(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
         worker_ids = None
-    # print('activity_end_times: ', activity_end_times)
     rcpsp_schedule = schedules
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         rcpsp_schedule_feasible = False
         last_act_id = max(problem.successors.keys())
-        # if last_act_id not in rcpsp_schedule.keys():
         rcpsp_schedule[last_act_id] = {}
         rcpsp_schedule[last_act_id]["starts"] = [99999999]
         rcpsp_schedule[last_act_id]["ends"] = [9999999]
@@ -1660,7 +1642,6 @@ def sgs_multi_skill_partial_schedule(
                 unfeasible_in_horizon = True
                 break
             for t in range_time:  # 9
-                # print(act_id, t)
                 for res in resource_avail_in_time.keys():  # 10
                     if t < new_horizon:
                         if resource_avail_in_time[res][t] < problem.mode_details[
@@ -1810,9 +1791,6 @@ def sgs_multi_skill_partial_schedule(
             rcpsp_schedule[last_act_id]["end_time"] = 9999999
     else:
         rcpsp_schedule_feasible = True
-    # print("unfeasible in horizon", unfeasible_in_horizon)
-    # print(rcpsp_schedule[problem.sink_task]["end_time"])
-    # print('employee_usage_ms: ', employee_usage)
     return rcpsp_schedule, [], employee_usage, modes_dict
 
 
@@ -1991,8 +1969,6 @@ class MS_RCPSPModel(Problem):
         }
         self.one_unit_per_task_max = one_unit_per_task_max
 
-        # self.graph = self.compute_graph()
-        # self.predecessors = self.graph.predecessors_dict
         self.is_multimode = (
             max(
                 [
@@ -2303,7 +2279,6 @@ class MS_RCPSPModel(Problem):
                     for emp in rcpsp_sol.employee_usage[task]
                     if len(rcpsp_sol.employee_usage[task][emp]) > 0
                 ]
-                # print(rcpsp_sol.employee_usage)
                 # employee available at this time
                 if len(employee_used) > 0:
                     for e in employee_used:
@@ -2376,12 +2351,7 @@ class MS_RCPSPModel(Problem):
                 end = rcpsp_sol.schedule[act_id]["end_time"]
                 mode = rcpsp_sol.modes[act_id]
                 if start <= t and t < end:
-                    # print(act_id)
                     for res in self.resources_set:  # self.mode_details[act_id][mode]:
-                        # print('res: ', res)
-                        # print('adding usage from act', act_id)
-                        # print('mode:', mode)
-                        # print('self.mode_details[act_id][mode][res]: ', self.mode_details[act_id][mode][res])
                         resource_usage[res] += self.mode_details[act_id][mode].get(
                             res, 0
                         )
@@ -2585,16 +2555,16 @@ class MS_RCPSPModel(Problem):
         return None
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        dict_register["modes"] = {"name": "modes", "type": [Dict[int, int]]}
-        # print('max_number_modes: ', max_number_modes)
-        dict_register["schedule"] = {
-            "name": "schedule",
-            "type": [Dict[int, Dict[str, int]]],
-        }
-        dict_register["employee_usage"] = {
-            "name": "employee_usage",
-            "type": [Dict[int, Dict[int, Set[str]]]],
+        dict_register = {
+            "modes": {"name": "modes", "type": [Dict[int, int]]},
+            "schedule": {
+                "name": "schedule",
+                "type": [Dict[int, Dict[str, int]]],
+            },
+            "employee_usage": {
+                "name": "employee_usage",
+                "type": [Dict[int, Dict[int, Set[str]]]],
+            },
         }
         return EncodingRegister(dict_register)
 
@@ -2727,7 +2697,6 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         self.fixed_modes = None
         self.fixed_permutation = None
         self.fixed_priority_worker_per_task = None
-        # self.preemptive = False
 
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {}
@@ -3143,7 +3112,6 @@ def create_np_data_and_jit_functions(
                 )
                 if not is_releasable_array[i, index_mode, k]:
                     consider_partial_preemptive = True
-                    # print("We consider partial preemptive")
             for s in range(len(rcpsp_problem.skills_list)):
                 skills_need[i, index_mode, s] = rcpsp_problem.mode_details[task][
                     mode
@@ -3163,13 +3131,6 @@ def create_np_data_and_jit_functions(
         ressource_available[k, :] = rcpsp_problem.resources_availability[
             rcpsp_problem.resources_list[k]
         ][:horizon]
-        # if rcpsp_problem.is_varying_resource():
-        #     ressource_available[k, :] = \
-        #         rcpsp_problem.resources_availability[rcpsp_problem.resources_list[k]][:horizon+1]
-        # else:
-        #     ressource_available[k, :] = np.full(horizon+1,
-        #                                         rcpsp_problem.resources_availability[rcpsp_problem.resources_list[k]],
-        #                                         dtype=int)
         if rcpsp_problem.resources_list[k] in rcpsp_problem.non_renewable_resources:
             ressource_renewable[k] = False
     for emp in range(len(rcpsp_problem.employees_list)):
@@ -3424,7 +3385,6 @@ def compute_constraints_details(
                         - solution.get_start_time(t),
                     )
                 ]
-                # print(list_constraints_not_respected[-1])
 
         if constraints.start_times_window[t][1] is not None:
             if solution.get_start_time(t) > constraints.start_times_window[t][1]:
@@ -3439,7 +3399,6 @@ def compute_constraints_details(
                         + solution.get_start_time(t),
                     )
                 ]
-                # print(list_constraints_not_respected[-1])
 
     for t in constraints.end_times_window:
         if constraints.end_times_window[t][0] is not None:
@@ -3454,7 +3413,6 @@ def compute_constraints_details(
                         constraints.end_times_window[t][0] - solution.get_end_time(t),
                     )
                 ]
-                # print(list_constraints_not_respected[-1])
 
         if constraints.end_times_window[t][1] is not None:
             if solution.get_end_time(t) > constraints.end_times_window[t][1]:
@@ -3468,7 +3426,6 @@ def compute_constraints_details(
                         -constraints.end_times_window[t][1] + solution.get_end_time(t),
                     )
                 ]
-                # print(list_constraints_not_respected[-1])
 
     return list_constraints_not_respected
 

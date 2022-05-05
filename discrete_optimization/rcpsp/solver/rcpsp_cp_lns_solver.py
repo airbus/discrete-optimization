@@ -171,7 +171,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             if lj in jobs_to_fix:
                 jobs_to_fix.remove(lj)
         list_strings = []
-        # current_solution: RCPSPSolution = current_solution
         modes_dict = self.problem.build_mode_dict(current_solution.rcpsp_modes)
         for t in modes_dict:
             if isinstance(cp_solver, CP_MRCPSP_MZN):
@@ -219,12 +218,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             list_strings += [string2]
             child_instance.add_string(string1)
             child_instance.add_string(string2)
-        # for job in current_solution.rcpsp_schedule:
-        #     if isinstance(cp_solver, CP_RCPSP_MZN):
-        #         string = "constraint s[" + str(cp_solver.index_in_minizinc[job]) + "] <= " + str(max_time) + ";\n"
-        #     if isinstance(cp_solver, CP_MRCPSP_MZN):
-        #         string = "constraint start[" + str(cp_solver.index_in_minizinc[job]) + "] <= " + str(max_time) + ";\n"
-        #     child_instance.add_string(string)
         return list_strings
 
     def remove_constraints_from_previous_iteration(
@@ -491,9 +484,7 @@ class PostProcessLeftShift(PostProcessSolution):
         self.check_sol = check_solution
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        for sol in list(
-            result_storage.list_solution_fits
-        ):  # [-min(2, len(result_storage.list_solution_fits)):]:
+        for sol in list(result_storage.list_solution_fits):
             if "satisfy" not in sol[0].__dict__.keys():
                 s: RCPSPSolution = sol[0]
                 sol[0].satisfy = self.check_sol(
@@ -598,10 +589,6 @@ def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
     if option_neighbor == OptionNeighbor.LARGE:
         params = params_om
     probas = [1 / len(params)] * len(params)
-    # self.constraint_handler = ConstraintHandlerStartTimeInterval_CP(problem=self.rcpsp_model,
-    #                                                                 fraction_to_fix=0.5,
-    #                                                                 minus_delta=1,
-    #                                                                 plus_delta=1)
     constraint_handler = ConstraintHandlerMix(
         problem=rcpsp_model, list_params=params, list_proba=probas
     )

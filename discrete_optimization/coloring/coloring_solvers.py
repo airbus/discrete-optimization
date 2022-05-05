@@ -20,12 +20,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-# from discrete_optimization.coloring.solvers.coloring_cp_lns_solvers import InitialColoring, InitialColoringMethod, \
-#     PostProcessSolutionColoring, ConstraintHandlerFixColorsCP
-# from discrete_optimization.generic_tools.lns_cp import LNS_CP
-# from discrete_optimization.generic_tools.lns_mip import LNS_MILP
-# import discrete_optimization.coloring.solvers.coloring_lp_lns_solvers as coloring_lp_lns
-
 solvers = {
     "lp": [
         (

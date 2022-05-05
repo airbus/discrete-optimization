@@ -54,7 +54,6 @@ class GPDP(Problem):
         target_vehicle: Dict[int, Hashable],
         resources_set: Set[Hashable],
         capacities: Dict[int, Dict[Hashable, Tuple[int, int]]],
-        # {Vehicle:{resource: (min_capacity, max_capacity)}}
         resources_flow_node: Dict[Hashable, Dict[Hashable, int]],
         resources_flow_edges: Dict[Tuple[Hashable, Hashable], Dict[Hashable, int]],
         distance_delta: Dict[Hashable, Dict[Hashable, int]],
@@ -169,7 +168,6 @@ class GPDP(Problem):
             for k in self.all_nodes_dict:
                 self.clusters_dict[k] = i
                 i += 1
-            # self.clusters_dict = {k: k for k in self.all_nodes_dict}
         self.clusters_set = set(self.clusters_dict.values())
         self.clusters_to_node = {k: set() for k in self.clusters_set}
         for k in self.clusters_dict:
@@ -338,7 +336,6 @@ def build_pruned_problem(problem: GPDP, undirected=True):
                 nx.strongly_connected_components(graph_nx), key=len, reverse=True
             )
         ]
-        # print("Connected components after post process= ", len(connected_components))
 
     return GPDP(
         number_vehicle=problem.number_vehicle,
@@ -513,7 +510,6 @@ class ProxyClass:
         nodes_origin = set(virtual_to_initial.keys())
         nodes_target = set(virtual_to_end.keys())
         list_pickup_deliverable = []
-        # resources_set = set()
         capacities = {
             i: {"demand": (0, vrp_model.vehicle_capacities[i])}
             for i in range(nb_vehicle)

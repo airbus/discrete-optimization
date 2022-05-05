@@ -63,7 +63,7 @@ def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
     coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
     clusters_dict = {i: i + 1 for i in range(nb_nodes_real)}
     for i in clusters_dict:
-        clusters_dict[i] = labels[i]  # random.randint(0, nb_clusters-1)
+        clusters_dict[i] = labels[i]
     for j in range(number_vehicle):
         clusters_dict[target_vehicle[j]] = max(labels)
         clusters_dict[origin_vehicle[j]] = min(labels)
@@ -140,7 +140,7 @@ def create_pickup_and_delivery(
         labels = kmeans.labels_
         coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
         for i in clusters_dict:
-            clusters_dict[i] = labels[i]  # random.randint(0, nb_clusters-1)
+            clusters_dict[i] = labels[i]
         for j in range(number_vehicle):
             clusters_dict[target_vehicle[j]] = max(labels)
             clusters_dict[origin_vehicle[j]] = min(labels)

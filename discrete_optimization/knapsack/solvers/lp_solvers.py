@@ -97,10 +97,8 @@ class LPKnapsackGurobi(SolverDO):
         self.model.setParam("MIPGap", 0.00000001)
 
     def retrieve_solutions(self, range_solutions: Iterable[int]):
-        # nObjectives = S.NumObj
         solutions = []
         fits = []
-        # x = S.getVars()
         for s in range_solutions:
             weight = 0
             xs = {}
@@ -253,7 +251,6 @@ class LPKnapsackCBC(SolverDO):
             "descr": "sum of weight of used items doesn't exceed max capacity"
         }
         S = pywraplp.Solver("knapsack", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-        # S.EnableOutput()
         x = {}
         weight = {}
         value = {}
@@ -385,10 +382,8 @@ class LPKnapsack(MilpSolver):
         self.model.update()
 
     def retrieve_solutions(self, range_solutions: Iterable[int]):
-        # nObjectives = S.NumObj
         solutions = []
         fits = []
-        # x = S.getVars()
         for s in range_solutions:
             weight = 0
             xs = {}
@@ -542,7 +537,6 @@ class KnapsackORTools(SolverDO):
         value = 0
         for i in range(self.knapsack_model.nb_items):
             if self.model.BestSolutionContains(i):
-                # packed_weights.append(self.knapsack_model.list_items[i].weight)
                 weight += self.knapsack_model.list_items[i].weight
                 value += self.knapsack_model.list_items[i].value
                 xs[self.knapsack_model.list_items[i].index] = 1

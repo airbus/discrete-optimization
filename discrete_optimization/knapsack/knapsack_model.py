@@ -101,11 +101,12 @@ class KnapsackModel(Problem):
         self.force_recompute_values = force_recompute_values
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        dict_register["list_taken"] = {
-            "name": "list_taken",
-            "type": [TypeAttribute.LIST_BOOLEAN, TypeAttribute.LIST_BOOLEAN_KNAP],
-            "n": self.nb_items,
+        dict_register = {
+            "list_taken": {
+                "name": "list_taken",
+                "type": [TypeAttribute.LIST_BOOLEAN, TypeAttribute.LIST_BOOLEAN_KNAP],
+                "n": self.nb_items,
+            }
         }
         return EncodingRegister(dict_register)
 
@@ -188,9 +189,6 @@ class KnapsackModel(Problem):
 
     def get_solution_type(self):
         return KnapsackSolution
-
-    # def get_default_objective_weights(self):
-    #     return [1.0, -100000]
 
 
 class KnapsackModel_Mobj(KnapsackModel):
@@ -321,11 +319,12 @@ class MultidimensionalKnapsack(Problem):
         self.force_recompute_values = force_recompute_values
 
     def get_attribute_register(self) -> EncodingRegister:
-        dict_register = {}
-        dict_register["list_taken"] = {
-            "name": "list_taken",
-            "type": [TypeAttribute.LIST_BOOLEAN],
-            "n": self.nb_items,
+        dict_register = {
+            "list_taken": {
+                "name": "list_taken",
+                "type": [TypeAttribute.LIST_BOOLEAN],
+                "n": self.nb_items,
+            }
         }
         return EncodingRegister(dict_register)
 

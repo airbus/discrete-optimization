@@ -51,7 +51,6 @@ class Solver_RCPSP_Based(SolverDO):
             modes = {i + 2: mode[i] for i in range(len(mode))}
             modes[self.model.source_task] = 1
             modes[self.model.sink_task] = 1
-            # print(fit, " found by ", self.method.__name__)
             ms_rcpsp_solution = MS_RCPSPSolution_Variant(
                 problem=self.model,
                 priority_list_task=sol.rcpsp_permutation,

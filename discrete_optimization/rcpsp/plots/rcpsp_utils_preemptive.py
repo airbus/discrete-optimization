@@ -128,7 +128,6 @@ def plot_ressource_view(
                         ax[i].annotate(
                             j,
                             xy=((time_start + time_end) / 2, (k + cons / 2)),
-                            # textcoords="offset points",
                             font_properties=FontProperties(size=6, weight="bold"),
                             verticalalignment="center",
                             horizontalalignment="left",
@@ -248,7 +247,6 @@ def plot_task_gantt(
                 / 2,
                 j,
             ),
-            # textcoords="offset points",
             font_properties=FontProperties(size=7, weight="bold"),
             verticalalignment="center",
             horizontalalignment="left",
@@ -360,16 +358,10 @@ def compute_schedule_per_resource_individual(
                         array_ressource_usage[r]["activity"].shape[1]
                     )
                 else:
-                    # try:
-                    #     range_interest = [x for x in range(len(rcpsp_model.calendar_details[r])) if
-                    #                       rcpsp_model.calendar_details[r][x][time_to_index[start_time]] == 1]
-                    # except:
                     range_interest = range(
                         rcpsp_model.resources[r][time_to_index[start_time]]
                     )
                 while rneeded > 0:
-                    # availables_people_r = [i for i in range(array_ressource_usage[r]["activity"].shape[1])
-                    #                        if array_ressource_usage[r]["activity"][time_to_index[start_time], i] == 0]
                     availables_people_r = [
                         i
                         for i in range_interest
@@ -502,7 +494,6 @@ def plot_resource_individual_gantt(
         p = PatchCollection(
             patches,
             match_original=True,
-            # cmap=matplotlib.cm.get_cmap('Blues'),
             alpha=0.4,
         )
         ax[i].add_collection(p)

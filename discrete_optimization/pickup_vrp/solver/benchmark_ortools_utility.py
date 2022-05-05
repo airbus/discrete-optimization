@@ -1,6 +1,4 @@
 from copy import deepcopy
-
-# from dill import
 from functools import partial
 
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
@@ -62,7 +60,6 @@ class BenchmarkOrtoolsUtility:
         return solvers_list
 
     def run_benchmark(self):
-        # p = Pool(min(8, len(self.solvers_list)))
         results = map(run, self.solvers_list)
         ps = []
         for res, p in results:

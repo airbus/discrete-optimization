@@ -114,22 +114,24 @@ def add_fake_task_cp_data(
             [fake_tasks[i].get(res, 0) for i in range(len(fake_tasks))]
             for res in rcpsp_model.resources_list
         ]
-        dict_to_add_in_instance = {}
-        dict_to_add_in_instance["max_duration_fake_task"] = max_duration_fake_task
-        dict_to_add_in_instance["n_fake_tasks"] = n_fake_tasks
-        dict_to_add_in_instance["fakestart"] = fakestart
-        dict_to_add_in_instance["fakedur"] = fake_dur
-        dict_to_add_in_instance["fakereq"] = fake_req
-        dict_to_add_in_instance["include_fake_tasks"] = True
+        dict_to_add_in_instance = {
+            "max_duration_fake_task": max_duration_fake_task,
+            "n_fake_tasks": n_fake_tasks,
+            "fakestart": fakestart,
+            "fakedur": fake_dur,
+            "fakereq": fake_req,
+            "include_fake_tasks": True,
+        }
         return dict_to_add_in_instance
     else:
-        dict_to_add_in_instance = {}
-        dict_to_add_in_instance["max_duration_fake_task"] = 0
-        dict_to_add_in_instance["n_fake_tasks"] = 0
-        dict_to_add_in_instance["fakestart"] = []
-        dict_to_add_in_instance["fakedur"] = []
-        dict_to_add_in_instance["fakereq"] = [[] for r in rcpsp_model.resources_list]
-        dict_to_add_in_instance["include_fake_tasks"] = False
+        dict_to_add_in_instance = {
+            "max_duration_fake_task": 0,
+            "n_fake_tasks": 0,
+            "fakestart": [],
+            "fakedur": [],
+            "fakereq": [[] for r in rcpsp_model.resources_list],
+            "include_fake_tasks": False,
+        }
         return dict_to_add_in_instance
 
 
@@ -554,9 +556,6 @@ class CP_MRCPSP_MZN(CPSolver):
             instance["ressource_capacity_time"] = ressource_capacity_time
             keys += ["ressource_capacity_time"]
 
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='rcpsp_.dzn')
         self.instance = instance
         p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
         self.index_in_minizinc = {
@@ -1111,7 +1110,6 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
             int(self.rcpsp_model.mode_details[key][1]["duration"])
             for key in sorted_tasks
         ]
-        # print('d: ', d)
         instance["d"] = d
         keys += ["d"]
 
@@ -1145,9 +1143,6 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
             for task in self.rcpsp_model.tasks_list
         }
         self.data_dict = {key: self.instance[key] for key in keys}
-        # import pymzn
-        # pymzn.dict2dzn(self.data_dict,
-        #               fout='rcpsp_preemptives_om.dzn')
         if add_partial_solution_hard_constraint:
             strings = add_hard_special_constraints(p_s, self)
             for s in strings:
@@ -1395,7 +1390,6 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
             if len(s_list) > 0:
                 s = s + "\/".join(s_list) + ";\n"
                 list_strings += [s]
-                # child_instance.add_string(s)
         return list_strings
 
     def constraint_objective_makespan(self):
@@ -1471,14 +1465,6 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
         super().__init__(
             rcpsp_model, cp_solver_name, params_objective_function, **kwargs
         )
-        # self.rcpsp_model = rcpsp_model
-        # self.instance: Instance = None
-        # self.cp_solver_name = cp_solver_name
-        # self.key_decision_variable = ["s"]  # For now, I've put the var name of the CP model (not the rcpsp_model)
-        # self.aggreg_sol, self.aggreg_from_dict_values, self.params_objective_function = \
-        #     build_aggreg_function_and_params_objective(self.rcpsp_model,
-        #                                                params_objective_function=params_objective_function)
-        # self.calendar = rcpsp_model.is_varying_resource()
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-preemptive")
@@ -1616,9 +1602,6 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
         }
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='rcpsp_preemptives.dzn')
         self.name_penalty = []
 
         if add_partial_solution_hard_constraint:
@@ -1902,9 +1885,6 @@ class CP_MRCPSP_MZN_NOBOOL(CPSolver):
             instance["ressource_capacity_time"] = ressource_capacity_time
             keys += ["ressource_capacity_time"]
 
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='rcpsp_.dzn')
         self.instance = instance
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
@@ -2122,7 +2102,6 @@ class CP_MRCPSP_MZN_MODES:
 
         for act in sorted_tasks:
             tmp = list(self.rcpsp_model.mode_details[act].keys())
-            # tmp = [counter + x for x in tmp]
             for i in range(len(tmp)):
                 original_mode_index = tmp[i]
                 mod_index = counter + tmp[i]
@@ -2133,8 +2112,6 @@ class CP_MRCPSP_MZN_MODES:
                 }
             modes.append(set(tmp))
             counter = tmp[-1]
-
-        # print('modes: ', modes)
         instance["modes"] = modes
 
         rreq = []
@@ -2387,7 +2364,6 @@ def hard_start_together_mrcpsp(
             + str(cp_solver.index_in_minizinc[t2])
             + "];\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2430,7 +2406,6 @@ def hard_start_together(
             + str(cp_solver.index_in_minizinc[t2])
             + "];\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2450,7 +2425,6 @@ def hard_start_after_nunit(
             + str(delta)
             + ";\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2509,7 +2483,6 @@ def hard_start_after_nunit_mrcpsp(
             + str(delta)
             + ";\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2570,7 +2543,6 @@ def hard_start_at_end_plus_offset_mrcpsp(
             + str(delta)
             + ";\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2603,7 +2575,6 @@ def hard_start_at_end_plus_offset(
                 + str(delta)
                 + ";\n"
             )  # WARNING , i don't put the last duration d[i, nb_preemptive] tht should be zero
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2706,7 +2677,6 @@ def hard_start_at_end_mrcpsp(
             + str(cp_solver.index_in_minizinc[t1])
             + "];\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -3081,7 +3051,6 @@ def add_hard_special_constraints_mrcpsp(
                     + str(cp_solver.index_in_minizinc[t2])
                     + "];\n"
                 )
-                # cp_solver.instance.add_string(string)
                 constraint_strings += [string]
         if partial_solution.list_partial_order is not None:
             for l in partial_solution.list_partial_order:
@@ -3093,7 +3062,6 @@ def add_hard_special_constraints_mrcpsp(
                         + str(cp_solver.index_in_minizinc[t2])
                         + "];\n"
                     )
-                    # cp_solver.instance.add_string(string)
                     constraint_strings += [string]
         if partial_solution.task_mode is not None:
             for task in partial_solution.task_mode:
@@ -3106,7 +3074,6 @@ def add_hard_special_constraints_mrcpsp(
                 ]
                 if len(indexes) >= 0:
                     string = "constraint mrun[" + str(indexes[0]) + "] == 1;"
-                    # cp_solver.instance.add_string(string)
                     constraint_strings += [string]
         if partial_solution.start_together is not None:
             constraint_strings += hard_start_together_mrcpsp(
@@ -3165,7 +3132,6 @@ def add_soft_special_constraints_mrcpsp(
                     + str(cp_solver.index_in_minizinc[t2])
                     + "];\n"
                 )
-                # cp_solver.instance.add_string(string)
                 constraint_strings += [string]
         if partial_solution.list_partial_order is not None:
             for l in partial_solution.list_partial_order:
@@ -3177,7 +3143,6 @@ def add_soft_special_constraints_mrcpsp(
                         + str(cp_solver.index_in_minizinc[t2])
                         + "];\n"
                     )
-                    # cp_solver.instance.add_string(string)
                     constraint_strings += [string]
         if partial_solution.task_mode is not None:
             for task in partial_solution.task_mode:
@@ -3190,7 +3155,6 @@ def add_soft_special_constraints_mrcpsp(
                 ]
                 if len(indexes) >= 0:
                     string = "constraint mrun[" + str(indexes[0]) + "] == 1;"
-                    # cp_solver.instance.add_string(string)
                     constraint_strings += [string]
         if partial_solution.start_together is not None:
             c, n = soft_start_together_mrcpsp(
@@ -3204,9 +3168,6 @@ def add_soft_special_constraints_mrcpsp(
                 cp_solver=cp_solver,
             )
             constraint_strings += c
-            # c = hard_start_after_nunit_mrcpsp(list_start_after_nunit=partial_solution.start_after_nunit,
-            #                                  cp_solver=cp_solver)
-            # constraint_strings += c
             name_penalty += n
         if partial_solution.start_at_end_plus_offset is not None:
             c, n = soft_start_at_end_plus_offset_mrcpsp(
@@ -3214,10 +3175,6 @@ def add_soft_special_constraints_mrcpsp(
                 cp_solver=cp_solver,
             )
             constraint_strings += c
-            # c = hard_start_at_end_plus_offset_mrcpsp(list_start_at_end_plus_offset=
-            #                                          partial_solution.start_at_end_plus_offset,
-            #                                          cp_solver=cp_solver)
-            # constraint_strings += c
             name_penalty += n
         if partial_solution.start_at_end is not None:
             c, n = soft_start_at_end_mrcpsp(
@@ -3263,7 +3220,6 @@ def add_hard_special_constraints(
                 "constraint s[" + str(cp_solver.index_in_minizinc[t1]) + "] "
                 "<= s[" + str(cp_solver.index_in_minizinc[t2]) + "];\n"
             )
-            # cp_solver.instance.add_string(string)
             constraint_strings += [string]
     if partial_solution.list_partial_order is not None:
         for l in partial_solution.list_partial_order:
@@ -3272,7 +3228,6 @@ def add_hard_special_constraints(
                     "constraint s[" + str(cp_solver.index_in_minizinc[t1]) + "] "
                     "<= s[" + str(cp_solver.index_in_minizinc[t2]) + "];\n"
                 )
-                # cp_solver.instance.add_string(string)
                 constraint_strings += [string]
     if partial_solution.start_together is not None:
         constraint_strings += hard_start_together(
@@ -3316,8 +3271,6 @@ def add_soft_special_constraints(
             dict_start_times=partial_solution.start_times, cp_solver=cp_solver
         )
         constraint_strings += c
-        # c = hard_start_times(dict_start_times=partial_solution.start_times, cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
     if partial_solution.partial_permutation is not None:
         for t1, t2 in zip(
@@ -3332,7 +3285,6 @@ def add_soft_special_constraints(
                 + str(cp_solver.index_in_minizinc[t2])
                 + "];\n"
             )
-            # cp_solver.instance.add_string(string)
             constraint_strings += [string]
     if partial_solution.list_partial_order is not None:
         for l in partial_solution.list_partial_order:
@@ -3341,16 +3293,12 @@ def add_soft_special_constraints(
                     "constraint s[" + str(cp_solver.index_in_minizinc[t1]) + "] "
                     "<= s[" + str(cp_solver.index_in_minizinc[t2]) + "];\n"
                 )
-                # cp_solver.instance.add_string(string)
                 constraint_strings += [string]
     if partial_solution.start_together is not None:
         c, n = soft_start_together(
             list_start_together=partial_solution.start_together, cp_solver=cp_solver
         )
         constraint_strings += c
-        # c = hard_start_together(list_start_together=partial_solution.start_together,
-        #                         cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
 
     if partial_solution.start_after_nunit is not None:
@@ -3359,9 +3307,6 @@ def add_soft_special_constraints(
             cp_solver=cp_solver,
         )
         constraint_strings += c
-        # c = hard_start_after_nunit(list_start_after_nunit=partial_solution.start_after_nunit,
-        #                           cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
     if partial_solution.start_at_end_plus_offset is not None:
         c, n = soft_start_at_end_plus_offset(
@@ -3369,9 +3314,6 @@ def add_soft_special_constraints(
             cp_solver=cp_solver,
         )
         constraint_strings += c
-        # c = hard_start_at_end_plus_offset(list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
-        #                                  cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
     if partial_solution.start_at_end is not None:
         c, n = soft_start_at_end(
@@ -3384,7 +3326,6 @@ def add_soft_special_constraints(
             partial_solution.start_times_window, cp_solver=cp_solver
         )
         constraint_strings += c
-        # constraint_strings += ["constraint "+str(n[0])+"==0;\n"]
         name_penalty += n
     if partial_solution.end_times_window is not None:
         c, n = soft_end_window(partial_solution.end_times_window, cp_solver=cp_solver)

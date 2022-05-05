@@ -69,10 +69,6 @@ class InitialSolutionMS_RCPSP(InitialSolution):
             }
             modes[self.problem.source_task] = 1
             modes[self.problem.sink_task] = 1
-            # ms_rcpsp_solution = MS_RCPSPSolution(problem=self.problem,
-            #                                      modes=modes,
-            #                                      schedule=sol.rcpsp_schedule,
-            #                                      employee_usage=None)
             ms_rcpsp_solution = self.problem.get_solution_type()(
                 problem=self.problem,
                 priority_list_task=sol.rcpsp_permutation,
@@ -156,9 +152,6 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
         self, milp_solver: LP_Solver_MRSCPSP, result_storage: ResultStorage
     ) -> Iterable[Any]:
         current_solution: MS_RCPSPSolution = result_storage.get_best_solution()
-        # st = milp_solver.start_solution
-        # if self.problem.evaluate(st)["makespan"] < self.problem.evaluate(current_solution)["makespan"]:
-        #    current_solution = st
         start = []
         for j in current_solution.schedule:
             start_time_j = current_solution.schedule[j]["start_time"]
@@ -168,8 +161,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
             for m in milp_solver.modes[j]:
                 start += [(milp_solver.modes[j][m], 1 if mode == m else 0)]
         milp_solver.model.start = start
-        constraints_dict = {}
-        constraints_dict["range_start_time"] = []
+        constraints_dict = {"range_start_time": []}
         max_time = max(
             [
                 current_solution.schedule[x]["end_time"]

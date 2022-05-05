@@ -79,22 +79,24 @@ def add_fake_task_cp_data(
             [fake_tasks[i].get(res, 0) for i in range(len(fake_tasks))]
             for res in rcpsp_model.resources_list
         ]
-        dict_to_add_in_instance = {}
-        dict_to_add_in_instance["max_duration_fake_task"] = max_duration_fake_task
-        dict_to_add_in_instance["n_fake_tasks"] = n_fake_tasks
-        dict_to_add_in_instance["fakestart"] = fakestart
-        dict_to_add_in_instance["fakedur"] = fake_dur
-        dict_to_add_in_instance["fakereq"] = fake_req
-        dict_to_add_in_instance["include_fake_tasks"] = True
+        dict_to_add_in_instance = {
+            "max_duration_fake_task": max_duration_fake_task,
+            "n_fake_tasks": n_fake_tasks,
+            "fakestart": fakestart,
+            "fakedur": fake_dur,
+            "fakereq": fake_req,
+            "include_fake_tasks": True,
+        }
         return dict_to_add_in_instance
     else:
-        dict_to_add_in_instance = {}
-        dict_to_add_in_instance["max_duration_fake_task"] = 0
-        dict_to_add_in_instance["n_fake_tasks"] = 0
-        dict_to_add_in_instance["fakestart"] = []
-        dict_to_add_in_instance["fakedur"] = []
-        dict_to_add_in_instance["fakereq"] = [[] for r in rcpsp_model.resources_list]
-        dict_to_add_in_instance["include_fake_tasks"] = False
+        dict_to_add_in_instance = {
+            "max_duration_fake_task": 0,
+            "n_fake_tasks": 0,
+            "fakestart": [],
+            "fakedur": [],
+            "fakereq": [[] for r in rcpsp_model.resources_list],
+            "include_fake_tasks": False,
+        }
         return dict_to_add_in_instance
 
 

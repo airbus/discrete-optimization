@@ -236,8 +236,6 @@ class LinearFlowSolver(SolverDO):
                         r
                     ]
                 )
-                # model.addConstr(resources_variable_coming[r][self.problem.target_vehicle[v]]==
-                #                 resources_variable_leaving[r][self.problem.target_vehicle[v]])
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         all_target = set(self.problem.target_vehicle.values())
@@ -258,16 +256,6 @@ class LinearFlowSolver(SolverDO):
                         == resources_variable_coming[r][node]
                         + self.problem.resources_flow_node[node][r]
                     )
-        #             model.addGenConstrIndicator(
-        #                 variables_edges[vehicle][edge],
-        #                 1,
-        #                 resources_variable_coming[r][node] ==
-        #                 resources_variable_leaving[r][edge[0]]+self.problem.resources_flow_edges[edge][r],
-        #                 name="res_coming_indicator_" + str(index))
-        #             index += 1
-        #         if node not in all_origin:
-        #             model.addConstr(resources_variable_leaving[r][node] ==
-        #                             resources_variable_coming[r][node]+self.problem.resources_flow_node[node][r])
         return {
             "resources_variable_coming": resources_variable_coming,
             "resources_variable_leaving": resources_variable_leaving,
@@ -410,8 +398,7 @@ class LinearFlowSolver(SolverDO):
             }
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables = {}
-        all_variables["variables_edges"] = variables_edges
+        all_variables = {"variables_edges": variables_edges}
         constraint_loop = {}
         for vehicle in variables_edges:
             for e in variables_edges[vehicle]:
@@ -516,7 +503,6 @@ class LinearFlowSolver(SolverDO):
             node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             node_target = self.problem.target_vehicle[name_vehicles[vehicle]]
             same_node = node_origin == node_target
-            # neighbors_origin = graph.get_neighbors(self.problem.origin_vehicle[name_vehicles[vehicle]])
             constraints_out_flow[(vehicle, node_origin)] = model.add_constr(
                 mip.quicksum(
                     [
@@ -774,7 +760,6 @@ class LinearFlowSolver(SolverDO):
             "edges_in_per_vehicles_cluster": edges_in_per_vehicles_cluster,
             "edges_out_per_vehicles_cluster": edges_out_per_vehicles_cluster,
         }
-        # self.variable_decisions = variables_edges
         self.variable_decisions = all_variables
         self.model = model
         self.clusters_version = one_visit_per_cluster
@@ -909,7 +894,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                 == 1,
                 name="visitout_" + str(node),
             )
-        # model.update()
 
     def one_visit_per_clusters(
         self,
@@ -945,47 +929,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                 == 1,
                 name="visitout_" + str(cluster),
             )
-
-    # model.update()
-
-    # def resources_constraint(self, model: mip.Model, variables_edges, edges_in_all_vehicles, edges_out_all_vehicles):
-    #     resources = self.problem.resources_set
-    #     resources_variable_coming = {r: {node: model.add_var(var_type=mip.CONTINUOUS,
-    #                                                          name="res_coming_"+str(r)+"_" + str(node))
-    #                                  for node in edges_in_all_vehicles} for r in resources}
-    #     resources_variable_leaving = {r: {node: model.add_var(var_type=mip.CONTINUOUS,
-    #                                                           name="res_leaving_" + str(r) + "_" + str(node))
-    #                                       for node in edges_in_all_vehicles} for r in resources}
-    #     for v in self.problem.origin_vehicle:
-    #         for r in resources_variable_coming:
-    #             model.add_constr(resources_variable_coming[r][self.problem.origin_vehicle[v]]
-    #                              == self.problem.resources_flow_node[self.problem.origin_vehicle[v]][r])
-    #             model.add_constr(resources_variable_leaving[r][self.problem.origin_vehicle[v]]
-    #                              == self.problem.resources_flow_node[self.problem.origin_vehicle[v]][r])
-    #             # model.addConstr(resources_variable_coming[r][self.problem.target_vehicle[v]]==
-    #             #                 resources_variable_leaving[r][self.problem.target_vehicle[v]])
-    #     index = 0
-    #     all_origin = set(self.problem.origin_vehicle.values())
-    #     all_target = set(self.problem.target_vehicle.values())
-    #     for r in resources_variable_coming:
-    #         for node in resources_variable_coming[r]:
-    #             for vehicle, edge in edges_in_all_vehicles[node]:
-    #                 if edge[0] == edge[1]:
-    #                     continue
-    #
-    #
-    #                 model.addGenConstrIndicator(
-    #                     variables_edges[vehicle][edge],
-    #                     1,
-    #                     resources_variable_coming[r][node] ==
-    #                     resources_variable_leaving[r][edge[0]]+self.problem.resources_flow_edges[edge][r],
-    #                     name="res_coming_indicator_" + str(index))
-    #                 index += 1
-    #             if node not in all_origin:
-    #                 model.addConstr(resources_variable_leaving[r][node] ==
-    #                                 resources_variable_coming[r][node]+self.problem.resources_flow_node[node][r])
-    #     return {"resources_variable_coming": resources_variable_coming,
-    #             "resources_variable_leaving": resources_variable_leaving}
 
     def simple_capacity_constraint(
         self,
@@ -1030,9 +973,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                         ]
                     )
                 )
-                # redundant : d
-                # model.add_constr(consumption_per_vehicle[v][r]<=self.problem.capacities[v][r][1],
-                #                 name="constraint_capa_"+str(v)+"_"+str(r))
         return {"consumption_per_vehicle": consumption_per_vehicle}
 
     def time_evolution(
@@ -1056,8 +996,6 @@ class LinearFlowSolverVehicleType(SolverDO):
         }
         for v in self.problem.origin_vehicle:
             model.add_constr(time_coming[self.problem.origin_vehicle[v]] == 0)
-            # model.addConstr(time_coming[self.problem.origin_vehicle[v]]
-            #                 == self.problem.resources_flow_node[self.problem.origin_vehicle[v]])
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         all_target = set(self.problem.target_vehicle.values())
@@ -1069,15 +1007,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                     + self.problem.time_delta[edge[0]][edge[1]]
                     - 100000 * (1 - variables_edges[vehicle][edge])
                 )
-                # if edge[0] == edge[1]:
-                #     continue
-                # model.addGenConstrIndicator(
-                #         variables_edges[vehicle][edge],
-                #         1,
-                #         time_coming[node] ==
-                #         time_leaving[edge[0]] + self.problem.time_delta[edge[0]][edge[1]],
-                #         name="time_coming_" + str(index))
-                # index += 1
             if node not in all_origin:
                 model.add_constr(
                     time_leaving[node]
@@ -1120,8 +1049,7 @@ class LinearFlowSolverVehicleType(SolverDO):
             }
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables = {}
-        all_variables["variables_edges"] = variables_edges
+        all_variables = {"variables_edges": variables_edges}
         constraint_loop = {}
         for group_vehicle in variables_edges:
             for e in variables_edges[group_vehicle]:
@@ -1233,7 +1161,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                 name_vehicles[representative_vehicle]
             ]
             same_node = node_origin == node_target
-            # neighbors_origin = graph.get_neighbors(self.problem.origin_vehicle[name_vehicles[vehicle]])
             constraints_out_flow[(group_vehicle, node_origin)] = model.add_constr(
                 mip.quicksum(
                     [
@@ -1274,17 +1201,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                 <= 0,
                 name="outflow_" + str((group_vehicle, node_target)),
             )
-
-        # for group_vehicle in self.problem.group_identical_vehicles:
-        #     representative_vehicle = self.problem.group_identical_vehicles[group_vehicle][0]
-        #     origin = self.problem.origin_vehicle[name_vehicles[representative_vehicle]]
-        #     target = self.problem.target_vehicle[name_vehicles[representative_vehicle]]
-        #     model.addConstr(grb.quicksum([variables_edges[v][edge]
-        #                                   for v, edge in edges_out_all_vehicles[origin]
-        #                                   if self.problem.origin_vehicle[name_vehicles[v]] != origin]) == 0)
-        #     model.addConstr(grb.quicksum([variables_edges[v][edge]
-        #                                   for v, edge in edges_in_all_vehicles[target]
-        #                                   if self.problem.target_vehicle[name_vehicles[v]] != target]) == 0)
 
         for group_vehicle in self.problem.group_identical_vehicles:
             representative_vehicle = self.problem.group_identical_vehicles[
@@ -1362,12 +1278,6 @@ class LinearFlowSolverVehicleType(SolverDO):
             )
             all_variables.update(vars)
 
-        # if include_resources:
-        #     vars = self.resources_constraint(model=model,
-        #                                      variables_edges=variables_edges,
-        #                                      edges_in_all_vehicles=edges_in_all_vehicles,
-        #                                      edges_out_all_vehicles=edges_out_all_vehicles)
-        #   all_variables.update(vars)
         if include_time_evolution:
             vars = self.time_evolution(
                 model=model,
@@ -1391,7 +1301,6 @@ class LinearFlowSolverVehicleType(SolverDO):
             "edges_in_per_vehicles_cluster": edges_in_per_vehicles_cluster,
             "edges_out_per_vehicles_cluster": edges_out_per_vehicles_cluster,
         }
-        # self.variable_decisions = variables_edges
         self.variable_decisions = all_variables
         self.model = model
         self.clusters_version = one_visit_per_cluster
@@ -1431,47 +1340,6 @@ class LinearFlowSolverVehicleType(SolverDO):
         else:
             solutions = self.retrieve_solutions([0])
         return solutions
-
-    # TODO = adapt
-    # def solve_iterative(self, parameters_milp: ParametersMilp = None, **kwargs):
-    #     finished = False
-    #     do_lns = kwargs.get("do_lns", True)
-    #     nb_iteration_max = kwargs.get("nb_iteration_max", 10)
-    #     solutions: List[TemporaryResult] = self.solve(parameters_milp=parameters_milp, **kwargs)
-    #     if self.clusters_version:
-    #         subtour = SubtourAddingConstraintCluster(problem=self.problem, linear_solver=self)
-    #     else:
-    #         subtour = SubtourAddingConstraint(problem=self.problem,
-    #                                           linear_solver=self)
-    #     if max([len(solutions[0].connected_components_per_vehicle[v])
-    #             for v in solutions[0].connected_components_per_vehicle]) == 1:
-    #         finished = True
-    #         return solutions
-    #     constraints_added = subtour.adding_component_constraints([solutions[0]])
-    #     self.model.update()
-    #     all_solutions = solutions
-    #     nb_iteration = 0
-    #     while not finished:
-    #         rebuilt_dict = solutions[0].rebuilt_dict
-    #         c = ConstraintHandlerOrWarmStart(linear_solver=self, problem=self.problem, do_lns=do_lns)
-    #         c.adding_constraint(rebuilt_dict)
-    #         self.model.update()
-    #         solutions: List[TemporaryResult] = self.solve(parameters_milp=parameters_milp, **kwargs)
-    #         all_solutions += solutions
-    #         if self.clusters_version:
-    #             subtour = SubtourAddingConstraintCluster(problem=self.problem, linear_solver=self)
-    #         else:
-    #             subtour = SubtourAddingConstraint(problem=self.problem,
-    #                                               linear_solver=self)
-    #         print(len(solutions[0].component_global))
-    #         constraints_added = subtour.adding_component_constraints([solutions[0]])
-    #         if max([len(solutions[0].connected_components_per_vehicle[v])
-    #                for v in solutions[0].connected_components_per_vehicle]) == 1 and not do_lns:
-    #             finished = True
-    #             return all_solutions
-    #         nb_iteration += 1
-    #         finished = nb_iteration > nb_iteration_max
-    #     return all_solutions
 
 
 def build_path_from_vehicle_type_flow(
@@ -1567,7 +1435,6 @@ class ConstraintHandlerOrWarmStart:
             edges_to_add[v].update(
                 {(e0, e1) for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])}
             )
-            # print("len rebuilt : ", len(rebuilt_dict[v]))
             print("edges to add , ", edges_to_add)
             edges_missing = {
                 (v, e)
@@ -1582,7 +1449,6 @@ class ConstraintHandlerOrWarmStart:
                 self.linear_solver.model.remove(
                     self.linear_solver.constraint_on_edge[iedge]
                 )
-        # self.linear_solver.model.update()
         self.linear_solver.constraint_on_edge = {}
         edges_to_constraint = {v: set() for v in range(self.problem.number_vehicle)}
         vehicle_to_not_constraints = set(
@@ -1732,7 +1598,6 @@ def rebuild_routine(
             rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
-            # index_path = {rebuilded_path[i]: i for i in range(len(rebuilded_path))}
             index_path = {}
             for i in range(len(rebuilded_path)):
                 if rebuilded_path[i] not in index_path:
@@ -1756,8 +1621,6 @@ def rebuild_routine(
             backup_min_dist = float("inf")
             for e in edge_out_of_interest:
                 index_in = index_path[e[0]][0]
-                # if index_in == total_length_path-1:
-                #     continue
                 index_in_1 = min(index_path[e[0]][0] + 1, total_length_path - 1)
                 next_node_1 = rebuilded_path[index_in_1]
                 component_e1 = node_to_component[e[1]]
@@ -1800,15 +1663,6 @@ def rebuild_routine(
                 return None
             if min_out_edge is None and False:
                 return None
-                # e = backup_min_in_edge
-                # graph.add_edge(e[0], e[1],
-                #                weight=evaluate_function_indexes(e[0], e[1]))
-                # graph.add_edge(e[1], e[0],
-                #                weight=evaluate_function_indexes(e[1], e[0]))
-                # min_out_edge = backup_min_out_edge
-                # min_in_edge = backup_min_in_edge
-                # min_index_in_path = backup_min_index_in_path
-                # min_component = backup_min_component
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
@@ -1974,7 +1828,6 @@ def update_model_cluster_tsp(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            # print(s)
             edge_in_of_interest = [
                 e
                 for n in s[0]
@@ -2025,7 +1878,6 @@ def update_model_cluster_tsp(
                         name="component_in_" + str(s)[:10],
                     )
                 ]
-    # lp_solver.model.update()
     return list_constraints
 
 
@@ -2041,7 +1893,6 @@ def update_model(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            # print(s)
             edge_in_of_interest = [
                 e
                 for n in s[0]
@@ -2109,11 +1960,8 @@ def update_model(
         c = max(components_global, key=lambda x: x[1])
         for s in [c]:
             use_big_m = True
-            # use_indicator = False
             for node in s[0]:
                 if node not in constraints_order:
-                    # if random.random() < 0.8:
-                    #    continue
                     for vehicle, edge in edges_in_all_vehicles[node]:
                         if edge[0] == edge[1]:
                             continue
@@ -2131,12 +1979,6 @@ def update_model(
                                 ),
                                 name="order_" + str(node),
                             )  # Big M constraint, TODO
-                        # if use_indicator:
-                        #     constraints_order[node] = lp_solver.model.addGenConstrIndicator(
-                        #         lp_solver.variable_decisions["variables_edges"][vehicle][edge], 1,
-                        #         variable_order[node] == variable_order[edge[0]] + 1,
-                        #     name="order_"+str(node))
-    # lp_solver.model.update()
     return list_constraints
 
 
@@ -2152,7 +1994,6 @@ def update_model_lazy(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            # print(s)
             edge_in_of_interest = [
                 e
                 for n in s[0]
@@ -2209,7 +2050,6 @@ def update_model_lazy(
                 )
                 for node in edges_in_all_vehicles
             }
-            # lp_solver.model.update()
             for vehicle in range(lp_solver.problem.number_vehicle):
                 node_origin = lp_solver.problem.origin_vehicle[vehicle]
                 constraints_order[node_origin] = lp_solver.model.add_constr(
@@ -2219,11 +2059,8 @@ def update_model_lazy(
         c = max(components_global, key=lambda x: x[1])
         for s in [c]:
             use_big_m = True
-            # use_indicator = False
             for node in s[0]:
                 if node not in constraints_order:
-                    # if random.random() < 0.8:
-                    #     continue
                     for vehicle, edge in edges_in_all_vehicles[node]:
                         if edge[0] == edge[1]:
                             continue
@@ -2240,12 +2077,6 @@ def update_model_lazy(
                                     ][edge]
                                 )
                             )  # Big M constraint, TODO
-    #                     if use_indicator:
-    #                         constraints_order[node] = lp_solver.model.addGenConstrIndicator(
-    #                             lp_solver.variable_decisions["variables_edges"][vehicle][edge], 1,
-    #                             variable_order[node] == variable_order[edge[0]] + 1,
-    #                         name="order_"+str(node))
-    # lp_solver.model.update()
     return list_constraints
 
 

@@ -120,18 +120,6 @@ class PostProMSRCPSPPreemptive(PostProcessSolution):
                 )
                 fit = self.aggreg_from_sol(new_solution)
                 result_storage.list_solution_fits += [(new_solution, fit)]
-        if False:
-            solver = LS_RCPSP_Solver(model=self.problem, ls_solver=LS_SOLVER.SA)
-            s, f = result_storage.get_last_best_solution()
-            s = schedule_solution_preemptive_to_variant(solution=s)
-            print("best ", f)
-            # if self.problem != s.problem:
-            #     s.change_problem(self.problem)
-            result_store = solver.solve(nb_iteration_max=300, init_solution=s)
-            solution, f = result_store.get_last_best_solution()
-            result_storage.list_solution_fits += [
-                (solution, self.aggreg_from_sol(solution))
-            ]
         return result_storage
 
 
@@ -224,8 +212,6 @@ def sgs_variant(solution: MS_RCPSPSolution, problem: MS_RCPSPModel, predecessors
         schedule=new_proposed_schedule,
         employee_usage=solution.employee_usage,
     )
-    # print("New : ", problem.evaluate(new_solution), problem.satisfy(new_solution))
-    # print("Old : ", problem.evaluate(solution), problem.satisfy(solution))
     return new_solution
 
 

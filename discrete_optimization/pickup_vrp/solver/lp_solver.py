@@ -293,8 +293,6 @@ class LinearFlowSolver(SolverDO):
                         r
                     ]
                 )
-                # model.addConstr(resources_variable_coming[r][self.problem.target_vehicle[v]]==
-                #                 resources_variable_leaving[r][self.problem.target_vehicle[v]])
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         all_target = set(self.problem.target_vehicle.values())
@@ -390,8 +388,6 @@ class LinearFlowSolver(SolverDO):
         }
         for v in self.problem.origin_vehicle:
             model.addConstr(time_coming[self.problem.origin_vehicle[v]] == 0)
-            # model.addConstr(time_coming[self.problem.origin_vehicle[v]]
-            #                 == self.problem.resources_flow_node[self.problem.origin_vehicle[v]])
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         all_target = set(self.problem.target_vehicle.values())
@@ -463,7 +459,6 @@ class LinearFlowSolver(SolverDO):
                 for j in range(nb_vehicle)
             }
         if optimize_span:
-            # model.update()
             self.spans = {
                 j: model.addVar(vtype=grb.GRB.INTEGER, name="span_" + str(j))
                 for j in range(nb_vehicle)
@@ -481,12 +476,10 @@ class LinearFlowSolver(SolverDO):
                     )
                 )
                 model.addConstr(self.objective >= self.spans[j], name="obj")
-            # model.setObjective(self.objective)
             model.update()
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables = {}
-        all_variables["variables_edges"] = variables_edges
+        all_variables = {"variables_edges": variables_edges}
         constraint_loop = {}
         for vehicle in variables_edges:
             for e in variables_edges[vehicle]:
@@ -591,7 +584,6 @@ class LinearFlowSolver(SolverDO):
             node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             node_target = self.problem.target_vehicle[name_vehicles[vehicle]]
             same_node = node_origin == node_target
-            # neighbors_origin = graph.get_neighbors(self.problem.origin_vehicle[name_vehicles[vehicle]])
             constraints_out_flow[(vehicle, node_origin)] = model.addConstr(
                 grb.quicksum(
                     [
@@ -854,13 +846,6 @@ class LinearFlowSolver(SolverDO):
             all_variables.update(vars)
 
         model.update()
-        # model.setParam("TimeLimit", 800)
-        # model.modelSense = grb.GRB.MINIMIZE
-        # model.setParam(grb.GRB.Param.Threads, 4)
-        # model.setParam(grb.GRB.Param.PoolSolutions, 10000)
-        # model.setParam(grb.GRB.Param.Method, -1)
-        # model.setParam("MIPGapAbs", 0.01)
-        # model.setParam("MIPGap", 0.003)
         model.setParam("Heuristics", 0.5)
         self.edges_info = {
             "edges_in_all_vehicles": edges_in_all_vehicles,
@@ -872,7 +857,6 @@ class LinearFlowSolver(SolverDO):
             "edges_in_per_vehicles_cluster": edges_in_per_vehicles_cluster,
             "edges_out_per_vehicles_cluster": edges_out_per_vehicles_cluster,
         }
-        # self.variable_decisions = variables_edges
         self.variable_decisions = all_variables
         self.model = model
         self.clusters_version = one_visit_per_cluster
@@ -1146,8 +1130,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                         r
                     ]
                 )
-                # model.addConstr(resources_variable_coming[r][self.problem.target_vehicle[v]]==
-                #                 resources_variable_leaving[r][self.problem.target_vehicle[v]])
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         all_target = set(self.problem.target_vehicle.values())
@@ -1243,8 +1225,6 @@ class LinearFlowSolverVehicleType(SolverDO):
         }
         for v in self.problem.origin_vehicle:
             model.addConstr(time_coming[self.problem.origin_vehicle[v]] == 0)
-            # model.addConstr(time_coming[self.problem.origin_vehicle[v]]
-            #                 == self.problem.resources_flow_node[self.problem.origin_vehicle[v]])
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         all_target = set(self.problem.target_vehicle.values())
@@ -1299,8 +1279,7 @@ class LinearFlowSolverVehicleType(SolverDO):
             }
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables = {}
-        all_variables["variables_edges"] = variables_edges
+        all_variables = {"variables_edges": variables_edges}
         constraint_loop = {}
         for group_vehicle in variables_edges:
             for e in variables_edges[group_vehicle]:
@@ -1412,7 +1391,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                 name_vehicles[representative_vehicle]
             ]
             same_node = node_origin == node_target
-            # neighbors_origin = graph.get_neighbors(self.problem.origin_vehicle[name_vehicles[vehicle]])
             constraints_out_flow[(group_vehicle, node_origin)] = model.addConstr(
                 lhs=grb.quicksum(
                     [
@@ -1456,17 +1434,6 @@ class LinearFlowSolverVehicleType(SolverDO):
                 sense=grb.GRB.LESS_EQUAL,
                 name="outflow_" + str((group_vehicle, node_target)),
             )
-
-        # for group_vehicle in self.problem.group_identical_vehicles:
-        #     representative_vehicle = self.problem.group_identical_vehicles[group_vehicle][0]
-        #     origin = self.problem.origin_vehicle[name_vehicles[representative_vehicle]]
-        #     target = self.problem.target_vehicle[name_vehicles[representative_vehicle]]
-        #     model.addConstr(grb.quicksum([variables_edges[v][edge]
-        #                                   for v, edge in edges_out_all_vehicles[origin]
-        #                                   if self.problem.origin_vehicle[name_vehicles[v]] != origin]) == 0)
-        #     model.addConstr(grb.quicksum([variables_edges[v][edge]
-        #                                   for v, edge in edges_in_all_vehicles[target]
-        #                                   if self.problem.target_vehicle[name_vehicles[v]] != target]) == 0)
 
         for group_vehicle in self.problem.group_identical_vehicles:
             representative_vehicle = self.problem.group_identical_vehicles[
@@ -1582,7 +1549,6 @@ class LinearFlowSolverVehicleType(SolverDO):
             "edges_in_per_vehicles_cluster": edges_in_per_vehicles_cluster,
             "edges_out_per_vehicles_cluster": edges_out_per_vehicles_cluster,
         }
-        # self.variable_decisions = variables_edges
         self.variable_decisions = all_variables
         self.model = model
         self.clusters_version = one_visit_per_cluster
@@ -1715,27 +1681,6 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
     def __init__(self, problem: GPDP):
         super().__init__(problem)
 
-    # def retrieve_solutions(self, range_solutions: Iterable[int]):
-    #     solutions = []
-    #     fits = []
-    #     for s in range_solutions:
-    #         xsolution = {v: {} for v in self.variable_decisions["variables_edges"]}
-    #         self.model.params.SolutionNumber = s
-    #         obj = self.model.getAttr("PoolObjVal")
-    #         for vehicle in self.variable_decisions["variables_edges"]:
-    #             for edge in self.variable_decisions["variables_edges"][vehicle]:
-    #                 value = self.variable_decisions["variables_edges"][vehicle][edge].getAttr('Xn')
-    #                 if value <= 0.1:
-    #                     # xsolution[vehicle][edge] = 0
-    #                     continue
-    #                 xsolution[vehicle][edge] = 1
-    #         solutions += [(xsolution, obj)]
-    #     list_temporary_results = build_graph_solutions(solutions=solutions,
-    #                                                    lp_solver=self)
-    #     for temp in list_temporary_results:
-    #         reevaluate_result(temp, problem=self.problem)
-    #     return list_temporary_results
-
     def solve(
         self, parameters_milp: ParametersMilp = None, **kwargs
     ) -> List[TemporaryResult]:
@@ -1759,9 +1704,6 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             for v in self.variable_decisions["variables_edges"]
             for e in self.variable_decisions["variables_edges"][v]
         ]
-        # subtour = SubtourAddingConstraint(problem=self.problem,
-        #                                   linear_solver=self,
-        #                                   lazy=True)
 
         def callback(model, where):
             if where == grb.GRB.Callback.MIPSOL:
@@ -1872,16 +1814,6 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                     constraints_added = subtour.adding_component_constraints(
                         [temporary_result]
                     )
-                # for v in sorted_connected_component:
-                #     if len(sorted_connected_component[v]) > 1:
-                #         for s, l in sorted_connected_component[v][:1]:
-                #              if self.problem.target_vehicle[v] not in s:
-                #                   model.cbLazy(grb.quicksum(self.variable_decisions["variables_edges"][v][(i, j)]
-                #                                             for i in s
-                #                                             for j in s
-                #                                             if (i, j) in
-                #                                             self.variable_decisions["variables_edges"][v])
-                #                               <= l-1)
 
         self.model.Params.lazyConstraints = 1
         self.model.optimize(callback)
@@ -1913,11 +1845,6 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         solutions: List[TemporaryResult] = self.solve(
             parameters_milp=parameters_milp, no_warm_start=True, **kwargs
         )
-        # if self.clusters_version:
-        #     subtour = SubtourAddingConstraintCluster(problem=self.problem, linear_solver=self)
-        # else:
-        #     subtour = SubtourAddingConstraint(problem=self.problem,
-        #                                       linear_solver=self)
         self.model.update()
         all_solutions = solutions
         nb_iteration = 0
@@ -1930,8 +1857,6 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         import time
 
         while not finished:
-            # self.model.reset()
-            # self.init_model(**kwargs)
             rebuilt_dict = solutions[0].rebuilt_dict
             if all(rebuilt_dict[v] is not None for v in rebuilt_dict):
                 json.dump(
@@ -1968,7 +1893,6 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            # constraints_added = subtour.adding_component_constraints([solutions[0]])
             nb_iteration += 1
             finished = nb_iteration > nb_iteration_max
         return all_solutions
@@ -2032,15 +1956,14 @@ class SubtourAddingConstraint:
                                     ]
 
                             ind += 1
-                    if True:
-                        c += update_model(
-                            self.problem,
-                            self.linear_solver,
-                            l.connected_components_per_vehicle[v],
-                            self.linear_solver.edges_info["edges_in_all_vehicles"],
-                            self.linear_solver.edges_info["edges_out_all_vehicles"],
-                            do_order=False,
-                        )
+                    c += update_model(
+                        self.problem,
+                        self.linear_solver,
+                        l.connected_components_per_vehicle[v],
+                        self.linear_solver.edges_info["edges_in_all_vehicles"],
+                        self.linear_solver.edges_info["edges_out_all_vehicles"],
+                        do_order=False,
+                    )
         self.linear_solver.model.update()
 
 
@@ -2088,7 +2011,6 @@ class ConstraintHandlerOrWarmStart:
             edges_to_add[v].update(
                 {(e0, e1) for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])}
             )
-            # print("len rebuilt : ", len(rebuilt_dict[v]))
             print("edges to add , ", edges_to_add)
             edges_missing = {
                 (v, e)
@@ -2167,54 +2089,27 @@ class ConstraintHandlerOrWarmStart:
                     )
                 )
                 j = random.randint(0, len(path) - 50)
-                if True:
-                    for p in path:
-                        if p in edges_to_constraint[v]:
-                            edges_to_constraint[v].remove(p)
-                    for p in path[j : min(len(path), j + 350)]:
-                        for sets in [
-                            self.linear_solver.edges_info["edges_in_per_vehicles"][
-                                v
-                            ].get(p[0], set()),
-                            self.linear_solver.edges_info["edges_in_per_vehicles"][
-                                v
-                            ].get(p[1], set()),
-                            self.linear_solver.edges_info["edges_out_per_vehicles"][
-                                v
-                            ].get(p[0], set()),
-                            self.linear_solver.edges_info["edges_out_per_vehicles"][
-                                v
-                            ].get(p[1], set()),
-                        ]:
-                            for set_ in sets:
-                                if set_ in edges_to_constraint[v]:
-                                    edges_to_constraint[v].remove(set_)
-
-                # for kk in path[:j] + path[min(len(path), j + 400):]:
-                #    if kk not in edges_to_constraint[v]:
-                #        if random.random() < 0.5:
-                #            edges_to_constraint[v].add(kk)
-                if False:
-                    for kk in path[:j] + path[min(len(path), j + 400) :]:
-                        if kk not in edges_to_constraint[v]:
-                            edges_to_constraint[v].add(kk)
-                        for sets in [
-                            self.linear_solver.edges_info["edges_in_per_vehicles"][v][
-                                kk[0]
-                            ],
-                            self.linear_solver.edges_info["edges_in_per_vehicles"][v][
-                                kk[1]
-                            ],
-                            self.linear_solver.edges_info["edges_out_per_vehicles"][v][
-                                kk[0]
-                            ],
-                            self.linear_solver.edges_info["edges_out_per_vehicles"][v][
-                                kk[1]
-                            ],
-                        ]:
-                            for set_ in sets:
-                                if set_ not in edges_to_constraint[v]:
-                                    edges_to_constraint[v].add(set_)
+                for p in path:
+                    if p in edges_to_constraint[v]:
+                        edges_to_constraint[v].remove(p)
+                for p in path[j : min(len(path), j + 350)]:
+                    for sets in [
+                        self.linear_solver.edges_info["edges_in_per_vehicles"][v].get(
+                            p[0], set()
+                        ),
+                        self.linear_solver.edges_info["edges_in_per_vehicles"][v].get(
+                            p[1], set()
+                        ),
+                        self.linear_solver.edges_info["edges_out_per_vehicles"][v].get(
+                            p[0], set()
+                        ),
+                        self.linear_solver.edges_info["edges_out_per_vehicles"][v].get(
+                            p[1], set()
+                        ),
+                    ]:
+                        for set_ in sets:
+                            if set_ in edges_to_constraint[v]:
+                                edges_to_constraint[v].remove(set_)
 
         print(
             sum([len(edges_to_constraint[v]) for v in edges_to_constraint]),
@@ -2271,8 +2166,6 @@ def build_the_cycles(flow_solution, component, start_index, end_index):
     }
     innn = {e[1]: e for e in edge_of_interest}
     outt = {e[0]: e for e in edge_of_interest}
-    # innn = {}
-    # outt = {}
 
     if start_index in outt:
         some_node = start_index
@@ -2322,7 +2215,6 @@ def rebuild_routine(
             rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
-            # index_path = {rebuilded_path[i]: i for i in range(len(rebuilded_path))}
             index_path = {}
             for i in range(len(rebuilded_path)):
                 if rebuilded_path[i] not in index_path:
@@ -2346,8 +2238,6 @@ def rebuild_routine(
             backup_min_dist = float("inf")
             for e in edge_out_of_interest:
                 index_in = index_path[e[0]][0]
-                # if index_in == total_length_path-1:
-                #     continue
                 index_in_1 = min(index_path[e[0]][0] + 1, total_length_path - 1)
                 next_node_1 = rebuilded_path[index_in_1]
                 component_e1 = node_to_component[e[1]]
@@ -2390,15 +2280,6 @@ def rebuild_routine(
                 return None
             if min_out_edge is None and False:
                 return None
-                # e = backup_min_in_edge
-                # graph.add_edge(e[0], e[1],
-                #                weight=evaluate_function_indexes(e[0], e[1]))
-                # graph.add_edge(e[1], e[0],
-                #                weight=evaluate_function_indexes(e[1], e[0]))
-                # min_out_edge = backup_min_out_edge
-                # min_in_edge = backup_min_in_edge
-                # min_index_in_path = backup_min_index_in_path
-                # min_component = backup_min_component
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
@@ -2463,7 +2344,6 @@ def rebuild_routine_variant(
             rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
-            # index_path = {rebuilded_path[i]: i for i in range(len(rebuilded_path))}
             index_path = {}
             for i in range(len(rebuilded_path)):
                 if rebuilded_path[i] not in index_path:
@@ -2480,8 +2360,6 @@ def rebuild_routine_variant(
             backup_min_dist = float("inf")
             for e in edge_out_of_interest:
                 index_in = index_path[e[0]][0]
-                # if index_in == total_length_path-1:
-                #     continue
                 index_in_1 = min(index_path[e[0]][0] + 1, total_length_path - 1)
                 component_e1 = node_to_component[e[1]]
                 if (
@@ -2499,15 +2377,6 @@ def rebuild_routine_variant(
                 return None
             if min_out_edge is None and False:
                 return None
-                # e = backup_min_in_edge
-                # graph.add_edge(e[0], e[1],
-                #                weight=evaluate_function_indexes(e[0], e[1]))
-                # graph.add_edge(e[1], e[0],
-                #                weight=evaluate_function_indexes(e[1], e[0]))
-                # min_out_edge = backup_min_out_edge
-                # min_in_edge = backup_min_in_edge
-                # min_index_in_path = backup_min_index_in_path
-                # min_component = backup_min_component
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
@@ -2526,10 +2395,6 @@ def rebuild_routine_variant(
                 print("path component ", paths_component[min_component])
                 print("New component : ", new_component)
             rebuilded_path = rebuilded_path + new_component
-            for e1, e2 in zip(new_component[:-1], new_component[1:]):
-                if (e1, e2) not in graph.edges():
-                    pass
-                    # graph.add_edge(e1, e2, distance=evaluate_function_indexes(e1, e2))
             path_set = set(rebuilded_path)
             total_length_path = len(rebuilded_path)
             component_reconnected.add(min_component)
@@ -2625,7 +2490,7 @@ def reevaluate_result(
                 end_index=problem.target_vehicle[v],
             )
             node_to_component[v].update({p: i for p in paths_component[v][i]})
-        # print("len node to component : ", len(node_to_component[v]))
+
         def f(n1, n2):
             return problem.evaluate_function_node(n1, n2)
 
@@ -2724,7 +2589,6 @@ def update_model_cluster_tsp(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            # print(s)
             edge_in_of_interest = [
                 e
                 for n in s[0]
@@ -2897,8 +2761,6 @@ def update_model(
                 use_indicator = False
                 for node in s[0]:
                     if node not in constraints_order:
-                        # if random.random() < 0.8:
-                        #    continue
                         for vehicle, edge in edges_in_all_vehicles[node]:
                             if edge[0] == edge[1]:
                                 continue
@@ -3001,7 +2863,6 @@ def update_model_lazy(
                 )
                 for node in edges_in_all_vehicles
             }
-            # lp_solver.model.update()
             for vehicle in range(lp_solver.problem.number_vehicle):
                 node_origin = lp_solver.problem.origin_vehicle[vehicle]
                 constraints_order[node_origin] = lp_solver.model.addConstr(
@@ -3014,8 +2875,6 @@ def update_model_lazy(
             use_indicator = False
             for node in s[0]:
                 if node not in constraints_order:
-                    # if random.random() < 0.8:
-                    #     continue
                     for vehicle, edge in edges_in_all_vehicles[node]:
                         if edge[0] == edge[1]:
                             continue

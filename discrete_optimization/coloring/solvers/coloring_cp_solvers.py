@@ -254,7 +254,6 @@ class ColoringCP(CPSolver):
                 )
                 for i in range_node:
                     if i in subpart_color and dict_color[i] < current_nb_color - 2:
-                        # print("constraint color_graph["+str(i)+"] == "+ str(dict_color[i])+";\n")
                         child.add_string(
                             "constraint color_graph["
                             + str(i)
@@ -294,7 +293,6 @@ class ColoringCP(CPSolver):
                         print(iteration, " : found solution ", nb_color)
                     except:
                         print(iteration, " failed ")
-                    # print({i: res["color_graph"][i-1] for i in range_node})
                 iteration += 1
         fit = self.coloring_problem.evaluate(current_best_solution)
         return current_best_solution, fit

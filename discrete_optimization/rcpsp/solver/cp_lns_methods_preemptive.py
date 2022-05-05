@@ -109,20 +109,6 @@ class PostProLeftShift(PostProcessSolution):
         )
         fit = self.aggreg_from_sol(new_solution)
         result_storage.add_solution(new_solution, fit)
-        # if False:
-        #     new_solution = sgs_variant(solution=result_storage.get_best_solution(),
-        #                                problem=self.problem,
-        #                                predecessors_dict=self.immediate_predecessors)
-        #     fit = self.aggreg_from_sol(new_solution)
-        #     result_storage.add_solution(new_solution, fit)
-        #     import random
-        #     for s in random.sample(result_storage.list_solution_fits,
-        #                            min(len(result_storage.list_solution_fits), 2)):
-        #         new_solution = sgs_variant(solution=s[0],
-        #                                    problem=self.problem,
-        #                                    predecessors_dict=self.immediate_predecessors)
-        #         fit = self.aggreg_from_sol(new_solution)
-        #         result_storage.add_solution(new_solution, fit)
         if self.do_ls:
             solver = LS_RCPSP_Solver(model=self.problem, ls_solver=LS_SOLVER.SA)
             s = result_storage.get_best_solution().copy()
@@ -136,9 +122,6 @@ class PostProLeftShift(PostProcessSolution):
             result_storage.list_solution_fits += [
                 (solution, self.aggreg_from_sol(solution))
             ]
-            # for solution, f in result_store.list_solution_fits:
-            #     result_storage.list_solution_fits += [(solution,
-            #                                            self.aggreg_from_sol(solution))]
         return result_storage
 
 
@@ -355,9 +338,6 @@ def constraints_strings(
             )
             list_strings += [string1Dur]
     for job in jobs_to_fix:
-        # continue
-        # sif job in subtasks:
-        #   continue
         is_paused = len(current_solution.rcpsp_schedule[job]["starts"]) > 1
         is_paused_str = "true" if is_paused else "false"
         list_strings += [
@@ -441,7 +421,6 @@ def constraints_strings(
                     sign=SignEnum.LEQ,
                     part_id=k + 1,
                 )
-                # list_strings += [string2Start]
                 list_strings += [string2Start, string1Start]
             string1Dur = cp_solver.constraint_duration_string_preemptive_i(
                 task=job, duration=0, sign=SignEnum.EQUAL, part_id=k + 1
@@ -602,7 +581,6 @@ class NeighborFixStartSubproblem(ConstraintHandler):
         current_solution: RCPSPSolutionPreemptive = current_solution
         max_time = get_max_time_solution(solution=current_solution)
         method = random.choices([0, 1, 2], weights=[0.5, 0.1, 0.4], k=1)[0]
-        # method = 0
         if method == 0:
             subtasks = create_subproblem_cut_time(
                 current_solution=current_solution, neighbor_fix_problem=self
@@ -616,12 +594,7 @@ class NeighborFixStartSubproblem(ConstraintHandler):
                 current_solution=current_solution, neighbor_fix_problem=self
             )
         subtasks = set(subtasks)
-        # if len(subtasks) > self.nb_jobs_subproblem:
-        #     subtasks = random.sample(subtasks,
-        #                              self.nb_jobs_subproblem)
         print(len(subtasks), " Tasks ")
-        # subtasks.update([l for l in current_solution.rcpsp_schedule
-        #                  if current_solution.get_end_time(l) >= max_time-50])
         eval = self.problem.evaluate(current_solution)
         if method == 0 and False:
             list_strings = constraints_strings(
@@ -660,18 +633,6 @@ class NeighborFixStartSubproblem(ConstraintHandler):
                     cp_solver=cp_solver,
                     constraint_max_time=False,
                 )
-                if False:
-                    list_strings = constraints_strings(
-                        current_solution=current_solution,
-                        subtasks=subtasks,
-                        plus_delta=6000,
-                        minus_delta=6000,
-                        plus_delta_2=1,
-                        minus_delta_2=1,
-                        jobs_to_fix=set(self.problem.tasks_list),
-                        cp_solver=cp_solver,
-                        constraint_max_time=False,
-                    )
         for s in list_strings:
             child_instance.add_string(s)
         child_instance.add_string(
@@ -765,11 +726,8 @@ def create_subproblems_random_and_predecessors(
                         k, {}
                     )
                 )
-            # if l != self.problem.sink_task])
         subtasks.update(task_intersect)
         len_subtask = len(subtasks)
-    # subtasks = random.sample(subtasks,
-    #                          self.nb_jobs_subproblem)
     return subtasks
 
 
@@ -817,34 +775,6 @@ def create_subproblems_problems(
                     neighbor_fix_problem.graph_rcpsp.get_ancestors_activities(c)
                 )
                 subtasks.update(neighbor_fix_problem.graph_rcpsp.get_pred_activities(c))
-            if False:
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_neighbors_constraints(t1))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_neighbors_constraints(t2))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_pred_constraints(t1))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_pred_constraints(t2))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_neighbors_constraints(t2))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_next_activities(t1))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_pred_activities(t1))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_next_activities(t2))
-                )
-                subtasks.update(
-                    list(neighbor_fix_problem.graph_rcpsp.get_pred_activities(t2))
-                )
             len_subtasks = len(subtasks)
             j += 1
             print("found problem")
@@ -854,8 +784,6 @@ def create_subproblems_problems(
                 current_solution, neighbor_fix_problem, subtasks
             )
         print(len(subtasks), " tasks 2")
-        # if len(subtasks) > 2*neighbor_fix_problem.nb_jobs_subproblem:
-        #     subtasks = random.sample(subtasks, 2*neighbor_fix_problem.nb_jobs_subproblem)
         return subtasks
     else:
         return create_subproblem_cut_time(current_solution, neighbor_fix_problem)
@@ -925,10 +853,7 @@ class NeighborFlexibleStart(ConstraintHandler):
             )
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
-        # current_solution, fit = result_storage.get_best_solution_fit()
         current_solution: RCPSPSolutionPreemptive = current_solution
-        # print("Nb task preempted ", current_solution.get_nb_task_preemption())
-        # print("Max nb of preemption ", current_solution.get_max_preempted())
         max_time = get_max_time_solution(current_solution)
         last_jobs = get_tasks_ending_between_two_times(
             solution=current_solution,
@@ -1058,10 +983,6 @@ def get_ressource_breaks(
                 ),
                 None,
             )
-            # if first_possible_start_before is not None:
-            #     first_possible_start_before = \
-            #         max(0,
-            #             first_possible_start_before-problem_calendar.mode_details[t][1]["duration"]+1)
             constraints[r][t] = (
                 first_possible_start_before,
                 first_possible_start_future,
@@ -1203,11 +1124,7 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
         result_storage: ResultStorage,
         last_result_store: ResultStorage = None,
     ) -> Iterable[Any]:
-        # solution, fit = result_storage.get_best_solution_fit()
         list_strings = []
-        # for s, f in list(result_storage.list_solution_fits):
-        #    if "satisfy" in s.__dict__.keys() and s.satisfy:
-        #        last_result_store.list_solution_fits += [(s, f)]
         r = random.random()
         if r <= 0.2:
             solution, fit = last_result_store.get_last_best_solution()
@@ -1247,8 +1164,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                 )
                 child_instance.add_string(s)
                 list_strings += [s]
-                # print("Res", r)
-                # print("Time", index)
         satisfiable = [
             (s, f)
             for s, f in last_result_store.list_solution_fits
@@ -1450,64 +1365,3 @@ def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
         problem=rcpsp_model, list_params=params, list_proba=probas
     )
     return constraint_handler
-
-
-# def sgs_variant(solution: RCPSPSolutionPreemptive,
-#                 problem: RCPSPModelPreemptive,
-#                 predecessors_dict):
-#     task_that_be_shifted_left = []
-#     new_proposed_schedule = {}
-#     # 1, 2
-#     resource_avail_in_time = {}
-#     new_horizon = min(solution.rcpsp_schedule[problem.sink_task]["end_time"]*4, problem.horizon)
-#     for res in problem.resources_list:
-#         if problem.is_varying_resource():
-#             resource_avail_in_time[res] = np.copy(problem.resources[res][:new_horizon + 1])
-#     worker_avail_in_time = {}
-#     for i in problem.employees:
-#         worker_avail_in_time[i] = list(problem.employees[i].calendar_employee)
-#     sorted_tasks = sorted(solution.schedule.keys(),
-#                           key=lambda x: (solution.schedule[x]["start_time"], x))
-#     for task in sorted_tasks:
-#         employee_used = [emp for emp in solution.employee_usage.get(task, {})
-#                          if len(solution.employee_usage[task][emp]) > 0]
-#         times_predecessors = [new_proposed_schedule[t]["end_time"]
-#                               if t in new_proposed_schedule
-#                               else solution.schedule[t]["end_time"]
-#                               for t in predecessors_dict[task]]
-#         if len(times_predecessors) > 0:
-#             min_time = max(times_predecessors)
-#         else:
-#             min_time = 0
-#         new_starting_time = solution.schedule[task]["start_time"]
-#         if solution.schedule[task]["start_time"]==solution.schedule[task]["end_time"]:
-#             new_starting_time = min_time
-#         else:
-#             for t in range(min_time, solution.schedule[task]["start_time"]+1):
-#                 if all(all(worker_avail_in_time[emp][time]
-#                            for time in range(t,
-#                                              t + solution.schedule[task]["end_time"]-solution.schedule[task]["start_time"]))
-#                        for emp in employee_used) and \
-#                         all(resource_avail_in_time[res][time] >= problem.mode_details[task][solution.modes[task]].get(res, 0)
-#                             for res in
-#                             problem.resources_list for time in range(t,
-#                                                                      t + solution.schedule[task]["end_time"]
-#                                                                      - solution.schedule[task]["start_time"])):
-#                     new_starting_time = t
-#                     break
-#         duration = solution.schedule[task]["end_time"]-solution.schedule[task]["start_time"]
-#         new_proposed_schedule[task] = {"start_time": new_starting_time,
-#                                        "end_time": new_starting_time+duration}
-#         for res in problem.resources_list:
-#             resource_avail_in_time[res][new_starting_time:new_starting_time+duration] \
-#                 -= problem.mode_details[task][solution.modes[task]].get(res, 0)
-#         for t in range(new_starting_time, new_starting_time+duration):
-#             for emp in employee_used:
-#                 worker_avail_in_time[emp][t] = False
-#     new_solution = MS_RCPSPSolution(problem=problem,
-#                                     modes=solution.modes,
-#                                     schedule=new_proposed_schedule,
-#                                     employee_usage=solution.employee_usage)
-#     # print("New : ", problem.evaluate(new_solution), problem.satisfy(new_solution))
-#     # print("Old : ", problem.evaluate(solution), problem.satisfy(solution))
-#     return new_solution
