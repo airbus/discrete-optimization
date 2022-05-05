@@ -261,10 +261,6 @@ def build_default_postpro(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwa
 
 def build_default_initial_solution(rcpsp_problem: ANY_RCPSP, **kwargs):
     if rcpsp_problem.is_multiskill():
-        # initial_solution_provider = InitialSolutionMS_RCPSP(problem=rcpsp_problem,
-        #                                                     initial_method=InitialMethodRCPSP.DUMMY,
-        #                                                     params_objective_function=kwargs
-        #                                                     .get("params_objective_function", None))
         initial_solution_provider = InitialSolutionFromSolver(
             LS_RCPSP_Solver(model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
             nb_iteration_max=500,
@@ -275,10 +271,6 @@ def build_default_initial_solution(rcpsp_problem: ANY_RCPSP, **kwargs):
             LS_RCPSP_Solver(model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
             nb_iteration_max=200,
         )
-        # initial_solution_provider = InitialSolutionRCPSP(problem=rcpsp_problem,
-        #                                                  initial_method=InitialMethodRCPSP.DUMMY,
-        #                                                  params_objective_function=kwargs
-        #                                                  .get("params_objective_function", None))
         return initial_solution_provider
 
 

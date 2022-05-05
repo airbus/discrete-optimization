@@ -143,7 +143,6 @@ class SimulatedAnnealing:
                 store.add_solution(nv.copy(), objective)
             if global_improvement:
                 print("iter ", iteration)
-                # print(cur_variable)
                 print("new obj ", objective, " better than ", cur_best_objective)
                 cur_best_objective = objective
                 cur_best_variable = cur_variable.copy()

@@ -228,8 +228,6 @@ def constraints_strings_preemptive(
         modes_dict = current_solution.problem.get_modes_dict(current_solution)
     list_strings = []
     for job in tasks_primary:
-        # if multimode:
-        #    list_strings += cp_solver.constraint_task_to_mode(task_id=job, mode=modes_dict[job])
         list_starts = current_solution.get_start_times_list(job)
         list_ends = current_solution.get_end_times_list(job)
         for j in range(len(list_starts)):
@@ -270,10 +268,6 @@ def constraints_strings_preemptive(
             )
             list_strings += [string1_dur, string1_start, string2_dur, string2_start]
         for k in range(len(list_starts), cp_solver.nb_preemptive):
-            # string1_dur = cp_solver.constraint_duration_string_preemptive_i(task=job,
-            #                                                                 duration=0,
-            #                                                                 sign=SignEnum.EQUAL,
-            #                                                                 part_id=k + 1)
             if isinstance(
                 cp_solver,
                 (
@@ -295,9 +289,6 @@ def constraints_strings_preemptive(
                 )
             list_strings += [string1_dur]
     for job in tasks_secondary:
-        # continue
-        # if job in subtasks:
-        #   continue
         is_paused = len(current_solution.get_start_times_list(job)) > 1
         is_paused_str = "true" if is_paused else "false"
         list_strings += [
@@ -426,37 +417,34 @@ def constraints_strings_multiskill(
         params_constraints=params_constraints,
     )
     if params_constraints.first_method_multiskill:
-        if True:
-            if not params_constraints.except_assigned_multiskill_primary_set:
-                list_strings += constraint_unit_used_to_tasks(
-                    tasks_set=set(  # tasks_secondary,
-                        random.sample(
-                            current_solution.problem.tasks_list,
-                            min(
-                                int(
-                                    params_constraints.fraction_of_task_assigned_multiskill
-                                    * current_solution.problem.n_jobs
-                                ),
-                                current_solution.problem.n_jobs,
+        if not params_constraints.except_assigned_multiskill_primary_set:
+            list_strings += constraint_unit_used_to_tasks(
+                tasks_set=set(
+                    random.sample(
+                        current_solution.problem.tasks_list,
+                        min(
+                            int(
+                                params_constraints.fraction_of_task_assigned_multiskill
+                                * current_solution.problem.n_jobs
                             ),
-                        )
-                    ),
-                    current_solution=current_solution,
-                    cp_solver=cp_solver,
-                )
-            else:
-                list_strings += constraint_unit_used_to_tasks(
-                    tasks_set=tasks_secondary,
-                    current_solution=current_solution,
-                    cp_solver=cp_solver,
-                )
+                            current_solution.problem.n_jobs,
+                        ),
+                    )
+                ),
+                current_solution=current_solution,
+                cp_solver=cp_solver,
+            )
+        else:
+            list_strings += constraint_unit_used_to_tasks(
+                tasks_set=tasks_secondary,
+                current_solution=current_solution,
+                cp_solver=cp_solver,
+            )
         if params_constraints.additional_methods:
             # those are WIP
             list_strings += constraints_start_on_end(
                 current_solution, cp_solver=cp_solver, frac=0.25
             )
-            # list_strings += [constraint_number_of_change_in_worker_allocation(current_solution=current_solution,
-            #                                                                   nb_moves=10)]
             nb_usage = sum(
                 [
                     len(current_solution.employee_usage[t])
@@ -518,14 +506,11 @@ def constraints_strings_multiskill(
             list_strings += constraints_start_on_end(
                 current_solution, cp_solver=cp_solver, frac=0.25
             )
-            # nb_usage = sum([len(current_solution.employee_usage[t])
-            #                 for t in current_solution.employee_usage])
             list_strings += [
                 constraint_number_of_change_in_worker_allocation(
                     current_solution=current_solution, nb_moves=10
                 )
             ]
-            # list_strings += ["constraint sum(unit_used)<=" + str(nb_usage + 5) + ";\n"]
     else:
         list_strings += [
             constraint_number_of_change_in_worker_allocation(
@@ -661,8 +646,6 @@ def constraints_exchange_worker(
         )
         + "]"
     )
-    # = array2d(Units, Act, """+str([1 if ref_unit_used[j][i] else 0 for j in range(len(ref_unit_used))
-    #  for i in range(len(ref_unit_used[j]))])+ """);
     s = (
         """
         int: nb_move="""
@@ -699,10 +682,7 @@ def constraints_exchange_worker(
         constraint forall(w in Units, a in Act)(bool2int(unit_used[w,a])!=ref_unit_used[w, a])!=2*nb_move;\n
         """
     )
-    # cp_solver.instance["ref_unit_used"] = ref_unit_used
-    # cp_solver.instance.add_string(s)
     return s
-    #
 
 
 def constraints_start_on_end(
@@ -718,7 +698,7 @@ def constraints_start_on_end(
         tasks_ending = [tt for tt in end_times if end_times[tt] == st]
         listed += [(t, tt) for tt in tasks_ending]
         data[st] = tasks_ending
-    selected = listed  # random.sample(listed, k=int(frac*len(listed)))
+    selected = listed
     selected_task = random.sample(
         cp_solver.rcpsp_model.tasks_list, k=int(frac * cp_solver.rcpsp_model.nb_tasks)
     )
@@ -749,14 +729,6 @@ def constraints_start_on_end(
             )
         s += [st]
         cnt += 1
-    # print(cnt)
-    # selected = random.sample(listed, k=int(frac*len(listed)))
-    # for i1, i2 in selected:
-    #     st = "constraint start["+str(cp_solver.index_in_minizinc[i1]) + \
-    #          "]==start["+str(cp_solver.index_in_minizinc[i2])+"]+adur["\
-    #          + str(cp_solver.index_in_minizinc[i2])+"];\n"
-    #     s += [st]
-    #     cnt += 1
     print(cnt, " constraint added start on end")
     return s
 
@@ -822,10 +794,6 @@ def constraints_strings_multiskill_preemptive(
         exceptions = []
         exceptions += [(x[1], 0) for x in constraint_description]
         exceptions += [(x[2], 0) for x in constraint_description]
-        # employee_usage_matrix, sum_usage, employees_usage_dict = employee_usage(solution=current_solution,
-        #                                                                         problem=current_solution.problem)
-        # print(sum_usage)
-        # print("min", np.min(sum_usage), "max", np.max(sum_usage), "mean", np.mean(sum_usage))
         list_strings += constraint_unit_used_to_tasks_preemptive(
             tasks_set=set(
                 random.sample(
@@ -859,13 +827,6 @@ def constraints_strings_multiskill_preemptive(
         employee_usage_matrix, sum_usage, employees_usage_dict = employee_usage(
             solution=current_solution, problem=current_solution.problem
         )
-        # sorted_employee = np.argsort(sum_usage)
-        # set_employees_to_fix = [e for e in current_solution.problem.employees_list
-        #                         if e != current_solution.problem.employees_list[sorted_employee[-1]]
-        #                         and e != current_solution.problem.employees_list[sorted_employee[0]]]
-        # set_employees_to_fix = set([current_solution.problem.employees_list[i]
-        #                             for i in sorted_employee[:int(len(sorted_employee)/2)]])
-
         set_employees_to_fix = set(
             random.sample(
                 current_solution.problem.employees_list,
@@ -1262,16 +1223,6 @@ class NeighborConstraintBreaks(NeighborBuilder):
                 else:
                     subtasks.update(list(self.graph.get_next_activities(t1)))
                     subtasks.update(list(self.graph.get_pred_activities(t1)))
-                # if False:
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_neighbors_constraints(t1)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_neighbors_constraints(t2)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_pred_constraints(t1)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_pred_constraints(t2)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_neighbors_constraints(t2)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_next_activities(t1)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_pred_activities(t1)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_next_activities(t2)))
-                #     subtasks.update(list(neighbor_fix_problem.graph_rcpsp.get_pred_activities(t2)))
                 len_subtasks = len(subtasks)
                 j += 1
                 print("found problem")
@@ -1528,89 +1479,60 @@ class ConstraintHandlerScheduling(ConstraintHandler):
                 + ";\n"
             )
         child_instance.add_string("constraint sec_objective>=0;\n")
-        # if False:
-        #     s = """array[Units] of var 0..max_time: res_load =
-        #     [sum(a in Tasks)( adur[a] * unit_used[w,a] )| w in Units ];\n"""
-        #     ss = """array[Tasks] of var int: overskill = [sum(sk in Skill where array_skills_required[sk, i]>0)
-        #     (sum(w in Units)(unit_used[w, i]*skillunits[w, sk])-array_skills_required[sk, i])|i in Tasks];\n"""
-        #     child_instance.add_string(s)
-        #     child_instance.add_string(ss)
-        #     if eval.get("constraint_penalty", 0) == 0:
-        #         # child_instance.add_string("constraint sec_objective==100*sum(overskill);\n")
-        #         child_instance.add_string("constraint sec_objective>=100*sum(overskill)+"
-        #                                   "10*sum(res_load)+max(res_load)-min(res_load);\n")
-        #         # )+sum(res_load)+max(res_load)-min(res_load);\n")
-        #     else:
-        #         # child_instance.add_string(
-        #         #    "constraint sec_objective>=100*sum(overskill)+10*sum(res_load)+max(res_load)-min(res_load);\n")
-        #         if self.use_makespan_of_subtasks:
-        #             strings = cp_solver.constraint_objective_max_time_set_of_jobs(subtasks_1)
-        #             current_max = max([current_solution.get_end_time(t) for t in subtasks_1])
-        #             strings += ["constraint objective<=" + str(current_max) + ";\n"]
-        #         else:
-        #             strings = cp_solver.constraint_objective_max_time_set_of_jobs([self.problem.sink_task])
-        #             strings = cp_solver.constraint_objective_equal_makespan(self.problem.sink_task)
-        #         for s in strings:
-        #             child_instance.add_string(s)
-        #             list_strings += [s]
-        if True:
-            if "constraint_penalty" not in eval:
-                # WARNING
+        if "constraint_penalty" not in eval:
+            # WARNING
+            child_instance.add_string("constraint sec_objective==0;\n")
+        if eval.get("constraint_penalty", 0) > 0:
+            strings = []
+        else:
+            try:
+                strings = cp_solver.add_hard_special_constraints(
+                    self.problem.special_constraints
+                )
+                for s in strings:
+                    child_instance.add_string(s)
                 child_instance.add_string("constraint sec_objective==0;\n")
-            if eval.get("constraint_penalty", 0) > 0:
-                strings = []
-            else:
-                try:
-                    strings = cp_solver.add_hard_special_constraints(
-                        self.problem.special_constraints
-                    )
-                    for s in strings:
-                        child_instance.add_string(s)
-                    child_instance.add_string("constraint sec_objective==0;\n")
-                except Exception as e:
-                    print(
-                        "Hard constraint failed no method add_hard_special_constraints inside your cpsolver class,"
-                        " but the code should work fine anyway !"
-                    )
-                strings = []
-                if self.objective_subproblem == ObjectiveSubproblem.MAKESPAN_SUBTASKS:
-                    strings = cp_solver.constraint_objective_max_time_set_of_jobs(
-                        subtasks_1
-                    )
-                    current_max = max(
-                        [current_solution.get_end_time(t) for t in subtasks_1]
-                    )
-                    strings += ["constraint objective<=" + str(current_max) + ";\n"]
-                elif self.objective_subproblem == ObjectiveSubproblem.GLOBAL_MAKESPAN:
-                    # strings = cp_solver.constraint_objective_max_time_set_of_jobs([self.problem.sink_task])
-                    strings = cp_solver.constraint_objective_equal_makespan(
-                        self.problem.sink_task
-                    )
-                elif (
-                    self.objective_subproblem == ObjectiveSubproblem.SUM_START_SUBTASKS
-                ):
-                    strings = cp_solver.constraint_sum_of_starting_time(subtasks_1)
-                    sum_end = sum(
-                        [
-                            (10 if t == self.problem.sink_task else 1)
-                            * current_solution.get_start_time(t)
-                            for t in subtasks_1
-                        ]
-                    )
-                    strings += ["constraint objective<=" + str(sum_end) + ";\n"]
-                elif self.objective_subproblem == ObjectiveSubproblem.SUM_END_SUBTASKS:
-                    strings = cp_solver.constraint_sum_of_ending_time(subtasks_1)
-                    sum_end = sum(
-                        [
-                            (10 if t == self.problem.sink_task else 1)
-                            * current_solution.get_end_time(t)
-                            for t in subtasks_1
-                        ]
-                    )
-                    strings += ["constraint objective<=" + str(sum_end) + ";\n"]
-            for s in strings:
-                child_instance.add_string(s)
-                list_strings += [s]
+            except Exception as e:
+                print(
+                    "Hard constraint failed no method add_hard_special_constraints inside your cpsolver class,"
+                    " but the code should work fine anyway !"
+                )
+            strings = []
+            if self.objective_subproblem == ObjectiveSubproblem.MAKESPAN_SUBTASKS:
+                strings = cp_solver.constraint_objective_max_time_set_of_jobs(
+                    subtasks_1
+                )
+                current_max = max(
+                    [current_solution.get_end_time(t) for t in subtasks_1]
+                )
+                strings += ["constraint objective<=" + str(current_max) + ";\n"]
+            elif self.objective_subproblem == ObjectiveSubproblem.GLOBAL_MAKESPAN:
+                strings = cp_solver.constraint_objective_equal_makespan(
+                    self.problem.sink_task
+                )
+            elif self.objective_subproblem == ObjectiveSubproblem.SUM_START_SUBTASKS:
+                strings = cp_solver.constraint_sum_of_starting_time(subtasks_1)
+                sum_end = sum(
+                    [
+                        (10 if t == self.problem.sink_task else 1)
+                        * current_solution.get_start_time(t)
+                        for t in subtasks_1
+                    ]
+                )
+                strings += ["constraint objective<=" + str(sum_end) + ";\n"]
+            elif self.objective_subproblem == ObjectiveSubproblem.SUM_END_SUBTASKS:
+                strings = cp_solver.constraint_sum_of_ending_time(subtasks_1)
+                sum_end = sum(
+                    [
+                        (10 if t == self.problem.sink_task else 1)
+                        * current_solution.get_end_time(t)
+                        for t in subtasks_1
+                    ]
+                )
+                strings += ["constraint objective<=" + str(sum_end) + ";\n"]
+        for s in strings:
+            child_instance.add_string(s)
+            list_strings += [s]
         return list_strings
 
     def remove_constraints_from_previous_iteration(
@@ -1691,10 +1613,7 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
         list_strings += cp_solver.constraint_objective_makespan()
         for s in list_strings:
             child_instance.add_string(s)
-        # if random.random() < 0.999:
         child_instance.add_string("constraint sec_objective==max(res_load);\n")
-        # else:
-        #    child_instance.add_string("constraint sec_objective==min(res_load)-max(res_load);\n")
         return list_strings
 
     def remove_constraints_from_previous_iteration(
@@ -1781,15 +1700,11 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
             + str(current_solution.get_end_time(self.problem.sink_task))
             + ";\n"
         ]
-        # strings += ["constraint objective<="+str(current_solution.get_end_time)"]
         for s in list_strings:
             child_instance.add_string(s)
         if random.random() < 0.999:
             if eval.get("constraint_penalty", 0) == 0:
-                # child_instance.add_string("constraint sec_objective==sum(overskill);\n")
                 child_instance.add_string("constraint sec_objective>=sum(res_load);\n")
-                # child_instance.add_string("constraint sec_objective==100*sum(overskill)
-                # +10*sum(res_load)+max(res_load)-min(res_load);\n")
             else:
                 child_instance.add_string(
                     "constraint sec_objective>=100*sum(overskill)+10*sum(res_load)+max(res_load)-min(res_load);\n"
@@ -1855,9 +1770,6 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
                 if s != "W":
                     continue
                 for i in overskill[t][s]:
-                    # print("overskill, task ", t,
-                    #      "part ", i, " skill ", s,
-                    #      overskill[t][s][i])
                     cnt += 1
         print(cnt, "overskill..")
         s = """array[Units] of var 0..max_time: res_load = [sum(a in Tasks, j in PREEMPTIVE)( d_preemptive[a, j] * unit_used_preemptive[w,a,j] )| w in Units ];\n"""
@@ -1886,7 +1798,6 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
             + str(current_solution.get_end_time(self.problem.sink_task))
             + ";\n"
         ]
-        # strings += ["constraint objective<="+str(current_solution.get_end_time)"]
         for s in list_strings:
             child_instance.add_string(s)
         if random.random() < 0.999:

@@ -64,7 +64,6 @@ class RestartHandlerLimit(RestartHandler):
         ):
             self.nb_iteration_no_global_improve = 0
             self.nb_iteration_no_local_improve = 0
-            # print("restart  ", self.variable_best, self.best_fitness)
             return self.solution_best.copy(), self.best_fitness
         else:
             return cur_solution, cur_objective

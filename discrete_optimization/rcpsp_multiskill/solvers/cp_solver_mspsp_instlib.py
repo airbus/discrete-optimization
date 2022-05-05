@@ -179,9 +179,6 @@ class CP_MSPSP_MZN(CPSolver):
             self.rcpsp_model.employees_list[i]: i + 1
             for i in range(len(self.rcpsp_model.employees_list))
         }
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='ms_rcpsp_example_imopse.dzn')
         self.instance = instance
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
@@ -385,7 +382,6 @@ class CP_MSPSP_MZN(CPSolver):
                 mruns += [[1] * len(self.rcpsp_model.tasks_list)]
                 units_used += [result["assign"]]
                 objectives_cp += [result["objective"]]
-            # array_skill = result["array_skills_required"]
         index_solution = 0
         skills_list = sorted(list(self.rcpsp_model.skills_set))
         for start_times, mrun, unit_used in zip(starts, mruns, units_used):

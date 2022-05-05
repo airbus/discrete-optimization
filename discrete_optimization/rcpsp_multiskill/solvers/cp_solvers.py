@@ -94,25 +94,23 @@ def add_fake_task_cp_data(
                 [fake_tasks_res[i].get(res, 0) for i in range(n_fake_tasks_res)]
                 for res in rcpsp_model.resources_list
             ]
-            dict_to_add_in_instance = {}
-            dict_to_add_in_instance[
-                "max_duration_fake_task_resource"
-            ] = max_duration_fake_task_res
-            dict_to_add_in_instance["n_fake_task_resource"] = n_fake_tasks_res
-            dict_to_add_in_instance["fakestart_resource"] = fakestart_res
-            dict_to_add_in_instance["fakedur_resource"] = fake_dur_res
-            dict_to_add_in_instance["fakereq_resource"] = fake_req_res
-            dict_to_add_in_instance["include_fake_tasks_resource"] = True
+            dict_to_add_in_instance = {
+                "max_duration_fake_task_resource": max_duration_fake_task_res,
+                "n_fake_task_resource": n_fake_tasks_res,
+                "fakestart_resource": fakestart_res,
+                "fakedur_resource": fake_dur_res,
+                "fakereq_resource": fake_req_res,
+                "include_fake_tasks_resource": True,
+            }
         else:
-            dict_to_add_in_instance = {}
-            dict_to_add_in_instance["max_duration_fake_task_resource"] = 0
-            dict_to_add_in_instance["n_fake_task_resource"] = 0
-            dict_to_add_in_instance["fakestart_resource"] = []
-            dict_to_add_in_instance["fakedur_resource"] = []
-            dict_to_add_in_instance["fakereq_resource"] = [
-                [] for req in rcpsp_model.resources_list
-            ]
-            dict_to_add_in_instance["include_fake_tasks_resource"] = False
+            dict_to_add_in_instance = {
+                "max_duration_fake_task_resource": 0,
+                "n_fake_task_resource": 0,
+                "fakestart_resource": [],
+                "fakedur_resource": [],
+                "fakereq_resource": [[] for req in rcpsp_model.resources_list],
+                "include_fake_tasks_resource": False,
+            }
         if len(fake_tasks_unit) > 0:
             fake_tasks_unit = [
                 f for f in fake_tasks_unit if f["start"] <= max_time_to_consider
@@ -148,23 +146,20 @@ def add_fake_task_cp_data(
             dict_to_add_in_instance["include_fake_tasks_unit"] = False
         return dict_to_add_in_instance
     else:
-        dict_to_add_in_instance = {}
-        dict_to_add_in_instance["max_duration_fake_task_resource"] = 0
-        dict_to_add_in_instance["n_fake_task_resource"] = 0
-        dict_to_add_in_instance["fakestart_resource"] = []
-        dict_to_add_in_instance["fakedur_resource"] = []
-        dict_to_add_in_instance["fakereq_resource"] = [
-            [] for r in rcpsp_model.resources_list
-        ]
-        dict_to_add_in_instance["include_fake_tasks_resource"] = False
-        dict_to_add_in_instance["max_duration_fake_task_unit"] = 0
-        dict_to_add_in_instance["n_fake_task_unit"] = 0
-        dict_to_add_in_instance["fakestart_unit"] = []
-        dict_to_add_in_instance["fakedur_unit"] = []
-        dict_to_add_in_instance["fakereq_unit"] = [
-            [] for e in rcpsp_model.employees_list
-        ]
-        dict_to_add_in_instance["include_fake_tasks_unit"] = False
+        dict_to_add_in_instance = {
+            "max_duration_fake_task_resource": 0,
+            "n_fake_task_resource": 0,
+            "fakestart_resource": [],
+            "fakedur_resource": [],
+            "fakereq_resource": [[] for r in rcpsp_model.resources_list],
+            "include_fake_tasks_resource": False,
+            "max_duration_fake_task_unit": 0,
+            "n_fake_task_unit": 0,
+            "fakestart_unit": [],
+            "fakedur_unit": [],
+            "fakereq_unit": [[] for e in rcpsp_model.employees_list],
+            "include_fake_tasks_unit": False,
+        }
         return dict_to_add_in_instance
 
 
@@ -521,18 +516,15 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         instance["one_ressource_per_task"] = self.one_ressource_per_task
         keys += ["one_ressource_per_task"]
         n_tasks = self.rcpsp_model.n_jobs
-        # print('n_tasks: ', n_tasks)
         instance["n_tasks"] = n_tasks
         keys += ["n_tasks"]
         sorted_tasks = self.rcpsp_model.tasks_list
-        # print('mode_details: ', self.rcpsp_model.mode_details)
         n_opt = sum(
             [
                 len(list(self.rcpsp_model.mode_details[key].keys()))
                 for key in sorted_tasks
             ]
         )
-        # print('n_opt: ', n_opt)
         instance["n_opt"] = n_opt
         keys += ["n_opt"]
         all_modes = [
@@ -585,11 +577,6 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         instance["source"] = (
             self.rcpsp_model.index_task[self.rcpsp_model.source_task] + 1
         )
-        # ressource_unit_capacity_time = [[1 if x else 0
-        #                                  for x
-        #                                  in self.rcpsp_model.employees[j]
-        #                                  .calendar_employee[:(instance["max_time"]+1)]]
-        #                                  for j in sorted(self.rcpsp_model.employees)]
 
         import math
 
@@ -646,9 +633,6 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         instance["succ"] = succ
         keys += ["succ"]
 
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='ms_rcpsp_example_imopse.dzn')
         self.instance = instance
         p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
         self.index_in_minizinc = {
@@ -699,8 +683,6 @@ class CP_MS_MRCPSP_MZN(CPSolver):
                     mruns += [result[i, "mrun"]]
                     units_used += [result[i, "unit_used"]]
                     objectives_cp += [result[i, "objective"]]
-                # array_skill = result[i, "array_skills_required"]
-                # print("Objective : ", result[i, "objective"])
         else:
             if isinstance(result, MS_RCPSPSolCP):
                 starts += [result.dict["start"]]
@@ -712,7 +694,6 @@ class CP_MS_MRCPSP_MZN(CPSolver):
                 mruns += [result["mrun"]]
                 units_used += [result["unit_used"]]
                 objectives_cp += [result["objective"]]
-            # array_skill = result["array_skills_required"]
         index_solution = 0
         skills_list = sorted(list(self.rcpsp_model.skills_set))
         for start_times, mrun, unit_used in zip(starts, mruns, units_used):
@@ -1192,9 +1173,6 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
 
         instance["add_objective_makespan"] = args.get("add_objective_makespan", True)
         instance["ignore_sec_objective"] = args.get("ignore_sec_objective", True)
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='ms_rcpsp_example_imopse.dzn')
         self.instance = instance
         p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
         self.index_in_minizinc = {
@@ -1613,9 +1591,6 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
 
         instance["add_objective_makespan"] = args.get("add_objective_makespan", True)
         instance["ignore_sec_objective"] = args.get("ignore_sec_objective", True)
-        # import pymzn
-        # pymzn.dict2dzn({key: instance[key] for key in keys},
-        #                fout='ms_rcpsp_example_imopse.dzn')
         self.instance = instance
         p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
         self.index_in_minizinc = {
@@ -1664,7 +1639,6 @@ def stick_to_solution(solution: RCPSPSolution, cp_solver: CP_MS_MRCPSP_MZN):
                 task=task, start_time=start, sign=SignEnum.EQUAL
             )
         ]
-        # list_strings += cp_solver.constraint_task_to_mode(task_id=task, mode=modes_dict[task])
     return list_strings
 
 
@@ -1703,7 +1677,6 @@ def stick_to_solution_preemptive(
                     task, duration=0, part_id=k + 1, sign=SignEnum.EQUAL
                 )
             ]
-        # list_strings += cp_solver.constraint_task_to_mode(task_id=task, mode=modes_dict[task])
     return list_strings
 
 
@@ -1787,7 +1760,6 @@ def hard_start_together(
             + str(cp_solver.index_in_minizinc[t2])
             + "];\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -1807,7 +1779,6 @@ def hard_start_after_nunit(
             + str(delta)
             + ";\n"
         )
-        # cp_solver.instance.add_string(string)
         constraint_strings += [string]
     return constraint_strings
 
@@ -2157,7 +2128,6 @@ def add_hard_special_constraints(
                 "constraint s[" + str(cp_solver.index_in_minizinc[t1]) + "] "
                 "<= s[" + str(cp_solver.index_in_minizinc[t2]) + "];\n"
             )
-            # cp_solver.instance.add_string(string)
             constraint_strings += [string]
     if partial_solution.list_partial_order is not None:
         for l in partial_solution.list_partial_order:
@@ -2166,7 +2136,6 @@ def add_hard_special_constraints(
                     "constraint s[" + str(cp_solver.index_in_minizinc[t1]) + "] "
                     "<= s[" + str(cp_solver.index_in_minizinc[t2]) + "];\n"
                 )
-                # cp_solver.instance.add_string(string)
                 constraint_strings += [string]
     if partial_solution.start_together is not None:
         constraint_strings += hard_start_together(
@@ -2213,8 +2182,6 @@ def add_soft_special_constraints(
             dict_start_times=partial_solution.start_times, cp_solver=cp_solver
         )
         constraint_strings += c
-        # c = hard_start_times(dict_start_times=partial_solution.start_times, cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
     if partial_solution.partial_permutation is not None:
         for t1, t2 in zip(
@@ -2229,7 +2196,6 @@ def add_soft_special_constraints(
                 + str(cp_solver.index_in_minizinc[t2])
                 + "];\n"
             )
-            # cp_solver.instance.add_string(string)
             constraint_strings += [string]
     if partial_solution.list_partial_order is not None:
         for l in partial_solution.list_partial_order:
@@ -2238,16 +2204,12 @@ def add_soft_special_constraints(
                     "constraint s[" + str(cp_solver.index_in_minizinc[t1]) + "] "
                     "<= s[" + str(cp_solver.index_in_minizinc[t2]) + "];\n"
                 )
-                # cp_solver.instance.add_string(string)
                 constraint_strings += [string]
     if partial_solution.start_together is not None:
         c, n = soft_start_together(
             list_start_together=partial_solution.start_together, cp_solver=cp_solver
         )
         constraint_strings += c
-        # c = hard_start_together(list_start_together=partial_solution.start_together,
-        #                         cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
 
     if partial_solution.start_after_nunit is not None:
@@ -2256,9 +2218,6 @@ def add_soft_special_constraints(
             cp_solver=cp_solver,
         )
         constraint_strings += c
-        # c = hard_start_after_nunit(list_start_after_nunit=partial_solution.start_after_nunit,
-        #                           cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
     if partial_solution.start_at_end_plus_offset is not None:
         c, n = soft_start_at_end_plus_offset(
@@ -2266,9 +2225,6 @@ def add_soft_special_constraints(
             cp_solver=cp_solver,
         )
         constraint_strings += c
-        # c = hard_start_at_end_plus_offset(list_start_at_end_plus_offset=partial_solution.start_at_end_plus_offset,
-        #                                  cp_solver=cp_solver)
-        # constraint_strings += c
         name_penalty += n
     if partial_solution.start_at_end is not None:
         c, n = soft_start_at_end(
@@ -2357,7 +2313,6 @@ class PrecomputeEmployeesForTasks:
                 for key in tasks_of_interest
             ]
         )
-        # print('n_opt: ', n_opt)
         instance["n_opt"] = n_opt
         all_modes = [
             (act, mode, self.ms_rcpsp_model.mode_details[act][mode])

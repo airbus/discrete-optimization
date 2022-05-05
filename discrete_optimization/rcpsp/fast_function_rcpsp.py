@@ -268,11 +268,9 @@ def sgs_fast_preemptive_some_special_constraints(
         minimum_starting_time[act] = minimum_starting_time_array[act]
     start_after_nunit_links = np.zeros((nb_task))
     for task in range(nb_task):
-        # start_after_nunit_links[task] = len(start_after_nunit_dict[task])
         start_after_nunit_links[task] = np.sum(start_after_nunit[:, 1] == task)
     start_at_end_plus_offset_links = np.zeros((nb_task))
     for task in range(nb_task):
-        # start_at_end_plus_offset_links[task] = len(start_at_end_plus_offset_dict[task])
         start_at_end_plus_offset_links[task] = np.sum(
             start_at_end_plus_offset[:, 1] == task
         )
@@ -283,7 +281,6 @@ def sgs_fast_preemptive_some_special_constraints(
     done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
     done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
     while done < nb_task and not unfeasible_non_renewable_resources:
-        # act_id = 0
         act_id = 0
         found = False
         for i in range(nb_task):
@@ -369,7 +366,6 @@ def sgs_fast_preemptive_some_special_constraints(
                         break
         if not unfeasible_non_renewable_resources:
             end_t = ends[-1]
-            # print('end_t: ', end_t)
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
@@ -1121,7 +1117,6 @@ def sgs_fast_partial_schedule_preemptive_minduration(
         starts = []
         ends = []
         while not valid:  # 7
-            # print('current_min_time: ', current_min_time)
             valid = True  # 8
             reached_t = None
             reached_end = True
@@ -1188,7 +1183,6 @@ def sgs_fast_partial_schedule_preemptive_minduration(
                     )
         if not unfeasible_non_renewable_resources:
             end_t = ends[-1]
-            # print('end_t: ', end_t)
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
@@ -1215,7 +1209,6 @@ def sgs_fast_partial_schedule_preemptive_minduration(
             )
             done_np[act_id] = 1
             done += 1
-            # print('scheduled to complete at: ', activity_end_times[act_id])
             for s in range(successors.shape[1]):
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(

@@ -160,10 +160,6 @@ def plot_resource_individual_gantt(
         name_task = {}
         for t in rcpsp_model.mode_details:
             name_task[t] = str(t)
-    # fig, ax = plt.subplots(len(array_ressource_usage),
-    #                        figsize=(10, 5))
-    # for i in range(len(array_ressource_usage)):
-    #     ax[i].imshow(array_ressource_usage[resources_list[i]]["binary_activity"].T)
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, figsize=(12, 6))
         fig.suptitle(title_figure)
@@ -200,7 +196,6 @@ def plot_resource_individual_gantt(
         p = PatchCollection(
             patches,
             match_original=True,
-            # cmap=matplotlib.cm.get_cmap('Blues'),
             alpha=0.4,
         )
         ax.add_collection(p)
@@ -212,7 +207,6 @@ def plot_resource_individual_gantt(
             ax.annotate(
                 name_task[activity],
                 xy=position_label[activity],
-                # textcoords="offset points",
                 font_properties=FontProperties(size=7, weight="bold"),
                 verticalalignment="center",
                 horizontalalignment="left",
@@ -256,10 +250,6 @@ def plot_resource_individual_gantt_preemptive(
             name_task[t] = str(t)
     if subtasks is None:
         subtasks = set(rcpsp_model.tasks_list)
-    # fig, ax = plt.subplots(len(array_ressource_usage),
-    #                        figsize=(10, 5))
-    # for i in range(len(array_ressource_usage)):
-    #     ax[i].imshow(array_ressource_usage[resources_list[i]]["binary_activity"].T)
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, figsize=(12, 6))
         fig.suptitle(title_figure)
@@ -293,7 +283,6 @@ def plot_resource_individual_gantt_preemptive(
         p = PatchCollection(
             patches,
             match_original=True,
-            # cmap=matplotlib.cm.get_cmap('Blues'),
             alpha=0.4,
         )
         ax.add_collection(p)
@@ -305,7 +294,6 @@ def plot_resource_individual_gantt_preemptive(
             ax.annotate(
                 name_task[activity],
                 xy=position_label[activity],
-                # textcoords="offset points",
                 font_properties=FontProperties(size=7, weight="bold"),
                 verticalalignment="center",
                 horizontalalignment="left",
@@ -380,7 +368,6 @@ def plot_task_gantt(
                 / 2,
                 j,
             ),
-            # textcoords="offset points",
             font_properties=FontProperties(size=7, weight="bold"),
             verticalalignment="center",
             horizontalalignment="left",

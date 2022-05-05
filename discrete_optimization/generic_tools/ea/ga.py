@@ -161,8 +161,6 @@ class Ga:
                     self.arrities = register_solution.dict_attribute_to_type[
                         self._encoding_name
                     ]["arrities"]
-                # else:
-                #     self.arrities = None
 
         if encoding is not None and isinstance(encoding, Dict):
             # check there is a type key and a n key
@@ -220,8 +218,6 @@ class Ga:
                 self.arrities = register_solution.dict_attribute_to_type[
                     self._encoding_name
                 ]["arrities"]
-            # else:
-            #     self.arrities = None
 
         if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
             self.arrity = 2
@@ -355,14 +351,12 @@ class Ga:
         else:
             self._crossover = crossover
 
-        # if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
         if self._crossover == DeapCrossover.CX_UNIFORM:
             self._toolbox.register("mate", tools.cxUniform, indpb=self._crossover_rate)
         elif self._crossover == DeapCrossover.CX_ONE_POINT:
             self._toolbox.register("mate", tools.cxOnePoint)
         elif self._crossover == DeapCrossover.CX_TWO_POINT:
             self._toolbox.register("mate", tools.cxTwoPoint)
-        # elif self._encoding_type == TypeAttribute.PERMUTATION:
         elif self._crossover == DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED:
             self._toolbox.register("mate", tools.cxUniformPartialyMatched, indpb=0.5)
         elif self._crossover == DeapCrossover.CX_ORDERED:
@@ -398,10 +392,6 @@ class Ga:
                     "mutate", tools.mutShuffleIndexes, indpb=self._mut_rate
                 )  # Choice of mutation operator
             elif self._mutation == DeapMutation.MUT_UNIFORM_INT:
-                # print('DEAP-GA - self.arrities: ', self.arrities)
-                # print('DEAP-GA - self.arrity: ', self.arrity)
-
-                # self._toolbox.register("mutate", tools.mutUniformInt, low=0, up=self.arrity-1, indpb=self._mut_rate)
                 self._toolbox.register(
                     "mutate",
                     tools.mutUniformInt,
@@ -437,7 +427,6 @@ class Ga:
         )  # TODO: That should probably be set to somthing else than None.
 
     def evaluate_problem(self, int_vector):
-        # encoding_name = self._encoding_name
         objective_values = self.problem.evaluate_from_encoding(
             int_vector, self._encoding_variable_name
         )
@@ -518,5 +507,3 @@ class Ga:
             mode_optim=self.params_objective_function.sense_function,
         )
         return result_storage
-
-        # return problem_sol

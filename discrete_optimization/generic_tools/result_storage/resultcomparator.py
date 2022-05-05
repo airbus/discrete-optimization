@@ -48,8 +48,6 @@ class ResultComparator:
             for obj in self.objectives_str:
                 self.reevaluated_results[self.list_result_storage.index(res)][obj] = []
                 for scenario in self.test_problems:
-                    # res.list_solution_fits[0][0].change_problem(scenario)
-                    # val = scenario.evaluate(res.list_solution_fits[0][0])[obj]
                     res.get_best_solution().change_problem(scenario)
                     val = scenario.evaluate(res.get_best_solution())[obj]
                     self.reevaluated_results[self.list_result_storage.index(res)][
@@ -80,7 +78,6 @@ class ResultComparator:
 
     def get_best_by_objective_by_result_storage(self, objectif_str: str):
         obj_index = self.objectives_str.index(objectif_str)
-        # print('obj_index: ', obj_index)
         val = {}
         for i in range(len(self.list_result_storage)):
             fit_array = [
@@ -89,17 +86,13 @@ class ResultComparator:
                 .vector_fitness[obj_index]
                 for j in range(len(self.list_result_storage[i].list_solution_fits))
             ]  # create fit array
-            # self.objective_weights[obj_index] > 0:
             if self.list_result_storage[i].maximize:
                 best_fit = max(fit_array)
             else:
                 best_fit = min(fit_array)
-            # best_fit = max(fit_array)
 
             best_index = fit_array.index(best_fit)
             best_sol = self.list_result_storage[i].list_solution_fits[best_index]
-            # print('fit_array:', fit_array)
-            # print('best_sol:', best_sol)
             val[self.result_storage_names[i]] = best_sol
         return val
 
@@ -109,10 +102,7 @@ class ResultComparator:
             for s in rs.list_solution_fits:
                 sols.append(s)
         rs = ResultStorage(list_solution_fits=sols, best_solution=None)
-        # print('len(rs): ', len(rs.list_solution_fits))
         pareto_store = result_storage_to_pareto_front(result_storage=rs, problem=None)
-        # print('len(pareto_store): ', len(pareto_store.list_solution_fits))
-        # print('hhhh: ', [x[1].vector_fitness for x in pareto_store.list_solution_fits])
         return pareto_store
 
     def plot_all_2d_paretos_single_plot(self, objectives_str=None):
@@ -186,7 +176,6 @@ class ResultComparator:
 
     def plot_super_pareto(self):
         super_pareto = self.generate_super_pareto()
-        # plot_storage_2d(result_storage=super_pareto, name_axis=self.objectives_str)
         plot_pareto_2d(pareto_front=super_pareto, name_axis=self.objectives_str)
         # TODO: This one is not working ! Need to check why
         plt.title("Pareto front obtained by merging solutions from all result stores")
@@ -196,11 +185,8 @@ class ResultComparator:
         data = self.get_best_by_objective_by_result_storage(objectif_str)
         x = list(data.keys())
         y = [data[key][1].vector_fitness[obj_index] for key in x]
-        # print('x: ', x)
-        # print('y: ', y)
         y_pos = np.arange(len(x))
 
         plt.bar(y_pos, y)
         plt.xticks(y_pos, x, rotation=45)
         plt.title("Comparison on " + objectif_str)
-        # plt.show()

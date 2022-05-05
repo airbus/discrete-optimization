@@ -32,8 +32,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolverRCPSP
 from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
 
-# from gurobi import LinExpr, Model, GRB, quicksum
-
 # TODO : modelize the optimisation problem behind this.
 
 
@@ -86,7 +84,6 @@ class LP_MRCPSP_GANTT(MilpSolver):
         self.modes_dict[1] = 1
         self.modes_dict[self.jobs[-1]] = 1
         self.rcpsp_schedule = self.rcpsp_solution.rcpsp_schedule
-        # self.set_start_times = set(self.rcpsp_schedule.values())
         self.start_times_dict = {}
         for task in self.rcpsp_schedule:
             t = self.rcpsp_schedule[task]["start_time"]
@@ -260,7 +257,6 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
         self.modes_dict[1] = 1
         self.modes_dict[self.jobs[-1]] = 1
         self.rcpsp_schedule = self.rcpsp_solution.rcpsp_schedule
-        # self.set_start_times = set(self.rcpsp_schedule.values())
         self.start_times_dict = {}
         for task in self.rcpsp_schedule:
             t = self.rcpsp_schedule[task]["start_time"]
@@ -497,8 +493,6 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
         for k in ressource_usage:
             for individual in ressource_usage[k]:
                 for task in ressource_usage[k][individual]:
-                    if (k, individual, task) in ignore_tuple:
-                        pass
                     if ressource_usage[k][individual][task] >= 0.5:
                         objective.add(1 - self.ressource_id_usage[k][individual][task])
         print("Setting new objectives = Change task objective")

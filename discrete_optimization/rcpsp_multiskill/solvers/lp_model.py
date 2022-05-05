@@ -35,8 +35,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
         self.model: Model = None
         self.lp_solver = lp_solver
         self.variable_decision = {}
-        self.constraints_dict = {}
-        self.constraints_dict["lns"] = []
+        self.constraints_dict = {"lns": []}
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
@@ -45,269 +44,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-
-    #
-    # def init_model(self, **args):
-    #     self.model = Model(name="mrcpsp",
-    #                        sense=MINIMIZE,
-    #                        solver_name=map_solver[self.lp_solver])
-    #     sorted_tasks = sorted(self.rcpsp_model.mode_details.keys())
-    #     max_duration = sum([int(max([self.rcpsp_model.mode_details[key][mode]['duration']
-    #                         for mode in self.rcpsp_model.mode_details[key]]))
-    #                         for key in sorted_tasks])+10
-    #
-    #     # c = [6, 8]
-    #     renewable = {r: self.rcpsp_model.resources_availability[r]
-    #                  for r in self.rcpsp_model.resources_availability
-    #                  if r not in self.rcpsp_model.non_renewable_resources}
-    #     non_renewable = {r: self.rcpsp_model.resources_availability[r]
-    #                      for r in self.rcpsp_model.non_renewable_resources}
-    #     # print('c: ', c)
-    #     # S = [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5], [2, 9], [2, 10], [3, 8], [4, 6],
-    #     #      [4, 7], [5, 9], [5, 10], [6, 8], [6, 9], [7, 8], [8, 11], [9, 11], [10, 11]]
-    #     list_edges = []
-    #     print('successors: ', self.rcpsp_model.successors)
-    #     for task in sorted_tasks:
-    #         for suc in self.rcpsp_model.successors[task]:
-    #             list_edges.append([task, suc])
-    #     self.x: Dict[Tuple, Var] = {}
-    #     self.employee_usage: Dict[Tuple, Var] = {}
-    #     self.task_mode: Dict[Tuple, Var] = {}
-    #     self.task_mode_without_t: Dict[Tuple, Var] = {}
-    #     last_task = max(self.rcpsp_model.mode_details.keys())
-    #     all_vars = set()
-    #     all_vars_employee = set()
-    #     variable_per_task = {}
-    #     variable_per_task_mode = {}
-    #     variable_per_employee = {}
-    #     variable_per_employee_time = {}
-    #     variable_employee_usage = {}
-    #     tasks_only_ressource = [task for task in self.rcpsp_model.mode_details
-    #                             if all([s not in self.rcpsp_model.skills_set
-    #                                     or (s in self.rcpsp_model.skills_set
-    #                                         and self.rcpsp_model.mode_details[task][mode][s] == 0)
-    #                                     for mode in self.rcpsp_model.mode_details[task]
-    #                                     for s in self.rcpsp_model.mode_details[task][mode]])]
-    #     for employee in self.rcpsp_model.employees:
-    #         skills_employee = [skill
-    #                            for skill in self.rcpsp_model.employees[employee].dict_skill.keys()
-    #                            if self.rcpsp_model.employees[employee].dict_skill[skill].skill_value > 0]
-    #         for task in sorted_tasks:
-    #             if task in tasks_only_ressource:
-    #                 continue
-    #             for mode in self.rcpsp_model.mode_details[task]:
-    #                 required_skills = [s
-    #                                    for s in self.rcpsp_model.mode_details[task][mode]
-    #                                    if s in self.rcpsp_model.skills_set
-    #                                    and self.rcpsp_model.mode_details[task][mode][s] > 0
-    #                                    and s in skills_employee]
-    #                 if len(required_skills) == 0:
-    #                     # this employee will be useless anyway, pass
-    #                     continue
-    #                 for t in range(max_duration+1):
-    #                     if (task, mode, t) not in self.task_mode:
-    #                         if task not in variable_per_task_mode:
-    #                             variable_per_task_mode[task] = []
-    #                         self.task_mode[(task, mode, t)] = self.model.add_var(name="mode_{},{},{}".format(task,
-    #                                                                                                          mode, t),
-    #                                                                              var_type=BINARY)
-    #                         variable_per_task_mode[task].append((task, mode, t))
-    #                     self.x[(task,
-    #                             employee,
-    #                             mode,
-    #                             t)] = self.model.add_var(name="x({},{},{},{})".format(task, employee, mode, t),
-    #                                                      var_type=BINARY)
-    #                     if task not in variable_per_task:
-    #                         variable_per_task[task] = []
-    #                     if employee not in variable_per_employee:
-    #                         variable_per_employee[employee] = []
-    #                     if employee not in variable_per_employee_time:
-    #                         variable_per_employee_time[employee] = {}
-    #                     if t not in variable_per_employee_time[employee]:
-    #                         variable_per_employee_time[employee][t] = []
-    #                     variable_per_task[task] += [(task, employee,
-    #                                                  mode, t)]
-    #                     all_vars.add((task, employee,
-    #                                   mode, t))
-    #                     variable_per_employee[employee] += [(task, employee,
-    #                                                          mode, t)]
-    #                     variable_per_employee_time[employee][t] += [(task,
-    #                                                                  employee,
-    #                                                                  mode,
-    #                                                                  t)]
-    #                 for s in required_skills:
-    #                     if employee not in variable_employee_usage:
-    #                         variable_employee_usage[employee] = []
-    #                     variable_employee_usage[employee] += [(task, employee, s)]
-    #                     all_vars_employee.add((task, employee, s))
-    #                     self.employee_usage[(task, employee, s)] = \
-    #                         self.model.add_var(name="usage({},{},{})".format(task, employee, s),
-    #                                            var_type=BINARY)
-    #
-    #     employee = "fake-employee"
-    #     for task in tasks_only_ressource:
-    #         for mode in self.rcpsp_model.mode_details[task]:
-    #             for t in range(max_duration + 1):
-    #                 if (task, mode, t) not in self.task_mode:
-    #                     if task not in variable_per_task_mode:
-    #                         variable_per_task_mode[task] = []
-    #                     self.task_mode[(task, mode, t)] = self.model.add_var(name="mode_{},{},{}".format(task, mode, t),
-    #                                                                          var_type=BINARY)
-    #                     variable_per_task_mode[task].append((task, mode, t))
-    #                 self.x[(task, employee, mode, t)] = self.model.add_var(name="x({},{},{},{})"
-    #                                                                        .format(task, employee, mode, t),
-    #                                                                        var_type=BINARY)
-    #                 if task not in variable_per_task:
-    #                     variable_per_task[task] = []
-    #                 if employee not in variable_per_employee:
-    #                     variable_per_employee[employee] = []
-    #                 if employee not in variable_per_employee_time:
-    #                     variable_per_employee_time[employee] = {}
-    #                 if t not in variable_per_employee_time[employee]:
-    #                     variable_per_employee_time[employee][t] = []
-    #                 variable_per_task[task] += [(task, employee,
-    #                                              mode, t)]
-    #                 variable_per_employee[employee] += [(task, employee,
-    #                                                      mode, t)]
-    #                 all_vars.add((task, employee,
-    #                               mode, t))
-    #                 variable_per_employee_time[employee][t] += [(task,
-    #                                                              employee,
-    #                                                              mode,
-    #                                                              t)]
-    #     for task, mode, t in self.task_mode:
-    #         # all variables in self.x, with same task, mode, time
-    #         var_of_interest = [v for v in all_vars if v[0] == task and v[2] == mode and v[3] == t]
-    #         for v in var_of_interest:
-    #             self.model.add_constr(self.task_mode[(task, mode, t)] >= self.x[v])
-    #
-    #     tm = set([(x[0], x[1]) for x in self.task_mode])
-    #     for t, m in tm:
-    #         self.task_mode_without_t[(t, m)] = self.model.add_var(name="mode_{},{}".format(t, m),
-    #                                                               var_type=BINARY)
-    #     for x in self.task_mode:
-    #         self.model.add_constr(self.task_mode_without_t[(x[0], x[1])] >= self.task_mode[x])
-    #     for t in sorted_tasks:
-    #         self.model.add_constr(xsum(self.task_mode_without_t[x] for x in self.task_mode_without_t
-    #                                    if x[0] == t) == 1)
-    #
-    #     # at least one mode !!!
-    #     for task in sorted_tasks:
-    #         vars_task_mode = [v for v in self.task_mode if v[0] == task]
-    #         self.model.add_constr(xsum(self.task_mode[v] for v in vars_task_mode) >= 1)
-    #
-    #     self.durations = {j: self.model.add_var(name="duration_" + str(j),
-    #                                             var_type=INTEGER)
-    #                       for j in variable_per_task}
-    #
-    #     for task in variable_per_task_mode.keys():
-    #         self.model.add_constr(xsum(self.task_mode_without_t[key]
-    #                                    * self.rcpsp_model.mode_details[key[0]][key[1]]["duration"]
-    #                                    for key in self.task_mode_without_t if key[0] == task)
-    #                               == self.durations[task])
-    #     for task in variable_per_task_mode.keys():
-    #        self.model.add_constr(xsum(self.task_mode[key] for key in variable_per_task_mode[task])
-    #                               == self.durations[task]+1)
-    #     self.start_time_bin: Dict[Tuple, Var] = {}
-    #     self.end_time_bin: Dict[Tuple, Var] = {}
-    #
-    #     self.start_time: Dict[Tuple, Var] = {}
-    #     self.end_time: Dict[Tuple, Var] = {}
-    #
-    #     for task in variable_per_task:
-    #         self.start_time[task] = self.model.add_var(name="start_{}".format(task),
-    #                                                             var_type=INTEGER,
-    #                                                             lb=0,
-    #                                                             ub=max_duration)
-    #         self.end_time[task] = self.model.add_var(name="end_{}".format(task),
-    #                                                  var_type=INTEGER,
-    #                                                  lb=0,
-    #                                                  ub=max_duration+10)
-    #         self.model.add_constr(self.start_time[task]+self.durations[task]-self.end_time[task] == 0)
-    #         for variable in variable_per_task_mode[task]:
-    #              time = variable[-1]
-    #              # Setting starting date.
-    #              self.model.add_constr(self.start_time[task] <= self.task_mode[variable]*time
-    #                                    + (1-self.task_mode[variable])*10000)
-    #
-    #     # constraints on the employees activity :
-    #     for employee in variable_per_employee:
-    #         if employee == "fake-employee":
-    #             # no constraint on this.
-    #             continue
-    #         for time in variable_per_employee_time[employee]:
-    #             # the employee do only one stuff at a time.
-    #             self.model.add_constr(xsum(self.x[variable]
-    #                                        for variable in variable_per_employee_time[employee][time]) <= 1)
-    #             self.model.add_constr(xsum(self.x[variable]
-    #                                        for variable in variable_per_employee_time[employee][time])
-    #                                   <= 1 if self.rcpsp_model.employees[employee].calendar_employee[time] else 0)
-    #             # (makes redundant the precedent one)
-    #
-    #     for task in variable_per_task:
-    #         for employee in variable_per_employee:
-    #             if employee == "fake-employee":
-    #                 continue
-    #             variable_task_employee = [v for v in variable_per_employee[employee]
-    #                                       if v[0] == task]
-    #             if len(variable_task_employee) > 0:
-    #                 variable_skills = [v for v in variable_employee_usage[employee] if v[0] == task]
-    #                 skills_dict = {}
-    #                 for v in variable_skills:
-    #                     if v[2] not in skills_dict:
-    #                         skills_dict[v[2]] = []
-    #                     skills_dict[v[2]] += [v]
-    #                 # for skill in skills_dict:
-    #                 #    self.model.add_constr(xsum([self.x[v] for v in variable_task_employee])
-    #                 #                          <= self.durations[task]) # Need to check that :/
-    #                 for v in variable_task_employee:
-    #                     self.model.add_constr(xsum([self.employee_usage[v]
-    #                                                 for v in variable_skills]) >= self.x[v])
-    #                 self.model.add_constr(xsum(self.x[v] for v in variable_task_employee)
-    #                                       >= xsum([self.employee_usage[v]
-    #                                                for v in variable_skills]))
-    #     # constraints on ressource usage :
-    #     from itertools import product
-    #
-    #     # for (r, t) in product(renewable, range(max_duration+1)):
-    #     #     self.model += (xsum(int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.task_mode[key]
-    #     #                         for key in self.task_mode)
-    #     #                    <= renewable[r][t])
-    #     #
-    #     # for r in non_renewable:
-    #     #     self.model.add_constr(xsum(int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.task_mode[key]
-    #     #                                for key in self.task_mode) <= non_renewable[r][0])
-    #
-    #     # constraint on skill:
-    #     done = set()
-    #     for (task, mode, time) in self.task_mode:
-    #         if (task, mode) not in done:
-    #             skills = [s
-    #                       for s in self.rcpsp_model.mode_details[task][mode]
-    #                       if s in self.rcpsp_model.skills_set
-    #                       and self.rcpsp_model.mode_details[task][mode][s]>0]
-    #             print("Skilles : ", skills)
-    #
-    #             if len(skills) > 0:
-    #                 for s in skills:
-    #                     print("Needs : ", [self.rcpsp_model.mode_details[task][mode][s]
-    #                                        for tmt in self.task_mode
-    #                                        if tmt[0] == task and tmt[1] == mode])
-    #                     variable = [v for v in all_vars_employee if v[0] == task and v[2] == s]
-    #                     self.model.add_constr(xsum(self.employee_usage[v]
-    #                                                * self.rcpsp_model.employees[v[1]].dict_skill[v[2]].skill_value
-    #                                                for v in variable) >=
-    #                                           xsum(self.task_mode[tmt]*self.rcpsp_model.mode_details[task][mode][s]
-    #                                                for tmt in self.task_mode
-    #                                                if tmt[0] == task and tmt[1] == mode))
-    #         else:
-    #             continue
-    #         done.add((task, mode))
-    #     # Precedence =
-    #     for (j, s) in list_edges:
-    #         self.model.add_constr(self.start_time[s]-self.end_time[j]
-    #                               >= self.durations[j])
-    #     self.model.objective = self.start_time[max(self.start_time)]
 
     def init_model(self, **args):
         self.model = Model(
@@ -330,7 +66,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
             )
             + 10
         )
-        # c = [6, 8]
         renewable = {
             r: self.rcpsp_model.resources_availability[r]
             for r in self.rcpsp_model.resources_availability
@@ -340,9 +75,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
             r: self.rcpsp_model.resources_availability[r]
             for r in self.rcpsp_model.non_renewable_resources
         }
-        # print('c: ', c)
-        # S = [[0, 1], [0, 2], [0, 3], [1, 4], [1, 5], [2, 9], [2, 10], [3, 8], [4, 6],
-        #      [4, 7], [5, 9], [5, 10], [6, 8], [6, 9], [7, 8], [8, 11], [9, 11], [10, 11]]
         list_edges = []
         print("successors: ", self.rcpsp_model.successors)
         for task in sorted_tasks:
@@ -483,23 +215,11 @@ class LP_Solver_MRSCPSP(MilpSolver):
                                     ],
                                 )
                             ):
-                                # print((employee, task, mode, t, s), "will be 0")
-                                # print(self.rcpsp_model.employees[employee].calendar_employee)
                                 self.model.add_constr(
                                     self.employee_usage[(employee, task, mode, t, s)]
                                     == 0
                                 )
         employees = set([x[0] for x in self.employee_usage])
-        # for emp in employees:
-        #     all = [x for x in self.employee_usage if x[0] == emp]
-        #     for x1 in all:
-        #         for x2 in all:
-        #             if x1[0] == x2[0]:
-        #                 self.model.add_constr(self.employee_usage[x1]+self.employee_usage[x2] <= 1)
-        #             if x1[0] != x2[0]:
-        #                 if x1[3]+self.rcpsp_model.mode_details[x1[0]][x1[2]]["duration"]>=x2[3]:
-        #                     self.model.add_constr(self.employee_usage[x1] + self.employee_usage[x2] <= 1)
-        #     print("Employee ", emp)
         from itertools import product
 
         # can't work on overlapping tasks.

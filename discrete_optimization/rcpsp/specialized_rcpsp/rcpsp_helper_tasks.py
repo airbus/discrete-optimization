@@ -27,7 +27,6 @@ class RCPSP_H_Model(SingleModeRCPSPModel):
         )
         self.pre_helper_activities = pre_helper_activities
         self.post_helper_activities = post_helper_activities
-        # self.base_rcpsp_model = base_rcpsp_model
 
     def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:
         if rcpsp_sol._schedule_to_recompute:
@@ -78,58 +77,41 @@ class RCPSP_H_Model(SingleModeRCPSPModel):
                     "start_time"
                 ]
             )
-        # print('pre_helper_ids: ', pre_helper_ids)
-        # print('pre_helper_starts: ', pre_helper_starts)
         sorted_pre_helper_ids = [
             x for _, x in sorted(zip(pre_helper_starts, pre_helper_ids), reverse=True)
         ]
-        # print('sorted_pre_helper_ids: ', sorted_pre_helper_ids)
 
         # for each pre_helper, try to start as late as possible
         for id in sorted_pre_helper_ids:
-            # print('id: ',id)
-            # print('original_start: ', corrected_sol.rcpsp_schedule[id]['start_time'])
-            # print('self.successors[id]: ', self.successors[id])
             # Latest possible cannot be later than the earliest start of its successors
             all_successor_starts = [
                 corrected_sol.rcpsp_schedule[s_id]["start_time"]
                 for s_id in self.successors[id]
             ]
-            # print('all_successor_starts: ', all_successor_starts)
             latest_end = min(all_successor_starts)
-            # print('initial latest_end: ',latest_end)
             duration = (
                 corrected_sol.rcpsp_schedule[id]["end_time"]
                 - corrected_sol.rcpsp_schedule[id]["start_time"]
             )
             latest_start = latest_end - duration
-            # print('initial latest_start:', latest_start)
-
-            # print('self.compute_resource_consumption(): ', self.compute_resource_consumption(corrected_sol))
             # Then iteratively check if the latest time is suitable resource-wise
             # if not try earlier
 
             # first copy the resource consumption array and remove consumption of the pre_helper activity
             consumption = np.copy(self.compute_resource_consumption(corrected_sol))
-            # print('self.resources: ', self.resources)
             for i in range(len(list(self.resources.keys()))):
                 res_str = list(self.resources.keys())[i]
-                # print('res_str: ', res_str)
                 for t in range(
                     corrected_sol.rcpsp_schedule[id]["start_time"],
                     corrected_sol.rcpsp_schedule[id]["end_time"],
                 ):
-                    # print('t: ', t)
                     consumption[i, t + 1] -= self.mode_details[id][1][res_str]
-
-            # print('consumption -2: ', consumption)
 
             # then start trying iteratively to fit the pre_helper activity as late as possible
             stop = False
             while not stop:
                 all_good = True
                 for t in range(latest_start, latest_start + duration):
-                    # print('t: ',t)
                     for i in range(len(list(self.resources.keys()))):
                         res_str = list(self.resources.keys())[i]
                         if (
@@ -143,13 +125,10 @@ class RCPSP_H_Model(SingleModeRCPSPModel):
                     corrected_sol.rcpsp_schedule[id]["end_time"] = (
                         latest_start + duration
                     )
-                    # print('Corrected start: ',corrected_sol.rcpsp_schedule[id]['start_time'])
-                    # print('Corrected end: ', corrected_sol.rcpsp_schedule[id]['end_time'])
                     stop = True
                 else:
                     latest_start -= 1
 
-        # print(' ---------- ')
         return corrected_sol.rcpsp_schedule
 
 

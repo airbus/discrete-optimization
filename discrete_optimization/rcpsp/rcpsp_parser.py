@@ -32,7 +32,6 @@ def get_data_available():
 
 def parse_psplib(input_data):
     # parse the input
-    # print('input_data\n',input_data)
     lines = input_data.split("\n")
 
     # Retrieving section bounds
@@ -40,19 +39,12 @@ def parse_psplib(input_data):
 
     prec_ref_line_index = lines.index("PRECEDENCE RELATIONS:")
     prec_start_line_index = prec_ref_line_index + 2
-    # print('prec_start_line_index: ', prec_start_line_index)
     duration_ref_line_index = lines.index("REQUESTS/DURATIONS:")
     prec_end_line_index = duration_ref_line_index - 2
     duration_start_line_index = duration_ref_line_index + 3
-    # print('duration_start_line_index: ', duration_start_line_index)
     res_ref_line_index = lines.index("RESOURCEAVAILABILITIES:")
-    # res_ref_line_index = lines.index('RESOURCE AVAILABILITIES')
     duration_end_line_index = res_ref_line_index - 2
     res_start_line_index = res_ref_line_index + 1
-    # print('res_start_line_index: ', res_start_line_index)
-
-    # print('prec_end_line_index: ', prec_end_line_index)
-    # print('duration_end_line_index: ', duration_end_line_index)
 
     # Parsing horizon
     tmp = lines[horizon_ref_line_index].split()
@@ -93,7 +85,6 @@ def parse_psplib(input_data):
             multi_mode = True
             mode_id = int(tmp[0])
             duration = int(tmp[1])
-            # resources_usage = tmp[2:(3 + n_resources)]
             resources_usage = [int(x) for x in tmp[2 : (3 + n_resources)]]
 
         if int(task_id) not in list(mode_details.keys()):

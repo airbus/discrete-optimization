@@ -174,7 +174,6 @@ class ParametersAltGa:
                 DeapCrossover.CX_PARTIALY_MATCHED,
             ],
             selection=DeapSelection.SEL_TOURNAMENT,
-            # encodings=['modes_arrity_fix', 'priority_list_task', 'priority_worker_per_task_perm'],
             encodings=[
                 "modes_arrity_fix_from_0",
                 "priority_list_task",

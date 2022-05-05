@@ -122,7 +122,6 @@ class InitialSolutionRCPSP(InitialSolution):
                 for mutate in mutations
                 if mutate[0] == PermutationMutationRCPSP
             ]
-            #  and mutate[1]["other_mutation"] == TwoOptMutation]
             mixed_mutation = BasicPortfolioMutation(
                 list_mutation, np.ones((len(list_mutation)))
             )
@@ -221,7 +220,6 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
     ) -> Iterable[Any]:
         constraints_dict = {}
         current_solution, fit = result_storage.get_best_solution_fit()
-        # milp_solver.init_model(greedy_start=False, start_solution=current_solution)
         # Starting point :
         start = []
         current_solution: RCPSPSolution = current_solution
@@ -322,8 +320,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
                 else:
                     start += [(milp_solver.x[k], 0)]
         milp_solver.model.start = start
-        constraints_dict = {}
-        constraints_dict["range_start_time"] = []
+        constraints_dict = {"range_start_time": []}
         max_time = max(
             [
                 current_solution.rcpsp_schedule[x]["end_time"]
@@ -408,8 +405,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
                     milp_solver.starts[j].start = start_time_j
                 else:
                     milp_solver.x[k].start = 0
-        constraints_dict = {}
-        constraints_dict["range_start_time"] = []
+        constraints_dict = {"range_start_time": []}
         max_time = max(
             [
                 current_solution.rcpsp_schedule[x]["end_time"]
@@ -467,8 +463,6 @@ class LNS_LP_RCPSP_SOLVER(SolverDO):
         self.params_objective_function = get_default_objective_setup(
             problem=self.rcpsp_model
         )
-        # constraint_handler = ConstraintHandlerFixStartTime(problem=rcpsp_problem,
-        #                                                    fraction_fix_start_time=0.5)
         self.constraint_handler = ConstraintHandlerStartTimeIntervalMRCPSP(
             problem=rcpsp_model, fraction_to_fix=0.6, minus_delta=5, plus_delta=5
         )

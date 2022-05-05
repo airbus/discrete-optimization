@@ -211,11 +211,6 @@ class RCPSPSolutionSpecial(RCPSPSolution):
         super().generate_schedule_from_permutation_serial_sgs()
 
         # TODO = seems buggy :O
-        # schedule, feasible = generate_schedule_from_permutation_serial_sgs(solution=self,
-        #                                                                   rcpsp_problem=self.problem)
-        # self.rcpsp_schedule = schedule
-        # self.rcpsp_schedule_feasible = feasible
-        # self._schedule_to_recompute = False
 
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
@@ -292,13 +287,6 @@ class RCPSPModelSpecialConstraints(RCPSPModel):
                 for predt2 in self.predecessors_dict[t2]:
                     if t1 not in self.successors[predt2]:
                         self.successors[predt2] += [t1]
-        # if self.do_special_constraints:
-        #     for t1, t2 in self.special_constraints.start_at_end:
-        #         if t2 not in self.successors[t1]:
-        #             self.successors[t1].append(t2)
-        #     for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
-        #         if t2 not in self.successors[t1]:
-        #             self.successors[t1].append(t2)
         self.graph = self.compute_graph(compute_predecessors=True)
         self.predecessors = self.graph.predecessors_dict
         self.sgs_func = generate_schedule_from_permutation_serial_sgs
@@ -330,7 +318,6 @@ class RCPSPModelSpecialConstraints(RCPSPModel):
         penalty = evaluate_constraints(
             solution=rcpsp_sol, constraints=self.special_constraints
         )
-        # obj_mean_resource_reserve = rcpsp_sol.compute_mean_resource_reserve()
         return makespan, penalty
 
     def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:
@@ -576,7 +563,6 @@ class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
             return objectives
         return None
 
-    # @abstractmethod
     def evaluate_function(self, rcpsp_sol: RCPSPSolutionPreemptive):
         if rcpsp_sol._schedule_to_recompute:
             rcpsp_sol.generate_schedule_from_permutation_serial_sgs()
@@ -587,7 +573,6 @@ class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
             )
         else:
             penalty = 0
-        # obj_mean_resource_reserve = rcpsp_sol.compute_mean_resource_reserve()
         return makespan, penalty
 
     def evaluate(self, rcpsp_sol: RCPSPSolutionPreemptive) -> Dict[str, float]:
@@ -1080,7 +1065,6 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                     )
                     if current_min_time is None:
                         unfeasible = True
-                        # print(act_ids, " unfeasible ")
                         break
                     current_min_time_dict = {ac: current_min_time for ac in act_ids}
                     first_step = True

@@ -122,7 +122,6 @@ class MultiSkillToRCPSP:
                 task_requirement_list += [task_requirement]
             if check_resource_compliance:
                 tt = []
-                # print("Before ressource compliance ", len(task_requirement_list))
                 for t in task_requirement_list:
                     b = self.is_compatible(
                         task_requirements={r: t[r] for r in t if r != "duration"},
@@ -132,7 +131,6 @@ class MultiSkillToRCPSP:
                     )
                     if b:
                         tt += [t]
-                # print("After compliance ", len(tt))
             else:
                 tt = task_requirement_list
             tt = sorted(
@@ -156,7 +154,6 @@ class MultiSkillToRCPSP:
                 for yy in tt[i]:
                     if yy in usage_worker_in_chosen_modes:
                         usage_worker_in_chosen_modes[yy] += 1
-                        # print(usage_worker_in_chosen_modes)
         rcpsp_model = RCPSPModel(
             resources=resources_dict,
             non_renewable_resources=list(self.multiskill_model.non_renewable_resources),
@@ -169,24 +166,3 @@ class MultiSkillToRCPSP:
             sink_task=self.multiskill_model.sink_task,
         )
         return rcpsp_model
-
-    # import pickle
-    # import json
-    # pickle.dump(rcpsp_model, open("om_rcpsp_model_"+str(index)+"calendar_"+str(do_calendar)+".pk", "wb"))
-    # dict_instance = {}
-    # for attr in [
-    #     "resources",
-    #     "non_renewable_resources",
-    #     "mode_details",
-    #     "successors",
-    #     "horizon",
-    #     "horizon_multiplier",
-    #     "tasks_list",
-    #     "source_task",
-    #     "sink_task"
-    # ]:
-    #     dict_instance[attr] = getattr(rcpsp_model, attr)
-    #     if attr == "resources":
-    #         dict_instance[attr] = {k: [int(x) for x in dict_instance[attr][k]]
-    #                                for k in dict_instance[attr]}
-    # json.dump(dict_instance, open("om_rcpsp_model_"+str(index)+"calendar_"+str(do_calendar)+".json", "w"), indent=2)

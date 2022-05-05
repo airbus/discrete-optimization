@@ -63,30 +63,17 @@ class MultimodeTranspositionSolver(SolverDO):
             self.worker_type_to_worker = algo.worker_type_to_worker
         result_store = self.solver_multimode_rcpsp.solve(**kwargs)
         solution, fit = result_store.get_best_solution_fit()
-        if False:
-            s = rebuild_multiskill_solution(
-                multiskill_rcpsp_model=self.model,
-                multimode_rcpsp_model=self.multimode_model,
-                worker_type_to_worker=self.worker_type_to_worker,
-                solution_rcpsp=solution,
-            )
-            f = self.aggreg_sol(s)
-            res = ResultStorage(
-                list_solution_fits=[(s, f)], mode_optim=result_store.mode_optim
-            )
-            return res
-        else:
-            solution: RCPSPSolutionPreemptive = solution
-            print(solution.get_task_preempted())
-            print(solution.get_nb_task_preemption())
-            print(solution.get_max_preempted())
-            res = rebuild_multiskill_solution_cp_based(
-                multiskill_rcpsp_model=self.model,
-                multimode_rcpsp_model=self.multimode_model,
-                worker_type_to_worker=self.worker_type_to_worker,
-                solution_rcpsp=solution,
-            )
-            return res
+        solution: RCPSPSolutionPreemptive = solution
+        print(solution.get_task_preempted())
+        print(solution.get_nb_task_preemption())
+        print(solution.get_max_preempted())
+        res = rebuild_multiskill_solution_cp_based(
+            multiskill_rcpsp_model=self.model,
+            multimode_rcpsp_model=self.multimode_model,
+            worker_type_to_worker=self.worker_type_to_worker,
+            solution_rcpsp=solution,
+        )
+        return res
 
 
 def rebuild_multiskill_solution(
