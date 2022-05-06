@@ -229,7 +229,12 @@ class ORToolsGPDP(SolverDO):
         consider_empty_route_cost = kwargs.get("consider_empty_route_cost", True)
         if consider_empty_route_cost:
             for v in range(self.problem.number_vehicle):
-                routing.ConsiderEmptyRouteCostsForVehicle(True, v)
+                try:
+                    # Works for <ortools9.2
+                    routing.ConsiderEmptyRouteCostsForVehicle(True, v)
+                except:
+                    # Works for >=ortools9.2
+                    routing.SetVehicleUsedWhenEmpty(True, v)
         print("routing init")
         if use_matrix:
             # Create and register a transit callback.
