@@ -1276,29 +1276,28 @@ def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive])
             index_s = task_index[s]
             predecessors[index_s, i] = 1
             successors[i, index_s] = 1
+    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=int)
     if not rcpsp_problem.is_duration_minimum_preemption():
-        func_sgs = partial(
-            sgs_fast_preemptive,
-            consumption_array=consumption_array,
-            preemptive_tag=preemptive_tag,
-            duration_array=duration_array,
-            predecessors=predecessors,
-            successors=successors,
-            horizon=horizon,
-            ressource_available=ressource_available,
-            ressource_renewable=ressource_renewable,
-        )
-        func_sgs_2 = partial(
-            sgs_fast_partial_schedule_preemptive,
-            consumption_array=consumption_array,
-            preemptive_tag=preemptive_tag,
-            duration_array=duration_array,
-            predecessors=predecessors,
-            successors=successors,
-            horizon=horizon,
-            ressource_available=ressource_available,
-            ressource_renewable=ressource_renewable,
-        )
+        func_sgs = partial(sgs_fast_preemptive,
+                           consumption_array=consumption_array,
+                           preemptive_tag=preemptive_tag,
+                           duration_array=duration_array,
+                           predecessors=predecessors,
+                           successors=successors,
+                           horizon=horizon,
+                           ressource_available=ressource_available,
+                           ressource_renewable=ressource_renewable,
+                           minimum_starting_time_array=minimum_starting_time_array)
+        func_sgs_2 = partial(sgs_fast_partial_schedule_preemptive,
+                             consumption_array=consumption_array,
+                             preemptive_tag=preemptive_tag,
+                             duration_array=duration_array,
+                             predecessors=predecessors,
+                             successors=successors,
+                             horizon=horizon,
+                             ressource_available=ressource_available,
+                             ressource_renewable=ressource_renewable,
+                             minimum_starting_time_array=minimum_starting_time_array)
     else:
         func_sgs = partial(
             sgs_fast_preemptive_minduration,
