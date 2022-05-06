@@ -25,7 +25,7 @@ def sgs_fast(
         )
     minimum_starting_time = {}
     for act in range(permutation_task.shape[0]):
-        minimum_starting_time[permutation_task[act]] = minimum_starting_time_array[act]
+        minimum_starting_time[act] = minimum_starting_time_array[act]
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors[permutation_task, :], axis=1)
@@ -111,6 +111,7 @@ def sgs_fast_preemptive(
     horizon,
     ressource_available,
     ressource_renewable,
+    minimum_starting_time_array
 ):  # array(res)->bool
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
@@ -124,7 +125,7 @@ def sgs_fast_preemptive(
         )
     minimum_starting_time = {}
     for act in range(permutation_task.shape[0]):
-        minimum_starting_time[act] = 0
+        minimum_starting_time[act] = minimum_starting_time_array[act]
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
