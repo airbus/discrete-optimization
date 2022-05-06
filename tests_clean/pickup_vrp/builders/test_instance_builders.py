@@ -108,8 +108,8 @@ def test_pickup_and_delivery_equilibrate():
             for v in range(model.number_vehicle)
         },
         local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.SAVINGS,
-        time_limit=100,
+        first_solution_strategy=first_solution_strategy_enum.AUTOMATIC,
+        time_limit=20,
         n_solutions=10000,
     )
     results = solver.solve()
