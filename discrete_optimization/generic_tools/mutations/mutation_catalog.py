@@ -1,9 +1,6 @@
 import os
-import sys
 
 import numpy as np
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
 from discrete_optimization.generic_tools.do_mutation import LocalMove, Mutation
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,

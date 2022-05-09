@@ -1,7 +1,5 @@
 import os
-import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../"))
 from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
