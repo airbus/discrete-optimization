@@ -7,7 +7,11 @@ folder_data = os.path.join(this_folder, "../data/tsp/")
 
 
 def get_data_available():
-    files = [f for f in os.listdir(folder_data) if "pk" not in f and "json" not in f]
+    files = [
+        f
+        for f in os.listdir(folder_data)
+        if not f.endswith(".pk") and not f.endswith(".json")
+    ]
     return [os.path.join(folder_data, f) for f in files]
 
 

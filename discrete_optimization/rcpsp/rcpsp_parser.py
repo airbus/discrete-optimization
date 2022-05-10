@@ -22,7 +22,11 @@ results_available = [
 
 
 def get_data_available():
-    files = [f for f in os.listdir(path_to_data) if "pk" not in f and "json" not in f]
+    files = [
+        f
+        for f in os.listdir(path_to_data)
+        if not f.endswith(".pk") and not f.endswith(".json")
+    ]
     return [os.path.join(path_to_data, f) for f in files]
 
 
