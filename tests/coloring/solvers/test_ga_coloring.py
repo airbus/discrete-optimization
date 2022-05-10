@@ -2,7 +2,10 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
-from discrete_optimization.coloring.coloring_parser import files_available, parse_file
+from discrete_optimization.coloring.coloring_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     TypeAttribute,
@@ -17,7 +20,7 @@ from discrete_optimization.generic_tools.ea.ga import (
 
 
 def test_ga_coloring_1():
-    file = [f for f in files_available if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
     ga_solver = Ga(
         color_problem,
@@ -32,7 +35,7 @@ def test_ga_coloring_1():
 
 
 def test_ga_coloring_2():
-    file = [f for f in files_available if "gc_100_1" in f][0]
+    file = [f for f in get_data_available() if "gc_100_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
     ga_solver = Ga(
         color_problem,
@@ -50,7 +53,7 @@ def test_ga_coloring_2():
 
 
 def test_ga_coloring_3():
-    file = [f for f in files_available if "gc_100_1" in f][0]
+    file = [f for f in get_data_available() if "gc_100_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
     encoding = {

@@ -1,21 +1,32 @@
 import os
+from typing import Optional
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
 
-this_folder = os.path.dirname(os.path.abspath(__file__))
-folder_data = os.path.join(this_folder, "../data/tsp/")
 
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+):
+    """Get datasets available for tsp.
 
-def get_data_available():
+    Params:
+        data_folder: folder where datasets for tsp whould be find.
+            If None, we look in "tsp" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/tsp"
+
     files = [
         f
-        for f in os.listdir(folder_data)
+        for f in os.listdir(data_folder)
         if not f.endswith(".pk") and not f.endswith(".json")
     ]
-    return [os.path.join(folder_data, f) for f in files]
-
-
-files_available = get_data_available()
+    return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
 def parse_input_data(input_data, start_index=None, end_index=None):

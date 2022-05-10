@@ -18,11 +18,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     SingleModeRCPSPModel,
     plt,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     all_diff_start_time,
     kendall_tau_similarity,

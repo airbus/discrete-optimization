@@ -1,8 +1,11 @@
-from discrete_optimization.coloring.coloring_parser import files_available, parse_file
+from discrete_optimization.coloring.coloring_parser import (
+    get_data_available,
+    parse_file,
+)
 
 
 def parsing():
-    file_path = files_available[0]
+    file_path = get_data_available()[0]
     coloring_model = parse_file(file_path)
     print(coloring_model)
     print(coloring_model.graph)

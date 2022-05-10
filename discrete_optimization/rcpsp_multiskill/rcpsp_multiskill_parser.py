@@ -1,6 +1,7 @@
 import os
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.path_tools import abspath_from_file
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
@@ -17,49 +18,55 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     SkillDetail,
 )
 
-path_to_data = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/dataset_def/"
-)
-folder_to_do_solution = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/do_solutions/"
-)
-
-folder_to_do_only_cp_solution = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "../data/rcpsp_multiskill/do_cp_solutions/",
-)
-folder_to_benchmark_solution = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/de_best/"
-)
+RCPSP_MS_SUBFOLDER = "rcpsp_multiskill/dataset_def"
+RCPSP_MS_RESULTS_SUBFOLDER = "rcpsp_multiskill/do_solutions"
 
 
-def get_data_available():
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+):
+    """Get datasets available for rcpsp_multiskill.
+
+    Params:
+        data_folder: folder where datasets for rcpsp_multiskill whould be find.
+            If None, we look in "rcpsp_multiskill" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/{RCPSP_MS_SUBFOLDER}"
+
     files = [
         f
-        for f in os.listdir(path_to_data)
+        for f in os.listdir(data_folder)
         if not f.endswith(".pk") and not f.endswith(".json")
     ]
-    return [os.path.join(path_to_data, f) for f in files]
+    return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
-def get_results_do():
-    files = [f for f in os.listdir(folder_to_do_solution) if f.endswith(".sol")]
-    return [os.path.join(folder_to_do_solution, f) for f in files]
+def get_results_available(
+    result_folder: Optional[str] = None, data_home: Optional[str] = None
+):
+    """Get results available for rcpsp_multiskill.
 
+    Params:
+        result_folder: folder where solutions for rcpsp_multiskill whould be find.
+            If None, we look in "rcpsp_multiskill/do_solutions" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
 
-def get_results_directory(directory):
-    files = [f for f in os.listdir(directory) if f.endswith(".sol")]
-    return [os.path.join(directory, f) for f in files]
+    """
+    if result_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        result_folder = f"{data_home}/{RCPSP_MS_RESULTS_SUBFOLDER}"
 
-
-def get_results_do_cp():
-    files = [f for f in os.listdir(folder_to_do_only_cp_solution) if f.endswith(".sol")]
-    return [os.path.join(folder_to_do_only_cp_solution, f) for f in files]
-
-
-def get_results_benchmark():
-    files = [f for f in os.listdir(folder_to_benchmark_solution) if f.endswith(".sol")]
-    return [os.path.join(folder_to_benchmark_solution, f) for f in files]
+    return [
+        os.path.abspath(os.path.join(result_folder, f))
+        for f in os.listdir(result_folder)
+        if f.endswith(".sol")
+    ]
 
 
 def parse_imopse(
@@ -360,9 +367,8 @@ def run_recompute():
 
 def benchmark():
     basename_benchmark = {os.path.basename(p): p for p in get_results_benchmark()}
-    basename_do = {os.path.basename(p): p for p in get_results_do()}
     direc = "/Users/poveda_g/Documents/discrete-optimisation/tests/rcpsp_multiskills/results/do_cp_largeneighbor"
-    basename_do = {os.path.basename(p): p for p in get_results_directory(direc)}
+    basename_do = {os.path.basename(p): p for p in get_results_available(direc)}
     common_files = list(
         set(basename_benchmark.keys()).intersection(set(basename_do.keys()))
     )
@@ -411,6 +417,10 @@ def benchmark():
     print(len([x for x in results if results[x]["best"] == "do"]), " best do ")
     print(len([x for x in results if results[x]["best"] == "equal"]), " equal ")
     print(len([x for x in results if results[x]["best"] == "bench"]), " best bench ")
+
+
+def get_results_benchmark():
+    return get_results_available(f"{get_data_home()}/rcpsp_multiskill/do_best")
 
 
 def compute_best_benchmark_solution():

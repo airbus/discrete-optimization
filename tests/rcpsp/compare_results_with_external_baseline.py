@@ -2,10 +2,10 @@ import os
 
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
+    get_data_available,
+    get_results_available,
     parse_file,
     parse_results_file,
-    results_available,
 )
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
@@ -15,6 +15,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolv
 
 
 def compare_results():
+    results_available = get_results_available()
     result_file = [f for f in results_available if "J30_DH1m.csv" in f]
     result_file = [f for f in results_available if "j60" in f]
     result_file = [f for f in results_available if "J120" in f]
@@ -25,6 +26,7 @@ def compare_results():
     results = parse_results_file(result_file[0])
     for result in results:
         file_problem = result["file_problem"]
+        files_available = get_data_available()
         if file_problem in files_available:
             print(file_problem)
             rcpsp_model = parse_file(file_problem)

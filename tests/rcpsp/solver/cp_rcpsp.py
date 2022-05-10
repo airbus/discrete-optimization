@@ -16,11 +16,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     UncertainRCPSPModel,
     create_poisson_laws_duration,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     kendall_tau_similarity,
     plot_task_gantt,
@@ -29,6 +25,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN, CP_RCPS
 
 
 def single_mode_rcpsp_cp():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_5.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
@@ -49,6 +46,7 @@ def single_mode_rcpsp_cp():
 
 
 def single_mode_rcpsp_cp_intermediate_solution():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
@@ -217,6 +215,7 @@ def compare_integer_and_bool_models():
 
     times_dict = {}
     results_dict = {}
+    files_available = get_data_available()
     # files_to_run = [f for f in files_available if 'j1010_10_2.mm' in f]
     files_to_run = files_available
     for f in files_to_run:
@@ -243,6 +242,7 @@ def compare_integer_and_bool_models():
 
 
 def multi_mode_rcpsp_cp_intermediate_solution():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_MRCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
@@ -324,6 +324,7 @@ def single_mode_robot():
 
 
 def rcpsp_cp_partial_solution():
+    files_available = get_data_available()
     file = [f for f in files_available if "j601_2.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_RCPSP_MZN(rcpsp_problem)

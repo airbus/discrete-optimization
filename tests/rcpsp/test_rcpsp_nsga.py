@@ -17,11 +17,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     SingleModeRCPSPModel,
     plt,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
 def test_single_mode_nsga_2obj():

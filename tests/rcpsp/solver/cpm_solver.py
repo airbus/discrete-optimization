@@ -15,11 +15,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     UncertainRCPSPModel,
     create_poisson_laws_duration,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import kendall_tau_similarity
 
 # from discrete_optimization.rcpsp.rcpsp_data_generator import generate_rcpsp_with_helper_tasks_data
@@ -28,6 +24,7 @@ from discrete_optimization.rcpsp.solver.cpm import CPM, run_partial_classic_cpm
 
 
 def single_mode_rcpsp_cpm():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
     dummy = rcpsp_problem.get_dummy_solution()
@@ -249,6 +246,7 @@ def single_mode_rcpsp_cpm():
 
 
 def cpm_partial():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
     dummy = rcpsp_problem.get_dummy_solution()

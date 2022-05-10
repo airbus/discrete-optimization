@@ -5,7 +5,10 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackSolutionMultidimensional,
     MultidimensionalKnapsack,
 )
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.knapsack_solvers import GreedyBest, GreedyDummy
 from discrete_optimization.knapsack.solvers.gphh_knapsack import (
     GPHH,
@@ -25,6 +28,7 @@ def from_kp_to_multi(knapsack_model: KnapsackModel):
 
 
 def run_one_example():
+    files_available = get_data_available()
     one_file = files_available[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)

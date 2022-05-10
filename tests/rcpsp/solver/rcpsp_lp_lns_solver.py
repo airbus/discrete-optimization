@@ -20,11 +20,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     UncertainRCPSPModel,
     create_poisson_laws_duration,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,
@@ -44,6 +40,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
 
 
 def lns_single_mode():
+    files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
@@ -90,6 +87,7 @@ def lns_single_mode():
 
 
 def lns_multi_mode():
+    files_available = get_data_available()
     # file = [f for f in files_available if 'j1010_8.mm' in f][0]
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)

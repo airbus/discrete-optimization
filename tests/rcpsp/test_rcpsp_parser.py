@@ -1,9 +1,8 @@
 from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
     get_data_available,
+    get_results_available,
     parse_file,
     parse_results_file,
-    results_available,
 )
 
 
@@ -33,7 +32,7 @@ def parsing():
 
 def parsing_results():
     # file_path = files_available[0]
-    files = [f for f in results_available]  # Single mode RCPSP
+    files = [f for f in get_results_available()]  # Single mode RCPSP
     # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     for f in files:
         parse_results_file(f)

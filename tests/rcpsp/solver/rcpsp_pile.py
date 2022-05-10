@@ -9,11 +9,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     create_poisson_laws_duration,
     plt,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,

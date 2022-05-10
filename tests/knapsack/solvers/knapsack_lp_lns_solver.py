@@ -2,7 +2,10 @@ import os
 
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
     ConstraintHandlerKnapsack,
     InitialKnapsackMethod,
@@ -18,7 +21,7 @@ from discrete_optimization.knapsack.solvers.lp_solvers import (
 
 
 def knapsack_lns():
-    model_file = [f for f in files_available if "ks_500_0" in f][0]
+    model_file = [f for f in get_data_available() if "ks_500_0" in f][0]
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_milp = ParametersMilp(

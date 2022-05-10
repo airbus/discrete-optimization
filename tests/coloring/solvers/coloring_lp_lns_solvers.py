@@ -1,4 +1,7 @@
-from discrete_optimization.coloring.coloring_parser import files_available, parse_file
+from discrete_optimization.coloring.coloring_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.coloring.solvers.coloring_lp_lns_solvers import (
     ConstraintHandlerFixColorsPyMip,
     InitialColoring,
@@ -18,7 +21,7 @@ from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 
 
 def run_lns():
-    file = [f for f in files_available if "gc_70_7" in f][0]
+    file = [f for f in get_data_available() if "gc_70_7" in f][0]
     color_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(color_problem)
     solver = ColoringLP_MIP(

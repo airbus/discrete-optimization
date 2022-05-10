@@ -13,14 +13,15 @@ from discrete_optimization.vrp.vrp_model import VrpProblem
 
 
 def load_vrp_and_transform():
-    file_path = vrp_parser.files_available[1]
+    file_path = vrp_parser.get_data_available()[1]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
     print("Hey")
 
 
 def load_tsp_and_transform():
-    file_path = tsp_parser.files_available[1]
+    files_available = tsp_parser.get_data_available()
+    file_path = files_available[1]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
     print("Hey")
@@ -196,11 +197,12 @@ def debug_lp():
     vrp = False
     tsp = True
     if tsp:
-        file_path = tsp_parser.files_available[16]
+        files_available = tsp_parser.get_data_available()
+        file_path = files_available[16]
         tsp_model = tsp_parser.parse_file(file_path)
         gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
     else:
-        file_path = vrp_parser.files_available[1]
+        file_path = vrp_parser.get_data_available()[1]
         vrp_model = vrp_parser.parse_file(file_path)
         gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
     simplify = False
@@ -235,7 +237,7 @@ def selective_tsp():
 
 
 def vrp_capacity():
-    file_path = vrp_parser.files_available[4]
+    file_path = vrp_parser.get_data_available()[4]
     print(file_path)
     vrp_model = vrp_parser.parse_file(file_path)
     print("Nb vehicle : ", vrp_model.vehicle_count)
@@ -272,7 +274,7 @@ from discrete_optimization.pickup_vrp.solver.ortools_solver import (
 
 
 def run_ortools_solver():
-    file_path = vrp_parser.files_available[4]
+    file_path = vrp_parser.get_data_available()[4]
     print(file_path)
     vrp_model = vrp_parser.parse_file(file_path)
     print("Nb vehicle : ", vrp_model.vehicle_count)
