@@ -34,27 +34,31 @@ folder_to_benchmark_solution = os.path.join(
 
 
 def get_data_available():
-    files = [f for f in os.listdir(path_to_data) if "pk" not in f and "json" not in f]
+    files = [
+        f
+        for f in os.listdir(path_to_data)
+        if not f.endswith(".pk") and not f.endswith(".json")
+    ]
     return [os.path.join(path_to_data, f) for f in files]
 
 
 def get_results_do():
-    files = [f for f in os.listdir(folder_to_do_solution) if ".sol" in f]
+    files = [f for f in os.listdir(folder_to_do_solution) if f.endswith(".sol")]
     return [os.path.join(folder_to_do_solution, f) for f in files]
 
 
 def get_results_directory(directory):
-    files = [f for f in os.listdir(directory) if ".sol" in f]
+    files = [f for f in os.listdir(directory) if f.endswith(".sol")]
     return [os.path.join(directory, f) for f in files]
 
 
 def get_results_do_cp():
-    files = [f for f in os.listdir(folder_to_do_only_cp_solution) if ".sol" in f]
+    files = [f for f in os.listdir(folder_to_do_only_cp_solution) if f.endswith(".sol")]
     return [os.path.join(folder_to_do_only_cp_solution, f) for f in files]
 
 
 def get_results_benchmark():
-    files = [f for f in os.listdir(folder_to_benchmark_solution) if ".sol" in f]
+    files = [f for f in os.listdir(folder_to_benchmark_solution) if f.endswith(".sol")]
     return [os.path.join(folder_to_benchmark_solution, f) for f in files]
 
 
