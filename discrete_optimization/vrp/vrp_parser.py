@@ -1,5 +1,8 @@
 import os
+from collections import namedtuple
+from typing import Optional, Union
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.vrp.vrp_model import (
     BasicCustomer,
@@ -8,11 +11,26 @@ from discrete_optimization.vrp.vrp_model import (
     VrpProblem2D,
 )
 
-path_to_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/vrp/")
-files_available = [os.path.join(path_to_data, f) for f in os.listdir(path_to_data)]
 
-from collections import namedtuple
-from typing import Union
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+):
+    """Get datasets available for vrp.
+
+    Params:
+        data_folder: folder where datasets for vrp whould be find.
+            If None, we look in "vrp" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/vrp"
+
+    return [
+        os.path.abspath(os.path.join(data_folder, f)) for f in os.listdir(data_folder)
+    ]
 
 
 def parse_input(input_data, start_index=0, end_index=0, vehicle_count=None):

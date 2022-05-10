@@ -7,7 +7,7 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringSolution,
 )
 from discrete_optimization.coloring.coloring_parser import (
-    files_available,
+    get_data_available,
     parse,
     parse_file,
 )
@@ -21,7 +21,7 @@ from discrete_optimization.coloring.coloring_solvers import (
 )
 
 
-@pytest.mark.parametrize("coloring_problem_file", files_available)
+@pytest.mark.parametrize("coloring_problem_file", get_data_available())
 def test_load_file(coloring_problem_file):
     coloring_model: ColoringProblem = parse_file(coloring_problem_file)
     dummy_solution = coloring_model.get_dummy_solution()
@@ -29,8 +29,7 @@ def test_load_file(coloring_problem_file):
 
 
 def test_solvers():
-    print(files_available)
-    small_example = [f for f in files_available if "gc_20_1" in f][0]
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
     solvers = solvers_map.keys()
     for s in solvers:

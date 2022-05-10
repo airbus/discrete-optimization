@@ -4,7 +4,10 @@ from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
 )
-from discrete_optimization.facility.facility_parser import files_available, parse_file
+from discrete_optimization.facility.facility_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.facility.facility_solvers import (
     CPSolverName,
     FacilityCP,
@@ -19,8 +22,7 @@ from discrete_optimization.facility.solvers.gphh_facility import GPHH, Parameter
 
 
 def run_gphh():
-    print(files_available)
-    model: FacilityProblem = parse_file(files_available[3])
+    model: FacilityProblem = parse_file(get_data_available()[3])
     params_gphh = ParametersGPHH.default()
     params_gphh.pop_size = 25
     params_gphh.crossover_rate = 0.7
@@ -38,8 +40,7 @@ def run_gphh():
 
 
 def run_greedy():
-    print([os.path.basename(p) for p in files_available])
-    model: FacilityProblem = parse_file(files_available[5])
+    model: FacilityProblem = parse_file(get_data_available()[5])
     for method in [
         GreedySolverFacility,
         GreedySolverDistanceBased,

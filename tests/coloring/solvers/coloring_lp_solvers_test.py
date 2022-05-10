@@ -1,5 +1,8 @@
 import mip
-from discrete_optimization.coloring.coloring_parser import files_available, parse_file
+from discrete_optimization.coloring.coloring_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     ColoringLP,
     ColoringLP_MIP,
@@ -12,7 +15,7 @@ from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 
 
 def test_color_lp_gurobi():
-    file = [f for f in files_available if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringLP(
         color_problem,
@@ -25,7 +28,7 @@ def test_color_lp_gurobi():
 
 
 def test_color_lp_pymip():
-    file = [f for f in files_available if "gc_50_7" in f][0]
+    file = [f for f in get_data_available() if "gc_50_7" in f][0]
     color_problem = parse_file(file)
     solver = ColoringLP_MIP(
         color_problem,

@@ -13,7 +13,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPSolution,
     SingleModeRCPSPModel,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import files_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,
@@ -32,6 +32,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
 
 
 def lns_single_mode():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)
     solver = CP_RCPSP_MZN(
@@ -84,6 +85,7 @@ def lns_single_mode():
 
 
 def lns_multi_mode():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1010_9.mm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)
     if isinstance(rcpsp_problem, MultiModeRCPSPModel):
@@ -129,6 +131,7 @@ def lns_multi_mode():
 
 
 def lns_solver():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     parameters_cp = ParametersCP.default()

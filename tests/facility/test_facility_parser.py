@@ -1,8 +1,11 @@
-from discrete_optimization.facility.facility_parser import files_available, parse_file
+from discrete_optimization.facility.facility_parser import (
+    get_data_available,
+    parse_file,
+)
 
 
 def parsing():
-    file_path = files_available[0]
+    file_path = get_data_available()[0]
     facility_model = parse_file(file_path)
     print(facility_model)
     print(

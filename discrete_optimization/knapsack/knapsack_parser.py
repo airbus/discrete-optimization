@@ -1,13 +1,29 @@
 import os
-import sys
+from typing import Optional
 
-from discrete_optimization.generic_tools.path_tools import abspath_from_file
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
 
-path_to_data = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../data/knapsack/"
-)
-files_available = [os.path.join(path_to_data, f) for f in os.listdir(path_to_data)]
+
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+):
+    """Get datasets available for knapsack.
+
+    Params:
+        data_folder: folder where datasets for knapsack whould be find.
+            If None, we look in "knapsack" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/knapsack"
+
+    return [
+        os.path.abspath(os.path.join(data_folder, f)) for f in os.listdir(data_folder)
+    ]
 
 
 def parse_input_data(input_data, force_recompute_values: bool = False) -> KnapsackModel:
@@ -44,7 +60,7 @@ def parse_file(file_path, force_recompute_values=False) -> KnapsackModel:
 
 
 def test_parser():
-    file_location = os.path.join(abspath_from_file(__file__, "./data/ks_4_0"))
+    file_location = [f for f in get_data_available() if f.endswith("/ks_4_0")][0]
     knapsack_model = parse_file(file_location)
     print(knapsack_model)
 

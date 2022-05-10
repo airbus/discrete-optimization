@@ -27,7 +27,10 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
 )
 from discrete_optimization.knapsack.knapsack_model import KnapsackSolution
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.knapsack_solvers import (
     CPKnapsackMZN2,
     GreedyBest,
@@ -46,7 +49,7 @@ from discrete_optimization.knapsack.mutation.mutation_knapsack import (
 
 
 def testing_nsga_1():
-    files = [f for f in files_available if "ks_60_0" in f]
+    files = [f for f in get_data_available() if "ks_60_0" in f]
     knapsack_model = parse_file(files[0])
     # ga_solver = Ga(knapsack_model,
     #                objective_handling=ObjectiveHandling.AGGREGATE,
@@ -77,7 +80,7 @@ def testing_nsga_1():
 
 
 def testing_own_bitflip_kp_mutation():
-    files = [f for f in files_available if "ks_60_0" in f]
+    files = [f for f in get_data_available() if "ks_60_0" in f]
     knapsack_model = parse_file(files[0])
     mutation_1 = KnapsackMutationSingleBitFlip(knapsack_model)
     mutation_2 = MutationKnapsack(knapsack_model)

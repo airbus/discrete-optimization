@@ -22,7 +22,10 @@ from discrete_optimization.generic_tools.mutations.mixed_mutation import (
 )
 from discrete_optimization.generic_tools.path_tools import abspath_from_file
 from discrete_optimization.knapsack.knapsack_model import KnapsackSolution
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.knapsack_solvers import (
     CPKnapsackMZN2,
     GreedyBest,
@@ -42,7 +45,7 @@ from discrete_optimization.knapsack.mutation.mutation_knapsack import (
 
 
 def main_run():
-    file = [f for f in files_available if "ks_60_0" in f][0]
+    file = [f for f in get_data_available() if "ks_60_0" in f][0]
     knapsack_model = parse_file(file)
     do_gurobi = False
     methods = solvers.keys()
@@ -60,7 +63,7 @@ def main_run():
 
 
 def run_lns():
-    file = [f for f in files_available if "ks_100_0" in f][0]
+    file = [f for f in get_data_available() if "ks_100_0" in f][0]
     knapsack_model = parse_file(file)
     gurobi_model = LPKnapsack(knapsack_model)
     gurobi_model.init_model()
@@ -77,7 +80,7 @@ def run_lns():
 
 
 def run_lns_cp():
-    file = [f for f in files_available if "ks_100_0" in f][0]
+    file = [f for f in get_data_available() if "ks_100_0" in f][0]
     knapsack_model = parse_file(file)
     cp_model = CPKnapsackMZN2(knapsack_model)
     cp_model.init_model()
@@ -108,7 +111,7 @@ def run_lns_cp():
 
 
 def run_lp():
-    file = [f for f in files_available if "ks_10000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_10000_0" in f][0]
     knapsack_model = parse_file(file)
     # gurobi_solver = LPKnapsackGurobi(knapsack_model)
     pymip_solver = LPKnapsack(knapsack_model, milp_solver_name=MilpSolverName.GRB)

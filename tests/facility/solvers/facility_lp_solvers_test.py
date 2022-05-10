@@ -1,6 +1,9 @@
 import os
 
-from discrete_optimization.facility.facility_parser import files_available, parse_file
+from discrete_optimization.facility.facility_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver,
     LP_Facility_Solver_CBC,
@@ -12,8 +15,8 @@ from discrete_optimization.generic_tools.do_problem import get_default_objective
 
 
 def test_facility_lp():
-    file = [f for f in files_available if "fl_100_1" in f][0]
-    file = [f for f in files_available if os.path.basename(f) == "fl_100_1"][0]
+    file = [f for f in get_data_available() if "fl_100_1" in f][0]
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
     print(file)
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
@@ -26,7 +29,7 @@ def test_facility_lp():
 
 
 def test_facility_lp_cbc():
-    file = [f for f in files_available if os.path.basename(f) == "fl_100_7"][0]
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
     print(file)
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_CBC(color_problem)
@@ -39,7 +42,7 @@ def test_facility_lp_cbc():
 
 
 def test_facility_lp_pymip():
-    file = [f for f in files_available if os.path.basename(f) == "fl_100_7"][0]
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
     print(file)
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
@@ -66,7 +69,7 @@ def test_facility_lp_pymip():
 
 
 def test_facility_lp_lns():
-    file = [f for f in files_available if os.path.basename(f) == "fl_100_1"][0]
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
     solution, fit = solver.solve_lns(
@@ -83,7 +86,7 @@ def test_facility_lp_lns():
 
 
 def test_facility_lp_lns_CBC():
-    file = [f for f in files_available if os.path.basename(f) == "fl_100_1"][0]
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_CBC(color_problem)
     solution, fit = solver.solve_lns(

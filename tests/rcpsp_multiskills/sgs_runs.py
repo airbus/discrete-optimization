@@ -13,11 +13,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     TaskDetailsPreemptive,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-    folder_to_do_only_cp_solution,
-    folder_to_do_solution,
     get_data_available,
-    get_results_do,
-    get_results_do_cp,
     parse_file,
     write_solution,
 )

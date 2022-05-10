@@ -31,7 +31,10 @@ from discrete_optimization.knapsack.knapsack_model import (
     create_noised_scenario,
     from_kp_to_multi,
 )
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.solvers.cp_solvers import (
     LNS_CP,
     CPKnapsackMZN,
@@ -43,7 +46,7 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
 
 
 def run_cp_multidimensional():
-    one_file = files_available[10]
+    one_file = get_data_available()[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
     cp_solver = CPMultidimensionalSolver(knapsack_model=multidimensional_knapsack)
@@ -78,7 +81,7 @@ def run_ls(multiscenario_model):
 
 
 def run_cp_multidimensional_multiscenario():
-    one_file = files_available[10]
+    one_file = get_data_available()[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
     scenarios = create_noised_scenario(multidimensional_knapsack, nb_scenarios=20)

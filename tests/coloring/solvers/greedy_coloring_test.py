@@ -2,7 +2,10 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
-from discrete_optimization.coloring.coloring_parser import files_available, parse_file
+from discrete_optimization.coloring.coloring_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -10,7 +13,7 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
 
 
 def test_greedy_coloring():
-    file = [f for f in files_available if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = GreedyColoring(color_problem, params_objective_function=None)
     result_store = solver.solve(
@@ -22,7 +25,7 @@ def test_greedy_coloring():
 
 
 def test_greedy_best_coloring():
-    file = [f for f in files_available if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = GreedyColoring(color_problem, params_objective_function=None)
     result_store = solver.solve(strategy=NXGreedyColoringMethod.best, verbose=True)

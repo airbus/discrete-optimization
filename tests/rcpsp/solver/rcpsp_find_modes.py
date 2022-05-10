@@ -4,7 +4,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
     result_storage_to_pareto_front,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import files_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_MODES,
@@ -13,6 +13,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
 
 
 def find_modes():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_MRCPSP_MZN_MODES(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)

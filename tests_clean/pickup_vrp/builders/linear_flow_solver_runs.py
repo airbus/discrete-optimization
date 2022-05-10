@@ -17,14 +17,12 @@ def run_on_tsp_vrp():
     vrp = True
     tsp = False
     if tsp:
-        print(tsp_parser)
-        print(tsp_parser.files_available)
-        file_path = tsp_parser.files_available[2]
-        file_path = [f for f in tsp_parser.files_available if "tsp_105_1" in f][0]
+        files_available = tsp_parser.get_data_available()
+        file_path = [f for f in files_available if "tsp_105_1" in f][0]
         tsp_model = tsp_parser.parse_file(file_path)
         gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
     else:
-        file_path = vrp_parser.files_available[3]
+        file_path = vrp_parser.get_data_available()[3]
         vrp_model = vrp_parser.parse_file(file_path)
         gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
     simplify = False

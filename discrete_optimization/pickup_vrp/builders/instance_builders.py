@@ -196,14 +196,15 @@ def create_pickup_and_delivery(
 
 
 def load_vrp_and_transform(index_in_files_available: int = 1):
-    file_path = vrp_parser.files_available[index_in_files_available]
+    file_path = vrp_parser.get_data_available()[index_in_files_available]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
     return gpdp
 
 
 def load_tsp_and_transform(index_in_files_available: int = 1):
-    file_path = tsp_parser.files_available[index_in_files_available]
+    files_available = tsp_parser.get_data_available()
+    file_path = files_available[index_in_files_available]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
     return gpdp

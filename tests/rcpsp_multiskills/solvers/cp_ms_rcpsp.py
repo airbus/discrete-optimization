@@ -1,6 +1,7 @@
 from typing import Dict, List, Set
 
 import matplotlib.pyplot as plt
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
@@ -277,15 +278,15 @@ def only_cp_imopse():
     import random
 
     from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        folder_to_do_only_cp_solution,
-        folder_to_do_solution,
         get_data_available,
-        get_results_do,
-        get_results_do_cp,
+        get_results_available,
         parse_file,
         write_solution,
     )
 
+    folder_to_do_only_cp_solution = (
+        f"{get_data_home()}/rcpsp_multiskill/do_cp_solutions"
+    )
     file = [f for f in get_data_available() if "100_10_47_9.def" in f][0]
     # print(files[1])
     files = [f for f in get_data_available() if "100_20_46_15.def" in f]
@@ -298,7 +299,10 @@ def only_cp_imopse():
     random.shuffle(files)
 
     for file in files:
-        if any(os.path.basename(file) in f for f in get_results_do_cp()):
+        if any(
+            os.path.basename(file) in f
+            for f in get_results_available(folder_to_do_only_cp_solution)
+        ):
             print("Already done")
             continue
         model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=2000)
@@ -354,23 +358,14 @@ def lns_cp_imopse():
     import random
 
     from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        folder_to_do_only_cp_solution,
-        folder_to_do_solution,
         get_data_available,
-        get_results_do,
+        get_results_available,
         parse_file,
         write_solution,
     )
 
-    file = [f for f in get_data_available() if "100_10_47_9.def" in f][0]
-    # print(files[1])
-    files = [f for f in get_data_available() if "100_20_46_15.def" in f]
+    folder_to_do_solution = f"{get_data_home()}/rcpsp_multiskill/do_solutions"
     files = get_data_available()
-    random.shuffle(files)
-    files = get_data_available()
-    files = [f for f in get_data_available() if "100_20_46_15.def" in f]
-    files = get_data_available()
-    # files = [f for f in get_data_available() if '100_20_47_9.def' in f]
     random.shuffle(files)
     to_rerun = [
         f[:-4]
@@ -386,7 +381,7 @@ def lns_cp_imopse():
         print(os.path.basename(file))
         if any(
             os.path.basename(file) in f and os.path.basename(file) not in to_rerun
-            for f in get_results_do()
+            for f in get_results_available(folder_to_do_solution)
         ):
             print("Already done")
             continue
@@ -447,10 +442,7 @@ def lns_small_neighbor():
     import random
 
     from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        folder_to_do_only_cp_solution,
-        folder_to_do_solution,
         get_data_available,
-        get_results_do,
         parse_file,
         write_solution,
     )
@@ -466,18 +458,6 @@ def lns_small_neighbor():
     )
     if not os.path.exists(folder_do_small_solution):
         os.makedirs(folder_do_small_solution)
-    files = [
-        f
-        for f in get_data_available()
-        if any(
-            g[:-4] in f
-            for g in [
-                "100_5_64_9.def.sol",
-                "100_5_22_15.def.sol",
-                "100_5_64_15.def.sol",
-            ]
-        )
-    ]
     files = [f for f in get_data_available() if "100_5_64_9.def" in f]
     for file in files:
         print(os.path.basename(file))

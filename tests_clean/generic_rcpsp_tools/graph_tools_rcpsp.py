@@ -13,11 +13,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPSolution,
     SingleModeRCPSPModel,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 files_rcpsp = get_data_available()
 single_modes_files = [f for f in files_rcpsp if "sm" in f]
