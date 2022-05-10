@@ -1,12 +1,30 @@
 import os
+from typing import Optional
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.graph_api import Graph
 
-path_to_data = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../data/coloring/"
-)
-files_available = [os.path.join(path_to_data, f) for f in os.listdir(path_to_data)]
+
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+):
+    """Get datasets available for coloring.
+
+    Params:
+        data_folder: folder where datasets for coloring whould be find.
+            If None, we look in "coloring" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/coloring"
+
+    return [
+        os.path.abspath(os.path.join(data_folder, f)) for f in os.listdir(data_folder)
+    ]
 
 
 def parse(input_data) -> ColoringProblem:
@@ -34,6 +52,6 @@ def parse_file(file_path) -> ColoringProblem:
 
 
 if __name__ == "__main__":
-    file = files_available[0]
+    file = get_data_available()[0]
     model = parse_file(file)
     print(model.graph.nodes_name)

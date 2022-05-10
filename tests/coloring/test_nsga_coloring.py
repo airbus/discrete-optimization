@@ -3,7 +3,10 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
-from discrete_optimization.coloring.coloring_parser import files_available, parse_file
+from discrete_optimization.coloring.coloring_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     TypeAttribute,
@@ -24,7 +27,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 
 def test_coloring_nsga_1():
 
-    file = [f for f in files_available if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
     objectives = ["nb_colors", "nb_violations"]
@@ -50,7 +53,7 @@ def test_coloring_nsga_1():
 
 def test_coloring_nsga_2():
 
-    file = [f for f in files_available if "gc_70_1" in f][0]
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
     encoding = {

@@ -6,13 +6,16 @@ from discrete_optimization.generic_tools.ea.ga import (
     ObjectiveHandling,
 )
 from discrete_optimization.generic_tools.path_tools import abspath_from_file
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.tsp.tsp_parser import get_data_available
 from discrete_optimization.tsp.tsp_parser import parse_file as tsp_parse_file
 
 
 def test_binary_cx():
-    files = [f for f in files_available if "ks_60_0" in f]
+    files = [f for f in get_data_available() if "ks_60_0" in f]
     knapsack_model = parse_file(files[0])
 
     ga_solver = Ga(knapsack_model, crossover=DeapCrossover.CX_ONE_POINT, max_evals=1000)

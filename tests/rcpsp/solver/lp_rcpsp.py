@@ -17,11 +17,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     UncertainRCPSPModel,
     create_poisson_laws_duration,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import (
-    files_available,
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     kendall_tau_similarity,
     plot_resource_individual_gantt,
@@ -35,6 +31,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
 
 
 def single_mode_rcpsp_lp_cbc():
+    files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
@@ -55,6 +52,7 @@ def single_mode_rcpsp_lp_cbc():
 
 
 def single_mode_rcpsp_lp_cbc_robot():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     original_duration_multiplier = 1
@@ -97,6 +95,7 @@ def single_mode_rcpsp_lp_cbc_robot():
 
 
 def multi_mode_rcpsp_lp_grb():
+    files_available = get_data_available()
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem: MultiModeRCPSPModel = parse_file(file)
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
@@ -122,6 +121,7 @@ def multi_mode_rcpsp_lp_grb():
 
 
 def single_mode_rcpsp_lp_grb():
+    files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.GRB)
@@ -144,6 +144,7 @@ def single_mode_rcpsp_lp_grb():
 
 
 def single_mode_rcpsp_lp_grb_partial():
+    files_available = get_data_available()
     file = [f for f in files_available if "j601_2.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     dummy_solution = rcpsp_problem.get_dummy_solution()

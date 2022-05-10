@@ -1,5 +1,8 @@
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.knapsack_solvers import (
     CPKnapsackMZN,
     CPKnapsackMZN2,
@@ -7,7 +10,7 @@ from discrete_optimization.knapsack.knapsack_solvers import (
 
 
 def cp_knapsack_1():
-    file = [f for f in files_available if "ks_100_0" in f][0]
+    file = [f for f in get_data_available() if "ks_100_0" in f][0]
     knapsack_model = parse_file(file)
     cp_model = CPKnapsackMZN(knapsack_model)
     cp_model.init_model()
@@ -18,7 +21,7 @@ def cp_knapsack_1():
 
 
 def cp_knapsack_2():
-    file = [f for f in files_available if "ks_100_0" in f][0]
+    file = [f for f in get_data_available() if "ks_100_0" in f][0]
     knapsack_model = parse_file(file)
     cp_model = CPKnapsackMZN2(knapsack_model)
     cp_model.init_model()

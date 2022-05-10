@@ -3,7 +3,10 @@ import os
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
-from discrete_optimization.knapsack.knapsack_parser import files_available, parse_file
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.knapsack.solvers.cp_solvers import (
     CPKnapsackMZN2,
     KnapsackModel,
@@ -16,7 +19,7 @@ from discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver import (
 
 
 def knapsack_lns():
-    model_file = [f for f in files_available if "ks_500_0" in f][
+    model_file = [f for f in get_data_available() if "ks_500_0" in f][
         0
     ]  # optim result "54939"
     model: KnapsackModel = parse_file(model_file)

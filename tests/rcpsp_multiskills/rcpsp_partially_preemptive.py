@@ -19,15 +19,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     TaskDetailsPreemptive,
     compute_constraints_details,
 )
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-    folder_to_do_only_cp_solution,
-    folder_to_do_solution,
-    get_data_available,
-    get_results_do,
-    get_results_do_cp,
-    parse_file,
-    write_solution,
-)
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE,
     ParametersCP,

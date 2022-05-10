@@ -4,7 +4,10 @@ from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
 )
-from discrete_optimization.facility.facility_parser import files_available, parse_file
+from discrete_optimization.facility.facility_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     TypeAttribute,
@@ -19,7 +22,7 @@ from discrete_optimization.generic_tools.ea.ga import (
 
 
 def test_ga_facility_1():
-    file = [f for f in files_available if os.path.basename(f) == "fl_50_6"][0]
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_50_6"][0]
     facility_problem: FacilityProblem = parse_file(file)
     obj_handling, objs, objs_weight = get_default_objective_setup(facility_problem)
     ga_solver = Ga(
