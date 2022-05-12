@@ -15,6 +15,10 @@ COURSERA_REPO_URL_SHA1 = "f69378420ce2bb845abaef0f448eab303aa7a7e7"
 COURSERA_DATASETS = ["coloring", "facility", "knapsack", "tsp", "vrp"]
 COURSERA_DATADIRNAME = "data"
 
+SKDECIDE_REPO_URL = "https://github.com/airbus/scikit-decide"
+SKDECIDE_TAG = "v0.9.4"
+SKDECIDE_RCPSP_DATADIR = "examples/discrete_optimization/data"
+
 
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the discrete-optimization data directory.
@@ -73,3 +77,34 @@ def fetch_data_from_coursera(data_home: Optional[str] = None):
                         src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
                     )
                 os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+
+
+def fetch_data_for_rcpsp(data_home: Optional[str] = None):
+    """Fetch data for rcpsp and rcpsp_multiskill examples.
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # download in a temporary file the repo data
+    url = f"{SKDECIDE_REPO_URL}/archive/refs/tags/{SKDECIDE_TAG}.zip"
+    with tempfile.NamedTemporaryFile() as local_file_path:
+        urlretrieve(url, local_file_path.name)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split(os.path.sep)[0]
+            prefix_in_zip = f"{rootdir}/{SKDECIDE_RCPSP_DATADIR}/"
+            with tempfile.TemporaryDirectory() as tmpdir:
+                for name in namelist:
+                    if name.startswith(prefix_in_zip):
+                        zipf.extract(name, path=tmpdir)
+                # move to appropriate place
+                for datafile in glob.glob(f"{tmpdir}/{prefix_in_zip}/*"):
+                    os.replace(
+                        src=datafile, dst=f"{data_home}/{os.path.basename(datafile)}"
+                    )
