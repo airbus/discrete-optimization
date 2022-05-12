@@ -7,6 +7,8 @@ data_packages = [
     for p in list(Path("discrete_optimization").glob("**/minizinc"))
 ]
 
+tests_require = ["pytest", "scikit-learn>=1.0"]
+
 setup(
     name="discrete_optimization",
     version="0.1",
@@ -27,7 +29,8 @@ setup(
         "tqdm>=4.62.3",
         "sortedcontainers>=2.4",
     ],
-    tests_require=["pytest", "scikit-learn>=1.0"],
+    tests_require=tests_require,
+    extras_require={"test": tests_require},
     license="MIT",
     author="Airbus AI Research <scikit-decide@airbus.com>",
     description="Discrete optimization library",
