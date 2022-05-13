@@ -129,4 +129,5 @@ jobs:
           fetch_data_for_rcpsp()
       - name: Test with pytest
         run: |
+          export PATH=$PATH:${{ matrix.minizinc_path }}
           pytest tests_clean
