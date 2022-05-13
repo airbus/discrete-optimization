@@ -5,7 +5,7 @@ import os
 import tempfile
 import zipfile
 from typing import Optional
-from urllib.request import urlretrieve
+from urllib.request import urlretrieve, urlcleanup
 
 DO_DEFAULT_DATAHOME = "~/discrete_optimization_data"
 DO_DEFAULT_DATAHOME_ENVVARNAME = "DISCRETE_OPTIMIZATION_DATA"
@@ -59,12 +59,12 @@ def fetch_data_from_coursera(data_home: Optional[str] = None):
 
     # download in a temporary file the repo data
     url = f"{COURSERA_REPO_URL}/archive/{COURSERA_REPO_URL_SHA1}.zip"
-    with tempfile.NamedTemporaryFile() as local_file_path:
-        urlretrieve(url, local_file_path.name)
+    try:
+        local_file_path, headers = urlretrieve(url)
         # extract only data
         with zipfile.ZipFile(local_file_path) as zipf:
             namelist = zipf.namelist()
-            rootdir = namelist[0].split(os.path.sep)[0]
+            rootdir = namelist[0].split("/")[0]
             for dataset in COURSERA_DATASETS:
                 dataset_dir = f"{data_home}/{dataset}"
                 os.makedirs(dataset_dir, exist_ok=True)
@@ -77,6 +77,8 @@ def fetch_data_from_coursera(data_home: Optional[str] = None):
                         src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
                     )
                 os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+    finally:
+        urlcleanup()
 
 
 def fetch_data_for_rcpsp(data_home: Optional[str] = None):
@@ -92,12 +94,12 @@ def fetch_data_for_rcpsp(data_home: Optional[str] = None):
 
     # download in a temporary file the repo data
     url = f"{SKDECIDE_REPO_URL}/archive/refs/tags/{SKDECIDE_TAG}.zip"
-    with tempfile.NamedTemporaryFile() as local_file_path:
-        urlretrieve(url, local_file_path.name)
+    try:
+        local_file_path, headers = urlretrieve(url)
         # extract only data
         with zipfile.ZipFile(local_file_path) as zipf:
             namelist = zipf.namelist()
-            rootdir = namelist[0].split(os.path.sep)[0]
+            rootdir = namelist[0].split("/")[0]
             prefix_in_zip = f"{rootdir}/{SKDECIDE_RCPSP_DATADIR}/"
             with tempfile.TemporaryDirectory() as tmpdir:
                 for name in namelist:
@@ -108,3 +110,5 @@ def fetch_data_for_rcpsp(data_home: Optional[str] = None):
                     os.replace(
                         src=datafile, dst=f"{data_home}/{os.path.basename(datafile)}"
                     )
+    finally:
+        urlcleanup()
