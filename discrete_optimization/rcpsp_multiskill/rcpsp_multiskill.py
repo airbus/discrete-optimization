@@ -714,7 +714,7 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=np.bool
+            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
         )
     minimum_starting_time = {}
     for act in problem.tasks_list:
@@ -941,7 +941,7 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=np.bool
+            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
         )
     minimum_starting_time = {}
     for act in problem.tasks_list:
@@ -1206,7 +1206,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=np.bool
+            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
         )
     minimum_starting_time = {}
     for act in problem.tasks_list:
@@ -1543,7 +1543,7 @@ def sgs_multi_skill_partial_schedule(
     worker_avail_in_time = {}
     for i in problem.employees:
         worker_avail_in_time[i] = np.array(
-            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=np.bool
+            problem.employees[i].calendar_employee[: new_horizon + 1], dtype=bool
         )
     perm_extended = [
         problem.tasks_list_non_dummy[x] for x in solution.priority_list_task
@@ -3014,7 +3014,7 @@ def create_fake_tasks_multiskills(
                 }
                 fake_tasks += [consume]
     unit_arrays = {
-        j: np.array(rcpsp_problem.employees[j].calendar_employee, dtype=np.int)
+        j: np.array(rcpsp_problem.employees[j].calendar_employee, dtype=np.int32)
         for j in rcpsp_problem.employees_list
     }
     max_capacity = {r: np.max(unit_arrays[r]) for r in unit_arrays}
@@ -3094,11 +3094,13 @@ def create_np_data_and_jit_functions(
         dtype=np.int32,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int32
     )
 
-    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
+    predecessors = np.zeros(
+        (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
+    )
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
         (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
@@ -3109,7 +3111,7 @@ def create_np_data_and_jit_functions(
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
     worker_skills = np.zeros(
         (len(rcpsp_problem.employees_list), len(rcpsp_problem.skills_list)),
-        dtype=np.int,
+        dtype=np.int32,
     )
     minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=int)
     consider_partial_preemptive = False
@@ -3158,7 +3160,7 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.employees[
                 rcpsp_problem.employees_list[emp]
             ].calendar_employee,
-            dtype=np.int,
+            dtype=np.int32,
         )[:horizon]
         for s in range(len(rcpsp_problem.skills_list)):
             worker_skills[emp, s] = (
