@@ -2931,8 +2931,8 @@ def build_partial_vectors(
     scheduled_tasks_start_times: Dict[Hashable, TaskDetails],
 ):
     scheduled_task_indicator = np.zeros((problem.n_jobs))
-    scheduled_tasks_start_times_vector = np.zeros((problem.n_jobs), dtype=int)
-    scheduled_tasks_end_times_vector = np.zeros((problem.n_jobs), dtype=int)
+    scheduled_tasks_start_times_vector = np.zeros((problem.n_jobs), dtype=np.int32)
+    scheduled_tasks_end_times_vector = np.zeros((problem.n_jobs), dtype=np.int32)
     worker_used = np.zeros((problem.n_jobs, problem.nb_employees), dtype=int)
     for dict_data in [completed_tasks, scheduled_tasks_start_times]:
         for t in dict_data:
@@ -2958,8 +2958,8 @@ def build_partial_vectors_preemptive(
     scheduled_tasks_start_times: Dict[Hashable, TaskDetailsPreemptive],
 ):
     scheduled_task_indicator = np.zeros((problem.n_jobs))
-    scheduled_tasks_start_times_array = np.zeros((problem.n_jobs, 10), dtype=int)
-    scheduled_tasks_end_times_array = np.zeros((problem.n_jobs, 10), dtype=int)
+    scheduled_tasks_start_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int32)
+    scheduled_tasks_end_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int32)
     nb_subparts = np.zeros((problem.n_jobs), dtype=int)
     worker_used = np.zeros((problem.n_jobs, 10, problem.nb_employees), dtype=int)
     for dict_data in [completed_tasks, scheduled_tasks_start_times]:

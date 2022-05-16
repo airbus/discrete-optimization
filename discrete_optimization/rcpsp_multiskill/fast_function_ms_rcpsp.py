@@ -1,5 +1,9 @@
+import numba.typed
+import numba.types
 import numpy as np
 from numba import jit, njit
+
+int32_array = numba.types.Array(numba.types.int32, 1, "C")
 
 
 @njit
@@ -414,8 +418,14 @@ def sgs_fast_ms_preemptive(
     unfeasible_sched = False
     new_horizon = horizon
     resource_avail_in_time = {}
-    starts_dict = {}
-    ends_dict = {}
+    starts_dict = numba.typed.Dict.empty(
+        key_type=numba.types.int32,
+        value_type=int32_array,
+    )
+    ends_dict = numba.typed.Dict.empty(
+        key_type=numba.types.int32,
+        value_type=int32_array,
+    )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
             ressource_available[index][: new_horizon + 1]
@@ -712,8 +722,8 @@ def sgs_fast_ms_preemptive(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts)
-            ends_dict[act_id] = np.array(ends)
+            starts_dict[act_id] = np.array(starts, dtype=np.int32)
+            ends_dict[act_id] = np.array(ends, dtype=np.int32)
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
@@ -754,8 +764,14 @@ def sgs_fast_ms_preemptive_some_special_constraints(
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
     resource_avail_in_time = {}
-    starts_dict = {}
-    ends_dict = {}
+    starts_dict = numba.typed.Dict.empty(
+        key_type=numba.types.int32,
+        value_type=int32_array,
+    )
+    ends_dict = numba.typed.Dict.empty(
+        key_type=numba.types.int32,
+        value_type=int32_array,
+    )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
             ressource_available[index][: new_horizon + 1]
@@ -1019,8 +1035,8 @@ def sgs_fast_ms_preemptive_some_special_constraints(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts)
-            ends_dict[act_id] = np.array(ends)
+            starts_dict[act_id] = np.array(starts, dtype=np.int32)
+            ends_dict[act_id] = np.array(ends, dtype=np.int32)
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
@@ -1082,8 +1098,14 @@ def sgs_fast_ms_preemptive_partial_schedule(
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
     resource_avail_in_time = {}
-    starts_dict = {}
-    ends_dict = {}
+    starts_dict = numba.typed.Dict.empty(
+        key_type=numba.types.int32,
+        value_type=int32_array,
+    )
+    ends_dict = numba.typed.Dict.empty(
+        key_type=numba.types.int32,
+        value_type=int32_array,
+    )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
             ressource_available[index][: new_horizon + 1]
@@ -1368,8 +1390,8 @@ def sgs_fast_ms_preemptive_partial_schedule(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts)
-            ends_dict[act_id] = np.array(ends)
+            starts_dict[act_id] = np.array(starts, dtype=np.int32)
+            ends_dict[act_id] = np.array(ends, dtype=np.int32)
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
