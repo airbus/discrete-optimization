@@ -790,10 +790,12 @@ def create_np_data_and_jit_functions(
         dtype=np.int32,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int32
     )
-    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
+    predecessors = np.zeros(
+        (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
+    )
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
         (len(rcpsp_problem.resources_list), horizon), dtype=np.int32

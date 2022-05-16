@@ -1223,11 +1223,13 @@ def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive])
         dtype=np.int32,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int32
     )
-    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    preemptive_tag = np.zeros((rcpsp_problem.n_jobs), dtype=np.bool)
+    predecessors = np.zeros(
+        (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
+    )
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
+    preemptive_tag = np.zeros((rcpsp_problem.n_jobs), dtype=bool)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
         (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
