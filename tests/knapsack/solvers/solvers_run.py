@@ -43,17 +43,23 @@ from discrete_optimization.knapsack.mutation.mutation_knapsack import (
     MutationKnapsack,
 )
 
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+
 
 def main_run():
     file = [f for f in get_data_available() if "ks_60_0" in f][0]
     knapsack_model = parse_file(file)
-    do_gurobi = False
     methods = solvers.keys()
     methods = ["cp"]
     for method in methods:
         print("method : ", method)
         for submethod in solvers[method]:
-            if submethod[0] == LPKnapsackGurobi and not do_gurobi:
+            if submethod[0] == LPKnapsackGurobi and not gurobi_available:
                 continue
             print(submethod[0])
             t = time.time()

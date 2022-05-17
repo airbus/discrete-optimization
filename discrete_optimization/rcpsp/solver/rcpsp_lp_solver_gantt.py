@@ -3,7 +3,6 @@ from enum import Enum
 from itertools import product
 from typing import Dict, List, Set, Tuple, Union
 
-import gurobi as gurobi
 import networkx as nx
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -31,6 +30,14 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolverRCPSP
 from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
+
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+    import gurobipy as gurobi
 
 # TODO : modelize the optimisation problem behind this.
 

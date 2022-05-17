@@ -2,7 +2,6 @@ import time
 from itertools import combinations
 from typing import Any, Dict, Iterable, List, Tuple
 
-import gurobipy as grb
 import networkx as nx
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -13,6 +12,13 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.pickup_vrp.gpdp import GPDP
+
+try:
+    import gurobipy as grb
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
 
 
 class TemporaryResult:

@@ -31,9 +31,12 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
 from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
 
 try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
     import gurobipy as gurobi
-except:
-    pass
 
 
 class LP_RCPSP_Solver(Enum):
