@@ -5,7 +5,7 @@ import os
 import tempfile
 import zipfile
 from typing import Optional
-from urllib.request import urlretrieve, urlcleanup
+from urllib.request import urlcleanup, urlretrieve
 
 DO_DEFAULT_DATAHOME = "~/discrete_optimization_data"
 DO_DEFAULT_DATAHOME_ENVVARNAME = "DISCRETE_OPTIMIZATION_DATA"
@@ -15,9 +15,16 @@ COURSERA_REPO_URL_SHA1 = "f69378420ce2bb845abaef0f448eab303aa7a7e7"
 COURSERA_DATASETS = ["coloring", "facility", "knapsack", "tsp", "vrp"]
 COURSERA_DATADIRNAME = "data"
 
-SKDECIDE_REPO_URL = "https://github.com/airbus/scikit-decide"
-SKDECIDE_TAG = "v0.9.4"
-SKDECIDE_RCPSP_DATADIR = "examples/discrete_optimization/data"
+PSPLIB_FILES_BASE_URL = "https://www.om-db.wi.tum.de/psplib/files"
+PSPLIB_DATASETS = {
+    "j10.mm": "j1010_",
+    "j120.sm": "j1201_",
+    "j30.sm": "j301_",
+    "j60.sm": "j601_",
+}
+
+IMOPSE_DATASET_URL = "http://imopse.ii.pwr.wroc.pl/files/imopse_validator_pack.zip"
+IMOPSE_DATASET_RELATIVE_PATH = "IMOPSE/dataset_def.zip"
 
 
 def get_data_home(data_home: Optional[str] = None) -> str:
@@ -81,8 +88,10 @@ def fetch_data_from_coursera(data_home: Optional[str] = None):
         urlcleanup()
 
 
-def fetch_data_for_rcpsp(data_home: Optional[str] = None):
-    """Fetch data for rcpsp and rcpsp_multiskill examples.
+def fetch_data_from_psplib(data_home: Optional[str] = None):
+    """Fetch data for rcpsp examples from psplib.
+
+    cf https://www.om-db.wi.tum.de/psplib/data.html
 
     Params:
         data_home: Specify the cache folder for the datasets. By default
@@ -92,23 +101,65 @@ def fetch_data_for_rcpsp(data_home: Optional[str] = None):
     #  get the proper data directory
     data_home = get_data_home(data_home=data_home)
 
-    # download in a temporary file the repo data
-    url = f"{SKDECIDE_REPO_URL}/archive/refs/tags/{SKDECIDE_TAG}.zip"
+    # get rcpsp data directory
+    rcpsp_dir = f"{data_home}/rcpsp"
+    os.makedirs(rcpsp_dir, exist_ok=True)
+
     try:
-        local_file_path, headers = urlretrieve(url)
-        # extract only data
-        with zipfile.ZipFile(local_file_path) as zipf:
-            namelist = zipf.namelist()
-            rootdir = namelist[0].split("/")[0]
-            prefix_in_zip = f"{rootdir}/{SKDECIDE_RCPSP_DATADIR}/"
-            with tempfile.TemporaryDirectory() as tmpdir:
+        # download each datasets
+        for dataset, prefix in PSPLIB_DATASETS.items():
+            url = f"{PSPLIB_FILES_BASE_URL}/{dataset}.zip"
+            local_file_path, _ = urlretrieve(url)
+            with zipfile.ZipFile(local_file_path) as zipf:
+                namelist = zipf.namelist()
                 for name in namelist:
-                    if name.startswith(prefix_in_zip):
-                        zipf.extract(name, path=tmpdir)
-                # move to appropriate place
-                for datafile in glob.glob(f"{tmpdir}/{prefix_in_zip}/*"):
-                    os.replace(
-                        src=datafile, dst=f"{data_home}/{os.path.basename(datafile)}"
-                    )
+                    if name.startswith(prefix):
+                        zipf.extract(name, path=rcpsp_dir)
     finally:
+        # remove temporary files
         urlcleanup()
+
+
+def fetch_data_from_imopse(data_home: Optional[str] = None):
+    """Fetch data from iMOPSE for rcpsp_multiskill examples.
+
+    cf http://imopse.ii.pwr.wroc.pl/download.html
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp_multiskill data directory
+    rcpsp_multiskill_dir = f"{data_home}/rcpsp_multiskill"
+    os.makedirs(rcpsp_multiskill_dir, exist_ok=True)
+
+    try:
+        # download dataset
+        local_file_path, headers = urlretrieve(IMOPSE_DATASET_URL)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # extract only data
+            with zipfile.ZipFile(local_file_path) as zipf:
+                zipf.extract(IMOPSE_DATASET_RELATIVE_PATH, tmpdir)
+            with zipfile.ZipFile(f"{tmpdir}/{IMOPSE_DATASET_RELATIVE_PATH}") as zipf:
+                zipf.extractall(path=rcpsp_multiskill_dir)
+
+    finally:
+        # remove temporary files
+        urlcleanup()
+
+
+def fetch_all_datasets(data_home: Optional[str] = None):
+    """Fetch data used by examples for all packages.
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    fetch_data_from_coursera(data_home=data_home)
+    fetch_data_from_psplib(data_home=data_home)
+    fetch_data_from_imopse(data_home=data_home)
