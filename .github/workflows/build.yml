@@ -114,6 +114,7 @@ jobs:
           python -m pip install -U pip
           wheelfile=$(ls ./wheels/discrete_optimization*.whl)
           pip install ${wheelfile}[test]
+          pip install gurobipy
       - name: Restore tests data cache
         id: cache-data
         uses: actions/cache@v2
