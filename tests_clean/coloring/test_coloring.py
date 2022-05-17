@@ -116,7 +116,7 @@ def test_ga_coloring_1():
         objective_weights=[-1],
         max_evals=3000,
     )
-    color_sol = ga_solver.solve()
+    color_sol = ga_solver.solve().get_best_solution()
     print("color_sol: ", color_sol)
     print("color_evaluate: ", color_problem.evaluate(color_sol))
     print("color_satisfy: ", color_problem.satisfy(color_sol))
@@ -134,7 +134,7 @@ def test_ga_coloring_2():
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=3000,
     )
-    color_sol = ga_solver.solve()
+    color_sol = ga_solver.solve().get_best_solution()
     print("color_sol: ", color_sol)
     print("color_evaluate: ", color_problem.evaluate(color_sol))
     print("color_satisfy: ", color_problem.satisfy(color_sol))
@@ -160,7 +160,7 @@ def test_ga_coloring_3():
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=3000,
     )
-    color_sol = ga_solver.solve()
+    color_sol = ga_solver.solve().get_best_solution()
     print("color_sol: ", color_sol)
     print("color_evaluate: ", color_problem.evaluate(color_sol))
     print("color_satisfy: ", color_problem.satisfy(color_sol))
