@@ -1,3 +1,4 @@
+"""Linear programming models and solve functions for Coloring problem."""
 import logging
 import sys
 from typing import Dict, Hashable, Optional, Tuple, Type, Union
@@ -132,9 +133,25 @@ class _BaseColoringLP(MilpSolver):
 
 
 class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
-    """Coloring LP solver based on gurobipy library."""
+    """Coloring LP solver based on gurobipy library.
+
+    Attributes:
+        coloring_problem (ColoringProblem): coloring problem instance to solve
+        params_objective_function (ParamsObjectiveFunction): objective function parameters
+                (however this is just used for the ResultStorage creation, not in the optimisation)
+
+    """
+
 
     def init_model(self, **kwargs):
+        """Initialize the gurobi model.
+
+        Keyword Args:
+            greedy_start (bool): if True, a greedy solution is computed (using GreedyColoring solver)
+                and used as warm start for the LP.
+            use_cliques (bool): if True, compute cliques of the coloring problem and add constraints to the model.
+            verbose (bool): verbose option.
+        """
         greedy_start = kwargs.get("greedy_start", True)
         use_cliques = kwargs.get("use_cliques", False)
         if greedy_start:
@@ -247,7 +264,19 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
 
 
 class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
-    """Coloring LP solver based on pymip library."""
+    """Coloring LP solver based on pymip library.
+
+    Note:
+        Gurobi and CBC are available as backend solvers.
+
+
+    Attributes:
+        coloring_problem (ColoringProblem): coloring problem instance to solve
+        params_objective_function (ParamsObjectiveFunction): objective function parameters
+                    (however this is just used for the ResultStorage creation, not in the optimisation)
+        milp_solver_name (MilpSolverName): backend solver to use (either CBC ou GRB)
+
+    """
 
     def __init__(
         self,

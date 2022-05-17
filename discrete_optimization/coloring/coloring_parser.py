@@ -28,6 +28,13 @@ def get_data_available(
 
 
 def parse(input_data) -> ColoringProblem:
+    """From a text input, initialise a coloring problem instance.
+
+    Args:
+        input_data: text input in the format of {data_home}/coloring files
+
+    Returns: a ColoringProblem instance
+    """
     # parse the input
     lines = input_data.split("\n")
     first_line = lines[0].split()
@@ -45,6 +52,13 @@ def parse(input_data) -> ColoringProblem:
 
 
 def parse_file(file_path) -> ColoringProblem:
+    """From an absolute path to a coloring text file, return the corresponding coloring instance
+    Args:
+        file_path (str): absolute path to the file
+
+    Returns: a ColoringProblem instance
+
+    """
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         coloring_model = parse(input_data)
