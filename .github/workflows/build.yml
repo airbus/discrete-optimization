@@ -124,9 +124,8 @@ jobs:
         if: steps.cache-data.outputs.cache-hit != 'true'
         shell: python3 {0}
         run: |
-          from discrete_optimization.datasets import fetch_data_from_coursera, fetch_data_for_rcpsp
-          fetch_data_from_coursera()
-          fetch_data_for_rcpsp()
+          from discrete_optimization.datasets import fetch_all_datasets
+          fetch_all_datasets()
       - name: Test with pytest
         run: |
           export PATH=$PATH:${{ matrix.minizinc_path }}
