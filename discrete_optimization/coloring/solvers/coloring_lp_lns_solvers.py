@@ -1,3 +1,4 @@
+"""Large neighborhood search + Linear programming toolbox for coloring problem."""
 import random
 from enum import Enum
 from typing import Any, Hashable, Mapping
@@ -28,6 +29,13 @@ class InitialColoringMethod(Enum):
 
 
 class InitialColoring(InitialSolution):
+    """Initial solution provider for lns algorithm.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        initial_method (InitialColoringMethod): the method to use to provide the initial solution.
+    """
+
     def __init__(
         self,
         problem: ColoringProblem,
@@ -62,6 +70,15 @@ class InitialColoring(InitialSolution):
 
 
 class ConstraintHandlerFixColorsGrb(ConstraintHandler):
+    """Constraint builder used in LNS+LP (using gurobi solver) for coloring problem.
+
+    This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
+    """
+
     def __init__(self, problem: ColoringProblem, fraction_to_fix: float = 0.9):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix
@@ -130,6 +147,15 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
 
 
 class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
+    """Constraint builder used in LNS+ LP (using pymip library) for coloring problem.
+
+    This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
+    """
+
     def __init__(self, problem: ColoringProblem, fraction_to_fix: float = 0.9):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix

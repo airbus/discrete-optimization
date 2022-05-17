@@ -1,5 +1,6 @@
-import logging
+"""Greedy solvers for coloring problem : binding from networkx library methods."""
 from enum import Enum
+import logging
 from typing import Optional
 
 import networkx as nx
@@ -47,6 +48,8 @@ class NXGreedyColoringMethod(Enum):
 
 
 class GreedyColoring(SolverDO):
+    """Binded solver of networkx heuristics for coloring problem."""
+
     def __init__(
         self,
         color_problem: ColoringProblem,
@@ -65,6 +68,19 @@ class GreedyColoring(SolverDO):
         )
 
     def solve(self, **kwargs):
+        """Run the greedy solver for the given problem.
+
+        Keyword Args:
+            strategy (NXGreedyColoringMethod) : one of the method used by networkx to compute coloring solution,
+                                                or use NXGreedyColoringMethod.best to run each of them and return
+                                                the best result.
+            verbose (bool)
+
+
+        Returns:
+            results (ResultStorage) : storage of solution found by the greedy solver.
+
+        """
         strategy: NXGreedyColoringMethod = kwargs.get(
             "strategy", NXGreedyColoringMethod.best
         )

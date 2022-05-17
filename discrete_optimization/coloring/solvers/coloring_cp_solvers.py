@@ -1,13 +1,16 @@
+"""Module containing Constraint Programming based solver for Coloring Problem.
+
+CP formulation rely on minizinc models stored in coloring/minizinc folder.
+"""
 import logging
 import os
 import random
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import pymzn
-from deprecation import deprecated
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.coloring.coloring_model import (
@@ -78,6 +81,15 @@ class ColoringCP(MinizincCPSolver):
         silent_solve_error: bool = False,
         **args,
     ):
+        """CP solver linked with minizinc implementation of coloring problem.
+
+        Args:
+            coloring_problem (ColoringProblem): coloring problem instance to solve
+            params_objective_function (ParamsObjectiveFunction): params of the objective function
+            cp_solver_name (CPSolverName): backend solver to use with minizinc
+            silent_solve_error: if True, raise a warning instead of an error if the underlying instance.solve() crashes
+            **args:
+        """
         self.silent_solve_error = silent_solve_error
         self.coloring_problem = coloring_problem
         self.number_of_nodes = self.coloring_problem.number_of_nodes
@@ -99,6 +111,21 @@ class ColoringCP(MinizincCPSolver):
         self.cp_solver_name = cp_solver_name
 
     def init_model(self, **kwargs):
+        """Instantiate a minizinc model with the coloring problem data.
+
+        Keyword Args:
+            nb_colors (int): upper bound of number of colors to be considered by the model.
+            object_output (bool): specify if the solution are returned in a ColoringCPSolution object
+                                  or native minizinc output.
+            include_seq_chain_constraint (bool) : include the value_precede_chain in the minizinc model.
+                        See documentation of minizinc for the specification of this global constraint.
+            cp_model (ColoringCPModel): CP model version.
+            max_cliques (int): if cp_model == ColoringCPModel.CLIQUES, specify the max number of cliques to include
+                               in the model.
+
+
+        Returns: None
+        """
         nb_colors = kwargs.get("nb_colors", None)
         object_output = kwargs.get("object_output", True)
         include_seq_chain_constraint = kwargs.get("include_seq_chain_constraint", False)
@@ -143,6 +170,15 @@ class ColoringCP(MinizincCPSolver):
     def export_dzn(
         self, file_name: Optional[str] = None, keys: Optional[Iterable[Any]] = None
     ):
+        """[DEBUG utility] Export the instantiated data into a dzn for potential debugs without python.
+
+        Args:
+            file_name (str): file path where to dump the data file
+            keys (List[str]): list of input data names to dump.
+
+        Returns: None
+
+        """
         if file_name is None:
             file_name = os.path.join(path_minizinc, "coloring_example_dzn.dzn")
         if keys is None:
@@ -154,6 +190,15 @@ class ColoringCP(MinizincCPSolver):
         logger.info(f"Successfully dumped data file {file_name}")
 
     def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
+        """Retrieve the solution found by solving the minizinc instance
+
+        Args:
+            result: result of solve() call on minizinc instance
+            parameters_cp (ParametersCP): parameters of the cp solving, to specify notably how much solution is expected.
+
+        Returns (ResultStorage): result object storing the solutions found by the CP solver.
+
+        """
         intermediate_solutions = parameters_cp.intermediate_solution
         colors = []
         objectives = []
@@ -189,6 +234,16 @@ class ColoringCP(MinizincCPSolver):
         )
 
     def get_solution(self, **kwargs):
+        """Used by the init_model method to provide a greedy first solution
+
+        Keyword Args:
+            greedy_start (bool): use heuristics (based on networkx) to compute starting solution, otherwise the
+                          dummy method is used.
+            verbose (bool): verbose option.
+
+        Returns (ColoringSolution): a starting coloring solution that can be used by lns.
+
+        """
         greedy_start = kwargs.get("greedy_start", True)
         if greedy_start:
             logger.info("Computing greedy solution")
