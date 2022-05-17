@@ -501,7 +501,6 @@ def sgs_debug_preemptive(model=None):
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
     get_data_available,
     parse_file,
-    write_solution,
 )
 
 
