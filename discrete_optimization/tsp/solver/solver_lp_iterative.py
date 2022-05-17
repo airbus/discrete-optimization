@@ -16,8 +16,16 @@ from discrete_optimization.tsp.common_tools_tsp import (
     length_1,
 )
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, TSPModel2D
-from gurobi import GRB, Model, quicksum
 from ortools.linear_solver import pywraplp
+
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+    from gurobipy import GRB, Model, quicksum
+
 
 folder_image = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../debug_image/image_lp_iterative/"

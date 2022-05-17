@@ -51,7 +51,7 @@ def run_greedy():
     solver = FacilityCP(model)
     solution, fit = solver.solve_lns(
         fraction_to_fix=0.65,
-        nb_iteration=50,
+        nb_iteration=2,
         limit_time_s=20,
         greedy_start=True,
         cp_model=FacilityCPModel.DEFAULT_INT_LNS,

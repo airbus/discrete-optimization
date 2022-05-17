@@ -1,7 +1,3 @@
-try:
-    from gurobi import GRB, Model, quicksum
-except:
-    pass
 import mip
 import networkx as nx
 from discrete_optimization.coloring.coloring_model import (
@@ -26,6 +22,14 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from mip import BINARY, INTEGER, xsum
+
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+    from gurobipy import GRB, Model, quicksum
 
 
 class ColoringLP(MilpSolver):
