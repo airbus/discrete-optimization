@@ -113,7 +113,7 @@ def run_multi_mode_alternating_ga():
 def run_multi_mode_alternating_ga_specific_mode_arrity():
 
     files = get_data_available()
-    files = [f for f in files if "j1010_10_2.mm" in f]  # Multi-mode RCPSP
+    files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]
     rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
 
@@ -173,7 +173,7 @@ def run_multi_mode_alternating_ga_specific_mode_arrity():
 
 def run_alternating_ga_specific_mode_arrity_single_solver():
     files = get_data_available()
-    files = [f for f in files if "j1010_10_2.mm" in f]  # Multi-mode RCPSP
+    files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
 
