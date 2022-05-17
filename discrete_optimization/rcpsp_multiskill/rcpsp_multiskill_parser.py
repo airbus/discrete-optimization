@@ -18,9 +18,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     SkillDetail,
 )
 
-RCPSP_MS_SUBFOLDER = "rcpsp_multiskill/dataset_def"
-RCPSP_MS_RESULTS_SUBFOLDER = "rcpsp_multiskill/do_solutions"
-
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
@@ -36,7 +33,7 @@ def get_data_available(
     """
     if data_folder is None:
         data_home = get_data_home(data_home=data_home)
-        data_folder = f"{data_home}/{RCPSP_MS_SUBFOLDER}"
+        data_folder = f"{data_home}/rcpsp_multiskill/dataset_def"
 
     files = [
         f
@@ -44,29 +41,6 @@ def get_data_available(
         if not f.endswith(".pk") and not f.endswith(".json")
     ]
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
-
-
-def get_results_available(
-    result_folder: Optional[str] = None, data_home: Optional[str] = None
-):
-    """Get results available for rcpsp_multiskill.
-
-    Params:
-        result_folder: folder where solutions for rcpsp_multiskill whould be find.
-            If None, we look in "rcpsp_multiskill/do_solutions" subdirectory of `data_home`.
-        data_home: root directory for all datasets. Is None, set by
-            default to "~/discrete_optimization_data "
-
-    """
-    if result_folder is None:
-        data_home = get_data_home(data_home=data_home)
-        result_folder = f"{data_home}/{RCPSP_MS_RESULTS_SUBFOLDER}"
-
-    return [
-        os.path.abspath(os.path.join(result_folder, f))
-        for f in os.listdir(result_folder)
-        if f.endswith(".sol")
-    ]
 
 
 def parse_imopse(
@@ -237,26 +211,6 @@ def parse_imopse(
     )
 
 
-def parse_results(input_data):
-    lines = input_data.split("\n")
-    schedule = {}
-    assignation = {}
-    for i in range(1, len(lines)):
-        line = lines[i]
-        words = line.split()
-        try:
-            hour = int(words[0])
-            for j in range(1, len(words)):
-                w = words[j].split("-")
-                ressource_id = w[0]
-                task_id = int(w[1])
-                assignation[task_id] = int(ressource_id)
-                schedule[task_id] = hour
-        except:
-            pass
-    return schedule, assignation
-
-
 def parse_file(
     file_path, max_horizon=None, one_unit_per_task=True, preemptive=False
 ) -> Tuple[MS_RCPSPModel, Dict]:
@@ -266,25 +220,3 @@ def parse_file(
             input_data, max_horizon, one_unit_per_task, preemptive=preemptive
         )
         return rcpsp_model, new_tame_to_original_task_id
-
-
-def write_solution(
-    solution: MS_RCPSPSolution, new_tame_to_original_task_id, file_path=""
-):
-    file1 = open(file_path, "w")
-    file1.writelines(["Hour 	 Resource assignments (resource ID - task ID) \n"])
-    sorted_task_per_hour = sorted(
-        solution.schedule, key=lambda x: solution.schedule[x]["start_time"]
-    )
-    strings_hours = {}
-    for task in sorted_task_per_hour:
-        if task in new_tame_to_original_task_id:
-            original_task = new_tame_to_original_task_id[task]
-            employees_used = list(solution.employee_usage[task].keys())
-            hour = solution.schedule[task]["start_time"]
-            if hour not in strings_hours:
-                strings_hours[hour] = str(hour) + " "
-            for emp in employees_used:
-                strings_hours[hour] += str(emp) + "-" + str(original_task) + " "
-    file1.writelines([strings_hours[hour] + "\n" for hour in sorted(strings_hours)])
-    file1.close()

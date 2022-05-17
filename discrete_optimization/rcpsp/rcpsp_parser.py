@@ -1,4 +1,3 @@
-import csv
 import os
 from typing import Optional
 
@@ -6,12 +5,8 @@ from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
-    RCPSPSolution,
     SingleModeRCPSPModel,
 )
-
-RCPSP_SUBFOLDER = "rcpsp"
-RCPSP_RESULTS_SUBFOLDER = "rcpsp_sols"
 
 
 def get_data_available(
@@ -28,7 +23,7 @@ def get_data_available(
     """
     if data_folder is None:
         data_home = get_data_home(data_home=data_home)
-        data_folder = f"{data_home}/{RCPSP_SUBFOLDER}"
+        data_folder = f"{data_home}/rcpsp"
 
     files = [
         f
@@ -36,28 +31,6 @@ def get_data_available(
         if not f.endswith(".pk") and not f.endswith(".json")
     ]
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
-
-
-def get_results_available(
-    result_folder: Optional[str] = None, data_home: Optional[str] = None
-):
-    """Get results available for rcpsp.
-
-    Params:
-        result_folder: folder where solutions for rcpsp whould be find.
-            If None, we look in "rcpsp_sols" subdirectory of `data_home`.
-        data_home: root directory for all datasets. Is None, set by
-            default to "~/discrete_optimization_data "
-
-    """
-    if result_folder is None:
-        data_home = get_data_home(data_home=data_home)
-        result_folder = f"{data_home}/{RCPSP_RESULTS_SUBFOLDER}"
-
-    return [
-        os.path.abspath(os.path.join(result_folder, f))
-        for f in os.listdir(result_folder)
-    ]
 
 
 def parse_psplib(input_data):
@@ -152,64 +125,3 @@ def parse_file(file_path) -> RCPSPModel:
         input_data = input_data_file.read()
         rcpsp_model = parse_psplib(input_data)
         return rcpsp_model
-
-
-def parse_results_file(file_path):
-    """Parse results file.
-
-    Assume that the directory containing the result file is
-    in the same directory as the directory containing the data file used to produce the result.
-
-    Params:
-        filepath: path to the result file to parse
-
-    """
-    results_directory = os.path.dirname(file_path)
-    path_to_data = os.path.join(os.path.dirname(results_directory), RCPSP_SUBFOLDER)
-
-    with open(file_path, "r", encoding="ISO-8859-1") as read_obj:
-        # pass the file object to reader() to get the reader object
-        csv_reader = csv.reader(read_obj, delimiter=";")
-        # Iterate over each row in the csv using reader object
-        results = []
-        index = 0
-        result_lines = False
-        names = ["ID", "Type", "Value", "Time", "Solution"]
-        prefix_sm = ""
-        if "J30" in file_path:
-            prefix_sm = "j301_"
-        if "j60" in file_path:
-            prefix_sm = "j601_"
-        if "j90" in file_path:
-            prefix_sm = "j901_"
-        if "J120" in file_path:
-            prefix_sm = "j1201_"
-        for row in csv_reader:
-            if row[0] == "1":
-                result_lines = True
-            if result_lines:
-                schedule = {}
-                for j in range(4, len(row)):
-                    if row[j] == "":
-                        break
-                    schedule[j - 3] = {
-                        "start_time": int(row[j]),
-                        "end_time": int(row[j]),
-                    }
-                nb_jobs_including_source_sink = len(schedule)
-                modes = [1 for i in range(nb_jobs_including_source_sink - 2)]
-                solution = RCPSPSolution(
-                    problem=None, rcpsp_schedule=schedule, rcpsp_modes=modes
-                )
-                res = {
-                    "ID": row[0],
-                    "file_problem": os.path.join(
-                        path_to_data, prefix_sm + str(row[0]) + ".sm"
-                    ),
-                    "Type": row[1],
-                    "Value": int(row[2]),
-                    "Time": int(row[3]),
-                    "Solution": solution,
-                }
-                results += [res]
-        return results
