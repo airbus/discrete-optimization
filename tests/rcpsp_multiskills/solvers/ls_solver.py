@@ -11,10 +11,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution_Variant,
     SkillDetail,
 )
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-    folder_to_do_solution,
-    write_solution,
-)
 
 
 def create_toy_msrcpsp():
