@@ -98,7 +98,11 @@ class ColoringProblem(Problem):
         }
 
     def evaluate(self, variable: ColoringSolution) -> Dict[str, float]:
-        if variable.nb_color is None:
+        try:
+            nb_color = variable.nb_color
+        except AttributeError:
+            nb_color = None
+        if nb_color is None:
             variable.nb_color = len(set(variable.colors))
             variable.nb_violations = self.count_violations(variable)
         return {"nb_colors": variable.nb_color, "nb_violations": variable.nb_violations}
