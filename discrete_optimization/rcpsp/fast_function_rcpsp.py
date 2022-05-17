@@ -78,7 +78,7 @@ def sgs_fast(
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
                     ]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             if unfeasible_non_renewable_resources:
@@ -564,7 +564,7 @@ def sgs_fast_preemptive_minduration(
                             resource_avail_in_time[res][
                                 starts[i] :
                             ] -= consumption_array[act_id, modes_array[act_id], res]
-                        if resource_avail_in_time[res][horizon] < 0:
+                        if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
             if unfeasible_non_renewable_resources:
@@ -629,7 +629,7 @@ def sgs_fast_partial_schedule(
                     resource_avail_in_time[res][
                         scheduled_task[t] :
                     ] -= consumption_array[t, modes_array[t], res]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             if unfeasible_non_renewable_resources:
@@ -693,7 +693,7 @@ def sgs_fast_partial_schedule(
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
                     ]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             if unfeasible_non_renewable_resources:
@@ -767,7 +767,7 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
                     resource_avail_in_time[res][
                         scheduled_task[t] :
                     ] -= consumption_array[t, modes_array[t], res]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             if unfeasible_non_renewable_resources:
@@ -835,7 +835,7 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
                     ]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             if unfeasible_non_renewable_resources:
@@ -920,7 +920,7 @@ def sgs_fast_partial_schedule_preemptive(
                             resource_avail_in_time[res][
                                 partial_schedule_starts[t, i] :
                             ] -= consumption_array[t, modes_array[t], res]
-                            if resource_avail_in_time[res][horizon] < 0:
+                            if resource_avail_in_time[res][-1] < 0:
                                 unfeasible_non_renewable_resources = True
                                 break
                 if unfeasible_non_renewable_resources:
@@ -1025,7 +1025,7 @@ def sgs_fast_partial_schedule_preemptive(
                             resource_avail_in_time[res][
                                 starts[i] :
                             ] -= consumption_array[act_id, modes_array[act_id], res]
-                        if resource_avail_in_time[res][horizon] < 0:
+                        if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
             if unfeasible_non_renewable_resources:
@@ -1111,7 +1111,7 @@ def sgs_fast_partial_schedule_preemptive_minduration(
                             resource_avail_in_time[res][
                                 partial_schedule_starts[t, i] :
                             ] -= consumption_array[t, modes_array[t], res]
-                            if resource_avail_in_time[res][horizon] < 0:
+                            if resource_avail_in_time[res][-1] < 0:
                                 unfeasible_non_renewable_resources = True
                                 break
                 if unfeasible_non_renewable_resources:
@@ -1233,7 +1233,7 @@ def sgs_fast_partial_schedule_preemptive_minduration(
                             resource_avail_in_time[res][
                                 starts[i] :
                             ] -= consumption_array[act_id, modes_array[act_id], res]
-                        if resource_avail_in_time[res][horizon] < 0:
+                        if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
             if unfeasible_non_renewable_resources:
