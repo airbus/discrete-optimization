@@ -20,6 +20,13 @@ from discrete_optimization.coloring.coloring_solvers import (
     solvers_map,
 )
 
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+
 
 @pytest.mark.parametrize("coloring_problem_file", get_data_available())
 def test_load_file(coloring_problem_file):
@@ -33,7 +40,7 @@ def test_solvers():
     coloring_model: ColoringProblem = parse_file(small_example)
     solvers = solvers_map.keys()
     for s in solvers:
-        if s == ColoringLP:
+        if s == ColoringLP and not gurobi_available:
             # you need a gurobi licence to test this solver.
             continue
         results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])

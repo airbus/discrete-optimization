@@ -27,10 +27,17 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
-from gurobi import GRB, LinExpr, Model, quicksum
 from ortools.algorithms import pywrapknapsack_solver
 from ortools.linear_solver import pywraplp
 from tqdm import trange
+
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+    from gurobipy import GRB, LinExpr, Model, quicksum
 
 
 class LPKnapsackGurobi(SolverDO):

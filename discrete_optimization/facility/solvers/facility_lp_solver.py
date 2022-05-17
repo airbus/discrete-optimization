@@ -22,8 +22,15 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from gurobi import GRB, LinExpr, Model, quicksum
 from ortools.linear_solver import pywraplp
+
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+    from gurobipy import GRB, LinExpr, Model, quicksum
 
 
 def compute_length_matrix(facility_problem: FacilityProblem):
