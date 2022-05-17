@@ -33,7 +33,7 @@ def get_data_available(
     """
     if data_folder is None:
         data_home = get_data_home(data_home=data_home)
-        data_folder = f"{data_home}/rcpsp_multiskill/dataset_def"
+        data_folder = f"{data_home}/rcpsp_multiskill"
 
     files = [
         f
