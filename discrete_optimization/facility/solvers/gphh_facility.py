@@ -26,7 +26,9 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
-from generic_tools.result_storage.result_storage import ResultStorage
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 
 
 def distance(problem: FacilityProblem, customer_index, **kwargs):
