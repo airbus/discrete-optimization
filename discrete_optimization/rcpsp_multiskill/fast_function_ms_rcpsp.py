@@ -234,7 +234,7 @@ def sgs_fast_ms_partial_schedule(
                     resource_avail_in_time[res][
                         scheduled_end_task_times[t] :
                     ] -= consumption_array[t, modes_array[t], res]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             activity_end_times[t] = scheduled_end_task_times[t]
@@ -353,7 +353,7 @@ def sgs_fast_ms_partial_schedule(
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
                     ]
-                    if resource_avail_in_time[res][horizon] < 0:
+                    if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
             skills = skills_needs[act_id, modes_array[act_id]]
@@ -690,7 +690,7 @@ def sgs_fast_ms_preemptive(
                             resource_avail_in_time[res][
                                 starts[i] :
                             ] -= consumption_array[act_id, modes_array[act_id], res]
-                        if resource_avail_in_time[res][horizon] < 0:
+                        if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
                 skills = skills_needs[act_id, modes_array[act_id]]
@@ -1009,7 +1009,7 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                             resource_avail_in_time[res][
                                 starts[i] :
                             ] -= consumption_array[act_id, modes_array[act_id], res]
-                        if resource_avail_in_time[res][horizon] < 0:
+                        if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
                 skills = skills_needs[act_id, modes_array[act_id]]
@@ -1144,7 +1144,7 @@ def sgs_fast_ms_preemptive_partial_schedule(
                             resource_avail_in_time[res][
                                 ends_dict[t][j] :
                             ] -= consumption_array[t, modes_array[t], res]
-                            if resource_avail_in_time[res][horizon] < 0:
+                            if resource_avail_in_time[res][-1] < 0:
                                 unfeasible_non_renewable_resources = True
                                 break
             activity_end_times[t] = ends_dict[t][-1]
@@ -1372,7 +1372,7 @@ def sgs_fast_ms_preemptive_partial_schedule(
                             resource_avail_in_time[res][
                                 starts[i] :
                             ] -= consumption_array[act_id, modes_array[act_id], res]
-                        if resource_avail_in_time[res][horizon] < 0:
+                        if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
                 skills = skills_needs[act_id, modes_array[act_id]]
