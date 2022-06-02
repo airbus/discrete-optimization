@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,
@@ -20,13 +21,13 @@ from discrete_optimization.generic_tools.do_problem import get_default_objective
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 
 
-def facility_lns():
-    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
+def test_facility_lns():
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
     print(file)
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
     params_milp = ParametersMilp(
-        time_limit=300,
+        time_limit=20,
         pool_solutions=1000,
         mip_gap=0.0001,
         mip_gap_abs=0.001,
@@ -56,7 +57,7 @@ def facility_lns():
     )
 
     result_store = lns_solver.solve_lns(
-        parameters_milp=params_milp, nb_iteration_lns=100
+        parameters_milp=params_milp, nb_iteration_lns=100, max_time_seconds=100
     )
     solution = result_store.get_best_solution_fit()[0]
     print(solution)
@@ -65,4 +66,4 @@ def facility_lns():
 
 
 if __name__ == "__main__":
-    facility_lns()
+    test_facility_lns()

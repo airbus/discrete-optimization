@@ -154,7 +154,7 @@ class Ga:
                     self.arrity = register_solution.dict_attribute_to_type[
                         self._encoding_name
                     ]["arrity"]
-                    self.arrities = [self.arrity for i in range(self.n)]
+                    self.arrities = [self.arrity-1 for i in range(self.n)]
                 else:
                     self.arrity = None
                 if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
@@ -211,7 +211,7 @@ class Ga:
                 self.arrity = register_solution.dict_attribute_to_type[
                     self._encoding_name
                 ]["arrity"]
-                self.arrities = [self.arrity for i in range(self.n)]
+                self.arrities = [self.arrity-1 for i in range(self.n)]
             else:
                 self.arrity = None
             if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
