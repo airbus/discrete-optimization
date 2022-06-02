@@ -4,7 +4,7 @@ from discrete_optimization.facility.facility_parser import (
 )
 
 
-def parsing():
+def test_parsing():
     file_path = get_data_available()[0]
     facility_model = parse_file(file_path)
     print(facility_model)
@@ -17,4 +17,4 @@ def parsing():
 
 
 if __name__ == "__main__":
-    parsing()
+    test_parsing()

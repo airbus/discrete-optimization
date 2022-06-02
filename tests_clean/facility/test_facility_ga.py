@@ -21,24 +21,24 @@ from discrete_optimization.generic_tools.ea.ga import (
 )
 
 
-def test_ga_facility_1():
+def test_ga_facility():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_50_6"][0]
     facility_problem: FacilityProblem = parse_file(file)
-    obj_handling, objs, objs_weight = get_default_objective_setup(facility_problem)
+    params = get_default_objective_setup(facility_problem)
     ga_solver = Ga(
         facility_problem,
         encoding="facility_for_customers",
-        objective_handling=obj_handling,
-        objectives=objs,
-        objective_weights=objs_weight,
+        objective_handling=params.objective_handling,
+        objectives=params.objectives,
+        objective_weights=params.weights,
         mutation=DeapMutation.MUT_UNIFORM_INT,
-        max_evals=1000000,
+        max_evals=1000,
     )
-    facility_solution = ga_solver.solve()
+    facility_solution = ga_solver.solve().get_best_solution()
     print("facility_solution: ", facility_solution)
     print("color_evaluate: ", facility_problem.evaluate(facility_solution))
     print("color_satisfy: ", facility_problem.satisfy(facility_solution))
 
 
 if __name__ == "__main__":
-    test_ga_facility_1()
+    test_ga_facility()

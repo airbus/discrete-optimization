@@ -13,7 +13,7 @@ def test_greedy_facility():
     file = [f for f in get_data_available() if "fl_50_1" in f][0]
     color_problem = parse_file(file)
     solver = GreedySolverFacility(color_problem)
-    solution, fit = solver.solve()
+    solution, fit = solver.solve().get_best_solution_fit()
     print(solution)
     print(fit)
     print("Satisfy : ", color_problem.satisfy(solution))
