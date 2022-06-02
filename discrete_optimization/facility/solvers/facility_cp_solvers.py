@@ -86,7 +86,7 @@ class FacilityCP(SolverDO):
             params_objective_function=params_objective_function,
         )
         self.model = None
-        self.instance = None
+        self.instance: Instance = None
         self.custom_output_type = False
 
     def init_model(self, **kwargs):
@@ -94,11 +94,11 @@ class FacilityCP(SolverDO):
         object_output = kwargs.get("object_output", True)
         path = os.path.join(path_minizinc, file_dict[model_type])
         self.model = Model(path)
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
-        instance = Instance(solver, self.model)
         if object_output:
             self.model.output_type = FacilitySolCP
             self.custom_output_type = True
+        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        instance = Instance(solver, self.model)
         instance["nb_facilities"] = self.facility_problem.facility_count
         instance["nb_customers"] = self.facility_problem.customer_count
         setup_costs, closests, distances = compute_length_matrix(self.facility_problem)
@@ -172,7 +172,8 @@ class FacilityCP(SolverDO):
         if self.model is None:
             self.init_model(**kwargs)
         limit_time_s = parameters_cp.TimeLimit
-        result = self.instance.solve(timeout=timedelta(seconds=limit_time_s))
+        result = self.instance.solve(timeout=timedelta(seconds=limit_time_s),
+                                     intermediate_solutions=parameters_cp.intermediate_solution)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def get_solution(self, **kwargs):

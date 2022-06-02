@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,
@@ -14,15 +15,18 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 
 
-def test_facility_lp():
-    file = [f for f in get_data_available() if "fl_100_1" in f][0]
-    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
+def test_facility_lp_gurobi():
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     print(file)
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
+    parameters_lp = ParametersMilp.default()
+    parameters_lp.TimeLimit = 20
     solution, fit = solver.solve(
-        limit_time_s=100, use_matrix_indicator_heuristic=False, verbose=True
-    )
+        parameters_milp=parameters_lp,
+        use_matrix_indicator_heuristic=False,
+        verbose=True,
+    ).get_best_solution_fit()
     print(solution)
     print("Satisfy : ", color_problem.satisfy(solution))
     print(fit)
@@ -33,9 +37,13 @@ def test_facility_lp_cbc():
     print(file)
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_CBC(color_problem)
+    parameters_lp = ParametersMilp.default()
+    parameters_lp.TimeLimit = 20
     solution, fit = solver.solve(
-        limit_time_s=100, use_matrix_indicator_heuristic=False, verbose=True
-    )
+        parameters_milp=parameters_lp,
+        use_matrix_indicator_heuristic=False,
+        verbose=True,
+    ).get_best_solution_fit()
     print(solution)
     print("Satisfy : ", color_problem.satisfy(solution))
     print(fit)
@@ -46,21 +54,17 @@ def test_facility_lp_pymip():
     print(file)
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
-    params_milp = ParametersMilp(
-        time_limit=100,
-        pool_solutions=1000,
-        mip_gap=0.0001,
-        mip_gap_abs=0.001,
-        retrieve_all_solution=True,
-        n_solutions_max=1000,
-    )
+    parameters_lp = ParametersMilp.default()
+    parameters_lp.TimeLimit = 20
     solver = LP_Facility_Solver_PyMip(
         facility_problem,
         milp_solver_name=MilpSolverName.CBC,
         params_objective_function=params_objective_function,
     )
     result_store = solver.solve(
-        parameters_milp=params_milp, use_matrix_indicator_heuristic=False, verbose=True
+        parameters_milp=parameters_lp,
+        use_matrix_indicator_heuristic=False,
+        verbose=True,
     )
     solution = result_store.get_best_solution_fit()[0]
     print(solution)
@@ -68,34 +72,19 @@ def test_facility_lp_pymip():
     print(facility_problem.evaluate(solution))
 
 
-def test_facility_lp_lns():
-    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
+def test_facility_lp_lns_gurobi():
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
+    parameters_lp = ParametersMilp.default()
+    parameters_lp.TimeLimit = 20
     solution, fit = solver.solve_lns(
         use_matrix_indicator_heuristic=False,
         fraction_to_fix_first_iter=0,
         fraction_to_fix=0.3,
-        nb_iteration=50,
+        nb_iteration=3,
         greedy_start=True,
-        limit_time_s=100,
-        verbose=True,
-    )
-    print(solution)
-    print("Satisfy : ", color_problem.satisfy(solution))
-
-
-def test_facility_lp_lns_CBC():
-    file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_1"][0]
-    color_problem = parse_file(file)
-    solver = LP_Facility_Solver_CBC(color_problem)
-    solution, fit = solver.solve_lns(
-        use_matrix_indicator_heuristic=False,
-        fraction_to_fix_first_iter=0,
-        fraction_to_fix=0.3,
-        nb_iteration=50,
-        greedy_start=True,
-        limit_time_s=100,
+        parameters_milp=parameters_lp,
         verbose=True,
     )
     print(solution)
@@ -103,4 +92,4 @@ def test_facility_lp_lns_CBC():
 
 
 if __name__ == "__main__":
-    test_facility_lp()
+    test_facility_lp_cbc()

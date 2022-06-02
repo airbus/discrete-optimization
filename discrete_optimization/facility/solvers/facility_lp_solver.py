@@ -194,7 +194,7 @@ class LP_Facility_Solver(MilpSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_milp: ParametersMilp, **kwargs):
+    def solve(self, parameters_milp: ParametersMilp = None, **kwargs):
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         if self.model is None:
@@ -285,7 +285,7 @@ class LP_Facility_Solver(MilpSolver):
             if verbose:
                 print("Computing greedy solution")
             greedy_solver = GreedySolverFacility(self.facility_problem)
-            solution, f = greedy_solver.solve()
+            solution, f = greedy_solver.solve().get_best_solution_fit()
             self.start_solution = solution
         else:
             if verbose:
@@ -300,7 +300,7 @@ class LP_Facility_Solver(MilpSolver):
                 current_solution,
                 fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
             )
-            cur_sol, fit = self.solve(**kwargs)
+            cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
             self.remove_lns_constraint()
             print(cur_sol)
             current_solution = cur_sol
@@ -512,7 +512,7 @@ class LP_Facility_Solver_CBC(SolverDO):
             if verbose:
                 print("Computing greedy solution")
             greedy_solver = GreedySolverFacility(self.facility_problem)
-            solution, f = greedy_solver.solve()
+            solution, f = greedy_solver.solve().get_best_solution_fit()
             self.start_solution = solution
         else:
             if verbose:
@@ -527,7 +527,7 @@ class LP_Facility_Solver_CBC(SolverDO):
                 current_solution,
                 fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
             )
-            cur_sol, fit = self.solve(**kwargs)
+            cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
             self.remove_lns_constraint()
             print(cur_sol)
             current_solution = cur_sol
@@ -743,7 +743,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
             if verbose:
                 print("Computing greedy solution")
             greedy_solver = GreedySolverFacility(self.facility_problem)
-            solution, f = greedy_solver.solve()
+            solution, f = greedy_solver.solve().get_best_solution_fit()
             self.start_solution = solution
         else:
             if verbose:
@@ -758,7 +758,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
                 current_solution,
                 fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
             )
-            cur_sol, fit = self.solve(**kwargs)
+            cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
             self.remove_lns_constraint()
             print(cur_sol)
             current_solution = cur_sol
