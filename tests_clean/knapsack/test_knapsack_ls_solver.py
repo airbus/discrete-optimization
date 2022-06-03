@@ -1,21 +1,8 @@
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../"))
-from discrete_optimization.knapsack.knapsack_model import (
-    KnapsackModel,
-    KnapsackModel_Mobj,
-    ObjectiveHandling,
-)
-from discrete_optimization.knapsack.knapsack_parser import (
-    get_data_available,
-    parse_file,
-)
-from discrete_optimization.knapsack.mutation.mutation_knapsack import MutationKnapsack
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
 import numpy as np
-from discrete_optimization.generic_tools.do_problem import ModeOptim
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    get_default_objective_setup,
+)
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimberPareto
 from discrete_optimization.generic_tools.ls.local_search import RestartHandlerLimit
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
@@ -29,13 +16,19 @@ from discrete_optimization.generic_tools.mutations.mixed_mutation import (
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    plot_pareto_2d,
-    plot_storage_2d,
+from discrete_optimization.knapsack.knapsack_model import (
+    KnapsackModel,
+    KnapsackModel_Mobj,
+    ObjectiveHandling,
 )
+from discrete_optimization.knapsack.knapsack_parser import (
+    get_data_available,
+    parse_file,
+)
+from discrete_optimization.knapsack.mutation.mutation_knapsack import MutationKnapsack
 
 
-def sa_knapsack():
+def test_sa_knapsack():
     model_file = [f for f in get_data_available() if "ks_60_0" in f][0]
     model: KnapsackModel = parse_file(model_file, force_recompute_values=True)
     solution = model.get_dummy_solution()
@@ -54,10 +47,10 @@ def sa_knapsack():
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
         mode_mutation=ModeMutation.MUTATE,
     )
-    sa.solve(solution, 1000000, max_time_seconds=100, pickle_result=False)
+    sa.solve(solution, 1000000, max_time_seconds=20, pickle_result=False)
 
 
-def hc_knapsack_multiobj():
+def test_hc_knapsack_multiobj():
     model_file = [f for f in get_data_available() if "ks_60_0" in f][0]
     model: KnapsackModel = parse_file(model_file, force_recompute_values=True)
     model: KnapsackModel_Mobj = KnapsackModel_Mobj.from_knapsack(model)
@@ -72,31 +65,26 @@ def hc_knapsack_multiobj():
         list_mutation, np.ones((len(list_mutation)))
     )
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
+    params_objective_function = get_default_objective_setup(model)
     sa = HillClimberPareto(
         evaluator=model,
         mutator=mixed_mutation,
         restart_handler=res,
         mode_mutation=ModeMutation.MUTATE,
-        params_objective_function=None,
+        params_objective_function=params_objective_function,
         store_solution=True,
         nb_solutions=50000,
     )
     result_sa = sa.solve(
         initial_variable=solution,
         nb_iteration_max=50000,
-        max_time_seconds=100,
+        max_time_seconds=20,
         update_iteration_pareto=1000,
         pickle_result=False,
     )
-    pareto = result_sa.result_storage
+    pareto = result_sa
     print(pareto.len_pareto_front())
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots(1)
-    plot_storage_2d(result_storage=pareto, name_axis=["value", "heaviest"], ax=ax)
-    plot_pareto_2d(pareto_front=pareto, name_axis=["value", "heaviest"], ax=ax)
-    plt.show()
 
 
 if __name__ == "__main__":
-    hc_knapsack_multiobj()
+    test_hc_knapsack_multiobj()

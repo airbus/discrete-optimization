@@ -19,11 +19,13 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackSolutionMultidimensional,
     MultidimensionalKnapsack,
 )
-from generic_tools.result_storage.result_storage import ResultStorage
 
 
 def protected_div(left, right):
@@ -376,7 +378,7 @@ class GPHH(SolverDO):
         val = 1.0 * n_operators + 1.0 * n_features
         return val
 
-    def plot_solution(self):
+    def plot_solution(self, show=True):
         import matplotlib.pyplot as plt
         import networkx as nx
 
@@ -389,4 +391,5 @@ class GPHH(SolverDO):
         nx.draw_networkx_nodes(g, pos)
         nx.draw_networkx_edges(g, pos)
         nx.draw_networkx_labels(g, pos, labels)
-        plt.show()
+        if show:
+            plt.show()
