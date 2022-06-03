@@ -38,7 +38,10 @@ class HillClimber:
         self.restart_handler = restart_handler
         self.mode_mutation = mode_mutation
         self.params_objective_function = params_objective_function
-        self.mode_optim = params_objective_function.sense_function
+        if params_objective_function is not None:
+            self.mode_optim = params_objective_function.sense_function
+        else:
+            self.mode_optim = ModeOptim.MAXIMIZATION
         (
             self.aggreg_from_solution,
             self.aggreg_from_dict_values,

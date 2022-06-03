@@ -228,8 +228,6 @@ class ParetoFront(ResultStorage):
             nb_best_store=nb_best_store,
         )
         self.paretos: List[Tuple[Solution, TupleFitness]] = []
-        for s, t in list_solution_fits:
-            self.add_solution(solution=s, fitness=t)
 
     def add_solution(self, solution: Solution, fitness: fitness_class):
         super().add_solution(solution=solution, fitness=fitness)
