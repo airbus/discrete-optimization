@@ -211,6 +211,7 @@ class KnapsackModel_Mobj(KnapsackModel):
             "value": {"type": TypeObjective.OBJECTIVE, "default_weight": 1},
         }
         return ObjectiveRegister(
+            objective_sense=ModeOptim.MAXIMIZATION,
             objective_handling=ObjectiveHandling.MULTI_OBJ,
             dict_objective_to_doc=dict_objective,
         )

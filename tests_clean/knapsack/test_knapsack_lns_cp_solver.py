@@ -18,8 +18,8 @@ from discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver import (
 )
 
 
-def knapsack_lns():
-    model_file = [f for f in get_data_available() if "ks_500_0" in f][
+def test_knapsack_lns():
+    model_file = [f for f in get_data_available() if "ks_30_0" in f][
         0
     ]  # optim result "54939"
     model: KnapsackModel = parse_file(model_file)
@@ -49,7 +49,9 @@ def knapsack_lns():
     result_store_pure_cp = solver.solve(parameters_cp=params_cp)
     solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
     print("Pure CP : ", solution_pure_cp[0], solution_pure_cp[1])
-    result_store = lns_solver.solve_lns(parameters_cp=params_cp, nb_iteration_lns=200)
+    result_store = lns_solver.solve_lns(
+        parameters_cp=params_cp, nb_iteration_lns=200, max_time_seconds=30
+    )
     solution = result_store.get_best_solution_fit()[0]
     print([x[1] for x in result_store.list_solution_fits])
     print(solution)
@@ -61,8 +63,7 @@ def knapsack_lns():
     fig, ax = plt.subplots(1)
     ax.plot(fitness)
     ax.set_title("Fitness evolution ")
-    plt.show()
 
 
 if __name__ == "__main__":
-    knapsack_lns()
+    test_knapsack_lns()

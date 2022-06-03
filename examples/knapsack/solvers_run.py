@@ -1,27 +1,6 @@
-import os
-import sys
-
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../"))
 import time
 
-from discrete_optimization.generic_tools.do_problem import (
-    ObjectiveHandling,
-    TypeAttribute,
-    get_default_objective_setup,
-)
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-    Ga,
-)
-from discrete_optimization.generic_tools.mutations.mixed_mutation import (
-    BasicPortfolioMutation,
-)
-from discrete_optimization.generic_tools.path_tools import abspath_from_file
-from discrete_optimization.knapsack.knapsack_model import KnapsackSolution
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -37,10 +16,6 @@ from discrete_optimization.knapsack.knapsack_solvers import (
     ParametersMilp,
     solve,
     solvers,
-)
-from discrete_optimization.knapsack.mutation.mutation_knapsack import (
-    KnapsackMutationSingleBitFlip,
-    MutationKnapsack,
 )
 
 try:

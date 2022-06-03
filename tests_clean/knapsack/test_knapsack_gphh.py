@@ -4,6 +4,7 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackSolution,
     KnapsackSolutionMultidimensional,
     MultidimensionalKnapsack,
+    from_kp_to_multi,
 )
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
@@ -17,17 +18,7 @@ from discrete_optimization.knapsack.solvers.gphh_knapsack import (
 )
 
 
-def from_kp_to_multi(knapsack_model: KnapsackModel):
-    return MultidimensionalKnapsack(
-        list_items=[
-            ItemMultidimensional(index=x.index, value=x.value, weights=[x.weight])
-            for x in knapsack_model.list_items
-        ],
-        max_capacities=[knapsack_model.max_capacity],
-    )
-
-
-def run_one_example():
+def test_run_one_example():
     files_available = get_data_available()
     one_file = files_available[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
@@ -54,9 +45,9 @@ def run_one_example():
         rs = gphh_solver.build_result_storage_for_domain(mdkp)
         print("Greedy :", GreedyBest(kp).solve().get_best_solution_fit()[1])
         print("Rule : ", rs.get_best_solution_fit()[1])
-    gphh_solver.plot_solution()
+    gphh_solver.plot_solution(show=False)
     print(fit)
 
 
 if __name__ == "__main__":
-    run_one_example()
+    test_run_one_example()

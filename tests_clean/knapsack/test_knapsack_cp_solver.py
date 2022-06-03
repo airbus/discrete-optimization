@@ -9,28 +9,32 @@ from discrete_optimization.knapsack.knapsack_solvers import (
 )
 
 
-def cp_knapsack_1():
-    file = [f for f in get_data_available() if "ks_100_0" in f][0]
+def test_cp_knapsack_1():
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_model = parse_file(file)
     cp_model = CPKnapsackMZN(knapsack_model)
     cp_model.init_model()
-    result_storage = cp_model.solve(parameters_cp=ParametersCP.default())
+    parameters_cp = ParametersCP.default()
+    parameters_cp.TimeLimit = 10
+    result_storage = cp_model.solve(parameters_cp=parameters_cp)
     best = result_storage.get_best_solution_fit()
     print(result_storage.list_solution_fits)
     print(best[0], best[1])
 
 
-def cp_knapsack_2():
-    file = [f for f in get_data_available() if "ks_100_0" in f][0]
+def test_cp_knapsack_2():
+    file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_model = parse_file(file)
     cp_model = CPKnapsackMZN2(knapsack_model)
     cp_model.init_model()
-    result_storage = cp_model.solve(parameters_cp=ParametersCP.default())
+    parameters_cp = ParametersCP.default()
+    parameters_cp.TimeLimit = 10
+    result_storage = cp_model.solve(parameters_cp=parameters_cp)
     best = result_storage.get_best_solution_fit()
     print(result_storage.list_solution_fits)
     print(best[0], best[1])
 
 
 if __name__ == "__main__":
-    cp_knapsack_1()
-    cp_knapsack_2()
+    test_cp_knapsack_1()
+    test_cp_knapsack_2()
