@@ -10,7 +10,9 @@ from discrete_optimization.knapsack.knapsack_parser import (
 )
 from discrete_optimization.knapsack.mutation.mutation_knapsack import MutationKnapsack
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../tests/")
+)
 
 
 # from discrete_optimization.generic_tools.simulated_annealing import SimulatedAnnealing, RestartHandler, \
