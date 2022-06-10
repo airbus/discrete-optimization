@@ -1,8 +1,9 @@
 import math
 from abc import abstractmethod
 from copy import deepcopy
+from dataclasses import dataclass
 from functools import partial
-from typing import Dict, List, NamedTuple, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
@@ -264,7 +265,8 @@ class TSPModel(Problem):
 
 
 # One
-class Point2D(Point, NamedTuple):
+@dataclass(frozen=True)
+class Point2D(Point):
     x: float
     y: float
 
