@@ -8,7 +8,8 @@ from pickup_vrp.solver.ortools_solver import (
     plot_ortools_solution,
     plt,
 )
-from tests_clean.pickup_vrp.classic_ortools_example import create_matrix_data
+
+from examples.pickup_vrp.classic_ortools_example import create_matrix_data
 
 
 def run_time_windows():
