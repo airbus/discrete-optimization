@@ -1,7 +1,6 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
 from tsp.solver.solver_ortools import TSP_ORtools
 from tsp.tsp_parser import get_data_available, parse_file
 

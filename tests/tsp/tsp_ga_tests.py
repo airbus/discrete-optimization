@@ -1,7 +1,6 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../"))
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,

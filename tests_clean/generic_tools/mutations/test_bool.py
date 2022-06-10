@@ -1,7 +1,6 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../"))
 from discrete_optimization.generic_tools.mutations.mutation_bool import MutationBitFlip
 from discrete_optimization.knapsack.knapsack_model import KnapsackModel
 from discrete_optimization.knapsack.knapsack_parser import (
@@ -9,11 +8,6 @@ from discrete_optimization.knapsack.knapsack_parser import (
     parse_file,
 )
 from discrete_optimization.knapsack.mutation.mutation_knapsack import MutationKnapsack
-
-sys.path.append(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../tests/")
-)
-
 
 # from discrete_optimization.generic_tools.simulated_annealing import SimulatedAnnealing, RestartHandler, \
 #     TemperatureSchedulingFactor, ModeMutation, ModeOptim
