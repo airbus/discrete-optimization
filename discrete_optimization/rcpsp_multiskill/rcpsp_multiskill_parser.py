@@ -38,7 +38,7 @@ def get_data_available(
     files = [
         f
         for f in os.listdir(data_folder)
-        if not f.endswith(".pk") and not f.endswith(".json")
+        if f.endswith('.def')
     ]
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
