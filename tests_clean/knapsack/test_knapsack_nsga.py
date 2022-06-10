@@ -1,8 +1,6 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../"))
-
 import matplotlib.pyplot as plt
 from discrete_optimization.generic_tools.ea.ga import DeapMutation
 from discrete_optimization.generic_tools.ea.nsga import Nsga
