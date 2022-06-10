@@ -1,7 +1,6 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
 import numpy as np
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimber
