@@ -53,7 +53,7 @@ jobs:
             minizinc_cache_path: ~/AppData/Local/Programs/MiniZinc
             minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.5.5/MiniZincIDE-2.5.5-bundled-setup-win64.exe
             minizinc_downloaded_filepath: minizinc_setup.exe
-            minizinc_install_cmdline: minizinc_setup.exe /VERYSILENT /CURRENTUSER /NORESTART /SUPPRESSMSGBOXES /SP
+            minizinc_install_cmdline: cmd //c "minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -87,7 +87,6 @@ jobs:
           curl -o "${{ matrix.minizinc_downloaded_filepath }}" -L ${{ matrix.minizinc_url }}
       - name: Install MiniZinc
         if: steps.cache-minizinc.outputs.cache-hit != 'true'
-        shell: cmd
         run: |
           ${{ matrix.minizinc_install_cmdline }}
       - name: Add MiniZinc to PATH
