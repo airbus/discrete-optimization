@@ -16,7 +16,6 @@ from discrete_optimization.facility.solvers.facility_cp_solvers import (
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Not yet working on windows")
 def test_facility_cp():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
-    print(file)
     facility_problem = parse_file(file)
     solver = FacilityCP(facility_problem)
     parameters_cp = ParametersCP.default()
@@ -25,13 +24,11 @@ def test_facility_cp():
     solution, fit = solver.solve(
         parameters_cp=parameters_cp, verbose=True
     ).get_best_solution_fit()
-    print(solution)
-    print("Satisfy : ", facility_problem.satisfy(solution))
+    assert facility_problem.satisfy(solution)
 
 
 def test_facility_cp_lns():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
-    print(file)
     facility_problem = parse_file(file)
     solver = FacilityCP(facility_problem)
     parameters_cp = ParametersCP.default()
@@ -46,8 +43,7 @@ def test_facility_cp_lns():
         cp_model=FacilityCPModel.DEFAULT_INT_LNS,
         verbose=True,
     )
-    print(solution)
-    print("Satisfy : ", facility_problem.satisfy(solution))
+    assert facility_problem.satisfy(solution)
 
 
 if __name__ == "__main__":

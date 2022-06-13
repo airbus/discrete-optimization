@@ -34,9 +34,7 @@ def test_graph_tools(rcpsp_model_file):
     )
     some_successor_task = random.choice(rcpsp_model.successors[some_task])
     rcpsp_model_copy.successors[some_successor_task].append(some_task)
-    print(some_task, some_successor_task, " one link in the precedence graph ")
     graph_rcpsp_with_loop = build_graph_rcpsp_object(rcpsp_model_copy)
     cycles = graph_rcpsp_with_loop.check_loop()
     # With this precedence graph, the rcpsp is no longer feasible.
     assert cycles is not None
-    print(cycles)

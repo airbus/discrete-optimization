@@ -41,11 +41,8 @@ def test_multiskill(rcpsp_model_file):
         modes_vector=mode_list,
         fast=True,
     )
-    evaluation = rcpsp_model.evaluate(rcpsp_sol)
-    print(rcpsp_model_file, rcpsp_model)
-    print(evaluation)
-    satisfy = rcpsp_model.satisfy(rcpsp_sol)
-    assert satisfy is True
+    rcpsp_model.evaluate(rcpsp_sol)
+    assert rcpsp_model.satisfy(rcpsp_sol)
 
 
 def create_task_details_classic(
@@ -130,28 +127,18 @@ def test_partial_sgs(rcpsp_model_file, preemptive_version):
         else MS_RCPSPSolution_Preemptive_Variant
     )
     dummy_solution: class_solution = rcpsp_model.get_dummy_solution()
-    print("dummy_solution.priority_list_task: ", dummy_solution.priority_list_task)
-    print(
-        "dummy_solution.priority_worker_per_task: ",
-        dummy_solution.priority_worker_per_task,
-    )
-    print("dummy_solution.modes_vector: ", dummy_solution.modes_vector)
-    print(rcpsp_model.evaluate(dummy_solution))
-    print(rcpsp_model.satisfy(dummy_solution))
+    dummy_solution.priority_list_task
+    dummy_solution.priority_worker_per_task
+    dummy_solution.modes_vector
+    rcpsp_model.evaluate(dummy_solution)
+    assert rcpsp_model.satisfy(dummy_solution)
     timesgs2 = int(dummy_solution.get_end_time(rcpsp_model.sink_task) / 2)
-    import time
 
     for i in range(2):
-        t = time.time()
         dummy_solution.do_recompute(fast=False)
-        t_end = time.time()
-        print("Full SGS ", t_end - t, " seconds slow")
-        print("Evaluate : ", rcpsp_model.evaluate(dummy_solution))
-        t = time.time()
+        rcpsp_model.evaluate(dummy_solution)
         dummy_solution.do_recompute(fast=True)
-        t_end = time.time()
-        print("Full SGS ", t_end - t, " seconds fast")
-        print("Evaluate : ", rcpsp_model.evaluate(dummy_solution))
+        rcpsp_model.evaluate(dummy_solution)
     if preemptive_version:
         completed, ongoing = create_task_details_preemptive(
             solution=dummy_solution, time_to_cut=timesgs2
@@ -161,28 +148,22 @@ def test_partial_sgs(rcpsp_model_file, preemptive_version):
             solution=dummy_solution, time_to_cut=timesgs2
         )
     for i in range(2):
-        t = time.time()
         dummy_solution.run_sgs_partial(
             current_t=timesgs2,
             completed_tasks=completed,
             scheduled_tasks_start_times=ongoing,
             fast=False,
         )
-        t_end = time.time()
-        print(t_end - t, " seconds slow")
-        t = time.time()
         dummy_solution.run_sgs_partial(
             current_t=timesgs2,
             completed_tasks=completed,
             scheduled_tasks_start_times=ongoing,
             fast=True,
         )
-        t_end = time.time()
-        print(t_end - t, " seconds fast")
     if preemptive_version:
         for dict_ in [ongoing, completed]:
             for o in dict_:
-                print(
+                (
                     dummy_solution.schedule[o],
                     dummy_solution.employee_usage.get(o, {}),
                     dict_[o],
@@ -201,7 +182,7 @@ def test_partial_sgs(rcpsp_model_file, preemptive_version):
     else:
         for dict_ in [ongoing, completed]:
             for o in dict_:
-                print(
+                (
                     dummy_solution.schedule[o],
                     dummy_solution.employee_usage.get(o, {}),
                     dict_[o],

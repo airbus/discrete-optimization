@@ -1,4 +1,5 @@
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.knapsack.knapsack_model import KnapsackSolution
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -17,9 +18,9 @@ def test_cp_knapsack_1():
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 10
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
-    best = result_storage.get_best_solution_fit()
-    print(result_storage.list_solution_fits)
-    print(best[0], best[1])
+    sol, fit = result_storage.get_best_solution_fit()
+    assert isinstance(result_storage.list_solution_fits[0][0], KnapsackSolution)
+    assert len(result_storage.list_solution_fits) == 3
 
 
 def test_cp_knapsack_2():
@@ -30,9 +31,9 @@ def test_cp_knapsack_2():
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 10
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
-    best = result_storage.get_best_solution_fit()
-    print(result_storage.list_solution_fits)
-    print(best[0], best[1])
+    sol, fit = result_storage.get_best_solution_fit()
+    assert isinstance(result_storage.list_solution_fits[0][0], KnapsackSolution)
+    assert len(result_storage.list_solution_fits) == 3
 
 
 if __name__ == "__main__":

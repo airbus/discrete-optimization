@@ -21,10 +21,8 @@ def testing_on_knapsack():
     mutation_2 = MutationKnapsack(model)
     for i in range(1000):
         sol, move, f = mutation_2.mutate_and_compute_obj(solution)
-        print(sol, f)
     sol_back = move.backtrack_local_move(sol)
     f = model.evaluate(sol_back)
-    print(sol_back, f)
 
 
 if __name__ == "__main__":
