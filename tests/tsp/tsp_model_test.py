@@ -10,14 +10,7 @@ def test_load():
     file = [f for f in files if "85900" in f][0]
     one_model = parse_file(file)
     basic_solution = SolutionTSP(0, 0, list(range(one_model.node_count)), None, None)
-    import time
-
-    """ for k in range(100):
-        t = time.time()
-        one_model.evaluate(basic_solution)s
-        print("Numba : ", time.time() - t) """
     for k in range(100):
-        t = time.time()
         compute_length(
             0,
             0,
@@ -26,8 +19,6 @@ def test_load():
             one_model.node_count,
             one_model.length_permutation,
         )
-        print("Old method : ", time.time() - t)
-    print(one_model)
 
 
 if __name__ == "__main__":
