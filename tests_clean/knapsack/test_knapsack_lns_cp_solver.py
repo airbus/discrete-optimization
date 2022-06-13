@@ -48,21 +48,14 @@ def test_knapsack_lns():
     )
     result_store_pure_cp = solver.solve(parameters_cp=params_cp)
     solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
-    print("Pure CP : ", solution_pure_cp[0], solution_pure_cp[1])
     result_store = lns_solver.solve_lns(
         parameters_cp=params_cp, nb_iteration_lns=200, max_time_seconds=30
     )
     solution = result_store.get_best_solution_fit()[0]
-    print([x[1] for x in result_store.list_solution_fits])
-    print(solution)
-    print("Satisfy : ", model.satisfy(solution))
-    print(model.evaluate(solution))
-    import matplotlib.pyplot as plt
+    assert model.satisfy(solution)
+    model.evaluate(solution)
 
     fitness = [f for s, f in result_store.list_solution_fits]
-    fig, ax = plt.subplots(1)
-    ax.plot(fitness)
-    ax.set_title("Fitness evolution ")
 
 
 if __name__ == "__main__":

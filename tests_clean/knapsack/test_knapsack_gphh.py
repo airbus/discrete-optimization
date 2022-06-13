@@ -43,10 +43,9 @@ def test_run_one_example():
         kp = parse_file(files_available[k])
         mdkp = from_kp_to_multi(kp)
         rs = gphh_solver.build_result_storage_for_domain(mdkp)
-        print("Greedy :", GreedyBest(kp).solve().get_best_solution_fit()[1])
-        print("Rule : ", rs.get_best_solution_fit()[1])
+        GreedyBest(kp).solve().get_best_solution_fit()
+        rs.get_best_solution_fit()
     gphh_solver.plot_solution(show=False)
-    print(fit)
 
 
 if __name__ == "__main__":

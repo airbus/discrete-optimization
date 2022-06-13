@@ -30,9 +30,7 @@ def test_single_mode(rcpsp_model_file):
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=mode_list
     )
     evaluation = rcpsp_model.evaluate(rcpsp_sol)
-    print(evaluation)
-    satisfy = rcpsp_model.satisfy(rcpsp_sol)
-    assert satisfy is True
+    assert rcpsp_model.satisfy(rcpsp_sol)
 
 
 def test_unfeasible_modes_solution():
@@ -46,10 +44,9 @@ def test_unfeasible_modes_solution():
     rcpsp_sol = RCPSPSolutionPreemptive(
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=unfeasible_modes
     )
-    assert rcpsp_sol.rcpsp_schedule_feasible is False
-    assert rcpsp_model.satisfy(rcpsp_sol) is False
-    evaluation = rcpsp_model.evaluate(rcpsp_sol)
-    print(evaluation)
+    assert not rcpsp_sol.rcpsp_schedule_feasible
+    assert not rcpsp_model.satisfy(rcpsp_sol)
+    rcpsp_model.evaluate(rcpsp_sol)
 
 
 def test_feasible_modes_solution():
@@ -64,7 +61,7 @@ def test_feasible_modes_solution():
     rcpsp_sol = RCPSPSolutionPreemptive(
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=feasible_modes
     )
-    assert rcpsp_model.satisfy(rcpsp_sol) is True
+    assert rcpsp_model.satisfy(rcpsp_sol)
 
 
 def create_partial_sgs_input(solution: RCPSPSolution, time_to_cut: int):
@@ -100,29 +97,23 @@ def test_partial_sgs(rcpsp_model_file):
     rcpsp_sol = rcpsp_model.get_dummy_solution()
     time_to_cut = int(rcpsp_sol.get_end_time(rcpsp_model.sink_task) / 3)
     rcpsp_sol_copy = rcpsp_sol.copy()
-    print("Makespan 0: ", rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task])
+    rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task]
     completed, partial_schedule = create_partial_sgs_input(
         solution=rcpsp_sol, time_to_cut=time_to_cut
     )
     for i in range(10):
-        t_fast = time.time()
         rcpsp_sol_copy.generate_schedule_from_permutation_serial_sgs_2(
             current_t=time_to_cut,
             partial_schedule=partial_schedule,
             completed_tasks=completed,
             do_fast=True,
         )
-        t_fast_e = time.time()
-        print(t_fast_e - t_fast, " seconds Fast")
-        t_slow = time.time()
         rcpsp_sol_copy.generate_schedule_from_permutation_serial_sgs_2(
             current_t=time_to_cut,
             partial_schedule=partial_schedule,
             completed_tasks=completed,
             do_fast=False,
         )
-        t_slow_e = time.time()
-        print(t_slow_e - t_slow, " seconds Slow")
 
     for o in partial_schedule:
         starts = rcpsp_sol_copy.get_start_times_list(o)

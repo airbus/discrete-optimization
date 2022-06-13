@@ -89,7 +89,6 @@ def test_selections():
     tsp_model = tsp_parser.parse_file(files[0])
     params = get_default_objective_setup(tsp_model)
 
-    print("SEL_RANDOM")
     ga_solver = Ga(
         tsp_model,
         selection=DeapSelection.SEL_RANDOM,
@@ -100,7 +99,6 @@ def test_selections():
     )
     kp_sol = ga_solver.solve()
 
-    print("SEL_BEST")
     ga_solver = Ga(
         tsp_model,
         selection=DeapSelection.SEL_BEST,
@@ -111,7 +109,6 @@ def test_selections():
     )
     kp_sol = ga_solver.solve()
 
-    print("SEL_TOURNAMENT")
     ga_solver = Ga(
         tsp_model,
         selection=DeapSelection.SEL_TOURNAMENT,
@@ -122,7 +119,6 @@ def test_selections():
     )
     kp_sol = ga_solver.solve()
 
-    print("SEL_ROULETTE")
     ga_solver = Ga(
         tsp_model,
         selection=DeapSelection.SEL_ROULETTE,
@@ -133,7 +129,6 @@ def test_selections():
     )
     kp_sol = ga_solver.solve()
 
-    print("SEL_WORST")
     ga_solver = Ga(
         tsp_model,
         selection=DeapSelection.SEL_WORST,
@@ -144,7 +139,6 @@ def test_selections():
     )
     kp_sol = ga_solver.solve()
 
-    print("SEL_STOCHASTIC_UNIVERSAL_SAMPLING")
     ga_solver = Ga(
         tsp_model,
         selection=DeapSelection.SEL_STOCHASTIC_UNIVERSAL_SAMPLING,

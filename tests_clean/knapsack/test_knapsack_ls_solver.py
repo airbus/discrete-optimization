@@ -83,7 +83,7 @@ def test_hc_knapsack_multiobj():
         pickle_result=False,
     )
     pareto = result_sa
-    print(pareto.len_pareto_front())
+    pareto.len_pareto_front()
 
 
 if __name__ == "__main__":

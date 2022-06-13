@@ -29,10 +29,7 @@ def test_single_mode(rcpsp_model_file):
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=mode_list
     )
     evaluation = rcpsp_model.evaluate(rcpsp_sol)
-    print(rcpsp_model_file, rcpsp_model)
-    print(evaluation)
-    satisfy = rcpsp_model.satisfy(rcpsp_sol)
-    assert satisfy is True
+    assert rcpsp_model.satisfy(rcpsp_sol)
 
 
 def test_unfeasible_modes_solution():
@@ -45,10 +42,9 @@ def test_unfeasible_modes_solution():
     rcpsp_sol = RCPSPSolution(
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=unfeasible_modes
     )
-    assert rcpsp_sol.rcpsp_schedule_feasible is False
-    assert rcpsp_model.satisfy(rcpsp_sol) is False
+    assert not rcpsp_sol.rcpsp_schedule_feasible
+    assert not rcpsp_model.satisfy(rcpsp_sol)
     evaluation = rcpsp_model.evaluate(rcpsp_sol)
-    print(evaluation)
 
 
 def test_feasible_modes_solution():
@@ -63,7 +59,7 @@ def test_feasible_modes_solution():
     rcpsp_sol = RCPSPSolution(
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=feasible_modes
     )
-    assert rcpsp_model.satisfy(rcpsp_sol) is True
+    assert rcpsp_model.satisfy(rcpsp_sol)
 
 
 def create_task_details_classic(
@@ -105,7 +101,7 @@ def test_partial_sgs(rcpsp_model_file):
     )
     scheduled_start_time = {o: ongoing[o].start for o in ongoing}
     rcpsp_sol_copy = rcpsp_sol.copy()
-    print("Makespan 0: ", rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task])
+    rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task]
 
     rcpsp_sol_copy.generate_schedule_from_permutation_serial_sgs_2(
         current_t=time_to_cut,
@@ -120,7 +116,7 @@ def test_partial_sgs(rcpsp_model_file):
         assert ongoing[task].start == rcpsp_sol_copy.get_start_time(task)
         assert ongoing[task].end == rcpsp_sol_copy.get_end_time(task)
 
-    print("Makespan 1: ", rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task])
+    rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task]
     rcpsp_sol_copy.generate_schedule_from_permutation_serial_sgs_2(
         current_t=time_to_cut,
         completed_tasks=completed,
@@ -133,4 +129,4 @@ def test_partial_sgs(rcpsp_model_file):
     for task in ongoing:
         assert ongoing[task].start == rcpsp_sol_copy.get_start_time(task)
         assert ongoing[task].end == rcpsp_sol_copy.get_end_time(task)
-    print("Makespan 2: ", rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task])
+    rcpsp_sol_copy.rcpsp_schedule[rcpsp_model.sink_task]

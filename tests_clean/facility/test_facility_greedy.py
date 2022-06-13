@@ -14,9 +14,7 @@ def test_greedy_facility():
     color_problem = parse_file(file)
     solver = GreedySolverFacility(color_problem)
     solution, fit = solver.solve().get_best_solution_fit()
-    print(solution)
-    print(fit)
-    print("Satisfy : ", color_problem.satisfy(solution))
+    assert color_problem.satisfy(solution)
 
 
 if __name__ == "__main__":
