@@ -13,7 +13,7 @@ def test_model_satisfy():
     facility_problem: FacilityProblem = parse_file(file)
     dummy_solution = facility_problem.get_dummy_solution()
     facility_problem.evaluate(dummy_solution)
-    assert facility_problem.satisfy(dummy_solution)
+    assert not facility_problem.satisfy(dummy_solution)
 
 
 if __name__ == "__main__":
