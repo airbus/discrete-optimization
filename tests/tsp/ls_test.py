@@ -2,7 +2,10 @@ import os
 import sys
 
 import numpy as np
-from discrete_optimization.generic_tools.do_problem import ModeOptim
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    get_default_objective_setup,
+)
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimber
 from discrete_optimization.generic_tools.ls.local_search import RestartHandlerLimit
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
@@ -30,6 +33,7 @@ def test_sa_2opt():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
+    params_objective_function = get_default_objective_setup(problem=model)
     # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
@@ -46,16 +50,23 @@ def test_sa_2opt():
         evaluator=model,
         mutator=mutate_portfolio,
         restart_handler=res,
-        temperature_handler=TemperatureSchedulingFactor(100, res, 1000, 0.99999),
+        temperature_handler=TemperatureSchedulingFactor(
+            temperature=100, restart_handler=res, coefficient=0.99999
+        ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
+        params_objective_function=params_objective_function,
     )
-    sa.solve(solution, 100000000, ModeOptim.MINIMIZATION, False)
+    sol = sa.solve(
+        initial_variable=solution, nb_iteration_max=10000
+    ).get_best_solution()
+    # assert model.satisfy(sol)
 
 
 def test_sa_partial_shuffle():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
+    params_objective_function = get_default_objective_setup(problem=model)
     # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
@@ -72,16 +83,23 @@ def test_sa_partial_shuffle():
         evaluator=model,
         mutator=mutate_portfolio,
         restart_handler=res,
-        temperature_handler=TemperatureSchedulingFactor(100, res, 1000, 0.99999),
+        temperature_handler=TemperatureSchedulingFactor(
+            temperature=100, restart_handler=res, coefficient=0.99999
+        ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
+        params_objective_function=params_objective_function,
     )
-    sa.solve(solution, 100000000, ModeOptim.MINIMIZATION, False)
+    sol = sa.solve(
+        initial_variable=solution, nb_iteration_max=10000
+    ).get_best_solution()
+    # assert model.satisfy(sol)
 
 
 def test_sa_swap():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
+    params_objective_function = get_default_objective_setup(problem=model)
     # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
@@ -97,16 +115,23 @@ def test_sa_swap():
         evaluator=model,
         mutator=mutate_portfolio,
         restart_handler=res,
-        temperature_handler=TemperatureSchedulingFactor(100, res, 1000, 0.99999),
+        temperature_handler=TemperatureSchedulingFactor(
+            temperature=100, restart_handler=res, coefficient=0.99999
+        ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
+        params_objective_function=params_objective_function,
     )
-    sa.solve(solution, 100000000, ModeOptim.MINIMIZATION, False)
+    sol = sa.solve(
+        initial_variable=solution, nb_iteration_max=10000
+    ).get_best_solution()
+    # assert model.satisfy(sol)
 
 
 def test_sa_twoopttbasic():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
+    params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
@@ -123,16 +148,23 @@ def test_sa_twoopttbasic():
         evaluator=model,
         mutator=mutate_portfolio,
         restart_handler=res,
-        temperature_handler=TemperatureSchedulingFactor(100, res, 1000, 0.99999),
+        temperature_handler=TemperatureSchedulingFactor(
+            temperature=100, restart_handler=res, coefficient=0.99999
+        ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
+        params_objective_function=params_objective_function,
     )
-    sa.solve(solution, 100000000, ModeOptim.MINIMIZATION, False)
+    sol = sa.solve(
+        initial_variable=solution, nb_iteration_max=10000
+    ).get_best_solution()
+    # assert model.satisfy(sol)
 
 
 def test_hc():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
+    params_objective_function = get_default_objective_setup(problem=model)
     # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
@@ -150,8 +182,12 @@ def test_hc():
         mutator=mutate_portfolio,
         restart_handler=res,
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
+        params_objective_function=params_objective_function,
     )
-    sa.solve(solution, 100000000, ModeOptim.MINIMIZATION, False)
+    sol = sa.solve(
+        initial_variable=solution, nb_iteration_max=10000
+    ).get_best_solution()
+    # assert model.satisfy(sol)
 
 
 if __name__ == "__main__":
