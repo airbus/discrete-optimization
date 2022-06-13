@@ -39,7 +39,6 @@ def test_knapsack_lns():
     )
     solver.init_model(use_matrix_indicator_heuristic=False)
     result_lp = solver.solve(parameters_milp=params_milp)
-    print(result_lp.get_best_solution_fit())
     initial_solution_provider = InitialKnapsackSolution(
         problem=model,
         initial_method=InitialKnapsackMethod.DUMMY,
@@ -58,10 +57,8 @@ def test_knapsack_lns():
         parameters_milp=params_milp, nb_iteration_lns=10000, max_time_seconds=30
     )
     solution = result_store.get_best_solution_fit()[0]
-    print([x[1] for x in result_store.list_solution_fits])
-    print(solution)
-    print("Satisfy : ", model.satisfy(solution))
-    print(model.evaluate(solution))
+    assert model.satisfy(solution)
+    model.evaluate(solution)
 
 
 if __name__ == "__main__":

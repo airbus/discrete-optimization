@@ -34,12 +34,6 @@ def testing_nsga_1():
     )
 
     result_storage = ga_solver.solve()
-    print(result_storage)
-
-    # pareto_front = ParetoFront(result_storage)
-    # print('pareto_front: ', pareto_front)
-
-    # plot_pareto_2d(result_storage, name_axis=objectives)
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
 
 
@@ -53,28 +47,17 @@ def testing_own_bitflip_kp_mutation():
     )
     objectives = ["value", "weight_violation"]
 
-    print("objectives", objectives)
-    # objectives = ['value', 'weight_violation']
     ga_solver = Nsga(
         knapsack_model,
         encoding="list_taken",
         objectives=objectives,
         objective_weights=[-1, -1],
         mutation=mutation,
-        # mutation=mutation_1,
-        # mutation=DeapMutation.MUT_FLIP_BIT,
         max_evals=3000,
     )
     result_storage = ga_solver.solve()
-    print(result_storage)
-
-    # pareto_front = ParetoFront(result_storage)
-    # print('pareto_front: ', pareto_front)
-
-    # plot_pareto_2d(result_storage, name_axis=objectives)
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
 
 
 if __name__ == "__main__":
-    # testing_nsga_1()
     testing_own_bitflip_kp_mutation()

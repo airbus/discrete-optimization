@@ -28,9 +28,7 @@ def test_ga():
     )
     results = ga_solver.solve()
     sol, fit = results.get_best_solution_fit()
-    print(sol)
     knapsack_model.evaluate(sol)
-    print("Solution GA", sol)
 
 
 def test_own_bitflip_kp_mutation():
@@ -52,9 +50,7 @@ def test_own_bitflip_kp_mutation():
     )
     results = ga_solver.solve()
     sol, fit = results.get_best_solution_fit()
-    print(sol)
     knapsack_model.evaluate(sol)
-    print("Solution GA", sol)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,6 @@ from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 
 def test_facility_lns():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
-    print(file)
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
     params_milp = ParametersMilp(
@@ -60,9 +59,8 @@ def test_facility_lns():
         parameters_milp=params_milp, nb_iteration_lns=100, max_time_seconds=100
     )
     solution = result_store.get_best_solution_fit()[0]
-    print(solution)
-    print("Satisfy : ", facility_problem.satisfy(solution))
-    print(facility_problem.evaluate(solution))
+    assert facility_problem.satisfy(solution)
+    facility_problem.evaluate(solution)
 
 
 if __name__ == "__main__":

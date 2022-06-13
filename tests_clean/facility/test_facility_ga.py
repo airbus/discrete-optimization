@@ -35,9 +35,8 @@ def test_ga_facility():
         max_evals=1000,
     )
     facility_solution = ga_solver.solve().get_best_solution()
-    print("facility_solution: ", facility_solution)
-    print("color_evaluate: ", facility_problem.evaluate(facility_solution))
-    print("color_satisfy: ", facility_problem.satisfy(facility_solution))
+    facility_problem.evaluate(facility_solution)
+    assert facility_problem.satisfy(facility_solution)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,6 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
 )
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 
-
 try:
     import gurobipy
 except ImportError:
@@ -26,7 +25,6 @@ else:
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_facility_lp_gurobi():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
-    print(file)
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
     parameters_lp = ParametersMilp.default()
@@ -36,14 +34,11 @@ def test_facility_lp_gurobi():
         use_matrix_indicator_heuristic=False,
         verbose=True,
     ).get_best_solution_fit()
-    print(solution)
-    print("Satisfy : ", color_problem.satisfy(solution))
-    print(fit)
+    assert color_problem.satisfy(solution)
 
 
 def test_facility_lp_cbc():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
-    print(file)
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_CBC(color_problem)
     parameters_lp = ParametersMilp.default()
@@ -53,14 +48,11 @@ def test_facility_lp_cbc():
         use_matrix_indicator_heuristic=False,
         verbose=True,
     ).get_best_solution_fit()
-    print(solution)
-    print("Satisfy : ", color_problem.satisfy(solution))
-    print(fit)
+    assert color_problem.satisfy(solution)
 
 
 def test_facility_lp_pymip():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
-    print(file)
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
     parameters_lp = ParametersMilp.default()
@@ -76,9 +68,8 @@ def test_facility_lp_pymip():
         verbose=True,
     )
     solution = result_store.get_best_solution_fit()[0]
-    print(solution)
-    print("Satisfy : ", facility_problem.satisfy(solution))
-    print(facility_problem.evaluate(solution))
+    assert facility_problem.satisfy(solution)
+    facility_problem.evaluate(solution)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -97,8 +88,7 @@ def test_facility_lp_lns_gurobi():
         parameters_milp=parameters_lp,
         verbose=True,
     )
-    print(solution)
-    print("Satisfy : ", color_problem.satisfy(solution))
+    assert color_problem.satisfy(solution)
 
 
 if __name__ == "__main__":
