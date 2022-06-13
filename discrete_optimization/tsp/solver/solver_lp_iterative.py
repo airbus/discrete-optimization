@@ -502,6 +502,8 @@ class LP_TSP_Iterative(SolverDO):
             fig, ax = plt.subplots(1, 2, figsize=(10, 5))
             for i in range(len(solutions)):
                 ll = []
+                ax[0].clear()
+                ax[1].clear()
                 for e in solutions[i]:
                     ll.append(
                         ax[0].plot(
@@ -527,8 +529,7 @@ class LP_TSP_Iterative(SolverDO):
                 fig.savefig(os.path.join(folder_image, "tsp_" + str(i) + ".png"))
                 plt.draw()
                 plt.pause(1)
-                ax[0].lines = []
-                ax[1].lines = []
+
             plt.show()
         print("Best solution : ", best_solution_rebuilt)
         print(rebuilt_obj[best_solution_rebuilt_index])
