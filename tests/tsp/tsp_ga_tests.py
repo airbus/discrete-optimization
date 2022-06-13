@@ -24,7 +24,6 @@ from discrete_optimization.tsp.tsp_parser import parse_file as tsp_parse_file
 
 
 def testing_tsp():
-    print(__file__)
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     tsp_model = tsp_parse_file(files[0])
