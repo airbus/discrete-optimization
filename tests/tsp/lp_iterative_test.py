@@ -24,8 +24,9 @@ def run_lp():
     solver = LP_TSP_Iterative(model, build_graph_complete)
     solver.init_model(method=MILPSolver.CBC)
     with TemporaryDirectory() as plot_folder:
-        solver.solve(plot=False, plot_folder=plot_folder)
+        sol = solver.solve(plot=False, plot_folder=plot_folder).get_best_solution()
         assert len(os.listdir(plot_folder)) == 5
+    # assert model.satisfy(sol)
 
 
 if __name__ == "__main__":

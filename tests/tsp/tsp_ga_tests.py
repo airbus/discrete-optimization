@@ -36,10 +36,9 @@ def testing_tsp():
         objective_weights=[-1],
         mutation=mutation,
     )
-    ga_solver._max_evals = 200000
-    sol = ga_solver.solve()
-    print(type(sol))
-    print(sol)
+    ga_solver._max_evals = 2000
+    sol = ga_solver.solve().get_best_solution()
+    # assert tsp_model.satisfy(sol)
 
 
 def testing_tsp_with_specific_mutation():
@@ -77,10 +76,9 @@ def testing_tsp_with_specific_mutation():
         crossover=crossover,
         selection=selection,
     )
-    ga_solver._max_evals = 500000
-    sol = ga_solver.solve()
-    print(type(sol))
-    print(sol)
+    ga_solver._max_evals = 2000
+    sol = ga_solver.solve().get_best_solution()
+    assert tsp_model.satisfy(sol)
 
 
 if __name__ == "__main__":
