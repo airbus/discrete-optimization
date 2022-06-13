@@ -223,6 +223,7 @@ def test_coloring_nsga_2():
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_color_lp_gurobi():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)

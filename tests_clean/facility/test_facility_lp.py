@@ -15,6 +15,15 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 
 
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_facility_lp_gurobi():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     print(file)
@@ -72,6 +81,7 @@ def test_facility_lp_pymip():
     print(facility_problem.evaluate(solution))
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_facility_lp_lns_gurobi():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     color_problem = parse_file(file)
