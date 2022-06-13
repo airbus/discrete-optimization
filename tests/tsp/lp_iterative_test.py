@@ -1,4 +1,6 @@
+import os
 import time
+from tempfile import TemporaryDirectory
 
 import numpy as np
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
@@ -21,7 +23,9 @@ def run_lp():
     model = parse_file(files[0], start_index=0, end_index=0)
     solver = LP_TSP_Iterative(model, build_graph_complete)
     solver.init_model(method=MILPSolver.CBC)
-    solver.solve()
+    with TemporaryDirectory() as plot_folder:
+        solver.solve(plot=False, plot_folder=plot_folder)
+        assert len(os.listdir(plot_folder)) == 5
 
 
 if __name__ == "__main__":

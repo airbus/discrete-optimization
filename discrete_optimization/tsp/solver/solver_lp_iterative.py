@@ -1,5 +1,6 @@
 import os
 from enum import Enum
+from typing import Optional
 
 import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
@@ -27,11 +28,6 @@ else:
     from gurobipy import GRB, Model, quicksum
 
 
-folder_image = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../debug_image/image_lp_iterative/"
-)
-if not os.path.exists(folder_image):
-    os.makedirs(folder_image)
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -358,6 +354,9 @@ class LP_TSP_Iterative(SolverDO):
     def solve(self, **kwargs):
         nb_iteration_max = kwargs.get("nb_iteration_max", 20)
         plot = kwargs.get("plot", True)
+        plot_folder: Optional[str] = kwargs.get("plot_folder", None)
+        if plot_folder is not None:
+            os.makedirs(plot_folder, exist_ok=True)
         tsp_model = self.model
         print("optimizing...")
         if self.method == MILPSolver.GUROBI:
@@ -498,7 +497,7 @@ class LP_TSP_Iterative(SolverDO):
             elif self.method == MILPSolver.CBC:
                 objective = self.model.Objective().Value()
             print("Objective : ", objective)
-        if plot:
+        if plot or plot_folder is not None:
             fig, ax = plt.subplots(1, 2, figsize=(10, 5))
             for i in range(len(solutions)):
                 ll = []
@@ -526,11 +525,14 @@ class LP_TSP_Iterative(SolverDO):
                     + str(nb_components[i])
                 )
                 ax[1].set_title("iter " + str(i) + " obj=" + str(int(rebuilt_obj[i])))
-                fig.savefig(os.path.join(folder_image, "tsp_" + str(i) + ".png"))
-                plt.draw()
-                plt.pause(1)
+                if plot_folder is not None:
+                    fig.savefig(os.path.join(plot_folder, "tsp_" + str(i) + ".png"))
+                if plot:
+                    plt.draw()
+                    plt.pause(1)
 
-            plt.show()
+            if plot:
+                plt.show()
         print("Best solution : ", best_solution_rebuilt)
         print(rebuilt_obj[best_solution_rebuilt_index])
         path = rebuilt_solution[best_solution_rebuilt_index]
