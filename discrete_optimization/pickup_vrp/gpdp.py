@@ -148,8 +148,9 @@ class GPDP(Problem):
                 resources = self.resources_flow_edges.get((node, node1), {})
                 for r in resources:
                     self.edges_dict[node][node1][r] = resources[r]
-        print("compute graph")
+        self.graph = None
         if compute_graph:
+            print("compute graph")
             self.graph = Graph(
                 nodes=[(n, self.all_nodes_dict[n]) for n in self.all_nodes_dict],
                 edges=[
@@ -240,6 +241,9 @@ class GPDP(Problem):
 
     def update_graph(self):
         self.update_edges()
+        self.compute_graph()
+
+    def compute_graph(self):
         self.graph = Graph(
             nodes=[(n, self.all_nodes_dict[n]) for n in self.all_nodes_dict],
             edges=[
@@ -250,6 +254,7 @@ class GPDP(Problem):
             undirected=False,
             compute_predecessors=False,
         )
+
 
     def get_attribute_register(self) -> EncodingRegister:
         pass
