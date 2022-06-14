@@ -431,6 +431,8 @@ class LinearFlowSolver(SolverDO):
         unique_visit = kwargs.get("unique_visit", True)
         nb_vehicle = self.problem.number_vehicle
         name_vehicles = sorted(self.problem.origin_vehicle.keys())
+        if self.problem.graph is None:
+            self.problem.compute_graph()
         graph = self.problem.graph
         nodes_of_interest = [
             n
