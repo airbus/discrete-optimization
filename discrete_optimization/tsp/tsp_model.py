@@ -184,11 +184,16 @@ class TSPModel(Problem):
 
     def satisfy(self, var_tsp: SolutionTSP) -> bool:
         b = (
-            var_tsp.permutation[0] == self.start_index
-            and var_tsp.permutation[-1] == self.end_index
+            var_tsp.start_index == self.start_index
+            and var_tsp.end_index == self.end_index
         )
         if not b:
             return False
+        if len(var_tsp.permutation) != self.length_permutation:
+            return False
+        if not all(x in var_tsp.permutation for x in self.ind_in_permutation):
+            return False
+        return True
 
     def get_dummy_solution(self):
         var = SolutionTSP(
