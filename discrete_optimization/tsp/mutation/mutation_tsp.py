@@ -301,7 +301,6 @@ class SwapTSPMove(LocalMove):
             i1, i2, solution, self.tsp_model.length_permutation
         )
         current[i1], current[i2] = v2, v1
-        print("Len :", len(solution.lengths))
         previous = (
             solution.lengths[i1],
             solution.lengths[i1 + 1],
