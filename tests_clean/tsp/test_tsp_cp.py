@@ -1,13 +1,8 @@
-import sys
-
-import pytest
-
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.tsp.solver.tsp_cp_solver import TSP_CP_Solver, TSP_CPModel
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="Not yet working on windows")
 def test_int_cp():
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
