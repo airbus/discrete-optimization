@@ -278,7 +278,7 @@ import networkx as nx
 import numpy as np
 
 
-def build_pruned_problem(problem: GPDP, undirected=True):
+def build_pruned_problem(problem: GPDP, undirected=True, compute_graph: bool = False):
     kept_edges = set()
     graph_nx = nx.DiGraph()
     for node in problem.graph.neighbors_dict:
@@ -370,6 +370,7 @@ def build_pruned_problem(problem: GPDP, undirected=True):
         list_pickup_deliverable_per_cluster=problem.list_pickup_deliverable_per_cluster,
         clusters_dict=problem.clusters_dict,
         coordinates_2d=problem.coordinates_2d,
+        compute_graph=compute_graph,
     )
 
 
@@ -424,7 +425,7 @@ from discrete_optimization.vrp.vrp_model import VrpProblem
 
 class ProxyClass:
     @staticmethod
-    def from_vrp_model_to_gpdp(vrp_model: VrpProblem):
+    def from_vrp_model_to_gpdp(vrp_model: VrpProblem, compute_graph:bool = False):
         nb_vehicle = vrp_model.vehicle_count
         nb_customers = len(vrp_model.customers)
         all_start_index = set(vrp_model.start_indexes)
@@ -538,10 +539,11 @@ class ProxyClass:
             distance_delta=distance_delta,
             time_delta=time_delta,
             coordinates_2d=coordinates,
+            compute_graph=compute_graph,
         )
 
     @staticmethod
-    def from_tsp_model_gpdp(tsp_model: TSPModel):
+    def from_tsp_model_gpdp(tsp_model: TSPModel, compute_graph: bool = False):
         nb_vehicle = 1
         nb_customers = tsp_model.node_count
         all_start_index = {tsp_model.start_index}
@@ -647,4 +649,5 @@ class ProxyClass:
             distance_delta=distance_delta,
             time_delta=time_delta,
             coordinates_2d=coordinates,
+            compute_graph=compute_graph,
         )
