@@ -17,7 +17,7 @@ from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, compute_l
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
 
-def run_lp():
+def test_lp():
     files = get_data_available()
     files = [f for f in files if "tsp_51_1" in f]
     model = parse_file(files[0], start_index=0, end_index=0)
@@ -30,4 +30,4 @@ def run_lp():
 
 
 if __name__ == "__main__":
-    run_lp()
+    test_lp()
