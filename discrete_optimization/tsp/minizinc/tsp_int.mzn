@@ -17,8 +17,13 @@
 % Also, see my MiniZinc page: http://www.hakank.org/minizinc/
 %
 
-include "globals.mzn";
-% include "jacop.mzn";
+%include "globals.mzn"; Bug with some minizinc install.
+include "circuit.mzn";
+include "all_different.mzn";
+
+
+
+
 
 predicate circuit_me(array[int] of var int: x) =
   let {
@@ -57,13 +62,11 @@ int: min_val = min([distances[i,j] | i,j in 1..n where distances[i,j] >= 0]);
 int: max_val = max([distances[i,j] | i,j in 1..n]);
 array[NODES] of var min_val..max_val: d;
 var int: distance = sum(d);
-%solve minimize distance;
 solve :: int_search(d, max_regret, indomain_split, complete) minimize distance;
 constraint if end!=start then x[end]=start endif;
 constraint
     all_different(x) /\ % this speeds up for some solvers
-    circuit(x) % use this for solvers with built-in circuit predicate, e.g. JaCoP
-               % or - lately - the built-in version in MiniZinc distribution
+    circuit(x)
     % circuit_me(x) % hakank: use this version for solvers without the built-in circuit predicate
     /\
     forall(i in 1..n) (
