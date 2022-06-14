@@ -39,19 +39,19 @@ jobs:
           - os: "ubuntu-latest"
             minizinc_path: $(pwd)/bin
             minizinc_cache_path: $(pwd)/bin/minizinc
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.5.5/MiniZincIDE-2.5.5-x86_64.AppImage
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
             minizinc_downloaded_filepath: bin/minizinc
             minizinc_install_cmdline: sudo chmod +x bin/minizinc
           - os: "macos-latest"
             minizinc_path: $(pwd)/bin/MiniZincIDE.app/Contents/Resources
             minizinc_cache_path: $(pwd)/bin/MiniZincIDE.app
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.5.5/MiniZincIDE-2.5.5-bundled.dmg
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled.dmg
             minizinc_downloaded_filepath: bin/minizinc.dmg
             minizinc_install_cmdline: sudo hdiutil attach bin/minizinc.dmg; sudo cp -R /Volumes/MiniZinc*/MiniZincIDE.app bin/.
           - os: "windows-latest"
             minizinc_path: ~/AppData/Local/Programs/MiniZinc
             minizinc_cache_path: ~/AppData/Local/Programs/MiniZinc
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.5.5/MiniZincIDE-2.5.5-bundled-setup-win64.exe
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled-setup-win64.exe
             minizinc_downloaded_filepath: minizinc_setup.exe
             minizinc_install_cmdline: cmd //c "minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp"
     runs-on: ${{ matrix.os }}
