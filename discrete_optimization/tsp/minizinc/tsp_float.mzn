@@ -17,8 +17,9 @@
 % Also, see my MiniZinc page: http://www.hakank.org/minizinc/
 %
 
-include "globals.mzn";
-% include "jacop.mzn";
+%include "globals.mzn"; Bug with some minizinc install.
+include "circuit.mzn";
+include "all_different.mzn";
 
 predicate circuit_me(array[int] of var int: x) =
   let {
