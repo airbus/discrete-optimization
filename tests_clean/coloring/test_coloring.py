@@ -48,6 +48,10 @@ else:
     gurobi_available = True
 
 
+@pytest.fixture
+def random_seed():
+    random.seed(0)
+
 @pytest.mark.parametrize("coloring_problem_file", get_data_available())
 def test_load_file(coloring_problem_file):
     coloring_model: ColoringProblem = parse_file(coloring_problem_file)
@@ -101,7 +105,7 @@ def test_greedy_best_coloring():
     assert color_problem.satisfy(solution)
 
 
-def test_ga_coloring_1():
+def test_ga_coloring_1(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
     ga_solver = Ga(
@@ -117,7 +121,7 @@ def test_ga_coloring_1():
     assert color_problem.satisfy(color_sol)
 
 
-def test_ga_coloring_2():
+def test_ga_coloring_2(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
     ga_solver = Ga(
@@ -134,7 +138,7 @@ def test_ga_coloring_2():
     assert color_problem.satisfy(color_sol)
 
 
-def test_ga_coloring_3():
+def test_ga_coloring_3(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
