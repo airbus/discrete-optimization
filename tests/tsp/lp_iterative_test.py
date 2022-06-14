@@ -26,7 +26,7 @@ def run_lp():
     with TemporaryDirectory() as plot_folder:
         sol = solver.solve(plot=False, plot_folder=plot_folder).get_best_solution()
         assert len(os.listdir(plot_folder)) == 5
-    # assert model.satisfy(sol)
+    assert model.satisfy(sol)
 
 
 if __name__ == "__main__":
