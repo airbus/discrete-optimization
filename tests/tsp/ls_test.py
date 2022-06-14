@@ -59,7 +59,7 @@ def test_sa_2opt():
     sol = sa.solve(
         initial_variable=solution, nb_iteration_max=10000
     ).get_best_solution()
-    # assert model.satisfy(sol)
+    assert model.satisfy(sol)
 
 
 def test_sa_partial_shuffle():
@@ -124,7 +124,7 @@ def test_sa_swap():
     sol = sa.solve(
         initial_variable=solution, nb_iteration_max=10000
     ).get_best_solution()
-    # assert model.satisfy(sol)
+    assert model.satisfy(sol)
 
 
 def test_sa_twoopttbasic():
@@ -157,7 +157,7 @@ def test_sa_twoopttbasic():
     sol = sa.solve(
         initial_variable=solution, nb_iteration_max=10000
     ).get_best_solution()
-    # assert model.satisfy(sol)
+    assert model.satisfy(sol)
 
 
 def test_hc():
@@ -187,7 +187,7 @@ def test_hc():
     sol = sa.solve(
         initial_variable=solution, nb_iteration_max=10000
     ).get_best_solution()
-    # assert model.satisfy(sol)
+    assert model.satisfy(sol)
 
 
 if __name__ == "__main__":
