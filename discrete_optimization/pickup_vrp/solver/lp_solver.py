@@ -1,6 +1,8 @@
 import time
 from itertools import combinations
-from typing import Any, Dict, Iterable, List, Tuple
+import json
+import os
+from typing import Any, Dict, Iterable, List, Tuple, Optional
 
 import networkx as nx
 from discrete_optimization.generic_tools.do_problem import (
@@ -910,6 +912,9 @@ class LinearFlowSolver(SolverDO):
         finished = False
         do_lns = kwargs.get("do_lns", True)
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
+        json_dump_folder: Optional[str] = kwargs.get("json_dump_folder", None)
+        if json_dump_folder is not None:
+            os.makedirs(json_dump_folder, exist_ok=True)
         if self.model is None:
             self.init_model(**kwargs)
         warm_start = kwargs.get("warm_start", None)
@@ -942,22 +947,14 @@ class LinearFlowSolver(SolverDO):
         self.model.update()
         all_solutions = solutions
         nb_iteration = 0
-        folder = "./interm_lp"
-        import os
-
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        import json
-        import time
-
         while not finished:
             rebuilt_dict = solutions[0].rebuilt_dict
-            if all(rebuilt_dict[v] is not None for v in rebuilt_dict):
+            if (json_dump_folder is not None) and all(rebuilt_dict[v] is not None for v in rebuilt_dict):
                 json.dump(
                     rebuilt_dict,
                     open(
                         os.path.join(
-                            folder,
+                            json_dump_folder,
                             "res_"
                             + str(nb_iteration)
                             + "_"
@@ -1832,6 +1829,9 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         finished = False
         do_lns = kwargs.get("do_lns", True)
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
+        json_dump_folder: Optional[str] = kwargs.get("json_dump_folder", None)
+        if json_dump_folder is not None:
+            os.makedirs(json_dump_folder, exist_ok=True)
         if self.model is None:
             self.init_model(**kwargs)
         warm_start = kwargs.get("warm_start", None)
@@ -1846,22 +1846,15 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         self.model.update()
         all_solutions = solutions
         nb_iteration = 0
-        folder = "./interm_lp"
-        import os
-
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        import json
-        import time
 
         while not finished:
             rebuilt_dict = solutions[0].rebuilt_dict
-            if all(rebuilt_dict[v] is not None for v in rebuilt_dict):
+            if (json_dump_folder is not None) and all(rebuilt_dict[v] is not None for v in rebuilt_dict):
                 json.dump(
                     rebuilt_dict,
                     open(
                         os.path.join(
-                            folder,
+                            json_dump_folder,
                             "res_"
                             + str(nb_iteration)
                             + "_"
