@@ -906,18 +906,35 @@ class LinearFlowSolver(SolverDO):
             solutions = self.retrieve_solutions([0])
         return solutions
 
-    def solve_iterative(self, parameters_milp: ParametersMilp = None, **kwargs):
+    def solve_iterative(
+        self,
+        parameters_milp: ParametersMilp = None,
+        do_lns: bool = True,
+        nb_iteration_max: int = 10,
+        json_dump_folder: Optional[str] = None,
+        warm_start: Optional[Dict[Any, Any]] = None,
+        **kwargs
+    ):
+        """
+
+        Args:
+            parameters_milp:
+            do_lns:
+            nb_iteration_max:
+            json_dump_folder: if not None, solution will be dumped in this folder at each iteration
+            warm_start:
+            **kwargs:
+
+        Returns:
+
+        """
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         finished = False
-        do_lns = kwargs.get("do_lns", True)
-        nb_iteration_max = kwargs.get("nb_iteration_max", 10)
-        json_dump_folder: Optional[str] = kwargs.get("json_dump_folder", None)
         if json_dump_folder is not None:
             os.makedirs(json_dump_folder, exist_ok=True)
         if self.model is None:
             self.init_model(**kwargs)
-        warm_start = kwargs.get("warm_start", None)
         if warm_start is not None:
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=do_lns
@@ -949,7 +966,9 @@ class LinearFlowSolver(SolverDO):
         nb_iteration = 0
         while not finished:
             rebuilt_dict = solutions[0].rebuilt_dict
-            if (json_dump_folder is not None) and all(rebuilt_dict[v] is not None for v in rebuilt_dict):
+            if (json_dump_folder is not None) and all(
+                rebuilt_dict[v] is not None for v in rebuilt_dict
+            ):
                 json.dump(
                     rebuilt_dict,
                     open(
@@ -1823,18 +1842,35 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             solutions = self.retrieve_solutions([0])
         return solutions
 
-    def solve_iterative(self, parameters_milp: ParametersMilp = None, **kwargs):
+    def solve_iterative(
+        self,
+        parameters_milp: ParametersMilp = None,
+        do_lns: bool = True,
+        nb_iteration_max: int = 10,
+        json_dump_folder: Optional[str] = None,
+        warm_start: Optional[Dict[Any, Any]] = None,
+        **kwargs
+    ):
+        """
+
+        Args:
+            parameters_milp:
+            do_lns:
+            nb_iteration_max:
+            json_dump_folder: if not None, solution will be dumped in this folder at each iteration
+            warm_start:
+            **kwargs:
+
+        Returns:
+
+        """
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         finished = False
-        do_lns = kwargs.get("do_lns", True)
-        nb_iteration_max = kwargs.get("nb_iteration_max", 10)
-        json_dump_folder: Optional[str] = kwargs.get("json_dump_folder", None)
         if json_dump_folder is not None:
             os.makedirs(json_dump_folder, exist_ok=True)
         if self.model is None:
             self.init_model(**kwargs)
-        warm_start = kwargs.get("warm_start", None)
         c = ConstraintHandlerOrWarmStart(
             linear_solver=self, problem=self.problem, do_lns=do_lns
         )
@@ -1849,7 +1885,9 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
 
         while not finished:
             rebuilt_dict = solutions[0].rebuilt_dict
-            if (json_dump_folder is not None) and all(rebuilt_dict[v] is not None for v in rebuilt_dict):
+            if (json_dump_folder is not None) and all(
+                rebuilt_dict[v] is not None for v in rebuilt_dict
+            ):
                 json.dump(
                     rebuilt_dict,
                     open(
