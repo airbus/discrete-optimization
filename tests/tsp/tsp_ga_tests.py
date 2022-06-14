@@ -38,13 +38,12 @@ def testing_tsp():
     )
     ga_solver._max_evals = 2000
     sol = ga_solver.solve().get_best_solution()
-    # assert tsp_model.satisfy(sol)
+    print(tsp_model.satisfy(sol))
+    assert tsp_model.satisfy(sol)
 
 
 def testing_tsp_with_specific_mutation():
     # print(__file__)
-    # '/Users/regnier-coudert/Documents/Dev/discrete_optimization/tsp/tests/data/tsp_51_1'
-    # tsp_model = tsp_parse_file('/Users/regnier-coudert/Documents/Dev/discrete_optimization/tsp/data/tsp_51_1')
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     tsp_model = tsp_parse_file(files[0])
@@ -82,5 +81,5 @@ def testing_tsp_with_specific_mutation():
 
 
 if __name__ == "__main__":
-    testing_tsp_with_specific_mutation()
+    testing_tsp()
     # testing_tsp_with_specific_mutation()

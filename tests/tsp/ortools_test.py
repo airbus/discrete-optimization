@@ -15,7 +15,7 @@ def run_ortools():
     solver = TSP_ORtools(model, params_objective_function=params_objective_function)
     solver.init_model()
     sol, fitness = solver.solve().get_best_solution_fit()
-    model.satisfy(sol)
+    assert model.satisfy(sol)
 
 
 if __name__ == "__main__":

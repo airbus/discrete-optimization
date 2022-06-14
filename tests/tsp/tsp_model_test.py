@@ -10,7 +10,8 @@ def test_load():
     file = [f for f in files if "85900" in f][0]
     one_model = parse_file(file)
     basic_solution = SolutionTSP(
-        problem=one_model, permutation=list(range(1, one_model.node_count))
+        problem=one_model,
+        permutation=list(range(1, one_model.node_count))
     )
     compute_length(
         start_index=basic_solution.start_index,
