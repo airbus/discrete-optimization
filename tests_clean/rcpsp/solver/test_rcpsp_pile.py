@@ -17,65 +17,48 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
 from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolverRCPSP
 
 
-def run_pile():
+def test_pile_sm():
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  #
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
     solver = PileSolverRCPSP(rcpsp_model=rcpsp_model)
-    fits = []
     for k in range(10):
         result_storage = solver.solve(greedy_choice=GreedyChoice.SAMPLE_MOST_SUCCESSORS)
         sol, fit = result_storage.get_best_solution_fit()
         print(sol, fit)
-        print(rcpsp_model.satisfy(sol))
-        fits += [fit]
+        assert rcpsp_model.satisfy(sol)
     sol_2 = RCPSPSolution(problem=rcpsp_model, rcpsp_permutation=sol.rcpsp_permutation)
-    print("Permutation : ", sol.rcpsp_permutation)
-    fit = rcpsp_model.evaluate(sol_2)
-    print("Schedule from greedy ", sol.rcpsp_schedule)
-    print("recomputed : ", fit)
-    print("satisfy sol2", rcpsp_model.satisfy(sol_2))
-    print("Recomputed schedule from permutation : ", sol_2.rcpsp_schedule)
+    assert rcpsp_model.satisfy(sol_2)
     plot_ressource_view(rcpsp_model, sol)
     plot_ressource_view(rcpsp_model, sol_2)
     plot_resource_individual_gantt(rcpsp_model, sol)
-    plt.show()
-    print(rcpsp_model.satisfy(sol))
+    assert rcpsp_model.satisfy(sol)
 
 
-def run_pile_multimode():
+def test_pile_multimode():
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  #
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
     solver = PileSolverRCPSP(rcpsp_model=rcpsp_model)
-    fits = []
     for k in range(10):
         result_storage = solver.solve(greedy_choice=GreedyChoice.SAMPLE_MOST_SUCCESSORS)
         sol, fit = result_storage.get_best_solution_fit()
-        print(sol, fit)
-        print(rcpsp_model.satisfy(sol))
-        fits += [fit]
+        assert rcpsp_model.satisfy(sol)
     sol_2 = RCPSPSolution(
         problem=rcpsp_model,
         rcpsp_modes=sol.rcpsp_modes,
         rcpsp_permutation=sol.rcpsp_permutation,
     )
-    print("Permutation : ", sol.rcpsp_permutation)
-    fit = rcpsp_model.evaluate(sol_2)
-    print("Schedule from greedy ", sol.rcpsp_schedule)
-    print("recomputed : ", fit)
-    print("satisfy sol2", rcpsp_model.satisfy(sol_2))
-    print("Recomputed schedule from permutation : ", sol_2.rcpsp_schedule)
+    assert rcpsp_model.satisfy(sol_2)
     plot_ressource_view(rcpsp_model, sol)
     plot_ressource_view(rcpsp_model, sol_2)
     plot_resource_individual_gantt(rcpsp_model, sol)
-    plt.show()
-    print(rcpsp_model.satisfy(sol))
+    assert rcpsp_model.satisfy(sol)
 
 
-def run_pile_robust():
+def test_pile_robust():
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  #
     file_path = files[0]
@@ -87,10 +70,13 @@ def run_pile_robust():
     )
     solver = PileSolverRCPSP(rcpsp_model=worst)
     solver_original = PileSolverRCPSP(rcpsp_model=rcpsp_model)
-    sol_origin, fit = solver_original.solve(greedy_choice=GreedyChoice.MOST_SUCCESSORS)
-    print(fit, "fitness found on original case")
-    sol, fit = solver.solve(greedy_choice=GreedyChoice.MOST_SUCCESSORS)
-    print(fit, "fitness found on worst case")
+    sol_origin, fit_origin = solver_original.solve(
+        greedy_choice=GreedyChoice.MOST_SUCCESSORS
+    ).get_best_solution_fit()
+    sol, fit = solver.solve(
+        greedy_choice=GreedyChoice.MOST_SUCCESSORS
+    ).get_best_solution_fit()
+    assert fit <= fit_origin
     many_random_instance = [
         uncertain.create_rcpsp_model(
             method_robustification=MethodRobustification(
@@ -110,48 +96,20 @@ def run_pile_robust():
     ]
     permutation = sol.rcpsp_permutation
     permutation_original = sol_origin.rcpsp_permutation
-    fits = []
-    fits_original = []
+
     for instance in many_random_instance:
         sol_ = RCPSPSolution(problem=instance, rcpsp_permutation=permutation)
         fit = instance.evaluate(sol_)
-        fits += [fit]
         sol_ = RCPSPSolution(problem=instance, rcpsp_permutation=permutation_original)
-        fit = instance.evaluate(sol_)
-        fits_original += [fit]
+        fit_origin = instance.evaluate(sol_)
+        assert fit_origin["makespan"] <= fit["makespan"]
 
     sol_ = RCPSPSolution(problem=rcpsp_model, rcpsp_permutation=permutation)
     fit = rcpsp_model.evaluate(sol_)
-    print("Fit on original problem worst :", fit)
-
     sol_ = RCPSPSolution(problem=rcpsp_model, rcpsp_permutation=permutation_original)
-    fit = rcpsp_model.evaluate(sol_)
-    print("Fit on original problem origin :", fit)
-    import numpy as np
-    import scipy.stats
-    import seaborn as sns
-
-    makespans = np.array([f["makespan"] for f in fits])
-    makespans_origin = np.array([f["makespan"] for f in fits_original])
-
-    print("Stats from robust version : ", scipy.stats.describe(makespans))
-    print(min(makespans), max(makespans))
-    print("Stats from original model", scipy.stats.describe(makespans_origin))
-    print(min(makespans_origin), max(makespans_origin))
-    import matplotlib.pyplot as plt
-
-    sns.distplot(
-        makespans, rug=True, bins=len(many_random_instance) // 10, label="Robust"
-    )
-    sns.distplot(
-        makespans_origin,
-        rug=True,
-        bins=len(many_random_instance) // 10,
-        label="Original",
-    )
-    plt.legend()
-    plt.show()
+    fit_origin = rcpsp_model.evaluate(sol_)
+    assert fit_origin["makespan"] <= fit["makespan"]
 
 
 if __name__ == "__main__":
-    run_pile_multimode()
+    test_pile_multimode()
