@@ -200,37 +200,52 @@ class RCPSPSolutionPreemptive(Solution):
                 return 0.0
             last_activity = self.problem.sink_task
             makespan = self.rcpsp_schedule[last_activity]["ends"]
-            return self.problem.compute_mean_resource(
-                horizon=makespan,
-                modes_array=np.array(self.problem.build_mode_array(self.rcpsp_modes))
-                - 1,
-                start_array=np.array(
-                    [
-                        self.rcpsp_schedule[t]["starts"][0]
-                        for t in self.problem.tasks_list
-                    ]
-                ),
-                end_array=np.array(
-                    [self.rcpsp_schedule[t]["ends"][0] for t in self.problem.tasks_list]
-                ),
-            )
+            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                # non existing modes
+                return 0.0
+            else:
+                return self.problem.compute_mean_resource(
+                    horizon=makespan,
+                    modes_array=np.array(
+                        self.problem.build_mode_array(self.rcpsp_modes)
+                    )
+                    - 1,
+                    start_array=np.array(
+                        [
+                            self.rcpsp_schedule[t]["starts"][0]
+                            for t in self.problem.tasks_list
+                        ]
+                    ),
+                    end_array=np.array(
+                        [
+                            self.rcpsp_schedule[t]["ends"][0]
+                            for t in self.problem.tasks_list
+                        ]
+                    ),
+                )
 
     def generate_schedule_from_permutation_serial_sgs(self, do_fast=True):
         if do_fast:
-            starts_dict, ends_dict, unfeasible = self.problem.func_sgs(
-                permutation_task=permutation_do_to_permutation_sgs_fast(
-                    self.problem, self.rcpsp_permutation
-                ),
-                modes_array=np.array(self.problem.build_mode_array(self.rcpsp_modes))
-                - 1,
-            )
-            self.rcpsp_schedule_feasible = not unfeasible
-            self.rcpsp_schedule = {
-                self.problem.sink_task: {
-                    "starts": [99999999],
-                    "ends": [99999999],
+            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                # non existing modes
+                starts_dict, ends_dict, unfeasible = {}, {}, True
+            else:
+                starts_dict, ends_dict, unfeasible = self.problem.func_sgs(
+                    permutation_task=permutation_do_to_permutation_sgs_fast(
+                        self.problem, self.rcpsp_permutation
+                    ),
+                    modes_array=np.array(
+                        self.problem.build_mode_array(self.rcpsp_modes)
+                    )
+                    - 1,
+                )
+                self.rcpsp_schedule_feasible = not unfeasible
+                self.rcpsp_schedule = {
+                    self.problem.sink_task: {
+                        "starts": [99999999],
+                        "ends": [99999999],
+                    }
                 }
-            }
             for k in starts_dict:
                 self.rcpsp_schedule[self.problem.tasks_list[k]] = {
                     "starts": list(starts_dict[k]),
@@ -253,57 +268,63 @@ class RCPSPSolutionPreemptive(Solution):
         if partial_schedule is None:
             partial_schedule = {}
         if do_fast:
-            starts_dict, ends_dict, unfeasible = self.problem.func_sgs_2(
-                current_time=current_t,
-                completed_task_indicator=np.array(
-                    [
-                        1 if self.problem.tasks_list[i] in completed_tasks else 0
-                        for i in range(self.problem.n_jobs)
-                    ]
-                ),
-                partial_schedule_starts=np.array(
-                    [
+            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                # non existing modes
+                starts_dict, ends_dict, unfeasible = {}, {}, True
+            else:
+                starts_dict, ends_dict, unfeasible = self.problem.func_sgs_2(
+                    current_time=current_t,
+                    completed_task_indicator=np.array(
                         [
-                            partial_schedule.get(self.problem.tasks_list[i], {}).get(
-                                "starts", []
-                            )[k]
-                            if k
-                            < len(
+                            1 if self.problem.tasks_list[i] in completed_tasks else 0
+                            for i in range(self.problem.n_jobs)
+                        ]
+                    ),
+                    partial_schedule_starts=np.array(
+                        [
+                            [
                                 partial_schedule.get(
                                     self.problem.tasks_list[i], {}
-                                ).get("starts", [])
-                            )
-                            else -1
-                            for k in range(10)
-                        ]
-                        for i in range(self.problem.n_jobs)
-                    ],
-                    np.int32,
-                ),
-                partial_schedule_ends=np.array(
-                    [
+                                ).get("starts", [])[k]
+                                if k
+                                < len(
+                                    partial_schedule.get(
+                                        self.problem.tasks_list[i], {}
+                                    ).get("starts", [])
+                                )
+                                else -1
+                                for k in range(10)
+                            ]
+                            for i in range(self.problem.n_jobs)
+                        ],
+                        np.int32,
+                    ),
+                    partial_schedule_ends=np.array(
                         [
-                            partial_schedule.get(self.problem.tasks_list[i], {}).get(
-                                "ends", []
-                            )[k]
-                            if k
-                            < len(
+                            [
                                 partial_schedule.get(
                                     self.problem.tasks_list[i], {}
-                                ).get("ends", [])
-                            )
-                            else -1
-                            for k in range(10)
+                                ).get("ends", [])[k]
+                                if k
+                                < len(
+                                    partial_schedule.get(
+                                        self.problem.tasks_list[i], {}
+                                    ).get("ends", [])
+                                )
+                                else -1
+                                for k in range(10)
+                            ]
+                            for i in range(self.problem.n_jobs)
                         ]
-                        for i in range(self.problem.n_jobs)
-                    ]
-                ),
-                permutation_task=permutation_do_to_permutation_sgs_fast(
-                    self.problem, self.rcpsp_permutation
-                ),
-                modes_array=np.array(self.problem.build_mode_array(self.rcpsp_modes))
-                - 1,
-            )
+                    ),
+                    permutation_task=permutation_do_to_permutation_sgs_fast(
+                        self.problem, self.rcpsp_permutation
+                    ),
+                    modes_array=np.array(
+                        self.problem.build_mode_array(self.rcpsp_modes)
+                    )
+                    - 1,
+                )
             self.rcpsp_schedule_feasible = not unfeasible
             self.rcpsp_schedule = {}
             for k in starts_dict:
