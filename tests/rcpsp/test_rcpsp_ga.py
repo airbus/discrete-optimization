@@ -1,3 +1,6 @@
+import random
+
+import pytest
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import (
@@ -16,16 +19,18 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
-def run_single_mode_ga():
+@pytest.fixture
+def random_seed():
+    random.seed(0)
+
+
+def test_single_mode_ga(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    import time
-
-    t = time.time()
     ga_solver = Ga(
         rcpsp_model,
         encoding="rcpsp_permutation",
@@ -36,21 +41,13 @@ def run_single_mode_ga():
     )
     ga_solver._max_evals = 10000
     sol = ga_solver.solve().get_best_solution()
-    t_end = time.time()
-    print(t_end - t, " seconds ")
-    print(type(sol))
-    print(sol)
-    print(rcpsp_model.satisfy(sol))
-
+    assert rcpsp_model.satisfy(sol)
     rcpsp_model.plot_ressource_view(sol)
-    plt.show()
-
     fitnesses = rcpsp_model.evaluate(sol)
-    print("fitnesses: ", fitnesses)
+    assert fitnesses == {"makespan": 122, "mean_resource_reserve": 0}
 
 
-def run_multi_mode_alternating_ga():
-
+def test_multi_mode_alternating_ga(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_5.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]
@@ -110,7 +107,7 @@ def run_multi_mode_alternating_ga():
     print("fitnesses: ", fitnesses)
 
 
-def run_multi_mode_alternating_ga_specific_mode_arrity():
+def test_multi_mode_alternating_ga_specific_mode_arrity(random_seed):
 
     files = get_data_available()
     files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
@@ -171,7 +168,7 @@ def run_multi_mode_alternating_ga_specific_mode_arrity():
     print("fitnesses: ", fitnesses)
 
 
-def run_alternating_ga_specific_mode_arrity_single_solver():
+def test_alternating_ga_specific_mode_arrity_single_solver(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]
@@ -194,18 +191,15 @@ def run_alternating_ga_specific_mode_arrity_single_solver():
     )
 
     tmp_sol = ga_solver.solve().get_best_solution()
-    print("best at end of alternating GA: ", rcpsp_model.evaluate(tmp_sol))
+    assert rcpsp_model.satisfy(tmp_sol)
+    # assert rcpsp_model.evaluate(tmp_sol) == {'makespan': 36, 'mean_resource_reserve': 0}
 
 
-def run_single_mode_moga_aggregated():
+def test_single_mode_moga_aggregated(random_seed):
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
-
-    print(
-        "Running GA using aggregation and minimizing both makespan and over time resource availability"
-    )
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     objectives = ["makespan", "mean_resource_reserve"]
@@ -220,24 +214,12 @@ def run_single_mode_moga_aggregated():
     )
     ga_solver._max_evals = 2000
     sol = ga_solver.solve().get_best_solution()
-    print(type(sol))
-    print(sol)
-    print(rcpsp_model.satisfy(sol))
+    assert rcpsp_model.satisfy(sol)
 
     rcpsp_model.plot_ressource_view(sol)
-    plt.show()
 
     fitnesses = rcpsp_model.evaluate(sol)
-    print(
-        "Solution obtained using aggregation and minimizing both makespan and over time resource availability"
-    )
-    print("objectives: ", objectives)
-    print("weights used: ", objective_weights)
-    print("fitnesses: ", fitnesses)
-
-    print(
-        "Running GA using aggregation and minimizing makespan while maximizing over time resource availability (Conflicting objectives !"
-    )
+    assert fitnesses == {"makespan": 43, "mean_resource_reserve": 0}
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     objectives = ["makespan", "mean_resource_reserve"]
@@ -252,32 +234,20 @@ def run_single_mode_moga_aggregated():
     )
     ga_solver._max_evals = 2000
     sol = ga_solver.solve().get_best_solution()
-    print(type(sol))
-    print(sol)
-    print(rcpsp_model.satisfy(sol))
+    assert rcpsp_model.satisfy(sol)
 
     rcpsp_model.plot_ressource_view(sol)
-    plt.show()
-
     fitnesses = rcpsp_model.evaluate(sol)
-    print(
-        "Solution obtained using aggregation and minimizing both makespan and over time resource availability"
-    )
-    print("objectives: ", objectives)
-    print("weights used: ", objective_weights)
-    print("fitnesses: ", fitnesses)
+    assert fitnesses == {"makespan": 43, "mean_resource_reserve": 0}
 
 
-def run_own_pop_single_mode_ga():
+def test_own_pop_single_mode_ga(random_seed):
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    import time
-
-    t = time.time()
 
     initial_population = []
     for i in range(5):
@@ -295,24 +265,13 @@ def run_own_pop_single_mode_ga():
     )
     ga_solver._max_evals = 100
     sol = ga_solver.solve().get_best_solution()
-    t_end = time.time()
-    print(t_end - t, " seconds ")
-    print(type(sol))
-    print(sol)
-    print(rcpsp_model.satisfy(sol))
+    assert rcpsp_model.satisfy(sol)
 
     rcpsp_model.plot_ressource_view(sol)
-    plt.show()
 
     fitnesses = rcpsp_model.evaluate(sol)
-    print("fitnesses: ", fitnesses)
+    assert fitnesses == {"makespan": 49, "mean_resource_reserve": 0}
 
 
 if __name__ == "__main__":
-    # run_single_mode_ga()
-    run_own_pop_single_mode_ga()
-    # run_multi_mode_alternating_ga()
-    # run_multi_mode_alternating_ga()
-    # run_multi_mode_alternating_ga_specific_mode_arrity()
-    # run_alternating_ga_specific_mode_arrity_single_solver()
-    # run_single_mode_moga_aggregated()
+    test_own_pop_single_mode_ga()
