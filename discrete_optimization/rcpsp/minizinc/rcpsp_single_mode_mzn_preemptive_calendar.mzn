@@ -1,7 +1,9 @@
 
 %-----------------------------------------------------------------------------%
 
-include "globals.mzn";
+%include "globals.mzn";
+include "increasing.mzn";
+include "decreasing.mzn";
 include "my_cumulative.mzn";
 
 %-----------------------------------------------------------------------------%
