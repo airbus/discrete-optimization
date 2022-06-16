@@ -9,7 +9,7 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
 )
 
 
-def compute_graph_run():
+def test_compute_graph_run():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
@@ -18,7 +18,7 @@ def compute_graph_run():
     path = nx.astar_path(
         G=graph_nx,
         source=1,
-        target=rcpsp_problem.n_jobs + 2,
+        target=rcpsp_problem.n_jobs,
         heuristic=lambda x, y: -100,
         weight="minus_min_duration",
     )
@@ -37,17 +37,15 @@ def compute_graph_run():
         length_to_nodes[length] += [node]
         position[node] = (length, len(length_to_nodes[length]))
     nx.draw_networkx(graph_nx, pos=position)
-    plt.show()
 
 
-def plot_gantt():
+def test_plot_gantt():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solution = rcpsp_problem.get_dummy_solution()
     plot_task_gantt(rcpsp_problem, solution)
-    plt.show()
 
 
 if __name__ == "__main__":
-    compute_graph_run()
+    test_compute_graph_run()
