@@ -38,14 +38,7 @@ def test_single_mode_nsga_2obj():
     )
     ga_solver._max_evals = 2000
     result_storage = ga_solver.solve()
-    print(result_storage)
-
-    # pareto_front = ParetoFront(result_storage)
-    # print('pareto_front: ', pareto_front)
-
-    # plot_pareto_2d(result_storage, name_axis=objectives)
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
-    plt.show()
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
 )
 
 
-def local_search():
+def test_local_search_sm():
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
@@ -77,27 +77,22 @@ def local_search():
         store_solution=False,
         nb_solutions=10,
     )
-    import time
 
-    import matplotlib.pyplot as plt
-
-    t = time.time()
-    store = sa.solve(dummy, nb_iteration_max=5000, pickle_result=False)
-    print("Optim done in ", time.time() - t, " seconds ")
+    sol = sa.solve(dummy, nb_iteration_max=500, pickle_result=False).get_best_solution()
+    assert rcpsp_model.satisfy(sol)
     plot_ressource_view(
         rcpsp_model=rcpsp_model,
-        rcpsp_sol=store.get_best_solution(),
+        rcpsp_sol=sol,
         title_figure="best makespan",
     )
     plot_resource_individual_gantt(
         rcpsp_model=rcpsp_model,
-        rcpsp_sol=store.get_best_solution(),
+        rcpsp_sol=sol,
         title_figure="best makespan",
     )
-    plt.show()
 
 
-def local_search_multimode():
+def test_local_search_mm():
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
@@ -107,7 +102,6 @@ def local_search_multimode():
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
-    print(mutations)
     list_mutation = [
         mutate[0].build(rcpsp_model, dummy, **mutate[1])
         for mutate in mutations
@@ -140,23 +134,22 @@ def local_search_multimode():
         store_solution=False,
         nb_solutions=10,
     )
-    import matplotlib.pyplot as plt
 
-    store = sa.solve(dummy, nb_iteration_max=300, pickle_result=False)
+    sol = sa.solve(dummy, nb_iteration_max=300, pickle_result=False).get_best_solution()
+    assert rcpsp_model.satisfy(sol)
     plot_ressource_view(
         rcpsp_model=rcpsp_model,
-        rcpsp_sol=store.best_solution,
+        rcpsp_sol=sol,
         title_figure="best makespan",
     )
     plot_resource_individual_gantt(
         rcpsp_model=rcpsp_model,
-        rcpsp_sol=store.best_solution,
+        rcpsp_sol=sol,
         title_figure="best makespan",
     )
-    plt.show()
 
 
-def local_search_multiobj():
+def test_local_search_sm_multiobj():
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
@@ -192,45 +185,15 @@ def local_search_multiobj():
         params_objective_function=params_objective_function,
         mode_mutation=ModeMutation.MUTATE,
         store_solution=True,
-        nb_solutions=10000,
+        nb_solutions=100,
     )
-    result_sa = sa.solve(
-        dummy, nb_iteration_max=2000, pickle_result=False, update_iteration_pareto=10000
+    pareto_store = sa.solve(
+        dummy, nb_iteration_max=100, pickle_result=False, update_iteration_pareto=100
     )
-    pareto_store: ParetoFront = result_sa.result_storage
-    fig, ax = plt.subplots(1)
-    print("Pareto length : ", pareto_store.len_pareto_front())
-    plot_storage_2d(result_storage=pareto_store, name_axis=objectives, ax=ax)
-    plot_pareto_2d(pareto_store, name_axis=["makespan", "mean_resource_reserve"], ax=ax)
-    extreme_points = pareto_store.compute_extreme_points()
-    plot_ressource_view(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[0][0],
-        title_figure="best makespan",
-    )
-    plot_resource_individual_gantt(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[0][0],
-        title_figure="best makespan",
-    )
-    plot_ressource_view(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[1][0],
-        title_figure="best availability",
-    )
-    plot_resource_individual_gantt(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[1][0],
-        title_figure="best availability",
-    )
-
-    plt.show()
-    # plot_resource_individual_gantt(rcpsp_model, sol)
-    # plot_ressource_view(rcpsp_model, sol)
-    # plt.show()
+    assert isinstance(pareto_store, ParetoFront)
 
 
-def local_search_postpro_multiobj():
+def test_local_search_sm_postpro_multiobj():
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j601_1.sm" in f]  # Single mode RCPSP
@@ -239,7 +202,6 @@ def local_search_postpro_multiobj():
     rcpsp_model: RCPSPModel = parse_file(file_path)
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
-    print(mutations)
     list_mutation = [
         mutate[0].build(rcpsp_model, dummy, **mutate[1])
         for mutate in mutations
@@ -268,18 +230,13 @@ def local_search_postpro_multiobj():
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=True,
-        nb_solutions=10000,
+        nb_solutions=100,
     )
-    result_sa = sa.solve(dummy, nb_iteration_max=2000, pickle_result=False)
-    store = result_sa.result_storage
+    store = sa.solve(dummy, nb_iteration_max=100, pickle_result=False)
     pareto_store = result_storage_to_pareto_front(
         result_storage=store, problem=rcpsp_model
     )
-    print(len(store.list_solution_fits))
-    print(pareto_store.len_pareto_front())
-    fig, ax = plt.subplots(1)
-    plot_storage_2d(result_storage=pareto_store, name_axis=objectives, ax=ax)
-    plot_pareto_2d(pareto_front=pareto_store, name_axis=objectives, ax=ax)
+    assert isinstance(pareto_store, ParetoFront)
     extreme_points = pareto_store.compute_extreme_points()
     plot_ressource_view(
         rcpsp_model=rcpsp_model,
@@ -301,10 +258,9 @@ def local_search_postpro_multiobj():
         rcpsp_sol=extreme_points[1][0],
         title_figure="best availability",
     )
-    plt.show()
 
 
-def local_search_multiobj_multimode():
+def test_local_search_mm_multiobj():
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
@@ -341,24 +297,21 @@ def local_search_multiobj_multimode():
         params_objective_function=params_objective_function,
         mode_mutation=ModeMutation.MUTATE,
         store_solution=True,
-        nb_solutions=10000,
+        nb_solutions=100,
     )
-    result_sa = sa.solve(
+    pareto_store = sa.solve(
         dummy,
-        nb_iteration_max=10000,
+        nb_iteration_max=100,
         pickle_result=False,
-        update_iteration_pareto=10000,
+        update_iteration_pareto=100,
     )
-    pareto_store: ParetoFront = result_sa.result_storage
+    assert isinstance(pareto_store, ParetoFront)
     pareto_store.list_solution_fits = [
         l for l in pareto_store.list_solution_fits if l[0].rcpsp_schedule_feasible
     ]
     pareto_store = result_storage_to_pareto_front(pareto_store, rcpsp_model)
-    fig, ax = plt.subplots(1)
-    print("Pareto length : ", pareto_store.len_pareto_front())
-    plot_storage_2d(result_storage=pareto_store, name_axis=objectives, ax=ax)
-    plot_pareto_2d(pareto_store, name_axis=["makespan", "mean_resource_reserve"], ax=ax)
-    fig.savefig("multimode_pareto.png")
+    plot_storage_2d(result_storage=pareto_store, name_axis=objectives)
+    plot_pareto_2d(pareto_store, name_axis=["makespan", "mean_resource_reserve"])
     extreme_points = pareto_store.compute_extreme_points()
     plot_ressource_view(
         rcpsp_model=rcpsp_model,
@@ -381,13 +334,8 @@ def local_search_multiobj_multimode():
         title_figure="best availability",
     )
 
-    plt.show()
-    # plot_resource_individual_gantt(rcpsp_model, sol)
-    # plot_ressource_view(rcpsp_model, sol)
-    # plt.show()
 
-
-def local_search_postpro_multiobj_multimode():
+def test_local_search_postpro_multiobj_multimode():
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
@@ -426,9 +374,9 @@ def local_search_postpro_multiobj_multimode():
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=True,
-        nb_solutions=10000,
+        nb_solutions=100,
     )
-    result_sa = sa.solve(dummy, nb_iteration_max=10000, pickle_result=False)
+    result_sa = sa.solve(dummy, nb_iteration_max=100, pickle_result=False)
     result_sa.list_solution_fits = [
         l for l in result_sa.list_solution_fits if l[0].rcpsp_schedule_feasible
     ]
@@ -436,32 +384,7 @@ def local_search_postpro_multiobj_multimode():
         result_storage=result_sa, problem=rcpsp_model
     )
     print("Nb Pareto : ", pareto_store.len_pareto_front())
-    fig, ax = plt.subplots(1)
-    plot_storage_2d(result_storage=pareto_store, name_axis=objectives, ax=ax)
-    plot_pareto_2d(pareto_front=pareto_store, name_axis=objectives, ax=ax)
-    extreme_points = pareto_store.compute_extreme_points()
-    plot_ressource_view(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[0][0],
-        title_figure="best makespan",
-    )
-    plot_resource_individual_gantt(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[0][0],
-        title_figure="best makespan",
-    )
-    plot_ressource_view(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[1][0],
-        title_figure="best availability",
-    )
-    plot_resource_individual_gantt(
-        rcpsp_model=rcpsp_model,
-        rcpsp_sol=extreme_points[1][0],
-        title_figure="best availability",
-    )
-    plt.show()
 
 
 if __name__ == "__main__":
-    local_search()
+    test_local_search_sm()

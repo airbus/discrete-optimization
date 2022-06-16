@@ -50,7 +50,6 @@ def test_rank_solutions_by_permutation_distance():
     # Remove similar solutions from result storage
     result_storage.remove_duplicate_solutions(var_name="standardised_permutation")
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
-    plt.show()
 
     # Pick one solution from the ResultStorage
     selected_index = 20
@@ -96,35 +95,6 @@ def test_rank_solutions_by_permutation_distance():
 
         l2_dist = distance.euclidean(start_times_val_1, start_times_val_2)
         y_l2.append(l2_dist)
-
-    # plot ktd vs. diffs in start time
-    x = [sorted_pop_ktds[key] for key in sorted_pop_ktds.keys()]
-    y_label = "Mean start time difference"
-    y = y_mean
-    plt.subplot(221)
-    plt.scatter(x, y)
-    # plt.title('Permutation vs. Schedule distances')
-    plt.xlabel("KT permutation similarity")
-    plt.ylabel(y_label)
-    # plt.show()
-
-    y_label = "L1 start time difference"
-    y = y_l1
-    plt.subplot(222)
-    plt.scatter(x, y)
-    # plt.title('Permutation vs. Schedule distances')
-    plt.xlabel("KT permutation similarity")
-    plt.ylabel(y_label)
-    # plt.show()
-
-    y_label = "L2 start time difference"
-    y = y_l2
-    plt.subplot(223)
-    plt.scatter(x, y)
-    # plt.title('Permutation vs. Schedule distances')
-    plt.xlabel("KT permutation similarity")
-    plt.ylabel(y_label)
-    plt.show()
 
 
 if __name__ == "__main__":

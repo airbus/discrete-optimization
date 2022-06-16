@@ -39,7 +39,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
 )
 
 
-def lns_single_mode():
+def test_lns_sm():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
@@ -72,21 +72,20 @@ def lns_single_mode():
         params_objective_function=params_objective_function,
     )
     result_store = lns_solver.solve_lns(
-        parameters_milp=parameters_milp, nb_iteration_lns=300
+        parameters_milp=parameters_milp, nb_iteration_lns=10
     )
     solution, fit = result_store.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    print(rcpsp_problem.evaluate(solution), fit_2)
-    print("Satisfy : ", rcpsp_problem.satisfy(solution))
+    assert rcpsp_problem.evaluate(solution) == fit_2
+    assert rcpsp_problem.satisfy(solution)
     plot_resource_individual_gantt(rcpsp_problem, solution)
     plot_ressource_view(rcpsp_problem, solution)
-    plt.show()
 
 
-def lns_multi_mode():
+def test_lns_mm():
     files_available = get_data_available()
     # file = [f for f in files_available if 'j1010_8.mm' in f][0]
     file = [f for f in files_available if "j1201_1.sm" in f][0]
@@ -107,7 +106,7 @@ def lns_multi_mode():
     )
     solver.init_model(greedy_start=False)
     parameters_milp = ParametersMilp(
-        time_limit=100,
+        time_limit=10,
         pool_solutions=1000,
         mip_gap_abs=0.001,
         mip_gap=0.001,
@@ -134,7 +133,7 @@ def lns_multi_mode():
     )
     result_store = lns_solver.solve_lns(
         parameters_milp=parameters_milp,
-        nb_iteration_lns=300,
+        nb_iteration_lns=10,
         skip_first_iteration=False,
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -144,12 +143,11 @@ def lns_multi_mode():
         rcpsp_modes=solution.rcpsp_modes,
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    print(rcpsp_problem.evaluate(solution), fit_2)
-    print("Satisfy : ", rcpsp_problem.satisfy(solution))
+    assert rcpsp_problem.evaluate(solution) == fit_2
+    assert rcpsp_problem.satisfy(solution)
     plot_resource_individual_gantt(rcpsp_problem, solution)
     plot_ressource_view(rcpsp_problem, solution)
-    plt.show()
 
 
 if __name__ == "__main__":
-    lns_single_mode()
+    test_lns_sm()

@@ -12,7 +12,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
 )
 
 
-def find_modes():
+def test_find_modes():
     files_available = get_data_available()
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem = parse_file(file)
@@ -21,14 +21,8 @@ def find_modes():
     params_cp.nr_solutions = float("inf")
     params_cp.all_solutions = True
     result_storage = solver.solve(parameters_cp=params_cp, verbose=True)
-    print(result_storage)
-    print(len(result_storage))
-    # for s in range(len(result_storage)):
-    #    sol = RCPSPSolution(problem=rcpsp_problem,
-    #                        rcpsp_permutation=list(range(rcpsp_problem.n_jobs)),
-    #                        rcpsp_modes=result_storage[s][1:-1])
-    # print(rcpsp_problem.satisfy(sol))
+    assert len(result_storage) == 12744
 
 
 if __name__ == "__main__":
-    find_modes()
+    test_find_modes()
