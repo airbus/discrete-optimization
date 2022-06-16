@@ -156,33 +156,45 @@ class RCPSPSolution(Solution):
                 return 0.0
             last_activity = self.problem.sink_task
             makespan = self.rcpsp_schedule[last_activity]["end_time"]
-            return self.problem.compute_mean_resource(
-                horizon=makespan,
-                modes_array=np.array(self.problem.build_mode_array(self.rcpsp_modes))
-                - 1,  # permutzation_task=array(task)->task index
-                start_array=np.array(
-                    [
-                        self.rcpsp_schedule[t]["start_time"]
-                        for t in self.problem.tasks_list
-                    ]
-                ),
-                end_array=np.array(
-                    [
-                        self.rcpsp_schedule[t]["end_time"]
-                        for t in self.problem.tasks_list
-                    ]
-                ),
-            )
+            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                # non existing modes
+                return 0.0
+            else:
+                return self.problem.compute_mean_resource(
+                    horizon=makespan,
+                    modes_array=np.array(
+                        self.problem.build_mode_array(self.rcpsp_modes)
+                    )
+                    - 1,  # permutzation_task=array(task)->task index
+                    start_array=np.array(
+                        [
+                            self.rcpsp_schedule[t]["start_time"]
+                            for t in self.problem.tasks_list
+                        ]
+                    ),
+                    end_array=np.array(
+                        [
+                            self.rcpsp_schedule[t]["end_time"]
+                            for t in self.problem.tasks_list
+                        ]
+                    ),
+                )
 
     def generate_schedule_from_permutation_serial_sgs(self, do_fast=True):
         if do_fast:
-            schedule, unfeasible = self.problem.func_sgs(
-                permutation_task=permutation_do_to_permutation_sgs_fast(
-                    self.problem, self.rcpsp_permutation
-                ),
-                modes_array=np.array(self.problem.build_mode_array(self.rcpsp_modes))
-                - 1,
-            )
+            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                # non existing modes
+                schedule, unfeasible = {}, True
+            else:
+                schedule, unfeasible = self.problem.func_sgs(
+                    permutation_task=permutation_do_to_permutation_sgs_fast(
+                        self.problem, self.rcpsp_permutation
+                    ),
+                    modes_array=np.array(
+                        self.problem.build_mode_array(self.rcpsp_modes)
+                    )
+                    - 1,
+                )
             self.rcpsp_schedule_feasible = not unfeasible
             self.rcpsp_schedule = {}
             for k in schedule:
@@ -216,36 +228,42 @@ class RCPSPSolution(Solution):
         if scheduled_tasks_start_times is None:
             scheduled_tasks_start_times = None
         if do_fast:
-            schedule, feasible = self.problem.func_sgs_2(
-                current_time=current_t,
-                completed_task_indicator=np.array(
-                    [
-                        1 if self.problem.tasks_list[i] in completed_tasks else 0
-                        for i in range(self.problem.n_jobs)
-                    ]
-                ),
-                completed_task_times=np.array(
-                    [
-                        completed_tasks[self.problem.tasks_list[i]].end
-                        if self.problem.tasks_list[i] in completed_tasks
-                        else 0
-                        for i in range(self.problem.n_jobs)
-                    ]
-                ),
-                scheduled_task=np.array(
-                    [
-                        scheduled_tasks_start_times[self.problem.tasks_list[i]]
-                        if self.problem.tasks_list[i] in scheduled_tasks_start_times
-                        else -1
-                        for i in range(self.problem.n_jobs)
-                    ]
-                ),
-                permutation_task=permutation_do_to_permutation_sgs_fast(
-                    self.problem, self.rcpsp_permutation
-                ),
-                modes_array=np.array(self.problem.build_mode_array(self.rcpsp_modes))
-                - 1,
-            )
+            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                # non existing modes
+                schedule, unfeasible = {}, True
+            else:
+                schedule, unfeasible = self.problem.func_sgs_2(
+                    current_time=current_t,
+                    completed_task_indicator=np.array(
+                        [
+                            1 if self.problem.tasks_list[i] in completed_tasks else 0
+                            for i in range(self.problem.n_jobs)
+                        ]
+                    ),
+                    completed_task_times=np.array(
+                        [
+                            completed_tasks[self.problem.tasks_list[i]].end
+                            if self.problem.tasks_list[i] in completed_tasks
+                            else 0
+                            for i in range(self.problem.n_jobs)
+                        ]
+                    ),
+                    scheduled_task=np.array(
+                        [
+                            scheduled_tasks_start_times[self.problem.tasks_list[i]]
+                            if self.problem.tasks_list[i] in scheduled_tasks_start_times
+                            else -1
+                            for i in range(self.problem.n_jobs)
+                        ]
+                    ),
+                    permutation_task=permutation_do_to_permutation_sgs_fast(
+                        self.problem, self.rcpsp_permutation
+                    ),
+                    modes_array=np.array(
+                        self.problem.build_mode_array(self.rcpsp_modes)
+                    )
+                    - 1,
+                )
             self.rcpsp_schedule = {}
             for k in schedule:
                 self.rcpsp_schedule[self.problem.tasks_list[k]] = {
@@ -257,7 +275,7 @@ class RCPSPSolution(Solution):
                     "start_time": 999999999,
                     "end_time": 999999999,
                 }
-            self.rcpsp_schedule_feasible = True
+            self.rcpsp_schedule_feasible = not unfeasible
             self._schedule_to_recompute = False
         else:
             (
