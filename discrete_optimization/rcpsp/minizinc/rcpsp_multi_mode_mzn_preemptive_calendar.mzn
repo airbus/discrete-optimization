@@ -1,4 +1,6 @@
-include "globals.mzn";
+%include "globals.mzn";
+include "increasing.mzn";
+include "decreasing.mzn";
 include "my_cumulative.mzn";
 %-----------------------------------------------------------------------------%
 % Model parameters.
@@ -131,7 +133,7 @@ constraint
 constraint
     forall ( i, j in Tasks where i < j )
     (
-        if exists(r in Res)(rr[r, i] + rr[r, j] > rc[r]) then
+        if exists(r in Res)(rreq[r, i] + rreq[r, j] > rc[r]) then
             s_preemptive[i, 1] + d_preemptive[i, 1] <= s_preemptive[j, 1]   \/
             s_preemptive[j, 1] + d_preemptive[j, 1] <= s_preemptive[i, 1]
         else
@@ -142,9 +144,9 @@ constraint
 
 % Cumulative resource constraints
 %
-constraint forall(r in Res)(my_cumulative([s_preemptive[i, j] | i in RTasks, j in PREEMPTIVE],
-                                          [d_preemptive[i, j] | i in RTasks, j in PREEMPTIVE],
-                                          [arreq[r, i] | i in RTasks, j in PREEMPTIVE],
+constraint forall(r in Res)(my_cumulative([s_preemptive[i, j] | i in Tasks, j in PREEMPTIVE],
+                                          [d_preemptive[i, j] | i in Tasks, j in PREEMPTIVE],
+                                          [arreq[r, i] | i in Tasks, j in PREEMPTIVE],
                                           [ressource_capacity_time[r, t] | t in Times1],
                                            max_time-1));
 
@@ -156,7 +158,7 @@ constraint forall(k in NRes)(sum(i in Tasks)(arreq[k, i]) <= rc[k]);
 bool: add_objective_makespan; % by default True. but by setting it false you can modify your objective function outside (i.e minizinc pyyhon)
 constraint
  if add_objective_makespan then
-        forall(i in Tasks where succ[i]={})(s_preemptive[i, nb_preemptive] + d_preemptive[i, nb_preemptive]
+        forall(i in Tasks where suc[i]={})(s_preemptive[i, nb_preemptive] + d_preemptive[i, nb_preemptive]
                                             <= objective)
  else
     true
