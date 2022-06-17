@@ -14,6 +14,8 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     TypeAttribute,
+    lower_bound_vector_encoding_from_dict,
+    upper_bound_vector_encoding_from_dict,
 )
 from discrete_optimization.generic_tools.mutations.mutation_util import (
     get_attribute_for_type,
@@ -43,6 +45,8 @@ class MutationIntegerSpecificArrity(Mutation):
         self.attribute = attribute
         self.arrities = arrities
         self.probability_flip = probability_flip
+        self.lows = None
+        self.ups = None
         if self.attribute is None:
             register = problem.get_attribute_register()
             attributes = [
@@ -55,9 +59,20 @@ class MutationIntegerSpecificArrity(Mutation):
             self.arrities = register.dict_attribute_to_type[attributes[0][0]][
                 "arrities"
             ]
+            self.lows = lower_bound_vector_encoding_from_dict(
+                register.dict_attribute_to_type[attributes[0][0]]
+            )
+            self.ups = upper_bound_vector_encoding_from_dict(
+                register.dict_attribute_to_type[attributes[0][0]]
+            )
+        if self.lows is None:
+            self.lows = [min_value for i in range(len(self.arrities))]
+        if self.ups is None:
+            self.ups = [
+                min_value + self.arrities[i] - 1 for i in range(len(self.arrities))
+            ]
         self.range_arrities = [
-            list(range(min_value, self.arrities[i] + min_value))
-            for i in range(len(self.arrities))
+            list(range(l, up + 1)) for l, up in zip(self.lows, self.ups)
         ]
         self.size = len(self.range_arrities)
 

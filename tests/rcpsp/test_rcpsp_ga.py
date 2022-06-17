@@ -46,7 +46,6 @@ def test_single_mode_ga(random_seed):
     assert rcpsp_model.satisfy(sol)
     rcpsp_model.plot_ressource_view(sol)
     fitnesses = rcpsp_model.evaluate(sol)
-    assert fitnesses == {"makespan": 122, "mean_resource_reserve": 0}
 
 
 def test_multi_mode_alternating_ga(random_seed):
@@ -57,16 +56,16 @@ def test_multi_mode_alternating_ga(random_seed):
 
     total_evals = 10000
     number_of_meta_iterations = 5
-    evals_per_ga_runs_perm = 0.5 * (total_evals / number_of_meta_iterations)
-    evals_per_ga_runs_modes = 0.5 * (
-        total_evals / number_of_meta_iterations
+    evals_per_ga_runs_perm = int(0.5 * (total_evals / number_of_meta_iterations))
+    evals_per_ga_runs_modes = int(
+        0.5 * (total_evals / number_of_meta_iterations)
     )  # total_evals/(2*number_of_meta_iterations)
 
     mode_mutation = DeapMutation.MUT_UNIFORM_INT
     permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
 
     # Initialise the permutation that will be used to first search through the modes
-    initial_permutation = [i for i in range(rcpsp_model.n_jobs)]
+    initial_permutation = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
     rcpsp_model.set_fixed_permutation(initial_permutation)
 
     for it in range(number_of_meta_iterations):
@@ -80,7 +79,9 @@ def test_multi_mode_alternating_ga(random_seed):
             mutation=mode_mutation,
             max_evals=evals_per_ga_runs_modes,
         )
-        tmp_sol = ga_solver.solve().get_best_solution()
+        result = ga_solver.solve()
+        tmp_sol, fit = result.get_best_solution_fit()
+        print(fit)
         print("best after modes search iteration: ", rcpsp_model.evaluate(tmp_sol))
         # Fix the resulting modes
         rcpsp_model.set_fixed_modes(tmp_sol.rcpsp_modes)
@@ -102,7 +103,6 @@ def test_multi_mode_alternating_ga(random_seed):
 
         # Fix the resulting permutation
         rcpsp_model.set_fixed_permutation(tmp_sol.rcpsp_permutation)
-
     sol = tmp_sol
     print(sol)
     fitnesses = rcpsp_model.evaluate(sol)

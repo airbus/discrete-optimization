@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Tuple
 
 import numpy as np
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
@@ -42,6 +42,60 @@ class EncodingRegister:
 
     def __str__(self):
         return "Encoding : " + str(self.dict_attribute_to_type)
+
+    def lower_bound_vector_encoding(self, encoding_name):
+        """Return for an encoding that is of type LIST_INTEGER or associated, the lower bound vector.
+        Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
+        """
+        dict_encoding = self.dict_attribute_to_type[encoding_name]
+        return lower_bound_vector_encoding_from_dict(dict_encoding)
+
+    def upper_bound_vector_encoding(self, encoding_name):
+        """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
+        Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
+        """
+        dict_encoding = self.dict_attribute_to_type[encoding_name]
+        return upper_bound_vector_encoding_from_dict(dict_encoding)
+
+
+def lower_bound_vector_encoding_from_dict(dict_encoding):
+    length_encoding = dict_encoding["n"]
+    if "low" in dict_encoding:
+        low_value = dict_encoding["low"]
+        low_value_vector = None
+        if isinstance(low_value, int):
+            low_value_vector = [low_value for i in range(length_encoding)]
+        if isinstance(low_value, (List, Iterable)):
+            low_value_vector = list(low_value)
+        return low_value_vector
+    else:
+        return [0 for i in range(length_encoding)]  # By default we start at zero.
+
+
+def upper_bound_vector_encoding_from_dict(dict_encoding):
+    """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
+
+    Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
+    """
+    length_encoding = dict_encoding["n"]
+    if "up" in dict_encoding:
+        up_value = dict_encoding["up"]
+        up_value_vector = None
+        if isinstance(up_value, int):
+            up_value_vector = [up_value for i in range(length_encoding)]
+        if isinstance(up_value, (List, Iterable)):
+            up_value_vector = list(up_value)
+        return up_value_vector
+    else:
+        low = lower_bound_vector_encoding_from_dict(dict_encoding)
+        up_value_vector = None
+        if "arrity" in dict_encoding:
+            arrity = dict_encoding["arrity"]  # number of possible value.
+            up_value_vector = [l + arrity - 1 for l in low]
+        if "arrities" in dict_encoding:
+            arrities = dict_encoding["arrities"]
+            up_value_vector = [l + arr - 1 for l, arr in zip(low, arrities)]
+        return up_value_vector
 
 
 class ObjectiveHandling(Enum):
