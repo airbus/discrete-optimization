@@ -46,44 +46,9 @@ def test_non_existing_modes_solution():
     rcpsp_sol = RCPSPSolution(
         problem=rcpsp_model, rcpsp_permutation=permutation, rcpsp_modes=mode_list
     )
-    assert rcpsp_sol.rcpsp_schedule_feasible
-    assert rcpsp_sol.rcpsp_schedule == {
-        1: {"start_time": 0, "end_time": 0},
-        2: {"start_time": 0, "end_time": 4},
-        3: {"start_time": 0, "end_time": 6},
-        4: {"start_time": 4, "end_time": 7},
-        5: {"start_time": 7, "end_time": 15},
-        6: {"start_time": 4, "end_time": 9},
-        7: {"start_time": 6, "end_time": 15},
-        8: {"start_time": 7, "end_time": 9},
-        9: {"start_time": 7, "end_time": 14},
-        10: {"start_time": 7, "end_time": 16},
-        11: {"start_time": 4, "end_time": 6},
-        12: {"start_time": 9, "end_time": 15},
-        13: {"start_time": 15, "end_time": 18},
-        14: {"start_time": 15, "end_time": 24},
-        15: {"start_time": 15, "end_time": 25},
-        16: {"start_time": 25, "end_time": 31},
-        17: {"start_time": 31, "end_time": 36},
-        18: {"start_time": 18, "end_time": 21},
-        19: {"start_time": 18, "end_time": 25},
-        20: {"start_time": 21, "end_time": 23},
-        21: {"start_time": 31, "end_time": 38},
-        22: {"start_time": 36, "end_time": 38},
-        23: {"start_time": 38, "end_time": 41},
-        24: {"start_time": 41, "end_time": 44},
-        25: {"start_time": 25, "end_time": 32},
-        26: {"start_time": 36, "end_time": 44},
-        27: {"start_time": 25, "end_time": 28},
-        28: {"start_time": 41, "end_time": 48},
-        29: {"start_time": 28, "end_time": 30},
-        30: {"start_time": 44, "end_time": 46},
-        31: {"start_time": 48, "end_time": 48},
-        32: {"start_time": 48, "end_time": 48},
-    }
+    assert not rcpsp_sol.rcpsp_schedule_feasible
     assert rcpsp_sol.rcpsp_modes == mode_list
-    with pytest.raises(KeyError):
-        rcpsp_model.satisfy(rcpsp_sol)
+    assert not rcpsp_model.satisfy(rcpsp_sol)
 
 
 def test_unfeasible_modes_solution():
