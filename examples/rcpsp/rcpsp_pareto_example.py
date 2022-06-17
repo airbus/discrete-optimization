@@ -50,6 +50,7 @@ def test_single_mode_moo_benchmark():
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
+    rcpsp_model.costs["mean_resource_reserve"] = True
 
     # Objective settings
     objectives = ["makespan", "mean_resource_reserve"]
@@ -133,13 +134,15 @@ def test_single_mode_robustness_benchmark():
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
+    rcpsp_model.costs["mean_resource_reserve"] = True
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, 1]
 
     # 3 random solutions:
-    sol_perm_1 = [i for i in range(rcpsp_model.n_jobs)]
-    sol_perm_2 = [rcpsp_model.n_jobs - 1 - i for i in range(rcpsp_model.n_jobs)]
-    sol_perm_3 = [i for i in range(rcpsp_model.n_jobs)]
+    sol_perm_1 = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
+    sol_perm_2 = [rcpsp_model.n_jobs_non_dummy - 1 - i
+                  for i in range(rcpsp_model.n_jobs_non_dummy)]
+    sol_perm_3 = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
     random.shuffle(sol_perm_3)
 
     print("sol_perm_1:", sol_perm_1)
@@ -208,6 +211,8 @@ def test_single_mode_robustness_benchmark():
         )
         for i in range(300)
     ]
+    for model in many_random_instance:
+        model.costs["mean_resource_reserve"] = True
     len_random_instance = len(many_random_instance)
     random.shuffle(many_random_instance)
     proportion_train = 0.8
