@@ -15,6 +15,8 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
     build_evaluate_function_aggregated,
     get_default_objective_setup,
+    lower_bound_vector_encoding_from_dict,
+    upper_bound_vector_encoding_from_dict,
 )
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -149,18 +151,16 @@ class Ga:
                 self.n = register_solution.dict_attribute_to_type[self._encoding_name][
                     "n"
                 ]
-
-                if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                    self.arrity = register_solution.dict_attribute_to_type[
-                        self._encoding_name
-                    ]["arrity"]
-                    self.arrities = [self.arrity-1 for i in range(self.n)]
-                else:
-                    self.arrity = None
-                if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
-                    self.arrities = register_solution.dict_attribute_to_type[
-                        self._encoding_name
-                    ]["arrities"]
+                if self._encoding_type in {
+                    TypeAttribute.LIST_INTEGER,
+                    TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
+                }:
+                    self.lows = lower_bound_vector_encoding_from_dict(
+                        register_solution.dict_attribute_to_type[self._encoding_name]
+                    )
+                    self.ups = upper_bound_vector_encoding_from_dict(
+                        register_solution.dict_attribute_to_type[self._encoding_name]
+                    )
 
         if encoding is not None and isinstance(encoding, Dict):
             # check there is a type key and a n key
@@ -173,13 +173,16 @@ class Ga:
                 self._encoding_variable_name = encoding["name"]
                 self._encoding_type = encoding["type"][0]
                 self.n = encoding["n"]
-                if "arrity" in encoding.keys():
-                    self.arrity = encoding["arrity"]
-                    self.arrities = [self.arrity for i in range(self.n)]
-                if "arrities" in encoding.keys():
-                    self.arrities = register_solution.dict_attribute_to_type[
-                        self._encoding_name
-                    ]["arrities"]
+                if self._encoding_type in {
+                    TypeAttribute.LIST_INTEGER,
+                    TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
+                }:
+                    self.lows = lower_bound_vector_encoding_from_dict(
+                        register_solution.dict_attribute_to_type[self._encoding_name]
+                    )
+                    self.ups = upper_bound_vector_encoding_from_dict(
+                        register_solution.dict_attribute_to_type[self._encoding_name]
+                    )
             else:
                 print(
                     "Erroneous encoding provided as input (encoding name not matching encoding of problem or custom "
@@ -192,8 +195,6 @@ class Ga:
                     "An encoding of type TypeAttribute should be specified or at least 1 TypeAttribute "
                     "should be defined in the RegisterSolution of your Problem"
                 )
-            print(register_solution.dict_attribute_to_type)
-            print(register_solution.dict_attribute_to_type.keys())
             self._encoding_name = list(register_solution.dict_attribute_to_type.keys())[
                 0
             ]
@@ -207,21 +208,21 @@ class Ga:
             ]  # TODO : while it's usually a list we could also have a unique value(not a list)
             self.n = register_solution.dict_attribute_to_type[self._encoding_name]["n"]
 
-            if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                self.arrity = register_solution.dict_attribute_to_type[
-                    self._encoding_name
-                ]["arrity"]
-                self.arrities = [self.arrity-1 for i in range(self.n)]
-            else:
-                self.arrity = None
-            if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
-                self.arrities = register_solution.dict_attribute_to_type[
-                    self._encoding_name
-                ]["arrities"]
+            dict_register = register_solution.dict_attribute_to_type
+            if self._encoding_type in {
+                TypeAttribute.LIST_INTEGER,
+                TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
+            }:
+                self.lows = lower_bound_vector_encoding_from_dict(
+                    dict_register[self._encoding_name]
+                )
+                self.ups = upper_bound_vector_encoding_from_dict(
+                    dict_register[self._encoding_name]
+                )
 
         if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
-            self.arrity = 2
-            self.arities = [2 for i in range(self.n)]
+            self.lows = [0 for i in range(self.n)]
+            self.ups = [1 for i in range(self.n)]
 
         print(
             "Encoding used by the GA: "
@@ -307,7 +308,7 @@ class Ga:
                 self._toolbox.permutation_indices,
             )
         elif self._encoding_type == TypeAttribute.LIST_INTEGER:
-            self._toolbox.register("int_val", random.randint, 0, self.arrity - 1)
+            self._toolbox.register("int_val", random.randint, self.lows[0], self.ups[0])
             self._toolbox.register(
                 "individual",
                 tools.initRepeat,
@@ -317,7 +318,7 @@ class Ga:
             )
         elif self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
             gen_idx = lambda: [
-                random.randint(0, arrity - 1) for arrity in self.arrities
+                random.randint(low, up) for low, up in zip(self.lows, self.ups)
             ]
             self._toolbox.register(
                 "individual", tools.initIterate, creator.individual, gen_idx
@@ -325,7 +326,7 @@ class Ga:
         # TODO : adapt to floating variable
         elif self._encoding_type == TypeAttribute.LIST_FLOATS:
             gen_idx = lambda: [
-                random.randrange(0, arrity - 1) for arrity in self.arrities
+                random.randrange(low, up) for low, up in zip(self.lows, self.ups)
             ]
             self._toolbox.register(
                 "individual", tools.initIterate, creator.individual, gen_idx
@@ -395,8 +396,8 @@ class Ga:
                 self._toolbox.register(
                     "mutate",
                     tools.mutUniformInt,
-                    low=0,
-                    up=self.arrities,
+                    low=self.lows,
+                    up=self.ups,
                     indpb=self._mut_rate,
                 )
 

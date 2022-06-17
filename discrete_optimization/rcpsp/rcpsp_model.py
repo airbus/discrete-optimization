@@ -658,6 +658,8 @@ class RCPSPModel(Problem):
             "name": "rcpsp_modes",
             "type": [TypeAttribute.LIST_INTEGER],
             "n": self.n_jobs_non_dummy,
+            "low": 1,  # integer.
+            "up": max_number_modes,  # integer.
             "arrity": max_number_modes,
         }
         mode_arrity = [
@@ -667,6 +669,8 @@ class RCPSPModel(Problem):
             "name": "rcpsp_modes",
             "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY],
             "n": self.n_jobs_non_dummy,
+            "low": 1,
+            "up": mode_arrity,
             "arrities": mode_arrity,
         }
 
@@ -965,12 +969,10 @@ class MultiModeRCPSPModel(RCPSPModel):
                 problem=self, rcpsp_permutation=int_vector, rcpsp_modes=self.fixed_modes
             )
         elif encoding_name == "rcpsp_modes":
-            # change the modes in the solution with int_vector and set the permutation with self.fixed_permutation
-            modes_corrected = [x + 1 for x in int_vector]
             rcpsp_sol = RCPSPSolution(
                 problem=self,
                 rcpsp_permutation=self.fixed_permutation,
-                rcpsp_modes=modes_corrected,
+                rcpsp_modes=int_vector,
             )
         objectives = self.evaluate(rcpsp_sol)
         return objectives
