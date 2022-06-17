@@ -19,8 +19,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import kendall_tau_similarity
-
-# from discrete_optimization.rcpsp.rcpsp_data_generator import generate_rcpsp_with_helper_tasks_data
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN, CP_RCPSP_MZN
 from discrete_optimization.rcpsp.solver.cpm import CPM, run_partial_classic_cpm
 
