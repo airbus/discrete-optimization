@@ -61,7 +61,7 @@ def test_rank_solutions_by_permutation_distance(random_seed):
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
 
     # Pick one solution from the ResultStorage
-    selected_index = 20
+    selected_index = len(result_storage.list_solution_fits) - 1
     selected_sol = result_storage.list_solution_fits[selected_index][0]
 
     # Calculate distance between selected solution and all solutions in resultStorage
