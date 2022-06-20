@@ -309,7 +309,7 @@ def test_local_search_mm_multiobj(random_seed):
     )
     pareto_store = sa.solve(
         dummy,
-        nb_iteration_max=250,
+        nb_iteration_max=500,
         pickle_result=False,
         update_iteration_pareto=100,
     )

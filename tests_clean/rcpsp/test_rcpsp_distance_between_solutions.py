@@ -53,7 +53,7 @@ def test_rank_solutions_by_permutation_distance(random_seed):
         objective_weights=objective_weights,
         mutation=mutation,
     )
-    ga_solver._max_evals = 2000
+    ga_solver._max_evals = 5000
     result_storage = ga_solver.solve()
 
     # Remove similar solutions from result storage
