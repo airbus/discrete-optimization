@@ -1,6 +1,7 @@
 import random
 from typing import Dict, Hashable, Tuple
 
+import numpy as np
 import pytest
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -51,6 +52,8 @@ else:
 @pytest.fixture
 def random_seed():
     random.seed(0)
+    np.random.seed(0)
+
 
 @pytest.mark.parametrize("coloring_problem_file", get_data_available())
 def test_load_file(coloring_problem_file):

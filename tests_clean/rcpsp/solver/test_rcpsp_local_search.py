@@ -1,5 +1,7 @@
-import matplotlib.pyplot as plt
+import random
+
 import numpy as np
+import pytest
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
@@ -35,7 +37,13 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
 )
 
 
-def test_local_search_sm():
+@pytest.fixture()
+def random_seed():
+    random.seed(42)
+    np.random.seed(42)
+
+
+def test_local_search_sm(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
@@ -92,7 +100,7 @@ def test_local_search_sm():
     )
 
 
-def test_local_search_mm():
+def test_local_search_mm(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
@@ -149,7 +157,7 @@ def test_local_search_mm():
     )
 
 
-def test_local_search_sm_multiobj():
+def test_local_search_sm_multiobj(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
@@ -193,7 +201,7 @@ def test_local_search_sm_multiobj():
     assert isinstance(pareto_store, ParetoFront)
 
 
-def test_local_search_sm_postpro_multiobj():
+def test_local_search_sm_postpro_multiobj(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j601_1.sm" in f]  # Single mode RCPSP
@@ -260,7 +268,7 @@ def test_local_search_sm_postpro_multiobj():
     )
 
 
-def test_local_search_mm_multiobj():
+def test_local_search_mm_multiobj(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
@@ -301,7 +309,7 @@ def test_local_search_mm_multiobj():
     )
     pareto_store = sa.solve(
         dummy,
-        nb_iteration_max=100,
+        nb_iteration_max=250,
         pickle_result=False,
         update_iteration_pareto=100,
     )
@@ -335,7 +343,7 @@ def test_local_search_mm_multiobj():
     )
 
 
-def test_local_search_postpro_multiobj_multimode():
+def test_local_search_postpro_multiobj_multimode(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
@@ -384,7 +392,3 @@ def test_local_search_postpro_multiobj_multimode():
         result_storage=result_sa, problem=rcpsp_model
     )
     print("Nb Pareto : ", pareto_store.len_pareto_front())
-
-
-if __name__ == "__main__":
-    test_local_search_sm()
