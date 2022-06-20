@@ -1,4 +1,7 @@
+import random
+
 import numpy as np
+import pytest
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
@@ -26,7 +29,13 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
 from scipy.spatial import distance
 
 
-def test_rank_solutions_by_permutation_distance():
+@pytest.fixture()
+def random_seed():
+    random.seed(42)
+    np.random.seed(42)
+
+
+def test_rank_solutions_by_permutation_distance(random_seed):
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
