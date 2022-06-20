@@ -124,6 +124,8 @@ class ColoringProblem(Problem):
                 "type": [TypeAttribute.LIST_INTEGER],
                 "n": self.number_of_nodes,
                 "arrity": self.number_of_nodes,
+                "low": 1,  # integer.
+                "up": self.number_of_nodes,  # integer.
             }
         }
         return EncodingRegister(dict_register)
