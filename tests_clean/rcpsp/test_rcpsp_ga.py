@@ -7,15 +7,10 @@ from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
     DeapMutation,
-    DeapSelection,
     Ga,
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-    plt,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
@@ -67,7 +62,7 @@ def test_multi_mode_alternating_ga(random_seed):
     # Initialise the permutation that will be used to first search through the modes
     initial_permutation = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
     rcpsp_model.set_fixed_permutation(initial_permutation)
-
+    tmp_sol = None
     for it in range(number_of_meta_iterations):
         # Run a GA for evals_per_ga_runs evals on modes
         ga_solver = Ga(
@@ -118,10 +113,10 @@ def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
 
     total_evals = 10000
     number_of_meta_iterations = 5
-    evals_per_ga_runs_perm = 0.5 * (total_evals / number_of_meta_iterations)
-    evals_per_ga_runs_modes = 0.5 * (
+    evals_per_ga_runs_perm = int(0.5 * (total_evals / number_of_meta_iterations))
+    evals_per_ga_runs_modes = int(0.5 * (
         total_evals / number_of_meta_iterations
-    )  # total_evals/(2*number_of_meta_iterations)
+    ))
 
     mode_mutation = DeapMutation.MUT_UNIFORM_INT
     permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
