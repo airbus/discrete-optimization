@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import pytest
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
@@ -22,6 +23,7 @@ from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_f
 @pytest.fixture
 def random_seed():
     random.seed(0)
+    np.random.seed(0)
 
 
 def test_single_mode_ga(random_seed):
