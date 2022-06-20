@@ -127,7 +127,7 @@ def test_multi_mode_alternating_ga_specific_mode_arrity(random_seed):
     permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
 
     # Initialise the permutation that will be used to first search through the modes
-    initial_permutation = [i for i in range(rcpsp_model.n_jobs)]
+    initial_permutation = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
     rcpsp_model.set_fixed_permutation(initial_permutation)
 
     for it in range(number_of_meta_iterations):
