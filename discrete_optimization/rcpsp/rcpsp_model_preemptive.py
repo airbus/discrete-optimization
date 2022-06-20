@@ -665,16 +665,16 @@ class RCPSPModelPreemptive(Problem):
             "name": "rcpsp_modes",
             "type": [TypeAttribute.LIST_INTEGER],
             "n": self.n_jobs_non_dummy,
-            "arrity": max_number_modes,
+            "arity": max_number_modes,
         }
-        mode_arrity = [
+        mode_arity = [
             len(self.mode_details[task]) for task in self.tasks_list_non_dummy
         ]
-        dict_register["rcpsp_modes_arrity_fix"] = {
+        dict_register["rcpsp_modes_arity_fix"] = {
             "name": "rcpsp_modes",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY],
+            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
-            "arrities": mode_arrity,
+            "arities": mode_arity,
         }
 
         # TODO: New encoding with both permutation and modes in the same encoding

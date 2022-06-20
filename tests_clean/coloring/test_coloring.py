@@ -149,7 +149,7 @@ def test_ga_coloring_3(random_seed):
         "name": "colors",
         "type": [TypeAttribute.LIST_INTEGER],
         "n": 70,
-        "arrity": 10,
+        "arity": 10,
     }
 
     ga_solver = Ga(
@@ -194,7 +194,7 @@ def test_coloring_nsga_2():
         "name": "colors",
         "type": [TypeAttribute.LIST_INTEGER],
         "n": 70,
-        "arrity": 10,
+        "arity": 10,
     }
 
     objectives = ["nb_colors", "nb_violations"]

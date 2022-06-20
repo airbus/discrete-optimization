@@ -10,7 +10,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.mutations.mutation_bool import MutationBitFlip
 from discrete_optimization.generic_tools.mutations.mutation_integer import (
-    MutationIntegerSpecificArrity,
+    MutationIntegerSpecificArity,
 )
 from discrete_optimization.generic_tools.mutations.permutation_mutations import (
     PermutationPartialShuffleMutation,
@@ -76,11 +76,11 @@ dictionnary_mutation = {
         "bitflip-kp": (MutationKnapsack, {}),
         "singlebitflip-kp": (KnapsackMutationSingleBitFlip, {}),
     },
-    TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY: {
-        "random_flip": (MutationIntegerSpecificArrity, {"probability_flip": 0.1}),
+    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: {
+        "random_flip": (MutationIntegerSpecificArity, {"probability_flip": 0.1}),
         "random_flip_modes_rcpsp": (
             PermutationMutationRCPSP,
-            {"other_mutation": MutationIntegerSpecificArrity, "probability_flip": 0.1},
+            {"other_mutation": MutationIntegerSpecificArity, "probability_flip": 0.1},
         ),
     },
 }

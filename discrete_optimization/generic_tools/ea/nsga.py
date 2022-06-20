@@ -60,13 +60,13 @@ class Nsga:
         self._default_crossovers = {
             TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
             TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY: DeapCrossover.CX_ONE_POINT,
+            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
             TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
         }
         self._default_mutations = {
             TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
             TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY: DeapMutation.MUT_UNIFORM_INT,
+            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
             TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
         }
         self._default_selection = DeapSelection.SEL_TOURNAMENT
@@ -131,16 +131,16 @@ class Nsga:
                 ]
 
                 if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                    self.arrity = register_solution.dict_attribute_to_type[
+                    self.arity = register_solution.dict_attribute_to_type[
                         self._encoding_name
-                    ]["arrity"]
-                    self.arrities = [self.arrity for i in range(self.n)]
+                    ]["arity"]
+                    self.arities = [self.arity for i in range(self.n)]
                 else:
-                    self.arrity = None
-                if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
-                    self.arrities = register_solution.dict_attribute_to_type[
+                    self.arity = None
+                if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
+                    self.arities = register_solution.dict_attribute_to_type[
                         self._encoding_name
-                    ]["arrities"]
+                    ]["arities"]
 
         if encoding is not None and isinstance(encoding, Dict):
             # check there is a type key and a n key
@@ -153,13 +153,13 @@ class Nsga:
                 self._encoding_variable_name = encoding["name"]
                 self._encoding_type = encoding["type"][0]
                 self.n = encoding["n"]
-                if "arrity" in encoding.keys():
-                    self.arrity = encoding["arrity"]
-                    self.arrities = [self.arrity for i in range(self.n)]
-                if "arrities" in encoding.keys():
-                    self.arrities = register_solution.dict_attribute_to_type[
+                if "arity" in encoding.keys():
+                    self.arity = encoding["arity"]
+                    self.arities = [self.arity for i in range(self.n)]
+                if "arities" in encoding.keys():
+                    self.arities = register_solution.dict_attribute_to_type[
                         self._encoding_name
-                    ]["arrities"]
+                    ]["arities"]
             else:
                 print(
                     "Erroneous encoding provided as input (encoding name not matching encoding of problem or custom "
@@ -188,19 +188,19 @@ class Nsga:
             self.n = register_solution.dict_attribute_to_type[self._encoding_name]["n"]
 
             if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                self.arrity = register_solution.dict_attribute_to_type[
+                self.arity = register_solution.dict_attribute_to_type[
                     self._encoding_name
-                ]["arrity"]
-                self.arrities = [self.arrity for i in range(self.n)]
+                ]["arity"]
+                self.arities = [self.arity for i in range(self.n)]
             else:
-                self.arrity = None
-            if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
-                self.arrities = register_solution.dict_attribute_to_type[
+                self.arity = None
+            if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
+                self.arities = register_solution.dict_attribute_to_type[
                     self._encoding_name
-                ]["arrities"]
+                ]["arities"]
 
         if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
-            self.arrity = 2
+            self.arity = 2
             self.arities = [2 for i in range(self.n)]
 
         print(
@@ -267,7 +267,7 @@ class Nsga:
                 self._toolbox.permutation_indices,
             )
         elif self._encoding_type == TypeAttribute.LIST_INTEGER:
-            self._toolbox.register("int_val", random.randint, 0, self.arrity - 1)
+            self._toolbox.register("int_val", random.randint, 0, self.arity - 1)
             self._toolbox.register(
                 "individual",
                 tools.initRepeat,
@@ -275,10 +275,8 @@ class Nsga:
                 self._toolbox.int_val,
                 n=self.n,
             )
-        elif self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
-            gen_idx = lambda: [
-                random.randint(0, arrity - 1) for arrity in self.arrities
-            ]
+        elif self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
+            gen_idx = lambda: [random.randint(0, arity - 1) for arity in self.arities]
             self._toolbox.register(
                 "individual", tools.initIterate, creator.individual, gen_idx
             )
@@ -348,7 +346,7 @@ class Nsga:
                     "mutate",
                     tools.mutUniformInt,
                     low=0,
-                    up=self.arrities,
+                    up=self.arities,
                     indpb=self._mut_rate,
                 )
 

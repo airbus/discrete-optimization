@@ -84,13 +84,13 @@ class Ga:
         self._default_crossovers = {
             TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
             TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY: DeapCrossover.CX_ONE_POINT,
+            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
             TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
         }
         self._default_mutations = {
             TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
             TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY: DeapMutation.MUT_UNIFORM_INT,
+            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
             TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
         }
         self._default_selection = DeapSelection.SEL_TOURNAMENT
@@ -153,7 +153,7 @@ class Ga:
                 ]
                 if self._encoding_type in {
                     TypeAttribute.LIST_INTEGER,
-                    TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
+                    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
                 }:
                     self.lows = lower_bound_vector_encoding_from_dict(
                         register_solution.dict_attribute_to_type[self._encoding_name]
@@ -175,7 +175,7 @@ class Ga:
                 self.n = encoding["n"]
                 if self._encoding_type in {
                     TypeAttribute.LIST_INTEGER,
-                    TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
+                    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
                 }:
                     self.lows = lower_bound_vector_encoding_from_dict(encoding)
                     self.ups = upper_bound_vector_encoding_from_dict(encoding)
@@ -207,7 +207,7 @@ class Ga:
             dict_register = register_solution.dict_attribute_to_type
             if self._encoding_type in {
                 TypeAttribute.LIST_INTEGER,
-                TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
+                TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
             }:
                 self.lows = lower_bound_vector_encoding_from_dict(
                     dict_register[self._encoding_name]
@@ -312,7 +312,7 @@ class Ga:
                 self._toolbox.int_val,
                 n=self.n,
             )
-        elif self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY:
+        elif self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
             gen_idx = lambda: [
                 random.randint(low, up) for low, up in zip(self.lows, self.ups)
             ]

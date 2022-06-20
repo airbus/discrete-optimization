@@ -31,7 +31,7 @@ from tests.rcpsp_multiskills.rcpsp_multiskills_runs import (
 )
 
 
-def alternating_ga_specific_mode_arrity():
+def alternating_ga_specific_mode_arity():
     msrcpsp_model = create_toy_msrcpsp_variant()
     files = [f for f in get_data_available() if "100_5_64_9.def" in f]
     msrcpsp_model, new_tame_to_original_task_id = parse_file(files[0], max_horizon=2000)
@@ -70,7 +70,7 @@ def alternating_ga_specific_mode_arrity():
         # Run a GA for evals_per_ga_runs evals on modes
         ga_solver = Ga(
             msrcpsp_model,
-            encoding="modes_arrity_fix_from_0",
+            encoding="modes_arity_fix_from_0",
             objective_handling=ObjectiveHandling.AGGREGATE,
             objectives=["makespan"],
             objective_weights=[-1],
@@ -130,7 +130,7 @@ def alternating_ga_specific_mode_arrity():
     print("satisfy : ", msrcpsp_model.satisfy(sol))
 
 
-def alternating_ga_specific_mode_arrity_single_solver():
+def alternating_ga_specific_mode_arity_single_solver():
     msrcpsp_model = create_toy_msrcpsp_variant()
 
     total_evals = 1000
@@ -140,7 +140,7 @@ def alternating_ga_specific_mode_arrity_single_solver():
     ga_solver = AlternatingGa(
         msrcpsp_model,
         encodings=[
-            "modes_arrity_fix_from_0",
+            "modes_arity_fix_from_0",
             "priority_list_task",
             "priority_worker_per_task_perm",
         ],
@@ -167,6 +167,6 @@ def alternating_ga_specific_mode_arrity_single_solver():
 
 
 if __name__ == "__main__":
-    # alternating_ga_specific_mode_arrity()
-    # test_alternating_ga_specific_mode_arrity()
-    alternating_ga_specific_mode_arrity_single_solver()
+    # alternating_ga_specific_mode_arity()
+    # test_alternating_ga_specific_mode_arity()
+    alternating_ga_specific_mode_arity_single_solver()
