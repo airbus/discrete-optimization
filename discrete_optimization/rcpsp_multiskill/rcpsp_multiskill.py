@@ -2760,25 +2760,25 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         dict_register["modes_vector"] = {
             "name": "modes_vector",
             "n": self.n_jobs_non_dummy,
-            "arrity": max_number_modes,
+            "arity": max_number_modes,
             "type": [TypeAttribute.LIST_INTEGER],
         }
 
-        mode_arrity = [
+        mode_arity = [
             len(list(self.mode_details[list(self.mode_details.keys())[i]].keys()))
             for i in range(1, len(self.mode_details.keys()) - 1)
         ]
-        dict_register["modes_arrity_fix"] = {
+        dict_register["modes_arity_fix"] = {
             "name": "modes_vector",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY],
+            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
-            "arrities": mode_arrity,
+            "arities": mode_arity,
         }
-        dict_register["modes_arrity_fix_from_0"] = {
+        dict_register["modes_arity_fix_from_0"] = {
             "name": "modes_vector_from0",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY],
+            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
-            "arrities": mode_arrity,
+            "arities": mode_arity,
         }
 
         dict_register["schedule"] = {

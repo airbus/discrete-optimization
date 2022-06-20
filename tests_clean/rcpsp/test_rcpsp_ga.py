@@ -109,7 +109,7 @@ def test_multi_mode_alternating_ga(random_seed):
     print("fitnesses: ", fitnesses)
 
 
-def test_multi_mode_alternating_ga_specific_mode_arrity(random_seed):
+def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
 
     files = get_data_available()
     files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
@@ -134,7 +134,7 @@ def test_multi_mode_alternating_ga_specific_mode_arrity(random_seed):
         # Run a GA for evals_per_ga_runs evals on modes
         ga_solver = Ga(
             rcpsp_model,
-            encoding="rcpsp_modes_arrity_fix",
+            encoding="rcpsp_modes_arity_fix",
             objective_handling=ObjectiveHandling.AGGREGATE,
             objectives=["makespan"],
             objective_weights=[-1],
@@ -170,7 +170,7 @@ def test_multi_mode_alternating_ga_specific_mode_arrity(random_seed):
     print("fitnesses: ", fitnesses)
 
 
-def test_alternating_ga_specific_mode_arrity_single_solver(random_seed):
+def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]
@@ -182,7 +182,7 @@ def test_alternating_ga_specific_mode_arrity_single_solver(random_seed):
 
     ga_solver = AlternatingGa(
         rcpsp_model,
-        encodings=["rcpsp_modes_arrity_fix", "rcpsp_permutation"],
+        encodings=["rcpsp_modes_arity_fix", "rcpsp_permutation"],
         objective_handling=ObjectiveHandling.AGGREGATE,
         objectives=["makespan"],
         objective_weights=[-1],

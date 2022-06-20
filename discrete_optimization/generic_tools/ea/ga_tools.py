@@ -147,7 +147,7 @@ class ParametersAltGa:
             mutations=[DeapMutation.MUT_UNIFORM_INT, DeapMutation.MUT_SHUFFLE_INDEXES],
             crossovers=[DeapCrossover.CX_ONE_POINT, DeapCrossover.CX_PARTIALY_MATCHED],
             selection=DeapSelection.SEL_TOURNAMENT,
-            encodings=["rcpsp_modes_arrity_fix", "rcpsp_permutation"],
+            encodings=["rcpsp_modes_arity_fix", "rcpsp_permutation"],
             objective_handling=ObjectiveHandling.AGGREGATE,
             objectives=["makespan"],
             objective_weights=[-1],
@@ -175,7 +175,7 @@ class ParametersAltGa:
             ],
             selection=DeapSelection.SEL_TOURNAMENT,
             encodings=[
-                "modes_arrity_fix_from_0",
+                "modes_arity_fix_from_0",
                 "priority_list_task",
                 "priority_worker_per_task_perm",
             ],

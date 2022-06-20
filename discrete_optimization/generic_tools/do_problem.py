@@ -16,7 +16,7 @@ class TypeAttribute(Enum):
     PERMUTATION_RCPSP = 4
     SET_INTEGER = 5
     LIST_BOOLEAN_KNAP = 6
-    LIST_INTEGER_SPECIFIC_ARRITY = 7
+    LIST_INTEGER_SPECIFIC_ARITY = 7
     SET_TUPLE_INTEGER = 8
     VRP_PATHS = 9
     LIST_FLOATS = 10
@@ -89,12 +89,12 @@ def upper_bound_vector_encoding_from_dict(dict_encoding):
     else:
         low = lower_bound_vector_encoding_from_dict(dict_encoding)
         up_value_vector = None
-        if "arrity" in dict_encoding:
-            arrity = dict_encoding["arrity"]  # number of possible value.
-            up_value_vector = [l + arrity - 1 for l in low]
-        if "arrities" in dict_encoding:
-            arrities = dict_encoding["arrities"]
-            up_value_vector = [l + arr - 1 for l, arr in zip(low, arrities)]
+        if "arity" in dict_encoding:
+            arity = dict_encoding["arity"]  # number of possible value.
+            up_value_vector = [l + arity - 1 for l in low]
+        if "arities" in dict_encoding:
+            arities = dict_encoding["arities"]
+            up_value_vector = [l + arr - 1 for l, arr in zip(low, arities)]
         return up_value_vector
 
 
