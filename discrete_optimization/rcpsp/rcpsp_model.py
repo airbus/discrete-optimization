@@ -908,7 +908,6 @@ def permutation_do_to_permutation_sgs_fast(rcpsp_problem: RCPSPModel, permutatio
     return np.array(perm_extended, dtype=np.int32)
 
 
-# TODO : Delete.
 class SingleModeRCPSPModel(RCPSPModel):
     def copy(self):
         return SingleModeRCPSPModel(
@@ -921,7 +920,6 @@ class SingleModeRCPSPModel(RCPSPModel):
         )
 
 
-# TODO : Delete.
 class MultiModeRCPSPModel(RCPSPModel):
     fixed_modes: List[int]
     fixed_permutation: Union[List[int], np.array]
