@@ -116,14 +116,14 @@ class ColoringProblem(Problem):
                 return False
         return True
 
-    # TODO: We need to allow a user to change the arrity (or the range_value) of the encoding (test with GA)
+    # TODO: We need to allow a user to change the arity (or the range_value) of the encoding (test with GA)
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {
             "colors": {
                 "name": "colors",
                 "type": [TypeAttribute.LIST_INTEGER],
                 "n": self.number_of_nodes,
-                "arrity": self.number_of_nodes,
+                "arity": self.number_of_nodes,
                 "low": 1,  # integer.
                 "up": self.number_of_nodes,  # integer.
             }

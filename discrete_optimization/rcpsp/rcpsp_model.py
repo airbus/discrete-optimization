@@ -660,18 +660,18 @@ class RCPSPModel(Problem):
             "n": self.n_jobs_non_dummy,
             "low": 1,  # integer.
             "up": max_number_modes,  # integer.
-            "arrity": max_number_modes,
+            "arity": max_number_modes,
         }
-        mode_arrity = [
+        mode_arity = [
             len(self.mode_details[task]) for task in self.tasks_list_non_dummy
         ]
-        dict_register["rcpsp_modes_arrity_fix"] = {
+        dict_register["rcpsp_modes_arity_fix"] = {
             "name": "rcpsp_modes",
-            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY],
+            "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
             "low": 1,
-            "up": mode_arrity,
-            "arrities": mode_arrity,
+            "up": mode_arity,
+            "arities": mode_arity,
         }
 
         # TODO: New encoding with both permutation and modes in the same encoding

@@ -135,7 +135,7 @@ class FacilityProblem(Problem):
             "name": "facility_for_customers",
             "type": [TypeAttribute.LIST_INTEGER],
             "n": self.customer_count,
-            "arrity": self.facility_count,
+            "arity": self.facility_count,
         }
         return EncodingRegister(dict_register)
 
