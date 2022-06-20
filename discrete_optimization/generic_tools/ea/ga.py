@@ -177,12 +177,8 @@ class Ga:
                     TypeAttribute.LIST_INTEGER,
                     TypeAttribute.LIST_INTEGER_SPECIFIC_ARRITY,
                 }:
-                    self.lows = lower_bound_vector_encoding_from_dict(
-                        register_solution.dict_attribute_to_type[self._encoding_name]
-                    )
-                    self.ups = upper_bound_vector_encoding_from_dict(
-                        register_solution.dict_attribute_to_type[self._encoding_name]
-                    )
+                    self.lows = lower_bound_vector_encoding_from_dict(encoding)
+                    self.ups = upper_bound_vector_encoding_from_dict(encoding)
             else:
                 print(
                     "Erroneous encoding provided as input (encoding name not matching encoding of problem or custom "
