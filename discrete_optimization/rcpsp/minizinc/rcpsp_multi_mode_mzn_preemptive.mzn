@@ -2,6 +2,7 @@
 include "increasing.mzn";
 include "decreasing.mzn";
 include "disjunctive.mzn";
+include "cumulative.mzn";
 %-----------------------------------------------------------------------------%
 % Model parameters.
 
