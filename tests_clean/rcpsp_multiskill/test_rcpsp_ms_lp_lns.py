@@ -17,6 +17,10 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
 )
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_pile import PileSolverRCPSP_Calendar
+from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
+    get_data_available,
+    parse_file,
+)
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
     LP_Solver_MRSCPSP,
     MilpSolverName,
@@ -29,11 +33,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver impor
 
 
 def test_multiskill_imopse():
-    from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        get_data_available,
-        parse_file,
-    )
-
     params_objective_function = ParamsObjectiveFunction(
         objectives=["makespan"],
         weights=[-1],
@@ -41,7 +40,7 @@ def test_multiskill_imopse():
         sense_function=ModeOptim.MAXIMIZATION,
     )
     file = [f for f in get_data_available() if "100_5_20_9_D3.def" in f][0]
-    model, new_tame_to_original_task_id = parse_file(file)
+    model, _ = parse_file(file)
     model_rcpsp = model.build_multimode_rcpsp_calendar_representative()
     graph = model_rcpsp.compute_graph()
     cycles = graph.check_loop()
@@ -52,12 +51,13 @@ def test_multiskill_imopse():
     best_mrcpsp, fit = store_solution.get_best_solution_fit()
     solver = LP_Solver_MRSCPSP(
         rcpsp_model=model,
-        lp_solver=MilpSolverName.CBC,
+        lp_solver=MilpSolverName.GRB,
+        # CBC is not working well at all. -> so in unit test you should probably skip this test.
         params_objective_function=params_objective_function,
     )
-    solver.init_model()
+    solver.init_model(max_time=600)
     parameters_milp = ParametersMilp(
-        time_limit=200,
+        time_limit=30,
         pool_solutions=1000,
         mip_gap_abs=0.001,
         mip_gap=0.001,
@@ -65,7 +65,7 @@ def test_multiskill_imopse():
         n_solutions_max=100,
     )
     constraint_handler = ConstraintHandlerStartTimeIntervalMRCPSP(
-        problem=model, fraction_to_fix=0.5, minus_delta=5, plus_delta=5
+        problem=model, fraction_to_fix=0.95, minus_delta=5, plus_delta=5
     )
     initial_solution_provider = InitialSolutionMS_RCPSP(
         problem=model,
@@ -81,9 +81,9 @@ def test_multiskill_imopse():
     )
     result_store = lns_solver.solve_lns(
         parameters_milp=parameters_milp,
-        nb_iteration_lns=300,
-        nb_iteration_no_improvement=200,
-        max_time_seconds=60,
+        nb_iteration_lns=10,
+        nb_iteration_no_improvement=10,
+        max_time_seconds=200,
         skip_first_iteration=False,
     )
     solution, fit = result_store.get_best_solution_fit()
