@@ -1,5 +1,6 @@
 from typing import Dict, List, Set
 
+import pytest
 from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import plot_ressource_view
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
@@ -25,81 +26,8 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
 )
 
 
-def create_toy_msrcpsp():
-    skills_set: Set[str] = {"S1", "S2", "S3"}
-    resources_set: Set[str] = {"R1", "R2", "R3"}
-    non_renewable_resources = set()
-    resources_availability = {"R1": [2] * 100, "R2": [4] * 100, "R3": [3] * 100}
-    employee: Dict[int, Employee] = {
-        1: Employee(
-            dict_skill={"S1": SkillDetail(1.0, 1.0, 1.0)},
-            calendar_employee=[True] * 100,
-        ),
-        2: Employee(
-            dict_skill={"S2": SkillDetail(1.0, 1.0, 1.0)},
-            calendar_employee=[True] * 100,
-        ),
-        3: Employee(
-            dict_skill={"S3": SkillDetail(1.0, 1.0, 1.0)},
-            calendar_employee=[True] * 100,
-        ),
-    }
-    index = 5
-    for emp in sorted(employee):
-        indexes = [index + 8 * i for i in range(10)] + [
-            index + 1 + 8 * i for i in range(10)
-        ]
-        for i in indexes:
-            employee[emp].calendar_employee[i] = False
-        index += 1
-
-    employees_availability: List[int] = [3] * 1000
-    mode_details: Dict[int, Dict[int, Dict[str, int]]] = {
-        1: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
-        2: {
-            1: {"S1": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 2},
-            2: {"S2": 1, "R1": 0, "R2": 0, "R3": 0, "duration": 3},
-        },
-        3: {1: {"S2": 1, "R1": 1, "R2": 2, "R3": 0, "duration": 4}},
-        4: {1: {"S3": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 5}},
-        5: {1: {"R1": 2, "R2": 0, "R3": 0, "duration": 5}},
-        6: {1: {"S3": 1, "S2": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 5}},
-        7: {
-            1: {"S3": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 1},
-            2: {"R1": 2, "R2": 0, "R3": 0, "duration": 2},
-        },
-        8: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
-    }
-    successors: Dict[int, List[int]] = {
-        1: [2, 3],
-        2: [5],
-        3: [4],
-        4: [5],
-        5: [6, 7],
-        6: [8],
-        7: [8],
-        8: [],
-    }
-    model = MS_RCPSPModel(
-        skills_set=skills_set,
-        resources_set=resources_set,
-        non_renewable_resources=non_renewable_resources,
-        resources_availability=resources_availability,
-        employees=employee,
-        employees_availability=employees_availability,
-        mode_details=mode_details,
-        successors=successors,
-        horizon=100,
-        preemptive=True,
-        preemptive_indicator={t: True for t in mode_details},
-        horizon_multiplier=1,
-        never_releasable_resources={"R1", "R2"},
-        always_releasable_resources={"R3"},
-    )
-    return model
-
-
-def create_toy_problem_paper():
+@pytest.fixture
+def model():
     skills_set = {"l1", "l2", "l3", "l4"}
     resource_set = {"R1"}
     resources_availability = {"R1": [2] * 100}
@@ -166,27 +94,21 @@ def create_toy_problem_paper():
     )
 
 
-def run_partial_preemptive():
-
-    model = create_toy_problem_paper()
+def test_partial_preemptive(model):
     model_variant: MS_RCPSPModel_Variant = model.to_variant_model()
-    import time
 
-    for j in range(100):
-        t = time.time()
-        dummy_solution = model_variant.get_dummy_solution(preemptive=True)
-        print(model.evaluate(dummy_solution))
-        print(compute_constraints_details(dummy_solution, model.special_constraints))
-        t_end = time.time()
-        print(t_end - t, " sec ")
+    dummy_solution = model_variant.get_dummy_solution(preemptive=True)
+    model.evaluate(dummy_solution)
+    compute_constraints_details(dummy_solution, model.special_constraints)
+    assert model.satisfy(dummy_solution)
+
     plot_resource_individual_gantt_preemptive(
         rcpsp_model=model, rcpsp_sol=dummy_solution
     )
     plot_ressource_view(rcpsp_model=model, rcpsp_sol=dummy_solution)
-    plt.show()
     cp_solver = CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(rcpsp_model=model)
     cp_solver.init_model(
-        max_time=100,
+        max_time=20,
         max_preempted=3,
         nb_preemptive=10,
         possibly_preemptive=[
@@ -197,28 +119,17 @@ def run_partial_preemptive():
         unit_usage_preemptive=True,
     )
     result_storage = cp_solver.solve(parameters_cp=ParametersCP.default())
-    plot_resource_individual_gantt_preemptive(
-        rcpsp_model=model, rcpsp_sol=result_storage.get_last_best_solution()[0]
-    )
-    plot_ressource_view(
-        rcpsp_model=model, rcpsp_sol=result_storage.get_last_best_solution()[0]
-    )
-    plt.show()
+    rcpsp_sol = result_storage.get_last_best_solution()[0]
+    assert model.satisfy(rcpsp_sol)
+    plot_resource_individual_gantt_preemptive(rcpsp_model=model, rcpsp_sol=rcpsp_sol)
+    plot_ressource_view(rcpsp_model=model, rcpsp_sol=rcpsp_sol)
 
 
-def try_ls():
-    model = create_toy_problem_paper()
+def test_ls(model):
     model_variant: MS_RCPSPModel_Variant = model.to_variant_model()
     solver = LS_RCPSP_Solver(model=model_variant, ls_solver=LS_SOLVER.SA)
-    result_storage = solver.solve(nb_iteration_max=2000, verbose=True)
-    plot_resource_individual_gantt_preemptive(
-        rcpsp_model=model, rcpsp_sol=result_storage.get_last_best_solution()[0]
-    )
-    plot_ressource_view(
-        rcpsp_model=model, rcpsp_sol=result_storage.get_last_best_solution()[0]
-    )
-    plt.show()
-
-
-if __name__ == "__main__":
-    try_ls()
+    result_storage = solver.solve(nb_iteration_max=5000, verbose=True)
+    rcpsp_sol = result_storage.get_last_best_solution()[0]
+    assert model.satisfy(rcpsp_sol)
+    plot_resource_individual_gantt_preemptive(rcpsp_model=model, rcpsp_sol=rcpsp_sol)
+    plot_ressource_view(rcpsp_model=model, rcpsp_sol=rcpsp_sol)
