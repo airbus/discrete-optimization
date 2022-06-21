@@ -35,13 +35,10 @@ bool: ressource_always_here = true;
 bool: include_fake_tasks_unit;
 int: max_duration_fake_task_unit;
 int: n_fake_task_unit;
-set of int: FakeActUnit=1..n_fake_tasks_unit;
+set of int: FakeActUnit=1..n_fake_task_unit;
 array[FakeActUnit] of 0..max_time: fakestart_unit;
-array[FakeActUnit] of 1..max_duration_fake_task: fakedur_unit;
+array[FakeActUnit] of 1..max_duration_fake_task_unit: fakedur_unit;
 array[Units, FakeActUnit] of 0..1: fakereq_unit;
-
-
-
 
 
 % Number of modes (optional activities)
@@ -114,7 +111,7 @@ constraint forall(w in Units)(
               in(
                  cumulative(start++[fakestart_unit[p] | p in FTasks],
                             adur++[fakedur_unit[p] | p in FTasks],
-                            [unit_used[w, i] | i in Act]++[fakereq_unit[r, p] | p in FTasks],
+                            [unit_used[w, i] | i in Act]++[fakereq_unit[w, p] | p in FTasks],
                             1)
               )
     else
@@ -211,13 +208,13 @@ constraint (if ignore_sec_objective then
 
 %---------------------------------------------------------------------------%
 % Solve item
-
+ann: my_search;
 solve
-    :: durThenStartThenMode
+    :: my_search
     minimize objective;
 
 ann: durThenStartThenMode = seq_search([
-        %bool_search(unit_used, input_order, indomain_max, complete),
+        bool_search(unit_used, input_order, indomain_max, complete),
         int_search(start, smallest, indomain_min, complete),
         int_search(adur, smallest, indomain_min, complete),
         bool_search(mrun, input_order, indomain_max, complete),
