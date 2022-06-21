@@ -7,12 +7,20 @@ from discrete_optimization.generic_tools.lp_tools import MilpSolverName, Paramet
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import plot_ressource_view
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import InitialMethodRCPSP
+from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
+    plot_resource_individual_gantt,
+    plot_task_gantt,
+)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
     SkillDetail,
+)
+from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
+    get_data_available,
+    parse_file,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
@@ -26,8 +34,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver impor
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver import (
     InitialSolutionMS_RCPSP,
 )
-
-# from tests.rcpsp_multiskills.solvers.instance_creator import create_ms_rcpsp_demo
 
 
 def create_toy_msrcpsp():
@@ -189,7 +195,7 @@ def create_toy_santi():
     return model
 
 
-def cp_toy_model():
+def test_cp_toy_model():
     model_msrcpsp = create_toy_santi()
 
     cp_model = CP_MS_MRCPSP_MZN(
@@ -203,27 +209,15 @@ def cp_toy_model():
     )
     parameters_cp = ParametersCP.default()
     parameters_cp.intermediate_solution = True
-    parameters_cp.TimeLimit = 2000
+    parameters_cp.TimeLimit = 200
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
-    from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-        plot_resource_individual_gantt,
-        plot_task_gantt,
-        plt,
-    )
-
+    assert model_msrcpsp.satisfy(solution)
     plot_resource_individual_gantt(rcpsp_model=model_msrcpsp, rcpsp_sol=solution)
     plot_task_gantt(rcpsp_model=model_msrcpsp, rcpsp_sol=solution)
-    plt.show()
 
 
-def cp_imopse():
-    import os
-
-    from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        get_data_available,
-        parse_file,
-    )
+def test_cp_imopse():
 
     file = [f for f in get_data_available() if "100_5_20_9_D3.def" in f][0]
     model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=1000)
@@ -238,7 +232,7 @@ def cp_imopse():
         add_objective_makespan=True,
         ignore_sec_objective=True,
         output_type=True,
-        max_time=1000,
+        max_time=500,
         # here you put makespan constraint. by default, would use model_msrcpsp.horizon if not provided.
         exact_skills_need=False,
     )
@@ -248,98 +242,51 @@ def cp_imopse():
     # but can be a good thing to be used in findmus algo
     # with free_search=False, you get first results after 10 seconds or so, but good quality.
     parameters_cp.intermediate_solution = True
-    parameters_cp.TimeLimit = 2000
+    parameters_cp.TimeLimit = 500
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
-    if False:
-        write_solution(
-            solution=solution,
-            new_tame_to_original_task_id=new_tame_to_original_task_id,
-            file_path=os.path.join(
-                folder_to_do_solution, os.path.basename(file) + ".sol"
-            ),
-        )
-        print(model_msrcpsp.evaluate(solution))
-        print("Satisfy : ", model_msrcpsp.satisfy(solution))
-        rebuilt_sol_rcpsp = RCPSPSolution(
-            problem=model_rcpsp,
-            rcpsp_permutation=None,
-            rcpsp_schedule=solution.schedule,
-            rcpsp_modes=[solution.modes[x] for x in range(2, model_rcpsp.n_jobs + 2)],
-        )
-        plot_ressource_view(model_rcpsp, rebuilt_sol_rcpsp)
-        plt.show()
+    assert model_msrcpsp.satisfy(solution)
+    model_msrcpsp.evaluate(solution)
 
 
-def lns_small_neighbor():
-    import os
-    import random
-
-    from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        get_data_available,
-        parse_file,
+def test_lns_small_neighbor():
+    files = [f for f in get_data_available() if f.endswith("100_5_64_9.def")]
+    f = files[0]
+    model_msrcpsp, new_tame_to_original_task_id = parse_file(f, max_horizon=2000)
+    model_msrcpsp = model_msrcpsp.to_variant_model()
+    initial_solution_provider = InitialSolutionMS_RCPSP(
+        problem=model_msrcpsp,
+        initial_method=InitialMethodRCPSP.PILE_CALENDAR,
+        params_objective_function=None,
     )
-
-    # file = [f for f in get_data_available() if "100_5_64_15.def.sol" in f][0]
-    # print(files[1])
-    files = get_data_available()
-    # files = [f for f in get_data_available() if '100_10_65_15.def' in f]
-    random.shuffle(files)
-    folder_do_small_solution = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "../results/do_cp_largeneighbor_test/",
+    solution = initial_solution_provider.get_starting_solution().get_best_solution()
+    makespan = model_msrcpsp.evaluate(solution)["makespan"]
+    model_msrcpsp.horizon = makespan + 5
+    model_rcpsp = model_msrcpsp.build_multimode_rcpsp_calendar_representative()
+    lns_cp = LNS_CP_MS_RCPSP_SOLVER(
+        rcpsp_model=model_msrcpsp,
+        option_neighbor=OptionNeighbor.MIX_LARGE_NEIGH,
+        one_ressource_per_task=True,
     )
-    if not os.path.exists(folder_do_small_solution):
-        os.makedirs(folder_do_small_solution)
-    files = [f for f in get_data_available() if "100_5_64_9.def" in f]
-    for file in files:
-        print(os.path.basename(file))
-        if any(
-            os.path.basename(file) in f for f in os.listdir(folder_do_small_solution)
-        ):
-            print("Already done")
-        model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=2000)
-        # if model_msrcpsp.nb_tasks >= 185:
-        #     continue
-        initial_solution_provider = InitialSolutionMS_RCPSP(
-            problem=model_msrcpsp,
-            initial_method=InitialMethodRCPSP.PILE_CALENDAR,
-            params_objective_function=None,
-        )
-        solution = initial_solution_provider.get_starting_solution().get_best_solution()
-        makespan = model_msrcpsp.evaluate(solution)["makespan"]
-        model_msrcpsp.horizon = makespan + 5
-        model_rcpsp = model_msrcpsp.build_multimode_rcpsp_calendar_representative()
-        lns_cp = LNS_CP_MS_RCPSP_SOLVER(
-            rcpsp_model=model_msrcpsp,
-            option_neighbor=OptionNeighbor.MIX_LARGE_NEIGH,
-            one_ressource_per_task=True,
-        )
-        parameters_cp = ParametersCP.default()
-        parameters_cp.intermediate_solution = True
-        parameters_cp.all_solutions = False
-        parameters_cp.TimeLimit = 200
-        parameters_cp.TimeLimit_iter0 = 60
-        result_storage = lns_cp.solve(
-            parameters_cp=parameters_cp,
-            nb_iteration_lns=3000,
-            max_time_seconds=10000,
-            nb_iteration_no_improvement=1000,
-            skip_first_iteration=False,
-        )
-        solution: MS_RCPSPSolution = result_storage.get_best_solution()
-        print(model_msrcpsp.evaluate(solution))
-        print("Satisfy : ", model_msrcpsp.satisfy(solution))
-
-
-def lns_example():
-    from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        get_data_available,
-        parse_file,
+    parameters_cp = ParametersCP.default()
+    parameters_cp.intermediate_solution = True
+    parameters_cp.all_solutions = False
+    parameters_cp.TimeLimit = 200
+    parameters_cp.TimeLimit_iter0 = 60
+    result_storage = lns_cp.solve(
+        parameters_cp=parameters_cp,
+        nb_iteration_lns=300,
+        max_time_seconds=500,
+        nb_iteration_no_improvement=100,
+        skip_first_iteration=False,
     )
+    solution: MS_RCPSPSolution = result_storage.get_best_solution()
+    assert model_msrcpsp.satisfy(solution)
+    model_msrcpsp.evaluate(solution)
 
+
+def test_lns():
     file = [f for f in get_data_available() if "100_5_22_15.def" in f][0]
-    # file = [f for f in get_data_available() if "100_5_20_9_D3.def" in f][0]
 
     model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=2000)
     model_msrcpsp = model_msrcpsp.to_variant_model()
@@ -367,13 +314,15 @@ def lns_example():
     parameters_cp.TimeLimit_iter0 = 60
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
-        nb_iteration_lns=3000,
-        max_time_seconds=7200,
-        nb_iteration_no_improvement=500,
+        nb_iteration_lns=300,
+        max_time_seconds=500,
+        nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
+    assert model_msrcpsp.satisfy(solution)
+    model_msrcpsp.evaluate(solution)
 
 
 if __name__ == "__main__":
-    cp_imopse()
+    test_cp_imopse()

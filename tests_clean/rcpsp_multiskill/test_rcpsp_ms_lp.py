@@ -12,7 +12,7 @@ from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
 )
 
 
-def run_lp_debug():
+def test_lp():
     skills_set: Set[str] = {"S1", "S2", "S3"}
     resources_set: Set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
@@ -53,12 +53,13 @@ def run_lp_debug():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_model = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
-    lp_model.init_model()
-    result = lp_model.solve(parameters_milp=ParametersMilp.default())
+    lp_solver = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
+    lp_solver.init_model()
+    sol = lp_solver.solve(parameters_milp=ParametersMilp.default()).get_best_solution()
+    assert model.satisfy(sol)
 
 
-def run_lp_debug_bis():
+def test_lp_bis():
     skills_set: Set[str] = {"S1", "S2", "S3"}
     resources_set: Set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
@@ -126,13 +127,9 @@ def run_lp_debug_bis():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_model = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
-    lp_model.init_model()
-    result = lp_model.solve(parameters_milp=ParametersMilp.default())
+    lp_solver = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
+    lp_solver.init_model()
+    result = lp_solver.solve(parameters_milp=ParametersMilp.default())
     best_solution = result.get_best_solution()
-    print(model.evaluate(best_solution))
-    print(model.satisfy(best_solution))
-
-
-if __name__ == "__main__":
-    run_lp_debug_bis()
+    model.evaluate(best_solution)
+    assert model.satisfy(best_solution)

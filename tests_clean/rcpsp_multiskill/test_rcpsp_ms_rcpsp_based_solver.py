@@ -1,7 +1,6 @@
-import os
 from typing import Dict, List, Set
 
-# from tests.rcpsp_multiskills.solvers.instance_creator import create_ms_rcpsp_demo
+from discrete_optimization.rcpsp.rcpsp_solvers import *
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
@@ -10,6 +9,9 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution,
     MS_RCPSPSolution_Variant,
     SkillDetail,
+)
+from discrete_optimization.rcpsp_multiskill.solvers.solver_rcpsp_based import (
+    Solver_RCPSP_Based,
 )
 
 
@@ -84,45 +86,24 @@ def create_toy_msrcpsp():
     return model
 
 
-def run_ls():
+def test_rcpsp_based():
     model = create_toy_msrcpsp()
     # model, model_rcpsp = create_ms_rcpsp_demo()
     model = model.to_variant_model()
-    solver = LS_RCPSP_Solver(model=model, ls_solver=LS_SOLVER.SA)
-    result = solver.solve(nb_iteration_max=100000)
+    method = LP_MRCPSP
+    params = [
+        solvers[k][j][1]
+        for k in solvers
+        for j in range(len(solvers[k]))
+        if solvers[k][j][0] == method
+    ][0]
+    params["lp_solver"] = LP_RCPSP_Solver.CBC
+    solver = Solver_RCPSP_Based(model=model, method=method, **params)
+    result = solver.solve()
     solution: MS_RCPSPSolution = result.get_best_solution()
-    print("Evaluation ", model.evaluate(solution))
-    print("Satisfaction ", model.satisfy(solution))
-
-
-def run_ls_imopse():
-    # model = create_toy_msrcpsp()
-    from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        get_data_available,
-        parse_file,
-    )
-
-    file = [f for f in get_data_available() if "100_5_22_15.def" in f][0]
-    model, name_task = parse_file(file, max_horizon=1000)
-    model = model.to_variant_model()
-    # model.preemptive = True
-    solver = LS_RCPSP_Solver(model=model, ls_solver=LS_SOLVER.SA)
-    result = solver.solve(nb_iteration_max=1)
-    solution: MS_RCPSPSolution = result.get_best_solution()
-    # write_solution(solution=solution,
-    #                new_tame_to_original_task_id=name_task,
-    #                file_path=os.path.join(folder_to_do_solution,
-    #                                       os.path.basename(file) + "_ls_test.sol"))
-    print("Evaluation ", model.evaluate(solution))
-    print("Satisfaction ", model.satisfy(solution))
-    from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-        plot_resource_individual_gantt,
-        plt,
-    )
-
-    plot_resource_individual_gantt(rcpsp_model=model, rcpsp_sol=solution)
-    plt.show()
+    model.evaluate(solution)
+    assert model.satisfy(solution)
 
 
 if __name__ == "__main__":
-    run_ls_imopse()
+    test_rcpsp_based()
