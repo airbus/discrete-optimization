@@ -60,6 +60,9 @@ class InitialSolutionMS_RCPSP(InitialSolution):
         )
         s = init_solution.get_starting_solution()
         list_solution_fits = []
+        class_solution = self.problem.get_solution_type()
+        if class_solution is None:
+            class_solution = self.problem.to_variant_model().get_solution_type()
         for sol, fit in s.list_solution_fits:
             sol: RCPSPSolution = sol
             mode = sol.rcpsp_modes
@@ -69,7 +72,7 @@ class InitialSolutionMS_RCPSP(InitialSolution):
             }
             modes[self.problem.source_task] = 1
             modes[self.problem.sink_task] = 1
-            ms_rcpsp_solution = self.problem.get_solution_type()(
+            ms_rcpsp_solution = class_solution(
                 problem=self.problem,
                 priority_list_task=sol.rcpsp_permutation,
                 modes_vector=sol.rcpsp_modes,
