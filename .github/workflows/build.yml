@@ -129,4 +129,4 @@ jobs:
       - name: Test with pytest
         run: |
           export PATH=$PATH:${{ matrix.minizinc_path }}
-          NUMBA_BOUNDSCHECK=1 pytest -vvv tests_clean
+          NUMBA_BOUNDSCHECK=1 pytest -vv --durations=0 --durations-min=10 tests_clean
