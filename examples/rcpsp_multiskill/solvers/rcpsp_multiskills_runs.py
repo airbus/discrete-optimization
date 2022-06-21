@@ -364,7 +364,6 @@ def sgs_debug_imopse():
     from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
         get_data_available,
         parse_file,
-        write_solution,
     )
 
     files = get_data_available()
