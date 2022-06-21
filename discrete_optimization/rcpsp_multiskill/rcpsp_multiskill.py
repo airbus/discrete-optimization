@@ -8,7 +8,6 @@ from typing import (
     Hashable,
     Iterable,
     List,
-    NamedTuple,
     Optional,
     Set,
     Tuple,
@@ -2738,9 +2737,10 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
 
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {}
-        max_number_modes = max(
-            [len(list(self.mode_details[x].keys())) for x in self.mode_details.keys()]
-        )
+        mode_arity = [
+            len(self.mode_details[task]) for task in self.tasks_list_non_dummy
+        ]
+        max_number_modes = max(mode_arity)
         dict_register["priority_list_task"] = {
             "name": "priority_list_task",
             "type": [TypeAttribute.PERMUTATION, TypeAttribute.PERMUTATION_RCPSP],
@@ -2761,23 +2761,26 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
             "name": "modes_vector",
             "n": self.n_jobs_non_dummy,
             "arity": max_number_modes,
-            "type": [TypeAttribute.LIST_INTEGER],
+            "low": 1,
+            "up": mode_arity,
+            "arities": mode_arity,
+            "type": [TypeAttribute.LIST_INTEGER, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
         }
 
-        mode_arity = [
-            len(list(self.mode_details[list(self.mode_details.keys())[i]].keys()))
-            for i in range(1, len(self.mode_details.keys()) - 1)
-        ]
         dict_register["modes_arity_fix"] = {
             "name": "modes_vector",
             "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
-            "arities": mode_arity,
+            "low": 1,
+            "up": mode_arity,
+            "arities": mode_arity
         }
         dict_register["modes_arity_fix_from_0"] = {
             "name": "modes_vector_from0",
             "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
+            "low": 0,
+            "up": [x-1 for x in mode_arity],
             "arities": mode_arity,
         }
 
