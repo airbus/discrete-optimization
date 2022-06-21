@@ -49,23 +49,10 @@ class LP_Solver_MRSCPSP(MilpSolver):
         self.model = Model(
             name="mrcpsp", sense=MINIMIZE, solver_name=map_solver[self.lp_solver]
         )
-        sorted_tasks = sorted(self.rcpsp_model.mode_details.keys())
-        max_duration = (
-            sum(
-                [
-                    int(
-                        max(
-                            [
-                                self.rcpsp_model.mode_details[key][mode]["duration"]
-                                for mode in self.rcpsp_model.mode_details[key]
-                            ]
-                        )
-                    )
-                    for key in sorted_tasks
-                ]
-            )
-            + 10
-        )
+        sorted_tasks = self.rcpsp_model.tasks_list
+        max_time = args.get("max_time", self.rcpsp_model.horizon)
+        max_duration = max_time
+
         renewable = {
             r: self.rcpsp_model.resources_availability[r]
             for r in self.rcpsp_model.resources_availability
