@@ -72,7 +72,7 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             for x in current_solution.schedule
             if current_solution.get_end_time(x) >= max_time - 20
         ]
-        nb_jobs = self.problem.n_jobs_non_dummy + 2
+        nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
                 current_solution.schedule.keys(), int(self.fraction_to_fix * nb_jobs)
@@ -82,7 +82,7 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             if lj in jobs_to_fix:
                 jobs_to_fix.remove(lj)
         list_strings = []
-        self.employees_position = sorted(self.problem.employees)
+        self.employees_position = self.problem.employees_list
         task_to_fix = set(
             random.sample(
                 current_solution.schedule.keys(),
@@ -115,41 +115,45 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
                 continue
             for task in task_to_fix:
                 emp = self.employees_position[i - 1]
+                index_minizinc = cp_solver.index_in_minizinc[task]
                 if (
                     task in current_solution.employee_usage
                     and emp in current_solution.employee_usage[task]
                     and len(current_solution.employee_usage[task][emp]) > 0
                 ):
                     string1 = (
-                        "constraint unit_used[" + str(i) + "," + str(task) + "] = 1;\n"
+                        "constraint unit_used[" + str(i) + "," + str(index_minizinc) + "] = 1;\n"
                     )
                 else:
                     string1 = (
-                        "constraint unit_used[" + str(i) + "," + str(task) + "] = 0;\n"
+                        "constraint unit_used[" + str(i) + "," + str(index_minizinc) + "] = 0;\n"
                     )
                 child_instance.add_string(string1)
                 list_strings += [string1]
         for job in [self.problem.sink_task]:
+            index_minizinc = cp_solver.index_in_minizinc[job]
             start_time_j = current_solution.schedule[job]["start_time"]
             string1 = (
-                "constraint start[" + str(job) + "] <= " + str(start_time_j) + ";\n"
+                "constraint start[" + str(index_minizinc) + "] <= " + str(start_time_j) + ";\n"
             )
             list_strings += [string1]
             child_instance.add_string(string1)
         for job in jobs_to_fix:
             start_time_j = current_solution.schedule[job]["start_time"]
+            index_minizinc = cp_solver.index_in_minizinc[job]
             min_st = max(start_time_j - self.minus_delta, 0)
             max_st = min(start_time_j + self.plus_delta, max_time)
-            string1 = "constraint start[" + str(job) + "] <= " + str(max_st) + ";\n"
-            string2 = "constraint start[" + str(job) + "] >= " + str(min_st) + ";\n"
+            string1 = "constraint start[" + str(index_minizinc) + "] <= " + str(max_st) + ";\n"
+            string2 = "constraint start[" + str(index_minizinc) + "] >= " + str(min_st) + ";\n"
             list_strings += [string1]
             list_strings += [string2]
             child_instance.add_string(string1)
             child_instance.add_string(string2)
         for job in current_solution.schedule.keys():
+            index_minizinc = cp_solver.index_in_minizinc[job]
             if job in jobs_to_fix:
                 continue
-            string1 = "constraint start[" + str(job) + "] <= " + str(max_time) + ";\n"
+            string1 = "constraint start[" + str(index_minizinc) + "] <= " + str(max_time) + ";\n"
             child_instance.add_string(string1)
             list_strings += [string1]
         return list_strings
