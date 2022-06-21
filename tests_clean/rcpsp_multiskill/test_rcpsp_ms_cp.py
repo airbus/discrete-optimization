@@ -24,7 +24,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
-    ParametersCP,
+    ParametersCP, SearchStrategyMS_MRCPSP,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import LP_Solver_MRSCPSP
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
@@ -123,7 +123,7 @@ def create_toy_msrcpsp():
     return model
 
 
-def create_toy_santi():
+def create_toy_v2():
     skills_set: Set[str] = {"S1", "S2", "S3"}
     resources_set: Set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
@@ -196,10 +196,11 @@ def create_toy_santi():
 
 
 def test_cp_toy_model():
-    model_msrcpsp = create_toy_santi()
+    model_msrcpsp = create_toy_v2()
 
     cp_model = CP_MS_MRCPSP_MZN(
-        rcpsp_model=model_msrcpsp, cp_solver_name=CPSolverName.GECODE
+        rcpsp_model=model_msrcpsp,
+        cp_solver_name=CPSolverName.GECODE
     )
     cp_model.init_model(
         add_calendar_constraint_unit=False,
@@ -213,8 +214,6 @@ def test_cp_toy_model():
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
-    plot_resource_individual_gantt(rcpsp_model=model_msrcpsp, rcpsp_sol=solution)
-    plot_task_gantt(rcpsp_model=model_msrcpsp, rcpsp_sol=solution)
 
 
 def test_cp_imopse():
@@ -226,23 +225,23 @@ def test_cp_imopse():
         one_ressource_per_task=True,
         cp_solver_name=CPSolverName.CHUFFED,
     )
-    cp_model.init_model(
-        add_calendar_constraint_unit=False,
-        fake_tasks=False,
-        add_objective_makespan=True,
-        ignore_sec_objective=True,
-        output_type=True,
-        max_time=500,
-        # here you put makespan constraint. by default, would use model_msrcpsp.horizon if not provided.
-        exact_skills_need=False,
-    )
+    cp_model.init_model(model_type="multi-calendar",
+                        add_calendar_constraint_unit=False,
+                        fake_tasks=False,
+                        add_objective_makespan=True,
+                        ignore_sec_objective=True,
+                        output_type=True,
+                        max_time=500, # here you put makespan constraint. by default,
+                        # would use model_msrcpsp.horizon if not provided.
+                        search_strategy=SearchStrategyMS_MRCPSP.PRIORITY_SEARCH_START_UNIT_USED,
+                        exact_skills_need=False)
     parameters_cp = ParametersCP.default()
-    parameters_cp.free_search = True
+    parameters_cp.free_search = False
     # With parameters_cp.free_search=True you get fast results but quite bad !
     # but can be a good thing to be used in findmus algo
     # with free_search=False, you get first results after 10 seconds or so, but good quality.
     parameters_cp.intermediate_solution = True
-    parameters_cp.TimeLimit = 500
+    parameters_cp.TimeLimit = 30
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
@@ -262,21 +261,20 @@ def test_lns_small_neighbor():
     solution = initial_solution_provider.get_starting_solution().get_best_solution()
     makespan = model_msrcpsp.evaluate(solution)["makespan"]
     model_msrcpsp.horizon = makespan + 5
-    model_rcpsp = model_msrcpsp.build_multimode_rcpsp_calendar_representative()
     lns_cp = LNS_CP_MS_RCPSP_SOLVER(
         rcpsp_model=model_msrcpsp,
-        option_neighbor=OptionNeighbor.MIX_LARGE_NEIGH,
+        option_neighbor=OptionNeighbor.MIX_FAST,
         one_ressource_per_task=True,
     )
     parameters_cp = ParametersCP.default()
     parameters_cp.intermediate_solution = True
     parameters_cp.all_solutions = False
-    parameters_cp.TimeLimit = 200
-    parameters_cp.TimeLimit_iter0 = 60
+    parameters_cp.TimeLimit = 10
+    parameters_cp.TimeLimit_iter0 = 10
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
-        nb_iteration_lns=300,
-        max_time_seconds=500,
+        nb_iteration_lns=100,
+        max_time_seconds=100,
         nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )
@@ -310,12 +308,12 @@ def test_lns():
     parameters_cp = ParametersCP.default()
     parameters_cp.intermediate_solution = True
     parameters_cp.all_solutions = False
-    parameters_cp.TimeLimit = 100
-    parameters_cp.TimeLimit_iter0 = 60
+    parameters_cp.TimeLimit = 10
+    parameters_cp.TimeLimit_iter0 = 10
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
-        nb_iteration_lns=300,
-        max_time_seconds=500,
+        nb_iteration_lns=100,
+        max_time_seconds=100,
         nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )
