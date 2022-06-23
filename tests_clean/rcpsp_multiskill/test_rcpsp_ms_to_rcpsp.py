@@ -1,4 +1,5 @@
 import random
+import sys
 
 import numpy as np
 import pytest
@@ -38,6 +39,7 @@ def test_ms_to_rcpsp_imopse(random_seed):
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
 def test_solve_rcpsp_imopse1():
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
     model_msrcpsp, new_name_to_original_task_id = parse_file(files[0], max_horizon=2000)
@@ -69,6 +71,7 @@ def test_solve_rcpsp_imopse1():
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
 def test_solve_rcpsp_imopse2():
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
     model_msrcpsp, new_name_to_original_task_id = parse_file(files[0], max_horizon=2000)
