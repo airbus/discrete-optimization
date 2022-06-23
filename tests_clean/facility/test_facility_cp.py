@@ -13,7 +13,7 @@ from discrete_optimization.facility.solvers.facility_cp_solvers import (
 )
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="Not yet working on windows")
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
 def test_facility_cp():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
     facility_problem = parse_file(file)
