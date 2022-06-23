@@ -41,7 +41,7 @@ class MultiSkillToRCPSP:
         one_worker_type_per_task: bool = False,
     ):
         params_cp = ParametersCP(
-            time_limit=30,
+            time_limit=0.5,
             pool_solutions=10000,
             intermediate_solution=True,
             all_solutions=False,
