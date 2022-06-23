@@ -67,7 +67,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
         for task in sorted_tasks:
             for suc in self.rcpsp_model.successors[task]:
                 list_edges.append([task, suc])
-        times = range(max_duration + 1)
+        times = range(max_duration)
         self.modes = {
             task: {
                 mode: self.model.add_var(
@@ -170,7 +170,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
                         # this employee will be useless anyway, pass
                         continue
                     for s in required_skills:
-                        for t in range(max_duration + 1):
+                        for t in range(max_duration):
                             self.employee_usage[
                                 (employee, task, mode, t, s)
                             ] = self.model.add_var(
