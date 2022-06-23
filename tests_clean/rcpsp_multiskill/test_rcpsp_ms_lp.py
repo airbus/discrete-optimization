@@ -67,15 +67,15 @@ def test_lp_bis():
     employee: Dict[int, Employee] = {
         1: Employee(
             dict_skill={"S1": SkillDetail(1.0, 1.0, 1.0)},
-            calendar_employee=[True] * 100,
+            calendar_employee=[True] * 1000,
         ),
         2: Employee(
             dict_skill={"S2": SkillDetail(1.0, 1.0, 1.0)},
-            calendar_employee=[True] * 100,
+            calendar_employee=[True] * 1000,
         ),
         3: Employee(
             dict_skill={"S3": SkillDetail(1.0, 1.0, 1.0)},
-            calendar_employee=[True] * 100,
+            calendar_employee=[True] * 1000,
         ),
     }
     index = 5
