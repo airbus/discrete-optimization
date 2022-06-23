@@ -32,6 +32,9 @@ from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver impor
 )
 
 
+@pytest.mark.skip(
+    reason="mip+gurobi not working with gurobi license coming from mere pip install"
+)
 def test_multiskill_imopse():
     params_objective_function = ParamsObjectiveFunction(
         objectives=["makespan"],
