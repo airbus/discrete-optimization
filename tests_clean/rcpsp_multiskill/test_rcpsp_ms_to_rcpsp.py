@@ -37,6 +37,7 @@ def test_ms_to_rcpsp_imopse(random_seed):
     assert rcpsp_model.n_jobs == 202
 
 
+@pytest.mark.slow
 def test_solve_rcpsp_imopse1():
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
     model_msrcpsp, new_name_to_original_task_id = parse_file(files[0], max_horizon=2000)
@@ -67,6 +68,7 @@ def test_solve_rcpsp_imopse1():
     assert rcpsp_model.satisfy(best_solution)
 
 
+@pytest.mark.slow
 def test_solve_rcpsp_imopse2():
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
     model_msrcpsp, new_name_to_original_task_id = parse_file(files[0], max_horizon=2000)
