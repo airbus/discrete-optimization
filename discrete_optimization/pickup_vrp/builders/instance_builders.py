@@ -1,9 +1,10 @@
-from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass
-import numpy as np
 import random
-import scipy.spatial.distance as dist
-import discrete_optimization.vrp.vrp_parser as vrp_parser
+
 import discrete_optimization.tsp.tsp_parser as tsp_parser
+import discrete_optimization.vrp.vrp_parser as vrp_parser
+import numpy as np
+import scipy.spatial.distance as dist
+from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass
 
 
 def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
@@ -21,32 +22,40 @@ def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
     # we stack the origin nodes after
     nodes_origin = {nb_nodes_transportation + i for i in range(number_vehicle)}
     # and destination nodes too
-    nodes_target = {nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)}
+    nodes_target = {
+        nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
+    }
     list_pickup_deliverable = []
     origin_vehicle = {i: nb_nodes_transportation + i for i in range(number_vehicle)}
-    target_vehicle = {i: nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)}
+    target_vehicle = {
+        i: nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
+    }
     # we don't include resources neither capacities
     resources_set = set()
     capacities = {i: {} for i in range(number_vehicle)}
     resources_flow_node = {i: {} for i in range(nb_nodes_transportation)}
-    resources_flow_edges = {i: {j: {} for j in range(nb_nodes_transportation) if j != i}
-                            for i in range(nb_nodes_transportation)}
+    resources_flow_edges = {
+        i: {j: {} for j in range(nb_nodes_transportation) if j != i}
+        for i in range(nb_nodes_transportation)
+    }
 
     # real number of nodes in the problem definition
     nb_nodes_real = nb_nodes_transportation + 2 * number_vehicle
     # we sample random 2D coordinates
-    coordinates = np.random.randint(-20, 20, size=(nb_nodes_real,
-                                                   2))
+    coordinates = np.random.randint(-20, 20, size=(nb_nodes_real, 2))
     coordinates[:, 0] += 40
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
-    distance_delta_dict = {i: {j: int(distance_delta[i, j])
-                               for j in range(nb_nodes_real) if j != i}
-                           for i in range(nb_nodes_real)}
-    time_delta_dict = {i: {j: int(distance_delta_dict[i][j] / 2)
-                           for j in distance_delta_dict[i]}
-                       for i in distance_delta_dict}
+    distance_delta_dict = {
+        i: {j: int(distance_delta[i, j]) for j in range(nb_nodes_real) if j != i}
+        for i in range(nb_nodes_real)
+    }
+    time_delta_dict = {
+        i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
+        for i in distance_delta_dict
+    }
     from sklearn.cluster import KMeans
+
     nb_clusters = nb_clusters
     # compute clusters based on geographical positions.
     kmeans = KMeans(n_clusters=nb_clusters, random_state=0).fit(coordinates)
@@ -58,21 +67,23 @@ def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
     for j in range(number_vehicle):
         clusters_dict[target_vehicle[j]] = max(labels)
         clusters_dict[origin_vehicle[j]] = min(labels)
-    return GPDP(number_vehicle=number_vehicle,
-                nodes_transportation=nodes_transportation,
-                nodes_origin=nodes_origin,
-                nodes_target=nodes_target,
-                list_pickup_deliverable=list_pickup_deliverable,
-                origin_vehicle=origin_vehicle,
-                target_vehicle=target_vehicle,
-                resources_set=resources_set,
-                capacities=capacities,
-                resources_flow_edges=resources_flow_edges,
-                resources_flow_node=resources_flow_node,
-                distance_delta=distance_delta_dict,
-                time_delta=time_delta_dict,
-                coordinates_2d=coordinates,
-                clusters_dict=clusters_dict)
+    return GPDP(
+        number_vehicle=number_vehicle,
+        nodes_transportation=nodes_transportation,
+        nodes_origin=nodes_origin,
+        nodes_target=nodes_target,
+        list_pickup_deliverable=list_pickup_deliverable,
+        origin_vehicle=origin_vehicle,
+        target_vehicle=target_vehicle,
+        resources_set=resources_set,
+        capacities=capacities,
+        resources_flow_edges=resources_flow_edges,
+        resources_flow_node=resources_flow_node,
+        distance_delta=distance_delta_dict,
+        time_delta=time_delta_dict,
+        coordinates_2d=coordinates,
+        clusters_dict=clusters_dict,
+    )
 
 
 def create_pickup_and_delivery(
@@ -89,31 +100,39 @@ def create_pickup_and_delivery(
     nodes_transportation = set(range(nb_nodes_transportation))
     nodes_origin = {nb_nodes_transportation + i for i in range(number_vehicle)}
     # and destination nodes too
-    nodes_target = {nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)}
+    nodes_target = {
+        nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
+    }
     list_pickup_deliverable = []
     origin_vehicle = {i: nb_nodes_transportation + i for i in range(number_vehicle)}
-    target_vehicle = {i: nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)}
+    target_vehicle = {
+        i: nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
+    }
 
-    all_nodes = set(range(nb_nodes_transportation+2*number_vehicle))
+    all_nodes = set(range(nb_nodes_transportation + 2 * number_vehicle))
     resources_set = set()
     capacities = {0: {}}
     resources_flow_node = {i: {} for i in all_nodes}
-    resources_flow_edges = {i: {j: {} for j in all_nodes if j != i}
-                            for i in all_nodes}
+    resources_flow_edges = {i: {j: {} for j in all_nodes if j != i} for i in all_nodes}
     import random
+
     import numpy as np
-    coordinates = np.random.randint(-20, 20, size=(len(all_nodes),
-                                                   2))
+
+    coordinates = np.random.randint(-20, 20, size=(len(all_nodes), 2))
     import scipy.spatial.distance as dist
+
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
-    distance_delta_dict = {i: {j: int(distance_delta[i, j])
-                               for j in all_nodes if j != i}
-                           for i in all_nodes}
-    time_delta_dict = {i: {j: int(distance_delta_dict[i][j]/2)
-                           for j in distance_delta_dict[i]}
-                       for i in distance_delta_dict}
+    distance_delta_dict = {
+        i: {j: int(distance_delta[i, j]) for j in all_nodes if j != i}
+        for i in all_nodes
+    }
+    time_delta_dict = {
+        i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
+        for i in distance_delta_dict
+    }
     from sklearn.cluster import KMeans
+
     clusters_dict = {i: i + 1 for i in all_nodes}
     if include_cluster:
         nb_clusters = nb_clusters
@@ -134,7 +153,7 @@ def create_pickup_and_delivery(
                 nodes_possible.remove(node_origin)
             for node_target in nodes_target:
                 nodes_possible.remove(node_target)
-            n = int(len(nodes_possible)*fraction_of_pickup_deliver)
+            n = int(len(nodes_possible) * fraction_of_pickup_deliver)
             for j in range(n):
                 k1 = random.choice(list(nodes_possible))
                 nodes_possible.remove(k1)
@@ -149,29 +168,31 @@ def create_pickup_and_delivery(
                     cluster_possible.remove(clusters_dict[origin_vehicle[j]])
                 if target_vehicle[j] in cluster_possible:
                     cluster_possible.remove(clusters_dict[target_vehicle[j]])
-            n = len(cluster_possible)//4
+            n = len(cluster_possible) // 4
             for j in range(n):
                 cluster_1 = random.choice(list(cluster_possible))
                 cluster_possible.remove(cluster_1)
                 cluster_2 = random.choice(list(cluster_possible))
                 cluster_possible.remove(cluster_2)
                 list_pickup_deliverable_per_cluster += [({cluster_1}, {cluster_2})]
-    return GPDP(number_vehicle=number_vehicle,
-                nodes_transportation=nodes_transportation,
-                nodes_origin=nodes_origin,
-                nodes_target=nodes_target,
-                list_pickup_deliverable=list_pickup_deliverable,
-                origin_vehicle=origin_vehicle,
-                target_vehicle=target_vehicle,
-                resources_set=resources_set,
-                capacities=capacities,
-                resources_flow_edges=resources_flow_edges,
-                resources_flow_node=resources_flow_node,
-                distance_delta=distance_delta_dict,
-                time_delta=time_delta_dict,
-                coordinates_2d=coordinates,
-                clusters_dict=clusters_dict,
-                list_pickup_deliverable_per_cluster=list_pickup_deliverable_per_cluster)
+    return GPDP(
+        number_vehicle=number_vehicle,
+        nodes_transportation=nodes_transportation,
+        nodes_origin=nodes_origin,
+        nodes_target=nodes_target,
+        list_pickup_deliverable=list_pickup_deliverable,
+        origin_vehicle=origin_vehicle,
+        target_vehicle=target_vehicle,
+        resources_set=resources_set,
+        capacities=capacities,
+        resources_flow_edges=resources_flow_edges,
+        resources_flow_node=resources_flow_node,
+        distance_delta=distance_delta_dict,
+        time_delta=time_delta_dict,
+        coordinates_2d=coordinates,
+        clusters_dict=clusters_dict,
+        list_pickup_deliverable_per_cluster=list_pickup_deliverable_per_cluster,
+    )
 
 
 def load_vrp_and_transform(index_in_files_available: int = 1):
@@ -191,114 +212,373 @@ def load_tsp_and_transform(index_in_files_available: int = 1):
 def create_ortools_example():
     """Build instances from ortools reference guide."""
     data = {}
-    coordinates = [(456, 320),  # location 0 - the depot
-                   (228, 0),  # location 1
-                   (912, 0),  # location 2
-                   (0, 80),  # location 3
-                   (114, 80),  # location 4
-                   (570, 160),  # location 5
-                   (798, 160),  # location 6
-                   (342, 240),  # location 7
-                   (684, 240),  # location 8
-                   (570, 400),  # location 9
-                   (912, 400),  # location 10
-                   (114, 480),  # location 11
-                   (228, 480),  # location 12
-                   (342, 560),  # location 13
-                   (684, 560),  # location 14
-                   (0, 640),  # location 15
-                   (798, 640)]
-    coordinates = [(0, 0),
-                   (-2, 4),
-                   (4, 4),
-                   (-4, 3),
-                   (-3, 3),
-                   (1, 2),
-                   (3, 3),
-                   (-1, 1),
-                   (2, 1),
-                   (1, -1),
-                   (4, -1),
-                   (-3, -2),
-                   (-2, -2),
-                   (-1, -3),
-                   (2, -3),
-                   (-4, -4),
-                   (3, -4)]
+    coordinates = [
+        (456, 320),  # location 0 - the depot
+        (228, 0),  # location 1
+        (912, 0),  # location 2
+        (0, 80),  # location 3
+        (114, 80),  # location 4
+        (570, 160),  # location 5
+        (798, 160),  # location 6
+        (342, 240),  # location 7
+        (684, 240),  # location 8
+        (570, 400),  # location 9
+        (912, 400),  # location 10
+        (114, 480),  # location 11
+        (228, 480),  # location 12
+        (342, 560),  # location 13
+        (684, 560),  # location 14
+        (0, 640),  # location 15
+        (798, 640),
+    ]
+    coordinates = [
+        (0, 0),
+        (-2, 4),
+        (4, 4),
+        (-4, 3),
+        (-3, 3),
+        (1, 2),
+        (3, 3),
+        (-1, 1),
+        (2, 1),
+        (1, -1),
+        (4, -1),
+        (-3, -2),
+        (-2, -2),
+        (-1, -3),
+        (2, -3),
+        (-4, -4),
+        (3, -4),
+    ]
     data["coordinates"] = coordinates
-    data['distance_matrix'] = [
+    data["distance_matrix"] = [
         [
-            0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354,
-            468, 776, 662
+            0,
+            548,
+            776,
+            696,
+            582,
+            274,
+            502,
+            194,
+            308,
+            194,
+            536,
+            502,
+            388,
+            354,
+            468,
+            776,
+            662,
         ],
         [
-            548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674,
-            1016, 868, 1210
+            548,
+            0,
+            684,
+            308,
+            194,
+            502,
+            730,
+            354,
+            696,
+            742,
+            1084,
+            594,
+            480,
+            674,
+            1016,
+            868,
+            1210,
         ],
         [
-            776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164,
-            1130, 788, 1552, 754
+            776,
+            684,
+            0,
+            992,
+            878,
+            502,
+            274,
+            810,
+            468,
+            742,
+            400,
+            1278,
+            1164,
+            1130,
+            788,
+            1552,
+            754,
         ],
         [
-            696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822,
-            1164, 560, 1358
+            696,
+            308,
+            992,
+            0,
+            114,
+            650,
+            878,
+            502,
+            844,
+            890,
+            1232,
+            514,
+            628,
+            822,
+            1164,
+            560,
+            1358,
         ],
         [
-            582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708,
-            1050, 674, 1244
+            582,
+            194,
+            878,
+            114,
+            0,
+            536,
+            764,
+            388,
+            730,
+            776,
+            1118,
+            400,
+            514,
+            708,
+            1050,
+            674,
+            1244,
         ],
         [
-            274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628,
-            514, 1050, 708
+            274,
+            502,
+            502,
+            650,
+            536,
+            0,
+            228,
+            308,
+            194,
+            240,
+            582,
+            776,
+            662,
+            628,
+            514,
+            1050,
+            708,
         ],
         [
-            502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856,
-            514, 1278, 480
+            502,
+            730,
+            274,
+            878,
+            764,
+            228,
+            0,
+            536,
+            194,
+            468,
+            354,
+            1004,
+            890,
+            856,
+            514,
+            1278,
+            480,
         ],
         [
-            194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320,
-            662, 742, 856
+            194,
+            354,
+            810,
+            502,
+            388,
+            308,
+            536,
+            0,
+            342,
+            388,
+            730,
+            468,
+            354,
+            320,
+            662,
+            742,
+            856,
         ],
         [
-            308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662,
-            320, 1084, 514
+            308,
+            696,
+            468,
+            844,
+            730,
+            194,
+            194,
+            342,
+            0,
+            274,
+            388,
+            810,
+            696,
+            662,
+            320,
+            1084,
+            514,
         ],
         [
-            194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388,
-            274, 810, 468
+            194,
+            742,
+            742,
+            890,
+            776,
+            240,
+            468,
+            388,
+            274,
+            0,
+            342,
+            536,
+            422,
+            388,
+            274,
+            810,
+            468,
         ],
         [
-            536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764,
-            730, 388, 1152, 354
+            536,
+            1084,
+            400,
+            1232,
+            1118,
+            582,
+            354,
+            730,
+            388,
+            342,
+            0,
+            878,
+            764,
+            730,
+            388,
+            1152,
+            354,
         ],
         [
-            502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114,
-            308, 650, 274, 844
+            502,
+            594,
+            1278,
+            514,
+            400,
+            776,
+            1004,
+            468,
+            810,
+            536,
+            878,
+            0,
+            114,
+            308,
+            650,
+            274,
+            844,
         ],
         [
-            388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194,
-            536, 388, 730
+            388,
+            480,
+            1164,
+            628,
+            514,
+            662,
+            890,
+            354,
+            696,
+            422,
+            764,
+            114,
+            0,
+            194,
+            536,
+            388,
+            730,
         ],
         [
-            354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0,
-            342, 422, 536
+            354,
+            674,
+            1130,
+            822,
+            708,
+            628,
+            856,
+            320,
+            662,
+            388,
+            730,
+            308,
+            194,
+            0,
+            342,
+            422,
+            536,
         ],
         [
-            468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536,
-            342, 0, 764, 194
+            468,
+            1016,
+            788,
+            1164,
+            1050,
+            514,
+            514,
+            662,
+            320,
+            274,
+            388,
+            650,
+            536,
+            342,
+            0,
+            764,
+            194,
         ],
         [
-            776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274,
-            388, 422, 764, 0, 798
+            776,
+            868,
+            1552,
+            560,
+            674,
+            1050,
+            1278,
+            742,
+            1084,
+            810,
+            1152,
+            274,
+            388,
+            422,
+            764,
+            0,
+            798,
         ],
         [
-            662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730,
-            536, 194, 798, 0
+            662,
+            1210,
+            754,
+            1358,
+            1244,
+            708,
+            480,
+            856,
+            514,
+            468,
+            354,
+            844,
+            730,
+            536,
+            194,
+            798,
+            0,
         ],
     ]
-    data['num_vehicles'] = 4
-    data['depot'] = 0
-    data['pickups_deliveries'] = [
+    data["num_vehicles"] = 4
+    data["depot"] = 0
+    data["pickups_deliveries"] = [
         [1, 6],
         [2, 10],
         [4, 3],
@@ -308,7 +588,7 @@ def create_ortools_example():
         [13, 12],
         [16, 14],
     ]
-    data['time_matrix'] = [
+    data["time_matrix"] = [
         [0, 6, 9, 8, 7, 3, 6, 2, 3, 2, 6, 6, 4, 4, 5, 9, 7],
         [6, 0, 8, 3, 2, 6, 8, 4, 8, 8, 13, 7, 5, 8, 12, 10, 14],
         [9, 8, 0, 11, 10, 6, 3, 9, 5, 8, 4, 15, 14, 13, 9, 18, 9],
@@ -327,7 +607,7 @@ def create_ortools_example():
         [9, 10, 18, 6, 8, 12, 15, 8, 13, 9, 13, 3, 4, 5, 9, 0, 9],
         [7, 14, 9, 16, 14, 8, 5, 10, 6, 5, 4, 10, 8, 6, 2, 9, 0],
     ]
-    data['time_windows'] = [
+    data["time_windows"] = [
         (0, 5),  # depot
         (7, 12),  # 1
         (10, 15),  # 2
@@ -346,19 +626,28 @@ def create_ortools_example():
         (10, 15),  # 15
         (11, 15),  # 16
     ]
-    data['demands'] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
-    data['vehicle_capacities'] = [15, 15, 15, 15]
+    data["demands"] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
+    data["vehicle_capacities"] = [15, 15, 15, 15]
     data_reindex = {}
-    coordinates_reindex = coordinates[1:] + [coordinates[data["depot"]] for i in range(2*data["num_vehicles"])]
-    original_index = [i for i in range(1, len(coordinates))] + [data["depot"] for i in range(2*data["num_vehicles"])]
+    coordinates_reindex = coordinates[1:] + [
+        coordinates[data["depot"]] for i in range(2 * data["num_vehicles"])
+    ]
+    original_index = [i for i in range(1, len(coordinates))] + [
+        data["depot"] for i in range(2 * data["num_vehicles"])
+    ]
     original_index_to_new = {}
     for j in range(len(original_index)):
         original_index_to_new[original_index[j]] = j
-    number_nodes_non_depot = len(coordinates)-1
-    nodes_origin = list(range(number_nodes_non_depot,
-                              number_nodes_non_depot+data["num_vehicles"]))
-    nodes_target = list(range(number_nodes_non_depot+data["num_vehicles"],
-                              number_nodes_non_depot+2*data["num_vehicles"]))
+    number_nodes_non_depot = len(coordinates) - 1
+    nodes_origin = list(
+        range(number_nodes_non_depot, number_nodes_non_depot + data["num_vehicles"])
+    )
+    nodes_target = list(
+        range(
+            number_nodes_non_depot + data["num_vehicles"],
+            number_nodes_non_depot + 2 * data["num_vehicles"],
+        )
+    )
     nodes_origin_dict = {i: nodes_origin[i] for i in range(data["num_vehicles"])}
     nodes_target_dict = {i: nodes_target[i] for i in range(data["num_vehicles"])}
     distance_delta_dict = {}
@@ -367,22 +656,35 @@ def create_ortools_example():
         distance_delta_dict[index] = {}
         time_delta_dict[index] = {}
         for index_2 in range(len(original_index)):
-            distance_delta_dict[index][index_2] = data["distance_matrix"][original_index[index]][original_index[index_2]]
-            time_delta_dict[index][index_2] = data["time_matrix"][original_index[index]][original_index[index_2]]
+            distance_delta_dict[index][index_2] = data["distance_matrix"][
+                original_index[index]
+            ][original_index[index_2]]
+            time_delta_dict[index][index_2] = data["time_matrix"][
+                original_index[index]
+            ][original_index[index_2]]
     pickup_and_deliveries = []
     for p_d in data["pickups_deliveries"]:
-        pickup_and_deliveries += [([original_index_to_new[p_d[0]]], [original_index_to_new[p_d[1]]])]
+        pickup_and_deliveries += [
+            ([original_index_to_new[p_d[0]]], [original_index_to_new[p_d[1]]])
+        ]
     capacities = {}
     resources_set = {"demand"}
     for i in range(data["num_vehicles"]):
         capacities[i] = {"demand": (0, data["vehicle_capacities"][i])}
-    resources_flow_edges = {(x, y): {"demand": 0} for x in distance_delta_dict
-                            for y in distance_delta_dict[x]}
+    resources_flow_edges = {
+        (x, y): {"demand": 0}
+        for x in distance_delta_dict
+        for y in distance_delta_dict[x]
+    }
     resources_flow_nodes = {}
     for index in range(len(original_index)):
-        resources_flow_nodes[index] = {"demand": -data["demands"][original_index[index]]}
+        resources_flow_nodes[index] = {
+            "demand": -data["demands"][original_index[index]]
+        }
     for k in nodes_origin_dict:
-        resources_flow_nodes[nodes_origin_dict[k]] = {"demand": capacities[k]["demand"][1]}
+        resources_flow_nodes[nodes_origin_dict[k]] = {
+            "demand": capacities[k]["demand"][1]
+        }
     for k in nodes_target_dict:
         resources_flow_nodes[nodes_target_dict[k]] = {"demand": 0}
     coordinates_dict = {}
@@ -393,16 +695,20 @@ def create_ortools_example():
         if i in nodes_target:
             continue
         time_windows_nodes[i] = data["time_windows"][original_index[i]]
-    return GPDP(number_vehicle=data["num_vehicles"],
-                nodes_transportation=set(range(number_nodes_non_depot)),
-                nodes_origin=set(nodes_origin),
-                nodes_target=set(nodes_target),
-                origin_vehicle=nodes_origin_dict,
-                target_vehicle=nodes_target_dict,list_pickup_deliverable=pickup_and_deliveries,
-                resources_set=resources_set,
-                capacities=capacities, resources_flow_node=resources_flow_nodes,
-                resources_flow_edges=resources_flow_edges,
-                distance_delta=distance_delta_dict,
-                time_delta=time_delta_dict,
-                coordinates_2d=coordinates_dict,
-                time_windows_nodes=time_windows_nodes)
+    return GPDP(
+        number_vehicle=data["num_vehicles"],
+        nodes_transportation=set(range(number_nodes_non_depot)),
+        nodes_origin=set(nodes_origin),
+        nodes_target=set(nodes_target),
+        origin_vehicle=nodes_origin_dict,
+        target_vehicle=nodes_target_dict,
+        list_pickup_deliverable=pickup_and_deliveries,
+        resources_set=resources_set,
+        capacities=capacities,
+        resources_flow_node=resources_flow_nodes,
+        resources_flow_edges=resources_flow_edges,
+        distance_delta=distance_delta_dict,
+        time_delta=time_delta_dict,
+        coordinates_2d=coordinates_dict,
+        time_windows_nodes=time_windows_nodes,
+    )

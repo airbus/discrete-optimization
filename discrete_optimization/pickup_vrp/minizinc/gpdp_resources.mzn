@@ -164,4 +164,3 @@ output [
     "resourceleaving =", show(resource_leaving_node), "\n",
 
 ];
-

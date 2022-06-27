@@ -1,23 +1,41 @@
-import os, sys
-from typing import Tuple, Dict
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),"../"))
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, SingleModeRCPSPModel, \
-    MultiModeRCPSPModel, RCPSPSolution
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPSolution_Variant, \
-    MS_RCPSPModel, MS_RCPSPModel_Variant, Employee, SkillDetail, MS_RCPSPSolution
 import os
 import sys
-from discrete_optimization.generic_tools.path_tools import abspath_from_file
-path_to_data =\
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/dataset_def/")
-folder_to_do_solution = \
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/do_solutions/")
+from typing import Dict, Tuple
 
-folder_to_do_only_cp_solution = \
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/do_cp_solutions/")
-folder_to_benchmark_solution =\
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/de_best/")
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../"))
+import os
+import sys
+
+from discrete_optimization.generic_tools.path_tools import abspath_from_file
+from discrete_optimization.rcpsp.rcpsp_model import (
+    MultiModeRCPSPModel,
+    RCPSPModel,
+    RCPSPSolution,
+    SingleModeRCPSPModel,
+)
+from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
+    Employee,
+    MS_RCPSPModel,
+    MS_RCPSPModel_Variant,
+    MS_RCPSPSolution,
+    MS_RCPSPSolution_Variant,
+    SkillDetail,
+)
+
+path_to_data = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/dataset_def/"
+)
+folder_to_do_solution = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/do_solutions/"
+)
+
+folder_to_do_only_cp_solution = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "../data/rcpsp_multiskill/do_cp_solutions/",
+)
+folder_to_benchmark_solution = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../data/rcpsp_multiskill/de_best/"
+)
 
 
 def get_data_available():
@@ -45,10 +63,12 @@ def get_results_benchmark():
     return [os.path.join(folder_to_benchmark_solution, f) for f in files]
 
 
-def parse_imopse(input_data, max_horizon=None, one_unit_per_task=True, preemptive=False):
+def parse_imopse(
+    input_data, max_horizon=None, one_unit_per_task=True, preemptive=False
+):
     # parse the input
     # print('input_data\n',input_data)
-    lines = input_data.split('\n')
+    lines = input_data.split("\n")
 
     # "General characteristics:
     #     Tasks: 161
@@ -109,7 +129,7 @@ def parse_imopse(input_data, max_horizon=None, one_unit_per_task=True, preemptiv
                     if word[0] == "Q":
                         current_skill = word[:-1]
                         continue
-                    resource_dict[id_worker][current_skill] = int(word)+1
+                    resource_dict[id_worker][current_skill] = int(word) + 1
                     real_skills_found.add(current_skill)
         if task_zone:
             if words[0][0] == "=":
@@ -124,16 +144,20 @@ def parse_imopse(input_data, max_horizon=None, one_unit_per_task=True, preemptiv
             while i < len(words):
                 if words[i][0] == "Q":
                     current_skill = words[i][:-1]
-                    task_dict[task_id]["skills"][current_skill] = int(words[i+1])+1
+                    task_dict[task_id]["skills"][current_skill] = int(words[i + 1]) + 1
                     real_skills_found.add(current_skill)
-                    i = i+2
+                    i = i + 2
                     continue
                 else:
                     if "precedence" not in task_dict[task_id]:
                         task_dict[task_id]["precedence"] = []
                     task_dict[task_id]["precedence"] += [int(words[i])]
                     if int(words[i]) not in task_dict:
-                        task_dict[int(words[i])] = {"id": int(words[i]), "successors": [], "skills": {}}
+                        task_dict[int(words[i])] = {
+                            "id": int(words[i]),
+                            "successors": [],
+                            "skills": {},
+                        }
                     if "successors" not in task_dict[int(words[i])]:
                         task_dict[int(words[i])]["successors"] = []
                     task_dict[int(words[i])]["successors"] += [task_id]
@@ -141,58 +165,81 @@ def parse_imopse(input_data, max_horizon=None, one_unit_per_task=True, preemptiv
     # print(resource_dict)
     # print(task_dict)
     sorted_task_names = sorted(task_dict.keys())
-    task_id_to_new_name = {sorted_task_names[i]: i+2 for i in range(len(sorted_task_names))}
-    new_tame_to_original_task_id = {task_id_to_new_name[ind]: ind for ind in task_id_to_new_name}
-    mode_details = {task_id_to_new_name[task_id]:
-                    {1: {"duration": task_dict[task_id]["duration"]}}
-                    for task_id in task_dict}
+    task_id_to_new_name = {
+        sorted_task_names[i]: i + 2 for i in range(len(sorted_task_names))
+    }
+    new_tame_to_original_task_id = {
+        task_id_to_new_name[ind]: ind for ind in task_id_to_new_name
+    }
+    mode_details = {
+        task_id_to_new_name[task_id]: {1: {"duration": task_dict[task_id]["duration"]}}
+        for task_id in task_dict
+    }
     resource_dict = {int(i): resource_dict[i] for i in resource_dict}
     # skills = set(["Q"+str(i) for i in range(nb_skills)])
     skills = real_skills_found
     for task_id in task_dict:
         for skill in skills:
-            req_squill = task_dict[task_id]["skills"].get(skill, 0.)
+            req_squill = task_dict[task_id]["skills"].get(skill, 0.0)
             mode_details[task_id_to_new_name[task_id]][1][skill] = req_squill
     mode_details[1] = {1: {"duration": 0}}
     for skill in skills:
         mode_details[1][1][skill] = int(0)
     max_t = max(mode_details)
-    mode_details[max_t+1] = {1: {"duration": 0}}
+    mode_details[max_t + 1] = {1: {"duration": 0}}
     for skill in skills:
-        mode_details[max_t+1][1][skill] = int(0)
-    successors = {task_id_to_new_name[task_id]:
-                  [task_id_to_new_name[t]
-                   for t in task_dict[task_id]["successors"]]+[max_t+1]
-                  for task_id in task_dict}
-    successors[max_t+1] = []
+        mode_details[max_t + 1][1][skill] = int(0)
+    successors = {
+        task_id_to_new_name[task_id]: [
+            task_id_to_new_name[t] for t in task_dict[task_id]["successors"]
+        ]
+        + [max_t + 1]
+        for task_id in task_dict
+    }
+    successors[max_t + 1] = []
     successors[1] = [k for k in successors]
-    horizon_large = 2*sum([task_dict[task_id]["duration"] for task_id in task_dict])
+    horizon_large = 2 * sum([task_dict[task_id]["duration"] for task_id in task_dict])
     max_horizon = horizon_large if max_horizon is None else max_horizon
-    return MS_RCPSPModel(skills_set=set(real_skills_found),
-                         resources_set=set(),
-                         non_renewable_resources=set(),
-                         resources_availability={},
-                         employees={res: Employee(dict_skill={skill: SkillDetail(skill_value=resource_dict[res][skill],
-                                                                                 efficiency_ratio=1., experience=1.)
-                                                              for skill in resource_dict[res] if skill != "salary"},
-                                                  salary=resource_dict[res]["salary"],
-                                                  calendar_employee=[True]*max_horizon)
-                                    for res in resource_dict},
-                         employees_availability=[len(resource_dict)]*max_horizon,
-                         mode_details=mode_details,
-                         successors=successors,
-                         horizon=max_horizon,
-                         source_task=1,
-                         sink_task=max_t+1,
-                         one_unit_per_task_max=one_unit_per_task,
-                         preemptive=preemptive), new_tame_to_original_task_id
+    return (
+        MS_RCPSPModel(
+            skills_set=set(real_skills_found),
+            resources_set=set(),
+            non_renewable_resources=set(),
+            resources_availability={},
+            employees={
+                res: Employee(
+                    dict_skill={
+                        skill: SkillDetail(
+                            skill_value=resource_dict[res][skill],
+                            efficiency_ratio=1.0,
+                            experience=1.0,
+                        )
+                        for skill in resource_dict[res]
+                        if skill != "salary"
+                    },
+                    salary=resource_dict[res]["salary"],
+                    calendar_employee=[True] * max_horizon,
+                )
+                for res in resource_dict
+            },
+            employees_availability=[len(resource_dict)] * max_horizon,
+            mode_details=mode_details,
+            successors=successors,
+            horizon=max_horizon,
+            source_task=1,
+            sink_task=max_t + 1,
+            one_unit_per_task_max=one_unit_per_task,
+            preemptive=preemptive,
+        ),
+        new_tame_to_original_task_id,
+    )
 
 
 def parse_results(input_data):
-    #if isinstance(input_data, str):
+    # if isinstance(input_data, str):
     #    with open(input_data, 'r') as input_data_file:
     #        return parse_results(input_data_file.read())
-    lines = input_data.split('\n')
+    lines = input_data.split("\n")
     schedule = {}
     assignation = {}
     for i in range(1, len(lines)):
@@ -211,26 +258,33 @@ def parse_results(input_data):
     return schedule, assignation
 
 
-def recompute_solution(ms_rcpsp_model: MS_RCPSPModel,
-                       new_name_to_original_task_id: Dict,
-                       schedule: Dict,
-                       assignation: Dict):
-    reverse_name = {new_name_to_original_task_id[key]: key
-                    for key in new_name_to_original_task_id}
+def recompute_solution(
+    ms_rcpsp_model: MS_RCPSPModel,
+    new_name_to_original_task_id: Dict,
+    schedule: Dict,
+    assignation: Dict,
+):
+    reverse_name = {
+        new_name_to_original_task_id[key]: key for key in new_name_to_original_task_id
+    }
     schedule_recomputed = {}
     modes = {}
     employee_usage = {}
     for task in schedule:
         schedule_recomputed[reverse_name[task]] = {"start_time": schedule[task]}
         duration = ms_rcpsp_model.mode_details[reverse_name[task]][1]["duration"]
-        schedule_recomputed[reverse_name[task]]["end_time"] = schedule_recomputed[reverse_name[task]]["start_time"]\
-                                                              + duration
+        schedule_recomputed[reverse_name[task]]["end_time"] = (
+            schedule_recomputed[reverse_name[task]]["start_time"] + duration
+        )
         modes[reverse_name[task]] = 1
         employee = assignation[task]
-        skills_used_by_employees = [s for s in ms_rcpsp_model.employees[employee].dict_skill
-                                    if ms_rcpsp_model.employees[employee].dict_skill[s].skill_value > 0
-                                    and s in ms_rcpsp_model.mode_details[reverse_name[task]][1]
-                                    and ms_rcpsp_model.mode_details[reverse_name[task]][1][s] > 0]
+        skills_used_by_employees = [
+            s
+            for s in ms_rcpsp_model.employees[employee].dict_skill
+            if ms_rcpsp_model.employees[employee].dict_skill[s].skill_value > 0
+            and s in ms_rcpsp_model.mode_details[reverse_name[task]][1]
+            and ms_rcpsp_model.mode_details[reverse_name[task]][1][s] > 0
+        ]
         employee_usage[reverse_name[task]] = {employee: set(skills_used_by_employees)}
     employee_usage[ms_rcpsp_model.source_task] = {}
     employee_usage[ms_rcpsp_model.sink_task] = {}
@@ -238,24 +292,26 @@ def recompute_solution(ms_rcpsp_model: MS_RCPSPModel,
     modes[ms_rcpsp_model.sink_task] = 1
     schedule_recomputed[ms_rcpsp_model.source_task] = {"start_time": 0, "end_time": 0}
     last_time = max([schedule_recomputed[x]["end_time"] for x in schedule_recomputed])
-    schedule_recomputed[ms_rcpsp_model.sink_task] = {"start_time": last_time,
-                                                     "end_time": last_time}
-    return MS_RCPSPSolution(problem=ms_rcpsp_model,
-                            modes=modes,
-                            schedule=schedule_recomputed,
-                            employee_usage=employee_usage)
+    schedule_recomputed[ms_rcpsp_model.sink_task] = {
+        "start_time": last_time,
+        "end_time": last_time,
+    }
+    return MS_RCPSPSolution(
+        problem=ms_rcpsp_model,
+        modes=modes,
+        schedule=schedule_recomputed,
+        employee_usage=employee_usage,
+    )
 
 
-def parse_file(file_path,
-               max_horizon=None,
-               one_unit_per_task=True,
-               preemptive=False) -> Tuple[MS_RCPSPModel, Dict]:
-    with open(file_path, 'r') as input_data_file:
+def parse_file(
+    file_path, max_horizon=None, one_unit_per_task=True, preemptive=False
+) -> Tuple[MS_RCPSPModel, Dict]:
+    with open(file_path, "r") as input_data_file:
         input_data = input_data_file.read()
-        rcpsp_model, new_tame_to_original_task_id = parse_imopse(input_data,
-                                                                 max_horizon,
-                                                                 one_unit_per_task,
-                                                                 preemptive=preemptive)
+        rcpsp_model, new_tame_to_original_task_id = parse_imopse(
+            input_data, max_horizon, one_unit_per_task, preemptive=preemptive
+        )
         return rcpsp_model, new_tame_to_original_task_id
 
 
@@ -266,12 +322,14 @@ def parse_one_file():
     print(model)
 
 
-def write_solution(solution: MS_RCPSPSolution,
-                   new_tame_to_original_task_id,
-                   file_path=""):
+def write_solution(
+    solution: MS_RCPSPSolution, new_tame_to_original_task_id, file_path=""
+):
     file1 = open(file_path, "w")
     file1.writelines(["Hour 	 Resource assignments (resource ID - task ID) \n"])
-    sorted_task_per_hour = sorted(solution.schedule, key=lambda x: solution.schedule[x]["start_time"])
+    sorted_task_per_hour = sorted(
+        solution.schedule, key=lambda x: solution.schedule[x]["start_time"]
+    )
     strings_hours = {}
     for task in sorted_task_per_hour:
         if task in new_tame_to_original_task_id:
@@ -279,21 +337,30 @@ def write_solution(solution: MS_RCPSPSolution,
             employees_used = list(solution.employee_usage[task].keys())
             hour = solution.schedule[task]["start_time"]
             if hour not in strings_hours:
-                strings_hours[hour] = str(hour)+" "
+                strings_hours[hour] = str(hour) + " "
             for emp in employees_used:
-                strings_hours[hour] += str(emp)+"-"+str(original_task)+" "
-    file1.writelines([strings_hours[hour]+'\n' for hour in sorted(strings_hours)])
+                strings_hours[hour] += str(emp) + "-" + str(original_task) + " "
+    file1.writelines([strings_hours[hour] + "\n" for hour in sorted(strings_hours)])
     file1.close()
 
 
 def run_recompute():
-    schedule, assignation = parse_results(open("/Users/poveda_g/Documents/git_repos/discrete-optimisation/"
-                                               "discrete_optimization/data/rcpsp_multiskill/"
-                                               "de_best/100_5_20_9_D3.def.sol", "r").read())
-    model, name = parse_imopse(open("/Users/poveda_g/Documents/git_repos/discrete-optimisation/"
-                                    "discrete_optimization/data/rcpsp_multiskill/dataset_def/100_5_20_9_D3.def",
-                                    "r").read(),
-                               max_horizon=1000)
+    schedule, assignation = parse_results(
+        open(
+            "/Users/poveda_g/Documents/git_repos/discrete-optimisation/"
+            "discrete_optimization/data/rcpsp_multiskill/"
+            "de_best/100_5_20_9_D3.def.sol",
+            "r",
+        ).read()
+    )
+    model, name = parse_imopse(
+        open(
+            "/Users/poveda_g/Documents/git_repos/discrete-optimisation/"
+            "discrete_optimization/data/rcpsp_multiskill/dataset_def/100_5_20_9_D3.def",
+            "r",
+        ).read(),
+        max_horizon=1000,
+    )
     solution = recompute_solution(model, name, schedule, assignation)
     print(model.evaluate(solution))
     print(model.satisfy(solution))
@@ -304,18 +371,27 @@ def benchmark():
     basename_do = {os.path.basename(p): p for p in get_results_do()}
     direc = "/Users/poveda_g/Documents/discrete-optimisation/tests/rcpsp_multiskills/results/do_cp_largeneighbor"
     basename_do = {os.path.basename(p): p for p in get_results_directory(direc)}
-    common_files = list(set(basename_benchmark.keys()).intersection(set(basename_do.keys())))
+    common_files = list(
+        set(basename_benchmark.keys()).intersection(set(basename_do.keys()))
+    )
     files_def = [f[:-4] for f in common_files]
     results = {}
     to_rerun = []
     for i in range(len(files_def)):
         print("File : ", files_def[i])
-        model, name = parse_file([f for f in get_data_available() if files_def[i] in f][0],
-                                 max_horizon=3000)
-        schedule_do, assignation_do = parse_results(open(basename_do[common_files[i]], "r").read())
-        schedule_benchmark, assignation_benchmark = parse_results(open(basename_benchmark[common_files[i]], "r").read())
+        model, name = parse_file(
+            [f for f in get_data_available() if files_def[i] in f][0], max_horizon=3000
+        )
+        schedule_do, assignation_do = parse_results(
+            open(basename_do[common_files[i]], "r").read()
+        )
+        schedule_benchmark, assignation_benchmark = parse_results(
+            open(basename_benchmark[common_files[i]], "r").read()
+        )
         solution_do = recompute_solution(model, name, schedule_do, assignation_do)
-        solution_benchmark = recompute_solution(model, name, schedule_benchmark, assignation_benchmark)
+        solution_benchmark = recompute_solution(
+            model, name, schedule_benchmark, assignation_benchmark
+        )
         print("DO = ", model.evaluate(solution_do))
         print("DO = ", model.satisfy(solution_do))
         print("Benchmark = ", model.evaluate(solution_benchmark))
@@ -324,23 +400,25 @@ def benchmark():
         makespan_do = model.evaluate(solution_do)["makespan"]
         makespan_benchmark = model.evaluate(solution_benchmark)["makespan"]
         best = ""
-        if makespan_do==makespan_benchmark:
+        if makespan_do == makespan_benchmark:
             best = "equal"
-        elif makespan_do<makespan_benchmark:
+        elif makespan_do < makespan_benchmark:
             best = "do"
         else:
             best = "bench"
-        results[common_files[i]] = {"do": makespan_do,
-                                    "benchmark": makespan_benchmark,
-                                    "best": best}
+        results[common_files[i]] = {
+            "do": makespan_do,
+            "benchmark": makespan_benchmark,
+            "best": best,
+        }
         if best == "bench":
             to_rerun += [common_files[i]]
 
     print(results)
     print(to_rerun)
-    print(len([x for x in results if results[x]["best"]=="do"]), " best do ")
-    print(len([x for x in results if results[x]["best"]=="equal"]), " equal ")
-    print(len([x for x in results if results[x]["best"]=="bench"]), " best bench ")
+    print(len([x for x in results if results[x]["best"] == "do"]), " best do ")
+    print(len([x for x in results if results[x]["best"] == "equal"]), " equal ")
+    print(len([x for x in results if results[x]["best"] == "bench"]), " best bench ")
 
 
 def compute_best_benchmark_solution():
@@ -349,10 +427,16 @@ def compute_best_benchmark_solution():
     problem_name = [f[:-4] for f in files_def]
     results = {}
     for i in range(len(files_def)):
-        model, name = parse_file([f for f in get_data_available() if problem_name[i] in f][0],
-                                 max_horizon=3000)
-        schedule_benchmark, assignation_benchmark = parse_results(open(basename_benchmark[files_def[i]], "r").read())
-        solution_benchmark = recompute_solution(model, name, schedule_benchmark, assignation_benchmark)
+        model, name = parse_file(
+            [f for f in get_data_available() if problem_name[i] in f][0],
+            max_horizon=3000,
+        )
+        schedule_benchmark, assignation_benchmark = parse_results(
+            open(basename_benchmark[files_def[i]], "r").read()
+        )
+        solution_benchmark = recompute_solution(
+            model, name, schedule_benchmark, assignation_benchmark
+        )
         results[problem_name[i]] = model.evaluate(solution_benchmark)
     return results
 

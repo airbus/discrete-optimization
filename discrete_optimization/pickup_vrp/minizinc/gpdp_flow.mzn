@@ -89,7 +89,3 @@ output [
     "final duration = ", show(final_duration),"\n",
     "distance = ", show(distance)
 ];
-
-
-
-
