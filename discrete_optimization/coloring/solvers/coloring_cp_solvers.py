@@ -1,20 +1,35 @@
 import os
-from dataclasses import InitVar
-from discrete_optimization.generic_tools.cp_tools import ParametersCP, CPSolver, CPSolverName, map_cp_solver_name
-from minizinc import Instance, Model, Solver
-import networkx as nx
-from discrete_optimization.generic_tools.do_problem import build_aggreg_function_and_params_objective,\
-    ParamsObjectiveFunction
-from discrete_optimization.coloring.coloring_model import ColoringProblem, ColoringSolution
-from discrete_optimization.coloring.solvers.greedy_coloring import GreedyColoring,\
-    NXGreedyColoringMethod
-from discrete_optimization.coloring.coloring_toolbox import compute_cliques
-from discrete_optimization.generic_tools.do_solver import ResultStorage
 import random
+from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
-path_minizinc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                             "../minizinc/"))
+
+import networkx as nx
+from discrete_optimization.coloring.coloring_model import (
+    ColoringProblem,
+    ColoringSolution,
+)
+from discrete_optimization.coloring.coloring_toolbox import compute_cliques
+from discrete_optimization.coloring.solvers.greedy_coloring import (
+    GreedyColoring,
+    NXGreedyColoringMethod,
+)
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
+    CPSolverName,
+    ParametersCP,
+    map_cp_solver_name,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    build_aggreg_function_and_params_objective,
+)
+from discrete_optimization.generic_tools.do_solver import ResultStorage
+from minizinc import Instance, Model, Solver
+
+path_minizinc = os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../minizinc/")
+)
 
 
 class ColotingCPSolution:
@@ -37,16 +52,21 @@ class ColoringCPModel(Enum):
     LNS = 2
 
 
-file_dict = {ColoringCPModel.CLIQUES: "coloring_clique.mzn",
-             ColoringCPModel.DEFAULT: "coloring.mzn",
-             ColoringCPModel.LNS: "coloring_for_lns.mzn"}
+file_dict = {
+    ColoringCPModel.CLIQUES: "coloring_clique.mzn",
+    ColoringCPModel.DEFAULT: "coloring.mzn",
+    ColoringCPModel.LNS: "coloring_for_lns.mzn",
+}
 
 
 class ColoringCP(CPSolver):
-    def __init__(self,
-                 coloring_problem: ColoringProblem,
-                 params_objective_function: ParamsObjectiveFunction = None,
-                 cp_solver_name: CPSolverName = CPSolverName.CHUFFED, **args):
+    def __init__(
+        self,
+        coloring_problem: ColoringProblem,
+        params_objective_function: ParamsObjectiveFunction = None,
+        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
+        **args,
+    ):
         self.coloring_problem = coloring_problem
         self.number_of_nodes = self.coloring_problem.number_of_nodes
         self.number_of_edges = len(self.coloring_problem.graph.edges_infos_dict)
@@ -58,9 +78,14 @@ class ColoringCP(CPSolver):
         self.instance: Instance = None
         self.custom_output_type = False
         self.g = None
-        self.aggreg_sol, self.aggreg_dict, self.params_objective_function = \
-            build_aggreg_function_and_params_objective(problem=self.coloring_problem,
-                                                       params_objective_function=params_objective_function)
+        (
+            self.aggreg_sol,
+            self.aggreg_dict,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=self.coloring_problem,
+            params_objective_function=params_objective_function,
+        )
         self.cp_solver_name = cp_solver_name
 
     def init_model(self, **kwargs):
@@ -79,7 +104,7 @@ class ColoringCP(CPSolver):
         solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
         instance = Instance(solver, self.model)
         instance["n_nodes"] = self.number_of_nodes
-        instance["n_edges"] = int(self.number_of_edges/2)
+        instance["n_edges"] = int(self.number_of_edges / 2)
         instance["nb_colors"] = nb_colors
         keys = []
         if model_type in {ColoringCPModel.DEFAULT, ColoringCPModel.CLIQUES}:
@@ -87,9 +112,10 @@ class ColoringCP(CPSolver):
             keys += ["include_seq_chain_constraint"]
         print("nb colors ", nb_colors)
         keys += ["n_nodes", "n_edges", "nb_colors"]
-        edges = [[self.index_nodes_name[e[0]]+1,
-                  self.index_nodes_name[e[1]]+1, e[2]]
-                 for e in self.coloring_problem.graph.edges]
+        edges = [
+            [self.index_nodes_name[e[0]] + 1, self.index_nodes_name[e[1]] + 1, e[2]]
+            for e in self.coloring_problem.graph.edges
+        ]
         g = nx.Graph()
         g.add_nodes_from([i for i in range(1, self.number_of_nodes + 1)])
         g.add_edges_from(edges)
@@ -105,17 +131,22 @@ class ColoringCP(CPSolver):
         self.instance = instance
         self.dict_datas = {k: instance[k] for k in keys}
 
-    def export_dzn(self, file_name: str=None, keys=None):
+    def export_dzn(self, file_name: str = None, keys=None):
         import pymzn
+
         if file_name is None:
             file_name = os.path.join(path_minizinc, "coloring_example_dzn.dzn")
         if keys is None:
             keys = list(self.dict_datas.keys())
-        pymzn.dict2dzn({k: self.dict_datas[k] for k in keys if k in self.dict_datas},
-                       fout=file_name)
+        pymzn.dict2dzn(
+            {k: self.dict_datas[k] for k in keys if k in self.dict_datas},
+            fout=file_name,
+        )
         print("Successfully dumped data file ", file_name)
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP = ParametersCP.default()) -> ResultStorage:
+    def retrieve_solutions(
+        self, result, parameters_cp: ParametersCP = ParametersCP.default()
+    ) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
         colors = []
         objectives = []
@@ -136,15 +167,19 @@ class ColoringCP(CPSolver):
                 colors += [result.dict["color_graph"]]
                 objectives += [result.objective]
         for k in range(len(colors)):
-            sol = [colors[k][self.index_nodes_name[self.nodes_name[i]]] - 1
-                   for i in range(self.number_of_nodes)]
+            sol = [
+                colors[k][self.index_nodes_name[self.nodes_name[i]]] - 1
+                for i in range(self.number_of_nodes)
+            ]
             color_sol = ColoringSolution(self.coloring_problem, sol)
             fit = self.aggreg_sol(color_sol)
             solutions_fit += [(color_sol, fit)]
 
-        return ResultStorage(list_solution_fits=solutions_fit,
-                             limit_store=False,
-                             mode_optim=self.params_objective_function.sense_function)
+        return ResultStorage(
+            list_solution_fits=solutions_fit,
+            limit_store=False,
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
     def solve(self, parameters_cp: ParametersCP = None, **kwargs) -> ResultStorage:
         if parameters_cp is None:
@@ -153,13 +188,15 @@ class ColoringCP(CPSolver):
             self.init_model(**kwargs)
         limit_time_s = parameters_cp.TimeLimit
         intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(timeout=timedelta(seconds=limit_time_s),
-                                     intermediate_solutions=intermediate_solutions,
-                                     processes=parameters_cp.nb_process if parameters_cp.multiprocess else None,
-                                     free_search=parameters_cp.free_search)
+        result = self.instance.solve(
+            timeout=timedelta(seconds=limit_time_s),
+            intermediate_solutions=intermediate_solutions,
+            processes=parameters_cp.nb_process if parameters_cp.multiprocess else None,
+            free_search=parameters_cp.free_search,
+        )
         verbose = kwargs.get("verbose", False)
         if verbose:
-            print('Solving finished')
+            print("Solving finished")
             print(result.status)
             print(result.statistics)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
@@ -170,10 +207,14 @@ class ColoringCP(CPSolver):
         if greedy_start:
             if verbose:
                 print("Computing greedy solution")
-            greedy_solver = GreedyColoring(self.coloring_problem,
-                                           params_objective_function=self.params_objective_function)
-            result_store = greedy_solver.solve(strategy=kwargs.get("greedy_method", NXGreedyColoringMethod.best),
-                                               verbose=verbose)
+            greedy_solver = GreedyColoring(
+                self.coloring_problem,
+                params_objective_function=self.params_objective_function,
+            )
+            result_store = greedy_solver.solve(
+                strategy=kwargs.get("greedy_method", NXGreedyColoringMethod.best),
+                verbose=verbose,
+            )
             solution = result_store.get_best_solution_fit()[0]
         else:
             if verbose:
@@ -182,44 +223,72 @@ class ColoringCP(CPSolver):
         return solution
 
     # Deprecated, better use the generic LNS-CP function !
-    def solve_lns(self, fraction_to_fix: float = 0.9,
-                  nb_iteration: int = 10,
-                  parameters_cp: ParametersCP = None,
-                  **kwargs):
+    def solve_lns(
+        self,
+        fraction_to_fix: float = 0.9,
+        nb_iteration: int = 10,
+        parameters_cp: ParametersCP = None,
+        **kwargs,
+    ):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         first_solution = self.get_solution(**kwargs)
-        dict_color = {i+1: first_solution.colors[i]+1 for i in range(self.number_of_nodes)}
+        dict_color = {
+            i + 1: first_solution.colors[i] + 1 for i in range(self.number_of_nodes)
+        }
         nb_colors = first_solution.nb_color
         kwargs["nb_colors"] = nb_colors
         self.init_model(**kwargs)
         limit_time_s = kwargs.get("limit_time_s", 100)
-        range_node = range(1, self.number_of_nodes+1)
+        range_node = range(1, self.number_of_nodes + 1)
         iteration = 0
         current_solution = first_solution
         current_best_solution = current_solution.copy()
         current_nb_color = current_best_solution.nb_color
         while iteration < nb_iteration:
             with self.instance.branch() as child:
-                subpart_color = set(random.sample(range_node, int(fraction_to_fix * self.number_of_nodes)))
+                subpart_color = set(
+                    random.sample(
+                        range_node, int(fraction_to_fix * self.number_of_nodes)
+                    )
+                )
                 for i in range_node:
-                    if i in subpart_color and dict_color[i] < current_nb_color-2:
+                    if i in subpart_color and dict_color[i] < current_nb_color - 2:
                         # print("constraint color_graph["+str(i)+"] == "+ str(dict_color[i])+";\n")
-                        child.add_string("constraint color_graph["+str(i)+"] == " + str(dict_color[i])+";\n")
-                    child.add_string("constraint color_graph["+str(i)+"] <= " + str(current_nb_color)+";\n")
+                        child.add_string(
+                            "constraint color_graph["
+                            + str(i)
+                            + "] == "
+                            + str(dict_color[i])
+                            + ";\n"
+                        )
+                    child.add_string(
+                        "constraint color_graph["
+                        + str(i)
+                        + "] <= "
+                        + str(current_nb_color)
+                        + ";\n"
+                    )
                 child.add_string(f"solve minimize(obj);\n")
-                res = child.solve(timeout=timedelta(seconds=parameters_cp.TimeLimit),
-                                  intermediate_solutions=parameters_cp.intermediate_solution)
-                result_storage = self.retrieve_solutions(res, parameters_cp=parameters_cp)
+                res = child.solve(
+                    timeout=timedelta(seconds=parameters_cp.TimeLimit),
+                    intermediate_solutions=parameters_cp.intermediate_solution,
+                )
+                result_storage = self.retrieve_solutions(
+                    res, parameters_cp=parameters_cp
+                )
                 print(res.status)
                 sol, fit = result_storage.get_best_solution_fit()
                 nb_color = self.coloring_problem.evaluate(sol)["nb_colors"]
                 if res.solution is not None and nb_color < current_nb_color:
                     current_nb_color = nb_color
                     current_best_solution = sol
-                    dict_color = {i + 1: current_best_solution.colors[i]+1 for i in range(self.number_of_nodes)}
+                    dict_color = {
+                        i + 1: current_best_solution.colors[i] + 1
+                        for i in range(self.number_of_nodes)
+                    }
                     print(iteration, " : , ", fit)
-                    print('IMPROVED : ')
+                    print("IMPROVED : ")
                 else:
                     try:
                         print(iteration, " : found solution ", nb_color)
@@ -229,5 +298,3 @@ class ColoringCP(CPSolver):
                 iteration += 1
         fit = self.coloring_problem.evaluate(current_best_solution)
         return current_best_solution, fit
-
-

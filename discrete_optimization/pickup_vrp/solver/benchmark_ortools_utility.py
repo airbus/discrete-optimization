@@ -1,10 +1,19 @@
-from discrete_optimization.pickup_vrp.solver.ortools_solver import ORToolsGPDP, \
-    value_firstsolution_to_name, value_metaheuristic_to_name,\
-    local_search_metaheuristic_enum, first_solution_strategy_enum, GPDP, name_firstsolution_to_value, name_metaheuristic_to_value
-from pathos.multiprocessing import Pool
-#from dill import
-from functools import partial
 from copy import deepcopy
+
+# from dill import
+from functools import partial
+
+from discrete_optimization.pickup_vrp.solver.ortools_solver import (
+    GPDP,
+    ORToolsGPDP,
+    first_solution_strategy_enum,
+    local_search_metaheuristic_enum,
+    name_firstsolution_to_value,
+    name_metaheuristic_to_value,
+    value_firstsolution_to_name,
+    value_metaheuristic_to_name,
+)
+from pathos.multiprocessing import Pool
 
 
 def run(X):
@@ -27,21 +36,33 @@ class BenchmarkOrtoolsUtility:
                     for use_cp in [True, False]:
                         solver = ORToolsGPDP(problem=self.problem)
                         dict_params = deepcopy(kwargs)
-                        dict_params["first_solution_strategy"] = name_firstsolution_to_value[method_first_solution]
-                        dict_params["local_search_metaheuristic"] = name_metaheuristic_to_value[method_metaheuristic]
+                        dict_params[
+                            "first_solution_strategy"
+                        ] = name_firstsolution_to_value[method_first_solution]
+                        dict_params[
+                            "local_search_metaheuristic"
+                        ] = name_metaheuristic_to_value[method_metaheuristic]
                         dict_params["use_lns"] = use_lns
                         dict_params["use_cp"] = use_cp
                         solver.init_model(**dict_params)
                         params = solver.build_search_parameters(**dict_params)
-                        solvers_list += [(solver, params, {"local_search_metaheuristic": method_metaheuristic,
-                                                           "first_solution_strategy": method_first_solution,
-                                                           "use_lns": use_lns,
-                                                           "use_cp": use_cp})]
+                        solvers_list += [
+                            (
+                                solver,
+                                params,
+                                {
+                                    "local_search_metaheuristic": method_metaheuristic,
+                                    "first_solution_strategy": method_first_solution,
+                                    "use_lns": use_lns,
+                                    "use_cp": use_cp,
+                                },
+                            )
+                        ]
         self.solvers_list = solvers_list
         return solvers_list
 
     def run_benchmark(self):
-        #p = Pool(min(8, len(self.solvers_list)))
+        # p = Pool(min(8, len(self.solvers_list)))
         results = map(run, self.solvers_list)
         ps = []
         for res, p in results:

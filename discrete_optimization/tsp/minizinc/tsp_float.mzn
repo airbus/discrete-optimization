@@ -1,10 +1,10 @@
 %
 % adaptation of https://github.com/hakank/hakank/blob/master/minizinc/tsp_circuit.mzn
 % TSP with circuit predicate in Minizinc.
-% 
+%
 % Model created by Hakan Kjellerstrand, hakank@gamil.com
 % with help from Krzysztof Kuchcinski (of the JaCoP team)
-%                 
+%
 % There are two optimal solutions (with distance=6859):
 %
 %   x: [14, 4, 2, 8, 11, 15, 6, 1, 10, 16, 9, 7, 12, 13, 5, 3]
@@ -21,7 +21,7 @@ include "globals.mzn";
 % include "jacop.mzn";
 
 predicate circuit_me(array[int] of var int: x) =
-  let { 
+  let {
         int: lbx = 1,
         int: ubx = length(x),
         array[lbx..ubx] of var lbx..ubx: z
@@ -31,8 +31,8 @@ predicate circuit_me(array[int] of var int: x) =
    all_different(z) :: domain /\
 
    % put the orbit of x[1] in in z[1..n]
-   % 
-   z[lbx] = x[lbx] /\ 
+   %
+   z[lbx] = x[lbx] /\
    forall(i in lbx+1..ubx) (
       z[i] = x[z[i-1]]
    )

@@ -12,7 +12,7 @@ array[FACILITIES] of var bool: used_facility;
 
 constraint forall(f in FACILITIES)
               (sum(c in CUSTOMERS)(if facility_for_customer[c]==f then demand[c]
-                                   else 0 
+                                   else 0
                                    endif)==capacity_used_by_facility[f]);
 constraint forall(f in FACILITIES)(capacity_used_by_facility[f]<=capacity[f]);
 constraint forall(f in FACILITIES)(used_facility[f]==1 <-> capacity_used_by_facility[f]>0);
@@ -26,15 +26,3 @@ constraint objective==setup_cost+length_cost;
 solve :: int_search(facility_for_customer, max_regret, indomain_split, complete)
         minimize(objective);
 output ["obj=\(objective)"];
-
-
-
-
-
-
-
-
-
-
-
-

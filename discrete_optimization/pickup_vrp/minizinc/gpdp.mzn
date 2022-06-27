@@ -77,4 +77,3 @@ output [
     "final time = ", show(final_duration),"\n",
     "cumulated distance = ", show(distance), "\n"
 ];
-

@@ -1,26 +1,36 @@
-from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.do_problem import Problem, ParamsObjectiveFunction, \
-    build_aggreg_function_and_params_objective
 import operator
-from typing import Union, List, Dict, Optional, Callable, Set
 from enum import Enum
-from deap.gp import PrimitiveSet, PrimitiveTree, genHalfAndHalf, PrimitiveSetTyped, Primitive, Terminal
-from deap import gp
-from deap import algorithms
-from deap.base import Toolbox, Fitness
-from deap import creator
-from deap import tools
-from discrete_optimization.knapsack.knapsack_model import MultidimensionalKnapsack, KnapsackSolutionMultidimensional
-import numpy as np
+from typing import Callable, Dict, List, Optional, Set, Union
 
+import numpy as np
+from deap import algorithms, creator, gp, tools
+from deap.base import Fitness, Toolbox
+from deap.gp import (
+    Primitive,
+    PrimitiveSet,
+    PrimitiveSetTyped,
+    PrimitiveTree,
+    Terminal,
+    genHalfAndHalf,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Problem,
+    build_aggreg_function_and_params_objective,
+)
+from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.knapsack.knapsack_model import (
+    KnapsackSolutionMultidimensional,
+    MultidimensionalKnapsack,
+)
 from generic_tools.result_storage.result_storage import ResultStorage
 
 
 def protected_div(left, right):
-    if right != 0.:
-        return left/right
+    if right != 0.0:
+        return left / right
     else:
-        return 1.
+        return 1.0
 
 
 def max_operator(left, right):
@@ -58,15 +68,24 @@ def get_res_consumption(problem: MultidimensionalKnapsack, item_index, **kwargs)
     return problem.list_items[item_index].weights
 
 
-def get_avg_res_consumption_delta_capacity(problem: MultidimensionalKnapsack, item_index, **kwargs):
-    return sum([(problem.max_capacities[j]-problem.list_items[item_index].weights[j])/problem.max_capacities[j]
-                for j in range(len(problem.max_capacities))])/len(problem.max_capacities)
+def get_avg_res_consumption_delta_capacity(
+    problem: MultidimensionalKnapsack, item_index, **kwargs
+):
+    return sum(
+        [
+            (problem.max_capacities[j] - problem.list_items[item_index].weights[j])
+            / problem.max_capacities[j]
+            for j in range(len(problem.max_capacities))
+        ]
+    ) / len(problem.max_capacities)
 
 
-feature_function_map = {FeatureEnum.PROFIT: get_profit,
-                        FeatureEnum.CAPACITIES: get_capacities,
-                        FeatureEnum.RES_CONSUMPTION_ARRAY: get_res_consumption,
-                        FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY: get_avg_res_consumption_delta_capacity}  #
+feature_function_map = {
+    FeatureEnum.PROFIT: get_profit,
+    FeatureEnum.CAPACITIES: get_capacities,
+    FeatureEnum.RES_CONSUMPTION_ARRAY: get_res_consumption,
+    FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY: get_avg_res_consumption_delta_capacity,
+}  #
 
 
 class ParametersGPHH:
@@ -81,13 +100,19 @@ class ParametersGPHH:
     mutation_rate: float = None
     deap_verbose: bool = None
 
-    def __init__(self,
-                 set_feature,
-                 set_primitves,
-                 tournament_ratio, pop_size, n_gen, min_tree_depth, max_tree_depth,
-                 crossover_rate, mutation_rate,
-                 deap_verbose
-                 ):
+    def __init__(
+        self,
+        set_feature,
+        set_primitves,
+        tournament_ratio,
+        pop_size,
+        n_gen,
+        min_tree_depth,
+        max_tree_depth,
+        crossover_rate,
+        mutation_rate,
+        deap_verbose,
+    ):
         self.set_feature = set_feature
         self.set_primitves = set_primitves
         self.tournament_ratio = tournament_ratio
@@ -101,10 +126,12 @@ class ParametersGPHH:
 
     @staticmethod
     def default():
-        set_feature = [FeatureEnum.PROFIT,
-                       FeatureEnum.RES_CONSUMPTION_ARRAY,
-                       FeatureEnum.CAPACITIES,
-                       FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY]
+        set_feature = [
+            FeatureEnum.PROFIT,
+            FeatureEnum.RES_CONSUMPTION_ARRAY,
+            FeatureEnum.CAPACITIES,
+            FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY,
+        ]
         pset = PrimitiveSetTyped("main", [float, list, list, float], float)
         # take profit, list of ressource consumption, avearage delta consumption
         pset.addPrimitive(operator.add, [float, float], float)
@@ -116,9 +143,19 @@ class ParametersGPHH:
         pset.addPrimitive(operator.neg, [float], float)
         pset.addPrimitive(max_operator_list, [list], float, name="max_operator_list")
         pset.addPrimitive(min_operator_list, [list], float, name="min_operator_list")
-        pset.addPrimitive(lambda x: sum(x)/len(x), [list], float, name="mean_list")
-        pset.addPrimitive(lambda x, y: [xx-yy for xx, yy in zip(x,y)], [list, list], list, name="sub_list")
-        pset.addPrimitive(lambda x, y: [xx+yy for xx, yy in zip(x,y)], [list, list], list, name="plus_list")
+        pset.addPrimitive(lambda x: sum(x) / len(x), [list], float, name="mean_list")
+        pset.addPrimitive(
+            lambda x, y: [xx - yy for xx, yy in zip(x, y)],
+            [list, list],
+            list,
+            name="sub_list",
+        )
+        pset.addPrimitive(
+            lambda x, y: [xx + yy for xx, yy in zip(x, y)],
+            [list, list],
+            list,
+            name="plus_list",
+        )
         # pset.addPrimitive(if_then_else, 3)
         # pset.addPrimitive(operator.xor, 2)
         return ParametersGPHH(
@@ -131,13 +168,16 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.3,
-            deap_verbose=True)
+            deap_verbose=True,
+        )
 
     @staticmethod
     def default():
-        set_feature = [FeatureEnum.PROFIT,
-                       FeatureEnum.CAPACITIES,
-                       FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY]
+        set_feature = [
+            FeatureEnum.PROFIT,
+            FeatureEnum.CAPACITIES,
+            FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY,
+        ]
         pset = PrimitiveSetTyped("main", [float, list, float], float)
         # take profit, list of ressource consumption, avearage delta consumption
         pset.addPrimitive(operator.add, [float, float], float)
@@ -150,8 +190,18 @@ class ParametersGPHH:
         pset.addPrimitive(max_operator_list, [list], float, name="max_operator_list")
         pset.addPrimitive(min_operator_list, [list], float, name="min_operator_list")
         pset.addPrimitive(lambda x: sum(x) / len(x), [list], float, name="mean_list")
-        pset.addPrimitive(lambda x, y: [xx - yy for xx, yy in zip(x, y)], [list, list], list, name="sub_list")
-        pset.addPrimitive(lambda x, y: [xx + yy for xx, yy in zip(x, y)], [list, list], list, name="plus_list")
+        pset.addPrimitive(
+            lambda x, y: [xx - yy for xx, yy in zip(x, y)],
+            [list, list],
+            list,
+            name="sub_list",
+        )
+        pset.addPrimitive(
+            lambda x, y: [xx + yy for xx, yy in zip(x, y)],
+            [list, list],
+            list,
+            name="plus_list",
+        )
         # pset.addPrimitive(if_then_else, 3)
         # pset.addPrimitive(operator.xor, 2)
         return ParametersGPHH(
@@ -164,7 +214,8 @@ class ParametersGPHH:
             max_tree_depth=4,
             crossover_rate=0.7,
             mutation_rate=0.3,
-            deap_verbose=True)
+            deap_verbose=True,
+        )
 
 
 class GPHH(SolverDO):
@@ -175,13 +226,15 @@ class GPHH(SolverDO):
     toolbox: Toolbox
     params_gphh: ParametersGPHH
 
-    def __init__(self,
-                 training_domains: List[Problem],
-                 domain_model: Problem,
-                 weight: int = 1,
-                 params_gphh: ParametersGPHH = None,
-                 params_objective_function: ParamsObjectiveFunction = None,
-                 verbose: bool = False):
+    def __init__(
+        self,
+        training_domains: List[Problem],
+        domain_model: Problem,
+        weight: int = 1,
+        params_gphh: ParametersGPHH = None,
+        params_objective_function: ParamsObjectiveFunction = None,
+        verbose: bool = False,
+    ):
         self.training_domains = training_domains
         self.domain_model = domain_model
         self.params_gphh = params_gphh
@@ -189,7 +242,7 @@ class GPHH(SolverDO):
             self.params_gphh = ParametersGPHH.default()
         # self.set_feature = set_feature
         self.set_feature = self.params_gphh.set_feature
-        print('self.set_feature: ', self.set_feature)
+        print("self.set_feature: ", self.set_feature)
         # if set_feature is None:
         #     self.set_feature = {FeatureEnum.RESSOURCE_TOTAL,
         #                         FeatureEnum.TASK_DURATION,
@@ -201,10 +254,14 @@ class GPHH(SolverDO):
         self.verbose = verbose
         self.pset = self.init_primitives(self.params_gphh.set_primitves)
         self.weight = weight
-        self.aggreg_from_sol, self.aggreg_dict, self.params_objective_function = \
-            build_aggreg_function_and_params_objective(problem=self.domain_model,
-                                                       params_objective_function=
-                                                       params_objective_function)
+        (
+            self.aggreg_from_sol,
+            self.aggreg_dict,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=self.domain_model,
+            params_objective_function=params_objective_function,
+        )
 
     def init_model(self):
         tournament_ratio = self.params_gphh.tournament_ratio
@@ -215,23 +272,43 @@ class GPHH(SolverDO):
         crossover_rate = self.params_gphh.crossover_rate
         mutation_rate = self.params_gphh.mutation_rate
 
-        creator.create("FitnessMin", Fitness, weights=(self.weight, ))
+        creator.create("FitnessMin", Fitness, weights=(self.weight,))
         creator.create("Individual", PrimitiveTree, fitness=creator.FitnessMin)
 
         self.toolbox = Toolbox()
-        self.toolbox.register("expr", genHalfAndHalf, pset=self.pset, min_=min_tree_depth, max_=max_tree_depth)
-        self.toolbox.register("individual", tools.initIterate, creator.Individual, self.toolbox.expr)
-        self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
+        self.toolbox.register(
+            "expr",
+            genHalfAndHalf,
+            pset=self.pset,
+            min_=min_tree_depth,
+            max_=max_tree_depth,
+        )
+        self.toolbox.register(
+            "individual", tools.initIterate, creator.Individual, self.toolbox.expr
+        )
+        self.toolbox.register(
+            "population", tools.initRepeat, list, self.toolbox.individual
+        )
         self.toolbox.register("compile", gp.compile, pset=self.pset)
-        self.toolbox.register("evaluate", self.evaluate_heuristic, domains=self.training_domains)
-        self.toolbox.register("select", tools.selTournament, tournsize=int(tournament_ratio * pop_size))
+        self.toolbox.register(
+            "evaluate", self.evaluate_heuristic, domains=self.training_domains
+        )
+        self.toolbox.register(
+            "select", tools.selTournament, tournsize=int(tournament_ratio * pop_size)
+        )
         self.toolbox.register("mate", gp.cxOnePoint)
         self.toolbox.register("expr_mut", gp.genFull, min_=0, max_=max_tree_depth)
-        self.toolbox.register("mutate", gp.mutUniform, expr=self.toolbox.expr_mut, pset=self.pset)
-        self.toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
-        self.toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
-       # nobj = 2
-        #ref_points = tools.uniform_reference_points(nobj=nobj)
+        self.toolbox.register(
+            "mutate", gp.mutUniform, expr=self.toolbox.expr_mut, pset=self.pset
+        )
+        self.toolbox.decorate(
+            "mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17)
+        )
+        self.toolbox.decorate(
+            "mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17)
+        )
+        # nobj = 2
+        # ref_points = tools.uniform_reference_points(nobj=nobj)
 
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values)
         stats_size = tools.Statistics(len)
@@ -252,30 +329,42 @@ class GPHH(SolverDO):
         pop = self.toolbox.population(n=self.params_gphh.pop_size)
         hof = tools.HallOfFame(1000)
         self.hof = hof
-        pop, log = algorithms.eaSimple(pop,
-                                       self.toolbox,
-                                       cxpb=self.params_gphh.crossover_rate,
-                                       mutpb=self.params_gphh.mutation_rate,
-                                       ngen=self.params_gphh.n_gen,
-                                       stats=mstats,
-                                       halloffame=hof,
-                                       verbose=True)
+        pop, log = algorithms.eaSimple(
+            pop,
+            self.toolbox,
+            cxpb=self.params_gphh.crossover_rate,
+            mutpb=self.params_gphh.mutation_rate,
+            ngen=self.params_gphh.n_gen,
+            stats=mstats,
+            halloffame=hof,
+            verbose=True,
+        )
         self.best_heuristic = hof[0]
-        print('best_heuristic: ', self.best_heuristic)
+        print("best_heuristic: ", self.best_heuristic)
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
-        solution = self.build_solution(domain=self.domain_model, func_heuristic=self.func_heuristic)
-        return ResultStorage(list_solution_fits=[(solution, self.aggreg_from_sol(solution))],
-                             mode_optim=self.params_objective_function.sense_function)
+        solution = self.build_solution(
+            domain=self.domain_model, func_heuristic=self.func_heuristic
+        )
+        return ResultStorage(
+            list_solution_fits=[(solution, self.aggreg_from_sol(solution))],
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
     def build_result_storage_for_domain(self, domain):
-        solution = self.build_solution(domain=domain, func_heuristic=self.func_heuristic)
-        return ResultStorage(list_solution_fits=[(solution, self.aggreg_dict(domain.evaluate(solution)))],
-                             mode_optim=self.params_objective_function.sense_function)
+        solution = self.build_solution(
+            domain=domain, func_heuristic=self.func_heuristic
+        )
+        return ResultStorage(
+            list_solution_fits=[
+                (solution, self.aggreg_dict(domain.evaluate(solution)))
+            ],
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
     def init_primitives(self, pset) -> PrimitiveSet:
         for i in range(len(self.list_feature)):
-            pset.renameArguments(**{"ARG"+str(i): self.list_feature[i].value})
+            pset.renameArguments(**{"ARG" + str(i): self.list_feature[i].value})
         return pset
 
     def build_solution(self, domain, individual=None, func_heuristic=None):
@@ -285,41 +374,56 @@ class GPHH(SolverDO):
         raw_values = []
         for j in range(len(d.list_items)):
             # print('task_id: ', task_id)
-            input_features = [feature_function_map[lf](problem=domain,
-                                                       item_index=j)
-                              for lf in self.list_feature]
+            input_features = [
+                feature_function_map[lf](problem=domain, item_index=j)
+                for lf in self.list_feature
+            ]
             output_value = func_heuristic(*input_features)
             raw_values.append(output_value)
-        sorted_indexes = [x for x in sorted(range(len(raw_values)),
-                                            key=lambda k: raw_values[k],
-                                            reverse=True)]
+        sorted_indexes = [
+            x
+            for x in sorted(
+                range(len(raw_values)), key=lambda k: raw_values[k], reverse=True
+            )
+        ]
         current_weight = [0] * len(d.max_capacities)
         k = 0
-        list_taken = [0]*len(d.list_items)
+        list_taken = [0] * len(d.list_items)
         value = 0
-        while all(current_weight[j] <= d.max_capacities[j] for j in range(len(d.max_capacities))) and k<len(sorted_indexes):
-            if all(current_weight[j]+d.list_items[sorted_indexes[k]].weights[j] <= d.max_capacities[j]
-                   for j in range(len(d.max_capacities))):
+        while all(
+            current_weight[j] <= d.max_capacities[j]
+            for j in range(len(d.max_capacities))
+        ) and k < len(sorted_indexes):
+            if all(
+                current_weight[j] + d.list_items[sorted_indexes[k]].weights[j]
+                <= d.max_capacities[j]
+                for j in range(len(d.max_capacities))
+            ):
                 list_taken[sorted_indexes[k]] = 1
                 value += d.list_items[sorted_indexes[k]].value
                 for j in range(len(d.max_capacities)):
-                    current_weight[j] = current_weight[j]+d.list_items[sorted_indexes[k]].weights[j]
+                    current_weight[j] = (
+                        current_weight[j] + d.list_items[sorted_indexes[k]].weights[j]
+                    )
             k += 1
-        solution = KnapsackSolutionMultidimensional(problem=d, list_taken=list_taken,
-                                                    value=value, weights=current_weight)
+        solution = KnapsackSolutionMultidimensional(
+            problem=d, list_taken=list_taken, value=value, weights=current_weight
+        )
         return solution
 
-    def evaluate_heuristic(self, individual, domains: List[MultidimensionalKnapsack]) -> float:
+    def evaluate_heuristic(
+        self, individual, domains: List[MultidimensionalKnapsack]
+    ) -> float:
         vals = []
         func_heuristic = self.toolbox.compile(expr=individual)
         for domain in domains:
-            solution = self.build_solution(individual=individual,
-                                           domain=domain,
-                                           func_heuristic=func_heuristic)
+            solution = self.build_solution(
+                individual=individual, domain=domain, func_heuristic=func_heuristic
+            )
             value = self.aggreg_dict(domain.evaluate(solution))
             vals.append(value)
         fitness = [np.mean(vals)]
-        return [fitness[0]-10*self.evaluate_complexity(individual)]
+        return [fitness[0] - 10 * self.evaluate_complexity(individual)]
 
     def evaluate_complexity(self, individual):
         all_primitives_list = []
@@ -331,12 +435,13 @@ class GPHH(SolverDO):
                 all_features_list.append(individual[i].value)
         n_operators = len(all_primitives_list)
         n_features = len(all_features_list)
-        val = 1. * n_operators + 1. * n_features
+        val = 1.0 * n_operators + 1.0 * n_features
         return val
 
     def plot_solution(self):
-        import networkx as nx
         import matplotlib.pyplot as plt
+        import networkx as nx
+
         nodes, edges, labels = gp.graph(self.best_heuristic)
         g = nx.Graph()
         g.add_nodes_from(nodes)

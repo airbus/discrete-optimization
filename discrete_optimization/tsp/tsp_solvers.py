@@ -1,14 +1,41 @@
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
-
-from discrete_optimization.tsp.tsp_model import TSPModel, TSPModel2D, TSPModelDistanceMatrix
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
+from discrete_optimization.tsp.solver.solver_lp_iterative import (
+    LP_TSP_Iterative,
+    MILPSolver,
+)
 from discrete_optimization.tsp.solver.solver_ortools import TSP_ORtools
-from discrete_optimization.tsp.solver.tsp_cp_solver import TSP_CP_Solver, TSP_CPModel, ParametersCP, CPSolverName
-from discrete_optimization.tsp.solver.solver_lp_iterative import LP_TSP_Iterative, MILPSolver
+from discrete_optimization.tsp.solver.tsp_cp_solver import (
+    CPSolverName,
+    ParametersCP,
+    TSP_CP_Solver,
+    TSP_CPModel,
+)
+from discrete_optimization.tsp.tsp_model import (
+    TSPModel,
+    TSPModel2D,
+    TSPModelDistanceMatrix,
+)
 
-
-solvers = {"lp": [(LP_TSP_Iterative, {"method": MILPSolver.CBC, "nb_iteration_max": 20, "plot": False})],
-           "ortools": [(TSP_ORtools, {})],
-           "cp": [(TSP_CP_Solver, {"model_type": TSP_CPModel.INT_VERSION, "cp_solver_name": CPSolverName.CHUFFED})]}
+solvers = {
+    "lp": [
+        (
+            LP_TSP_Iterative,
+            {"method": MILPSolver.CBC, "nb_iteration_max": 20, "plot": False},
+        )
+    ],
+    "ortools": [(TSP_ORtools, {})],
+    "cp": [
+        (
+            TSP_CP_Solver,
+            {
+                "model_type": TSP_CPModel.INT_VERSION,
+                "cp_solver_name": CPSolverName.CHUFFED,
+            },
+        )
+    ],
+}
 
 solvers_map = {}
 for key in solvers:
@@ -42,9 +69,7 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method,
-          tsp_problem: TSPModel,
-          **args) -> ResultStorage:
+def solve(method, tsp_problem: TSPModel, **args) -> ResultStorage:
     solver = method(tsp_problem, **args)
     try:
         solver.init_model(**args)
@@ -53,9 +78,7 @@ def solve(method,
     return solver.solve(**args)
 
 
-def return_solver(method,
-                  tsp_problem: TSPModel,
-                  **args) -> ResultStorage:
+def return_solver(method, tsp_problem: TSPModel, **args) -> ResultStorage:
     solver = method(tsp_problem, **args)
     try:
         solver.init_model(**args)

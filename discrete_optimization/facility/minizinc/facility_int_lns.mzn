@@ -24,15 +24,3 @@ constraint setup_cost == sum(f in FACILITIES)(used_facility[f]*setup_cost_vector
 constraint length_cost == sum(c in CUSTOMERS)(distance[facility_for_customer[c], c]);
 constraint objective==setup_cost+length_cost;
 output ["obj=\(objective)"];
-
-
-
-
-
-
-
-
-
-
-
-
