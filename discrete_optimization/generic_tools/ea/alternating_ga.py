@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from deap import algorithms, base, creator, tools
+
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,

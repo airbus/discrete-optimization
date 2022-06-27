@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,

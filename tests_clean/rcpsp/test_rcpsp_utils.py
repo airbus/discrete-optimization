@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     Graph,

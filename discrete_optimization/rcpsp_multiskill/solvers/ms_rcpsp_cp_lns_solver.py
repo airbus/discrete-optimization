@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Iterable, List
 
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
@@ -122,11 +123,19 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
                     and len(current_solution.employee_usage[task][emp]) > 0
                 ):
                     string1 = (
-                        "constraint unit_used[" + str(i) + "," + str(index_minizinc) + "] = 1;\n"
+                        "constraint unit_used["
+                        + str(i)
+                        + ","
+                        + str(index_minizinc)
+                        + "] = 1;\n"
                     )
                 else:
                     string1 = (
-                        "constraint unit_used[" + str(i) + "," + str(index_minizinc) + "] = 0;\n"
+                        "constraint unit_used["
+                        + str(i)
+                        + ","
+                        + str(index_minizinc)
+                        + "] = 0;\n"
                     )
                 child_instance.add_string(string1)
                 list_strings += [string1]
@@ -134,7 +143,11 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             index_minizinc = cp_solver.index_in_minizinc[job]
             start_time_j = current_solution.schedule[job]["start_time"]
             string1 = (
-                "constraint start[" + str(index_minizinc) + "] <= " + str(start_time_j) + ";\n"
+                "constraint start["
+                + str(index_minizinc)
+                + "] <= "
+                + str(start_time_j)
+                + ";\n"
             )
             list_strings += [string1]
             child_instance.add_string(string1)
@@ -143,8 +156,20 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             index_minizinc = cp_solver.index_in_minizinc[job]
             min_st = max(start_time_j - self.minus_delta, 0)
             max_st = min(start_time_j + self.plus_delta, max_time)
-            string1 = "constraint start[" + str(index_minizinc) + "] <= " + str(max_st) + ";\n"
-            string2 = "constraint start[" + str(index_minizinc) + "] >= " + str(min_st) + ";\n"
+            string1 = (
+                "constraint start["
+                + str(index_minizinc)
+                + "] <= "
+                + str(max_st)
+                + ";\n"
+            )
+            string2 = (
+                "constraint start["
+                + str(index_minizinc)
+                + "] >= "
+                + str(min_st)
+                + ";\n"
+            )
             list_strings += [string1]
             list_strings += [string2]
             child_instance.add_string(string1)
@@ -153,7 +178,13 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             index_minizinc = cp_solver.index_in_minizinc[job]
             if job in jobs_to_fix:
                 continue
-            string1 = "constraint start[" + str(index_minizinc) + "] <= " + str(max_time) + ";\n"
+            string1 = (
+                "constraint start["
+                + str(index_minizinc)
+                + "] <= "
+                + str(max_time)
+                + ";\n"
+            )
             child_instance.add_string(string1)
             list_strings += [string1]
         return list_strings

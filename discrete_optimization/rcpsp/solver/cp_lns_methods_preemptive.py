@@ -5,6 +5,7 @@ from typing import Any, Hashable, Iterable, List, Set, Union
 
 import networkx as nx
 import numpy as np
+
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
     GraphRCPSPSpecialConstraints,

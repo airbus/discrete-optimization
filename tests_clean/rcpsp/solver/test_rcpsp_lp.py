@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -78,8 +79,7 @@ def test_rcpsp_sm_lp_cbc_partial():
     some_constraints = {
         task: dummy_solution.rcpsp_schedule[task]["start_time"] for task in [1, 2, 3, 4]
     }
-    partial_solution = PartialSolution(task_mode=None,
-                                       start_times=some_constraints)
+    partial_solution = PartialSolution(task_mode=None, start_times=some_constraints)
     partial_solution_for_lp = partial_solution
     solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
     solver.init_model(partial_solution=partial_solution_for_lp, greedy_start=False)
@@ -87,7 +87,7 @@ def test_rcpsp_sm_lp_cbc_partial():
     params_milp.TimeLimit = 20
     store = solver.solve(parameters_milp=params_milp)
     solution, fit = store.get_best_solution_fit()
-    solution: RCPSPSolution = solution # just for autocompletion.
+    solution: RCPSPSolution = solution  # just for autocompletion.
     print("Constraint given as partial solution : ", partial_solution.start_times)
     print(
         "Found solution : ",

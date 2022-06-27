@@ -23,7 +23,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
 @pytest.fixture
 def random_seed():
     random.seed(42)
-    np.random.seed(42   )
+    np.random.seed(42)
 
 
 def test_ms_to_rcpsp_imopse(random_seed):
@@ -56,8 +56,7 @@ def test_solve_rcpsp_imopse1():
     params_cp.TimeLimit_iter0 = 100
     params_cp.free_search = False
     lns_solver = LNS_CP_RCPSP_SOLVER(
-        rcpsp_model=rcpsp_model,
-        option_neighbor=OptionNeighbor.MIX_FAST
+        rcpsp_model=rcpsp_model, option_neighbor=OptionNeighbor.MIX_FAST
     )
     result_storage = lns_solver.solve(
         parameters_cp=params_cp,

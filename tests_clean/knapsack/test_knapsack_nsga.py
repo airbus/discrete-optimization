@@ -2,6 +2,7 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+
 from discrete_optimization.generic_tools.ea.ga import DeapMutation
 from discrete_optimization.generic_tools.ea.nsga import Nsga
 from discrete_optimization.generic_tools.mutations.mixed_mutation import (

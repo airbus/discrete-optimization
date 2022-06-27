@@ -3,19 +3,11 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import (
-    Dict,
-    Hashable,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Dict, Hashable, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import scipy.stats as ss
+
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -2764,7 +2756,10 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
             "low": 1,
             "up": mode_arity,
             "arities": mode_arity,
-            "type": [TypeAttribute.LIST_INTEGER, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
+            "type": [
+                TypeAttribute.LIST_INTEGER,
+                TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
+            ],
         }
 
         dict_register["modes_arity_fix"] = {
@@ -2773,14 +2768,14 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
             "n": self.n_jobs_non_dummy,
             "low": 1,
             "up": mode_arity,
-            "arities": mode_arity
+            "arities": mode_arity,
         }
         dict_register["modes_arity_fix_from_0"] = {
             "name": "modes_vector_from0",
             "type": [TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY],
             "n": self.n_jobs_non_dummy,
             "low": 0,
-            "up": [x-1 for x in mode_arity],
+            "up": [x - 1 for x in mode_arity],
             "arities": mode_arity,
         }
 

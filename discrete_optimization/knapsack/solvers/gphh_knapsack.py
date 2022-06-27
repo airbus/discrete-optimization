@@ -13,6 +13,7 @@ from deap.gp import (
     Terminal,
     genHalfAndHalf,
 )
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,

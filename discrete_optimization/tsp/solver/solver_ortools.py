@@ -3,6 +3,8 @@
 from __future__ import print_function
 
 import numpy as np
+from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
@@ -12,7 +14,6 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
-from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 
 class TSP_ORtools(SolverDO):
@@ -44,7 +45,7 @@ class TSP_ORtools(SolverDO):
                 self.list_points,
                 method=self.tsp_model.evaluate_function_indexes,
             )
-            distance_matrix = 10 ** 6 * matrix.astype(np.int)
+            distance_matrix = 10**6 * matrix.astype(np.int)
 
             def distance_callback(from_index, to_index):
                 from_node = manager.IndexToNode(from_index)
@@ -57,7 +58,7 @@ class TSP_ORtools(SolverDO):
                 from_node = manager.IndexToNode(from_index)
                 to_node = manager.IndexToNode(to_index)
                 return int(
-                    10 ** 6
+                    10**6
                     * self.tsp_model.evaluate_function_indexes(
                         self.list_points[from_node], self.list_points[to_node]
                     )

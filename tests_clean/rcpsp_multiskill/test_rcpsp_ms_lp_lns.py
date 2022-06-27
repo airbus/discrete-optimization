@@ -2,6 +2,7 @@ import time
 
 import matplotlib.pyplot as plt
 import pytest
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,

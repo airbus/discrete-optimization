@@ -4,6 +4,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,

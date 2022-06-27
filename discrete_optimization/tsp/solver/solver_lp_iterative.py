@@ -3,6 +3,8 @@ from enum import Enum
 from typing import Optional
 
 import numpy as np
+from ortools.linear_solver import pywraplp
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -17,7 +19,6 @@ from discrete_optimization.tsp.common_tools_tsp import (
     length_1,
 )
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, TSPModel2D
-from ortools.linear_solver import pywraplp
 
 try:
     import gurobipy
@@ -26,7 +27,6 @@ except ImportError:
 else:
     gurobi_available = True
     from gurobipy import GRB, Model, quicksum
-
 
 import matplotlib.pyplot as plt
 import networkx as nx

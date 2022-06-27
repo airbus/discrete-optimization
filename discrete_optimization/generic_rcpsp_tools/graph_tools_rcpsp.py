@@ -1,6 +1,8 @@
 from typing import Union
 
 import networkx as nx
+from networkx import NetworkXNoCycle
+
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
@@ -16,7 +18,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
 )
-from networkx import NetworkXNoCycle
 
 
 class GraphRCPSP:

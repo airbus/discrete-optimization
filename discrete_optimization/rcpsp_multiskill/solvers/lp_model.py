@@ -1,5 +1,7 @@
 from typing import Dict, Tuple
 
+from mip import BINARY, INTEGER, MAXIMIZE, MINIMIZE, LinExpr, Model, Var, xsum
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -20,7 +22,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution,
     tree,
 )
-from mip import BINARY, INTEGER, MAXIMIZE, MINIMIZE, LinExpr, Model, Var, xsum
 
 
 class LP_Solver_MRSCPSP(MilpSolver):

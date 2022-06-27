@@ -1,6 +1,8 @@
 import os
 from typing import List
 
+from docplex.cp.model import *
+
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
@@ -17,7 +19,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
-from docplex.cp.model import *
 
 
 class CPOptSolver(CPSolver):

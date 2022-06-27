@@ -5,6 +5,8 @@ from datetime import timedelta
 from enum import Enum
 
 import networkx as nx
+from minizinc import Instance, Model, Solver
+
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
@@ -25,7 +27,6 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage
-from minizinc import Instance, Model, Solver
 
 path_minizinc = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../minizinc/")

@@ -5,6 +5,7 @@ from typing import Dict, Hashable, List, Tuple, Union
 
 import networkx as nx
 import numpy as np
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,

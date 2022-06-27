@@ -6,6 +6,9 @@ from typing import Dict, Hashable, Iterable, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import poisson, randint, rv_discrete
+from sortedcontainers import SortedDict
+
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     MethodAggregating,
@@ -26,8 +29,6 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
     sgs_fast_partial_schedule,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
-from scipy.stats import poisson, randint, rv_discrete
-from sortedcontainers import SortedDict
 
 
 def tree():

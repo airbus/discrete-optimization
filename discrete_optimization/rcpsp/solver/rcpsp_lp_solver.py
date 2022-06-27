@@ -3,6 +3,8 @@ from enum import Enum
 from itertools import product
 from typing import Dict, List, Union
 
+from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
@@ -28,7 +30,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     PileSolverRCPSP,
     PileSolverRCPSP_Calendar,
 )
-from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
 
 try:
     import gurobipy

@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from typing import List, Tuple
 
+from minizinc import Instance, Model, Result, Solver, Status
+
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     ParametersCP,
@@ -14,7 +16,6 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
-from minizinc import Instance, Model, Result, Solver, Status
 
 this_path = os.path.dirname(os.path.abspath(__file__))
 

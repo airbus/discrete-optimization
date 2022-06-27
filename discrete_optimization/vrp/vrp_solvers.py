@@ -1,12 +1,15 @@
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
-
-from discrete_optimization.vrp.vrp_model import VrpProblem, VrpProblem2D
-from discrete_optimization.vrp.solver.solver_ortools import VrpORToolsSolver
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.vrp.solver.lp_vrp_iterative import VRPIterativeLP
 from discrete_optimization.vrp.solver.lp_vrp_iterative_pymip import VRPIterativeLP_Pymip
+from discrete_optimization.vrp.solver.solver_ortools import VrpORToolsSolver
+from discrete_optimization.vrp.vrp_model import VrpProblem, VrpProblem2D
 
-solvers = {"ortools": [(VrpORToolsSolver, {"limit_time_s": 100})],
-           "lp": [(VRPIterativeLP, {}), (VRPIterativeLP_Pymip, {})]}
+solvers = {
+    "ortools": [(VrpORToolsSolver, {"limit_time_s": 100})],
+    "lp": [(VRPIterativeLP, {}), (VRPIterativeLP_Pymip, {})],
+}
 
 solvers_map = {}
 for key in solvers:
@@ -40,9 +43,7 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method,
-          vrp_problem: VrpProblem,
-          **args) -> ResultStorage:
+def solve(method, vrp_problem: VrpProblem, **args) -> ResultStorage:
     solver = method(vrp_problem, **args)
     try:
         solver.init_model(**args)
@@ -51,9 +52,7 @@ def solve(method,
     return solver.solve(**args)
 
 
-def return_solver(method,
-                  vrp_problem: VrpProblem,
-                  **args) -> ResultStorage:
+def return_solver(method, vrp_problem: VrpProblem, **args) -> ResultStorage:
     solver = method(vrp_problem, **args)
     try:
         solver.init_model(**args)

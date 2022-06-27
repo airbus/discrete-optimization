@@ -5,6 +5,7 @@ import time
 from abc import abstractmethod
 
 import numpy as np
+
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,

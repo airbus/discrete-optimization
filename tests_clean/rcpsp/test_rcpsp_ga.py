@@ -2,16 +2,11 @@ import random
 
 import numpy as np
 import pytest
+
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    Ga,
-)
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-)
+from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
+from discrete_optimization.rcpsp.rcpsp_model import MultiModeRCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
@@ -114,9 +109,7 @@ def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
     total_evals = 10000
     number_of_meta_iterations = 5
     evals_per_ga_runs_perm = int(0.5 * (total_evals / number_of_meta_iterations))
-    evals_per_ga_runs_modes = int(0.5 * (
-        total_evals / number_of_meta_iterations
-    ))
+    evals_per_ga_runs_modes = int(0.5 * (total_evals / number_of_meta_iterations))
 
     mode_mutation = DeapMutation.MUT_UNIFORM_INT
     permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES

@@ -5,6 +5,8 @@ from dataclasses import InitVar
 from datetime import timedelta
 from typing import Dict, Hashable, List, Set, Tuple, Union
 
+from minizinc import Instance, Model, Result, Solver, Status
+
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
@@ -35,7 +37,6 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPSolutionPreemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
-from minizinc import Instance, Model, Result, Solver, Status
 
 this_path = os.path.dirname(os.path.abspath(__file__))
 

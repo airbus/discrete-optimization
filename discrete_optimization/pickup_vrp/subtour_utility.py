@@ -1,4 +1,5 @@
 import networkx as nx
+
 from discrete_optimization.pickup_vrp.gpdp import GPDP
 
 

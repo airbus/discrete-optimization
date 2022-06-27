@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import mip
 import networkx as nx
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,

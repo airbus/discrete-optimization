@@ -2,6 +2,7 @@ from abc import abstractmethod
 from enum import Enum
 
 import mip
+
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,

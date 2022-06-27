@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPModelCalendar
 
 

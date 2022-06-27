@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import pytest
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,

@@ -28,4 +28,3 @@ constraint forall(v in 1..nb_vehicle)(circuit_vrp[index_end_subcircuit[v]]==virt
 array[1..nb_vehicle] of var capacity_per_vehicle: capa;
 constraint forall(v in 2..nb_vehicle)(
     (sum(i in index_end_subcircuit[v-1]..index_end_subcircuit[v])(demand[circuit_vrp[i]]))==capa[v]);
-

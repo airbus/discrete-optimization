@@ -1,5 +1,6 @@
 import networkx as nx
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.result_storage.result_storage import (

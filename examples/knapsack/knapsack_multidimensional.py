@@ -1,4 +1,5 @@
 import numpy as np
+
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,

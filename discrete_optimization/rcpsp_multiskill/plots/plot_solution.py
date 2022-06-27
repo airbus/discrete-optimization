@@ -1,14 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.collections import PatchCollection
+from matplotlib.font_manager import FontProperties
+from matplotlib.patches import Polygon as pp
+from shapely.geometry import Polygon
+
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive,
 )
-from matplotlib.collections import PatchCollection
-from matplotlib.font_manager import FontProperties
-from matplotlib.patches import Polygon as pp
-from shapely.geometry import Polygon
 
 
 def compute_schedule_per_resource_individual_preemptive(

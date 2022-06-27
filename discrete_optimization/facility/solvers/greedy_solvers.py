@@ -1,4 +1,5 @@
 import numpy as np
+
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,

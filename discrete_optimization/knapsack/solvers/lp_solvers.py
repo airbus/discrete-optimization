@@ -2,6 +2,10 @@ import random
 from typing import Dict, Iterable
 
 import matplotlib.pyplot as plt
+from ortools.algorithms import pywrapknapsack_solver
+from ortools.linear_solver import pywraplp
+from tqdm import trange
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -27,9 +31,6 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
-from ortools.algorithms import pywrapknapsack_solver
-from ortools.linear_solver import pywraplp
-from tqdm import trange
 
 try:
     import gurobipy

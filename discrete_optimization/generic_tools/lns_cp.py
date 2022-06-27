@@ -5,6 +5,8 @@ from datetime import timedelta
 from typing import Any, Iterable, List, Optional, Union
 
 import numpy as np
+from minizinc import Status
+
 from discrete_optimization.generic_tools.cp_tools import CPSolver, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -23,7 +25,6 @@ from discrete_optimization.generic_tools.lns_mip import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from minizinc import Status
 
 
 class ConstraintHandler:

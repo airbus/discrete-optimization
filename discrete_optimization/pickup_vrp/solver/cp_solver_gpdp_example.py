@@ -6,6 +6,8 @@ from datetime import timedelta
 from typing import Tuple
 
 import numpy as np
+from minizinc import Instance, Model, Result, Solver, Status
+
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandlerLimit,
@@ -25,7 +27,6 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
     Mutation2OptIntersection,
     MutationSwapTSP,
 )
-from minizinc import Instance, Model, Result, Solver, Status
 
 this_path = os.path.dirname(os.path.abspath(__file__))
 

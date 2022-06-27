@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 import pytest
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import (
     plot_resource_individual_gantt,

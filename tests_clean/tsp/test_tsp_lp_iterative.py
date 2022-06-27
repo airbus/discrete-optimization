@@ -3,6 +3,7 @@ import time
 from tempfile import TemporaryDirectory
 
 import numpy as np
+
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
 )

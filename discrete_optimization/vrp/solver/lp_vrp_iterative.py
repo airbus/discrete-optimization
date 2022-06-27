@@ -7,6 +7,7 @@ import networkx as nx
 
 # from numba import jit
 import numpy as np
+
 from discrete_optimization.vrp.vrp_toolbox import Customer, length
 
 this_path = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +15,7 @@ os.chdir(this_path)
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,

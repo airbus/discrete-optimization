@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Iterable, List, Union
 
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import (
