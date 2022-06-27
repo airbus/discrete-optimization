@@ -12,4 +12,3 @@ def compute_cliques(g, nb_max=None):
             not_all = True
             break
     return cliques, not_all
-

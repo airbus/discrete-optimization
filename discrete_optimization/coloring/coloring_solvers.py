@@ -1,28 +1,64 @@
+from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
+    ColoringCP,
+    ColoringCPModel,
+    CPSolver,
+    CPSolverName,
+    ParametersCP,
+)
+from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
+    ColoringLP,
+    ColoringLP_MIP,
+    MilpSolverName,
+)
+from discrete_optimization.coloring.solvers.greedy_coloring import (
+    ColoringProblem,
+    GreedyColoring,
+    NXGreedyColoringMethod,
+)
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 
-from discrete_optimization.coloring.solvers.greedy_coloring import GreedyColoring, NXGreedyColoringMethod, ColoringProblem
-from discrete_optimization.coloring.solvers.coloring_cp_solvers import ColoringCP, CPSolver, CPSolverName, \
-    ParametersCP, ColoringCPModel
-from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLP, ColoringLP_MIP, MilpSolverName
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
 # from discrete_optimization.coloring.solvers.coloring_cp_lns_solvers import InitialColoring, InitialColoringMethod, \
 #     PostProcessSolutionColoring, ConstraintHandlerFixColorsCP
 # from discrete_optimization.generic_tools.lns_cp import LNS_CP
 # from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 # import discrete_optimization.coloring.solvers.coloring_lp_lns_solvers as coloring_lp_lns
 
-solvers = {"lp": [(ColoringLP, {"greedy_start": True,
-                                "use_cliques": False,
-                                "parameters_milp": ParametersMilp.default()}),
-                  (ColoringLP_MIP, {"milp_solver_name": MilpSolverName.CBC,
-                                    "greedy_start": True,
-                                    "parameters_milp": ParametersMilp.default(),
-                                    "use_cliques": False})],
-           "cp": [(ColoringCP, {"cp_solver_name": CPSolverName.CHUFFED,
-                                "cp_model": ColoringCPModel.DEFAULT,
-                                "parameters_cp": ParametersCP.default(),
-                                "object_output": True})],
-           "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})]}
+solvers = {
+    "lp": [
+        (
+            ColoringLP,
+            {
+                "greedy_start": True,
+                "use_cliques": False,
+                "parameters_milp": ParametersMilp.default(),
+            },
+        ),
+        (
+            ColoringLP_MIP,
+            {
+                "milp_solver_name": MilpSolverName.CBC,
+                "greedy_start": True,
+                "parameters_milp": ParametersMilp.default(),
+                "use_cliques": False,
+            },
+        ),
+    ],
+    "cp": [
+        (
+            ColoringCP,
+            {
+                "cp_solver_name": CPSolverName.CHUFFED,
+                "cp_model": ColoringCPModel.DEFAULT,
+                "parameters_cp": ParametersCP.default(),
+                "object_output": True,
+            },
+        )
+    ],
+    "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
+}
 
 solvers_map = {}
 for key in solvers:
@@ -56,9 +92,7 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method,
-          coloring_model: ColoringProblem,
-          **args) -> ResultStorage:
+def solve(method, coloring_model: ColoringProblem, **args) -> ResultStorage:
     solver = method(coloring_model, **args)
     try:
         solver.init_model(**args)
@@ -67,9 +101,7 @@ def solve(method,
     return solver.solve(**args)
 
 
-def return_solver(method,
-                  coloring_model: ColoringProblem,
-                  **args) -> ResultStorage:
+def return_solver(method, coloring_model: ColoringProblem, **args) -> ResultStorage:
     solver = method(coloring_model, **args)
     try:
         solver.init_model(**args)

@@ -1,27 +1,69 @@
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
-
 from discrete_optimization.facility.facility_model import FacilityProblem
-from discrete_optimization.facility.solvers.greedy_solvers import GreedySolverFacility, GreedySolverDistanceBased
-from discrete_optimization.facility.solvers.facility_lp_solver import LP_Facility_Solver, \
-    LP_Facility_Solver_CBC, LP_Facility_Solver_PyMip, ParametersMilp, MilpSolverName
-from discrete_optimization.facility.solvers.facility_cp_solvers import FacilityCP, ParametersCP, CPSolverName, FacilityCPModel
+from discrete_optimization.facility.solvers.facility_cp_solvers import (
+    CPSolverName,
+    FacilityCP,
+    FacilityCPModel,
+    ParametersCP,
+)
+from discrete_optimization.facility.solvers.facility_lp_solver import (
+    LP_Facility_Solver,
+    LP_Facility_Solver_CBC,
+    LP_Facility_Solver_PyMip,
+    MilpSolverName,
+    ParametersMilp,
+)
+from discrete_optimization.facility.solvers.greedy_solvers import (
+    GreedySolverDistanceBased,
+    GreedySolverFacility,
+)
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 
-
-solvers = {"lp": [(LP_Facility_Solver, {"parameters_milp": ParametersMilp.default(),
-                                        "use_matrix_indicator_heuristic": True,
-                                        "n_shortest": 10, "n_cheapest": 10}),
-                  (LP_Facility_Solver_CBC, {"parameters_milp": ParametersMilp.default(),
-                                            "use_matrix_indicator_heuristic": True,
-                                            "n_shortest": 10, "n_cheapest": 10}),
-                  (LP_Facility_Solver_PyMip, {"parameters_milp": ParametersMilp.default(),
-                                              "use_matrix_indicator_heuristic": True,
-                                              "milp_solver_name": MilpSolverName.CBC,
-                                              "n_shortest": 10, "n_cheapest": 10})],
-           "cp": [(FacilityCP, {"cp_solver_name": CPSolverName.CHUFFED,
-                                "object_output": True,
-                                "cp_model": FacilityCPModel.DEFAULT_INT,
-                                "parameters_cp": ParametersCP.default()})],
-           "greedy": [(GreedySolverFacility, {}), (GreedySolverDistanceBased, {})]}
+solvers = {
+    "lp": [
+        (
+            LP_Facility_Solver,
+            {
+                "parameters_milp": ParametersMilp.default(),
+                "use_matrix_indicator_heuristic": True,
+                "n_shortest": 10,
+                "n_cheapest": 10,
+            },
+        ),
+        (
+            LP_Facility_Solver_CBC,
+            {
+                "parameters_milp": ParametersMilp.default(),
+                "use_matrix_indicator_heuristic": True,
+                "n_shortest": 10,
+                "n_cheapest": 10,
+            },
+        ),
+        (
+            LP_Facility_Solver_PyMip,
+            {
+                "parameters_milp": ParametersMilp.default(),
+                "use_matrix_indicator_heuristic": True,
+                "milp_solver_name": MilpSolverName.CBC,
+                "n_shortest": 10,
+                "n_cheapest": 10,
+            },
+        ),
+    ],
+    "cp": [
+        (
+            FacilityCP,
+            {
+                "cp_solver_name": CPSolverName.CHUFFED,
+                "object_output": True,
+                "cp_model": FacilityCPModel.DEFAULT_INT,
+                "parameters_cp": ParametersCP.default(),
+            },
+        )
+    ],
+    "greedy": [(GreedySolverFacility, {}), (GreedySolverDistanceBased, {})],
+}
 
 solvers_map = {}
 for key in solvers:
@@ -55,9 +97,7 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method,
-          facility_problem: FacilityProblem,
-          **args) -> ResultStorage:
+def solve(method, facility_problem: FacilityProblem, **args) -> ResultStorage:
     solver = method(facility_problem, **args)
     try:
         solver.init_model(**args)
@@ -66,9 +106,7 @@ def solve(method,
     return solver.solve(**args)
 
 
-def return_solver(method,
-                  coloring_model: FacilityProblem,
-                  **args) -> ResultStorage:
+def return_solver(method, coloring_model: FacilityProblem, **args) -> ResultStorage:
     solver = method(coloring_model, **args)
     try:
         solver.init_model(**args)

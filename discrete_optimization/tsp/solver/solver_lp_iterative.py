@@ -1,20 +1,32 @@
 import os
 from enum import Enum
-#from numba import jit
+
+# from numba import jit
 import numpy as np
-from discrete_optimization.generic_tools.do_solver import SolverDO, ResultStorage
-from discrete_optimization.generic_tools.do_problem import build_evaluate_function_aggregated, \
-    build_aggreg_function_and_params_objective, ParamsObjectiveFunction
-from gurobi import Model, GRB, quicksum
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    build_aggreg_function_and_params_objective,
+    build_evaluate_function_aggregated,
+)
+from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.tsp.common_tools_tsp import (
+    build_matrice_distance,
+    build_matrice_distance_np,
+    compute_length,
+    length,
+    length_1,
+)
+from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, TSPModel2D
+from gurobi import GRB, Model, quicksum
 from ortools.linear_solver import pywraplp
-from discrete_optimization.tsp.tsp_model import TSPModel, SolutionTSP, TSPModel2D
-from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance, length, length_1, \
-    build_matrice_distance_np, compute_length
-folder_image = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../debug_image/image_lp_iterative/')
+
+folder_image = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../debug_image/image_lp_iterative/"
+)
 if not os.path.exists(folder_image):
     os.makedirs(folder_image)
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
 
 
 def build_graph_pruned(tsp_model: TSPModel2D):
@@ -26,25 +38,27 @@ def build_graph_pruned(tsp_model: TSPModel2D):
     shape = sd.shape[0]
     edges_in = {i: set() for i in range(nodeCount)}
     edges_out = {i: set() for i in range(nodeCount)}
+
     def length_ij(i, j):
-        return tsp_model.evaluate_function_indexes(i,j)
+        return tsp_model.evaluate_function_indexes(i, j)
+
     for i in range(shape):
         nodes_to_add = sd[i, 1:50]
         for n in nodes_to_add:
             if n == i:
                 continue
-            g.add_edge(i, n, weight=length_ij(i,n))
-            g.add_edge(n, i, weight=length_ij(n,i))
+            g.add_edge(i, n, weight=length_ij(i, n))
+            g.add_edge(n, i, weight=length_ij(n, i))
             edges_in[n].add((i, n))
             edges_out[i].add((i, n))
             edges_in[i].add((n, i))
             edges_out[n].add((n, i))
-        nodes_to_add = range(i, min(i+5, nodeCount))
+        nodes_to_add = range(i, min(i + 5, nodeCount))
         for n in nodes_to_add:
             if n == i:
                 continue
-            g.add_edge(i, n, weight=length_ij(i,n))
-            g.add_edge(n, i, weight=length_ij(n,i))
+            g.add_edge(i, n, weight=length_ij(i, n))
+            g.add_edge(n, i, weight=length_ij(n, i))
             edges_in[n].add((i, n))
             edges_out[i].add((i, n))
             edges_in[i].add((n, i))
@@ -53,8 +67,8 @@ def build_graph_pruned(tsp_model: TSPModel2D):
         for n in nodes_to_add:
             if n == i:
                 continue
-            g.add_edge(i, n, weight=length_ij(i,n)) 
-            g.add_edge(n, i, weight=length_ij(n,i))
+            g.add_edge(i, n, weight=length_ij(i, n))
+            g.add_edge(n, i, weight=length_ij(n, i))
             edges_in[n].add((i, n))
             edges_out[i].add((i, n))
             edges_in[i].add((n, i))
@@ -74,8 +88,10 @@ def build_graph_complete(tsp_model: TSPModel):
     shape = sd.shape[0]
     edges_in = {i: set() for i in range(nodeCount)}
     edges_out = {i: set() for i in range(nodeCount)}
+
     def length_ij(i, j):
         return mat[i, j]
+
     for i in range(shape):
         nodes_to_add = sd[i, 1:]
         for n in nodes_to_add:
@@ -91,7 +107,7 @@ def build_graph_complete(tsp_model: TSPModel):
         for n in nodes_to_add:
             if n == i:
                 continue
-            g.add_edge(i, n, weight=length_ij(i, n)) 
+            g.add_edge(i, n, weight=length_ij(i, n))
             g.add_edge(n, i, weight=length_ij(n, i))
             edges_in[n].add((i, n))
             edges_out[i].add((i, n))
@@ -108,10 +124,13 @@ class MILPSolver(Enum):
 
 
 class LP_TSP_Iterative(SolverDO):
-    def __init__(self, tsp_model: TSPModel,
-                 graph_builder=None,
-                 params_objective_function: ParamsObjectiveFunction = None,
-                 **args):
+    def __init__(
+        self,
+        tsp_model: TSPModel,
+        graph_builder=None,
+        params_objective_function: ParamsObjectiveFunction = None,
+        **args
+    ):
         self.tsp_model = tsp_model
         self.node_count = self.tsp_model.node_count
         self.list_points = self.tsp_model.list_points
@@ -121,9 +140,13 @@ class LP_TSP_Iterative(SolverDO):
         self.g = None
         self.edges = None
         _, self.aggreg = build_evaluate_function_aggregated(tsp_model)
-        self.aggreg_sol, self.aggreg, self.params_objective_function = \
-            build_aggreg_function_and_params_objective(problem=self.tsp_model,
-                                                       params_objective_function=params_objective_function)
+        (
+            self.aggreg_sol,
+            self.aggreg,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=self.tsp_model, params_objective_function=params_objective_function
+        )
 
     def init_model(self, method: MILPSolver):
         if method == MILPSolver.GUROBI:
@@ -139,16 +162,20 @@ class LP_TSP_Iterative(SolverDO):
         edges = set(g.edges())
         self.edges = edges
         self.g = g
-        x_var = {} # decision variables on edges
+        x_var = {}  # decision variables on edges
         dummy_sol = self.tsp_model.get_dummy_solution()
-        path = [self.tsp_model.start_index]+dummy_sol.permutation+[self.tsp_model.end_index]
-        edges_to_add = {(e0, e1)  for e0, e1 in zip(path[:-1], path[1:])}
+        path = (
+            [self.tsp_model.start_index]
+            + dummy_sol.permutation
+            + [self.tsp_model.end_index]
+        )
+        edges_to_add = {(e0, e1) for e0, e1 in zip(path[:-1], path[1:])}
         flow_in = {}
         flow_out = {}
         for e in edges:
-            x_var[e] = tsp_model.addVar(vtype=GRB.BINARY, 
-                                        obj=g[e[0]][e[1]]["weight"],
-                                        name="x_"+str(e))
+            x_var[e] = tsp_model.addVar(
+                vtype=GRB.BINARY, obj=g[e[0]][e[1]]["weight"], name="x_" + str(e)
+            )
             if e[0] not in flow_out:
                 flow_out[e[0]] = set()
             if e[1] not in flow_in:
@@ -167,29 +194,50 @@ class LP_TSP_Iterative(SolverDO):
         cnt_tour = 0
         for edge in edges:
             if (edge[1], edge[0]) in edges:
-                constraint_tour_2length[cnt_tour] = tsp_model.addConstr(x_var[edge]+x_var[(edge[1], edge[0])]<=1, name="Tour_"+str(cnt_tour))
+                constraint_tour_2length[cnt_tour] = tsp_model.addConstr(
+                    x_var[edge] + x_var[(edge[1], edge[0])] <= 1,
+                    name="Tour_" + str(cnt_tour),
+                )
                 cnt_tour += 1
         tsp_model.update()
         # constraint_flow_in = {}
         # constraint_flow_out = {}
         constraint_flow = {}
         for n in flow_in:
-            if n!=self.tsp_model.start_index and n!=self.tsp_model.end_index:
-                constraint_flow[n] = tsp_model.addConstr(quicksum([x_var[i]
-                                                                  for i in flow_in[n]]
-                                                  +[-x_var[i] for i in flow_out[n]])==0, name="flow_"+str(n))
+            if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
+                constraint_flow[n] = tsp_model.addConstr(
+                    quicksum(
+                        [x_var[i] for i in flow_in[n]]
+                        + [-x_var[i] for i in flow_out[n]]
+                    )
+                    == 0,
+                    name="flow_" + str(n),
+                )
             if n != self.tsp_model.start_index:
-                constraint_flow[(n, "sub")] = tsp_model.addConstr(quicksum([x_var[i]
-                                                                            for i in flow_in[n]])==1, 
-                                                                  name="flowin_"+str(n))
-            if n==self.tsp_model.start_index:
-                constraint_flow[(n, 0)] = tsp_model.addConstr(quicksum([x_var[i] for i in flow_out[n]])==1, name="flowoutsource_"+str(n))
-                if n!=self.tsp_model.end_index:
-                    constraint_flow[(n, 1)] = tsp_model.addConstr(quicksum([x_var[i] for i in flow_in[n]])==0, name="flowinsource_"+str(n))
-            if n==self.tsp_model.end_index:
-                constraint_flow[(n, 0)] = tsp_model.addConstr(quicksum([x_var[i] for i in flow_in[n]])==1, name="flowinsink_"+str(n))
+                constraint_flow[(n, "sub")] = tsp_model.addConstr(
+                    quicksum([x_var[i] for i in flow_in[n]]) == 1,
+                    name="flowin_" + str(n),
+                )
+            if n == self.tsp_model.start_index:
+                constraint_flow[(n, 0)] = tsp_model.addConstr(
+                    quicksum([x_var[i] for i in flow_out[n]]) == 1,
+                    name="flowoutsource_" + str(n),
+                )
+                if n != self.tsp_model.end_index:
+                    constraint_flow[(n, 1)] = tsp_model.addConstr(
+                        quicksum([x_var[i] for i in flow_in[n]]) == 0,
+                        name="flowinsource_" + str(n),
+                    )
+            if n == self.tsp_model.end_index:
+                constraint_flow[(n, 0)] = tsp_model.addConstr(
+                    quicksum([x_var[i] for i in flow_in[n]]) == 1,
+                    name="flowinsink_" + str(n),
+                )
                 if n != self.tsp_model.start_index:
-                    constraint_flow[(n, 1)] = tsp_model.addConstr(quicksum([x_var[i] for i in flow_out[n]])==0, name="flowoutsink_"+str(n))
+                    constraint_flow[(n, 1)] = tsp_model.addConstr(
+                        quicksum([x_var[i] for i in flow_out[n]]) == 0,
+                        name="flowoutsink_" + str(n),
+                    )
         tsp_model.setParam("TimeLimit", 1000)
         tsp_model.modelSense = GRB.MINIMIZE
         tsp_model.setParam(GRB.Param.Threads, 8)
@@ -201,22 +249,28 @@ class LP_TSP_Iterative(SolverDO):
 
         self.model = tsp_model
         self.variables = {"x": x_var}
-    
+
     def init_model_cbc(self, **kwargs):
         g, g_empty, edges_in, edges_out = self.graph_builder(self.tsp_model)
-        tsp_model = pywraplp.Solver("TSP-master", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-        #S.EnableOutput()
+        tsp_model = pywraplp.Solver(
+            "TSP-master", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING
+        )
+        # S.EnableOutput()
         edges = set(g.edges())
         self.edges = edges
         self.g = g
-        x_var = {} # decision variables on edges
+        x_var = {}  # decision variables on edges
         dummy_sol = self.tsp_model.get_dummy_solution()
-        path = [self.tsp_model.start_index]+dummy_sol.permutation+[self.tsp_model.end_index]
-        edges_to_add = {(e0, e1)  for e0, e1 in zip(path[:-1], path[1:])}
+        path = (
+            [self.tsp_model.start_index]
+            + dummy_sol.permutation
+            + [self.tsp_model.end_index]
+        )
+        edges_to_add = {(e0, e1) for e0, e1 in zip(path[:-1], path[1:])}
         flow_in = {}
         flow_out = {}
         for e in edges:
-            x_var[e] = tsp_model.BoolVar("x_"+str(e))
+            x_var[e] = tsp_model.BoolVar("x_" + str(e))
             if e[0] not in flow_out:
                 flow_out[e[0]] = set()
             if e[1] not in flow_in:
@@ -233,33 +287,47 @@ class LP_TSP_Iterative(SolverDO):
         cnt_tour = 0
         for edge in edges:
             if (edge[1], edge[0]) in edges:
-                constraint_tour_2length[cnt_tour] = tsp_model.Add(x_var[edge]+x_var[(edge[1], edge[0])]<=1)
+                constraint_tour_2length[cnt_tour] = tsp_model.Add(
+                    x_var[edge] + x_var[(edge[1], edge[0])] <= 1
+                )
                 cnt_tour += 1
         # constraint_flow_in = {}
         # constraint_flow_out = {}
         constraint_flow = {}
         for n in flow_in:
-            if n!=self.tsp_model.start_index and n!=self.tsp_model.end_index:
-                constraint_flow[n] = tsp_model.Add(tsp_model.Sum([x_var[i]
-                                                                  for i in flow_in[n]]
-                                                  +[-x_var[i] for i in flow_out[n]])==0)
+            if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
+                constraint_flow[n] = tsp_model.Add(
+                    tsp_model.Sum(
+                        [x_var[i] for i in flow_in[n]]
+                        + [-x_var[i] for i in flow_out[n]]
+                    )
+                    == 0
+                )
             if n != self.tsp_model.start_index:
-                constraint_flow[(n, "sub")] = tsp_model.Add(tsp_model.Sum([x_var[i]
-                                                            for i in flow_in[n]])==1)
-            if n==self.tsp_model.start_index:
-                constraint_flow[(n, 0)] = tsp_model.Add(tsp_model.Sum([x_var[i] for i in flow_out[n]])==1)
-                if n!=self.tsp_model.end_index:
-                    constraint_flow[(n, 1)] = tsp_model.Add(tsp_model.Sum([x_var[i] for i in flow_in[n]])==0)
-            if n==self.tsp_model.end_index:
-                constraint_flow[(n, 0)] = tsp_model.Add(tsp_model.Sum([x_var[i] for i in flow_in[n]])==1)
+                constraint_flow[(n, "sub")] = tsp_model.Add(
+                    tsp_model.Sum([x_var[i] for i in flow_in[n]]) == 1
+                )
+            if n == self.tsp_model.start_index:
+                constraint_flow[(n, 0)] = tsp_model.Add(
+                    tsp_model.Sum([x_var[i] for i in flow_out[n]]) == 1
+                )
+                if n != self.tsp_model.end_index:
+                    constraint_flow[(n, 1)] = tsp_model.Add(
+                        tsp_model.Sum([x_var[i] for i in flow_in[n]]) == 0
+                    )
+            if n == self.tsp_model.end_index:
+                constraint_flow[(n, 0)] = tsp_model.Add(
+                    tsp_model.Sum([x_var[i] for i in flow_in[n]]) == 1
+                )
                 if n != self.tsp_model.start_index:
-                    constraint_flow[(n, 1)] = tsp_model.Add(tsp_model.Sum([x_var[i] for i in flow_out[n]])==0)
-        value = tsp_model.Sum([x_var[i] * g[i[0]][i[1]]["weight"]
-                            for i in x_var])
+                    constraint_flow[(n, 1)] = tsp_model.Add(
+                        tsp_model.Sum([x_var[i] for i in flow_out[n]]) == 0
+                    )
+        value = tsp_model.Sum([x_var[i] * g[i[0]][i[1]]["weight"] for i in x_var])
         tsp_model.Minimize(value)
         self.model = tsp_model
         self.variables = {"x": x_var}
-        self.model.SetTimeLimit(60000)    
+        self.model.SetTimeLimit(60000)
 
     def retrieve_results_cbc(self):
         g_empty = nx.DiGraph()
@@ -272,19 +340,19 @@ class LP_TSP_Iterative(SolverDO):
                 x_solution.add(e)
                 g_empty.add_edge(e[0], e[1], weight=1)
         return g_empty, x_solution
-    
+
     def retrieve_results_gurobi(self):
         g_empty = nx.DiGraph()
         g_empty.add_nodes_from([i for i in range(self.node_count)])
         x_solution = set()
         x_var = self.variables["x"]
         for e in x_var:
-            value = x_var[e].getAttr('X')
+            value = x_var[e].getAttr("X")
             if value >= 0.5:
                 x_solution.add(e)
                 g_empty.add_edge(e[0], e[1], weight=1)
         return g_empty, x_solution
-    
+
     def solve(self, **kwargs):
         nb_iteration_max = kwargs.get("nb_iteration_max", 20)
         plot = kwargs.get("plot", True)
@@ -295,15 +363,22 @@ class LP_TSP_Iterative(SolverDO):
             nSolutions = tsp_model.SolCount
             nObjectives = tsp_model.NumObj
             objective = tsp_model.getObjective().getValue()
-            print('Problem has', nObjectives, 'objectives')
-            print('Gurobi found', nSolutions, 'solutions')
+            print("Problem has", nObjectives, "objectives")
+            print("Gurobi found", nSolutions, "solutions")
             status = tsp_model.getAttr("Status")
         if self.method == MILPSolver.CBC:
             self.model.Solve()
             res = self.model.Solve()
-            resdict = {0: 'OPTIMAL', 1: 'FEASIBLE', 2: 'INFEASIBLE', 3: 'UNBOUNDED',
-                    4: 'ABNORMAL', 5: 'MODEL_INVALID', 6: 'NOT_SOLVED'}
-            print('Result :', resdict[res])
+            resdict = {
+                0: "OPTIMAL",
+                1: "FEASIBLE",
+                2: "INFEASIBLE",
+                3: "UNBOUNDED",
+                4: "ABNORMAL",
+                5: "MODEL_INVALID",
+                6: "NOT_SOLVED",
+            }
+            print("Result :", resdict[res])
             objective = self.model.Objective().Value()
         finished = False
         solutions = []
@@ -313,15 +388,19 @@ class LP_TSP_Iterative(SolverDO):
         rebuilt_solution = []
         rebuilt_obj = []
         best_solution_rebuilt_index = 0
-        best_solution_rebuilt = float('inf')
+        best_solution_rebuilt = float("inf")
         while not finished:
             if self.method == MILPSolver.GUROBI:
                 g_empty, x_solution = self.retrieve_results_gurobi()
             if self.method == MILPSolver.CBC:
                 g_empty, x_solution = self.retrieve_results_cbc()
-            connected_components = [(set(e), len(e)) for e in nx.weakly_connected_components(g_empty)]
+            connected_components = [
+                (set(e), len(e)) for e in nx.weakly_connected_components(g_empty)
+            ]
             print("Connected component : ", len(connected_components))
-            sorted_connected_component = sorted(connected_components, key=lambda x: x[1], reverse=True)
+            sorted_connected_component = sorted(
+                connected_components, key=lambda x: x[1], reverse=True
+            )
             nb_components += [len(sorted_connected_component)]
             cost += [objective]
             solutions += [x_solution.copy()]
@@ -332,43 +411,59 @@ class LP_TSP_Iterative(SolverDO):
             x_var = self.variables["x"]
             for i in range(nb_component):
                 s = sorted_connected_component[i]
-                paths_component[i], indexes_component[i] = build_the_cycles(x_solution, 
-                                                                            s[0], 
-                                                                            self.g, 
-                                                                            start_index=self.start_index, 
-                                                                            end_index=self.end_index)
+                paths_component[i], indexes_component[i] = build_the_cycles(
+                    x_solution,
+                    s[0],
+                    self.g,
+                    start_index=self.start_index,
+                    end_index=self.end_index,
+                )
                 node_to_component.update({p: i for p in paths_component[i]})
-                edge_in_of_interest = [e for e in self.edges if e[1] in s[0] and e[0] not in s[0]]
-                edge_out_of_interest = [e for e in self.edges if e[0] in s[0] and e[1] not in s[0]]
+                edge_in_of_interest = [
+                    e for e in self.edges if e[1] in s[0] and e[0] not in s[0]
+                ]
+                edge_out_of_interest = [
+                    e for e in self.edges if e[0] in s[0] and e[1] not in s[0]
+                ]
                 # if i <= len(sorted_connected_component)//2:
                 if self.method == MILPSolver.GUROBI:
-                    tsp_model.addConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
-                    tsp_model.addConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
+                    tsp_model.addConstr(
+                        quicksum([x_var[e] for e in edge_in_of_interest]) >= 1
+                    )
+                    tsp_model.addConstr(
+                        quicksum([x_var[e] for e in edge_out_of_interest]) >= 1
+                    )
                 if self.method == MILPSolver.CBC:
-                    tsp_model.Add(tsp_model.Sum([x_var[e] for e in edge_in_of_interest]) >= 1)
-                    tsp_model.Add(tsp_model.Sum([x_var[e] for e in edge_out_of_interest]) >= 1)
+                    tsp_model.Add(
+                        tsp_model.Sum([x_var[e] for e in edge_in_of_interest]) >= 1
+                    )
+                    tsp_model.Add(
+                        tsp_model.Sum([x_var[e] for e in edge_out_of_interest]) >= 1
+                    )
             print(len(node_to_component), self.node_count)
             print(len(x_solution))
-            rebuilt, objective = rebuild_tsp_routine(sorted_connected_component, 
-                                                     paths_component,
-                                                     node_to_component, 
-                                                     indexes_component,
-                                                     self.g, 
-                                                     self.edges, 
-                                                     self.node_count,
-                                                     self.list_points, 
-                                                     self.tsp_model.evaluate_function_indexes, 
-                                                     self.tsp_model,
-                                                     self.start_index, 
-                                                     self.end_index)
+            rebuilt, objective = rebuild_tsp_routine(
+                sorted_connected_component,
+                paths_component,
+                node_to_component,
+                indexes_component,
+                self.g,
+                self.edges,
+                self.node_count,
+                self.list_points,
+                self.tsp_model.evaluate_function_indexes,
+                self.tsp_model,
+                self.start_index,
+                self.end_index,
+            )
             objective = self.aggreg(objective)
             rebuilt_solution += [rebuilt]
             rebuilt_obj += [objective]
             if objective < best_solution_rebuilt:
                 best_solution_rebuilt = objective
                 best_solution_rebuilt_index = iteration
-            if len(sorted_connected_component)>1:  
-                edges_to_add = {(e0, e1)  for e0, e1 in zip(rebuilt[:-1], rebuilt[1:])}
+            if len(sorted_connected_component) > 1:
+                edges_to_add = {(e0, e1) for e0, e1 in zip(rebuilt[:-1], rebuilt[1:])}
                 print("len rebuilt : ", len(rebuilt))
                 # print(rebuilt[0], rebuilt[-1])
                 print("len set rebuilt (debug) ", len(set(rebuilt)))
@@ -397,7 +492,7 @@ class LP_TSP_Iterative(SolverDO):
                 iteration += 1
             else:
                 finished = True
-            finished = finished or iteration>=nb_iteration_max
+            finished = finished or iteration >= nb_iteration_max
             if self.method == MILPSolver.GUROBI:
                 objective = tsp_model.getObjective().getValue()
             elif self.method == MILPSolver.CBC:
@@ -408,14 +503,28 @@ class LP_TSP_Iterative(SolverDO):
             for i in range(len(solutions)):
                 ll = []
                 for e in solutions[i]:
-                    ll.append(ax[0].plot([self.list_points[e[0]].x, self.list_points[e[1]].x],
-                                         [self.list_points[e[0]].y, self.list_points[e[1]].y], color="b"))
-                ax[1].plot([self.list_points[n].x for n in rebuilt_solution[i]],
-                           [self.list_points[n].y for n in rebuilt_solution[i]],
-                           color="orange")
-                ax[0].set_title("iter "+str(i)+" obj="+str(int(cost[i]))+" nbcomp="+str(nb_components[i]))
-                ax[1].set_title("iter "+str(i)+" obj="+str(int(rebuilt_obj[i])))
-                fig.savefig(os.path.join(folder_image, 'tsp_'+str(i)+".png"))
+                    ll.append(
+                        ax[0].plot(
+                            [self.list_points[e[0]].x, self.list_points[e[1]].x],
+                            [self.list_points[e[0]].y, self.list_points[e[1]].y],
+                            color="b",
+                        )
+                    )
+                ax[1].plot(
+                    [self.list_points[n].x for n in rebuilt_solution[i]],
+                    [self.list_points[n].y for n in rebuilt_solution[i]],
+                    color="orange",
+                )
+                ax[0].set_title(
+                    "iter "
+                    + str(i)
+                    + " obj="
+                    + str(int(cost[i]))
+                    + " nbcomp="
+                    + str(nb_components[i])
+                )
+                ax[1].set_title("iter " + str(i) + " obj=" + str(int(rebuilt_obj[i])))
+                fig.savefig(os.path.join(folder_image, "tsp_" + str(i) + ".png"))
                 plt.draw()
                 plt.pause(1)
                 ax[0].lines = []
@@ -424,19 +533,25 @@ class LP_TSP_Iterative(SolverDO):
         print("Best solution : ", best_solution_rebuilt)
         print(rebuilt_obj[best_solution_rebuilt_index])
         path = rebuilt_solution[best_solution_rebuilt_index]
-        var_tsp = SolutionTSP(problem=self.tsp_model,
-                              start_index=self.tsp_model.start_index,
-                              end_index=self.tsp_model.end_index,
-                              permutation=path[1:-1],
-                              lengths=None,
-                              length=None)
+        var_tsp = SolutionTSP(
+            problem=self.tsp_model,
+            start_index=self.tsp_model.start_index,
+            end_index=self.tsp_model.end_index,
+            permutation=path[1:-1],
+            lengths=None,
+            length=None,
+        )
         fit = self.aggreg_sol(var_tsp)
-        return ResultStorage(list_solution_fits=[(var_tsp, fit)],
-                             mode_optim=self.params_objective_function.sense_function)
+        return ResultStorage(
+            list_solution_fits=[(var_tsp, fit)],
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
 
 def build_the_cycles(x_solution, component, graph, start_index, end_index):
-    edge_of_interest = {e for e in x_solution if e[1] in component and e[0] in component}
+    edge_of_interest = {
+        e for e in x_solution if e[1] in component and e[0] in component
+    }
     innn = {e[1]: e for e in edge_of_interest}
     outt = {e[0]: e for e in edge_of_interest}
     if start_index in outt:
@@ -448,7 +563,7 @@ def build_the_cycles(x_solution, component, graph, start_index, end_index):
     cur_edge = outt[some_node]
     indexes = {some_node: 0}
     cur_index = 1
-    while cur_edge[1]!=end_node:
+    while cur_edge[1] != end_node:
         path += [cur_edge[1]]
         indexes[cur_edge[1]] = cur_index
         cur_index += 1
@@ -459,17 +574,21 @@ def build_the_cycles(x_solution, component, graph, start_index, end_index):
     return path, indexes
 
 
-def rebuild_tsp_routine(sorted_connected_component, 
-                        paths_component,
-                        node_to_component, 
-                        indexes,
-                        graph, edges,
-                        nodeCount, list_points,
-                        evaluate_function_indexes,
-                        tsp_model:TSPModel,
-                        start_index=0, 
-                        end_index=0,
-                        verbose=False):
+def rebuild_tsp_routine(
+    sorted_connected_component,
+    paths_component,
+    node_to_component,
+    indexes,
+    graph,
+    edges,
+    nodeCount,
+    list_points,
+    evaluate_function_indexes,
+    tsp_model: TSPModel,
+    start_index=0,
+    end_index=0,
+    verbose=False,
+):
     print(len(node_to_component))
     rebuilded_path = list(paths_component[node_to_component[start_index]])
     component_end = node_to_component[end_index]
@@ -477,48 +596,57 @@ def rebuild_tsp_routine(sorted_connected_component,
     current_component = sorted_connected_component[node_to_component[start_index]]
     path_set = set(rebuilded_path)
     total_length_path = len(rebuilded_path)
-    while len(component_reconnected)<len(sorted_connected_component):
-        if len(component_reconnected) ==len(sorted_connected_component)-1 and \
-            end_index!=start_index and node_to_component[end_index] != node_to_component[start_index]:
-            rebuilded_path = rebuilded_path+paths_component[component_end]
+    while len(component_reconnected) < len(sorted_connected_component):
+        if (
+            len(component_reconnected) == len(sorted_connected_component) - 1
+            and end_index != start_index
+            and node_to_component[end_index] != node_to_component[start_index]
+        ):
+            rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
             index_path = {rebuilded_path[i]: i for i in range(len(rebuilded_path))}
-            edge_out_of_interest = {e
-                                    for e in edges 
-                                    if e[0] in path_set 
-                                    and e[1] not in path_set}
-            edge_in_of_interest =  {e
-                                    for e in edges 
-                                    if e[0] not in path_set 
-                                    and e[1] in path_set}
+            edge_out_of_interest = {
+                e for e in edges if e[0] in path_set and e[1] not in path_set
+            }
+            edge_in_of_interest = {
+                e for e in edges if e[0] not in path_set and e[1] in path_set
+            }
             min_out_edge = None
             min_in_edge = None
             min_index_in_path = None
             min_component = None
-            min_dist = float('inf')
+            min_dist = float("inf")
             backup_min_out_edge = None
             backup_min_in_edge = None
             backup_min_index_in_path = None
             backup_min_component = None
-            backup_min_dist = float('inf')
+            backup_min_dist = float("inf")
             for e in edge_out_of_interest:
                 index_in = index_path[e[0]]
-                if index_in == total_length_path-1:
+                if index_in == total_length_path - 1:
                     continue
-                index_in_1 = index_path[e[0]]+1
+                index_in_1 = index_path[e[0]] + 1
                 next_node_1 = rebuilded_path[index_in_1]
                 component_e1 = node_to_component[e[1]]
-                if component_e1 == component_end and len(component_reconnected)<len(sorted_connected_component)-1:
+                if (
+                    component_e1 == component_end
+                    and len(component_reconnected) < len(sorted_connected_component) - 1
+                ):
                     continue
                 index_component_e1 = indexes[component_e1][e[1]]
-                index_component_e1_plus1 = index_component_e1+1
+                index_component_e1_plus1 = index_component_e1 + 1
                 if index_component_e1_plus1 >= len(paths_component[component_e1]):
                     index_component_e1_plus1 = 0
-                next_node_component_e1 = paths_component[component_e1][index_component_e1_plus1]
+                next_node_component_e1 = paths_component[component_e1][
+                    index_component_e1_plus1
+                ]
                 if (next_node_component_e1, next_node_1) in edge_in_of_interest:
-                    cost = graph[e[0]][e[1]]["weight"] + graph[next_node_component_e1][next_node_1]["weight"]-\
-                            graph[e[0]][next_node_1]["weight"]
+                    cost = (
+                        graph[e[0]][e[1]]["weight"]
+                        + graph[next_node_component_e1][next_node_1]["weight"]
+                        - graph[e[0]][next_node_1]["weight"]
+                    )
                     if cost < min_dist:
                         min_component = node_to_component[e[1]]
                         min_out_edge = e
@@ -542,7 +670,11 @@ def rebuild_tsp_routine(sorted_connected_component,
                 min_in_edge = backup_min_in_edge
                 min_index_in_path = backup_min_index_in_path
                 min_component = backup_min_component
-                min_dist = backup_min_dist+graph[e[0]][e[1]]["weight"]-graph[min_in_edge[0]][e[1]]["weight"]
+                min_dist = (
+                    backup_min_dist
+                    + graph[e[0]][e[1]]["weight"]
+                    - graph[min_in_edge[0]][e[1]]["weight"]
+                )
             len_this_component = len(paths_component[min_component])
             if verbose:
                 print(list(range(0, -len_this_component, -1)))
@@ -550,28 +682,35 @@ def rebuild_tsp_routine(sorted_connected_component,
                 print("out edge :", min_out_edge)
                 print("in edge :", min_in_edge)
             index_of_in_component = indexes[min_component][min_out_edge[1]]
-            new_component = [paths_component[min_component][(index_of_in_component+i)%len_this_component] 
-                            for i in range(0, -len_this_component, -1)]
+            new_component = [
+                paths_component[min_component][
+                    (index_of_in_component + i) % len_this_component
+                ]
+                for i in range(0, -len_this_component, -1)
+            ]
             if verbose:
                 print("path component ", paths_component[min_component])
                 print("New compenent : ", new_component)
 
-            rebuilded_path = rebuilded_path[:(min_index_in_path+1)]+new_component+rebuilded_path[(min_index_in_path+1):]
+            rebuilded_path = (
+                rebuilded_path[: (min_index_in_path + 1)]
+                + new_component
+                + rebuilded_path[(min_index_in_path + 1) :]
+            )
             for e1, e2 in zip(new_component[:-1], new_component[1:]):
                 if (e1, e2) not in graph.edges():
                     graph.add_edge(e1, e2, weight=evaluate_function_indexes(e1, e2))
             path_set = set(rebuilded_path)
             total_length_path = len(rebuilded_path)
             component_reconnected.add(min_component)
-    var = SolutionTSP(problem=tsp_model, start_index=start_index,
-                      end_index=end_index, permutation=rebuilded_path[1:-1], lengths=None, length=None)
+    var = SolutionTSP(
+        problem=tsp_model,
+        start_index=start_index,
+        end_index=end_index,
+        permutation=rebuilded_path[1:-1],
+        lengths=None,
+        length=None,
+    )
     fit = tsp_model.evaluate(var)
     print("ObjRebuilt=", fit)
     return rebuilded_path, fit
-
-
-
-
-    
-
-

@@ -1,13 +1,15 @@
-from enum import Enum
-from discrete_optimization.generic_tools.do_problem import Solution, Problem
 from abc import abstractmethod
-from typing import Tuple, Dict
+from enum import Enum
+from typing import Dict, Tuple
+
+from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
 
 class LocalMove:
     @abstractmethod
     def apply_local_move(self, solution: Solution) -> Solution:
         ...
+
     @abstractmethod
     def backtrack_local_move(self, solution: Solution) -> Solution:
         ...
@@ -20,6 +22,7 @@ class LocalMoveDefault(LocalMove):
     don't do in place modification of the previous solution, so that you can retrieve it directly.
     So the backward operator is then obvious.
     """
+
     def __init__(self, prev_solution: Solution, new_solution: Solution):
         self.prev_solution = prev_solution
         self.new_solution = new_solution
@@ -35,20 +38,13 @@ class Mutation:
     @staticmethod
     def build(problem: Problem, solution: Solution, **kwargs):
         return NotImplementedError("Please implement it !")
-        
+
     @abstractmethod
-    def mutate(self, solution: Solution)->Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
         ...
 
     @abstractmethod
-    def mutate_and_compute_obj(self, solution: Solution)->Tuple[Solution, LocalMove, Dict[str, float]]:
+    def mutate_and_compute_obj(
+        self, solution: Solution
+    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
         ...
-
-
-
-
-
-
-
-
-

@@ -1,21 +1,40 @@
-import os, random
+import os
+import random
 from enum import Enum
+
 this_path = os.path.dirname(os.path.abspath(__file__))
-files_mzn = {"single": os.path.join(this_path, "../minizinc/rcpsp_single_mode_mzn.mzn"),
-             "single-preemptive": os.path.join(this_path, "../minizinc/rcpsp_single_mode_mzn_preemptive.mzn"),
-             "multi-preemptive": os.path.join(this_path, "../minizinc/rcpsp_multi_mode_mzn_preemptive.mzn"),
-             "multi-preemptive-calendar": os.path.join(this_path,
-                                                       "../minizinc/rcpsp_multi_mode_mzn_preemptive_calendar.mzn"),
-             "single-preemptive-calendar": os.path.join(this_path,
-                                                        "../minizinc/rcpsp_single_mode_mzn_preemptive_calendar.mzn"),
-             "multi": os.path.join(this_path, "../minizinc/rcpsp_multi_mode_mzn.mzn"),
-             "multi-faketasks": os.path.join(this_path, "../minizinc/rcpsp_multi_mode_mzn_with_faketasks.mzn"),
-             "multi-no-bool": os.path.join(this_path, "../minizinc/rcpsp_multi_mode_mzn_no_bool.mzn"),
-             "multi-calendar": os.path.join(this_path, "../minizinc/rcpsp_multi_mode_mzn_calendar.mzn"),
-             "multi-calendar-boxes": os.path.join(this_path, "../minizinc/rcpsp_mzn_calendar_boxes.mzn"),
-             "multi-resource-feasibility": os.path.join(this_path,
-                                                        "../minizinc/rcpsp_multi_mode_resource_feasibility_mzn.mzn"),
-             "modes": os.path.join(this_path, "../minizinc/mrcpsp_mode_satisfy.mzn")}
+files_mzn = {
+    "single": os.path.join(this_path, "../minizinc/rcpsp_single_mode_mzn.mzn"),
+    "single-preemptive": os.path.join(
+        this_path, "../minizinc/rcpsp_single_mode_mzn_preemptive.mzn"
+    ),
+    "multi-preemptive": os.path.join(
+        this_path, "../minizinc/rcpsp_multi_mode_mzn_preemptive.mzn"
+    ),
+    "multi-preemptive-calendar": os.path.join(
+        this_path, "../minizinc/rcpsp_multi_mode_mzn_preemptive_calendar.mzn"
+    ),
+    "single-preemptive-calendar": os.path.join(
+        this_path, "../minizinc/rcpsp_single_mode_mzn_preemptive_calendar.mzn"
+    ),
+    "multi": os.path.join(this_path, "../minizinc/rcpsp_multi_mode_mzn.mzn"),
+    "multi-faketasks": os.path.join(
+        this_path, "../minizinc/rcpsp_multi_mode_mzn_with_faketasks.mzn"
+    ),
+    "multi-no-bool": os.path.join(
+        this_path, "../minizinc/rcpsp_multi_mode_mzn_no_bool.mzn"
+    ),
+    "multi-calendar": os.path.join(
+        this_path, "../minizinc/rcpsp_multi_mode_mzn_calendar.mzn"
+    ),
+    "multi-calendar-boxes": os.path.join(
+        this_path, "../minizinc/rcpsp_mzn_calendar_boxes.mzn"
+    ),
+    "multi-resource-feasibility": os.path.join(
+        this_path, "../minizinc/rcpsp_multi_mode_resource_feasibility_mzn.mzn"
+    ),
+    "modes": os.path.join(this_path, "../minizinc/mrcpsp_mode_satisfy.mzn"),
+}
 
 
 class CPModelEnum(Enum):
@@ -31,4 +50,3 @@ class CPModelEnum(Enum):
     MULTI_CALENDAR_BOXES = "multi-calendar-boxes"
     MULTI_RESOURCE_FEASIBILITY = "multi-resource-feasibility"
     MODES = "modes"
-
