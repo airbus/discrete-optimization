@@ -1,6 +1,8 @@
 from copy import deepcopy
 from functools import partial
 
+from pathos.multiprocessing import Pool
+
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     GPDP,
     ORToolsGPDP,
@@ -11,7 +13,6 @@ from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     value_firstsolution_to_name,
     value_metaheuristic_to_name,
 )
-from pathos.multiprocessing import Pool
 
 
 def run(X):

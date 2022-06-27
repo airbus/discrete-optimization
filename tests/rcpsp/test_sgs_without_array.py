@@ -1,13 +1,14 @@
 import time
 
 import numpy as np
+from sortedcontainers import SortedDict, SortedList
+
 from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPModel,
     RCPSPSolution,
     SGSWithoutArray,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from sortedcontainers import SortedDict, SortedList
 
 
 def test_sgs_wo_array():

@@ -2,6 +2,8 @@ import random
 
 import numpy as np
 import pytest
+from scipy.spatial import distance
+
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
@@ -26,7 +28,6 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     all_diff_start_time,
     kendall_tau_similarity,
 )
-from scipy.spatial import distance
 
 
 @pytest.fixture()

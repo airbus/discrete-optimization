@@ -2,6 +2,7 @@ import os
 import sys
 
 import numpy as np
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     get_default_objective_setup,

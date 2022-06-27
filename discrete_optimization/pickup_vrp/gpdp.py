@@ -255,7 +255,6 @@ class GPDP(Problem):
             compute_predecessors=False,
         )
 
-
     def get_attribute_register(self) -> EncodingRegister:
         pass
 
@@ -425,7 +424,7 @@ from discrete_optimization.vrp.vrp_model import VrpProblem
 
 class ProxyClass:
     @staticmethod
-    def from_vrp_model_to_gpdp(vrp_model: VrpProblem, compute_graph:bool = False):
+    def from_vrp_model_to_gpdp(vrp_model: VrpProblem, compute_graph: bool = False):
         nb_vehicle = vrp_model.vehicle_count
         nb_customers = len(vrp_model.customers)
         all_start_index = set(vrp_model.start_indexes)

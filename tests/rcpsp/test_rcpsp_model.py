@@ -3,6 +3,7 @@ from math import isclose
 from typing import Dict, Hashable, Tuple
 
 import pytest
+
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,

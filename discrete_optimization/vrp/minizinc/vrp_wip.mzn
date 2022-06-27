@@ -69,4 +69,3 @@ output [
     "x = ", show(orbit), "\n",
     "objective = ", show(cumulated_distance),"\n"
 ];
-

@@ -1,5 +1,7 @@
 import mip
 import networkx as nx
+from mip import BINARY, INTEGER, xsum
+
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
@@ -21,7 +23,6 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from mip import BINARY, INTEGER, xsum
 
 try:
     import gurobipy

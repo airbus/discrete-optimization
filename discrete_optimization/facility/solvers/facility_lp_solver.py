@@ -3,6 +3,8 @@ from typing import Iterable
 
 import mip
 import numpy as np
+from ortools.linear_solver import pywraplp
+
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
@@ -22,7 +24,6 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from ortools.linear_solver import pywraplp
 
 try:
     import gurobipy

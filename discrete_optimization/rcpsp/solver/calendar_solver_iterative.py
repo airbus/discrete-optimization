@@ -4,6 +4,7 @@ import random
 from typing import Any, Iterable, Optional, Tuple, Union
 
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,

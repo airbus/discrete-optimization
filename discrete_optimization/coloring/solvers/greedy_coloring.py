@@ -1,6 +1,7 @@
 from enum import Enum
 
 import networkx as nx
+
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,

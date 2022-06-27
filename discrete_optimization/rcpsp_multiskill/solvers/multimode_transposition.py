@@ -1,6 +1,8 @@
 from typing import Dict, Set, Union
 
 import numpy as np
+from generic_tools.result_storage.result_storage import ResultStorage
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -27,7 +29,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
 )
-from generic_tools.result_storage.result_storage import ResultStorage
 
 
 class MultimodeTranspositionSolver(SolverDO):

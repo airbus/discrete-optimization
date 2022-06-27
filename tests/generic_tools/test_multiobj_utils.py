@@ -1,4 +1,5 @@
 import numpy as np
+
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
     TupleFitness,
 )

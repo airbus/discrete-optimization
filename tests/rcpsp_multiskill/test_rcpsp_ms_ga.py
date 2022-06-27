@@ -3,6 +3,7 @@ from typing import Dict, List, Set
 
 import numpy as np
 import pytest
+
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import (

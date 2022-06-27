@@ -13,6 +13,7 @@ from deap.gp import (
     Terminal,
     genHalfAndHalf,
 )
+
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,

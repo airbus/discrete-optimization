@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Iterable, Tuple, Union
 
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,

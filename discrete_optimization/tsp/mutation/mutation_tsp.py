@@ -2,6 +2,7 @@ import random
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,

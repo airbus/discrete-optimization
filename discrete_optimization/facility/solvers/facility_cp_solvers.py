@@ -4,6 +4,8 @@ from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
 
+from minizinc import Instance, Model, Solver, Status
+
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
@@ -30,7 +32,6 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from minizinc import Instance, Model, Solver, Status
 
 path_minizinc = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../minizinc/")
@@ -172,8 +173,10 @@ class FacilityCP(SolverDO):
         if self.model is None:
             self.init_model(**kwargs)
         limit_time_s = parameters_cp.TimeLimit
-        result = self.instance.solve(timeout=timedelta(seconds=limit_time_s),
-                                     intermediate_solutions=parameters_cp.intermediate_solution)
+        result = self.instance.solve(
+            timeout=timedelta(seconds=limit_time_s),
+            intermediate_solutions=parameters_cp.intermediate_solution,
+        )
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def get_solution(self, **kwargs):

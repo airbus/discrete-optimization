@@ -1,6 +1,7 @@
 import random
 
 import pytest
+
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
     GraphRCPSPSpecialConstraints,

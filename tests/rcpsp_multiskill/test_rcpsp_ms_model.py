@@ -2,6 +2,7 @@ import random
 from typing import Dict, Hashable, Tuple
 
 import pytest
+
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,

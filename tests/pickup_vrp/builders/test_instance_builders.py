@@ -1,6 +1,7 @@
 from typing import Hashable, Set
 
 import numpy as np
+
 from discrete_optimization.pickup_vrp.builders.instance_builders import (
     GPDP,
     create_ortools_example,

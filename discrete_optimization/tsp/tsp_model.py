@@ -6,6 +6,8 @@ from functools import partial
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+from numba import njit
+
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -16,7 +18,6 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeAttribute,
     TypeObjective,
 )
-from numba import njit
 
 
 class SolutionTSP(Solution):

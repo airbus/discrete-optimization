@@ -1,8 +1,9 @@
 from copy import deepcopy
 from typing import Dict, List, Tuple
 
-from discrete_optimization.pickup_vrp.gpdp import GPDP
 from matplotlib.gridspec import GridSpec
+
+from discrete_optimization.pickup_vrp.gpdp import GPDP
 
 
 class VehicleStatus:

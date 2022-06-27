@@ -3,6 +3,8 @@ from dataclasses import InitVar
 from datetime import timedelta
 from typing import Dict, Hashable, List, Set, Tuple, Union
 
+from minizinc import Instance, Model, Solver, Status
+
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_graph_rcpsp_object,
     build_unrelated_task,
@@ -34,7 +36,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     cluster_employees_to_resource_types,
     create_fake_tasks_multiskills,
 )
-from minizinc import Instance, Model, Solver, Status
 
 this_path = os.path.dirname(os.path.abspath(__file__))
 

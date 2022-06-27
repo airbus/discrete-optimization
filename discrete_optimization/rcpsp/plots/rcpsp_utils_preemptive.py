@@ -4,14 +4,15 @@ from typing import List, Union
 import matplotlib.cm
 import matplotlib.pyplot as plt
 import numpy as np
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
-    RCPSPModelPreemptive,
-    RCPSPSolutionPreemptive,
-)
 from matplotlib.collections import PatchCollection
 from matplotlib.font_manager import FontProperties
 from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
+
+from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
+    RCPSPModelPreemptive,
+    RCPSPSolutionPreemptive,
+)
 
 
 def compute_resource_consumption(

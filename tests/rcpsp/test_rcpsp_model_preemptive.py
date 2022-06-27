@@ -3,6 +3,7 @@ import time
 from typing import Dict, Hashable, Tuple
 
 import pytest
+
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,

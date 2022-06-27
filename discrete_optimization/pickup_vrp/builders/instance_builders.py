@@ -1,9 +1,10 @@
 import random
 
-import discrete_optimization.tsp.tsp_parser as tsp_parser
-import discrete_optimization.vrp.vrp_parser as vrp_parser
 import numpy as np
 import scipy.spatial.distance as dist
+
+import discrete_optimization.tsp.tsp_parser as tsp_parser
+import discrete_optimization.vrp.vrp_parser as vrp_parser
 from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass
 
 

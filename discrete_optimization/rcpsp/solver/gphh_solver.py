@@ -7,6 +7,7 @@ import numpy as np
 from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
 from deap.gp import PrimitiveSet, PrimitiveTree, genHalfAndHalf
+
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ANY_RCPSP,
     MS_RCPSPModel,

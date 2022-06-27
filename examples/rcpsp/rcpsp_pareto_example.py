@@ -140,8 +140,10 @@ def test_single_mode_robustness_benchmark():
 
     # 3 random solutions:
     sol_perm_1 = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
-    sol_perm_2 = [rcpsp_model.n_jobs_non_dummy - 1 - i
-                  for i in range(rcpsp_model.n_jobs_non_dummy)]
+    sol_perm_2 = [
+        rcpsp_model.n_jobs_non_dummy - 1 - i
+        for i in range(rcpsp_model.n_jobs_non_dummy)
+    ]
     sol_perm_3 = [i for i in range(rcpsp_model.n_jobs_non_dummy)]
     random.shuffle(sol_perm_3)
 

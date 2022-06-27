@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Iterable
 
 import mip
+
 from discrete_optimization.facility.facility_model import FacilityProblem
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver_PyMip,

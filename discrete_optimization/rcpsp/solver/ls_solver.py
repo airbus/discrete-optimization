@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Union
 
 import numpy as np
+
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import ANY_RCPSP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

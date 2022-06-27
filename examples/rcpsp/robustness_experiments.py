@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,

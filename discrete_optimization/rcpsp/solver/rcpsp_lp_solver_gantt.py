@@ -4,6 +4,8 @@ from itertools import product
 from typing import Dict, List, Set, Tuple, Union
 
 import networkx as nx
+from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
@@ -29,7 +31,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolverRCPSP
-from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
 
 try:
     import gurobipy

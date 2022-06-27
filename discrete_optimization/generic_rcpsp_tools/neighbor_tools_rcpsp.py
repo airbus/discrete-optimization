@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Hashable, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
+
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
     GraphRCPSPSpecialConstraints,

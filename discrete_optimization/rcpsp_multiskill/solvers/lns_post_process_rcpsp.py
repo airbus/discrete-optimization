@@ -3,6 +3,7 @@ from typing import Union
 
 import networkx as nx
 import numpy as np
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,

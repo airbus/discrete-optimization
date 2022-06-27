@@ -1,10 +1,11 @@
-import time
-from itertools import combinations
 import json
 import os
-from typing import Any, Dict, Iterable, List, Tuple, Optional
+import time
+from itertools import combinations
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,

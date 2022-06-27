@@ -6,6 +6,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+
 from discrete_optimization.tsp.tsp_model import Point2D, length
 
 this_path = os.path.dirname(os.path.abspath(__file__))

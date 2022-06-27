@@ -7,6 +7,8 @@ from typing import Any, Iterable, Optional, Tuple, Union
 
 import networkx as nx
 import numpy as np
+from minizinc import Status
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -40,7 +42,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver impor
     InitialMethodRCPSP,
     InitialSolutionMS_RCPSP,
 )
-from minizinc import Status
 
 
 def get_ressource_breaks(problem_calendar: MS_RCPSPModel, solution: MS_RCPSPSolution):

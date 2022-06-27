@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Iterable, Union
 
 import mip
+
 from discrete_optimization.generic_tools.cp_tools import CPSolver, CPSolverName
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

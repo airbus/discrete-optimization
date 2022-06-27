@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Dict, Iterable, Iterator, List, Tuple
 
 import numpy as np
+
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
     TupleFitness,
 )

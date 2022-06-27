@@ -1,6 +1,7 @@
 from typing import Dict, List, Set
 
 import matplotlib.pyplot as plt
+
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
@@ -24,7 +25,8 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
-    ParametersCP, SearchStrategyMS_MRCPSP,
+    ParametersCP,
+    SearchStrategyMS_MRCPSP,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import LP_Solver_MRSCPSP
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
@@ -199,8 +201,7 @@ def test_cp_toy_model():
     model_msrcpsp = create_toy_v2()
 
     cp_model = CP_MS_MRCPSP_MZN(
-        rcpsp_model=model_msrcpsp,
-        cp_solver_name=CPSolverName.GECODE
+        rcpsp_model=model_msrcpsp, cp_solver_name=CPSolverName.GECODE
     )
     cp_model.init_model(
         add_calendar_constraint_unit=False,
@@ -225,16 +226,18 @@ def test_cp_imopse():
         one_ressource_per_task=True,
         cp_solver_name=CPSolverName.CHUFFED,
     )
-    cp_model.init_model(model_type="multi-calendar",
-                        add_calendar_constraint_unit=False,
-                        fake_tasks=False,
-                        add_objective_makespan=True,
-                        ignore_sec_objective=True,
-                        output_type=True,
-                        max_time=500, # here you put makespan constraint. by default,
-                        # would use model_msrcpsp.horizon if not provided.
-                        search_strategy=SearchStrategyMS_MRCPSP.PRIORITY_SEARCH_START_UNIT_USED,
-                        exact_skills_need=False)
+    cp_model.init_model(
+        model_type="multi-calendar",
+        add_calendar_constraint_unit=False,
+        fake_tasks=False,
+        add_objective_makespan=True,
+        ignore_sec_objective=True,
+        output_type=True,
+        max_time=500,  # here you put makespan constraint. by default,
+        # would use model_msrcpsp.horizon if not provided.
+        search_strategy=SearchStrategyMS_MRCPSP.PRIORITY_SEARCH_START_UNIT_USED,
+        exact_skills_need=False,
+    )
     parameters_cp = ParametersCP.default()
     parameters_cp.free_search = False
     # With parameters_cp.free_search=True you get fast results but quite bad !

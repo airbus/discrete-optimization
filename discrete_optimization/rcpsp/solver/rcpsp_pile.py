@@ -5,6 +5,7 @@ from typing import Dict, Iterable, List, Union
 
 import networkx as nx
 import numpy as np
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

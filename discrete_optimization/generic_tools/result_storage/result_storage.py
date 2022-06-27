@@ -3,6 +3,7 @@ from heapq import heapify, heappush, heappushpop, nlargest, nsmallest
 from typing import Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,

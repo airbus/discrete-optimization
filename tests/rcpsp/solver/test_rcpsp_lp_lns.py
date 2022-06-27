@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,

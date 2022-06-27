@@ -5,15 +5,16 @@ import matplotlib.cm
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon as pp
+from shapely.geometry import Polygon
+
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPModel,
     RCPSPModelCalendar,
     RCPSPSolution,
 )
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Polygon as pp
-from shapely.geometry import Polygon
 
 
 def compute_resource_consumption(

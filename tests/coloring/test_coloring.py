@@ -3,6 +3,7 @@ from typing import Dict, Hashable, Tuple
 
 import numpy as np
 import pytest
+
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
