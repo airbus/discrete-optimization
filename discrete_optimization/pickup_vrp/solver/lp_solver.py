@@ -2943,4 +2943,3 @@ def plot_solution(temporary_result: TemporaryResult, problem: GPDP):
             [problem.coordinates_2d[n][1] for n in temporary_result.rebuilt_dict[v]],
             color=color,
         )
-    plt.show()
