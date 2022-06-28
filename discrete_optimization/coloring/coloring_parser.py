@@ -49,9 +49,3 @@ def parse_file(file_path) -> ColoringProblem:
         input_data = input_data_file.read()
         coloring_model = parse(input_data)
         return coloring_model
-
-
-if __name__ == "__main__":
-    file = get_data_available()[0]
-    model = parse_file(file)
-    print(model.graph.nodes_name)

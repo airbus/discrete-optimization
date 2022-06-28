@@ -35,9 +35,15 @@ from discrete_optimization.tsp.tsp_model import Point2D, TSPModelDistanceMatrix
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
-    "gpdp": os.path.join(this_path, "../minizinc/gpdp.mzn"),
-    "gpdp-flow": os.path.join(this_path, "../minizinc/gpdp_flow.mzn"),
-    "gpdp-resources": os.path.join(this_path, "../minizinc/gpdp_resources.mzn"),
+    "gpdp": os.path.join(
+        this_path, "../../discrete_optimization/pickup_vrp/minizinc/gpdp.mzn"
+    ),
+    "gpdp-flow": os.path.join(
+        this_path, "../../discrete_optimization/pickup_vrp/minizinc/gpdp_flow.mzn"
+    ),
+    "gpdp-resources": os.path.join(
+        this_path, "../../discrete_optimization/pickup_vrp/minizinc/gpdp_resources.mzn"
+    ),
 }
 
 
