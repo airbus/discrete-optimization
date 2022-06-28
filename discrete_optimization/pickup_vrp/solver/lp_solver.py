@@ -1709,7 +1709,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         self.model.setParam("MIPGap", parameters_milp.MIPGap)
 
         self.model.setParam(grb.GRB.Param.Method, 2)
-        if "warm_start" in kwargs and kwargs.get("no_warm_start", False) == False:
+        if "warm_start" in kwargs and not kwargs.get("no_warm_start", False):
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=False
             )
