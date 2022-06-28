@@ -241,8 +241,8 @@ class CP_MS_MRCPSP_MZN(CPSolver):
                 array[index_res][self.rcpsp_model.index_task[list_task[0]]] = (
                     self.rcpsp_model.index_task[list_task[-1]] + 1
                 )
-                for l in list_task[1:]:
-                    array[index_res][self.rcpsp_model.index_task[l]] = -1
+                for i in list_task[1:]:
+                    array[index_res][self.rcpsp_model.index_task[i]] = -1
         for r in blocking_per_resource:
             blocking_per_resource[r]["not_blocked"] = [
                 t
