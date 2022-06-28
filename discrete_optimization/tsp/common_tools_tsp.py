@@ -1,6 +1,5 @@
 from typing import List
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from discrete_optimization.tsp.tsp_model import Point2D, length
@@ -8,18 +7,6 @@ from discrete_optimization.tsp.tsp_model import Point2D, length
 
 def length_1(point1, point2):
     return abs(point1.x - point2.x) + abs(point1.y - point2.y)
-
-
-def parse(input_data):
-    # parse the input
-    lines = input_data.split("\n")
-    nodeCount = int(lines[0])
-    points = []
-    for i in range(1, nodeCount + 1):
-        line = lines[i]
-        parts = line.split()
-        points.append(Point2D(float(parts[0]), float(parts[1])))
-    return nodeCount, points
 
 
 def compute_length(solution, list_points, nodeCount):
@@ -91,19 +78,3 @@ def closest_greedy(nodeCount: int, points: List[Point2D]):
         nb_point += 1
     length_circuit += length(points[cur_point], points[0])
     return sol, length_circuit, 0
-
-
-def testing():
-    file_location = "./data/tsp_574_1"
-    print(file_location)
-    with open(file_location, "r") as input_data_file:
-        input_data = input_data_file.read()
-        nodeCount, points = parse(input_data)
-        sol, length_circuit, opt = closest_greedy(nodeCount, points)
-        fig, ax = plt.subplots(1)
-        ax.plot([points[jj].x for jj in sol], [points[jj].y for jj in sol])
-        plt.show()
-
-
-if __name__ == "__main__":
-    testing()

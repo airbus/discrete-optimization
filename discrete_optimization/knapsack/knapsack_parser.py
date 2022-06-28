@@ -57,13 +57,3 @@ def parse_file(file_path, force_recompute_values=False) -> KnapsackModel:
             input_data, force_recompute_values=force_recompute_values
         )
         return knapsack_model
-
-
-def test_parser():
-    file_location = [f for f in get_data_available() if f.endswith("/ks_4_0")][0]
-    knapsack_model = parse_file(file_location)
-    print(knapsack_model)
-
-
-if __name__ == "__main__":
-    test_parser()
