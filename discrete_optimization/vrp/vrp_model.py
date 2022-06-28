@@ -135,11 +135,11 @@ class VrpProblem(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "length": {"type": TypeObjective.OBJECTIVE, "default_weight": -1}
-        }
-        dict_objective["capacity_violation"] = {
-            "type": TypeObjective.PENALTY,
-            "default_weight": -100,
+            "length": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
+            "capacity_violation": {
+                "type": TypeObjective.PENALTY,
+                "default_weight": -100,
+            },
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
