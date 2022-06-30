@@ -431,7 +431,7 @@ def sgs_fast_preemptive_some_special_constraints(
     return starts_dict, ends_dict, unfeasible_non_renewable_resources
 
 
-# @njit
+@njit
 def sgs_fast_preemptive_minduration(
     permutation_task,
     modes_array,  # permutation_task=array(task)->task index
