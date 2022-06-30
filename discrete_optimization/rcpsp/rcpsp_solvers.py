@@ -289,11 +289,7 @@ solvers_compatibility = {
 
 def look_for_solver(domain):
     class_domain = domain.__class__
-    available = []
-    for solver in solvers_compatibility:
-        if class_domain in solvers_compatibility[solver]:
-            available += [solver]
-    return available
+    return look_for_solver_class(class_domain)
 
 
 def look_for_solver_class(class_domain):
