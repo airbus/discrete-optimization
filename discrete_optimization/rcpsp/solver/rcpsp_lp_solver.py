@@ -27,7 +27,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
 )
 
 try:
-    pass
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:

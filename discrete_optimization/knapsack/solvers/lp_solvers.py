@@ -2,6 +2,7 @@ import random
 from typing import Dict, Iterable
 
 import matplotlib.pyplot as plt
+from mip import BINARY, MAXIMIZE, xsum
 from ortools.algorithms import pywrapknapsack_solver
 from ortools.linear_solver import pywraplp
 from tqdm import trange
@@ -17,19 +18,14 @@ from discrete_optimization.generic_tools.lp_tools import (
     ParametersMilp,
     map_solver,
 )
-from discrete_optimization.generic_tools.mip.pymip_tools import (
-    BINARY,
-    MAXIMIZE,
-    MyModelMilp,
-    xsum,
-)
+from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
 
 try:
-    pass
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:

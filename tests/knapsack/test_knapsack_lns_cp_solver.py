@@ -11,6 +11,8 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
 )
 from discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver import (
     ConstraintHandlerKnapsack,
+)
+from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
     InitialKnapsackMethod,
     InitialKnapsackSolution,
 )
