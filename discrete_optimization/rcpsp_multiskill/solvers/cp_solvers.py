@@ -1937,7 +1937,7 @@ def soft_start_at_end(
         + str([cp_solver.index_in_minizinc[t2] for t1, t2 in list_start_at_end])
         + """;\n"""
     )
-    if isinstance(cp_solver, (CP_MS_MRCPSP_MZN_PREEMPTIVE)):
+    if isinstance(cp_solver, CP_MS_MRCPSP_MZN_PREEMPTIVE):
         s += """
             %constraint forall(i in 1..nb_start_at_end)(s[st2_9[i]]-s_preemptive[st1_9[i], nb_preemptive]>=0);\n
             constraint sum(i in 1..nb_start_at_end)(abs(s[st2_9[i]]-s_preemptive[st1_9[i], nb_preemptive]))==penalty_start_at_end;\n

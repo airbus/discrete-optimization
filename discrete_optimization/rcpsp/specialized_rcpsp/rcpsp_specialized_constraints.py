@@ -2092,14 +2092,14 @@ def create_np_data_and_jit_functions(
     )
     predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
     successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    preemptive_tag = np.zeros((rcpsp_problem.n_jobs), dtype=np.bool)
+    preemptive_tag = np.zeros(rcpsp_problem.n_jobs, dtype=np.bool)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
         (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
-    min_duration_preemptive_bool = np.zeros((rcpsp_problem.n_jobs), dtype=bool)
-    min_duration_preemptive = np.zeros((rcpsp_problem.n_jobs), dtype=np.int32)
+    min_duration_preemptive_bool = np.zeros(rcpsp_problem.n_jobs, dtype=bool)
+    min_duration_preemptive = np.zeros(rcpsp_problem.n_jobs, dtype=np.int32)
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
         min_duration_preemptive_bool[i] = rcpsp_problem.duration_subtask[task][0]

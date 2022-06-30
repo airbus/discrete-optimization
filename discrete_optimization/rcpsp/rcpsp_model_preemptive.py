@@ -1206,7 +1206,7 @@ def compute_resource(
             )
         else:
             resource_avail_in_time[r] = rcpsp_problem.resources[r] * np.ones(
-                (new_horizon)
+                new_horizon
             )
     for t in solution.rcpsp_schedule:
         start_times = solution.rcpsp_schedule[t]["starts"]
@@ -1249,14 +1249,14 @@ def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive])
         (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
     )
     successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
-    preemptive_tag = np.zeros((rcpsp_problem.n_jobs), dtype=bool)
+    preemptive_tag = np.zeros(rcpsp_problem.n_jobs, dtype=bool)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
         (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
-    min_duration_preemptive_bool = np.zeros((rcpsp_problem.n_jobs), dtype=bool)
-    min_duration_preemptive = np.zeros((rcpsp_problem.n_jobs), dtype=np.int32)
+    min_duration_preemptive_bool = np.zeros(rcpsp_problem.n_jobs, dtype=bool)
+    min_duration_preemptive = np.zeros(rcpsp_problem.n_jobs, dtype=np.int32)
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
         min_duration_preemptive_bool[i] = rcpsp_problem.duration_subtask[task][0]

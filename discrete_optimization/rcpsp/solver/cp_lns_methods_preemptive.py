@@ -136,7 +136,7 @@ def sgs_variant(
         if problem.is_varying_resource():
             resource_avail_in_time[r] = np.copy(problem.resources[r][:new_horizon])
         else:
-            resource_avail_in_time[r] = problem.resources[r] * np.ones((new_horizon))
+            resource_avail_in_time[r] = problem.resources[r] * np.ones(new_horizon)
     sorted_tasks = sorted(
         solution.rcpsp_schedule.keys(), key=lambda x: (solution.get_start_time(x), x)
     )
@@ -894,7 +894,7 @@ def get_ressource_breaks(
     ressource_arrays_usage = {}
     makespan = get_max_time_solution(solution=solution)
     for r in ressources:
-        ressource_arrays[r] = np.zeros((makespan))
+        ressource_arrays[r] = np.zeros(makespan)
         ressource_arrays_usage[r] = np.zeros((makespan, len(solution.rcpsp_schedule)))
     sorted_keys_schedule = problem_calendar.tasks_list
     modes = problem_calendar.build_mode_dict(solution.rcpsp_modes)

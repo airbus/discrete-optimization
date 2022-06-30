@@ -283,10 +283,10 @@ def sgs_fast_preemptive_some_special_constraints(
     nb_task = permutation_task.shape[0]
     for act in range(nb_task):
         minimum_starting_time[act] = minimum_starting_time_array[act]
-    start_after_nunit_links = np.zeros((nb_task))
+    start_after_nunit_links = np.zeros(nb_task)
     for task in range(nb_task):
         start_after_nunit_links[task] = np.sum(start_after_nunit[:, 1] == task)
-    start_at_end_plus_offset_links = np.zeros((nb_task))
+    start_at_end_plus_offset_links = np.zeros(nb_task)
     for task in range(nb_task):
         start_at_end_plus_offset_links[task] = np.sum(
             start_at_end_plus_offset[:, 1] == task
@@ -614,7 +614,7 @@ def sgs_fast_partial_schedule(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((nb_task), dtype=np.int64)
+    done_np = np.zeros(nb_task, dtype=np.int64)
     for t in range(nb_task):
         if scheduled_task[t] != -1:
             activity_end_times[t] = (
@@ -900,8 +900,8 @@ def sgs_fast_partial_schedule_preemptive(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((nb_task), dtype=np.int64)
-    done_duration = np.zeros((nb_task), dtype=np.int64)
+    done_np = np.zeros(nb_task, dtype=np.int64)
+    done_duration = np.zeros(nb_task, dtype=np.int64)
     for t in range(nb_task):
         end = None
         for i in range(partial_schedule_starts.shape[1]):
@@ -1091,8 +1091,8 @@ def sgs_fast_partial_schedule_preemptive_minduration(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((nb_task), dtype=np.int64)
-    done_duration = np.zeros((nb_task), dtype=np.int64)
+    done_np = np.zeros(nb_task, dtype=np.int64)
+    done_duration = np.zeros(nb_task, dtype=np.int64)
     for t in range(nb_task):
         end = None
         for i in range(partial_schedule_starts.shape[1]):

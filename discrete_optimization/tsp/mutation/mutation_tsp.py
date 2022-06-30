@@ -166,7 +166,7 @@ class Mutation2Opt(Mutation):
         fitness = variable.length + min_change
         i_before, i_, j_, j_after = self.get_points_index(it, jt, variable)
         permut = (
-            variable.permutation[:(it)]
+            variable.permutation[:it]
             + variable.permutation[it : jt + 1][::-1]
             + variable.permutation[jt + 1 :]
         )
@@ -253,7 +253,7 @@ class Mutation2OptIntersection(Mutation2Opt):
         fitness = variable.length + min_change
         i_before, i_, j_, j_after = self.get_points_index(it, jt, variable)
         permut = (
-            variable.permutation[:(it)]
+            variable.permutation[:it]
             + variable.permutation[it : jt + 1][::-1]
             + variable.permutation[jt + 1 :]
         )

@@ -72,7 +72,7 @@ class PermutationShuffleMutation(Mutation):
     ) -> Tuple[Solution, LocalMove, float]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
-        return (sol, move, obj)
+        return sol, move, obj
 
 
 # TODO : Add Attribute in the constructor.
@@ -124,14 +124,14 @@ class PermutationPartialShuffleMutation(Mutation):
             new[int_to_move[k]] = previous[int_to_move[self.range_int[k]]]
         sol = solution.lazy_copy()
         setattr(sol, self.attribute, new)
-        return (sol, ShuffleMove(self.attribute, new, previous))
+        return sol, ShuffleMove(self.attribute, new, previous)
 
     def mutate_and_compute_obj(
         self, solution: Solution
     ) -> Tuple[Solution, LocalMove, float]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
-        return (sol, move, obj)
+        return sol, move, obj
 
 
 class SwapsLocalMove(LocalMove):
@@ -192,14 +192,14 @@ class PermutationSwap(Mutation):
             self.attribute, [(swaps[i, 0], swaps[i, 1]) for i in range(self.nb_swap)]
         )
         next_sol = move.apply_local_move(solution)
-        return (next_sol, move)
+        return next_sol, move
 
     def mutate_and_compute_obj(
         self, solution: Solution
     ) -> Tuple[Solution, LocalMove, float]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
-        return (sol, move, obj)
+        return sol, move, obj
 
 
 class TwoOptMove(LocalMove):
@@ -249,11 +249,11 @@ class TwoOptMutation(LocalMove):
         j = random.randint(i + 1, self.length - 1)
         two_opt_move = TwoOptMove(self.attribute, [(i, j)])
         new_sol = two_opt_move.apply_local_move(solution)
-        return (new_sol, two_opt_move)
+        return new_sol, two_opt_move
 
     def mutate_and_compute_obj(
         self, solution: Solution
     ) -> Tuple[Solution, LocalMove, float]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
-        return (sol, move, obj)
+        return sol, move, obj

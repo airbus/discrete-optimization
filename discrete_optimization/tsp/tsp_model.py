@@ -371,7 +371,7 @@ def compute_length_np(
         (np_points[start_index, 0] - np_points[solution[0], 0]) ** 2
         + (np_points[start_index, 1] - np_points[solution[0], 1]) ** 2
     )
-    lengths = np.zeros((node_count))
+    lengths = np.zeros(node_count)
     lengths[0] = obj
     for index in range(0, length_permutation - 1):
         ll = math.sqrt(
@@ -398,7 +398,7 @@ def compute_length_matrix(
     length_permutation,
 ):
     obj = int(distance_matrix[start_index, solution[0]])
-    lengths = np.zeros((node_count))
+    lengths = np.zeros(node_count)
     lengths[0] = obj
     for index in range(0, length_permutation - 1):
         ll = int(distance_matrix[solution[index], solution[index + 1]])

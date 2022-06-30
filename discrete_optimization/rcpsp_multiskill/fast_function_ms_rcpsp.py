@@ -786,11 +786,11 @@ def sgs_fast_ms_preemptive_some_special_constraints(
     done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
     done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
 
-    start_after_nunit_links = np.zeros((nb_task))
+    start_after_nunit_links = np.zeros(nb_task)
     for task in range(nb_task):
         start_after_nunit_links[task] = np.sum(start_after_nunit[:, 1] == task)
 
-    start_at_end_plus_offset_links = np.zeros((nb_task))
+    start_at_end_plus_offset_links = np.zeros(nb_task)
     for task in range(nb_task):
         start_at_end_plus_offset_links[task] = np.sum(
             start_at_end_plus_offset[:, 1] == task
