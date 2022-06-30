@@ -80,11 +80,6 @@ def test_rcpsp_sm_lp_cbc_partial():
     store = solver.solve(parameters_milp=params_milp)
     solution, fit = store.get_best_solution_fit()
     solution: RCPSPSolution = solution  # just for autocompletion.
-    print("Constraint given as partial solution : ", partial_solution.start_times)
-    print(
-        "Found solution : ",
-        {j: solution.rcpsp_schedule[j]["start_time"] for j in some_constraints},
-    )
     for task in some_constraints:
         assert solution.get_start_time(task) == some_constraints[task]
     assert rcpsp_problem.satisfy(solution)

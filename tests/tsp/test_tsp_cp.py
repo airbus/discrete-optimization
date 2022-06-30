@@ -20,7 +20,6 @@ def test_int_cp():
     parameters_cp.TimeLimit = 20
     cp_solver.init_model()
     var, fit = cp_solver.solve(parameters_cp=parameters_cp).get_best_solution_fit()
-    print(var, fit)
     assert model.satisfy(var)
 
 
@@ -36,7 +35,6 @@ def test_float_cp():
     parameters_cp.TimeLimit = 20
     cp_solver.init_model()
     var, fit = cp_solver.solve(parameters_cp=parameters_cp).get_best_solution_fit()
-    print(var, fit)
     assert model.satisfy(var)
 
 

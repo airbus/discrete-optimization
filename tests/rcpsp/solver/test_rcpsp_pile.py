@@ -23,7 +23,6 @@ def test_pile_sm():
     for k in range(10):
         result_storage = solver.solve(greedy_choice=GreedyChoice.SAMPLE_MOST_SUCCESSORS)
         sol, fit = result_storage.get_best_solution_fit()
-        print(sol, fit)
         assert rcpsp_model.satisfy(sol)
     sol_2 = RCPSPSolution(problem=rcpsp_model, rcpsp_permutation=sol.rcpsp_permutation)
     assert rcpsp_model.satisfy(sol_2)

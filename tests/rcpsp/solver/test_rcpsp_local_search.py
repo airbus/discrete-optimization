@@ -49,7 +49,6 @@ def test_local_search_sm(random_seed):
     rcpsp_model: RCPSPModel = parse_file(file_path)
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
-    print(mutations)
     list_mutation = [
         mutate[0].build(rcpsp_model, dummy, **mutate[1])
         for mutate in mutations
@@ -334,7 +333,6 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
-    print(mutations)
     list_mutation = [
         mutate[0].build(rcpsp_model, dummy, **mutate[1])
         for mutate in mutations
@@ -371,4 +369,3 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_sa, problem=rcpsp_model
     )
-    print("Nb Pareto : ", pareto_store.len_pareto_front())

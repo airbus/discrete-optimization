@@ -43,7 +43,6 @@ def test_ms_to_rcpsp_imopse(random_seed):
 def test_solve_rcpsp_imopse1(random_seed):
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
     model_msrcpsp, new_name_to_original_task_id = parse_file(files[0], max_horizon=2000)
-    print(model_msrcpsp)
     algorithm = MultiSkillToRCPSP(model_msrcpsp)
     rcpsp_model = algorithm.construct_rcpsp_by_worker_type(
         limit_number_of_mode_per_task=True,
@@ -74,7 +73,6 @@ def test_solve_rcpsp_imopse1(random_seed):
 def test_solve_rcpsp_imopse2(random_seed):
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
     model_msrcpsp, new_name_to_original_task_id = parse_file(files[0], max_horizon=2000)
-    print(model_msrcpsp)
     algorithm = MultiSkillToRCPSP(model_msrcpsp)
     rcpsp_model = algorithm.construct_rcpsp_by_worker_type(
         limit_number_of_mode_per_task=True,

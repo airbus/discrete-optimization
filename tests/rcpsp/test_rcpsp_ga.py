@@ -69,8 +69,6 @@ def test_multi_mode_alternating_ga(random_seed):
         )
         result = ga_solver.solve()
         tmp_sol, fit = result.get_best_solution_fit()
-        print(fit)
-        print("best after modes search iteration: ", rcpsp_model.evaluate(tmp_sol))
         # Fix the resulting modes
         rcpsp_model.set_fixed_modes(tmp_sol.rcpsp_modes)
 
@@ -85,16 +83,11 @@ def test_multi_mode_alternating_ga(random_seed):
             max_evals=evals_per_ga_runs_perm,
         )
         tmp_sol = ga_solver.solve().get_best_solution()
-        print(
-            "best after permutation search iteration: ", rcpsp_model.evaluate(tmp_sol)
-        )
 
         # Fix the resulting permutation
         rcpsp_model.set_fixed_permutation(tmp_sol.rcpsp_permutation)
     sol = tmp_sol
-    print(sol)
     fitnesses = rcpsp_model.evaluate(sol)
-    print("fitnesses: ", fitnesses)
 
 
 def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
@@ -128,7 +121,6 @@ def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
             max_evals=evals_per_ga_runs_modes,
         )
         tmp_sol = ga_solver.solve().get_best_solution()
-        print("best after modes search iteration: ", rcpsp_model.evaluate(tmp_sol))
         # Fix the resulting modes
         rcpsp_model.set_fixed_modes(tmp_sol.rcpsp_modes)
 
@@ -143,17 +135,12 @@ def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
             max_evals=evals_per_ga_runs_perm,
         )
         tmp_sol = ga_solver.solve().get_best_solution()
-        print(
-            "best after permutation search iteration: ", rcpsp_model.evaluate(tmp_sol)
-        )
 
         # Fix the resulting permutation
         rcpsp_model.set_fixed_permutation(tmp_sol.rcpsp_permutation)
 
     sol = tmp_sol
-    print(sol)
     fitnesses = rcpsp_model.evaluate(sol)
-    print("fitnesses: ", fitnesses)
 
 
 def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
