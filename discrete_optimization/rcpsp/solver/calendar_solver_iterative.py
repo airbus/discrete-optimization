@@ -1,9 +1,8 @@
-# DEPRECATED !!!
-
 import random
 from typing import Any, Iterable, Optional, Union
 
 import numpy as np
+from deprecation import deprecated
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
@@ -33,6 +32,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
 )
 
 
+@deprecated(deprecated_in="0.1")
 def get_ressource_breaks(
     problem_calendar: RCPSPModel,
     problem_no_calendar: RCPSPModel,
@@ -122,6 +122,7 @@ def get_ressource_breaks(
     return index_ressource, constraints
 
 
+@deprecated(deprecated_in="0.1")
 class PostProcessSolutionNonFeasible(PostProcessSolution):
     def __init__(
         self,
@@ -201,6 +202,7 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
         return result_storage
 
 
+@deprecated(deprecated_in="0.1")
 class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
     def __init__(
         self,
@@ -306,6 +308,7 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
         pass
 
 
+@deprecated(deprecated_in="0.1")
 class SolverWithCalendarIterative(SolverDO):
     def __init__(
         self,

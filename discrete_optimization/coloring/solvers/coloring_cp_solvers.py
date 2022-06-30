@@ -6,6 +6,7 @@ from enum import Enum
 
 import networkx as nx
 import pymzn
+from deprecation import deprecated
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.coloring.coloring_model import (
@@ -222,7 +223,7 @@ class ColoringCP(CPSolver):
             solution = self.coloring_problem.get_dummy_solution()
         return solution
 
-    # Deprecated, better use the generic LNS-CP function !
+    @deprecated(deprecated_in="0.1", details="Use rather the generic LNS-CP function.")
     def solve_lns(
         self,
         fraction_to_fix: float = 0.9,

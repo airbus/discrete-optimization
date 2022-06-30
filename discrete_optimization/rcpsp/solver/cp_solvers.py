@@ -4,6 +4,7 @@ from dataclasses import InitVar
 from datetime import timedelta
 from typing import Dict, Hashable, List, Set, Tuple, Union
 
+from deprecation import deprecated
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
@@ -743,7 +744,7 @@ class CP_MRCPSP_MZN(CPSolver):
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
-# Deprecated
+@deprecated(deprecated_in="0.1")
 class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
     def __init__(
         self,
