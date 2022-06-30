@@ -52,6 +52,7 @@ def test_facility_lp_cbc():
     assert color_problem.satisfy(solution)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_facility_lp_pymip():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
     facility_problem = parse_file(file)

@@ -1,3 +1,5 @@
+import pytest
+
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
 from discrete_optimization.pickup_vrp.builders.instance_builders import (
@@ -12,7 +14,15 @@ from discrete_optimization.pickup_vrp.solver.lp_solver import (
     plot_solution,
 )
 
+try:
+    import gurobipy as grb
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
 
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_tsp():
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_105_1" in f][0]
@@ -34,6 +44,7 @@ def test_tsp():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_tsp_simplified():
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_105_1" in f][0]
@@ -56,6 +67,7 @@ def test_tsp_simplified():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_vrp():
     file_path = vrp_parser.get_data_available()[3]
     vrp_model = vrp_parser.parse_file(file_path)
@@ -76,6 +88,7 @@ def test_vrp():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_vrp_simplified():
     file_path = vrp_parser.get_data_available()[3]
     vrp_model = vrp_parser.parse_file(file_path)
@@ -97,6 +110,7 @@ def test_vrp_simplified():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_selective_tsp():
     gpdp = create_selective_tsp(nb_nodes=200, nb_vehicles=1, nb_clusters=50)
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
@@ -115,6 +129,7 @@ def test_selective_tsp():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_selective_vrp():
     gpdp = create_selective_tsp(nb_nodes=200, nb_vehicles=3, nb_clusters=50)
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
@@ -133,6 +148,7 @@ def test_selective_vrp():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_ortools_example():
     gpdp = create_ortools_example()
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
