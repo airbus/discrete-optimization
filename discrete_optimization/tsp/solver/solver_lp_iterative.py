@@ -18,7 +18,7 @@ from discrete_optimization.tsp.common_tools_tsp import (
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, TSPModel2D
 
 try:
-    pass
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:

@@ -4,6 +4,7 @@ from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
 )
+from discrete_optimization.generic_tools.lns_cp import LNS_CP
 from discrete_optimization.generic_tools.lns_mip import TrivialInitialSolution
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -34,7 +35,6 @@ from discrete_optimization.knapsack.knapsack_parser import (
     parse_file,
 )
 from discrete_optimization.knapsack.solvers.cp_solvers import (
-    LNS_CP,
     CPMultidimensionalMultiScenarioSolver,
     CPMultidimensionalSolver,
     KnapConstraintHandler,

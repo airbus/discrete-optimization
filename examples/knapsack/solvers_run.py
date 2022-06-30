@@ -10,16 +10,16 @@ from discrete_optimization.knapsack.knapsack_parser import (
 )
 from discrete_optimization.knapsack.knapsack_solvers import (
     CPKnapsackMZN2,
-    GreedyDummy,
     LPKnapsack,
     LPKnapsackGurobi,
     ParametersMilp,
     solve,
     solvers,
 )
+from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyDummy
 
 try:
-    pass
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:

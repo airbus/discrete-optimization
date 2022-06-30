@@ -16,7 +16,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModelCalendar, RCPSPSolution
 
 try:
-    pass
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:

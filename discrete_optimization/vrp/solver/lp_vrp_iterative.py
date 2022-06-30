@@ -15,7 +15,7 @@ from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution, compute
 from discrete_optimization.vrp.vrp_toolbox import Customer, length
 
 try:
-    pass
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:

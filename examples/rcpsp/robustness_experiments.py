@@ -10,12 +10,10 @@ from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     ModeOptim,
+    ObjectiveHandling,
     ParamsObjectiveFunction,
 )
-from discrete_optimization.generic_tools.ls.hill_climber import (
-    HillClimberPareto,
-    ObjectiveHandling,
-)
+from discrete_optimization.generic_tools.ls.hill_climber import HillClimberPareto
 from discrete_optimization.generic_tools.ls.local_search import RestartHandlerLimit
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     ModeMutation,
