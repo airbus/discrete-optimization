@@ -44,7 +44,7 @@ class TemporaryResult:
         self.rebuilt_dict = None
 
 
-def retrieve_solutions(model: grb.Model, variable_decisions: Dict[str, Any]):
+def retrieve_solutions(model: "grb.Model", variable_decisions: Dict[str, Any]):
     nSolutions = model.SolCount
     range_solutions = range(nSolutions)
     list_results = []
@@ -88,7 +88,7 @@ def retrieve_solutions(model: grb.Model, variable_decisions: Dict[str, Any]):
 
 
 def retrieve_solutions_vehicle_types(
-    model: grb.Model, variable_decisions: Dict[str, Any]
+    model: "grb.Model", variable_decisions: Dict[str, Any]
 ):
     nSolutions = model.SolCount
     range_solutions = range(nSolutions)
@@ -135,7 +135,7 @@ def retrieve_solutions_vehicle_types(
 class LinearFlowSolver(SolverDO):
     def __init__(self, problem: GPDP):
         self.problem = problem
-        self.model: grb.Model = None
+        self.model: "grb.Model" = None
         self.constraint_on_edge = {}
 
     def one_visit_per_node(
@@ -262,7 +262,7 @@ class LinearFlowSolver(SolverDO):
 
     def resources_constraint(
         self,
-        model: grb.Model,
+        model: "grb.Model",
         variables_edges,
         edges_in_all_vehicles,
         edges_out_all_vehicles,
@@ -331,7 +331,7 @@ class LinearFlowSolver(SolverDO):
 
     def simple_capacity_constraint(
         self,
-        model: grb.Model,
+        model: "grb.Model",
         variables_edges,
         edges_in_all_vehicles,
         edges_out_all_vehicles,
@@ -377,7 +377,7 @@ class LinearFlowSolver(SolverDO):
 
     def time_evolution(
         self,
-        model: grb.Model,
+        model: "grb.Model",
         variables_edges,
         edges_in_all_vehicles,
         edges_out_all_vehicles,
@@ -1115,7 +1115,7 @@ class LinearFlowSolverVehicleType(SolverDO):
 
     def resources_constraint(
         self,
-        model: grb.Model,
+        model: "grb.Model",
         variables_edges,
         edges_in_all_vehicles,
         edges_out_all_vehicles,
@@ -1184,7 +1184,7 @@ class LinearFlowSolverVehicleType(SolverDO):
 
     def simple_capacity_constraint(
         self,
-        model: grb.Model,
+        model: "grb.Model",
         variables_edges,
         edges_in_all_vehicles,
         edges_out_all_vehicles,
@@ -1230,7 +1230,7 @@ class LinearFlowSolverVehicleType(SolverDO):
 
     def time_evolution(
         self,
-        model: grb.Model,
+        model: "grb.Model",
         variables_edges,
         edges_in_all_vehicles,
         edges_out_all_vehicles,
