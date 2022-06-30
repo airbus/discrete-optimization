@@ -875,21 +875,18 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
                     end_index=(v, vrp_problem.end_indexes[v]),
                 )
                 node_to_component[v].update({p: i for p in paths_component[v][i]})
-            if True:
-                rebuilt_dict[v], objective_dict[v] = rebuild_tsp_routine(
-                    sorted_connected_component=sorted_connected_component[v],
-                    paths_component=paths_component[v],
-                    node_to_component=node_to_component[v],
-                    start_index=(v, vrp_problem.start_indexes[v]),
-                    end_index=(v, vrp_problem.end_indexes[v]),
-                    indexes=indexes_component[v],
-                    graph=graph_of_interest,
-                    edges=set(graph_of_interest.edges()),
-                    evaluate_function_indexes=vrp_problem.evaluate_function_indexes,
-                    vrp_model=vrp_problem,
-                )
-            else:
-                rebuilt_dict[v], objective_dict[v] = None, float("inf")
+            rebuilt_dict[v], objective_dict[v] = rebuild_tsp_routine(
+                sorted_connected_component=sorted_connected_component[v],
+                paths_component=paths_component[v],
+                node_to_component=node_to_component[v],
+                start_index=(v, vrp_problem.start_indexes[v]),
+                end_index=(v, vrp_problem.end_indexes[v]),
+                indexes=indexes_component[v],
+                graph=graph_of_interest,
+                edges=set(graph_of_interest.edges()),
+                evaluate_function_indexes=vrp_problem.evaluate_function_indexes,
+                vrp_model=vrp_problem,
+            )
         rebuilt_solution += [rebuilt_dict]
         rebuilt_obj += [sum(list(objective_dict.values()))]
     print("Rebuilt : ", rebuilt_solution, rebuilt_obj)

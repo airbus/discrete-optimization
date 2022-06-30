@@ -137,20 +137,6 @@ def build_graph_pruned_vrp(vrp_problem: VrpProblem):
                 edges_out_customers[i].add((node_1, node_2))
                 edges_in_customers[i].add((node_2, node_1))
                 edges_out_customers[n].add((node_2, node_1))
-    if False:
-        for v in range(vehicle_count):
-            start = vrp_problem.start_indexes[v]
-            end = vrp_problem.end_indexes[v]
-            g.add_edge(
-                (v, start),
-                (v, end),
-                weight=vrp_problem.evaluate_function_indexes(start, end),
-                demand=customers[end].demand,
-            )
-            edges_in_merged_graph[(v, end)].add(((v, start), (v, end)))
-            edges_out_merged_graph[(v, start)].add(((v, start), (v, end)))
-            edges_in_customers[end].add(((v, start), (v, end)))
-            edges_out_customers[start].add(((v, start), (v, end)))
     g_empty = nx.DiGraph()
     g_empty.add_nodes_from(
         [(v, i) for i in range(customer_count) for v in range(vehicle_count)]
@@ -1130,21 +1116,18 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
                     end_index=(v, vrp_problem.end_indexes[v]),
                 )
                 node_to_component[v].update({p: i for p in paths_component[v][i]})
-            if True:
-                rebuilt_dict[v], objective_dict[v] = rebuild_tsp_routine(
-                    sorted_connected_component=sorted_connected_component[v],
-                    paths_component=paths_component[v],
-                    node_to_component=node_to_component[v],
-                    start_index=(v, vrp_problem.start_indexes[v]),
-                    end_index=(v, vrp_problem.end_indexes[v]),
-                    indexes=indexes_component[v],
-                    graph=graph_of_interest,
-                    edges=set(graph_of_interest.edges()),
-                    evaluate_function_indexes=vrp_problem.evaluate_function_indexes,
-                    vrp_model=vrp_problem,
-                )
-            else:
-                rebuilt_dict[v], objective_dict[v] = None, float("inf")
+            rebuilt_dict[v], objective_dict[v] = rebuild_tsp_routine(
+                sorted_connected_component=sorted_connected_component[v],
+                paths_component=paths_component[v],
+                node_to_component=node_to_component[v],
+                start_index=(v, vrp_problem.start_indexes[v]),
+                end_index=(v, vrp_problem.end_indexes[v]),
+                indexes=indexes_component[v],
+                graph=graph_of_interest,
+                edges=set(graph_of_interest.edges()),
+                evaluate_function_indexes=vrp_problem.evaluate_function_indexes,
+                vrp_model=vrp_problem,
+            )
         rebuilt_solution += [rebuilt_dict]
         rebuilt_obj += [sum(list(objective_dict.values()))]
     print("Rebuilt : ", rebuilt_solution, rebuilt_obj)
