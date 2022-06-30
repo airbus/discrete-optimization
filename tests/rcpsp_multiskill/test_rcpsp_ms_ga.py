@@ -205,9 +205,7 @@ def test_alternating_ga_specific_mode_arity(random_seed):
         max_evals=evals_per_ga_runs_modes,
     )
     tmp_sol = ga_solver.solve().get_best_solution()
-    print("best after modes search iteration: ", msrcpsp_model.evaluate(tmp_sol))
     # Fix the resulting modes
-    print("tmp_sol.modes_vector:", tmp_sol.modes_vector)
     msrcpsp_model.set_fixed_modes(tmp_sol.modes_vector)
 
     # Run a GA for evals_per_ga_runs evals on permutation
@@ -221,10 +219,6 @@ def test_alternating_ga_specific_mode_arity(random_seed):
         max_evals=evals_per_ga_runs_perm,
     )
     tmp_sol = ga_solver.solve().get_best_solution()
-    print(
-        "best after task permutation search iteration: ",
-        msrcpsp_model.evaluate(tmp_sol),
-    )
 
     # Fix the resulting permutation
     msrcpsp_model.set_fixed_task_permutation(tmp_sol.priority_list_task)

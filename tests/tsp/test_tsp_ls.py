@@ -32,7 +32,6 @@ def test_sa_2opt():
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
-    print(list_mutation)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
@@ -64,7 +63,6 @@ def test_sa_partial_shuffle():
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
-    print(list_mutation)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
@@ -126,13 +124,11 @@ def test_sa_twoopttbasic():
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
-    print(list_mutation)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
         if mutate[0] in [TwoOptMutation]
     ]
-    print(list_mutation[0].attribute)
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = SimulatedAnnealing(
@@ -159,7 +155,6 @@ def test_hc():
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(100, solution, model.evaluate(solution))
-    print(list_mutation)
     list_mutation = [
         mutate[0].build(model, solution, **mutate[1])
         for mutate in list_mutation

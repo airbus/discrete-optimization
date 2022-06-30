@@ -28,7 +28,6 @@ def testing_tsp():
     )
     ga_solver._max_evals = 2000
     sol = ga_solver.solve().get_best_solution()
-    print(tsp_model.satisfy(sol))
     assert tsp_model.satisfy(sol)
 
 

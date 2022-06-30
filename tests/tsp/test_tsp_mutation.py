@@ -9,7 +9,6 @@ def test_mutation():
     model = parse_file(files[0])
     mutation = MutationSwapTSP(model)
     solution = model.get_dummy_solution()
-    print("Initial : ", solution.length)
     sol = mutation.mutate_and_compute_obj(solution)
     lengths, obj = compute_length(
         model.start_index,
