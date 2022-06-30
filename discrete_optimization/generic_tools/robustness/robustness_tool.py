@@ -12,8 +12,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
-    Problem,
-    RobustProblem,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimberPareto

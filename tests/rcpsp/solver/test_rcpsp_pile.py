@@ -1,13 +1,10 @@
 from discrete_optimization.rcpsp.rcpsp_model import (
     MethodBaseRobustification,
     MethodRobustification,
-    MultiModeRCPSPModel,
     RCPSPModel,
     RCPSPSolution,
-    SingleModeRCPSPModel,
     UncertainRCPSPModel,
     create_poisson_laws_duration,
-    plt,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (

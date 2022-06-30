@@ -26,7 +26,6 @@ from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.rcpsp.fast_function_rcpsp import (
     compute_mean_ressource,
     sgs_fast,
-    sgs_fast_partial_schedule,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
 

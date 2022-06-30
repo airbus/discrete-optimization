@@ -2,13 +2,7 @@ import os
 from typing import Optional
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.generic_tools.graph_api import Graph
-from discrete_optimization.vrp.vrp_model import (
-    BasicCustomer,
-    Customer2D,
-    VrpProblem,
-    VrpProblem2D,
-)
+from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem, VrpProblem2D
 
 
 def get_data_available(

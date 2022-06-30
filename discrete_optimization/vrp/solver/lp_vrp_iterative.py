@@ -11,17 +11,16 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
-from discrete_optimization.vrp.solver.solver_ortools import VrpORToolsSolver
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution, compute_length
 from discrete_optimization.vrp.vrp_toolbox import Customer, length
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, LinExpr, Model, quicksum
+    from gurobipy import GRB, Model, quicksum
 
 
 def build_matrice_distance_np(customer_count: int, customers: List[Customer]):

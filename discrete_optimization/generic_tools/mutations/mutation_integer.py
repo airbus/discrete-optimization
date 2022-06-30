@@ -1,23 +1,17 @@
 import random
 from typing import Dict, List, Tuple
 
-import numpy as np
-
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
     Mutation,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     Problem,
     Solution,
     TypeAttribute,
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
-)
-from discrete_optimization.generic_tools.mutations.mutation_util import (
-    get_attribute_for_type,
 )
 
 

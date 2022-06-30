@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-from minizinc import Instance, Model, Result, Solver, Status
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,

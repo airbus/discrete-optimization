@@ -12,15 +12,11 @@ from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive,
     MS_RCPSPSolution_Preemptive_Variant,
-    MS_RCPSPSolution_Variant,
-    schedule_solution_preemptive_to_variant,
 )
 
 

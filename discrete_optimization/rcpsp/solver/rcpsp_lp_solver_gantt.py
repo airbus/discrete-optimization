@@ -1,38 +1,22 @@
 import random
-from itertools import product
 from typing import Dict, List, Set, Tuple, Union
 
 import networkx as nx
-from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
+from mip import BINARY, MINIMIZE, Model, xsum
 
-from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
-    get_default_objective_setup,
-)
 from discrete_optimization.generic_tools.lp_tools import (
     MilpSolver,
     MilpSolverName,
     ParametersMilp,
     map_solver,
 )
-from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    PartialSolution,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
-from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolverRCPSP
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModelCalendar, RCPSPSolution
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

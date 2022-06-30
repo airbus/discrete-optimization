@@ -3,7 +3,6 @@ import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
-    ModeOptim,
 )
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -21,7 +20,6 @@ from discrete_optimization.generic_tools.mutations.mutation_catalog import (
 )
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
-    MultidimensionalKnapsack,
     MultiScenarioMultidimensionalKnapsack,
     create_noised_scenario,
     from_kp_to_multi,

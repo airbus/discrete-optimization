@@ -45,20 +45,12 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
-from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
-    InitialMethodRCPSP,
-    InitialSolutionRCPSP,
-)
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lns_post_process_rcpsp import (
     PostProMSRCPSP,
-    PostProMSRCPSPPreemptive,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver import (
-    InitialSolutionMS_RCPSP,
 )
 
 

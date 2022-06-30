@@ -20,9 +20,6 @@ from discrete_optimization.generic_tools.ea.ga import (
     DeapMutation,
     DeapSelection,
 )
-from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
-    TupleFitness,
-)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )

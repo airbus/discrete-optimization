@@ -1,9 +1,7 @@
 from enum import Enum
 
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
-    ANY_MSRCPSP,
     ANY_RCPSP,
-    ANY_SOLUTION_MSRCPSP,
     BasicConstraintBuilder,
     ConstraintHandler,
     ConstraintHandlerMultiskillAllocation,
@@ -13,7 +11,6 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     GraphRCPSP,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
-    NeighborBuilder,
     NeighborBuilderMix,
     NeighborBuilderSubPart,
     NeighborBuilderTimeWindow,
@@ -22,7 +19,6 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     NeighborRandomAndNeighborGraph,
     ObjectiveSubproblem,
     ParamsConstraintBuilder,
-    RCPSPModel,
     build_graph_rcpsp_object,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandlerMix

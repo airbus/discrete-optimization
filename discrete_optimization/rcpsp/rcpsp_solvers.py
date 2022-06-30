@@ -34,11 +34,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CPSolverName,
 )
 from discrete_optimization.rcpsp.solver.cpm import CPM
-from discrete_optimization.rcpsp.solver.gphh_solver import (
-    GPHH,
-    EvaluationGPHH,
-    ParametersGPHH,
-)
+from discrete_optimization.rcpsp.solver.gphh_solver import GPHH
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import LNS_CP_RCPSP_SOLVER
 from discrete_optimization.rcpsp.solver.rcpsp_ga_solver import (

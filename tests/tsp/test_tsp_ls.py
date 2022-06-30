@@ -1,9 +1,6 @@
 import numpy as np
 
-from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    get_default_objective_setup,
-)
+from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimber
 from discrete_optimization.generic_tools.ls.local_search import RestartHandlerLimit
 from discrete_optimization.generic_tools.ls.simulated_annealing import (

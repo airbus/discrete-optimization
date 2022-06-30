@@ -1,4 +1,4 @@
-from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, compute_length
+from discrete_optimization.tsp.tsp_model import SolutionTSP, compute_length
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
 

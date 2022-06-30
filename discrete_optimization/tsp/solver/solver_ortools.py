@@ -7,8 +7,6 @@ from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Problem,
-    Solution,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO

@@ -1,24 +1,12 @@
 import os
 
-from discrete_optimization.facility.facility_model import (
-    FacilityProblem,
-    FacilitySolution,
-)
+from discrete_optimization.facility.facility_model import FacilityProblem
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ObjectiveHandling,
-    TypeAttribute,
-    get_default_objective_setup,
-)
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-    Ga,
-)
+from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 
 
 def test_ga_facility():

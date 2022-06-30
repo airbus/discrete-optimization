@@ -4,7 +4,7 @@ from collections import namedtuple
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.vrp.vrp_model import BasicCustomer, VrpProblem, VrpSolution
+from discrete_optimization.vrp.vrp_model import VrpProblem
 
 Customer = namedtuple("Customer", ["index", "demand", "x", "y"])
 

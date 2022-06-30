@@ -9,7 +9,6 @@ from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive_Variant,
     MS_RCPSPSolution_Variant,
     SkillDetail,
@@ -237,11 +236,7 @@ def sgs_debug_preemptive(model=None):
 
 
 def sgs_debug_om():
-    from scheduler_om_pi2.parsing.cn_file_parser import (
-        RepoVersion,
-        build_multiskill,
-        parse,
-    )
+    from scheduler_om_pi2.parsing.cn_file_parser import RepoVersion, build_multiskill
 
     model: MS_RCPSPModel = build_multiskill(
         index=0,

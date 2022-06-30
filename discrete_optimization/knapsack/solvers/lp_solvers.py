@@ -19,26 +19,22 @@ from discrete_optimization.generic_tools.lp_tools import (
 )
 from discrete_optimization.generic_tools.mip.pymip_tools import (
     BINARY,
-    CBC,
-    CONTINUOUS,
-    INTEGER,
     MAXIMIZE,
     MyModelMilp,
     xsum,
 )
 from discrete_optimization.knapsack.knapsack_model import (
-    Item,
     KnapsackModel,
     KnapsackSolution,
 )
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, LinExpr, Model, quicksum
+    from gurobipy import GRB, Model, quicksum
 
 
 class LPKnapsackGurobi(SolverDO):

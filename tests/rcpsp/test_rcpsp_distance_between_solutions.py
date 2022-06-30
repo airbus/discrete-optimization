@@ -4,24 +4,10 @@ import numpy as np
 import pytest
 from scipy.spatial import distance
 
-from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-)
+from discrete_optimization.generic_tools.ea.ga import DeapMutation
 from discrete_optimization.generic_tools.ea.nsga import Nsga
 from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ParetoFront,
-    plot_pareto_2d,
     plot_storage_2d,
-)
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-    plt,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (

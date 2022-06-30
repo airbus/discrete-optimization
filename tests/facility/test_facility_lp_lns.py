@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,
@@ -12,8 +10,6 @@ from discrete_optimization.facility.solvers.facility_lp_lns_solver import (
     InitialFacilitySolution,
 )
 from discrete_optimization.facility.solvers.facility_lp_solver import (
-    LP_Facility_Solver,
-    LP_Facility_Solver_CBC,
     LP_Facility_Solver_PyMip,
     MilpSolverName,
     ParametersMilp,

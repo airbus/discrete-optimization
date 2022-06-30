@@ -10,11 +10,7 @@ from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
 
 from discrete_optimization.generic_tools.graph_api import Graph
-from discrete_optimization.rcpsp.rcpsp_model import (
-    RCPSPModel,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 
 
 def compute_resource_consumption(

@@ -17,7 +17,6 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
 from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass, build_pruned_problem
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
-    LinearFlowSolverLazyConstraint,
     ParametersMilp,
     plot_solution,
 )

@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -8,18 +6,11 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 from discrete_optimization.rcpsp.rcpsp_model import (
-    MethodBaseRobustification,
-    MethodRobustification,
     MultiModeRCPSPModel,
     RCPSPModel,
     RCPSPSolution,
     SingleModeRCPSPModel,
-    UncertainRCPSPModel,
-    create_poisson_laws_duration,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (

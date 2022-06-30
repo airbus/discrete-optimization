@@ -18,7 +18,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.rcpsp_model import (
     PartialSolution,
     RCPSPModel,
-    RCPSPModelCalendar,
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (

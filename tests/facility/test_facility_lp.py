@@ -16,7 +16,7 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

@@ -10,16 +10,13 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.mutations.permutation_mutations import (
     Mutation,
-    PermutationPartialShuffleMutation,
     PermutationShuffleMutation,
-    PermutationSwap,
     Problem,
     ShuffleMove,
     Solution,
     SwapsLocalMove,
-    TwoOptMutation,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 
 
 class PermutationMutationRCPSP(Mutation):

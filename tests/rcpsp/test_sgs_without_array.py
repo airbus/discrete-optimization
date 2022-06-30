@@ -1,11 +1,6 @@
-import numpy as np
-from sortedcontainers import SortedDict, SortedList
+from sortedcontainers import SortedDict
 
-from discrete_optimization.rcpsp.rcpsp_model import (
-    RCPSPModel,
-    RCPSPSolution,
-    SGSWithoutArray,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution, SGSWithoutArray
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 

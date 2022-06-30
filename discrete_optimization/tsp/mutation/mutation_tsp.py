@@ -1,8 +1,6 @@
 import random
 from typing import Dict, List, Tuple
 
-import numpy as np
-
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
@@ -15,7 +13,6 @@ from discrete_optimization.tsp.tsp_model import (
     TSPModel,
     TSPModel2D,
     compute_length,
-    length,
 )
 
 

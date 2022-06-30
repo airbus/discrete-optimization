@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import pytest
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
@@ -14,7 +13,6 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,
 )
-from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_pile import PileSolverRCPSP_Calendar
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
     get_data_available,

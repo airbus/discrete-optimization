@@ -10,15 +10,8 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
-from discrete_optimization.vrp.vrp_model import (
-    BasicCustomer,
-    Customer2D,
-    VrpProblem,
-    VrpProblem2D,
-    VrpSolution,
-    length,
-)
-from discrete_optimization.vrp.vrp_toolbox import build_graph, compute_length_matrix
+from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution
+from discrete_optimization.vrp.vrp_toolbox import build_graph
 
 
 def create_data_model():

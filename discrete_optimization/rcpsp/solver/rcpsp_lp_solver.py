@@ -5,14 +5,10 @@ from typing import Dict, List, Union
 from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
 
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
-    get_default_objective_setup,
 )
 from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp
-from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -31,7 +27,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
 )
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

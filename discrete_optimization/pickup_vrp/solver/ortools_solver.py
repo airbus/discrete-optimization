@@ -6,11 +6,9 @@ from typing import Any, Iterable, List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numba import njit
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 from ortools.util.optional_boolean_pb2 import BOOL_FALSE, BOOL_TRUE
 
-from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.pickup_vrp.gpdp import (
     GPDP,

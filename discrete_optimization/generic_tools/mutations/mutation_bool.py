@@ -2,13 +2,8 @@ from typing import List
 
 import numpy as np
 
-from discrete_optimization.generic_tools.do_mutation import (
-    LocalMove,
-    LocalMoveDefault,
-    Mutation,
-)
+from discrete_optimization.generic_tools.do_mutation import LocalMove, Mutation
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     Problem,
     Solution,
     TypeAttribute,

@@ -1,33 +1,13 @@
 import random
 from typing import Any, Iterable
 
-import mip
-
-from discrete_optimization.generic_tools.cp_tools import CPSolver, CPSolverName
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
-from discrete_optimization.generic_tools.lns_cp import (
-    ConstraintHandler,
-    InitialSolution,
-)
+from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
-from discrete_optimization.knapsack.solvers.cp_solvers import (
-    CPKnapsackMZN,
-    CPKnapsackMZN2,
-)
-from discrete_optimization.knapsack.solvers.greedy_solvers import (
-    GreedyBest,
-    ResultStorage,
-)
-from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
-    InitialKnapsackMethod,
-    InitialKnapsackSolution,
-)
+from discrete_optimization.knapsack.solvers.cp_solvers import CPKnapsackMZN2
+from discrete_optimization.knapsack.solvers.greedy_solvers import ResultStorage
 
 
 class ConstraintHandlerKnapsack(ConstraintHandler):

@@ -13,11 +13,7 @@ from discrete_optimization.coloring.coloring_parser import (
 )
 from discrete_optimization.coloring.coloring_solvers import (
     ColoringLP,
-    ColoringLP_MIP,
-    look_for_solver,
-    look_for_solver_class,
     solve,
-    solvers_compatibility,
     solvers_map,
 )
 from discrete_optimization.coloring.solvers.greedy_coloring import (
@@ -29,12 +25,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeAttribute,
     get_default_objective_setup,
 )
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-    Ga,
-)
+from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.nsga import Nsga
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -42,7 +33,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

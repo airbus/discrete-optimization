@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
 
-from discrete_optimization.tsp.tsp_model import (
-    SolutionTSP,
-    TSPModel,
-    TSPModel2D,
-    TSPModelDistanceMatrix,
-)
+from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
 
 
 def plot_tsp_solution(tsp_model: TSPModel, solution: SolutionTSP, fig=None, ax=None):

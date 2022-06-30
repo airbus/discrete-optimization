@@ -1,7 +1,5 @@
 import networkx as nx
 
-from discrete_optimization.pickup_vrp.gpdp import GPDP
-
 
 def compute_subtour():
     g_empty = {v: nx.DiGraph() for v in range(vehicle_count)}

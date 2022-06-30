@@ -3,41 +3,23 @@ import random
 import matplotlib.pyplot as plt
 
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
-    Problem,
-    TypeAttribute,
     build_evaluate_function_aggregated,
 )
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-)
+from discrete_optimization.generic_tools.ea.ga import DeapMutation
 from discrete_optimization.generic_tools.ea.nsga import Nsga
-from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
-    TupleFitness,
-)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ParetoFront,
     ResultStorage,
-    plot_pareto_2d,
-    plot_storage_2d,
 )
 from discrete_optimization.generic_tools.result_storage.resultcomparator import (
     ResultComparator,
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
-    Aggreg_RCPSPModel,
-    MethodAggregating,
     MethodBaseRobustification,
     MethodRobustification,
-    MultiModeRCPSPModel,
-    RCPSPModel,
     RCPSPSolution,
-    SingleModeRCPSPModel,
     UncertainRCPSPModel,
     create_poisson_laws,
 )

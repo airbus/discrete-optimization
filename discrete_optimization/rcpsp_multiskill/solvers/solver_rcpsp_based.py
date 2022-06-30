@@ -2,7 +2,6 @@ from typing import Union
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Problem,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -10,11 +9,10 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
-from discrete_optimization.rcpsp.rcpsp_solvers import solve, solvers
+from discrete_optimization.rcpsp.rcpsp_solvers import solve
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
     MS_RCPSPSolution_Variant,
 )
 

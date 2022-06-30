@@ -1,12 +1,7 @@
-import numpy as np
-
 from discrete_optimization.pickup_vrp.builders.instance_builders import (
     GPDP,
-    create_ortools_example,
     create_pickup_and_delivery,
     create_selective_tsp,
-    load_tsp_and_transform,
-    load_vrp_and_transform,
 )
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     ORToolsGPDP,
@@ -14,7 +9,6 @@ from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     first_solution_strategy_enum,
     local_search_metaheuristic_enum,
     plot_ortools_solution,
-    plt,
 )
 
 

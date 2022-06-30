@@ -8,7 +8,6 @@ from discrete_optimization.tsp.solver.solver_lp_iterative import (
 from discrete_optimization.tsp.solver.solver_ortools import TSP_ORtools
 from discrete_optimization.tsp.solver.tsp_cp_solver import (
     CPSolverName,
-    ParametersCP,
     TSP_CP_Solver,
     TSP_CPModel,
 )

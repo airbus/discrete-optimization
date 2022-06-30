@@ -2,8 +2,6 @@ import random
 from enum import Enum
 from typing import Any, Iterable
 
-import mip
-
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
