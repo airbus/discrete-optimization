@@ -1,8 +1,6 @@
 from copy import deepcopy
 from functools import partial
 
-from pathos.multiprocessing import Pool
-
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     GPDP,
     ORToolsGPDP,
