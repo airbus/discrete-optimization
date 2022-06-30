@@ -235,26 +235,5 @@ def sgs_debug_preemptive(model=None):
     plt.show()
 
 
-def sgs_debug_om():
-    from scheduler_om_pi2.parsing.cn_file_parser import RepoVersion, build_multiskill
-
-    model: MS_RCPSPModel = build_multiskill(
-        index=0,
-        include_zones=False,
-        cut_too_long_task=False,
-        remove_masked=True,
-        add_missing_worker_super_skilled=0 == 0,
-        remove_resources_type=True,
-        add_varying_ressource=True,
-        preemptive=True,
-        repo_version=RepoVersion.DO,
-    )
-    model = model.to_variant_model()
-    solver = LS_RCPSP_Solver(model=model, ls_solver=LS_SOLVER.SA)
-    result = solver.solve(nb_iteration_max=500, init_solution_process=False)
-
-    # sgs_debug_preemptive(model)
-
-
 if __name__ == "__main__":
     sgs_debug_preemptive()
