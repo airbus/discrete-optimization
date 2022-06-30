@@ -138,7 +138,6 @@ def rebuild_multiskill_solution(
                         if s in multiskill_rcpsp_model.skills_set
                         and multiskill_rcpsp_model.mode_details[task][1][s] > 0
                     ]
-                    # TODO keep info on original mode.
                     non_zeros = multiskill_rcpsp_model.employees[
                         wavail[0]
                     ].get_non_zero_skills()
@@ -174,7 +173,6 @@ def rebuild_multiskill_solution(
                                     and multiskill_rcpsp_model.mode_details[task][1][s]
                                     > 0
                                 ]
-                                # TODO keep info on original mode.
                                 non_zeros = multiskill_rcpsp_model.employees[
                                     wavail[0]
                                 ].get_non_zero_skills()

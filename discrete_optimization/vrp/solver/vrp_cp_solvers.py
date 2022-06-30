@@ -1,4 +1,3 @@
-# TODO : do it..
 import os
 
 from minizinc import Instance

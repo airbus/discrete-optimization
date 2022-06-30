@@ -26,7 +26,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import LP_Solver_MRSCPSP
 
 
-# TODO, better call the rcpsp_based_solvers directly.
 class InitialSolutionMS_RCPSP(InitialSolution):
     def __init__(
         self,

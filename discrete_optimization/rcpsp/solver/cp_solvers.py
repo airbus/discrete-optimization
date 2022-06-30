@@ -743,7 +743,7 @@ class CP_MRCPSP_MZN(CPSolver):
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
-# Deprecated. TODO : REMOVE
+# Deprecated
 class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
     def __init__(
         self,

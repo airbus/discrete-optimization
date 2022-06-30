@@ -64,7 +64,7 @@ class ParametersCP:
         """
 
         :param time_limit: in seconds, the time limit of solving the cp model
-        :param pool_solutions: TODO remove it it's not used
+        :param pool_solutions:
         :param intermediate_solution: retrieve intermediate solutions
         :param all_solutions: returns all solutions found by the cp solver
         :param nr_solutions: the requested number of solutions

@@ -36,7 +36,7 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
     def __init__(
         self,
         problem: MS_RCPSPModel,
-        fraction_to_fix: float = 0.9,  # TODO not really fix
+        fraction_to_fix: float = 0.9,
         minus_delta: int = 2,
         plus_delta: int = 2,
         fraction_task_to_fix_employee: float = 0.5,
@@ -206,7 +206,7 @@ class Params:
 
     def __init__(
         self,
-        fraction_to_fix: float = 0.9,  # TODO not really fix
+        fraction_to_fix: float = 0.9,
         minus_delta: int = 2,
         plus_delta: int = 2,
         fraction_task_to_fix_employee: float = 0.5,

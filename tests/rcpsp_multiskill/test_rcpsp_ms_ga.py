@@ -182,9 +182,7 @@ def test_alternating_ga_specific_mode_arity(random_seed):
 
     mode_mutation = DeapMutation.MUT_UNIFORM_INT
     task_permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    resource_permutation_mutation = (
-        DeapMutation.MUT_SHUFFLE_INDEXES
-    )  # TODO: Using adjacent swap would make more sense for this encoding
+    resource_permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
 
     # Initialise the task permutation that will be used to first search through the modes
     initial_task_permutation = [i for i in range(msrcpsp_model.n_jobs_non_dummy)]

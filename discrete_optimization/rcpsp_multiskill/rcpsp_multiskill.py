@@ -2662,7 +2662,6 @@ class MS_RCPSPModel(Problem):
         )
 
     def get_dummy_solution(self):
-        # TODO
         return None
 
     def get_max_resource_capacity(self, res):

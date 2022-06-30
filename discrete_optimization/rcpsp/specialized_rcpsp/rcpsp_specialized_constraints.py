@@ -208,8 +208,6 @@ class RCPSPSolutionSpecial(RCPSPSolution):
     def generate_schedule_from_permutation_serial_sgs(self, do_fast=True):
         super().generate_schedule_from_permutation_serial_sgs()
 
-        # TODO = seems buggy :O
-
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
         current_t=0,

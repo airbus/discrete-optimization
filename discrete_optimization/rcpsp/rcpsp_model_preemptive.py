@@ -679,10 +679,6 @@ class RCPSPModelPreemptive(Problem):
             "arities": mode_arity,
         }
 
-        # TODO: New encoding with both permutation and modes in the same encoding
-        #  (if this can be handled by DEAP ? Look at the initES example
-        #  at https://deap.readthedocs.io/en/master/tutorials/basic/part1.html)
-
         return EncodingRegister(dict_register)
 
     def get_objective_register(self) -> ObjectiveRegister:

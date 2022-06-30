@@ -675,7 +675,6 @@ class ORToolsGPDP(SolverDO):
                             for v in self.problem.target_vehicle
                         }
                     ]
-                    # TODO = check if the solver is actually softening those constraints.
                     if mini is not None:
                         routing.solver().Add(
                             routing.solver().Sum(

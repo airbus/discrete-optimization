@@ -156,7 +156,6 @@ class Solution:
         ...
 
 
-# TODO see if a repair function can be added to repair a solution, as a new class like mutation
 class Problem:
     @abstractmethod
     def evaluate(self, variable: Solution) -> Dict[str, float]:

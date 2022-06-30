@@ -483,7 +483,6 @@ def constraints_strings_multiskill(
         employee_usage_matrix, sum_usage, employees_usage_dict = employee_usage(
             solution=current_solution, problem=current_solution.problem
         )
-        # TODO : see the effect of this piece of code.
         sorted_employee = np.argsort(sum_usage)
         set_employees_to_fix = set(
             [

@@ -117,7 +117,6 @@ class ColoringProblem(Problem):
                 return False
         return True
 
-    # TODO: We need to allow a user to change the arity (or the range_value) of the encoding (test with GA)
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {
             "colors": {
@@ -134,7 +133,6 @@ class ColoringProblem(Problem):
     def get_solution_type(self):
         return ColoringSolution
 
-    # TODO: add maximzation or minimization to objective register (valid for any Problem)
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
             "nb_colors": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},

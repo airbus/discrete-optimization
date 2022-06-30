@@ -196,9 +196,7 @@ class Ga:
             ]["name"]
             self._encoding_type = register_solution.dict_attribute_to_type[
                 self._encoding_name
-            ]["type"][
-                0
-            ]  # TODO : while it's usually a list we could also have a unique value(not a list)
+            ]["type"][0]
             self.n = register_solution.dict_attribute_to_type[self._encoding_name]["n"]
 
             dict_register = register_solution.dict_attribute_to_type
@@ -316,7 +314,6 @@ class Ga:
             self._toolbox.register(
                 "individual", tools.initIterate, creator.individual, gen_idx
             )
-        # TODO : adapt to floating variable
         elif self._encoding_type == TypeAttribute.LIST_FLOATS:
             gen_idx = lambda: [
                 random.randrange(low, up) for low, up in zip(self.lows, self.ups)
@@ -418,7 +415,7 @@ class Ga:
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem, params_objective_function=None
-        )  # TODO: That should probably be set to somthing else than None.
+        )
 
     def evaluate_problem(self, int_vector):
         objective_values = self.problem.evaluate_from_encoding(

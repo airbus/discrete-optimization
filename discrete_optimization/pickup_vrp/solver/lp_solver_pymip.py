@@ -243,7 +243,7 @@ class LinearFlowSolver(SolverDO):
                         >= resources_variable_leaving[r][edge[0]]
                         + self.problem.resources_flow_edges[edge][r]
                         - 100000 * (1 - variables_edges[vehicle][edge])
-                    )  # TODO Check if it works
+                    )
                 if node not in all_origin:
                     model.add_constr(
                         resources_variable_leaving[r][node]
@@ -506,7 +506,6 @@ class LinearFlowSolver(SolverDO):
                     ]
                 )
                 == count_origin[node_origin],
-                # TODO : probably a silent bug here. (should be ==1 ?)
                 name="outflow_" + str((vehicle, node_origin)),
             )
             constraints_in_flow[(vehicle, node_target)] = model.add_constr(
@@ -522,7 +521,6 @@ class LinearFlowSolver(SolverDO):
                 == count_target[node_target],
                 name="inflow_" + str((vehicle, node_target)),
             )  # Avoid loop
-            # TODO : probably a silent bug here. (should be ==1 ?)
             constraints_out_flow[(vehicle, node_target)] = model.add_constr(
                 mip.quicksum(
                     [
@@ -677,7 +675,6 @@ class LinearFlowSolver(SolverDO):
                                 - 1000 * (1 - variables_edges[vehicle][edge]),
                                 name="order_" + str(node),
                             )
-                            # Big M constraint, TODO
                         if use_indicator:
                             raise MipModelException(
                                 "indicator constraint dont exist in pymip"
@@ -1954,7 +1951,7 @@ def update_model(
                                     ][edge]
                                 ),
                                 name="order_" + str(node),
-                            )  # Big M constraint, TODO
+                            )
     return list_constraints
 
 
@@ -2052,7 +2049,7 @@ def update_model_lazy(
                                         vehicle
                                     ][edge]
                                 )
-                            )  # Big M constraint, TODO
+                            )
     return list_constraints
 
 
