@@ -6,19 +6,13 @@ from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import plot_ressou
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
     plot_resource_individual_gantt_preemptive,
-    plt,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Preemptive_Variant,
-    MS_RCPSPSolution_Variant,
     SkillDetail,
     SpecialConstraintsDescription,
-    TaskDetails,
-    TaskDetailsPreemptive,
     compute_constraints_details,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (

@@ -26,11 +26,7 @@ from discrete_optimization.generic_tools.mutations.mutation_catalog import (
 from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
     PermutationMutationRCPSP,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
-    InitialMethodRCPSP,
-    InitialSolutionRCPSP,
-)
+from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import InitialMethodRCPSP
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPModel
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver import (
     InitialSolutionMS_RCPSP,

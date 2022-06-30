@@ -6,28 +6,16 @@ import pytest
 
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-    Ga,
-)
+from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
     SkillDetail,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
     get_data_available,
     parse_file,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
-    LP_Solver_MRSCPSP,
-    MilpSolverName,
-    ParametersMilp,
 )
 
 

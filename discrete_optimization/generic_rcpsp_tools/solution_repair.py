@@ -1,7 +1,6 @@
 import random
 from typing import Any, Dict, Hashable, Iterable, List, Union
 
-import networkx as nx
 import numpy as np
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
@@ -9,10 +8,7 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSPSpecialConstraints,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
-    BasicConstraintBuilder,
-    NeighborBuilder,
     ParamsConstraintBuilder,
-    constraint_unit_used_subset_employees,
     constraint_unit_used_subset_employees_preemptive,
     constraint_unit_used_to_tasks_preemptive,
 )
@@ -25,7 +21,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
     RCPSPModelCalendar,
-    RCPSPSolution,
     SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
@@ -33,7 +28,6 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPSolutionPreemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
-from discrete_optimization.rcpsp.rcpsp_solution_utils import get_max_time_solution
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_PREEMMPTIVE,
     CP_RCPSP_MZN_PREEMMPTIVE,
@@ -42,14 +36,11 @@ from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints
     RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
     RCPSPSolutionSpecialPreemptive,
-    SpecialConstraintsDescription,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive,
-    MS_RCPSPSolution_Variant,
     create_fake_tasks_multiskills,
     employee_usage,
 )

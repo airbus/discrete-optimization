@@ -26,7 +26,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:
@@ -251,7 +251,6 @@ class LP_Facility_Solver(MilpSolver):
                         )
                     except:
                         print("failed")
-                        pass
                 else:
                     try:
                         lns_constraint[(f, c)] = self.model.addConstr(
@@ -480,7 +479,6 @@ class LP_Facility_Solver_CBC(SolverDO):
                         lns_constraint[(f, c)] = self.model.Add(x_var[key] == 1)
                     except:
                         print("failed")
-                        pass
                 else:
                     try:
                         lns_constraint[(f, c)] = self.model.Add(x_var[key] == 0)
@@ -709,7 +707,6 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
                         )
                     except:
                         print("failed")
-                        pass
                 else:
                     try:
                         lns_constraint[(f, c)] = self.model.addConstr(

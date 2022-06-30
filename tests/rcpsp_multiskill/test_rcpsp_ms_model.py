@@ -5,9 +5,6 @@ import pytest
 
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Preemptive,
     MS_RCPSPSolution_Preemptive_Variant,
     MS_RCPSPSolution_Variant,
     TaskDetails,

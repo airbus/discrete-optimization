@@ -6,9 +6,7 @@ import numpy as np
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
     ParamsObjectiveFunction,
-    Solution,
     build_evaluate_function_aggregated,
     get_default_objective_setup,
 )
@@ -18,7 +16,7 @@ from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
     SolverDO,
 )
-from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandlerLimit,

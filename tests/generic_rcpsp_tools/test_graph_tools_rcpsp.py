@@ -3,17 +3,9 @@ import random
 import pytest
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
-    GraphRCPSP,
-    GraphRCPSPSpecialConstraints,
-    SpecialConstraintsDescription,
     build_graph_rcpsp_object,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 files_rcpsp = get_data_available()

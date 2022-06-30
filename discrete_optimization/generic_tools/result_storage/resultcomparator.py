@@ -8,10 +8,8 @@ import seaborn as sns
 
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ParetoFront,
     ResultStorage,
     plot_pareto_2d,
-    plot_storage_2d,
     result_storage_to_pareto_front,
 )
 

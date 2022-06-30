@@ -2,19 +2,7 @@ import gc
 from typing import List, Optional, Tuple, Union
 
 import mip
-from mip import (
-    BINARY,
-    CBC,
-    CONTINUOUS,
-    GRB,
-    INTEGER,
-    MAXIMIZE,
-    MINIMIZE,
-    IncumbentUpdater,
-    Model,
-    Var,
-    xsum,
-)
+from mip import IncumbentUpdater, Model, Var
 
 
 def release_token():

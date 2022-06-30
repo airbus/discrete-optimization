@@ -25,7 +25,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

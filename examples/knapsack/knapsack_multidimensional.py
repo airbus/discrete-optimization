@@ -3,7 +3,6 @@ import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lns_mip import TrivialInitialSolution
 from discrete_optimization.generic_tools.ls.local_search import (
@@ -21,13 +20,11 @@ from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
     from_solutions_to_result_storage,
     plot_fitness,
 )
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
-    MultidimensionalKnapsack,
     MultiScenarioMultidimensionalKnapsack,
     create_noised_scenario,
     from_kp_to_multi,
@@ -38,7 +35,6 @@ from discrete_optimization.knapsack.knapsack_parser import (
 )
 from discrete_optimization.knapsack.solvers.cp_solvers import (
     LNS_CP,
-    CPKnapsackMZN,
     CPMultidimensionalMultiScenarioSolver,
     CPMultidimensionalSolver,
     KnapConstraintHandler,

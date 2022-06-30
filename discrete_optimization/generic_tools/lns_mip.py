@@ -6,9 +6,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
     Problem,
-    Solution,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp

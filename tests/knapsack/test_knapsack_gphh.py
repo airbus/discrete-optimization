@@ -1,21 +1,13 @@
 from discrete_optimization.knapsack.knapsack_model import (
-    ItemMultidimensional,
     KnapsackModel,
-    KnapsackSolution,
-    KnapsackSolutionMultidimensional,
-    MultidimensionalKnapsack,
     from_kp_to_multi,
 )
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.knapsack.knapsack_solvers import GreedyBest, GreedyDummy
-from discrete_optimization.knapsack.solvers.gphh_knapsack import (
-    GPHH,
-    FeatureEnum,
-    ParametersGPHH,
-)
+from discrete_optimization.knapsack.knapsack_solvers import GreedyBest
+from discrete_optimization.knapsack.solvers.gphh_knapsack import GPHH, ParametersGPHH
 
 
 def test_run_one_example():

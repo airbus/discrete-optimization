@@ -5,10 +5,8 @@ from typing import Dict, Hashable, Tuple
 import pytest
 
 from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
     RCPSPModel,
     RCPSPSolution,
-    SingleModeRCPSPModel,
     TaskDetails,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file

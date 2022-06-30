@@ -1,10 +1,4 @@
-import numpy as np
-
-from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    Problem,
-    TypeAttribute,
-)
+from discrete_optimization.generic_tools.do_problem import Problem, TypeAttribute
 
 
 def get_attribute_for_type(problem: Problem, type_attribute: TypeAttribute):

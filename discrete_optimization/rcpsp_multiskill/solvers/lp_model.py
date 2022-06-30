@@ -10,13 +10,11 @@ from discrete_optimization.generic_tools.lp_tools import (
     MilpSolver,
     MilpSolverName,
     ParametersMilp,
-    SolverDO,
     map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,

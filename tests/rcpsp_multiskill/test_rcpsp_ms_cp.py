@@ -1,20 +1,9 @@
 from typing import Dict, List, Set
 
-import matplotlib.pyplot as plt
-
-from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
-from discrete_optimization.rcpsp.rcpsp_utils import plot_ressource_view
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import InitialMethodRCPSP
-from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-    plot_resource_individual_gantt,
-    plot_task_gantt,
-)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
-    MS_RCPSPModel,
     MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
     SkillDetail,
@@ -28,7 +17,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     ParametersCP,
     SearchStrategyMS_MRCPSP,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.lp_model import LP_Solver_MRSCPSP
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
     LNS_CP_MS_RCPSP_SOLVER,
     OptionNeighbor,

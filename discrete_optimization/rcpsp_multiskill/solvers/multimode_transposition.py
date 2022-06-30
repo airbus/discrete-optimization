@@ -22,10 +22,8 @@ from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import (
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive,
-    MS_RCPSPSolution_Variant,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,

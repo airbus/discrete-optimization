@@ -4,7 +4,6 @@ import time
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
-    ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
     Solution,
@@ -13,7 +12,6 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandler,
-    ResultLS,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ParetoFront,

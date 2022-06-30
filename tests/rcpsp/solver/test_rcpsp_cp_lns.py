@@ -1,13 +1,6 @@
-import matplotlib.pyplot as plt
-
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    ObjectiveHandling,
-    ParamsObjectiveFunction,
-    get_default_objective_setup,
-)
-from discrete_optimization.generic_tools.lns_cp import LNS_CP, InitialSolution
+from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.lns_cp import LNS_CP
 from discrete_optimization.generic_tools.lns_mip import TrivialInitialSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     from_solutions_to_result_storage,
@@ -30,7 +23,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import (
     OptionNeighbor,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
-    LNS_LP_RCPSP_SOLVER,
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
 )

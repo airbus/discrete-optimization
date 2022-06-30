@@ -12,8 +12,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
     SkillDetail,
     TaskDetails,
     TaskDetailsPreemptive,

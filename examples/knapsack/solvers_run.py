@@ -10,11 +10,8 @@ from discrete_optimization.knapsack.knapsack_parser import (
 )
 from discrete_optimization.knapsack.knapsack_solvers import (
     CPKnapsackMZN2,
-    GreedyBest,
     GreedyDummy,
-    KnapsackORTools,
     LPKnapsack,
-    LPKnapsackCBC,
     LPKnapsackGurobi,
     ParametersMilp,
     solve,
@@ -22,7 +19,7 @@ from discrete_optimization.knapsack.knapsack_solvers import (
 )
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

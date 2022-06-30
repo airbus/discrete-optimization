@@ -2,19 +2,9 @@ import os
 from typing import Dict, Optional, Tuple
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.generic_tools.path_tools import abspath_from_file
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
     SkillDetail,
 )
 

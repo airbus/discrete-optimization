@@ -1,8 +1,6 @@
 import random
 from typing import Dict, Tuple
 
-import numpy as np
-
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
     LocalMoveDefault,
@@ -11,7 +9,7 @@ from discrete_optimization.generic_tools.do_mutation import (
 
 # Relocate operator
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.vrp.vrp_model import VrpProblem, VrpProblem2D, VrpSolution
+from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution
 
 # https://dial.uclouvain.be/memoire/ucl/fr/object/thesis%3A4615/datastream/PDF_01/
 # view#:~:text=One%20of%20the%20approaches%20that,solution%20and%20iteratively%20improving%20it.

@@ -10,7 +10,6 @@ from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import (
 )
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
-    RCPSPSolutionPreemptive,
     get_rcpsp_modelp_preemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import (

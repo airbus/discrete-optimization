@@ -1,15 +1,6 @@
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    plot_pareto_2d,
-    plot_storage_2d,
-    result_storage_to_pareto_front,
-)
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_MODES,
-    RCPSPSolution,
-)
+from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_MODES
 
 
 def test_find_modes():

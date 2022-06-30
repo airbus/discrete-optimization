@@ -6,10 +6,9 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_ortools_example,
     create_selective_tsp,
 )
-from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass, build_pruned_problem
+from discrete_optimization.pickup_vrp.gpdp import ProxyClass, build_pruned_problem
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
-    LinearFlowSolverLazyConstraint,
     ParametersMilp,
     plot_solution,
 )

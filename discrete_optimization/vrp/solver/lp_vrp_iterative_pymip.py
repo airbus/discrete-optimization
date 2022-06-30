@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from mip import BINARY, CBC, GRB, MINIMIZE, Model, Var, xsum
+from mip import BINARY, CBC, MINIMIZE, Model, Var, xsum
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

@@ -12,12 +12,10 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
 )
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandler,
-    ResultLS,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,

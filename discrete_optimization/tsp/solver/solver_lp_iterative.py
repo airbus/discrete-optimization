@@ -14,14 +14,11 @@ from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverD
 from discrete_optimization.tsp.common_tools_tsp import (
     build_matrice_distance,
     build_matrice_distance_np,
-    compute_length,
-    length,
-    length_1,
 )
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel, TSPModel2D
 
 try:
-    import gurobipy
+    pass
 except ImportError:
     gurobi_available = False
 else:

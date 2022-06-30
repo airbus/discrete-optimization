@@ -21,7 +21,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPModel,
     RCPSPModelCalendar,
     RCPSPSolution,
-    SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_MODES
 

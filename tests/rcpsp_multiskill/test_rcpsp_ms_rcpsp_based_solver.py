@@ -7,10 +7,8 @@ from discrete_optimization.rcpsp.rcpsp_solvers import (
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
-    MS_RCPSPModel,
     MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
     SkillDetail,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.solver_rcpsp_based import (

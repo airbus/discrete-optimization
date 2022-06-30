@@ -15,11 +15,8 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.rcpsp.fast_function_rcpsp import (
     compute_mean_ressource,
-    sgs_fast,
-    sgs_fast_partial_schedule,
     sgs_fast_partial_schedule_preemptive,
     sgs_fast_partial_schedule_preemptive_minduration,
-    sgs_fast_preemptive,
     sgs_fast_preemptive_minduration,
     sgs_fast_preemptive_some_special_constraints,
 )

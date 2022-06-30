@@ -1,7 +1,3 @@
-from discrete_optimization.facility.facility_model import (
-    FacilityProblem,
-    FacilitySolution,
-)
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,

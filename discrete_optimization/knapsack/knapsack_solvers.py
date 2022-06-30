@@ -6,12 +6,8 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
     CPSolverName,
 )
 from discrete_optimization.knapsack.solvers.dyn_prog_knapsack import KnapsackDynProg
-from discrete_optimization.knapsack.solvers.greedy_solvers import (
-    GreedyBest,
-    GreedyDummy,
-)
+from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 from discrete_optimization.knapsack.solvers.lp_solvers import (
-    CBC,
     KnapsackORTools,
     LPKnapsack,
     LPKnapsackCBC,

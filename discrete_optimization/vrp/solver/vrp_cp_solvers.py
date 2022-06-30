@@ -3,16 +3,12 @@ import os
 
 from minizinc import Instance
 
-from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
-    CPSolverName,
-    ParametersCP,
-)
+from discrete_optimization.generic_tools.cp_tools import CPSolver, CPSolverName
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.vrp.vrp_model import VrpProblem, VrpProblem2D
+from discrete_optimization.vrp.vrp_model import VrpProblem
 
 this_path = os.path.dirname(os.path.abspath(__file__))
 

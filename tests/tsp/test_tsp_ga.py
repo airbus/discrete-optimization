@@ -5,17 +5,10 @@ from discrete_optimization.generic_tools.ea.ga import (
     DeapSelection,
     Ga,
 )
-from discrete_optimization.generic_tools.mutations.permutation_mutations import (
-    PermutationPartialShuffleMutation,
-)
-from discrete_optimization.generic_tools.path_tools import abspath_from_file
 from discrete_optimization.tsp.mutation.mutation_tsp import (
     Mutation2Opt,
     Mutation2OptIntersection,
-    MutationSwapTSP,
-    SwapTSPMove,
 )
-from discrete_optimization.tsp.tsp_model import SolutionTSP
 from discrete_optimization.tsp.tsp_parser import get_data_available
 from discrete_optimization.tsp.tsp_parser import parse_file as tsp_parse_file
 

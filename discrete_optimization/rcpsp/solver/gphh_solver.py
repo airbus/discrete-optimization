@@ -11,8 +11,6 @@ from deap.gp import PrimitiveSet, PrimitiveTree, genHalfAndHalf
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ANY_RCPSP,
     MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
-    RCPSPModel,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

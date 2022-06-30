@@ -3,7 +3,6 @@ from typing import Any, Iterable
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Solution,
     build_evaluate_function_aggregated,
     get_default_objective_setup,
 )
@@ -23,7 +22,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import LP_Solver_MRSCPSP
 

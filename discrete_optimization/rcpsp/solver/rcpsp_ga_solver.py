@@ -1,8 +1,6 @@
 from discrete_optimization.generic_tools.do_problem import (
-    ObjectiveHandling,
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
@@ -11,17 +9,7 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    PartialSolution,
-    RCPSPModel,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import MultiModeRCPSPModel, RCPSPModel
 
 
 class GA_RCPSP_Solver(SolverDO):

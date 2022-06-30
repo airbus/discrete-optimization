@@ -1,5 +1,3 @@
-import pytest
-
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 from discrete_optimization.knapsack.knapsack_parser import (
