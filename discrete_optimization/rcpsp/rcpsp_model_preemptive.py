@@ -782,7 +782,6 @@ def generate_schedule_from_permutation_serial_sgs(
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
 
-    # 1, 2
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
@@ -793,7 +792,6 @@ def generate_schedule_from_permutation_serial_sgs(
             resource_avail_in_time[res] = np.full(
                 new_horizon, rcpsp_problem.resources[res], dtype=int
             ).tolist()
-    # 3
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
         minimum_starting_time[act] = 0
@@ -824,12 +822,12 @@ def generate_schedule_from_permutation_serial_sgs(
             if respected:
                 act_id = id_successor
                 break
-        current_min_time = minimum_starting_time[act_id]  # 5
+        current_min_time = minimum_starting_time[act_id]
         starts = []
         ends = []
         cur_duration = 0
-        valid = False  # 6
-        while not valid:  # 7ok
+        valid = False
+        while not valid:
             reached_t = None
             if expected_durations_task[act_id] == 0:
                 starts += [current_min_time]
@@ -954,7 +952,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
-    # 1, 2
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
@@ -965,7 +962,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             resource_avail_in_time[res] = np.full(
                 new_horizon, rcpsp_problem.resources[res], dtype=int
             ).tolist()
-    # 3
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
         minimum_starting_time[act] = current_t

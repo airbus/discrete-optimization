@@ -97,7 +97,6 @@ def test_single_mode_moo_benchmark():
     result_comparator.plot_all_best_by_objective("mean_resource_reserve")
     plt.show()
 
-    # result_comparator.plot_all_2d_paretos()
     result_comparator.plot_all_2d_paretos_single_plot(objectives_str=objectives)
     plt.show()
 
@@ -105,7 +104,6 @@ def test_single_mode_moo_benchmark():
     plt.show()
 
     # Generate and plot super Pareto front, the one to rule them all
-    # result_comparator.generate_super_pareto()
     result_comparator.plot_super_pareto()
     plt.show()
 

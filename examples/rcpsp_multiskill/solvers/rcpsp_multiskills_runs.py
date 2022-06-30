@@ -293,7 +293,6 @@ def create_toy_msrcpsp_variant():
 
 def sgs_debug(model=None):
     if model is None:
-        # model = create_toy_msrcpsp()
         model = create_toy_msrcpsp_variant()
     dummy_solution = model.get_dummy_solution()
     print("dummy_solution.priority_list_task: ", dummy_solution.priority_list_task)
@@ -366,7 +365,6 @@ def sgs_debug_imopse():
     files = get_data_available()
     files = [f for f in get_data_available() if "100_5_22_15.def" in f]
     random.shuffle(files)
-    # 100_5_22_15
     model_msrcpsp, new_tame_to_original_task_id = parse_file(files[0], max_horizon=2000)
     model_msrcpsp = model_msrcpsp.to_variant_model()
     sgs_debug(model_msrcpsp)
@@ -382,7 +380,6 @@ def sgs_debug_imopse():
 
 def sgs_debug_preemptive(model=None):
     if model is None:
-        # model = create_toy_msrcpsp()
         model = create_toy_msrcpsp_variant()
     dummy_solution = model.get_dummy_solution(preemptive=True)
     print("dummy_solution.priority_list_task: ", dummy_solution.priority_list_task)
@@ -491,7 +488,6 @@ def sgs_debug_preemptive(model=None):
 
 def sgs_debug_fast(model=None):
     if model is None:
-        # model = create_toy_msrcpsp()
         model = create_toy_msrcpsp_variant()
         files = get_data_available()
         files = [f for f in get_data_available() if "100_5_22_15.def" in f]

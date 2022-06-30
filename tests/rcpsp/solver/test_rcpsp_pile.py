@@ -16,7 +16,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolv
 
 def test_pile_sm():
     files = get_data_available()
-    files = [f for f in files if "j1201_1.sm" in f]  #
+    files = [f for f in files if "j1201_1.sm" in f]
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
     solver = PileSolverRCPSP(rcpsp_model=rcpsp_model)
@@ -35,7 +35,7 @@ def test_pile_sm():
 
 def test_pile_multimode():
     files = get_data_available()
-    files = [f for f in files if "j1010_1.mm" in f]  #
+    files = [f for f in files if "j1010_1.mm" in f]
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
     solver = PileSolverRCPSP(rcpsp_model=rcpsp_model)
@@ -57,7 +57,7 @@ def test_pile_multimode():
 
 def test_pile_robust():
     files = get_data_available()
-    files = [f for f in files if "j1201_1.sm" in f]  #
+    files = [f for f in files if "j1201_1.sm" in f]
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     poisson_laws = create_poisson_laws_duration(rcpsp_model)

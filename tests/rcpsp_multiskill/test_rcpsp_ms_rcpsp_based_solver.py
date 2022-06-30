@@ -89,7 +89,6 @@ def create_toy_msrcpsp():
 
 def test_rcpsp_based():
     model = create_toy_msrcpsp()
-    # model, model_rcpsp = create_ms_rcpsp_demo()
     model = model.to_variant_model()
     method = LP_MRCPSP
     params = [

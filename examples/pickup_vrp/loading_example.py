@@ -82,7 +82,7 @@ def create_selective_tsp():
     coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
     clusters_dict = {i: i + 1 for i in range(nb_nodes_transportation + 1)}
     for i in clusters_dict:
-        clusters_dict[i] = labels[i]  # random.randint(0, nb_clusters-1)
+        clusters_dict[i] = labels[i]
     clusters_dict[target_vehicle[0]] = max(labels)
     clusters_dict[origin_vehicle[0]] = min(labels)
     return GPDP(
@@ -148,7 +148,7 @@ def create_pickup_and_delivery(
         labels = kmeans.labels_
         coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
         for i in clusters_dict:
-            clusters_dict[i] = labels[i]  # random.randint(0, nb_clusters-1)
+            clusters_dict[i] = labels[i]
         clusters_dict[target_vehicle[0]] = max(labels)
         clusters_dict[origin_vehicle[0]] = min(labels)
     list_pickup_deliverable = []
@@ -215,7 +215,6 @@ def debug_lp():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     p = ParametersMilp.default()
     p.TimeLimit = 2000
     solutions = linear_flow_solver.solve_iterative(
@@ -227,7 +226,6 @@ def debug_lp():
 def selective_tsp():
     gpdp = create_selective_tsp()
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     p = ParametersMilp.default()
     p.TimeLimit = 30
     linear_flow_solver.init_model(

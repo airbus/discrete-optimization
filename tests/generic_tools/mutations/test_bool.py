@@ -6,9 +6,6 @@ from discrete_optimization.knapsack.knapsack_parser import (
 )
 from discrete_optimization.knapsack.mutation.mutation_knapsack import MutationKnapsack
 
-# from discrete_optimization.generic_tools.simulated_annealing import SimulatedAnnealing, RestartHandler, \
-#     TemperatureSchedulingFactor, ModeMutation, ModeOptim
-
 
 def testing_on_knapsack():
     model_file = [f for f in get_data_available() if "ks_60_0" in f][0]

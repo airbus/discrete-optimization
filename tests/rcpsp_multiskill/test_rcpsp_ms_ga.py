@@ -175,9 +175,7 @@ def test_alternating_ga_specific_mode_arity(random_seed):
 
     total_evals = 50
     evals_per_ga_runs_perm = 0.33 * total_evals
-    evals_per_ga_runs_modes = (
-        0.33 * total_evals
-    )  # total_evals/(2*number_of_meta_iterations)
+    evals_per_ga_runs_modes = 0.33 * total_evals
     evals_per_ga_runs_resource_perm = 0.34 * total_evals
 
     mode_mutation = DeapMutation.MUT_UNIFORM_INT
@@ -195,9 +193,6 @@ def test_alternating_ga_specific_mode_arity(random_seed):
     msrcpsp_model.set_fixed_priority_worker_per_task_from_permutation(
         initial_resource_permutation
     )
-
-    # initial_resource_priorities = [[w for w in msrcpsp_model.employees] for i in range(msrcpsp_model.n_jobs_non_dummy)]
-    # msrcpsp_model.set_fixed_priority_worker_per_task(initial_resource_priorities)
 
     # Run a GA for evals_per_ga_runs evals on modes
     ga_solver = Ga(

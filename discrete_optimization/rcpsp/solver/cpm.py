@@ -178,7 +178,6 @@ class CPM(SolverDO):
         total_order: List[Any] = None,
         cut_sgs_by_critical=True,
     ):
-        # 1, 2
         if total_order is None:
             total_order = self.return_order_cpm()
         index_in_order = {total_order[i]: i for i in range(len(total_order))}
@@ -192,7 +191,6 @@ class CPM(SolverDO):
                 resource_avail_in_time[res] = np.full(
                     self.rcpsp_model.horizon, self.rcpsp_model.resources[res], dtype=int
                 ).tolist()
-        # 3
         done = set()
         ressource_usage = {
             res: {time: {} for time in range(self.rcpsp_model.horizon)}
@@ -386,7 +384,6 @@ class CPM(SolverDO):
         critical_path: List[Any],
         total_order: List[Any] = None,
     ):
-        # 1, 2
         if total_order is None:
             total_order = self.return_order_cpm()
         resource_avail_in_time = {}
@@ -399,7 +396,6 @@ class CPM(SolverDO):
                 resource_avail_in_time[res] = np.full(
                     self.rcpsp_model.horizon, self.rcpsp_model.resources[res], dtype=int
                 ).tolist()
-        # 3
         done = set()
         ressource_usage = {
             res: {time: {} for time in range(self.rcpsp_model.horizon)}

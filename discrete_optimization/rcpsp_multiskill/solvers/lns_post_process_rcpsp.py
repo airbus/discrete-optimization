@@ -411,8 +411,6 @@ def shift_left_method(
     problem: MS_RCPSPModel,
     predecessors_dict,
 ):
-    # employees_schedule = compute_schedule_per_employees(solution=solution, problem=problem,
-    #                                                    predecessors_dict=predecessors_dict)
     print("Old : ", problem.evaluate(solution), problem.satisfy(solution))
     allparts_to_schedule = []
     for t in problem.tasks_list:

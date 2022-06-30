@@ -29,7 +29,6 @@ def test_sa_2opt():
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
-    # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
@@ -62,7 +61,6 @@ def test_sa_partial_shuffle():
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
-    # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
@@ -87,7 +85,6 @@ def test_sa_partial_shuffle():
     sol = sa.solve(
         initial_variable=solution, nb_iteration_max=10000
     ).get_best_solution()
-    # assert model.satisfy(sol)
 
 
 def test_sa_swap():
@@ -95,7 +92,6 @@ def test_sa_swap():
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
-    # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(3000, solution, model.evaluate(solution)["length"])
@@ -160,7 +156,6 @@ def test_hc():
     files = [f for f in files if "tsp_100_3" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
-    # mutation = Mutation2Opt(model, False, 100, False)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
     res = RestartHandlerLimit(100, solution, model.evaluate(solution))

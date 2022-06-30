@@ -47,9 +47,7 @@ def test_multi_mode_alternating_ga(random_seed):
     total_evals = 10000
     number_of_meta_iterations = 5
     evals_per_ga_runs_perm = int(0.5 * (total_evals / number_of_meta_iterations))
-    evals_per_ga_runs_modes = int(
-        0.5 * (total_evals / number_of_meta_iterations)
-    )  # total_evals/(2*number_of_meta_iterations)
+    evals_per_ga_runs_modes = int(0.5 * (total_evals / number_of_meta_iterations))
 
     mode_mutation = DeapMutation.MUT_UNIFORM_INT
     permutation_mutation = DeapMutation.MUT_SHUFFLE_INDEXES
@@ -182,7 +180,6 @@ def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
 
     tmp_sol = ga_solver.solve().get_best_solution()
     assert rcpsp_model.satisfy(tmp_sol)
-    # assert rcpsp_model.evaluate(tmp_sol) == {'makespan': 36, 'mean_resource_reserve': 0}
 
 
 def test_single_mode_moga_aggregated(random_seed):

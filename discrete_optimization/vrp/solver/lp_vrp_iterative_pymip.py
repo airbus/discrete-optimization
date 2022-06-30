@@ -104,7 +104,6 @@ def init_model_lp(
                             + x_var[(node_neigh_neigh, node)]
                             <= 2
                         )
-    # tsp_model.update()
     constraint_flow_in = {}
     constraint_flow_out = {}
     start_to_i, end_to_i = compute_start_end_flows_info(start_indexes, end_indexes)
@@ -131,14 +130,6 @@ def init_model_lp(
                 xsum([x_var[e] for e in edges_in_customers[customer]]) == 1,
                 name="in_" + str(customer),
             )
-    # for customer in edges_out_customers:
-    #     if customer in start_to_i or customer in end_to_i:
-    #         # Already dealt by previous constraints
-    #         continue
-    #     else:
-    #         constraint_flow_out[customer] = tsp_model.addConstr(quicksum([x_var[e]
-    #                                                                       for e in edges_out_customers[customer]]) == 1,
-    #                                                             name="outs_"+str(customer))
     c_flow = {}
     for n in edges_in_merged_graph:
         if start_indexes[n[0]] == end_indexes[n[0]] or n[1] not in [
@@ -286,9 +277,6 @@ class VRPIterativeLP_Pymip(SolverDO):
 
         initial_solution = kwargs.get("initial_solution", None)
         if initial_solution is None:
-            # solver = VrpORToolsSolver(self.problem)
-            # solver.init_model()
-            # solution, fit = solver.solve()
             solution = self.problem.get_dummy_solution()
         else:
             vehicle_tours_b = initial_solution
@@ -365,7 +353,6 @@ class VRPIterativeLP_Pymip(SolverDO):
         limit_time_s = kwargs.get("limit_time_s", 10)
         self.model.optimize(max_seconds=limit_time_s)
         objective = self.model.objective_value
-        # "C5t0ynWADsH8TEiH"
         # Query number of multiple objectives, and number of solutions
         finished = False
         solutions = []
@@ -390,7 +377,6 @@ class VRPIterativeLP_Pymip(SolverDO):
             solutions_ll = retreve_solutions(self.model, self.x_var, vehicle_count, g)
             solutions += [solutions_ll[0]["x_solution"]]
             cost += [objective]
-            # print(solutions)
             (
                 x_solution,
                 rebuilt_dict,
@@ -402,13 +388,6 @@ class VRPIterativeLP_Pymip(SolverDO):
             ) = reevaluate_solutions(
                 solutions_ll, vehicle_count, g, vrp_problem=self.problem
             )
-            # for components_per_vehicle in component_all:
-            #     update_model(self.problem,
-            #                  self.model,
-            #                  self.x_var,
-            #                  components_per_vehicle,
-            #                  edges_in_customers,
-            #                  edges_out_customers)
             for comp in component_global_all:
                 update_model_2(
                     self.problem,
@@ -436,7 +415,6 @@ class VRPIterativeLP_Pymip(SolverDO):
                             for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])
                         }
                     )
-                    # print("len rebuilt : ", len(rebuilt_dict[v]))
                 print("edges to add , ", edges_to_add)
                 edges_missing = {e for e in edges_to_add if e not in edges}
                 print("missing : ", edges_missing)
@@ -459,7 +437,6 @@ class VRPIterativeLP_Pymip(SolverDO):
                         edges_missing,
                         customers,
                     )
-                    # self.model.reset()
                     self.model = None
                     (
                         tsp_model,
@@ -523,21 +500,13 @@ class VRPIterativeLP_Pymip(SolverDO):
                     edges_to_constraint.update(
                         set([e for e in edges if e[0][0] not in vehicle])
                     )
-                    # customers_to_constraint = set(random.sample(range(1, customer_count),
-                    #                                             int(fraction * customer_count)))
-                    # edges_to_constraint.update(set([edge for edge in edges
-                    #                                 if (edge[0][1] in customers_to_constraint
-                    #                                 or edge[1][1] in customers_to_constraint) ]))
                     print(
                         len(edges_to_constraint), " edges constraint over ", len(edges)
                     )
-                # print(rebuilt[0], rebuilt[-1])
-                # print("len set rebuilt (debug) ", len(set(rebuilt_dict[v])))
                 iedge = 0
                 x_var = self.x_var
                 start = []
                 if all((e in edges) for e in edges_to_add):
-                    # print("setting default value")
                     for e in x_var:
                         val = 0
                         if e in edges_to_add:
@@ -554,7 +523,6 @@ class VRPIterativeLP_Pymip(SolverDO):
                     self.model.update()
                 else:
                     pass
-                # print([e for e in edges_to_add if e not in edges])
                 self.model.start = start
                 self.model.optimize(max_seconds=limit_time_s)
                 objective = self.model.objective_value
@@ -583,7 +551,6 @@ class VRPIterativeLP_Pymip(SolverDO):
                     )
                 ax[0].set_title("iter " + str(i) + " obj=" + str(int(cost[i])))
                 ax[1].set_title("iter " + str(i) + " obj=" + str(int(rebuilt_obj[i])))
-                # fig.savefig('./images/vrp_' + str(i) + ".png")
                 plt.draw()
                 plt.pause(0.01)
                 ax[0].lines = []
@@ -689,8 +656,6 @@ def rebuild_tsp_routine(
             backup_min_dist = float("inf")
             for e in edge_out_of_interest:
                 index_in = index_path[e[0]][0]
-                # if index_in == total_length_path-1:
-                #     continue
                 index_in_1 = min(index_path[e[0]][0] + 1, total_length_path - 1)
                 next_node_1 = rebuilded_path[index_in_1]
                 component_e1 = node_to_component[e[1]]
@@ -780,9 +745,7 @@ def rebuild_tsp_routine(
 
 def retreve_solutions(model: Model, x_var: Dict[Any, Var], vehicle_count, g):
     nSolutions = model.num_solutions
-    # nObjectives = S.NumObj
     solutions = []
-    # x = S.getVars()
     for s in range(nSolutions):
         # Set which solution we will query from now on
         g_empty = {v: nx.DiGraph() for v in range(vehicle_count)}
@@ -847,7 +810,6 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
         nb_components += [
             [len(sorted_connected_component[v]) for v in sorted_connected_component]
         ]
-        # print("NB COMPONENT", sum(nb_components[-1]))
         solutions_list += [x_solution.copy()]
         paths_component = {v: {} for v in range(vehicle_count)}
         indexes_component = {v: {} for v in range(vehicle_count)}
@@ -955,7 +917,6 @@ def update_model_2(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            # print(s)
             if True:
                 edge_in_of_interest = [
                     e
@@ -969,7 +930,6 @@ def update_model_2(
                     for e in edges_out_customers[n]
                     if e[1][1] not in s[0] and e[0][1] in s[0]
                 ]
-                # print(len(edge_out_of_interest), len(edge_in_of_interest))
                 model.add_constr(xsum([x_var[e] for e in edge_in_of_interest]) >= 1)
                 model.add_constr(xsum([x_var[e] for e in edge_out_of_interest]) >= 1)
     model.update()

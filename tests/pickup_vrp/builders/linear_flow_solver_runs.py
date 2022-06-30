@@ -30,7 +30,6 @@ def test_tsp():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -53,7 +52,6 @@ def test_tsp_simplified():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -74,7 +72,6 @@ def test_vrp():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -96,7 +93,6 @@ def test_vrp_simplified():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -113,7 +109,6 @@ def test_vrp_simplified():
 def test_selective_tsp():
     gpdp = create_selective_tsp(nb_nodes=200, nb_vehicles=1, nb_clusters=50)
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=False,
         one_visit_per_cluster=True,
@@ -132,7 +127,6 @@ def test_selective_tsp():
 def test_selective_vrp():
     gpdp = create_selective_tsp(nb_nodes=200, nb_vehicles=3, nb_clusters=50)
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=False,
         one_visit_per_cluster=True,
@@ -151,7 +145,6 @@ def test_selective_vrp():
 def test_ortools_example():
     gpdp = create_ortools_example()
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    # linear_flow_solver = LinearFlowSolverLazyConstraint(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True,
         one_visit_per_cluster=False,

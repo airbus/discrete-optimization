@@ -1,5 +1,3 @@
-# One LNS code to rule them all. WIP...
-
 from enum import Enum
 from typing import Optional
 

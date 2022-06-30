@@ -268,9 +268,7 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
         }
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        for sol in list(
-            result_storage.list_solution_fits
-        ):  # [-min(2, len(result_storage.list_solution_fits)):]:
+        for sol in list(result_storage.list_solution_fits):
             if "satisfy" not in sol[0].__dict__.keys():
                 rb, constraints, constraint_emp = get_ressource_breaks(
                     self.problem_calendar, sol[0]

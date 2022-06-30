@@ -33,28 +33,13 @@ def testing_tsp():
 
 
 def testing_tsp_with_specific_mutation():
-    # print(__file__)
     files = get_data_available()
     files = [f for f in files if "tsp_100_3" in f]
     tsp_model = tsp_parse_file(files[0])
-    # tsp_model = tsp_parse_file(abspath_from_file(__file__, "data/tsp_51_1"))
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    # mutation = Mutation2OptIntersection(tsp_model=tsp_model, nb_test=10)
-    # mutation = Mutation2Opt(tsp_model=tsp_model, nb_test=10)
-    # mutation = MutationSwapTSP(tsp_model=tsp_model)
     crossover = DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED
     selection = DeapSelection.SEL_TOURNAMENT
-    mutation = Mutation2OptIntersection(tsp_model=tsp_model, nb_test=10)  # Work OK
-    mutation = Mutation2Opt(tsp_model=tsp_model, nb_test=200)  # Work OK
-    # mutation = MutationSwapTSP(tsp_model)
-    # doesn't work as expected here because the attribute permutation_from0 is never updated in the mutation,
-    # or maybe would work with Ga(encoding="permutation") but another problem occur
-
-    # mutation = PermutationPartialShuffleMutation(tsp_model,
-    #                                              tsp_model.get_dummy_solution(),
-    #                                              attribute="permutation_from0",
-    # important here otherwise you're doomed.
-    #                                              proportion=0.1)
+    mutation = Mutation2Opt(tsp_model=tsp_model, nb_test=200)
     ga_solver = Ga(
         tsp_model,
         encoding="permutation_from0",

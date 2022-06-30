@@ -84,7 +84,7 @@ first_solution_names = [
 name_firstsolution_to_value = {x[0]: x[1] for x in first_solution_names}
 value_firstsolution_to_name = {x[1]: x[0] for x in first_solution_names}
 
-# rebuilt by hand.. warning !
+
 class MetaheuristicEnum(Enum):
     UNSET = "UNSET"
     AUTOMATIC = "AUTOMATIC"
@@ -95,7 +95,6 @@ class MetaheuristicEnum(Enum):
     GENERIC_TABU_SEARCH = "GENERIC_TABU_SEARCH"
 
 
-# rebuilt by hand, warning !
 class FirstSolutionEnum(Enum):
     UNSET = "UNSET"
     AUTOMATIC = "AUTOMATIC"

@@ -80,7 +80,6 @@ def create_models(base_rcpsp_model: RCPSPModel, range_around_mean: int = 3):
         )
         for i in range(50)
     ]
-    # many_random_instance = []
     many_random_instance += [
         uncertain.create_rcpsp_model(
             method_robustification=MethodRobustification(
@@ -94,7 +93,7 @@ def create_models(base_rcpsp_model: RCPSPModel, range_around_mean: int = 3):
 
 def test_cp_sm_robust():
     files = get_data_available()
-    files = [f for f in files if "j1201_1.sm" in f]  #
+    files = [f for f in files if "j1201_1.sm" in f]
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     worst, average, many_random_instance = create_models(
@@ -178,9 +177,7 @@ def test_cp_sm_partial_solution():
         task: dummy_solution.rcpsp_schedule[task]["start_time"] + 5
         for task in [1, 2, 3, 4]
     }
-    partial_solution = PartialSolution(
-        task_mode=None, start_times=some_constraints
-    )  # 4: 10})
+    partial_solution = PartialSolution(task_mode=None, start_times=some_constraints)
     solver.init_model(partial_solution=partial_solution)
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 5

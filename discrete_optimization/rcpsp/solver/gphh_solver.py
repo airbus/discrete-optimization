@@ -200,17 +200,17 @@ feature_function_map = {
     FeatureEnum.TASK_DURATION: feature_task_duration,
     FeatureEnum.RESSOURCE_TOTAL: feature_total_n_res,
     FeatureEnum.N_SUCCESSORS: feature_n_successors,
-    FeatureEnum.N_PREDECESSORS: feature_n_predecessors,  #
-    FeatureEnum.RESSOURCE_REQUIRED: feature_resource_requirements,  #
-    FeatureEnum.RESSOURCE_AVG: feature_average_resource_requirements,  #
-    FeatureEnum.RESSOURCE_MIN: feature_minimum_resource_requirements,  #
-    FeatureEnum.RESSOURCE_NZ_MIN: feature_non_zero_minimum_resource_requirements,  #
-    FeatureEnum.RESSOURCE_MAX: feature_maximum_resource_requirements,  #
-    FeatureEnum.ALL_DESCENDANTS: feature_all_descendants,  #
-    FeatureEnum.EARLIEST_START_DATE: feature_esd,  #
-    FeatureEnum.EARLIEST_FINISH_DATE: feature_efd,  #
-    FeatureEnum.LATEST_START_DATE: feature_lsd,  #
-    FeatureEnum.LATEST_FINISH_DATE: feature_lfd,  #
+    FeatureEnum.N_PREDECESSORS: feature_n_predecessors,
+    FeatureEnum.RESSOURCE_REQUIRED: feature_resource_requirements,
+    FeatureEnum.RESSOURCE_AVG: feature_average_resource_requirements,
+    FeatureEnum.RESSOURCE_MIN: feature_minimum_resource_requirements,
+    FeatureEnum.RESSOURCE_NZ_MIN: feature_non_zero_minimum_resource_requirements,
+    FeatureEnum.RESSOURCE_MAX: feature_maximum_resource_requirements,
+    FeatureEnum.ALL_DESCENDANTS: feature_all_descendants,
+    FeatureEnum.EARLIEST_START_DATE: feature_esd,
+    FeatureEnum.EARLIEST_FINISH_DATE: feature_efd,
+    FeatureEnum.LATEST_START_DATE: feature_lsd,
+    FeatureEnum.LATEST_FINISH_DATE: feature_lfd,
     FeatureEnum.DUMMY: get_dummy,
 }
 

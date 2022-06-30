@@ -258,7 +258,6 @@ def trivial_solution(vrp_model: VrpProblem):
                     ].demand
                     vehicle_tours[v].append(customer)
                     cur_node = customer
-                    # print '   add', ci, capacity_remaining
                     used.add(customer)
             remaining_customers -= used
     solution = VrpSolution(

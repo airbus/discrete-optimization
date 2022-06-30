@@ -268,7 +268,6 @@ class TSPModel(Problem):
         )
 
 
-# One
 @dataclass(frozen=True)
 class Point2D(Point):
     x: float

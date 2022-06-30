@@ -1,6 +1,5 @@
 from typing import Dict, List, Set
 
-# from tests.rcpsp_multiskills.solvers.instance_creator import create_ms_rcpsp_demo
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
     plot_resource_individual_gantt,
