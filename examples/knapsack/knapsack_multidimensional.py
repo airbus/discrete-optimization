@@ -82,8 +82,6 @@ def test_cp_multidimensional_multiscenario():
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
     scenarios = create_noised_scenario(multidimensional_knapsack, nb_scenarios=20)
-    # scenarios = [from_kp_to_multi(parse_file(files_available[0]))
-    #              for i in range(10)]
     for s in scenarios:
         s.force_recompute_values = True
     multiscenario_model = MultiScenarioMultidimensionalKnapsack(
@@ -115,8 +113,6 @@ def test_cp_multidimensional_multiscenario():
     )
     plot_fitness(r_lns, title="LNS results")
     print(r_lns.get_best_solution_fit()[1])
-    # r = solver.solve(parameters_cp=ParametersCP.default())
-    # print(r.get_best_solution_fit()[1])
     r_ls = run_ls(multiscenario_model=multiscenario_model)
     print(r_ls.get_best_solution_fit()[1])
     plot_fitness(r_ls, title="Local search results")

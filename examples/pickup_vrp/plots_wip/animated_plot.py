@@ -52,7 +52,6 @@ def post_process_solution(result, problem: GPDP, delta_time: int = 10):
         real_name = [problem.list_nodes[k] for k in node_index]
         print("----Vehicle----")
         print(real_name)
-        # print([problem.resources_flow_node[k] for k in real_name])
         path_aircraft[v] = {
             "path": real_name,
             "details": [
@@ -230,7 +229,6 @@ def plot_flights(
             ax.add_feature(OCEAN_50m)
             if map_view:
                 ax.stock_img()
-        # ax = plt.axes(projection=ccrs.PlateCarree())
         ax.set_xlim(
             [x_1[0] - (x_1[1] - x_1[0]) * 0.1, x_1[1] + (x_1[1] - x_1[0]) * 0.1]
         )
@@ -239,9 +237,6 @@ def plot_flights(
         )
         plt.ion()
         ax.set_title("Title")
-        # ax.add_feature(cartopy.feature.LAND)
-        # ax.add_feature(cartopy.feature.OCEAN)
-        # ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.3)
         index_per_flights = {v: 0 for v in history}
         position_v = {v: None for v in history}
         current_flight = {v: None for v in history}
@@ -292,7 +287,6 @@ def plot_flights(
                         markersize=3,
                         alpha=0.5,
                     )
-                    # transform=ccrs.Geodetic() if map_view else None)
                 all_flights[v]["history"] = (
                     [history[v][0].position[1], history[v][1].position[1]],
                     [history[v][0].position[0], history[v][1].position[0]],
@@ -495,9 +489,6 @@ def plot_flights(
                         ) / (tt_2 - tt_1)
                         b = history[v][jj].position[0]
                         pos_1 = coef * (t - tt_1) + b
-                        # if tt_2 >= t:
-                        #    pos_0 = history[v][jj+1].position[1]
-                        #    pos_1 = history[v][jj+1].position[0]
                         position_v[v].set_xdata([pos_0])
                         position_v[v].set_ydata([pos_1])
                         for ressource in dict_ax_ressources:
@@ -541,7 +532,7 @@ def plot_flights(
                         os.path.join(
                             folder_to_save_video, name_file + "%0*d" % (4, index)
                         )
-                    )  # , dpi=300)
+                    )
                     index += 1
             if len(allstat_to_plot) == 0:
                 for v in history:
@@ -602,9 +593,6 @@ def plot_flights(
                         ) / (tt_2 - tt_1)
                         b = history[v][jj].position[0]
                         pos_1 = coef * (t - tt_1) + b
-                        # if tt_2 >= t:
-                        #    pos_0 = history[v][jj+1].position[1]
-                        #    pos_1 = history[v][jj+1].position[0]
                         position_v[v].set_xdata([pos_0])
                         position_v[v].set_ydata([pos_1])
                         for ressource in dict_ax_ressources:
@@ -648,7 +636,7 @@ def plot_flights(
                         os.path.join(
                             folder_to_save_video, name_file + "%0*d" % (4, index)
                         )
-                    )  # , dpi=300)
+                    )
                     index += 1
         if save_video:
             a = (

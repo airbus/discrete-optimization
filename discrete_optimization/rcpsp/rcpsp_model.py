@@ -165,7 +165,7 @@ class RCPSPSolution(Solution):
                     modes_array=np.array(
                         self.problem.build_mode_array(self.rcpsp_modes)
                     )
-                    - 1,  # permutzation_task=array(task)->task index
+                    - 1,  # permutation_task=array(task)->task index
                     start_array=np.array(
                         [
                             self.rcpsp_schedule[t]["start_time"]
@@ -1263,7 +1263,6 @@ def generate_schedule_from_permutation_serial_sgs(
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
 
-    # 1, 2
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
@@ -1274,7 +1273,6 @@ def generate_schedule_from_permutation_serial_sgs(
             resource_avail_in_time[res] = np.full(
                 new_horizon, rcpsp_problem.resources[res], dtype=int
             ).tolist()
-    # 3
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
         minimum_starting_time[act] = 0
@@ -1284,7 +1282,6 @@ def generate_schedule_from_permutation_serial_sgs(
     perm_extended.insert(0, rcpsp_problem.source_task)
     perm_extended.append(rcpsp_problem.sink_task)
     modes_dict = rcpsp_problem.build_mode_dict(solution.rcpsp_modes)
-    # Warning = adapt to the case where the mode doesn't exist.
     for k in modes_dict:
         if modes_dict[k] not in rcpsp_problem.mode_details[k]:
             modes_dict[k] = 1
@@ -1301,11 +1298,11 @@ def generate_schedule_from_permutation_serial_sgs(
             if respected:
                 act_id = id_successor
                 break
-        # for act_id in perm_extended:  # 4
-        current_min_time = minimum_starting_time[act_id]  # 5
-        valid = False  # 6
-        while not valid:  # 7
-            valid = True  # 8
+        # for act_id in perm_extended:
+        current_min_time = minimum_starting_time[act_id]
+        valid = False
+        while not valid:
+            valid = True
             for t in range(
                 current_min_time,
                 current_min_time
@@ -1325,12 +1322,12 @@ def generate_schedule_from_permutation_serial_sgs(
                             < rcpsp_problem.mode_details[act_id][modes_dict[act_id]][
                                 res
                             ]
-                        ):  # 11
-                            valid = False  # 12
+                        ):
+                            valid = False
                     else:
                         unfeasible_non_renewable_resources = True
             if not valid:
-                current_min_time += 1  # 14
+                current_min_time += 1
         if not unfeasible_non_renewable_resources:
             end_t = (
                 current_min_time
@@ -1393,7 +1390,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
-    # 1, 2
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
@@ -1404,7 +1400,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             resource_avail_in_time[res] = np.full(
                 new_horizon, rcpsp_problem.resources[res], dtype=int
             ).tolist()
-    # 3
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
         if act in list(scheduled_tasks_start_times.keys()):
@@ -1463,15 +1458,15 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             if respected:
                 act_id = id_successor
                 break
-        current_min_time = minimum_starting_time[act_id]  # 5
-        valid = False  # 6
-        while not valid:  # 7
-            valid = True  # 8
+        current_min_time = minimum_starting_time[act_id]
+        valid = False
+        while not valid:
+            valid = True
             for t in range(
                 current_min_time,
                 current_min_time
                 + rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"],
-            ):  # 9
+            ):
                 for res in resource_avail_in_time:
                     if t < new_horizon:
                         if resource_avail_in_time[res][t] < rcpsp_problem.mode_details[

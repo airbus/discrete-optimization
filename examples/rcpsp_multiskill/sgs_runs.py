@@ -159,8 +159,6 @@ def create_task_details_classic(solution: MS_RCPSPSolution_Variant, time_to_cut:
 
 def sgs_debug_preemptive(model=None):
     if model is None:
-        # model = create_toy_msrcpsp_variant()
-        # files = get_data_available()
         files = [f for f in get_data_available() if "100_5_22_15.def" in f]
         model_msrcpsp, new_tame_to_original_task_id = parse_file(
             files[0], max_horizon=2000, one_unit_per_task=False, preemptive=True

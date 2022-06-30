@@ -1239,7 +1239,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
-    # 1, 2
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
@@ -1250,7 +1249,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
             resource_avail_in_time[res] = np.full(
                 new_horizon, rcpsp_problem.resources[res], dtype=int
             ).tolist()
-    # 3
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
         minimum_starting_time[act] = current_t
@@ -1830,7 +1828,6 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
-    # 1, 2
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():

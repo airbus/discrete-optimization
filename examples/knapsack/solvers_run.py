@@ -67,10 +67,6 @@ def run_lns_cp():
     cp_model.init_model()
     greedy = GreedyDummy(knapsack_model)
     init_solution = greedy.solve().get_best_solution()
-    # gurobi_model = LPKnapsackGurobi(knapsack_model)
-    # gurobi_model.init_model()
-    # solutions = gurobi_model.solve(ParametersGurobi.default())
-    # print("sol ", solutions[0].value)
     sol, results = cp_model.solve_lns(
         init_solution=init_solution,
         fraction_decision_fixed=0.92,
@@ -92,7 +88,6 @@ def run_lns_cp():
 def run_lp():
     file = [f for f in get_data_available() if "ks_10000_0" in f][0]
     knapsack_model = parse_file(file)
-    # gurobi_solver = LPKnapsackGurobi(knapsack_model)
     pymip_solver = LPKnapsack(knapsack_model, milp_solver_name=MilpSolverName.GRB)
 
     pymip_solver.init_model(solver_name=GRB)  # (or CBC)..

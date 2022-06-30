@@ -87,8 +87,6 @@ def test_lns_mm():
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 5
     params_objective_function = get_default_objective_setup(problem=rcpsp_problem)
-    # constraint_handler = ConstraintHandlerFixStartTime(problem=rcpsp_problem,
-    #                                                    fraction_fix_start_time=0.5)
     constraint_handler = ConstraintHandlerStartTimeInterval_CP(
         problem=rcpsp_problem, fraction_to_fix=0.7, minus_delta=5, plus_delta=5
     )

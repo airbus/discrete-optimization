@@ -61,7 +61,7 @@ def sgs_fast_ms(
                         if (
                             resource_avail_in_time[res][t]
                             < consumption_array[act_id, modes_array[act_id], res]
-                        ):  # 11
+                        ):
                             valid = False
                             current_min_time = t
                             break
@@ -563,7 +563,7 @@ def sgs_fast_ms_preemptive(
                             if (
                                 resource_avail_in_time[res][t]
                                 < consumption_array[act_id, modes_array[act_id], res]
-                            ):  # 11
+                            ):
                                 reached_end = False
                                 break
                         else:
@@ -639,9 +639,7 @@ def sgs_fast_ms_preemptive(
                                             act_id, modes_array[act_id], res
                                         ]
                                     ]
-                                    minimum_starting_time[act_id] = (
-                                        indexes[-1] + 1
-                                    )  # [0] +1 #ends[-1]
+                                    minimum_starting_time[act_id] = indexes[-1] + 1
                                     done_duration[
                                         act_id
                                     ] = 0  # a bit conservative here.
@@ -731,7 +729,7 @@ def sgs_fast_ms_preemptive(
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(
                         int(minimum_starting_time[s]), int(activity_end_times[act_id])
-                    )  # 20
+                    )
                     pred_links[s] -= 1
     return starts_dict, ends_dict, skills_usage, unfeasible_sched
 
@@ -920,7 +918,7 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                             if (
                                 resource_avail_in_time[res][t]
                                 < consumption_array[act_id, modes_array[act_id], res]
-                            ):  # 11
+                            ):
                                 reached_end = False
                                 break
                         else:
@@ -1044,7 +1042,7 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(
                         int(minimum_starting_time[s]), int(activity_end_times[act_id])
-                    )  # 20
+                    )
                     pred_links[s] -= 1
             for t in range(start_after_nunit.shape[0]):
                 if start_after_nunit[t, 0] == act_id:
@@ -1303,7 +1301,7 @@ def sgs_fast_ms_preemptive_partial_schedule(
                             if (
                                 resource_avail_in_time[res][t]
                                 < consumption_array[act_id, modes_array[act_id], res]
-                            ):  # 11
+                            ):
                                 reached_end = False
                                 break
                         else:
@@ -1399,6 +1397,6 @@ def sgs_fast_ms_preemptive_partial_schedule(
                 if successors[act_id, s] == 1:
                     minimum_starting_time[s] = max(
                         int(minimum_starting_time[s]), int(activity_end_times[act_id])
-                    )  # 20
+                    )
                     pred_links[s] -= 1
     return starts_dict, ends_dict, skills_usage, unfeasible_non_renewable_resources

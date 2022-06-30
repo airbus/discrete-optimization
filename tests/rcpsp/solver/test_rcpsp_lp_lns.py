@@ -46,8 +46,6 @@ def test_lns_sm():
         n_solutions_max=100,
     )
     params_objective_function = get_default_objective_setup(problem=rcpsp_problem)
-    # constraint_handler = ConstraintHandlerFixStartTime(problem=rcpsp_problem,
-    #                                                    fraction_fix_start_time=0.5)
     constraint_handler = ConstraintHandlerStartTimeInterval(
         problem=rcpsp_problem, fraction_to_fix=0.8, minus_delta=5, plus_delta=5
     )
@@ -79,7 +77,6 @@ def test_lns_sm():
 
 def test_lns_mm():
     files_available = get_data_available()
-    # file = [f for f in files_available if 'j1010_8.mm' in f][0]
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)
     if isinstance(rcpsp_problem, MultiModeRCPSPModel):

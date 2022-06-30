@@ -432,7 +432,7 @@ def build_neighbor_mixing_methods(
         graph = build_graph_rcpsp_object(rcpsp_problem=rcpsp_model)
     n1 = NeighborBuilderSubPart(
         problem=rcpsp_model, graph=graph, nb_cut_part=kwargs.get("cut_part", 10)
-    )  # 2
+    )
     n2 = NeighborRandomAndNeighborGraph(
         problem=rcpsp_model,
         graph=graph,
@@ -441,7 +441,7 @@ def build_neighbor_mixing_methods(
     n3 = NeighborConstraintBreaks(
         problem=rcpsp_model,
         graph=graph,
-        fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),  # 0.25
+        fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),
         other_constraint_handler=n1,
     )
     n_mix = NeighborBuilderMix(
@@ -488,7 +488,7 @@ def build_neighbor_mixing_cut_parts(
     n1_s = [
         NeighborBuilderSubPart(problem=rcpsp_model, graph=graph, nb_cut_part=c_part)
         for c_part in [4, 5, 6, 7]
-    ]  # 2
+    ]
     n2_s = []
     n_mix = NeighborBuilderMix(
         list_neighbor=n1_s + n2_s,
@@ -611,7 +611,7 @@ def constraint_neigh(rcpsp_model, fraction_subproblem: float = 0.35, **kwargs):
     n2 = NeighborConstraintBreaks(
         problem=rcpsp_model,
         graph=gr,
-        fraction_subproblem=fraction_subproblem,  # 0.25
+        fraction_subproblem=fraction_subproblem,
         other_constraint_handler=n1,
     )
     return ConstraintHandlerScheduling(

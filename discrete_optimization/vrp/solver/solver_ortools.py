@@ -436,8 +436,6 @@ class VrpORToolsSolver(SolverDO):
             True,  # start cumul to zero
             "Capacity",
         )
-        # initial_solution = routing.ReadAssignmentFromRoutes(vehicle_tours,
-        #                                                     True)
         # Setting first solution heuristic.
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
         search_parameters.first_solution_strategy = first_solution_strategy

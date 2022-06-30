@@ -762,7 +762,7 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
         current_min_time = minimum_starting_time[act_id]
         valid = False
         while not valid:
-            valid = True  # 8
+            valid = True
             mode = modes_dict[act_id]
             range_time = range(
                 current_min_time,
@@ -774,14 +774,12 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
             ):
                 unfeasible_in_horizon = True
                 break
-            for t in range_time:  # 9
-                for res in resource_avail_in_time.keys():  # 10
+            for t in range_time:
+                for res in resource_avail_in_time.keys():
                     if t < new_horizon:
                         if resource_avail_in_time[res][t] < problem.mode_details[
                             act_id
-                        ][modes_dict[act_id]].get(
-                            res, 0
-                        ):  # 11
+                        ][modes_dict[act_id]].get(res, 0):
                             valid = False
                             break
                     else:
@@ -1075,7 +1073,7 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
             if s in problem.skills_set and problem.mode_details[act_id][mode][s] > 0
         }
         while not valid:
-            valid = True  # 8
+            valid = True
             reached_t = None
             if expected_durations_task[act_id] == 0:
                 starts += [current_min_time]
@@ -1411,7 +1409,7 @@ def sgs_multi_skill_preemptive_partial_schedule(
             if s in problem.skills_set and problem.mode_details[act_id][mode][s] > 0
         }
         while not valid:
-            valid = True  # 8
+            valid = True
             reached_t = None
             if expected_durations_task[act_id] == 0:
                 starts += [current_min_time]
@@ -1658,7 +1656,7 @@ def sgs_multi_skill_partial_schedule(
         current_min_time = minimum_starting_time[act_id]
         valid = False
         while not valid:
-            valid = True  # 8
+            valid = True
             mode = modes_dict[act_id]
             range_time = range(
                 current_min_time,
@@ -1670,14 +1668,12 @@ def sgs_multi_skill_partial_schedule(
             ):
                 unfeasible_in_horizon = True
                 break
-            for t in range_time:  # 9
-                for res in resource_avail_in_time.keys():  # 10
+            for t in range_time:
+                for res in resource_avail_in_time.keys():
                     if t < new_horizon:
                         if resource_avail_in_time[res][t] < problem.mode_details[
                             act_id
-                        ][modes_dict[act_id]].get(
-                            res, 0
-                        ):  # 11
+                        ][modes_dict[act_id]].get(res, 0):
                             valid = False
                             break
                     else:

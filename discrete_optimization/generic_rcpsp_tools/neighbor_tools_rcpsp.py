@@ -444,7 +444,6 @@ def constraints_strings_multiskill(
                 cp_solver=cp_solver,
             )
         if params_constraints.additional_methods:
-            # those are WIP
             list_strings += constraints_start_on_end(
                 current_solution, cp_solver=cp_solver, frac=0.25
             )
@@ -811,7 +810,6 @@ def constraints_strings_multiskill_preemptive(
             exceptions=exceptions,
         )
         if params_constraints.additional_methods:
-            # those are WIP
             list_strings += constraints_start_on_end_preemptive(
                 current_solution, cp_solver=cp_solver, frac=0.3
             )
@@ -1479,7 +1477,6 @@ class ConstraintHandlerScheduling(ConstraintHandler):
             )
         child_instance.add_string("constraint sec_objective>=0;\n")
         if "constraint_penalty" not in evaluation:
-            # WARNING
             child_instance.add_string("constraint sec_objective==0;\n")
         if evaluation.get("constraint_penalty", 0) > 0:
             strings = []

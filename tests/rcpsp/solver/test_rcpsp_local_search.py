@@ -43,10 +43,8 @@ def random_seed():
 
 
 def test_local_search_sm(random_seed):
-    # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     dummy = rcpsp_model.get_dummy_solution()
@@ -62,7 +60,6 @@ def test_local_search_sm(random_seed):
     )
 
     objectives = ["makespan"]
-    # objective_weights = [-1]
     objectives = ["mean_resource_reserve"]
     objective_weights = [-1]
     res = RestartHandlerLimit(
@@ -102,8 +99,7 @@ def test_local_search_sm(random_seed):
 def test_local_search_mm(random_seed):
     # file_path = files_available[0]
     files = get_data_available()
-    files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
+    files = [f for f in files if "j1010_1.mm" in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
@@ -114,13 +110,10 @@ def test_local_search_mm(random_seed):
         for mutate in mutations
         if mutate[0] == PermutationMutationRCPSP
     ]
-    # and mutate[1]["other_mutation"] == TwoOptMutation]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
     objectives = ["makespan"]
-    # objective_weights = [-1]
-    # objectives = ['mean_resource_reserve']
     objective_weights = [-1]
     res = RestartHandlerLimit(
         200, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
@@ -157,10 +150,8 @@ def test_local_search_mm(random_seed):
 
 
 def test_local_search_sm_multiobj(random_seed):
-    # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     dummy = rcpsp_model.get_dummy_solution()
@@ -170,7 +161,6 @@ def test_local_search_sm_multiobj(random_seed):
         for mutate in mutations
         if mutate[0] == PermutationMutationRCPSP
     ]
-    # and mutate[1]["other_mutation"] == TwoOptMutation]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
@@ -201,10 +191,8 @@ def test_local_search_sm_multiobj(random_seed):
 
 
 def test_local_search_sm_postpro_multiobj(random_seed):
-    # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j601_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     dummy = rcpsp_model.get_dummy_solution()
@@ -214,7 +202,6 @@ def test_local_search_sm_postpro_multiobj(random_seed):
         for mutate in mutations
         if mutate[0] == PermutationMutationRCPSP
     ]
-    #  and mutate[1]["other_mutation"] == TwoOptMutation]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
@@ -268,10 +255,8 @@ def test_local_search_sm_postpro_multiobj(random_seed):
 
 
 def test_local_search_mm_multiobj(random_seed):
-    # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
@@ -282,7 +267,6 @@ def test_local_search_mm_multiobj(random_seed):
         for mutate in mutations
         if mutate[0] == PermutationMutationRCPSP
     ]
-    # and mutate[1]["other_mutation"] == TwoOptMutation]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
@@ -343,10 +327,8 @@ def test_local_search_mm_multiobj(random_seed):
 
 
 def test_local_search_postpro_multiobj_multimode(random_seed):
-    # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
@@ -358,7 +340,6 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
         for mutate in mutations
         if mutate[0] == PermutationMutationRCPSP
     ]
-    #  and mutate[1]["other_mutation"] == TwoOptMutation]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )

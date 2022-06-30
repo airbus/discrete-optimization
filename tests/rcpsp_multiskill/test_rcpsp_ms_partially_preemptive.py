@@ -64,7 +64,6 @@ def model():
     partial_preemptive_data = {
         t: {m: {"R1": True} for m in mode_details[t]} for t in mode_details
     }
-    # partial_preemptive_data["A3"][1]["R1"] = False
     special_constraint_description = SpecialConstraintsDescription(
         start_times_window={"A2": (2, None), "A4": (5, None)},
         end_times_window={"A2": (None, 3)},

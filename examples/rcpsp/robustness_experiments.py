@@ -98,21 +98,13 @@ def create_models(
         )
         for i in range(nb_sampled_scenario)
     ]
-    # many_random_instance = []
-    # many_random_instance = []
-    # many_random_instance += [uncertain.create_rcpsp_model(method_robustification=
-    #                                                       MethodRobustification(MethodBaseRobustification.PERCENTILE,
-    #                                                                            percentile=j))
-    #                         for j in range(0, 100, 1)]
     return worst, average, many_random_instance
 
 
 def run_cp_multiscenario():
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j601_1.sm' in f]  # Single mode RCPSP
     print(files)
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
     poisson_laws = create_poisson_laws_duration(rcpsp_model, range_around_mean=2)
@@ -187,13 +179,10 @@ def run_cp_multiscenario():
 
 
 def local_search_postpro_multiobj_multimode(postpro=True):
-    # file_path = files_available[0]
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
-    # rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
     print(mutations)
@@ -277,13 +266,6 @@ def local_search_postpro_multiobj_multimode(postpro=True):
         instance = many_random_instance[index_instance]
         executor.update(instance)
         for index_pareto in range(len(solutions_pareto)):
-            # t = time.time()
-            # sol_ = RCPSPSolution(problem=instance,
-            #                      rcpsp_permutation=solutions_pareto[index_pareto].rcpsp_permutation,
-            #                      rcpsp_modes=solutions_pareto[index_pareto].rcpsp_modes)
-            # fit = instance.evaluate(sol_)
-            # t_end = time.time()
-            # print(t_end-t, " seconds for classic")
             modes_dict = {1: 1}
             modes_dict[instance.n_jobs + 2] = 1
             for j in range(len(solutions_pareto[index_pareto].rcpsp_modes)):
@@ -336,22 +318,6 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     ax.set_xlabel("mean resource reserve")
     ax.set_ylabel("max makespan : ")
     plt.show()
-    # plot_storage_2d(result_storage=pareto_store, name_axis=objectives, ax=ax)
-    # plot_pareto_2d(pareto_front=pareto_store, name_axis=objectives, ax=ax)
-    # extreme_points = pareto_store.compute_extreme_points()
-    # plot_ressource_view(rcpsp_model=rcpsp_model,
-    #                     rcpsp_sol=extreme_points[0][0],
-    #                     title_figure="best makespan")
-    # plot_resource_individual_gantt(rcpsp_model=rcpsp_model,
-    #                                rcpsp_sol=extreme_points[0][0],
-    #                                title_figure="best makespan")
-    # plot_ressource_view(rcpsp_model=rcpsp_model,
-    #                     rcpsp_sol=extreme_points[1][0],
-    #                     title_figure="best availability")
-    # plot_resource_individual_gantt(rcpsp_model=rcpsp_model,
-    #                                rcpsp_sol=extreme_points[1][0],
-    #                                title_figure="best availability")
-    # plt.show()
 
 
 def solve_model(model, postpro=True, nb_iteration=500):
@@ -415,33 +381,10 @@ def solve_model(model, postpro=True, nb_iteration=500):
     return result_ls
 
 
-# def evaluate():
-#     modes_dict = {1: 1}
-#     modes_dict[instance.n_jobs + 2] = 1
-#     for j in range(len(solutions[index_pareto].rcpsp_modes)):
-#         modes_dict[j + 2] = solutions[index_pareto].rcpsp_modes[j]
-#     t = time.time()
-#     result_store = executor.compute_schedule_from_priority_list(permutation_jobs=
-#                                                                 [1]
-#                                                                 +
-#                                                                 [k + 2
-#                                                                  for k in
-#                                                                  solutions[index_pareto].rcpsp_permutation]
-#                                                                 + [rcpsp_model.n_jobs + 2],
-#                                                                 modes_dict=modes_dict)
-#     t_end = time.time()
-#     print(t_end - t, " seconds for exec")
-#     sol_ = result_store.get_best_solution()
-#     fit = instance.evaluate(sol_)
-
-
 def local_search_aggregated(
     postpro=True, nb_iteration=100, merge_aposteriori=True, merge_apriori=True
 ):
-    # file_path = files_available[0]
     files = get_data_available()
-    # files = [f for f in files if 'j1010_1.mm' in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     files = [f for f in files if "j601_9.sm" in f]  # Single mode RCPS
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)

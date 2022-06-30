@@ -500,7 +500,6 @@ class CP_MS_MRCPSP_MZN(CPSolver):
             self.graph = build_graph_rcpsp_object(rcpsp_problem=self.rcpsp_model)
             _, unrelated = build_unrelated_task(self.graph)
             instance["nUnrel"] = len(unrelated)
-            # sorted_unrelated = sorted(unrelated)
             instance["unpred"] = [
                 self.rcpsp_model.index_task[x[0]] + 1 for x in unrelated
             ]
@@ -1613,14 +1612,6 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
                 )
                 for s in strings:
                     self.instance.add_string(s)
-        # s = """constraint forall(sk in [nb_skill], i in Tasks, n in PREEMPTIVE)(
-        #             if unit_usage_preemptive then
-        #                 if array_skills_required[sk, i]>0 then
-        #                     d_preemptive[i, n] > 0 -> sum(w in Units)(skillunits[w, sk]*unit_used_preemptive[w, i, n])>=array_skills_required[sk, i] /\sum(w in Units)(skillunits[w, sk]*unit_used_preemptive[w, i, n])<=array_skills_required[sk, i]+1
-        #                 endif
-        #             endif);
-        #    """
-        # self.instance.add_string(s)
 
 
 def stick_to_solution(solution: RCPSPSolution, cp_solver: CP_MS_MRCPSP_MZN):
@@ -2156,8 +2147,6 @@ def add_hard_special_constraints(
         constraint_strings += hard_end_window(
             end_times_window=partial_solution.end_times_window, cp_solver=cp_solver
         )
-    # if partial_solution.disjunctive_tasks is not None:
-    #     constraints_string += []
     return constraint_strings
 
 
@@ -2229,7 +2218,7 @@ def add_soft_special_constraints(
             partial_solution.start_times_window, cp_solver=cp_solver
         )
         constraint_strings += c
-        constraint_strings += ["constraint " + str(n[0]) + "==0;\n"]  # WARNING !
+        constraint_strings += ["constraint " + str(n[0]) + "==0;\n"]
         name_penalty += n
     if partial_solution.end_times_window is not None:
         c, n = soft_end_window(partial_solution.end_times_window, cp_solver=cp_solver)

@@ -2566,7 +2566,7 @@ def hard_start_at_end_plus_offset(
                 + ", nb_preemptive]+"
                 + str(delta)
                 + ";\n"
-            )  # WARNING , i don't put the last duration d[i, nb_preemptive] tht should be zero
+            )  # WARNING , i don't put the last duration d[i, nb_preemptive] that should be zero
         constraint_strings += [string]
     return constraint_strings
 

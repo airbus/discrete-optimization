@@ -331,7 +331,6 @@ class LinearFlowSolver(SolverDO):
                     + self.problem.time_delta[edge[0]][edge[1]]
                     - 100000 * (1 - variables_edges[vehicle][edge])
                 )
-                # Big M : check if it works
             if node not in all_origin:
                 model.add_constr(
                     time_leaving[node]

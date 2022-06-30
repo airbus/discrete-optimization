@@ -14,7 +14,6 @@ from discrete_optimization.rcpsp.rcpsp_solvers import (
 def script():
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     methods = solvers.keys()
@@ -43,7 +42,6 @@ def script_choose_solver():
     ]
     files = get_data_available()
     files = [f for f in files if "j1201_1.sm" in f]  # Single mode RCPSP
-    # files = [f for f in files if 'j1010_5.mm' in f]  # Multi mode RCPSP
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
     solvers_choice = look_for_solver(rcpsp_model)
