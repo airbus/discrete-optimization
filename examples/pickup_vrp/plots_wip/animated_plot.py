@@ -1,6 +1,5 @@
 import os
 from copy import deepcopy
-
 from functools import reduce
 from typing import Dict, List, Optional, Tuple
 
@@ -117,10 +116,6 @@ def post_process_solution(result, problem: GPDP, delta_time: int = 10):
     return path_aircraft, vehicle_status_history
 
 
-# os.environ["REQUESTS_CA_BUNDLE"] = "/Users/poveda_g/Documents/airbus-ca/bundle/airbus-ca.crt"
-# os.environ["SSL_CERT_FILE"] = "/Users/poveda_g/Documents/airbus-ca/bundle/airbus-ca.crt"
-
-
 def compute_bounds(history: Dict[int, List[VehicleStatus]]):
     x_0_min = min(
         [history[v][k].position[0] for v in history for k in range(len(history[v]))]
@@ -137,13 +132,6 @@ def compute_bounds(history: Dict[int, List[VehicleStatus]]):
     return (x_0_min, x_0_max), (x_1_min, x_1_max)
 
 
-folder_extract_images = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "output/"
-)
-if not os.path.exists(folder_extract_images):
-    os.makedirs(folder_extract_images)
-
-
 def plot_flights(
     history: Dict[int, List[VehicleStatus]],
     problem: GPDP,
@@ -153,6 +141,7 @@ def plot_flights(
     map_view=True,
     save_video: bool = False,
     name_file: str = "video_gpdp",
+    folder_to_save_video: Optional[str] = None,
 ):
     previous_time = 0
     current_time = 0
@@ -161,13 +150,15 @@ def plot_flights(
     colors_vehicle = {v: colors(v) for v in range(problem.number_vehicle)}
     x_0, x_1 = compute_bounds(history)
     if save_video:
-        folder_this_video = os.path.join(folder_extract_images, name_file + "/")
-        if not os.path.exists(folder_this_video):
-            # os.rmdir(folder_this_video)
-            os.makedirs(folder_this_video)
+        if folder_to_save_video is None:
+            raise ValueError(
+                "folder_to_save_video must not be None if save_video is True."
+            )
+        if not os.path.exists(folder_to_save_video):
+            os.makedirs(folder_to_save_video)
         else:
-            for k in os.listdir(folder_this_video):
-                os.remove(os.path.join(folder_this_video, k))
+            for k in os.listdir(folder_to_save_video):
+                os.remove(os.path.join(folder_to_save_video, k))
 
     with plt.xkcd():
         fig = plt.figure("Fleet scheduling render", figsize=(15, 15))
@@ -547,7 +538,9 @@ def plot_flights(
                     plt.pause(0.1)
                 if save_video:
                     fig.savefig(
-                        os.path.join(folder_this_video, name_file + "%0*d" % (4, index))
+                        os.path.join(
+                            folder_to_save_video, name_file + "%0*d" % (4, index)
+                        )
                     )  # , dpi=300)
                     index += 1
             if len(allstat_to_plot) == 0:
@@ -652,17 +645,19 @@ def plot_flights(
                     plt.pause(0.1)
                 if save_video:
                     fig.savefig(
-                        os.path.join(folder_this_video, name_file + "%0*d" % (4, index))
+                        os.path.join(
+                            folder_to_save_video, name_file + "%0*d" % (4, index)
+                        )
                     )  # , dpi=300)
                     index += 1
         if save_video:
             a = (
                 "ffmpeg -r 2 -pattern_type glob -i '"
-                + os.path.join(folder_this_video, name_file)
+                + os.path.join(folder_to_save_video, name_file)
                 + "*.png' -c:v libx264 -vf "
                 + '"fps=5,format=yuv420p,pad=ceil(iw/2)*2:ceil(ih/2)*2" '
-                + os.path.join(folder_this_video, name_file + ".mp4")
+                + os.path.join(folder_to_save_video, name_file + ".mp4")
             )
             os.system(a)
 
-        return os.path.join(folder_this_video, name_file + ".mp4")
+        return os.path.join(folder_to_save_video, name_file + ".mp4")

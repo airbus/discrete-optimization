@@ -33,7 +33,6 @@ def load_vrp_and_transform():
     file_path = vrp_parser.get_data_available()[1]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
-    print("Hey")
 
 
 def load_tsp_and_transform():
@@ -41,7 +40,6 @@ def load_tsp_and_transform():
     file_path = files_available[1]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
-    print("Hey")
 
 
 def create_selective_tsp():
@@ -60,9 +58,6 @@ def create_selective_tsp():
         i: {j: {} for j in range(nb_nodes_transportation + 1) if j != i}
         for i in range(nb_nodes_transportation + 1)
     }
-    import random
-
-    import numpy as np
 
     coordinates = np.random.randint(-20, 20, size=(nb_nodes_transportation + 1, 2))
 
@@ -453,14 +448,7 @@ def run_ortools_pickup_delivery_cluster():
     plt.show()
 
 
-def create_examples_script():
-    import os
-    import pickle
-
-    folder_to_save = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)),
-        "../../discrete_optimization/data/gpgp/",
-    )
+def create_examples_script(folder_to_save):
     if not os.path.exists(folder_to_save):
         os.makedirs(folder_to_save)
     sizes = [10, 50, 150, 300, 1000]
