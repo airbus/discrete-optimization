@@ -420,7 +420,7 @@ class MutationTwoOptVRP(Mutation):
             some_vehicle, it, jt, variable
         )
         permut = (
-            variable.list_paths[some_vehicle][:(it)]
+            variable.list_paths[some_vehicle][:it]
             + variable.list_paths[some_vehicle][it : jt + 1][::-1]
             + variable.list_paths[some_vehicle][jt + 1 :]
         )

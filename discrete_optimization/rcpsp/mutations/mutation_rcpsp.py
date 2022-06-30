@@ -119,14 +119,14 @@ class DeadlineMutationRCPSP(Mutation):
             self.attribute, [(swaps[i, 0], swaps[i, 1]) for i in range(1)]
         )
         next_sol = move.apply_local_move(solution)
-        return (next_sol, move)
+        return next_sol, move
 
     def mutate_and_compute_obj(
         self, solution: Solution
     ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
-        return (sol, move, obj)
+        return sol, move, obj
 
     @staticmethod
     def build(problem: Problem, solution: Solution, **kwargs):

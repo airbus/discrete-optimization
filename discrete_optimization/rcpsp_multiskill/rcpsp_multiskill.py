@@ -2941,9 +2941,9 @@ def build_partial_vectors(
     completed_tasks: Dict[Hashable, TaskDetails],
     scheduled_tasks_start_times: Dict[Hashable, TaskDetails],
 ):
-    scheduled_task_indicator = np.zeros((problem.n_jobs))
-    scheduled_tasks_start_times_vector = np.zeros((problem.n_jobs), dtype=np.int32)
-    scheduled_tasks_end_times_vector = np.zeros((problem.n_jobs), dtype=np.int32)
+    scheduled_task_indicator = np.zeros(problem.n_jobs)
+    scheduled_tasks_start_times_vector = np.zeros(problem.n_jobs, dtype=np.int32)
+    scheduled_tasks_end_times_vector = np.zeros(problem.n_jobs, dtype=np.int32)
     worker_used = np.zeros((problem.n_jobs, problem.nb_employees), dtype=int)
     for dict_data in [completed_tasks, scheduled_tasks_start_times]:
         for t in dict_data:
@@ -2968,10 +2968,10 @@ def build_partial_vectors_preemptive(
     completed_tasks: Dict[Hashable, TaskDetailsPreemptive],
     scheduled_tasks_start_times: Dict[Hashable, TaskDetailsPreemptive],
 ):
-    scheduled_task_indicator = np.zeros((problem.n_jobs))
+    scheduled_task_indicator = np.zeros(problem.n_jobs)
     scheduled_tasks_start_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int32)
     scheduled_tasks_end_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int32)
-    nb_subparts = np.zeros((problem.n_jobs), dtype=int)
+    nb_subparts = np.zeros(problem.n_jobs, dtype=int)
     worker_used = np.zeros((problem.n_jobs, 10, problem.nb_employees), dtype=int)
     for dict_data in [completed_tasks, scheduled_tasks_start_times]:
         for t in dict_data:
@@ -3210,7 +3210,7 @@ def create_np_data_and_jit_functions(
             start_after_nunit[j, 2] = off
             j += 1
     if rcpsp_problem.preemptive:
-        preemptive_tag = np.ones((rcpsp_problem.n_jobs), dtype=np.int32)
+        preemptive_tag = np.ones(rcpsp_problem.n_jobs, dtype=np.int32)
         for t in rcpsp_problem.preemptive_indicator:
             preemptive_tag[rcpsp_problem.index_task[t]] = (
                 1 if rcpsp_problem.preemptive_indicator[t] else 0

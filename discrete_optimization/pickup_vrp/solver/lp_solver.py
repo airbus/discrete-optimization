@@ -740,7 +740,7 @@ class LinearFlowSolver(SolverDO):
                                     ]
                                     + variables_edges[vehicle][(node_neigh_neigh, node)]
                                     <= 2,
-                                    name="triangle_" + str((cnt_triangle)),
+                                    name="triangle_" + str(cnt_triangle),
                                 )
                                 cnt_triangle += 1
 

@@ -468,7 +468,7 @@ def init_model_resources():
     instance["resource_flow_node"][
         0:number_of_nodes_transportation, 1
     ] = np.random.randint(
-        -5, 5, size=(number_of_nodes_transportation)
+        -5, 5, size=number_of_nodes_transportation
     )  # random depot/delivery.
     for i in carburant_node:
         instance["resource_flow_node"][i, 0] = 20
@@ -916,7 +916,7 @@ def init_model_ortools():
     instance["resource_flow_node"][
         0:number_of_nodes_transportation, 1
     ] = np.random.randint(
-        -5, 5, size=(number_of_nodes_transportation)
+        -5, 5, size=number_of_nodes_transportation
     )  # random depot/delivery.
     for i in carburant_node:
         instance["resource_flow_node"][i, 0] = 2
@@ -1356,7 +1356,7 @@ def init_model_ortools_tsp():
     instance["resource_flow_node"][
         0:number_of_nodes_transportation, 1
     ] = np.random.randint(
-        -5, 5, size=(number_of_nodes_transportation)
+        -5, 5, size=number_of_nodes_transportation
     )  # random depot/delivery.
     for i in carburant_node:
         instance["resource_flow_node"][i, 0] = 2
