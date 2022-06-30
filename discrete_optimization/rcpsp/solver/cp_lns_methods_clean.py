@@ -1,5 +1,7 @@
 from typing import Any, Iterable, List, Union
 
+from deprecation import deprecated
+
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
     GraphRCPSPSpecialConstraints,
@@ -29,7 +31,9 @@ from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints
 )
 
 
-# DEPRECATED, see generic_tools_rcpsp/neighbor_tools_rcpsp
+@deprecated(
+    deprecated_in="0.1", details="Use rather generic_tools_rcpsp/neighbor_tools_rcpsp"
+)
 class NeighborSubproblem(ConstraintHandler):
     def __init__(
         self,

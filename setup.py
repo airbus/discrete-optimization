@@ -28,6 +28,7 @@ setup(
         "ortools>=8.0",
         "tqdm>=4.62.3",
         "sortedcontainers>=2.4",
+        "deprecation",
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},
