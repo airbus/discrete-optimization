@@ -39,7 +39,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 )
 
 
-# TODO : most of this can become generic, but for now it's adapted to RCPSP..
 class RobustnessTool:
     def __init__(
         self,

@@ -36,9 +36,7 @@ class PostProLocalSearch(PostProcessSolution):
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
         solver = LS_RCPSP_Solver(model=self.problem, ls_solver=LS_SOLVER.SA)
         s = result_storage.get_best_solution().copy()
-        if isinstance(
-            s, MS_RCPSPSolution_Preemptive
-        ):  # TODO : check if other cases fail. probably MS_RCPSPSolution
+        if isinstance(s, MS_RCPSPSolution_Preemptive):
             s = schedule_solution_preemptive_to_variant(s)
         if self.problem != s.problem:
             s.change_problem(self.problem)

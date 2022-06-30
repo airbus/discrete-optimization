@@ -75,7 +75,6 @@ class PermutationShuffleMutation(Mutation):
         return sol, move, obj
 
 
-# TODO : Add Attribute in the constructor.
 class PermutationPartialShuffleMutation(Mutation):
     @staticmethod
     def build(problem: Problem, solution: Solution, **kwargs):

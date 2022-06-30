@@ -210,7 +210,6 @@ class LNS_CP(SolverDO):
         return self.solve_lns(**kwargs)
 
 
-# TODO : continue working on this
 class LNS_CPlex(SolverDO):
     def __init__(
         self,
@@ -331,7 +330,6 @@ class LNS_CPlex(SolverDO):
                             store_lns.add_solution(solution=s, fitness=f)
                 else:
                     current_nb_iteration_no_improvement += 1
-                # TODO : retrieve the solving status of cplex
                 if (
                     skip_first_iteration
                     and False

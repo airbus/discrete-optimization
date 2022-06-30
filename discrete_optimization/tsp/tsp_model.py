@@ -60,7 +60,6 @@ class SolutionTSP(Solution):
             self.permutation_from0 = self.problem.convert_original_perm_to_perm_from0(
                 self.permutation
             )
-        # TODO: Think about moving this into another function (to prevent unecessary calls to evaluate()
         if self.length is None:
             self.problem.evaluate(self)
 

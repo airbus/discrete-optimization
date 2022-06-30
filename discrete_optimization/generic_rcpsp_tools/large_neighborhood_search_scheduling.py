@@ -242,8 +242,6 @@ def build_default_postpro(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwa
     if rcpsp_problem.is_multiskill():
         if rcpsp_problem.is_preemptive():
             return None
-            # TODO ?
-            # return PostProMSRCPSPPreemptive(problem=rcpsp_problem)
         else:
             post_process_solution = PostProMSRCPSP(
                 problem=rcpsp_problem, params_objective_function=None

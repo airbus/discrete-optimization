@@ -514,8 +514,6 @@ class CPM(SolverDO):
         )
 
     def solve(self, **kwargs) -> ResultStorage:
-        # TODO : make this more generic. here we return some serial and parallel
-        #  sgs results based on priority queue found by CPM method
         cpath = self.run_classic_cpm()
         order = sorted(
             self.map_node,

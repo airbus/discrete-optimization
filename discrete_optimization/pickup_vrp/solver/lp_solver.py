@@ -771,7 +771,7 @@ class LinearFlowSolver(SolverDO):
                                 + 1
                                 - 2 * nb_nodes * (1 - variables_edges[vehicle][edge]),
                                 name="order_" + str(node),
-                            )  # Big M constraint, TODO
+                            )
                         if use_indicator:
                             constraints_order[node] = model.addGenConstrIndicator(
                                 variables_edges[vehicle][edge],
@@ -2456,7 +2456,6 @@ def reevaluate_result(
                         print("1 = ", sum([x[1] for x in cycles]))
                         print("2 = ", l)
                         print(cycles)
-                        # TODO ...
                         temporary_result.rebuilt_dict = {
                             v: None for v in connected_components
                         }
@@ -2774,7 +2773,7 @@ def update_model(
                                         ][vehicle][edge]
                                     ),
                                     name="order_" + str(node),
-                                )  # Big M constraint, TODO
+                                )
                             if use_indicator:
                                 constraints_order[
                                     node
@@ -2886,7 +2885,7 @@ def update_model_lazy(
                                         vehicle
                                     ][edge]
                                 )
-                            )  # Big M constraint, TODO
+                            )
                         if use_indicator:
                             constraints_order[
                                 node

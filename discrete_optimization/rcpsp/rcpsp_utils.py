@@ -448,7 +448,6 @@ def plot_resource_individual_gantt(
     return fig
 
 
-# TODO: Check if the scipy version of KTD is the most meaningful for what we want to use it for (ktd between -1 and 1)
 def kendall_tau_similarity(rcpsp_sols: (RCPSPSolution, RCPSPSolution)):
     sol1 = rcpsp_sols[0]
     sol2 = rcpsp_sols[1]

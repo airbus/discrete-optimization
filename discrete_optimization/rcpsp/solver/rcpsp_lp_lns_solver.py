@@ -205,7 +205,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
     def __init__(
         self,
         problem: RCPSPModel,
-        fraction_to_fix: float = 0.9,  # TODO not really fix
+        fraction_to_fix: float = 0.9,
         minus_delta: int = 2,
         plus_delta: int = 2,
     ):

@@ -37,7 +37,7 @@ class TSP_ORtools(SolverDO):
     def init_model(self, **kwargs):
         # Create the routing index manager.
 
-        if self.node_count < 1000:  # TODO : hardcoded
+        if self.node_count < 1000:
             matrix = build_matrice_distance(
                 self.node_count,
                 self.list_points,

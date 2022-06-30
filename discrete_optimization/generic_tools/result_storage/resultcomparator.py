@@ -175,7 +175,6 @@ class ResultComparator:
     def plot_super_pareto(self):
         super_pareto = self.generate_super_pareto()
         plot_pareto_2d(pareto_front=super_pareto, name_axis=self.objectives_str)
-        # TODO: This one is not working ! Need to check why
         plt.title("Pareto front obtained by merging solutions from all result stores")
 
     def plot_all_best_by_objective(self, objectif_str):

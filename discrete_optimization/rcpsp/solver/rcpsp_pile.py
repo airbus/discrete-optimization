@@ -330,7 +330,6 @@ class PileSolverRCPSP_Calendar(SolverDO):
         }
         schedule = {}
         partial_solution: PartialSolution = kwargs.get("partial_solution", None)
-        # TODO continue on this... the mode partial solution will probaby override the self.modes_dict at some point.
         if partial_solution is not None:
             if partial_solution.start_times is not None:
                 starting_time = 0
@@ -344,7 +343,6 @@ class PileSolverRCPSP_Calendar(SolverDO):
                     if task in schedule:
                         schedule[task]["end_time"] = partial_solution.end_times[task]
 
-        # TODO = add utility function in models to deal with that.
         current_ressource_available = {}
         for r in self.resources:
             if isinstance(self.resources[r], Iterable):

@@ -23,8 +23,6 @@ else:
     gurobi_available = True
     import gurobipy as gurobi
 
-# TODO : modelize the optimisation problem behind this.
-
 
 def intersect(i1, i2):
     if i2[0] >= i1[1] or i1[0] >= i2[1]:

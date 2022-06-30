@@ -129,7 +129,7 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
     def __init__(
         self,
         problem: RCPSPModel,
-        fraction_to_fix: float = 0.9,  # TODO not really fix
+        fraction_to_fix: float = 0.9,
         minus_delta: int = 2,
         plus_delta: int = 2,
         delta_time_from_makepan_to_not_fix: int = 5,
@@ -233,7 +233,7 @@ class ConstraintHandlerByPart_CP(ConstraintHandler):
     def __init__(
         self,
         problem: RCPSPModel,
-        fraction_to_fix: float = 0.9,  # TODO not really fix
+        fraction_to_fix: float = 0.9,
         nb_cut_part: int = 10,
         minus_delta: int = 2,
         plus_delta: int = 2,
@@ -345,7 +345,7 @@ class Params:
 
     def __init__(
         self,
-        fraction_to_fix: float = 0.9,  # TODO not really fix
+        fraction_to_fix: float = 0.9,
         minus_delta: int = 2,
         plus_delta: int = 2,
         delta_time_from_makepan_to_not_fix: int = 5,

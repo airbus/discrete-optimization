@@ -669,7 +669,6 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         )
         return result_store
 
-    # TODO : wrong implementation using mip library
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
         subpart_customer = set(
             random.sample(

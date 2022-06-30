@@ -93,7 +93,7 @@ class GreedyColoring(SolverDO):
         solution = ColoringSolution(
             self.color_problem, colors=best_solution, nb_color=None
         )
-        solution = solution.to_reformated_solution()  # TODO : make this OPTIONAL
+        solution = solution.to_reformated_solution()
         fit = self.aggreg_sol(solution)
         if verbose:
             print("Solution found : ", solution)

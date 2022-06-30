@@ -180,9 +180,7 @@ class Nsga:
             ]["name"]
             self._encoding_type = register_solution.dict_attribute_to_type[
                 self._encoding_name
-            ]["type"][
-                0
-            ]  # TODO : while it's usually a list we could also have a unique value(not a list)
+            ]["type"][0]
             self.n = register_solution.dict_attribute_to_type[self._encoding_name]["n"]
 
             if self._encoding_type == TypeAttribute.LIST_INTEGER:

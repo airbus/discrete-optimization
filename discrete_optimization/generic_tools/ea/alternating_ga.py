@@ -93,7 +93,6 @@ class AlternatingGa:
             )
             tmp_sol = ga_solver.solve().get_best_solution()
             count_evals += self.sub_evals[current_encoding_index]
-            # TODO: implement function below (1 in rcpsp domains, 1 in rcpsp solutions)
             self.problem.set_fixed_attributes(
                 self.encodings[current_encoding_index], tmp_sol
             )
