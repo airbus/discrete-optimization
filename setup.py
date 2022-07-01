@@ -7,7 +7,7 @@ data_packages = [
     for p in list(Path("discrete_optimization").glob("**/minizinc"))
 ]
 
-tests_require = ["pytest", "scikit-learn>=1.0"]
+tests_require = ["pytest", "pytest-cov", "scikit-learn>=1.0"]
 
 setup(
     name="discrete_optimization",

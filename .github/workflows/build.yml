@@ -64,6 +64,11 @@ jobs:
             minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled-setup-win64.exe
             minizinc_downloaded_filepath: minizinc_setup.exe
             minizinc_install_cmdline: cmd //c "minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp"
+          - coverage: false  # generally no coverage to avoid multiple reports
+          - coverage: true  # coverage only for one entry of the matrix
+            os: "ubuntu-latest"
+            python-version: "3.9"
+            wo_gurobi: ""
         exclude:
           - os: "windows-latest"
             wo_gurobi: "without gurobi"
@@ -151,7 +156,34 @@ jobs:
         run: |
           from discrete_optimization.datasets import fetch_all_datasets
           fetch_all_datasets()
-      - name: Test with pytest
+      - name: Test with pytest (no coverage)
+        if: ${{ !matrix.coverage }}
         run: |
           export PATH=$PATH:${{ matrix.minizinc_path }}
-          NUMBA_BOUNDSCHECK=1 pytest -v --durations=0 --durations-min=10 tests
+          NUMBA_BOUNDSCHECK=1 pytest \
+            -v --durations=0 --durations-min=10 \
+            tests
+      - name: Test with pytest (with coverage)
+        if: ${{ matrix.coverage }}
+        run: |
+          export PATH=$PATH:${{ matrix.minizinc_path }}
+          # create a tmp directory from which running the tests
+          # so that "--cov discrete_optimization" look for package installed via the wheel
+          # instead of the source directory in the repository (which would lead to a coverage of 0%)
+          mkdir -p tmp && cd tmp
+          NUMBA_BOUNDSCHECK=1 pytest \
+            --cov discrete_optimization  \
+            --cov-report xml:coverage.xml \
+            --cov-report html:coverage_html \
+            --cov-report term \
+            -v --durations=0 --durations-min=10 \
+            ../tests
+          cd ..
+      - name: Upload coverage report as artifact
+        if: ${{ matrix.coverage }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: |
+            tmp/coverage.xml
+            tmp/coverage_html
