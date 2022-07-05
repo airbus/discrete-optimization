@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Union
 
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ANY_MSRCPSP,
@@ -9,6 +8,8 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ConstraintHandler,
     ConstraintHandlerMultiskillAllocation,
     ConstraintHandlerScheduling,
+    EquilibrateMultiskillAllocation,
+    EquilibrateMultiskillAllocationNonPreemptive,
     GraphRCPSP,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
@@ -704,10 +705,6 @@ def mix_lot(rcpsp_model, nb_cut_parts, fraction_subproblems, **kwargs):
     if "time_windows" in kwargs and kwargs["time_windows"]:
         c4 = [time_window_neigh(rcpsp_model=rcpsp_model, **kwargs)]
         tags += ["time_windows"]
-    from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
-        EquilibrateMultiskillAllocation,
-        EquilibrateMultiskillAllocationNonPreemptive,
-    )
 
     c5 = []
     if kwargs.get("equilibrate_multiskill", False):

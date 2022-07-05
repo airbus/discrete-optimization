@@ -1,7 +1,19 @@
+import os
+import pickle
+import random
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.spatial.distance as dist
+from sklearn.cluster import KMeans
 
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
+from discrete_optimization.pickup_vrp.builders.instance_builders import (
+    create_pickup_and_delivery,
+    create_selective_tsp,
+)
 from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass, build_pruned_problem
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
@@ -9,7 +21,13 @@ from discrete_optimization.pickup_vrp.solver.lp_solver import (
     ParametersMilp,
     plot_solution,
 )
-from discrete_optimization.vrp.vrp_model import VrpProblem
+from discrete_optimization.pickup_vrp.solver.ortools_solver import (
+    ORToolsGPDP,
+    ParametersCost,
+    first_solution_strategy_enum,
+    local_search_metaheuristic_enum,
+    plot_ortools_solution,
+)
 
 
 def load_vrp_and_transform():
@@ -48,7 +66,6 @@ def create_selective_tsp():
     import numpy as np
 
     coordinates = np.random.randint(-20, 20, size=(nb_nodes_transportation + 1, 2))
-    import scipy.spatial.distance as dist
 
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
@@ -64,7 +81,6 @@ def create_selective_tsp():
         i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
         for i in distance_delta_dict
     }
-    from sklearn.cluster import KMeans
 
     nb_clusters = int(nb_nodes_transportation / 10)
     kmeans = KMeans(n_clusters=nb_clusters, random_state=0).fit(coordinates)
@@ -114,12 +130,8 @@ def create_pickup_and_delivery(
         i: {j: {} for j in range(nb_nodes_transportation + 1) if j != i}
         for i in range(nb_nodes_transportation + 1)
     }
-    import random
-
-    import numpy as np
 
     coordinates = np.random.randint(-20, 20, size=(nb_nodes_transportation + 1, 2))
-    import scipy.spatial.distance as dist
 
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
@@ -135,8 +147,6 @@ def create_pickup_and_delivery(
         i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
         for i in distance_delta_dict
     }
-    from sklearn.cluster import KMeans
-
     clusters_dict = {i: i + 1 for i in range(nb_nodes_transportation + 1)}
     if include_cluster:
         nb_clusters = max(int(nb_nodes_transportation / 10), 2)
@@ -263,16 +273,6 @@ def vrp_capacity():
     plot_solution(solutions[-1], gpdp)
 
 
-from discrete_optimization.pickup_vrp.solver.ortools_solver import (
-    ORToolsGPDP,
-    ParametersCost,
-    first_solution_strategy_enum,
-    local_search_metaheuristic_enum,
-    plot_ortools_solution,
-    plt,
-)
-
-
 def run_ortools_solver():
     file_path = vrp_parser.get_data_available()[4]
     print(file_path)
@@ -294,10 +294,6 @@ def run_ortools_solver():
 
 
 def run_ortools_solver_selective():
-    from discrete_optimization.pickup_vrp.builders.instance_builders import (
-        create_selective_tsp,
-    )
-
     gpdp = create_selective_tsp(nb_nodes=600, nb_vehicles=5, nb_clusters=100)
     solver = ORToolsGPDP(
         problem=gpdp, factor_multiplier_distance=1, factor_multiplier_time=1
@@ -344,10 +340,6 @@ def run_ortools_pickup_delivery():
             index_p = [res[vehicle_p].index(pp) for pp in p]
             index_d = [res[vehicle_d].index(dd) for dd in d]
             assert max(index_p) < min(index_d)
-
-    from discrete_optimization.pickup_vrp.builders.instance_builders import (
-        create_pickup_and_delivery,
-    )
 
     model = create_pickup_and_delivery(
         number_of_vehicles=4,
@@ -415,7 +407,6 @@ def run_ortools_pickup_delivery_cluster():
         n_solutions=10000,
     )
     results = solver.solve()
-    import time
 
     def check_solution(res, gpdp: GPDP):
         for p, d in gpdp.list_pickup_deliverable_per_cluster:

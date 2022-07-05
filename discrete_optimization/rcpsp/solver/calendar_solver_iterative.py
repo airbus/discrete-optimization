@@ -1,15 +1,12 @@
 # DEPRECATED !!!
 
 import random
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Union
 
 import numpy as np
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    get_default_objective_setup,
-)
+from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import (
     LNS_CP,
     ConstraintHandler,
@@ -27,7 +24,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 )
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN, CP_RCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import (
-    ConstraintHandlerStartTimeInterval_CP,
     OptionNeighbor,
     build_neighbor_operator,
 )

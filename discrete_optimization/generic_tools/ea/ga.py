@@ -8,14 +8,10 @@ from deap import algorithms, base, creator, tools
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
-    ModeOptim,
     ObjectiveHandling,
-    ParamsObjectiveFunction,
     Problem,
     TypeAttribute,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
-    get_default_objective_setup,
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
 )

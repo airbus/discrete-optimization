@@ -1,5 +1,5 @@
 import random
-from typing import Any, Iterable, Tuple, Union
+from typing import Any, Iterable
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -17,6 +17,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
+    InitialSolutionRCPSP,
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
@@ -49,10 +50,6 @@ class InitialSolutionMS_RCPSP(InitialSolution):
 
     def get_starting_solution(self) -> ResultStorage:
         multi_skill_rcpsp = self.problem.build_multimode_rcpsp_calendar_representative()
-        from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
-            InitialSolutionRCPSP,
-        )
-
         init_solution = InitialSolutionRCPSP(
             problem=multi_skill_rcpsp,
             params_objective_function=self.params_objective_function,

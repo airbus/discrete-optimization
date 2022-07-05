@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from enum import Enum
+from functools import partial
 from typing import Any, Iterable, List, Union
 
 import matplotlib.pyplot as plt
@@ -128,9 +129,6 @@ status_description = {
     3: "ROUTING_FAIL_TIMEOUT",
     4: "ROUTING_INVALID",
 }
-
-
-from functools import partial
 
 
 class ORToolsGPDP(SolverDO):

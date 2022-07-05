@@ -1,4 +1,3 @@
-import random
 from typing import Any, Iterable, List, Union
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (

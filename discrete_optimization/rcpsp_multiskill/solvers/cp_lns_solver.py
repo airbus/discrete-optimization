@@ -1,6 +1,5 @@
-import random
 from enum import Enum
-from typing import Any, Iterable, Optional, Union
+from typing import Optional, Union
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_graph_rcpsp_object,
@@ -36,10 +35,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lns_post_process_rcpsp import (
     PostProMSRCPSP,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
-    OptionNeighbor,
-    build_neighbor_operator,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver import (
     InitialSolutionMS_RCPSP,

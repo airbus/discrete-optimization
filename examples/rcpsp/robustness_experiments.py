@@ -1,4 +1,7 @@
+import random
+import time
 from collections import defaultdict
+from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,6 +32,9 @@ from discrete_optimization.generic_tools.mutations.mutation_catalog import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     result_storage_to_pareto_front,
 )
+from discrete_optimization.generic_tools.robustness.robustness_tool import (
+    RobustnessTool,
+)
 from discrete_optimization.rcpsp.rcpsp_model import (
     Aggreg_RCPSPModel,
     MethodAggregating,
@@ -42,6 +48,11 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     create_poisson_laws_resource,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import (
+    CP_MULTISCENARIO,
+    ParametersCP,
+)
+from discrete_optimization.rcpsp.solver.rcpsp_pile import Executor
 
 
 def tree():
@@ -157,10 +168,6 @@ def run_cp_multiscenario():
     for model in list_rcpsp_model:
         s = RCPSPSolution(problem=model, rcpsp_permutation=permutation)
         annealing += [model.evaluate(s)["makespan"]]
-    from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import (
-        CP_MULTISCENARIO,
-        ParametersCP,
-    )
 
     solver = CP_MULTISCENARIO(
         list_rcpsp_model=list_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
@@ -175,10 +182,6 @@ def run_cp_multiscenario():
     solution_fit = result.list_solution_fits
     objectives_cp = [s[0][1] for s in solution_fit]
     real_objective = [s[1] for s in solution_fit]
-
-    # print(np.correlate(objectives_cp, real_objective))
-    import matplotlib.pyplot as plt
-    import scipy.stats as stats
 
     plt.scatter(objectives_cp, real_objective)
     plt.show()
@@ -269,9 +272,6 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     solutions_pareto = [l[0] for l in pareto_store.paretos]
     all_results = []
     results = np.zeros((len(solutions_pareto), len(many_random_instance), 3))
-    import time
-
-    from discrete_optimization.rcpsp.solver.rcpsp_pile import Executor
 
     executor = Executor(rcpsp_model=rcpsp_model)
     for index_instance in range(len(many_random_instance)):
@@ -417,10 +417,6 @@ def solve_model(model, postpro=True, nb_iteration=500):
     return result_ls
 
 
-from discrete_optimization.generic_tools.robustness.robustness_tool import (
-    RobustnessTool,
-)
-
 # def evaluate():
 #     modes_dict = {1: 1}
 #     modes_dict[instance.n_jobs + 2] = 1
@@ -461,7 +457,6 @@ def local_search_aggregated(
         do_uncertain_duration=True,
         nb_sampled_scenario=1000,
     )
-    import random
 
     len_random_instance = len(many_random_instance)
     random.shuffle(many_random_instance)
@@ -476,7 +471,6 @@ def local_search_aggregated(
         test_instance=test_data,
     )
     models = robust.get_models(apriori=True, aposteriori=True)
-    from functools import partial
 
     solve_function = partial(solve_model, postpro=postpro, nb_iteration=nb_iteration)
     results = robust.solve_and_retrieve(solve_models_function=solve_function)

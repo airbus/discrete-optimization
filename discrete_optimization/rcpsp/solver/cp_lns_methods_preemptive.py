@@ -30,7 +30,6 @@ from discrete_optimization.rcpsp.rcpsp_solution_utils import (
     get_tasks_ending_between_two_times,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_PREEMMPTIVE,
     CP_RCPSP_MZN,
     CP_RCPSP_MZN_PREEMMPTIVE,

@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import List, Union
 
 import matplotlib.cm

@@ -1,4 +1,5 @@
 import math
+import random
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
@@ -210,8 +211,6 @@ class TSPModel(Problem):
         return var
 
     def get_random_dummy_solution(self):
-        import random
-
         a = list(self.ind_in_permutation)
         random.shuffle(a)
         var = SolutionTSP(

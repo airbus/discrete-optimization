@@ -1,19 +1,17 @@
-import random
-from typing import Any, Iterable, Optional, Union
+from typing import Optional, Union
 
+import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_graph_rcpsp_object,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
     OptionNeighborRandom,
+    build_neighbor_mixing_cut_parts,
+    build_neighbor_mixing_methods,
     build_neighbor_random,
+    mix_both,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
-    BasicConstraintBuilder,
-    NeighborBuilderMix,
-    NeighborBuilderSubPart,
-    NeighborConstraintBreaks,
-    NeighborRandomAndNeighborGraph,
     ParamsConstraintBuilder,
 )
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
@@ -22,21 +20,15 @@ from discrete_optimization.generic_tools.lns_cp import LNS_CP, SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
-    PartialSolutionPreemptive,
-    RCPSPModelPreemptive,
-)
+from discrete_optimization.rcpsp.rcpsp_model_preemptive import PartialSolutionPreemptive
 from discrete_optimization.rcpsp.solver.cp_lns_methods_clean import (
-    NeighborSubproblem,
     RCPSPModel,
     RCPSPModelPreemptive,
     RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
 )
 from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
-    MethodSubproblem,
-    NeighborFixStartSubproblem,
-    build_neighbor_operator,
+    PostProLeftShift,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
@@ -44,7 +36,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN,
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
-from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import OptionNeighbor
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
@@ -137,11 +128,6 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
                 rcpsp_model=self.rcpsp_problem,
             )
         if option == 1:
-            from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
-                build_neighbor_mixing_methods,
-                mix_both,
-            )
-
             constraint_handler = mix_both(
                 rcpsp_model=rcpsp_problem,
                 option_neighbor_random=kwargs.get(
@@ -171,10 +157,6 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
                 ),
             )
         if option == 2:
-            from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
-                build_neighbor_mixing_methods,
-            )
-
             constraint_handler = build_neighbor_mixing_methods(
                 rcpsp_model=self.rcpsp_problem,
                 graph=graph,
@@ -201,10 +183,6 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
                 ),
             )
         if option == 3:
-            from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
-                build_neighbor_mixing_cut_parts,
-            )
-
             constraint_handler = build_neighbor_mixing_cut_parts(
                 rcpsp_model=rcpsp_problem,
                 graph=graph,
@@ -243,18 +221,12 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
             self.rcpsp_problem,
             (RCPSPModelPreemptive, RCPSPModelSpecialConstraintsPreemptive),
         ):
-            from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
-                PostProLeftShift,
-            )
-
             self.post_process_solution = PostProLeftShift(
                 problem=self.rcpsp_problem,
                 params_objective_function=params_objective_function,
                 do_ls=kwargs.get("do_ls", False),
             )
         else:
-            import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
-
             self.post_process_solution = rcpsp_lns.PostProcessLeftShift(
                 rcpsp_problem=self.rcpsp_problem, partial_solution=None
             )

@@ -1,7 +1,14 @@
+import gc
 import time
 
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.rcpsp_solvers import *
+from discrete_optimization.rcpsp.rcpsp_solvers import (
+    RCPSPModel,
+    look_for_solver,
+    solve,
+    solvers,
+    solvers_map,
+)
 
 
 def script():
@@ -25,8 +32,6 @@ def script():
 
 
 def script_choose_solver():
-    import gc
-
     def release_token():
         gc.collect()
 

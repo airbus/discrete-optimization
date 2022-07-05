@@ -3,7 +3,7 @@
 import random
 import time
 from datetime import timedelta
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Union
 
 import networkx as nx
 import numpy as np
@@ -21,20 +21,14 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
     schedule_solution_to_variant,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     PartialSolution,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.lns_post_process_rcpsp import (
-    sgs_variant,
-)
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
-    ConstraintHandlerStartTimeInterval_CP,
     OptionNeighbor,
     build_neighbor_operator,
 )
@@ -443,9 +437,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
         previous_constraints: Iterable[Any],
     ):
         pass
-
-
-from copy import deepcopy
 
 
 class SolverWithCalendarIterative(SolverDO):

@@ -4,10 +4,14 @@
 import os
 from dataclasses import InitVar
 from datetime import timedelta
-from typing import Dict, Hashable, List, Set, Tuple, Union
+from typing import Hashable, Set
 
 from minizinc import Instance, Model, Solver
 
+from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
+    build_graph_rcpsp_object,
+    build_unrelated_task,
+)
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
@@ -22,19 +26,11 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    PartialSolution,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-)
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModelCalendar
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
-    MS_RCPSPSolution_Preemptive,
     SkillDetail,
-    cluster_employees_to_resource_types,
-    create_fake_tasks_multiskills,
 )
 
 this_path = os.path.dirname(os.path.abspath(__file__))
@@ -230,11 +226,6 @@ class CP_MSPSP_MZN(CPSolver):
             ]
         dict_data["pred"] = pred
         dict_data["succ"] = succ
-        from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
-            build_graph_rcpsp_object,
-            build_unrelated_task,
-        )
-
         self.graph = build_graph_rcpsp_object(rcpsp_problem=self.rcpsp_model)
         _, unrelated = build_unrelated_task(self.graph)
         dict_data["nUnrels"] = len(unrelated)

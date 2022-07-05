@@ -1,4 +1,5 @@
-from typing import Any, Dict, Hashable, Iterable, List, Set, Union
+import random
+from typing import Any, Dict, Hashable, Iterable, List, Union
 
 import networkx as nx
 import numpy as np
@@ -175,8 +176,6 @@ def problem_constraints(
             current_solution.rcpsp_modes
         )
     subtasks = set(problems_output.keys())
-    import random
-
     if len(subtasks) >= 0.2 * current_solution.problem.n_jobs:
         subtasks = set(
             random.sample(subtasks, int(0.2 * current_solution.problem.n_jobs))

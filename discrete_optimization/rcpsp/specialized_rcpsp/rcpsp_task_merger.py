@@ -1,3 +1,5 @@
+import itertools
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -75,9 +77,6 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
         has_loop = gg.check_loop()
 
         list_solution_fits = []
-
-        import itertools
-
         if has_loop is None:
             has_loop = []
         for l in range(0, len(has_loop) + 1):

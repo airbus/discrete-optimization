@@ -10,6 +10,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution_Preemptive,
+    schedule_solution_preemptive_to_variant,
 )
 
 
@@ -38,10 +39,6 @@ class PostProLocalSearch(PostProcessSolution):
         if isinstance(
             s, MS_RCPSPSolution_Preemptive
         ):  # TODO : check if other cases fail. probably MS_RCPSPSolution
-            from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-                schedule_solution_preemptive_to_variant,
-            )
-
             s = schedule_solution_preemptive_to_variant(s)
         if self.problem != s.problem:
             s.change_problem(self.problem)

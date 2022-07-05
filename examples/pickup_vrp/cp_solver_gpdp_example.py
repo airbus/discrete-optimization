@@ -1,12 +1,15 @@
-import json
+import math
 import os
 import random
 from dataclasses import InitVar
 from datetime import timedelta
+from enum import Enum
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
-from minizinc import Instance, Model, Result, Solver, Status
+import scipy.spatial.distance as dist
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -24,9 +27,10 @@ from discrete_optimization.generic_tools.mutations.mutation_catalog import (
 )
 from discrete_optimization.tsp.mutation.mutation_tsp import (
     Mutation2Opt,
-    Mutation2OptIntersection,
     MutationSwapTSP,
 )
+from discrete_optimization.tsp.plots.plot_tsp import plot_tsp_solution
+from discrete_optimization.tsp.tsp_model import Point2D, TSPModelDistanceMatrix
 
 this_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -101,7 +105,6 @@ def script_example():
     coordinates = np.random.randint(
         -20, 20, size=(number_of_nodes_transportation + 2 * n_vehicles, 2)
     )
-    import scipy.spatial.distance as dist
 
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
@@ -130,7 +133,6 @@ def script_example():
         results += [(result[i].dict["trajectories"], result[i].objective)]
     print(result.status)
     print("HEY")
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(1)
     for i in range(len(results)):
@@ -164,8 +166,6 @@ def script_example_lns():
     coordinates = np.random.randint(
         -20, 20, size=(number_of_nodes_transportation + 2 * n_vehicles, 2)
     )
-    import scipy.spatial.distance as dist
-
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
     for i in range(distance_delta.shape[0]):
@@ -203,8 +203,6 @@ def script_example_lns():
     def chunks(l, n):
         n = max(1, n)
         return [l[i : min(i + n, len(l))] for i in range(0, len(l), n)]
-
-    import math
 
     cut_parts = chunks(cut_part, int(math.ceil(len(cut_part) / n_vehicles)))
     for v in range(len(cut_parts)):
@@ -311,7 +309,6 @@ def script_example_lns():
             print("Iter n°", i, " objective=", results[-1][1], results[-1][2])
     print(result.status)
     print("HEY")
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(1)
     for i in range(len(results)):
@@ -345,8 +342,6 @@ def script_example_flow():
     coordinates = np.random.randint(
         -20, 20, size=(number_of_nodes_transportation + 2 * n_vehicles, 2)
     )
-    import scipy.spatial.distance as dist
-
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
     for i in range(distance_delta.shape[0]):
@@ -385,7 +380,6 @@ def script_example_flow():
                         path += [(i, j)]
             path_dict[vehicle] = path
         paths += [path_dict]
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(1)
 
@@ -419,8 +413,6 @@ def init_model_resources():
     total_node = number_of_nodes_transportation + 2 * n_vehicles
     coordinates = np.random.randint(-20, 20, size=(total_node, 2))
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
-    import scipy.spatial.distance as dist
-
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
     for i in range(distance_delta.shape[0]):
@@ -1293,7 +1285,6 @@ def init_model_ortools_tsp():
     # Locations in block units
     n_vehicles = 1
     instance = {}
-    import math
 
     def compute_euclidean_distance_matrix(locations):
         """Creates callback to return distance between points."""
@@ -1478,9 +1469,6 @@ def do_lns(
                 )
 
 
-from enum import Enum
-
-
 class Example(Enum):
     RANDOM = 0
     PICKUP = 1
@@ -1521,8 +1509,6 @@ def run_resource(version: Example = Example.TSP):
         def chunks(l, n):
             n = max(1, n)
             return [l[i : min(i + n, len(l))] for i in range(0, len(l), n)]
-
-        import math
 
         cut_parts = chunks(cut_part, int(math.ceil(len(cut_part) / n_vehicles)))
         for v in range(len(cut_parts)):
@@ -1614,8 +1600,6 @@ def run_resource(version: Example = Example.TSP):
             except:
                 pass
 
-    import matplotlib.pyplot as plt
-
     fig, ax = plt.subplots(1, 2)
     for i in range(len(results)):
         traj = results[i]["trajectories"]
@@ -1658,15 +1642,6 @@ def run_resource(version: Example = Example.TSP):
     plt.show()
 
 
-from discrete_optimization.tsp.plots.plot_tsp import plot_tsp_solution
-from discrete_optimization.tsp.tsp_model import (
-    Point2D,
-    TSPModel,
-    TSPModel2D,
-    TSPModelDistanceMatrix,
-)
-
-
 def run_tsp():
     dict_instance, coordinates = init_model_ortools_tsp()
     tsp_model = TSPModelDistanceMatrix(
@@ -1699,7 +1674,6 @@ def run_tsp():
     results = sa.solve(solution, 30000, verbose=True)
     best_solution, fit = results.get_best_solution_fit()
     print("Fit ", fit)
-    import matplotlib.pyplot as plt
 
     plot_tsp_solution(tsp_model=tsp_model, solution=best_solution)
     plt.show()

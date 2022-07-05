@@ -1,8 +1,9 @@
+import math
 from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, Hashable, Iterable, List, Tuple, Union
+from typing import Dict, Hashable, Iterable, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -738,10 +739,7 @@ class RCPSPModelPreemptive(Problem):
 
     def copy_with_multiplier(self, multiplier=0.5):
         mode_details = deepcopy(self.mode_details)
-        import math
-
         n = int(1 / multiplier)
-
         for t in mode_details:
             for m in mode_details[t]:
                 mode_details[t][m]["duration"] = int(

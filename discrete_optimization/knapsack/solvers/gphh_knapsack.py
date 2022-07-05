@@ -1,7 +1,9 @@
 import operator
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Set, Union
+from typing import List, Set
 
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
@@ -380,9 +382,6 @@ class GPHH(SolverDO):
         return val
 
     def plot_solution(self, show=True):
-        import matplotlib.pyplot as plt
-        import networkx as nx
-
         nodes, edges, labels = gp.graph(self.best_heuristic)
         g = nx.Graph()
         g.add_nodes_from(nodes)

@@ -2,7 +2,7 @@ import random
 import time
 from abc import abstractmethod
 from datetime import timedelta
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Iterable, List, Optional
 
 import numpy as np
 from minizinc import Status

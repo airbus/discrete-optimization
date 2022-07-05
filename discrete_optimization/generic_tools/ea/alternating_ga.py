@@ -1,23 +1,11 @@
-import random
-from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
-from deap import algorithms, base, creator, tools
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    ModeOptim,
     ObjectiveHandling,
-    ParamsObjectiveFunction,
     Problem,
-    TypeAttribute,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
-    get_default_objective_setup,
 )
-from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
     DeapMutation,

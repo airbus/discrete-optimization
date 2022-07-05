@@ -115,12 +115,8 @@ def create_pickup_and_delivery(
     capacities = {0: {}}
     resources_flow_node = {i: {} for i in all_nodes}
     resources_flow_edges = {i: {j: {} for j in all_nodes if j != i} for i in all_nodes}
-    import random
-
-    import numpy as np
 
     coordinates = np.random.randint(-20, 20, size=(len(all_nodes), 2))
-    import scipy.spatial.distance as dist
 
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)

@@ -1,4 +1,5 @@
 import random
+from multiprocessing import Pool
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -106,9 +107,6 @@ class RobustnessTool:
         return models
 
     def solve_and_retrieve(self, solve_models_function, apriori=True, aposteriori=True):
-        from functools import partial
-        from multiprocessing import Pool
-
         models = self.get_models(apriori, aposteriori)
         p = Pool(min(8, len(models)))
         l = p.map(solve_models_function, models)

@@ -1,6 +1,6 @@
-from typing import Dict, Tuple
+from itertools import product
 
-from mip import BINARY, INTEGER, MAXIMIZE, MINIMIZE, LinExpr, Model, Var, xsum
+from mip import BINARY, INTEGER, MINIMIZE, Model, xsum
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -208,7 +208,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
                                     == 0
                                 )
         employees = set([x[0] for x in self.employee_usage])
-        from itertools import product
 
         # can't work on overlapping tasks.
         for emp, t in product(employees, times):

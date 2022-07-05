@@ -1,5 +1,3 @@
-import os
-
 import matplotlib.pyplot as plt
 
 from discrete_optimization.tsp.tsp_model import (

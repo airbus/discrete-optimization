@@ -1,5 +1,8 @@
 import time
 
+import matplotlib.pyplot as plt
+from mip import GRB
+
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
@@ -78,8 +81,6 @@ def run_lns_cp():
         max_time_per_iteration_s=0.2,
         save_results=True,
     )
-    import matplotlib.pyplot as plt
-
     fig, ax = plt.subplots(2)
     ax[0].plot(results["objective"][6:])
     ax[0].set_title("Evolution of the objective")
@@ -96,7 +97,6 @@ def run_lp():
     knapsack_model = parse_file(file)
     # gurobi_solver = LPKnapsackGurobi(knapsack_model)
     pymip_solver = LPKnapsack(knapsack_model, milp_solver_name=MilpSolverName.GRB)
-    from mip import CBC, GRB
 
     pymip_solver.init_model(solver_name=GRB)  # (or CBC)..
     parameters_milp = ParametersMilp.default()

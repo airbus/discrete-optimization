@@ -1,6 +1,8 @@
+import math
 import os
 from dataclasses import InitVar
 from datetime import timedelta
+from enum import Enum
 from typing import Dict, Hashable, List, Set, Tuple, Union
 
 from minizinc import Instance, Model, Solver, Status
@@ -184,9 +186,6 @@ class MS_RCPSPSolCP:
 
     def check(self) -> bool:
         return True
-
-
-from enum import Enum
 
 
 class SearchStrategyMS_MRCPSP(Enum):
@@ -578,9 +577,6 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         instance["source"] = (
             self.rcpsp_model.index_task[self.rcpsp_model.source_task] + 1
         )
-
-        import math
-
         skillunits = [
             [
                 int(math.floor(self.rcpsp_model.employees[j].dict_skill[s].skill_value))
@@ -1122,7 +1118,6 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         instance["skillreq"] = skill_required
         instance["nb_units"] = nb_units
         keys += ["nb_skill", "skillreq", "nb_units"]
-        import math
 
         skillunits = [
             [
@@ -1533,8 +1528,6 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
         instance["skillreq"] = skill_required
         instance["nb_units"] = nb_units
         keys += ["nb_skill", "skillreq", "nb_units"]
-        import math
-
         skillunits = [
             [
                 int(math.floor(self.rcpsp_model.employees[j].dict_skill[s].skill_value))
@@ -2355,7 +2348,6 @@ class PrecomputeEmployeesForTasks:
         instance["nb_skill"] = len(self.ms_rcpsp_model.skills_set)
         instance["skillreq"] = skill_required
         instance["nb_units"] = len(self.ms_rcpsp_model.employees_list)
-        import math
 
         skillunits = [
             [

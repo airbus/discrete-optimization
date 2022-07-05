@@ -1,3 +1,6 @@
+import random
+from copy import deepcopy
+
 import networkx as nx
 import numpy as np
 
@@ -19,8 +22,9 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     create_poisson_laws_duration,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.rcpsp_utils import kendall_tau_similarity
-from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN, CP_RCPSP_MZN
+from discrete_optimization.rcpsp.rcpsp_utils import plot_ressource_view, plot_task_gantt
+from discrete_optimization.rcpsp.solver.cp_solvers import CP_RCPSP_MZN
+
 from discrete_optimization.rcpsp.solver.cpm import CPM, run_partial_classic_cpm
 
 
@@ -61,11 +65,6 @@ def test_cpm_sm():
     )
     schedule, link_to_add, effects_on_delay, causes_of_delay = cpm.run_sgs_on_order(
         map_nodes=cpm.map_node, critical_path=cpath, total_order=order
-    )
-    from discrete_optimization.rcpsp.rcpsp_utils import (
-        plot_ressource_view,
-        plot_task_gantt,
-        plt,
     )
 
     def compute_graph_conflict(
@@ -160,8 +159,6 @@ def test_cpm_sm():
                             link_to_add += [(edge[0], edge[1])]
         return link_to_add
 
-    import random
-
     graph_conflict = compute_graph_conflict(
         effects_on_delay,
         causes_of_delay,
@@ -171,8 +168,6 @@ def test_cpm_sm():
     link_to_add = compute_link_second_version(
         schedule, cpm, cpath, causes_of_delay, effects_on_delay, graph_conflict
     )
-
-    from copy import deepcopy
 
     original_successors = deepcopy(rcpsp_problem.successors)
     results = []

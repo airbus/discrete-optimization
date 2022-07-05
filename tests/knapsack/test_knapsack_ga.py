@@ -1,6 +1,3 @@
-import os
-import sys
-
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import Ga
 from discrete_optimization.generic_tools.mutations.mixed_mutation import (

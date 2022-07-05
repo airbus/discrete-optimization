@@ -2,7 +2,7 @@ import math
 from abc import abstractmethod
 from copy import deepcopy
 from functools import partial
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 from numba import njit

@@ -1,6 +1,12 @@
+import os
 from copy import deepcopy
-from typing import Dict, List, Tuple
 
+from functools import reduce
+from typing import Dict, List, Optional, Tuple
+
+import cartopy
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
 from discrete_optimization.pickup_vrp.gpdp import GPDP
@@ -111,12 +117,6 @@ def post_process_solution(result, problem: GPDP, delta_time: int = 10):
     return path_aircraft, vehicle_status_history
 
 
-import os
-
-import cartopy
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
-
 # os.environ["REQUESTS_CA_BUNDLE"] = "/Users/poveda_g/Documents/airbus-ca/bundle/airbus-ca.crt"
 # os.environ["SSL_CERT_FILE"] = "/Users/poveda_g/Documents/airbus-ca/bundle/airbus-ca.crt"
 
@@ -136,8 +136,6 @@ def compute_bounds(history: Dict[int, List[VehicleStatus]]):
     )
     return (x_0_min, x_0_max), (x_1_min, x_1_max)
 
-
-import os
 
 folder_extract_images = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "output/"
@@ -352,8 +350,6 @@ def plot_flights(
                 if len(status_to_plot[v]) > 0:
                     index_per_flights[v] = status_to_plot[v][-1][0]
                     finished[v] = index_per_flights[v] == (len(history[v]) - 1)
-            from functools import reduce
-
             allstat_to_plot = sorted(
                 reduce(
                     lambda x, y: x + y, [status_to_plot[v] for v in status_to_plot], []

@@ -1,15 +1,15 @@
 import time
 
-from pickup_vrp.solver.ortools_solver import (
+import matplotlib.pyplot as plt
+from classic_ortools_example import create_matrix_data
+
+from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     ORToolsGPDP,
     ParametersCost,
     first_solution_strategy_enum,
     local_search_metaheuristic_enum,
     plot_ortools_solution,
-    plt,
 )
-
-from examples.pickup_vrp.classic_ortools_example import create_matrix_data
 
 
 def run_time_windows():

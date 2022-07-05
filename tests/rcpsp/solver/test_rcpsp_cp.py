@@ -18,7 +18,11 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     kendall_tau_similarity,
     plot_task_gantt,
 )
-from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN, CP_RCPSP_MZN
+from discrete_optimization.rcpsp.solver.cp_solvers import (
+    CP_MRCPSP_MZN,
+    CP_MRCPSP_MZN_NOBOOL,
+    CP_RCPSP_MZN,
+)
 
 
 def test_cp_sm():
@@ -137,11 +141,6 @@ def test_cp_sm_robust():
 
 
 def test_cp_mm_integer_vs_bool():
-    from discrete_optimization.rcpsp.solver.cp_solvers import (
-        CP_MRCPSP_MZN,
-        CP_MRCPSP_MZN_NOBOOL,
-    )
-
     files_available = get_data_available()
     files_to_run = [f for f in files_available if f.endswith(".mm")]
     for f in files_to_run:
