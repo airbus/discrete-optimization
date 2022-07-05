@@ -60,7 +60,7 @@ def test_solve_rcpsp_imopse1(random_seed):
     result_storage = lns_solver.solve(
         parameters_cp=params_cp,
         nb_iteration_lns=5,
-        max_time_seconds=30,
+        max_time_seconds=100,
         nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )
