@@ -1582,9 +1582,6 @@ def compute_mean_resource_reserve(solution: RCPSPSolution, rcpsp_problem: RCPSPM
     return mean_resource_reserve
 
 
-from copy import deepcopy
-
-
 class SGSWithoutArray:
     def __init__(self, rcpsp_model: RCPSPModel):
         self.rcpsp_model = rcpsp_model

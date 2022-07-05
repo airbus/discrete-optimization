@@ -1,5 +1,4 @@
 import os
-import random
 from enum import Enum
 
 this_path = os.path.dirname(os.path.abspath(__file__))

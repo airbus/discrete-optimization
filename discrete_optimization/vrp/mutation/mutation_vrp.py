@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Tuple
 
 import numpy as np
 

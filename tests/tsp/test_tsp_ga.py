@@ -1,6 +1,3 @@
-import os
-import sys
-
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,

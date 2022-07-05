@@ -1,6 +1,5 @@
 import pickle
 import time
-from typing import List, Optional, Union
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (

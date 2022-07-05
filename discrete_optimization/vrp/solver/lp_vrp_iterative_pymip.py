@@ -1,18 +1,9 @@
-# from numba import jit
-import os
 import random
-from typing import Dict, List
-
-import networkx as nx
-
-from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
-from discrete_optimization.vrp.vrp_toolbox import length
-
-this_path = os.path.dirname(os.path.abspath(__file__))
-os.chdir(this_path)
 from copy import deepcopy
+from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
+import networkx as nx
 from mip import BINARY, CBC, GRB, MINIMIZE, Model, Var, xsum
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -20,11 +11,13 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.vrp.solver.lp_vrp_iterative import (
     build_graph_pruned_vrp,
     compute_start_end_flows_info,
 )
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution, compute_length
+from discrete_optimization.vrp.vrp_toolbox import length
 
 
 def init_model_lp(
@@ -783,9 +776,6 @@ def rebuild_tsp_routine(
     )
 
     return rebuilded_path, obj
-
-
-from typing import Any
 
 
 def retreve_solutions(model: Model, x_var: Dict[Any, Var], vehicle_count, g):

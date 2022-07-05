@@ -4,17 +4,18 @@
 # https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem
 from typing import Dict, Hashable, List, Set, Tuple
 
+import networkx as nx
+import numpy as np
+
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
-    MethodAggregating,
     ObjectiveRegister,
-    ParamsObjectiveFunction,
     Problem,
     Solution,
-    TypeAttribute,
-    TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
+from discrete_optimization.tsp.tsp_model import TSPModel
+from discrete_optimization.vrp.vrp_model import VrpProblem
 
 
 class GPDPSolution(Solution):
@@ -273,10 +274,6 @@ class GPDP(Problem):
         return s
 
 
-import networkx as nx
-import numpy as np
-
-
 def build_pruned_problem(problem: GPDP, undirected=True, compute_graph: bool = False):
     kept_edges = set()
     graph_nx = nx.DiGraph()
@@ -416,10 +413,6 @@ def build_matrix_time(problem: GPDP):
                 problem.index_nodes[j], problem.index_nodes[k]
             ] = problem.time_delta[j][k]
     return matrix_time
-
-
-from discrete_optimization.tsp.tsp_model import TSPModel
-from discrete_optimization.vrp.vrp_model import VrpProblem
 
 
 class ProxyClass:

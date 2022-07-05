@@ -1,7 +1,6 @@
 from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     ColoringCP,
     ColoringCPModel,
-    CPSolver,
     CPSolverName,
     ParametersCP,
 )

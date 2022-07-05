@@ -1,7 +1,7 @@
 import numba.typed
 import numba.types
 import numpy as np
-from numba import jit, njit
+from numba import njit
 
 int32_array = numba.types.Array(numba.types.int32, 1, "C")
 

@@ -45,7 +45,9 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution_Preemptive,
     MS_RCPSPSolution_Preemptive_Variant,
     MS_RCPSPSolution_Variant,
+    compute_overskill,
     employee_usage,
+    start_together_problem_description,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solver_mspsp_instlib import (
     CP_MSPSP_MZN,
@@ -784,9 +786,6 @@ def constraints_strings_multiskill_preemptive(
         params_constraints=params_constraints,
     )
     if random.random() < 0.99 and params_constraints.first_method_multiskill:
-        from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-            start_together_problem_description,
-        )
 
         constraint_description = start_together_problem_description(
             solution=current_solution,
@@ -1621,9 +1620,6 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
         self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
     ):
         pass
-
-
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import compute_overskill
 
 
 class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):

@@ -30,6 +30,9 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
+    CPSolverName,
+    stick_to_solution,
+    stick_to_solution_preemptive,
 )
 
 
@@ -218,14 +221,6 @@ def rebuild_multiskill_solution_cp_based(
     worker_type_to_worker: Dict[str, Set[Union[str, int]]],
     solution_rcpsp: Union[RCPSPSolution, RCPSPSolutionPreemptive],
 ):
-    from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
-        CP_MS_MRCPSP_MZN,
-        CP_MS_MRCPSP_MZN_PREEMPTIVE,
-        CPSolverName,
-        stick_to_solution,
-        stick_to_solution_preemptive,
-    )
-
     if isinstance(solution_rcpsp, RCPSPSolution):
         model = CP_MS_MRCPSP_MZN(
             rcpsp_model=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED

@@ -4,7 +4,7 @@ from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
 
-from minizinc import Instance, Model, Solver, Status
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
@@ -15,7 +15,6 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
 )
 from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
-    GreedySolverFacility,
 )
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
@@ -25,7 +24,6 @@ from discrete_optimization.generic_tools.cp_tools import (
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
     get_default_objective_setup,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO

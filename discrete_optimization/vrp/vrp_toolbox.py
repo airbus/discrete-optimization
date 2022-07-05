@@ -1,6 +1,5 @@
 import math
 from collections import namedtuple
-from typing import List
 
 import networkx as nx
 import numpy as np

@@ -1,5 +1,7 @@
 import random
 
+import matplotlib.pyplot as plt
+
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -38,7 +40,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     SingleModeRCPSPModel,
     UncertainRCPSPModel,
     create_poisson_laws,
-    plt,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 

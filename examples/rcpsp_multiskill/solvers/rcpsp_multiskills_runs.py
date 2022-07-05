@@ -1,5 +1,13 @@
+import random
+import time
 from typing import Dict, List, Set
 
+import matplotlib.pyplot as plt
+
+from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
+    plot_resource_individual_gantt,
+    plot_resource_individual_gantt_preemptive,
+)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
@@ -9,6 +17,10 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     SkillDetail,
     TaskDetails,
     TaskDetailsPreemptive,
+)
+from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
+    get_data_available,
+    parse_file,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
     LP_Solver_MRSCPSP,
@@ -324,7 +336,6 @@ def sgs_debug(model=None):
     print("completed: ", completed)
     print("ongoing: ", ongoing)
     print("current_time: ", timesgs2)
-    import time
 
     for i in range(1):
         t = time.time()
@@ -348,24 +359,12 @@ def sgs_debug(model=None):
         )
     print(model.satisfy(dummy_solution))
     print(model.evaluate(dummy_solution))
-    from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-        plot_resource_individual_gantt,
-        plt,
-    )
 
     plot_resource_individual_gantt(rcpsp_model=model, rcpsp_sol=dummy_solution)
     plt.show()
 
 
 def sgs_debug_imopse():
-    import os
-    import random
-
-    from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-        get_data_available,
-        parse_file,
-    )
-
     files = get_data_available()
     files = [f for f in get_data_available() if "100_5_22_15.def" in f]
     random.shuffle(files)
@@ -462,7 +461,6 @@ def sgs_debug_preemptive(model=None):
         <= timesgs2
         < dummy_solution.schedule[t]["ends"][-1]
     }
-    import time
 
     for i in range(1):
         t = time.time()
@@ -486,21 +484,11 @@ def sgs_debug_preemptive(model=None):
         )
     print(model.satisfy(dummy_solution))
     print(model.evaluate(dummy_solution))
-    from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-        plot_resource_individual_gantt_preemptive,
-        plt,
-    )
 
     plot_resource_individual_gantt_preemptive(
         rcpsp_model=model, rcpsp_sol=dummy_solution
     )
     plt.show()
-
-
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
-    get_data_available,
-    parse_file,
-)
 
 
 def sgs_debug_fast(model=None):
@@ -523,7 +511,6 @@ def sgs_debug_fast(model=None):
     print("dummy_solution.modes_vector: ", dummy_solution.modes_vector)
     print(model.evaluate(dummy_solution))
     print(model.satisfy(dummy_solution))
-    import time
 
     for i in range(10):
         t = time.time()

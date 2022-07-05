@@ -4,7 +4,7 @@ from dataclasses import InitVar
 from datetime import timedelta
 from typing import Any, Iterable, List
 
-from minizinc import Instance, Model, Result, Solver, Status
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
@@ -16,6 +16,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -485,13 +486,6 @@ class CPMultidimensionalMultiScenarioSolver(CPSolver):
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
-
-
-from discrete_optimization.generic_tools.lns_cp import (
-    LNS_CP,
-    ConstraintHandler,
-    InitialSolution,
-)
 
 
 class KnapConstraintHandler(ConstraintHandler):

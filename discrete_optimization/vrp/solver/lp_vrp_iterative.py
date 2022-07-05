@@ -1,30 +1,19 @@
-import os
 import random
-from enum import Enum
-from typing import Dict, List
-
-import networkx as nx
-
-# from numba import jit
-import numpy as np
-
-from discrete_optimization.vrp.vrp_toolbox import Customer, length
-
-this_path = os.path.dirname(os.path.abspath(__file__))
-os.chdir(this_path)
 from copy import deepcopy
+from typing import List
 
 import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-
-# from mip import Model, GRB, CBC, MINIMIZE, MAXIMIZE, LinExpr, xsum
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.vrp.solver.solver_ortools import VrpORToolsSolver
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution, compute_length
+from discrete_optimization.vrp.vrp_toolbox import Customer, length
 
 try:
     import gurobipy

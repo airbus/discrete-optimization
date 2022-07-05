@@ -3,12 +3,16 @@
 from enum import Enum
 from typing import Optional
 
+import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_graph_rcpsp_object,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
     OptionNeighborRandom,
+    build_neighbor_mixing_cut_parts,
+    build_neighbor_mixing_methods,
     build_neighbor_random,
+    mix_both,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ANY_RCPSP,
@@ -31,7 +35,9 @@ from discrete_optimization.generic_tools.lns_mip import InitialSolutionFromSolve
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import PartialSolutionPreemptive
+from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
+    PostProLeftShift,
+)
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_PREEMMPTIVE,
@@ -228,10 +234,6 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
 def build_default_postpro(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwargs):
     if not rcpsp_problem.is_multiskill():
         if rcpsp_problem.is_preemptive():
-            from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
-                PostProLeftShift,
-            )
-
             post_process_solution = PostProLeftShift(
                 problem=rcpsp_problem,
                 params_objective_function=None,
@@ -241,8 +243,6 @@ def build_default_postpro(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwa
         if partial_solution is not None:
             return None
         if not rcpsp_problem.is_preemptive():
-            import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
-
             post_process_solution = rcpsp_lns.PostProcessLeftShift(
                 rcpsp_problem=rcpsp_problem, partial_solution=partial_solution
             )
@@ -367,11 +367,6 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             rcpsp_model=rcpsp_problem,
         )
     if option == 1:
-        from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
-            build_neighbor_mixing_methods,
-            mix_both,
-        )
-
         constraint_handler = mix_both(
             rcpsp_model=rcpsp_problem,
             option_neighbor_random=kwargs.get(
@@ -401,9 +396,6 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             ),
         )
     if option == 2:
-        from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
-            build_neighbor_mixing_methods,
-        )
 
         constraint_handler = build_neighbor_mixing_methods(
             rcpsp_model=rcpsp_problem,
@@ -431,10 +423,6 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             ),
         )
     if option == 3:
-        from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
-            build_neighbor_mixing_cut_parts,
-        )
-
         constraint_handler = build_neighbor_mixing_cut_parts(
             rcpsp_model=rcpsp_problem,
             graph=graph,

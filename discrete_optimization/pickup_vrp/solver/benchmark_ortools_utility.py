@@ -1,15 +1,10 @@
 from copy import deepcopy
-from functools import partial
 
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     GPDP,
     ORToolsGPDP,
-    first_solution_strategy_enum,
-    local_search_metaheuristic_enum,
     name_firstsolution_to_value,
     name_metaheuristic_to_value,
-    value_firstsolution_to_name,
-    value_metaheuristic_to_name,
 )
 
 

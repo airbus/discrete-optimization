@@ -11,11 +11,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.knapsack.knapsack_model import (
-    Item,
     KnapsackModel,
     KnapsackSolution,
 )
-from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 
 
 class KnapsackDynProg(SolverDO):

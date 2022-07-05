@@ -1,4 +1,3 @@
-import os
 from typing import Dict, List, Set
 
 # from tests.rcpsp_multiskills.solvers.instance_creator import create_ms_rcpsp_demo

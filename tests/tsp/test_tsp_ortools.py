@@ -1,6 +1,3 @@
-import os
-import sys
-
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.tsp.solver.solver_ortools import TSP_ORtools
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file

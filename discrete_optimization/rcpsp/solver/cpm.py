@@ -13,11 +13,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
     RCPSPModel,
     RCPSPModelCalendar,
     RCPSPSolution,
-    SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.rcpsp_utils import compute_graph_rcpsp
 

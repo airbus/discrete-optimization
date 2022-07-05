@@ -1,4 +1,4 @@
-from copy import deepcopy
+import random
 from typing import Union
 
 import networkx as nx
@@ -62,7 +62,6 @@ class PostProMSRCPSP(PostProcessSolution):
         )
         fit = self.aggreg_from_sol(new_solution)
         result_storage.add_solution(new_solution, fit)
-        import random
 
         for s in random.sample(
             result_storage.list_solution_fits,
@@ -107,7 +106,6 @@ class PostProMSRCPSPPreemptive(PostProcessSolution):
         )
         fit = self.aggreg_from_sol(new_solution)
         result_storage.list_solution_fits += [(new_solution, fit)]
-        import random
 
         for s in random.sample(
             result_storage.list_solution_fits,

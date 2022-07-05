@@ -1,6 +1,5 @@
 import os
 from datetime import timedelta
-from typing import List, Tuple
 
 from minizinc import Instance, Model, Result, Solver, Status
 

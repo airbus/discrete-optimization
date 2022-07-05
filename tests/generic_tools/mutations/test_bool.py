@@ -1,6 +1,3 @@
-import os
-import sys
-
 from discrete_optimization.generic_tools.mutations.mutation_bool import MutationBitFlip
 from discrete_optimization.knapsack.knapsack_model import KnapsackModel
 from discrete_optimization.knapsack.knapsack_parser import (

@@ -1,41 +1,25 @@
-import json
 import os
-import random
 from dataclasses import InitVar
 from datetime import timedelta
-from typing import Dict, Hashable, List, Tuple, Union
+from typing import List, Union
 
-from minizinc import Instance, Model, Result, Solver, Status
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
     ParametersCP,
-    SignEnum,
     map_cp_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ObjectiveHandling,
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
-    build_evaluate_function_aggregated,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    PartialSolution,
-    RCPSPModel,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
-    PartialSolutionPreemptive,
-    RCPSPModelPreemptive,
-    RCPSPSolutionPreemptive,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
 
 this_path = os.path.dirname(os.path.abspath(__file__))

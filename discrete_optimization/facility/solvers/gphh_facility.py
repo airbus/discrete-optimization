@@ -2,6 +2,8 @@ import operator
 from enum import Enum
 from typing import List, Set
 
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
@@ -14,10 +16,7 @@ from deap.gp import (
     genHalfAndHalf,
 )
 
-from discrete_optimization.facility.facility_model import (
-    FacilityProblem,
-    FacilitySolution,
-)
+from discrete_optimization.facility.facility_model import FacilityProblem
 from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
 )
@@ -379,9 +378,6 @@ class GPHH(SolverDO):
         return val
 
     def plot_solution(self):
-        import matplotlib.pyplot as plt
-        import networkx as nx
-
         nodes, edges, labels = gp.graph(self.best_heuristic)
         g = nx.Graph()
         g.add_nodes_from(nodes)

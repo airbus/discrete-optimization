@@ -1,15 +1,10 @@
-from itertools import combinations
+import random
 from typing import Any, Dict, Iterable, List, Tuple
 
+import matplotlib.pyplot as plt
 import mip
 import networkx as nx
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Problem,
-    Solution,
-    build_aggreg_function_and_params_objective,
-)
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.pickup_vrp.gpdp import GPDP
@@ -629,7 +624,6 @@ class LinearFlowSolver(SolverDO):
         if include_triangle:
             constraint_triangle = {}
             cnt_triangle = 0
-            import networkx as nx
 
             for node in graph.graph_nx.nodes():
                 neigh = set([n for n in nx.neighbors(graph.graph_nx, node)])
@@ -1798,9 +1792,6 @@ def build_graph_solutions(
     return transformed_solutions
 
 
-import random
-
-
 def update_model_cluster_tsp(
     problem: GPDP,
     lp_solver: LinearFlowSolver,
@@ -2063,9 +2054,6 @@ def update_model_lazy(
                                 )
                             )  # Big M constraint, TODO
     return list_constraints
-
-
-import matplotlib.pyplot as plt
 
 
 def plot_solution(temporary_result: TemporaryResult, problem: GPDP):

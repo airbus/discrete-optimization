@@ -1,6 +1,6 @@
 import random
 from enum import Enum
-from typing import Any, Iterable, Tuple, Union
+from typing import Any, Iterable, Union
 
 import numpy as np
 

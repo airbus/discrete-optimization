@@ -5,6 +5,7 @@ from datetime import timedelta
 from enum import Enum
 
 import networkx as nx
+import pymzn
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.coloring.coloring_model import (
@@ -133,8 +134,6 @@ class ColoringCP(CPSolver):
         self.dict_datas = {k: instance[k] for k in keys}
 
     def export_dzn(self, file_name: str = None, keys=None):
-        import pymzn
-
         if file_name is None:
             file_name = os.path.join(path_minizinc, "coloring_example_dzn.dzn")
         if keys is None:

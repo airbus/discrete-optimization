@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup

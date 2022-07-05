@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 from heapq import heappop, heappush
-from typing import Dict, Iterable, List, Union
+from typing import Dict, Iterable, List
 
 import networkx as nx
 import numpy as np

@@ -1,5 +1,4 @@
 import random
-from enum import Enum
 from itertools import product
 from typing import Dict, List, Set, Tuple, Union
 

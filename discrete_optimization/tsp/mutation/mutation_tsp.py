@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -358,7 +358,7 @@ class MutationSwapTSP(Mutation):
 
 
 if __name__ == "__main__":
-    from tsp.tsp_parser import get_data_available, parse_file
+    from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
     files = get_data_available()
     files = [f for f in files if "tsp_51_1" in f]

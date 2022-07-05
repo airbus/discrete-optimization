@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     SpecialConstraintsDescription,
 )
@@ -2175,8 +2176,6 @@ class MS_RCPSPModel(Problem):
 
     def build_multimode_rcpsp_calendar_representative(self):
         # put skills as ressource.
-        from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-
         if len(self.resources_list) == 0:
             skills_availability = {s: [0] * int(self.horizon) for s in self.skills_set}
         else:

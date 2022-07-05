@@ -1,7 +1,10 @@
 from typing import Dict, List, Set
 
-from discrete_optimization.rcpsp.rcpsp_solvers import *
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
+from discrete_optimization.rcpsp.rcpsp_solvers import (
+    LP_MRCPSP,
+    LP_RCPSP_Solver,
+    solvers,
+)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,

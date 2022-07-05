@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 
 from discrete_optimization.generic_tools.do_mutation import LocalMove, Mutation

@@ -1,9 +1,13 @@
+import time
 from typing import Dict, List, Set
 
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
+import matplotlib.pyplot as plt
+
+from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
+    plot_resource_individual_gantt_preemptive,
+)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
-    MS_RCPSPModel,
     MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive_Variant,
@@ -175,12 +179,6 @@ def sgs_debug_preemptive(model=None):
     print(model.satisfy(dummy_solution))
     timesgs2 = int(dummy_solution.get_end_time(model.sink_task) / 2)
     completed, ongoing = create_task_details_preemptive(dummy_solution, timesgs2)
-    import time
-
-    from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
-        plot_resource_individual_gantt_preemptive,
-        plt,
-    )
 
     for i in range(10):
         t = time.time()
