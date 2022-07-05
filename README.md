@@ -1,7 +1,8 @@
 # Discrete Optimization
 
-Discrete Optimization is a python library to ease the definition and re-use of discrete optimization problems and solvers. 
-It has been initially developed in the frame of [scikit-decide](https://github.com/airbus/scikit-decide) for scheduling. The code base starting to be big, the repository are now splitted
+Discrete Optimization is a python library to ease the definition and re-use of discrete optimization problems and solvers.
+It has been initially developed in the frame of [scikit-decide](https://github.com/airbus/scikit-decide) for scheduling.
+The code base starting to be big, the repository has now been splitted in two separate ones.
 
 The library contains a range of existing solvers already implemented such as:
 * greedy methods
