@@ -1,6 +1,6 @@
 # Discrete Optimization
 
-Discrete Optimization is a python library to ease the definition and re-use of discrete optimization problems and solvers. It is implemented by the CRT AI Research as part of the IOODA project.
+Discrete Optimization is a python library to ease the definition and re-use of discrete optimization problems and solvers. It is implemented by the CRT AI Research. It has been initially developed in the frame of [scikit-decide](https://github.com/airbus/scikit-decide) for scheduling. The code base starting to be big, the repository are now splitted
 
 The library contains a range of existing solvers already implemented such as:
 * greedy methods
