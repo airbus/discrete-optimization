@@ -1,8 +1,10 @@
+"""Linear programming models and solve functions for facility location problem."""
 import logging
 from typing import Any, Dict, Hashable, Optional, Tuple, Union
 
 import mip
 import numpy as np
+from deprecation import deprecated
 from ortools.linear_solver import pywraplp
 
 from discrete_optimization.facility.facility_model import (
@@ -47,7 +49,17 @@ else:
     )
 
 
-def compute_length_matrix(facility_problem: FacilityProblem):
+def compute_length_matrix(facility_problem: FacilityProblem) -> Tuple[np.array, np.array, np.array]:
+    """Precompute all the cost of allocation in a matrix form.
+
+    A matrix "closest" is also computed, sorting for each customers the facility by distance.
+
+    Args:
+        facility_problem (FacilityProblem): facility problem instance to compute cost matrix
+
+    Returns: setup cost vector, sorted matrix distance, matrix distance
+
+    """
     facilities = facility_problem.facilities
     customers = facility_problem.customers
     nb_facilities = len(facilities)
@@ -65,7 +77,22 @@ def compute_length_matrix(facility_problem: FacilityProblem):
 
 def prune_search_space(
     facility_problem: FacilityProblem, n_cheapest: int = 10, n_shortest=10
-):
+) -> Tuple[np.array, np.array]:
+    """Utility function that can prune the search space.
+
+    Output of this function will be used to :
+    - consider only the n_cheapest facility that has the cheapest setup_cost
+    - consider only the n_shortest (closest actually) facilities for each customers
+
+
+    Args:
+        facility_problem (FacilityProblem): facility problem instance
+        n_cheapest (int): select the cheapest setup cost facilities
+        n_shortest (int): for each customer, select the closest facilities
+
+    Returns: tuple of matrix, first element is a matrix (facility_count, customer_count) with 2 as value
+    when we should consider the allocation possible. Second element in the (facility,customer) matrix distance.
+    """
     costs, closest, matrix_distance = compute_length_matrix(facility_problem)
     sorted_costs = np.argsort(costs)
     facilities = facility_problem.facilities
@@ -145,7 +172,24 @@ class _LPFacilitySolverBase(MilpSolver):
 
 
 class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
+    """Milp solver using gurobi library
+
+    Attributes:
+        coloring_problem (FacilityProblem): facility problem instance to solve
+        params_objective_function (ParamsObjectiveFunction): objective function parameters
+                        (however this is just used for the ResultStorage creation, not in the optimisation)
+    """
     def init_model(self, **kwargs):
+        """
+
+        Keyword Args:
+            use_matrix_indicator_heuristic (bool): use the prune search method to reduce number of variable.
+            n_shortest (int): parameter for the prune search method
+            n_cheapest (int): parameter for the prune search method
+
+        Returns: None
+
+        """
         nb_facilities = self.facility_problem.facility_count
         nb_customers = self.facility_problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
@@ -239,6 +283,8 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
 
 
 class LP_Facility_Solver_CBC(SolverDO):
+    """Milp formulation using cbc solver.
+    """
     def __init__(
         self,
         facility_problem: FacilityProblem,
@@ -396,6 +442,12 @@ class LP_Facility_Solver_CBC(SolverDO):
 
 
 class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
+    """Milp solver using pymip library
+
+    Note:
+        Gurobi and CBC are available backends.
+
+    """
     def __init__(
         self,
         facility_problem: FacilityProblem,
