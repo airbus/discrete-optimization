@@ -33,6 +33,12 @@ class InitialFacilityMethod(Enum):
 
 
 class InitialFacilitySolution(InitialSolution):
+    """Initial solution provider for lns algorithm.
+
+    Attributes:
+        problem (FacilityProblem): input coloring problem
+        initial_method (InitialFacilityMethod): the method to use to provide the initial solution.
+    """
     def __init__(
         self,
         problem: FacilityProblem,
@@ -66,6 +72,16 @@ class InitialFacilitySolution(InitialSolution):
 
 
 class ConstraintHandlerFacility(ConstraintHandler):
+    """Constraint builder used in LNS+LP for coloring problem.
+
+    This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of allocation of customer to
+    facility.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
+    """
+
     def __init__(
         self,
         problem: FacilityProblem,

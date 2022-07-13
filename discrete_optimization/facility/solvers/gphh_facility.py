@@ -1,3 +1,5 @@
+"""Genetic programming based solver for facility location problem.
+"""
 import operator
 from enum import Enum
 from typing import List, Optional, Set
@@ -32,6 +34,12 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 
 
 def distance(problem: FacilityProblem, customer_index, **kwargs):
+    """Compute distance to facilitied for a given customer index
+
+    Args:
+        problem (FacilityProblem): problem instance
+        customer_index (int): customer index to compute distances to facilities
+    """
     return [
         problem.evaluate_customer_facility(
             facility=f, customer=problem.customers[customer_index]
@@ -41,6 +49,12 @@ def distance(problem: FacilityProblem, customer_index, **kwargs):
 
 
 def demand_minus_capacity(problem: FacilityProblem, customer_index, **kwargs):
+    """Compute demand-capacity feature for a given customer_index
+
+    Args:
+        problem (FacilityProblem): problem instance
+        customer_index (int): customer index to compute distances to facilities
+    """
     return [
         problem.customers[customer_index].demand - f.capacity
         for f in problem.facilities
@@ -48,10 +62,24 @@ def demand_minus_capacity(problem: FacilityProblem, customer_index, **kwargs):
 
 
 def capacity(problem: FacilityProblem, customer_index, **kwargs):
+    """Capacity feature.
+    Args:
+        problem (FacilityProblem): problem instance
+        customer_index (int): [unused] customer index to compute distances to facilities
+    """
     return [f.capacity for f in problem.facilities]
 
 
 def closest_facility(problem: FacilityProblem, customer_index, **kwargs):
+    """Closest facility feature for a given customer index.
+
+    Args:
+        problem (FacilityProblem): problem instance
+        customer_index (int): [unused] customer index to compute distances to facilities
+
+    Returns (int): closest facility index
+
+    """
     return min(
         range(len(problem.facilities)),
         key=lambda x: problem.evaluate_customer_facility(
@@ -61,14 +89,35 @@ def closest_facility(problem: FacilityProblem, customer_index, **kwargs):
 
 
 def index_min(list_or_array):
+    """Argmin operator that can be used in gp.
+
+    Args:
+        list_or_array: any list or array
+
+    Returns: index of minimum element of the array
+    """
     return np.argmin(list_or_array)
 
 
 def index_max(list_or_array):
+    """Argmax operator that can be used in gp.
+
+    Args:
+        list_or_array: any list or array
+
+    Returns: index of maximum element of the array
+    """
     return np.argmax(list_or_array)
 
 
 def argsort(list_or_array):
+    """Return the sorted array with indexes
+
+    Args:
+        list_or_array: any list or array
+
+    Returns: indexes of array by increasing order.
+    """
     return np.argsort(list_or_array)
 
 
@@ -109,6 +158,13 @@ feature_function_map = {
 
 
 class ParametersGPHH:
+    """Custom class to parametrize the GPHH solver.
+
+    Attributes:
+        set_feature: the set of feature to consider
+        set_primitves: set of operator/primitive to consider.
+    """
+
     def __init__(
         self,
         set_feature: Set[FeatureEnum],

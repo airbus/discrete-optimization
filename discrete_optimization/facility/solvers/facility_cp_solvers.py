@@ -69,6 +69,15 @@ class FacilitySolCP:
 
 
 class FacilityCP(MinizincCPSolver):
+    """CP solver linked with minizinc implementation of coloring problem.
+
+    Attributes:
+        facility_problem (FacilityProblem): facility problem instance to solve
+        params_objective_function (ParamsObjectiveFunction): params of the objective function
+        cp_solver_name (CPSolverName): backend solver to use with minizinc
+        silent_solve_error (bool): if True, raise a warning instead of an error if the underlying instance.solve() crashes
+        **args: unused
+    """
     def __init__(
         self,
         facility_problem: FacilityProblem,
@@ -97,6 +106,16 @@ class FacilityCP(MinizincCPSolver):
         self.custom_output_type = False
 
     def init_model(self, **kwargs):
+        """Initialise the minizinc instance to solve for a given instance.
+
+        Keyword Args:
+            cp_model (FacilityCPModel): CP model version
+            object_output (bool): specify if the solution are returned in a FacilitySolCP object
+                                  or native minizinc output.
+
+        Returns: None
+
+        """
         model_type = kwargs.get("cp_model", FacilityCPModel.DEFAULT_INT)
         object_output = kwargs.get("object_output", True)
         path = os.path.join(path_minizinc, file_dict[model_type])
