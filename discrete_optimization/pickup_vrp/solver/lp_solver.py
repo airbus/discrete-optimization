@@ -2105,7 +2105,7 @@ class ConstraintHandlerOrWarmStart:
                         )
                     )
                 )
-                j = random.randint(0, len(path) - 50)
+                j = random.randint(0, max(0, len(path) - 50))
                 for p in path:
                     if p in edges_to_constraint[v]:
                         edges_to_constraint[v].remove(p)
