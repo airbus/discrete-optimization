@@ -26,8 +26,6 @@ def test_tsp():
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
-    print(gpdp.graph.get_nodes())
-    print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
@@ -48,8 +46,6 @@ def test_tsp_simplified():
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
     gpdp = build_pruned_problem(gpdp, compute_graph=True)
-    print(gpdp.graph.get_nodes())
-    print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
@@ -69,8 +65,6 @@ def test_vrp():
     file_path = [f for f in files_available if "vrp_16_3_1" in f][0]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model, compute_graph=True)
-    print(gpdp.graph.get_nodes())
-    print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
@@ -92,8 +86,6 @@ def test_vrp_simplified():
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model, compute_graph=True)
     gpdp = build_pruned_problem(gpdp, compute_graph=True)
-    print(gpdp.graph.get_nodes())
-    print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
