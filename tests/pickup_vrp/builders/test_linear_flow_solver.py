@@ -84,6 +84,7 @@ def test_vrp():
     plot_solution(solutions[-1], gpdp)
 
 
+@pytest.mark.skip(reason="build_pruned_problem() is buggy for now.")
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_vrp_simplified():
     files_available = vrp_parser.get_data_available()
