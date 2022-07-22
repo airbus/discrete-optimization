@@ -55,7 +55,7 @@ def parse_input(input_data, start_index=0, end_index=0, vehicle_count=None):
 
 
 def parse_file(file_path, start_index=0, end_index=0, vehicle_count=None) -> VrpProblem:
-    with open(file_path, "r") as input_data_file:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         vrp_model = parse_input(
             input_data,

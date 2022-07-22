@@ -45,7 +45,7 @@ def parse(input_data) -> ColoringProblem:
 
 
 def parse_file(file_path) -> ColoringProblem:
-    with open(file_path, "r") as input_data_file:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         coloring_model = parse(input_data)
         return coloring_model

@@ -200,7 +200,7 @@ def parse_imopse(
 def parse_file(
     file_path, max_horizon=None, one_unit_per_task=True, preemptive=False
 ) -> Tuple[MS_RCPSPModel, Dict]:
-    with open(file_path, "r") as input_data_file:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         rcpsp_model, new_tame_to_original_task_id = parse_imopse(
             input_data, max_horizon, one_unit_per_task, preemptive=preemptive

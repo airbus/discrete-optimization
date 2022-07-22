@@ -48,7 +48,7 @@ def parse_input_data(input_data, start_index=None, end_index=None):
 
 def parse_file(file_path, start_index=None, end_index=None):
     # parse the input
-    with open(file_path, "r") as input_data_file:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         return parse_input_data(
             input_data, start_index=start_index, end_index=end_index
