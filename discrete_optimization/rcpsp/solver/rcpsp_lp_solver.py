@@ -1,6 +1,6 @@
 from enum import Enum
 from itertools import product
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
 
@@ -160,7 +160,7 @@ class LP_RCPSP(MilpSolver):
                 else:
                     start += [(self.x[j][t], 0)]
         self.model.start = start
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.constraints_partial_solutions = []
         if p_s is not None:
             constraints = []
@@ -483,7 +483,7 @@ class LP_MRCPSP(MilpSolver):
                 else:
                     start += [(self.x[k], 0)]
         self.model.start = start
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.constraints_partial_solutions = []
         if p_s is not None:
             constraints = []
@@ -799,7 +799,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
                     start += [(self.x[k], 0)]
                     self.x[k].start = 0
 
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.constraints_partial_solutions = []
         self.model.update()
         if p_s is not None:

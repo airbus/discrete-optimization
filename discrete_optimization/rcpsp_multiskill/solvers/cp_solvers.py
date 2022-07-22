@@ -3,7 +3,7 @@ import os
 from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
-from typing import Dict, Hashable, List, Set, Tuple, Union
+from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 
 from minizinc import Instance, Model, Solver, Status
 
@@ -630,7 +630,7 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         keys += ["succ"]
 
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
@@ -1169,7 +1169,7 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         instance["add_objective_makespan"] = args.get("add_objective_makespan", True)
         instance["ignore_sec_objective"] = args.get("ignore_sec_objective", True)
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
@@ -1585,7 +1585,7 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
         instance["add_objective_makespan"] = args.get("add_objective_makespan", True)
         instance["ignore_sec_objective"] = args.get("ignore_sec_objective", True)
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list

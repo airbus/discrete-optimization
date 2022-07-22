@@ -2,7 +2,7 @@ import json
 import os
 from dataclasses import InitVar
 from datetime import timedelta
-from typing import Dict, Hashable, List, Set, Tuple, Union
+from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 
 from deprecation import deprecated
 from minizinc import Instance, Model, Solver
@@ -168,7 +168,7 @@ class CP_RCPSP_MZN(CPSolver):
             "add_partial_solution_hard_constraint", True
         )
         custom_output_type = args.get("output_type", False)
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         model = Model(files_mzn[model_type])
         if custom_output_type:
             model.output_type = RCPSPSolCP
@@ -553,7 +553,7 @@ class CP_MRCPSP_MZN(CPSolver):
             keys += ["ressource_capacity_time"]
 
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
@@ -853,7 +853,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         instance["succ"] = succ
         keys += ["succ"]
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
@@ -1133,7 +1133,7 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
         instance["suc"] = suc
         keys += ["suc"]
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
@@ -1593,7 +1593,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
         instance["suc"] = suc
         keys += ["suc"]
         self.instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
@@ -1886,7 +1886,7 @@ class CP_MRCPSP_MZN_NOBOOL(CPSolver):
             task: self.rcpsp_model.return_index_task(task, offset=1)
             for task in self.rcpsp_model.tasks_list
         }
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         if p_s is not None and add_partial_solution_hard_constraint:
             constraint_strings = []
             if p_s.start_times is not None:
@@ -2132,7 +2132,7 @@ class CP_MRCPSP_MZN_MODES:
         ]
         instance["rtype"] = rtype
         self.instance: Instance = instance
-        p_s: Union[PartialSolution, None] = args.get("partial_solution", None)
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         if p_s is not None:
             constraint_strings = []
             if p_s.task_mode is not None:
