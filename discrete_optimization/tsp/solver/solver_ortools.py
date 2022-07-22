@@ -19,7 +19,7 @@ class TSP_ORtools(SolverDO):
         self,
         tsp_model: TSPModel,
         params_objective_function: ParamsObjectiveFunction,
-        *args
+        *args,
     ):
         self.tsp_model = tsp_model
         self.node_count = self.tsp_model.node_count
@@ -89,7 +89,7 @@ class TSP_ORtools(SolverDO):
     def solve(self, **kwargs):
         """Prints solution on console."""
         solution = self.routing.SolveWithParameters(self.search_parameters)
-        print("Objective: {} miles".format(solution.ObjectiveValue()))
+        print(f"Objective: {solution.ObjectiveValue()} miles")
         index = self.routing.Start(0)
         index_real = self.manager.IndexToNode(index)
         sol = [index_real]

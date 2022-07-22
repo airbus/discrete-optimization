@@ -224,8 +224,8 @@ class FacilityCP(SolverDO):
                             + ";\n"
                         )
                 child.add_string(
-                    f"solve :: int_search(facility_for_customer,"
-                    f" input_order, indomain_min, complete) minimize(objective);\n"
+                    "solve :: int_search(facility_for_customer,"
+                    " input_order, indomain_min, complete) minimize(objective);\n"
                 )
                 print("Solving... ", iteration)
                 res = child.solve(timeout=timedelta(seconds=limit_time_s))
