@@ -51,7 +51,7 @@ def parse_input_data(input_data, force_recompute_values: bool = False) -> Knapsa
 
 
 def parse_file(file_path, force_recompute_values=False) -> KnapsackModel:
-    with open(file_path, "r") as input_data_file:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         knapsack_model = parse_input_data(
             input_data, force_recompute_values=force_recompute_values
