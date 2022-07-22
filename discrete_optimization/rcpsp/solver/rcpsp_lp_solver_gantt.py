@@ -124,10 +124,8 @@ class LP_MRCPSP_GANTT(MilpSolver):
                 if needed_ressource:
                     for individual in self.ressource_id_usage[k]:
                         available = all(
-                            [
-                                self.rcpsp_model.calendar_details[k][individual][time]
-                                for time in range(start, end)
-                            ]
+                            self.rcpsp_model.calendar_details[k][individual][time]
+                            for time in range(start, end)
                         )
                         if available:
                             key_variable = (k, individual, task)
@@ -295,10 +293,8 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
                 if needed_ressource:
                     for individual in self.ressource_id_usage[k]:
                         available = all(
-                            [
-                                self.rcpsp_model.calendar_details[k][individual][time]
-                                for time in range(start, end)
-                            ]
+                            self.rcpsp_model.calendar_details[k][individual][time]
+                            for time in range(start, end)
                         )
                         if available:
                             key_variable = (k, individual, task)

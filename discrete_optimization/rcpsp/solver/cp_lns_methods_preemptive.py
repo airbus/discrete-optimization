@@ -705,9 +705,9 @@ def create_subproblems_random_and_predecessors(
             is not None
         ]
         for k in set(task_intersect):
-            task_intersect += list(
-                neighbor_fix_problem.graph.get_predecessors(k)
-            ) + list([l for l in neighbor_fix_problem.graph.get_neighbors(k)])
+            task_intersect += list(neighbor_fix_problem.graph.get_predecessors(k)) + [
+                l for l in neighbor_fix_problem.graph.get_neighbors(k)
+            ]
             if isinstance(
                 neighbor_fix_problem.problem, RCPSPModelSpecialConstraintsPreemptive
             ):

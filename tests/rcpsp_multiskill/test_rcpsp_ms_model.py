@@ -174,7 +174,7 @@ def test_partial_sgs(rcpsp_model_file, preemptive_version):
                     assert ends[i] == dict_[o].ends[i]
                 for i in range(len(employees)):
                     assert all(
-                        [e in dict_[o].resource_units_used[i] for e in employees[i]]
+                        e in dict_[o].resource_units_used[i] for e in employees[i]
                     )
 
     else:
@@ -188,8 +188,6 @@ def test_partial_sgs(rcpsp_model_file, preemptive_version):
                 assert dummy_solution.get_start_time(o) == dict_[o].start
                 assert dummy_solution.get_end_time(o) == dict_[o].end
                 assert all(
-                    [
-                        e in dict_[o].resource_units_used
-                        for e in dummy_solution.employee_usage.get(o, {})
-                    ]
+                    e in dict_[o].resource_units_used
+                    for e in dummy_solution.employee_usage.get(o, {})
                 )

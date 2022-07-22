@@ -279,12 +279,9 @@ class CPM(SolverDO):
                                 for task in current_schedule
                                 if current_schedule[task]["end_time"] == time
                                 and any(
-                                    [
-                                        res in ressource_blocking
-                                        for res in ressource_usage
-                                        if ressource_usage[res][time - 1].get(task, 0)
-                                        > 0
-                                    ]
+                                    res in ressource_blocking
+                                    for res in ressource_usage
+                                    if ressource_usage[res][time - 1].get(task, 0) > 0
                                 )
                             ]
                             if j not in unlock_task_transition:
