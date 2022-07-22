@@ -529,9 +529,7 @@ def plot_flights(
                     plt.pause(0.1)
                 if save_video:
                     fig.savefig(
-                        os.path.join(
-                            folder_to_save_video, name_file + "%0*d" % (4, index)
-                        )
+                        os.path.join(folder_to_save_video, f"{name_file}{index:04d}")
                     )
                     index += 1
             if len(allstat_to_plot) == 0:
@@ -633,9 +631,7 @@ def plot_flights(
                     plt.pause(0.1)
                 if save_video:
                     fig.savefig(
-                        os.path.join(
-                            folder_to_save_video, name_file + "%0*d" % (4, index)
-                        )
+                        os.path.join(folder_to_save_video, f"{name_file}{index:04d}")
                     )
                     index += 1
         if save_video:
