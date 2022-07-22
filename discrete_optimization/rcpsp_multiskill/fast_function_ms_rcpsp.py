@@ -929,16 +929,10 @@ def sgs_fast_ms_preemptive_some_special_constraints(
                     else:
                         break
                 if reached_t is not None and preemptive_tag[act_id]:
-                    if (
-                        True
-                        or reached_t + 1 - current_min_time
-                        >= duration_array[act_id, modes_array[act_id]] / 10
-                        or reached_end
-                    ):
-                        starts.append(current_min_time)
-                        ends.append(reached_t + 1)
-                        workers_av.append(indexes_present_worker_t)
-                        done_duration[act_id] += ends[-1] - starts[-1]
+                    starts.append(current_min_time)
+                    ends.append(reached_t + 1)
+                    workers_av.append(indexes_present_worker_t)
+                    done_duration[act_id] += ends[-1] - starts[-1]
 
                 if reached_end and not preemptive_tag[act_id]:
                     starts.append(current_min_time)
