@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Dict, List, NamedTuple
 
 import numpy as np
@@ -18,7 +19,8 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 
 
-class Item(NamedTuple):
+@dataclass(frozen=True)
+class Item:
     index: int
     value: float
     weight: float
@@ -285,7 +287,8 @@ class KnapsackSolutionMultidimensional(Solution):
         return self.list_taken == other.list_taken
 
 
-class ItemMultidimensional(NamedTuple):
+@dataclass(frozen=True)
+class ItemMultidimensional:
     index: int
     value: float
     weights: List[float]
