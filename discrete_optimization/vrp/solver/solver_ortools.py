@@ -375,7 +375,7 @@ class VrpORToolsSolver(SolverDO):
         self,
         problem: VrpProblem,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.problem = problem
         self.manager = None
@@ -457,7 +457,7 @@ class VrpORToolsSolver(SolverDO):
             vehicle_tours.append([])
             vehicle_tours_all.append([])
             index = self.routing.Start(vehicle_id)
-            plan_output = "Route for vehicle {}:\n".format(vehicle_id)
+            plan_output = f"Route for vehicle {vehicle_id}:\n"
             route_load = 0
             cnt = 0
             print(vehicle_id)
@@ -468,7 +468,7 @@ class VrpORToolsSolver(SolverDO):
                 vehicle_tours_all[-1] += [node_index]
                 cnt += 1
                 route_load += self.problem.customers[node_index].demand
-                plan_output += " {0} Load({1}) -> ".format(node_index, route_load)
+                plan_output += f" {node_index} Load({route_load}) -> "
                 previous_index = index
                 index = solution.Value(self.routing.NextVar(index))
                 route_distance += self.routing.GetArcCostForVehicle(

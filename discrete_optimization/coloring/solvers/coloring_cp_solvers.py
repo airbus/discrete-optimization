@@ -268,7 +268,7 @@ class ColoringCP(CPSolver):
                         + str(current_nb_color)
                         + ";\n"
                     )
-                child.add_string(f"solve minimize(obj);\n")
+                child.add_string("solve minimize(obj);\n")
                 res = child.solve(
                     timeout=timedelta(seconds=parameters_cp.TimeLimit),
                     intermediate_solutions=parameters_cp.intermediate_solution,

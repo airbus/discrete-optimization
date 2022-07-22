@@ -475,10 +475,7 @@ def create_examples_script(folder_to_save):
                             file=open(
                                 os.path.join(
                                     folder_to_save,
-                                    "gpdp_size{0}_cluster{1}_pickup{2}_pickuppercluster{3}_time{4}".format(
-                                        s, cl, picdel, pickupcluster, t
-                                    )
-                                    + ".pk",
+                                    f"gpdp_size{s}_cluster{cl}_pickup{picdel}_pickuppercluster{pickupcluster}_time{t}.pk",
                                 ),
                                 "wb",
                             ),

@@ -507,7 +507,7 @@ class ORToolsGPDP(SolverDO):
                             0,
                             10000000,
                             False,
-                            "interval_%i" % task,
+                            f"interval_{task}",
                         )
                         routing.solver().Add(
                             intervals[task].StartExpr() == starts[task]

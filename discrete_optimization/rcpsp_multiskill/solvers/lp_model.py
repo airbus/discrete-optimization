@@ -28,7 +28,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
         rcpsp_model: MS_RCPSPModel,
         lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.model: Model = None
@@ -69,9 +69,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
         times = range(max_duration)
         self.modes = {
             task: {
-                mode: self.model.add_var(
-                    name="mode_{},{}".format(task, mode), var_type=BINARY
-                )
+                mode: self.model.add_var(name=f"mode_{task},{mode}", var_type=BINARY)
                 for mode in self.rcpsp_model.mode_details[task]
             }
             for task in self.rcpsp_model.mode_details
@@ -81,7 +79,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
             task: {
                 mode: {
                     t: self.model.add_var(
-                        name="start_{},{},{}".format(task, mode, t), var_type=BINARY
+                        name=f"start_{task},{mode},{t}", var_type=BINARY
                     )
                     for t in times
                 }
@@ -112,13 +110,11 @@ class LP_Solver_MRSCPSP(MilpSolver):
             for task in self.modes
         }
         self.start_times_task = {
-            task: self.model.add_var(
-                name="start_time_{}".format(task), var_type=INTEGER
-            )
+            task: self.model.add_var(name=f"start_time_{task}", var_type=INTEGER)
             for task in self.start_times
         }
         self.end_times_task = {
-            task: self.model.add_var(name="end_time_{}".format(task), var_type=INTEGER)
+            task: self.model.add_var(name=f"end_time_{task}", var_type=INTEGER)
             for task in self.start_times
         }
 
@@ -173,9 +169,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
                             self.employee_usage[
                                 (employee, task, mode, t, s)
                             ] = self.model.add_var(
-                                name="employee_{}{}{}{}{}".format(
-                                    employee, task, mode, t, s
-                                ),
+                                name=f"employee_{employee}{task}{mode}{t}{s}",
                                 var_type=BINARY,
                             )
                             task_in_employee_usage.add(task)

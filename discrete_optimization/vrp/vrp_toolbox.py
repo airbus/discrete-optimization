@@ -87,7 +87,7 @@ def recompute_output(dictionary_path, customers):
 
 def output_result(vehicle_tours, obj, opt, vehicle_count, depot):
     # prepare the solution in the specified output format
-    outputData = "%.2f" % obj + " " + str(opt) + "\n"
+    outputData = f"{obj:.2f} {opt}\n"
     print(len(vehicle_tours))
     for v in range(0, vehicle_count):
         outputData += (

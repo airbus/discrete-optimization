@@ -3,8 +3,8 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 data_packages = [
-    "{}".format(p).replace("/", ".")
-    for p in list(Path("discrete_optimization").glob("**/minizinc"))
+    str(p).format(p).replace("/", ".")
+    for p in Path("discrete_optimization").glob("**/minizinc")
 ]
 
 tests_require = ["pytest", "pytest-cov", "scikit-learn>=1.0"]

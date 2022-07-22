@@ -46,7 +46,7 @@ class LP_RCPSP(MilpSolver):
         rcpsp_model: SingleModeRCPSPModel,
         lp_solver=LP_RCPSP_Solver.CBC,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.model: Model = None
@@ -110,7 +110,7 @@ class LP_RCPSP(MilpSolver):
         self.model = Model(sense=MINIMIZE, solver_name=self.lp_solver)
         self.x: List[List[Var]] = [
             [
-                self.model.add_var(name="x({},{})".format(task, t), var_type=BINARY)
+                self.model.add_var(name=f"x({task},{t})", var_type=BINARY)
                 for t in self.index_time
             ]
             for task in sorted_tasks
@@ -313,7 +313,7 @@ class LP_MRCPSP(MilpSolver):
         rcpsp_model: Union[RCPSPModel, MultiModeRCPSPModel],
         lp_solver=LP_RCPSP_Solver.CBC,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.model: Model = None
@@ -399,7 +399,7 @@ class LP_MRCPSP(MilpSolver):
             for mode in self.rcpsp_model.mode_details[task]:
                 for t in self.index_time:
                     self.x[(task, mode, t)] = self.model.add_var(
-                        name="x({},{}, {})".format(task, mode, t), var_type=BINARY
+                        name=f"x({task},{mode}, {t})", var_type=BINARY
                     )
                     variable_per_task[task] += [(task, mode, t)]
         self.model.objective = xsum(
@@ -596,7 +596,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
         rcpsp_model: MultiModeRCPSPModel,
         lp_solver=LP_RCPSP_Solver.CBC,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.model: gurobi.Model = None
@@ -687,7 +687,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             for mode in self.rcpsp_model.mode_details[task]:
                 for t in self.index_time:
                     self.x[(task, mode, t)] = self.model.addVar(
-                        name="x({},{}, {})".format(task, mode, t),
+                        name=f"x({task},{mode}, {t})",
                         vtype=gurobi.GRB.BINARY,
                     )
                     for tt in range(
@@ -767,7 +767,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
         self.starts = {}
         for task in sorted_tasks:
             self.starts[task] = self.model.addVar(
-                name="start({})".format(task),
+                name=f"start({task})",
                 vtype=gurobi.GRB.INTEGER,
                 lb=0,
                 ub=self.index_time[-1],
