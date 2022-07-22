@@ -555,24 +555,21 @@ class ORToolsGPDP(SolverDO):
                     )
                     == len(mandatory_nodes)
                 )
-            if not one_visit_per_cluster or True:
-                other_nodes = [
-                    manager.NodeToIndex(self.problem.index_nodes[n])
-                    for n in self.problem.mandatory_node_info
-                    if not self.problem.mandatory_node_info[n]
-                    and n
-                    not in {
-                        self.problem.origin_vehicle[v]
-                        for v in self.problem.origin_vehicle
-                    }
-                    and n
-                    not in {
-                        self.problem.target_vehicle[v]
-                        for v in self.problem.target_vehicle
-                    }
-                ]
-                if len(other_nodes) > 0:
-                    routing.AddDisjunction(other_nodes, 0, len(other_nodes))
+            other_nodes = [
+                manager.NodeToIndex(self.problem.index_nodes[n])
+                for n in self.problem.mandatory_node_info
+                if not self.problem.mandatory_node_info[n]
+                and n
+                not in {
+                    self.problem.origin_vehicle[v] for v in self.problem.origin_vehicle
+                }
+                and n
+                not in {
+                    self.problem.target_vehicle[v] for v in self.problem.target_vehicle
+                }
+            ]
+            if len(other_nodes) > 0:
+                routing.AddDisjunction(other_nodes, 0, len(other_nodes))
         include_node_vehicle = kwargs.get("include_node_vehicle", True)
         if include_node_vehicle:
             if self.problem.node_vehicle is not None:

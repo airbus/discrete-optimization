@@ -1638,8 +1638,6 @@ def rebuild_routine(
                         backup_min_dist = cost
             if len(edge_out_of_interest) == 0:
                 return None
-            if min_out_edge is None and False:
-                return None
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
@@ -2010,45 +2008,6 @@ def update_model_lazy(
                         >= 1
                     )
                 ]
-    if len_component_global > 1 and False:
-        constraints_order = {}
-        try:
-            variable_order = lp_solver.variable_order
-
-        except:
-            variable_order = {
-                node: lp_solver.model.add_var(
-                    var_type=mip.CONTINUOUS, name="order_" + str(node)
-                )
-                for node in edges_in_all_vehicles
-            }
-            for vehicle in range(lp_solver.problem.number_vehicle):
-                node_origin = lp_solver.problem.origin_vehicle[vehicle]
-                constraints_order[node_origin] = lp_solver.model.add_constr(
-                    variable_order[node_origin] == 0
-                )
-            lp_solver.variable_order = variable_order
-        c = max(components_global, key=lambda x: x[1])
-        for s in [c]:
-            use_big_m = True
-            for node in s[0]:
-                if node not in constraints_order:
-                    for vehicle, edge in edges_in_all_vehicles[node]:
-                        if edge[0] == edge[1]:
-                            continue
-                        if use_big_m:
-                            constraints_order[node] = lp_solver.model.add_lazy_constr(
-                                variable_order[node]
-                                >= variable_order[edge[0]]
-                                + 1
-                                - 1000
-                                * (
-                                    1
-                                    - lp_solver.variable_decisions["variables_edges"][
-                                        vehicle
-                                    ][edge]
-                                )
-                            )
     return list_constraints
 
 
