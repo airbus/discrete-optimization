@@ -67,7 +67,7 @@ def parse(input_data):
 
 
 def parse_file(file_path) -> FacilityProblem:
-    with open(file_path, "r") as input_data_file:
+    with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         facility_model = parse(input_data)
         return facility_model
