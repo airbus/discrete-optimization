@@ -1005,13 +1005,11 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
     unfeasible = False
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
         act_ids = look_for_task(
-            list(
-                [
-                    k
-                    for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
-                    if k in perm_extended
-                ]
-            )
+            [
+                k
+                for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
+                if k in perm_extended
+            ]
         )
         if len(act_ids) == 0:
             act_ids = look_for_task(perm_extended)
@@ -1399,13 +1397,11 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
 
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
         act_ids = look_for_task(
-            list(
-                [
-                    k
-                    for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
-                    if k in perm_extended
-                ]
-            )
+            [
+                k
+                for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
+                if k in perm_extended
+            ]
         )
         if len(act_ids) == 0:
             act_ids = look_for_task(perm_extended)
@@ -1693,13 +1689,11 @@ def generate_schedule_from_permutation_serial_sgs(
 
     while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
         act_ids = look_for_task(
-            list(
-                [
-                    k
-                    for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
-                    if k in perm_extended
-                ]
-            )
+            [
+                k
+                for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
+                if k in perm_extended
+            ]
         )
         act_ids = []
         if len(act_ids) == 0:
