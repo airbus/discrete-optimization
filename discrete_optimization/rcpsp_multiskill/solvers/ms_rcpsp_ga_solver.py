@@ -28,14 +28,20 @@ class GA_MSRCPSP_Solver(SolverDO):
         self, parameters_ga: ParametersAltGa = ParametersAltGa.default_msrcpsp(), **args
     ):
         ga_solver = AlternatingGa(
-            self.rcpsp_model,
+            problem=self.rcpsp_model,
             encodings=parameters_ga.encodings,
             objective_handling=parameters_ga.objective_handling,
             objectives=parameters_ga.objectives,
             objective_weights=parameters_ga.objective_weights,
             mutations=parameters_ga.mutations,
+            selections=parameters_ga.selections,
             crossovers=parameters_ga.crossovers,
             max_evals=parameters_ga.max_evals,
             sub_evals=parameters_ga.sub_evals,
+            pop_size=parameters_ga.pop_size,
+            mut_rate=parameters_ga.mut_rate,
+            crossover_rate=parameters_ga.crossover_rate,
+            tournament_size=parameters_ga.tournament_size,
+            deap_verbose=parameters_ga.deap_verbose,
         )
         return ga_solver.solve()

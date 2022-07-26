@@ -35,19 +35,19 @@ class AlternatingGa:
         self,
         problem: Problem,
         objectives: Union[str, List[str]],
-        encodings: Union[List[str], List[Dict[str, Any]]] = None,
+        encodings: Optional[Union[List[str], List[Dict[str, Any]]]] = None,
         mutations: Optional[Union[List[Mutation], List[DeapMutation]]] = None,
         crossovers: Optional[List[DeapCrossover]] = None,
         selections: Optional[List[DeapSelection]] = None,
         objective_handling: Optional[ObjectiveHandling] = None,
         objective_weights: Optional[List[float]] = None,
-        pop_size: int = None,
-        max_evals: int = None,
-        sub_evals: List[int] = None,
-        mut_rate: float = None,
-        crossover_rate: float = None,
-        tournament_size: float = None,
-        deap_verbose: bool = None,
+        pop_size: Optional[int] = None,
+        max_evals: int = 10000,
+        sub_evals: Optional[List[int]] = None,
+        mut_rate: Optional[float] = None,
+        crossover_rate: Optional[float] = None,
+        tournament_size: Optional[float] = None,
+        deap_verbose: bool = False,
     ):
         self.problem = problem
         self.encodings = encodings
@@ -82,14 +82,34 @@ class AlternatingGa:
                 self.encodings[i], self.problem.get_dummy_solution()
             )
         while count_evals < self.max_evals:
+            kwargs_ga: Dict[str, Any] = {}
+            if self.mutations is not None:
+                kwargs_ga["mutation"] = self.mutations[current_encoding_index]
+            if self.encodings is not None:
+                kwargs_ga["encoding"] = self.encodings[current_encoding_index]
+            if self.crossovers is not None:
+                kwargs_ga["crossover"] = self.crossovers[current_encoding_index]
+            if self.selections is not None:
+                kwargs_ga["selection"] = self.selections[current_encoding_index]
+            if self.sub_evals is not None:
+                kwargs_ga["max_evals"] = self.sub_evals[current_encoding_index]
+            if self.objective_handling is not None:
+                kwargs_ga["objective_handling"] = self.objective_handling
+            if self.pop_size is not None:
+                kwargs_ga["pop_size"] = self.pop_size
+            if self.mut_rate is not None:
+                kwargs_ga["mut_rate"] = self.mut_rate
+            if self.crossover_rate is not None:
+                kwargs_ga["crossover_rate"] = self.crossover_rate
+            if self.tournament_size is not None:
+                kwargs_ga["tournament_size"] = self.tournament_size
+
             ga_solver = Ga(
                 problem=self.problem,
-                encoding=self.encodings[current_encoding_index],
-                objective_handling=self.objective_handling,
                 objectives=self.objectives,
                 objective_weights=self.objective_weights,
-                mutation=self.mutations[current_encoding_index],
-                max_evals=self.sub_evals[current_encoding_index],
+                deap_verbose=self.deap_verbose,
+                **kwargs_ga
             )
             tmp_sol = ga_solver.solve().get_best_solution()
             count_evals += self.sub_evals[current_encoding_index]
