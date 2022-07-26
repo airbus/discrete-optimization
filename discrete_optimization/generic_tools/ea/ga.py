@@ -62,12 +62,12 @@ class Ga:
     def __init__(
         self,
         problem: Problem,
+        objectives: Union[str, List[str]],
         mutation: Union[Mutation, DeapMutation] = None,
         crossover: DeapCrossover = None,
         selection: DeapSelection = None,
         encoding: Optional[Union[str, Dict[str, Any]]] = None,
         objective_handling: Optional[ObjectiveHandling] = None,
-        objectives: Optional[Union[str, List[str]]] = None,
         objective_weights: Optional[List[float]] = None,
         pop_size: int = None,
         max_evals: int = None,
@@ -229,18 +229,21 @@ class Ga:
         else:
             self._objective_handling = objective_handling
 
-        self._objectives = objectives
+        if isinstance(objectives, str):
+            self._objectives = [objectives]
+        else:
+            self._objectives = objectives
         if (
-            isinstance(self._objectives, List) and len(self._objectives) > 1
-        ) and self._objective_handling == ObjectiveHandling.SINGLE:
+            len(self._objectives) > 1
+            and self._objective_handling == ObjectiveHandling.SINGLE
+        ):
             print(
                 "Many objectives specified but single objective handling, using the first objective in the dictionary"
             )
 
         self._objective_weights = objective_weights
-        if (
-            (self._objective_weights is None)
-            or self._objective_weights is not None
+        if (self._objective_weights is None) or (
+            self._objective_weights is not None
             and (
                 (
                     len(self._objective_weights) != len(self._objectives)
@@ -421,13 +424,7 @@ class Ga:
             int_vector, self._encoding_variable_name
         )
         if self._objective_handling == ObjectiveHandling.SINGLE:
-            if (self._objectives is None) or (
-                self._objectives[0] not in list(objective_values.keys())
-            ):
-                default_key = list(objective_values.keys())[0]
-                val = self._objectives[0] * objective_values[default_key]
-            else:
-                val = objective_values[self._objectives[0]]
+            val = objective_values[self._objectives[0]]
         elif self._objective_handling == "aggregate":
             val = sum(
                 [

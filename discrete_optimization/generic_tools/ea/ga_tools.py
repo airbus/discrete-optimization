@@ -15,7 +15,7 @@ class ParametersGa:
     selection: DeapSelection = None
     encoding: str = None
     objective_handling: ObjectiveHandling = None
-    objectives: Union[str, List[str]] = None
+    objectives: Union[str, List[str]]
     objective_weights: List[float] = None
     pop_size: int = None
     max_evals: int = None
@@ -79,7 +79,7 @@ class ParametersAltGa:
     selection: DeapSelection = None
     encodings: List[str] = None
     objective_handling: ObjectiveHandling = None
-    objectives: Union[str, List[str]] = None
+    objectives: Union[str, List[str]]
     objective_weights: List[float] = None
     pop_size: int = None
     max_evals: int = None
