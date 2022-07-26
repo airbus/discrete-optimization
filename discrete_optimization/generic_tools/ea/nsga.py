@@ -24,6 +24,20 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
+_default_crossovers = {
+    TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
+    TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
+    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
+    TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
+}
+
+_default_mutations = {
+    TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
+    TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
+    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
+    TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
+}
+
 
 class Nsga:
     """NSGA
@@ -43,71 +57,28 @@ class Nsga:
         self,
         problem: Problem,
         objectives: Union[str, List[str]],
-        mutation: Union[Mutation, DeapMutation] = None,
-        crossover: DeapCrossover = None,
-        selection: DeapSelection = None,
+        mutation: Optional[Union[Mutation, DeapMutation]] = None,
+        crossover: Optional[DeapCrossover] = None,
         encoding: Optional[Union[str, Dict[str, Any]]] = None,
         objective_weights: Optional[List[float]] = None,
-        pop_size: int = None,
-        max_evals: int = None,
-        mut_rate: float = None,
-        crossover_rate: float = None,
-        deap_verbose: bool = None,
+        pop_size: int = 100,
+        max_evals: Optional[int] = None,
+        mut_rate: float = 0.1,
+        crossover_rate: float = 0.9,
+        deap_verbose: bool = True,
     ):
-
-        self._default_crossovers = {
-            TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
-            TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
-            TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
-        }
-        self._default_mutations = {
-            TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
-            TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
-            TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
-        }
-        self._default_selection = DeapSelection.SEL_TOURNAMENT
-        self.params_objective_function = ParamsObjectiveFunction(
-            objective_handling=ObjectiveHandling.MULTI_OBJ,
-            objectives=objectives,
-            weights=objective_weights,
-            sense_function=ModeOptim.MAXIMIZATION,
-        )
-        self.evaluate_sol, _ = build_evaluate_function_aggregated(
-            problem=problem, params_objective_function=self.params_objective_function
-        )
-
         self.problem = problem
-        if pop_size is not None:
-            self._pop_size = pop_size
-        else:
-            self._pop_size = 100
-
+        self._pop_size = pop_size
         if max_evals is not None:
             self._max_evals = max_evals
         else:
             self._max_evals = 100 * self._pop_size
             print(
-                "No value specified for max_evals. Using the default 10*pop_size - This should really be set carefully"
+                "No value specified for max_evals. Using the default 100*pop_size - This should really be set carefully"
             )
-
-        if mut_rate is not None:
-            self._mut_rate = mut_rate
-        else:
-            self._mut_rate = 0.1
-
-        if crossover_rate is not None:
-            self._crossover_rate = crossover_rate
-        else:
-            self._crossover_rate = 0.9
-
-        self.problem = problem
-
-        if deap_verbose is not None:
-            self._deap_verbose = deap_verbose
-        else:
-            self._deap_verbose = True
+        self._mut_rate = mut_rate
+        self._crossover_rate = crossover_rate
+        self._deap_verbose = deap_verbose
 
         # set encoding
         register_solution: EncodingRegister = problem.get_attribute_register()
@@ -209,22 +180,27 @@ class Nsga:
             self._objectives = [objectives]
         else:
             self._objectives = objectives
-        self._objective_weights = objective_weights
-        if (
-            (self._objective_weights is None)
-            or self._objective_weights is not None
-            and (len(self._objective_weights) != len(self._objectives))
+        self._objective_weights: List[float]
+        if (objective_weights is None) or (
+            objective_weights is not None
+            and (len(objective_weights) != len(self._objectives))
         ):
             print(
                 "Objective weight issue: no weight given or size of weights and objectives lists mismatch. "
                 "Setting all weights to default 1 value."
             )
             self._objective_weights = [1 for i in range(len(self._objectives))]
-
-        if selection is None:
-            self._selection_type = self._default_selection
         else:
-            self._selection_type = selection
+            self._objective_weights = objective_weights
+        self.params_objective_function = ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.MULTI_OBJ,
+            objectives=self._objectives,
+            weights=self._objective_weights,
+            sense_function=ModeOptim.MAXIMIZATION,
+        )
+        self.evaluate_sol, _ = build_evaluate_function_aggregated(
+            problem=problem, params_objective_function=self.params_objective_function
+        )
 
         nobj = len(self._objectives)
         ref_points = tools.uniform_reference_points(nobj=nobj)
@@ -292,7 +268,7 @@ class Nsga:
 
         # Define crossover
         if crossover is None:
-            self._crossover = self._default_crossovers[self._encoding_type]
+            self._crossover = _default_crossovers[self._encoding_type]
         else:
             self._crossover = crossover
 
@@ -312,8 +288,9 @@ class Nsga:
             print("Crossover of specified type not handled!")
 
         # Define mutation
+        self._mutation: Union[Mutation, DeapMutation]
         if mutation is None:
-            self._mutation = self._default_mutations[self._encoding_type]
+            self._mutation = _default_mutations[self._encoding_type]
         else:
             self._mutation = mutation
 

@@ -45,6 +45,21 @@ class DeapCrossover(Enum):
     CX_PARTIALY_MATCHED = 5  # perm
 
 
+_default_crossovers = {
+    TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
+    TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
+    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
+    TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
+}
+
+_default_mutations = {
+    TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
+    TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
+    TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
+    TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
+}
+
+
 class Ga:
     """Single objective GA
 
@@ -63,70 +78,33 @@ class Ga:
         self,
         problem: Problem,
         objectives: Union[str, List[str]],
-        mutation: Union[Mutation, DeapMutation] = None,
-        crossover: DeapCrossover = None,
-        selection: DeapSelection = None,
+        mutation: Optional[Union[Mutation, DeapMutation]] = None,
+        crossover: Optional[DeapCrossover] = None,
+        selection: DeapSelection = DeapSelection.SEL_TOURNAMENT,
         encoding: Optional[Union[str, Dict[str, Any]]] = None,
-        objective_handling: Optional[ObjectiveHandling] = None,
+        objective_handling: ObjectiveHandling = ObjectiveHandling.SINGLE,
         objective_weights: Optional[List[float]] = None,
-        pop_size: int = None,
-        max_evals: int = None,
-        mut_rate: float = None,
-        crossover_rate: float = None,
-        tournament_size: float = None,
-        deap_verbose: bool = None,
-        initial_population: List[List] = None,
+        pop_size: int = 100,
+        max_evals: Optional[int] = None,
+        mut_rate: float = 0.1,
+        crossover_rate: float = 0.9,
+        tournament_size: float = 0.2,  # as a percentage of the population
+        deap_verbose: bool = True,
+        initial_population: Optional[List[List[Any]]] = None,
     ):
-
-        self._default_crossovers = {
-            TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
-            TypeAttribute.LIST_INTEGER: DeapCrossover.CX_ONE_POINT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapCrossover.CX_ONE_POINT,
-            TypeAttribute.PERMUTATION: DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
-        }
-        self._default_mutations = {
-            TypeAttribute.LIST_BOOLEAN: DeapMutation.MUT_FLIP_BIT,
-            TypeAttribute.LIST_INTEGER: DeapMutation.MUT_UNIFORM_INT,
-            TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: DeapMutation.MUT_UNIFORM_INT,
-            TypeAttribute.PERMUTATION: DeapMutation.MUT_SHUFFLE_INDEXES,
-        }
-        self._default_selection = DeapSelection.SEL_TOURNAMENT
-
         self.problem = problem
-        if pop_size is not None:
-            self._pop_size = pop_size
-        else:
-            self._pop_size = 100
-
+        self._pop_size = pop_size
         if max_evals is not None:
             self._max_evals = max_evals
         else:
             self._max_evals = 100 * self._pop_size
             print(
-                "No value specified for max_evals. Using the default 10*pop_size - This should really be set carefully"
+                "No value specified for max_evals. Using the default 100*pop_size - This should really be set carefully"
             )
-
-        if mut_rate is not None:
-            self._mut_rate = mut_rate
-        else:
-            self._mut_rate = 0.1
-
-        if crossover_rate is not None:
-            self._crossover_rate = crossover_rate
-        else:
-            self._crossover_rate = 0.9
-
-        self.problem = problem
-
-        if tournament_size is not None:
-            self._tournament_size = tournament_size
-        else:
-            self._tournament_size = 0.2  # as a percentage of the population
-
-        if deap_verbose is not None:
-            self._deap_verbose = deap_verbose
-        else:
-            self._deap_verbose = True
+        self._mut_rate = mut_rate
+        self._crossover_rate = crossover_rate
+        self._tournament_size = tournament_size
+        self._deap_verbose = deap_verbose
 
         self.initial_population = initial_population
 
@@ -241,12 +219,12 @@ class Ga:
                 "Many objectives specified but single objective handling, using the first objective in the dictionary"
             )
 
-        self._objective_weights = objective_weights
-        if (self._objective_weights is None) or (
-            self._objective_weights is not None
+        self._objective_weights: List[float]
+        if (objective_weights is None) or (
+            objective_weights is not None
             and (
                 (
-                    len(self._objective_weights) != len(self._objectives)
+                    len(objective_weights) != len(self._objectives)
                     and self._objective_handling == ObjectiveHandling.AGGREGATE
                 )
             )
@@ -256,11 +234,10 @@ class Ga:
                 "Setting all weights to default 1 value."
             )
             self._objective_weights = [1 for i in range(len(self._objectives))]
-
-        if selection is None:
-            self._selection_type = self._default_selection
         else:
-            self._selection_type = selection
+            self._objective_weights = objective_weights
+
+        self._selection_type = selection
 
         # DEAP toolbox setup
         self._toolbox = base.Toolbox()
@@ -340,7 +317,7 @@ class Ga:
 
         # Define crossover
         if crossover is None:
-            self._crossover = self._default_crossovers[self._encoding_type]
+            self._crossover = _default_crossovers[self._encoding_type]
         else:
             self._crossover = crossover
 
@@ -360,8 +337,9 @@ class Ga:
             print("Crossover of specified type not handled!")
 
         # Define mutation
+        self._mutation: Union[Mutation, DeapMutation]
         if mutation is None:
-            self._mutation = self._default_mutations[self._encoding_type]
+            self._mutation = _default_mutations[self._encoding_type]
         else:
             self._mutation = mutation
 
