@@ -3,6 +3,7 @@ import random
 from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
+from typing import Optional
 
 from minizinc import Instance, Model, Solver
 
@@ -165,7 +166,9 @@ class FacilityCP(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: ParametersCP = None, **kwargs) -> ResultStorage:
+    def solve(
+        self, parameters_cp: Optional[ParametersCP] = None, **kwargs
+    ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         if self.model is None:

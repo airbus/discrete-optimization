@@ -1,4 +1,5 @@
 from itertools import product
+from typing import Optional
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, xsum
 
@@ -363,7 +364,9 @@ class LP_Solver_MRSCPSP(MilpSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_milp: ParametersMilp, **args) -> ResultStorage:
+    def solve(
+        self, parameters_milp: Optional[ParametersMilp] = None, **args
+    ) -> ResultStorage:
         if self.model is None:
             import time
 
@@ -371,6 +374,8 @@ class LP_Solver_MRSCPSP(MilpSolver):
             t = time.time()
             self.init_model(greedy_start=False)
             print("LP model initialized...in ", time.time() - t, " seconds")
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         limit_time_s = parameters_milp.TimeLimit
         self.model.sol_pool_size = parameters_milp.PoolSolutions
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs

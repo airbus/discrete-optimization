@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from typing import Optional
 
 from minizinc import Instance, Model, Solver
 
@@ -76,7 +77,7 @@ class TSP_CP_Solver(SolverDO):
         instance["end"] = self.end_index + 1
         self.instance = instance
 
-    def solve(self, parameters_cp: ParametersCP = None, **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         max_time_seconds = parameters_cp.TimeLimit

@@ -3,6 +3,7 @@ import random
 from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
+from typing import Optional
 
 import networkx as nx
 import pymzn
@@ -144,9 +145,7 @@ class ColoringCP(CPSolver):
         )
         print("Successfully dumped data file ", file_name)
 
-    def retrieve_solutions(
-        self, result, parameters_cp: ParametersCP = ParametersCP.default()
-    ) -> ResultStorage:
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
         colors = []
         objectives = []
@@ -181,7 +180,9 @@ class ColoringCP(CPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: ParametersCP = None, **kwargs) -> ResultStorage:
+    def solve(
+        self, parameters_cp: Optional[ParametersCP] = None, **kwargs
+    ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         if self.model is None:
@@ -227,7 +228,7 @@ class ColoringCP(CPSolver):
         self,
         fraction_to_fix: float = 0.9,
         nb_iteration: int = 10,
-        parameters_cp: ParametersCP = None,
+        parameters_cp: Optional[ParametersCP] = None,
         **kwargs,
     ):
         if parameters_cp is None:

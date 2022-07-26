@@ -1,3 +1,5 @@
+from typing import Optional
+
 import mip
 import networkx as nx
 from mip import BINARY, INTEGER, xsum
@@ -195,9 +197,13 @@ class ColoringLP(MilpSolver):
             mode_optim=self.sense_optim,
         )
 
-    def solve(self, parameters_milp: ParametersMilp, **kwargs) -> ResultStorage:
+    def solve(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+    ) -> ResultStorage:
         if self.model is None:
             self.init_model(**kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
         self.model.optimize()
         n_solutions = self.model.SolCount
@@ -345,7 +351,9 @@ class ColoringLP_MIP(ColoringLP):
             mode_optim=self.sense_optim,
         )
 
-    def solve(self, parameters_milp: ParametersMilp = None, **kwargs) -> ResultStorage:
+    def solve(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+    ) -> ResultStorage:
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         if self.model is None:

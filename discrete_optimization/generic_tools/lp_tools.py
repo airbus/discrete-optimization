@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
+from typing import Optional
 
 import mip
 
@@ -65,5 +66,7 @@ class MilpSolver(SolverDO):
         ...
 
     @abstractmethod
-    def solve(self, parameters_milp: ParametersMilp, **args) -> ResultStorage:
+    def solve(
+        self, parameters_milp: Optional[ParametersMilp] = None, **args
+    ) -> ResultStorage:
         ...

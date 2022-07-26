@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 from mip import BINARY, MINIMIZE, Model, xsum
@@ -205,10 +205,12 @@ class LP_MRCPSP_GANTT(MilpSolver):
             }
 
     def solve(
-        self, parameters_milp: ParametersMilp = ParametersMilp.default(), **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         limit_time_s = parameters_milp.TimeLimit
         self.model.sol_pool_size = parameters_milp.PoolSolutions
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
@@ -446,10 +448,12 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
         return solutions
 
     def solve(
-        self, parameters_milp: ParametersMilp = ParametersMilp.default(), **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.modelSense = kwargs.get("sense", gurobi.GRB.MINIMIZE)
         self.model.setParam(
             gurobi.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions

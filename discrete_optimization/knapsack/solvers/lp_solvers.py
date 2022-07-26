@@ -1,5 +1,5 @@
 import random
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
 import matplotlib.pyplot as plt
 from mip import BINARY, MAXIMIZE, xsum
@@ -407,9 +407,11 @@ class LPKnapsack(MilpSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_milp: ParametersMilp, **args):
+    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **args):
         if self.model is None:
             self.init_model(**args)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         print("optimizing...")
         self.model.optimize(
             max_seconds=parameters_milp.TimeLimit,

@@ -4,6 +4,7 @@ Constraint programming common utilities and class that should be used by any sol
 """
 from abc import abstractmethod
 from enum import Enum
+from typing import Optional
 
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -154,5 +155,7 @@ class CPSolver(SolverDO):
         ...
 
     @abstractmethod
-    def solve(self, parameters_cp: ParametersCP, **args) -> ResultStorage:
+    def solve(
+        self, parameters_cp: Optional[ParametersCP] = None, **args
+    ) -> ResultStorage:
         ...

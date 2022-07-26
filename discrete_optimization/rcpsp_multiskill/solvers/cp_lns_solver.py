@@ -222,14 +222,16 @@ class LargeNeighborhoodSearchMSRCPSP(SolverDO):
 
     def solve(
         self,
-        parameters_cp: ParametersCP,
         nb_iteration_lns: int,
+        parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         **args
     ) -> ResultStorage:
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         return self.lns_solver.solve_lns(
             parameters_cp=parameters_cp,
             max_time_seconds=max_time_seconds,
