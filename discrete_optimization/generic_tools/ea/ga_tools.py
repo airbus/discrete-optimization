@@ -10,35 +10,21 @@ from discrete_optimization.generic_tools.ea.ga import (
 
 
 class ParametersGa:
-    mutation: Union[Mutation, DeapMutation] = None
-    crossover: DeapCrossover = None
-    selection: DeapSelection = None
-    encoding: str = None
-    objective_handling: ObjectiveHandling = None
-    objectives: Union[str, List[str]]
-    objective_weights: List[float] = None
-    pop_size: int = None
-    max_evals: int = None
-    mut_rate: float = None
-    crossover_rate: float = None
-    tournament_size: float = None
-    deap_verbose: bool = False
-
     def __init__(
         self,
-        mutation,
-        crossover,
-        selection,
-        encoding,
-        objective_handling,
-        objectives,
-        objective_weights,
-        pop_size,
-        max_evals,
-        mut_rate,
-        crossover_rate,
-        tournament_size,
-        deap_verbose,
+        mutation: Union[Mutation, DeapMutation],
+        crossover: DeapCrossover,
+        selection: DeapSelection,
+        encoding: str,
+        objective_handling: ObjectiveHandling,
+        objectives: Union[str, List[str]],
+        objective_weights: List[float],
+        pop_size: int,
+        max_evals: int,
+        mut_rate: float,
+        crossover_rate: float,
+        tournament_size: float,
+        deap_verbose: bool,
     ):
         self.mutation = mutation
         self.crossover = crossover
@@ -58,7 +44,7 @@ class ParametersGa:
     def default_rcpsp():
         return ParametersGa(
             mutation=DeapMutation.MUT_SHUFFLE_INDEXES,
-            crossover=DeapCrossover.CX_PARTIALY_MATCHED,
+            crossover=DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
             selection=DeapSelection.SEL_TOURNAMENT,
             encoding="rcpsp_permutation",
             objective_handling=ObjectiveHandling.AGGREGATE,
@@ -68,47 +54,32 @@ class ParametersGa:
             max_evals=10000,
             mut_rate=0.1,
             crossover_rate=0.9,
-            tournament_size=5,
-            deap_verbose=False,
+            tournament_size=0.2,
+            deap_verbose=True,
         )
 
 
 class ParametersAltGa:
-    mutations: List[Union[Mutation, DeapMutation]] = None
-    crossovers: List[DeapCrossover] = None
-    selection: DeapSelection = None
-    encodings: List[str] = None
-    objective_handling: ObjectiveHandling = None
-    objectives: Union[str, List[str]]
-    objective_weights: List[float] = None
-    pop_size: int = None
-    max_evals: int = None
-    mut_rate: float = None
-    crossover_rate: float = None
-    tournament_size: float = None
-    deap_verbose: bool = False
-    sub_evals: List[int] = None
-
     def __init__(
         self,
-        mutations,
-        crossovers,
-        selection,
-        encodings,
-        objective_handling,
-        objectives,
-        objective_weights,
-        pop_size,
-        max_evals,
-        mut_rate,
-        crossover_rate,
-        tournament_size,
-        deap_verbose,
-        sub_evals,
+        mutations: List[Union[Mutation, DeapMutation]],
+        crossovers: List[DeapCrossover],
+        selections: List[DeapSelection],
+        encodings: List[str],
+        objective_handling: ObjectiveHandling,
+        objectives: Union[str, List[str]],
+        objective_weights: List[float],
+        pop_size: int,
+        max_evals: int,
+        mut_rate: float,
+        crossover_rate: float,
+        tournament_size: float,
+        deap_verbose: bool,
+        sub_evals: List[int],
     ):
         self.mutations = mutations
         self.crossovers = crossovers
-        self.selection = selection
+        self.selections = selections
         self.encodings = encodings
         self.objective_handling = objective_handling
         self.objectives = objectives
@@ -125,8 +96,11 @@ class ParametersAltGa:
     def default_mrcpsp():
         return ParametersAltGa(
             mutations=[DeapMutation.MUT_UNIFORM_INT, DeapMutation.MUT_SHUFFLE_INDEXES],
-            crossovers=[DeapCrossover.CX_ONE_POINT, DeapCrossover.CX_PARTIALY_MATCHED],
-            selection=DeapSelection.SEL_TOURNAMENT,
+            crossovers=[
+                DeapCrossover.CX_ONE_POINT,
+                DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
+            ],
+            selections=[DeapSelection.SEL_TOURNAMENT, DeapSelection.SEL_TOURNAMENT],
             encodings=["rcpsp_modes_arity_fix", "rcpsp_permutation"],
             objective_handling=ObjectiveHandling.AGGREGATE,
             objectives=["makespan"],
@@ -135,8 +109,8 @@ class ParametersAltGa:
             max_evals=10000,
             mut_rate=0.1,
             crossover_rate=0.9,
-            tournament_size=5,
-            deap_verbose=False,
+            tournament_size=0.2,
+            deap_verbose=True,
             sub_evals=[1000, 1000],
         )
 
@@ -150,10 +124,14 @@ class ParametersAltGa:
             ],
             crossovers=[
                 DeapCrossover.CX_ONE_POINT,
-                DeapCrossover.CX_PARTIALY_MATCHED,
-                DeapCrossover.CX_PARTIALY_MATCHED,
+                DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
+                DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
             ],
-            selection=DeapSelection.SEL_TOURNAMENT,
+            selections=[
+                DeapSelection.SEL_TOURNAMENT,
+                DeapSelection.SEL_TOURNAMENT,
+                DeapSelection.SEL_TOURNAMENT,
+            ],
             encodings=[
                 "modes_arity_fix_from_0",
                 "priority_list_task",
@@ -166,7 +144,7 @@ class ParametersAltGa:
             max_evals=10000,
             mut_rate=0.1,
             crossover_rate=0.9,
-            tournament_size=5,
-            deap_verbose=False,
+            tournament_size=0.2,
+            deap_verbose=True,
             sub_evals=[500, 500, 500],
         )
