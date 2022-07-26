@@ -34,12 +34,12 @@ class AlternatingGa:
     def __init__(
         self,
         problem: Problem,
+        objectives: Union[str, List[str]],
         encodings: Union[List[str], List[Dict[str, Any]]] = None,
         mutations: Optional[Union[List[Mutation], List[DeapMutation]]] = None,
         crossovers: Optional[List[DeapCrossover]] = None,
         selections: Optional[List[DeapSelection]] = None,
         objective_handling: Optional[ObjectiveHandling] = None,
-        objectives: Optional[Union[str, List[str]]] = None,
         objective_weights: Optional[List[float]] = None,
         pop_size: int = None,
         max_evals: int = None,

@@ -42,11 +42,11 @@ class Nsga:
     def __init__(
         self,
         problem: Problem,
+        objectives: Union[str, List[str]],
         mutation: Union[Mutation, DeapMutation] = None,
         crossover: DeapCrossover = None,
         selection: DeapSelection = None,
         encoding: Optional[Union[str, Dict[str, Any]]] = None,
-        objectives: Optional[Union[str, List[str]]] = None,
         objective_weights: Optional[List[float]] = None,
         pop_size: int = None,
         max_evals: int = None,
@@ -205,7 +205,10 @@ class Nsga:
             + str(self.n)
         )
 
-        self._objectives = objectives
+        if isinstance(objectives, str):
+            self._objectives = [objectives]
+        else:
+            self._objectives = objectives
         self._objective_weights = objective_weights
         if (
             (self._objective_weights is None)
