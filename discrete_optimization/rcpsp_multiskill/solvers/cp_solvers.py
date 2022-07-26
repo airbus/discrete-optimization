@@ -654,9 +654,7 @@ class CP_MS_MRCPSP_MZN(CPSolver):
                 for s in strings:
                     self.instance.add_string(s)
 
-    def retrieve_solutions(
-        self, result, parameters_cp: ParametersCP = ParametersCP.default()
-    ):
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
         intermediate_solutions = parameters_cp.intermediate_solution
         best_solution = None
         best_makespan = -float("inf")
@@ -784,9 +782,11 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         timeout = parameters_cp.TimeLimit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
@@ -1200,9 +1200,7 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
                 for s in strings:
                     self.instance.add_string(s)
 
-    def retrieve_solutions(
-        self, result, parameters_cp: ParametersCP = ParametersCP.default()
-    ) -> ResultStorage:
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
         best_solution = None
         best_makespan = -float("inf")
@@ -1381,9 +1379,11 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         timeout = parameters_cp.TimeLimit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
@@ -2367,9 +2367,7 @@ class PrecomputeEmployeesForTasks:
 
         self.instance = instance
 
-    def retrieve_solutions(
-        self, result, parameters_cp: ParametersCP = ParametersCP.default()
-    ):
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
         intermediate_solutions = parameters_cp.intermediate_solution
         units_used = []
         workers_type_used = []
@@ -2417,9 +2415,11 @@ class PrecomputeEmployeesForTasks:
             )
         ]
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         timeout = parameters_cp.TimeLimit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(

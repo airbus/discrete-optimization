@@ -2,7 +2,7 @@ import os
 import random
 from dataclasses import InitVar
 from datetime import timedelta
-from typing import Any, Iterable, List
+from typing import Any, Iterable, List, Optional
 
 from minizinc import Instance, Model, Solver
 
@@ -119,7 +119,9 @@ class CPKnapsackMZN(CPSolver):
         instance["max_capacity"] = self.knapsack_model.max_capacity
         self.instance = instance
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         if self.instance is None:
             self.init_model(**args)
         result = self.instance.solve(
@@ -201,9 +203,11 @@ class CPKnapsackMZN2(CPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         result = self.instance.solve(
             timeout=timedelta(seconds=parameters_cp.TimeLimit),
             intermediate_solutions=parameters_cp.intermediate_solution,
@@ -376,9 +380,11 @@ class CPMultidimensionalSolver(CPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         result = self.instance.solve(
             timeout=timedelta(seconds=parameters_cp.TimeLimit),
             intermediate_solutions=parameters_cp.intermediate_solution,
@@ -476,9 +482,11 @@ class CPMultidimensionalMultiScenarioSolver(CPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         result = self.instance.solve(
             timeout=timedelta(seconds=parameters_cp.TimeLimit),
             intermediate_solutions=parameters_cp.intermediate_solution,

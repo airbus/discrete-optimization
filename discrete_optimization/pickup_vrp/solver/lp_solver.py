@@ -880,10 +880,12 @@ class LinearFlowSolver(SolverDO):
         return list_temporary_results
 
     def solve(
-        self, parameters_milp: ParametersMilp = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> List[TemporaryResult]:
         if self.model is None:
             self.init_model(**kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
         self.model.modelSense = grb.GRB.MINIMIZE
         self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions)
@@ -905,7 +907,7 @@ class LinearFlowSolver(SolverDO):
 
     def solve_iterative(
         self,
-        parameters_milp: ParametersMilp = None,
+        parameters_milp: Optional[ParametersMilp] = None,
         do_lns: bool = True,
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
@@ -1583,10 +1585,12 @@ class LinearFlowSolverVehicleType(SolverDO):
         return solutions
 
     def solve(
-        self, parameters_milp: ParametersMilp = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> List[TemporaryResult]:
         if self.model is None:
             self.init_model(**kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
         self.model.modelSense = grb.GRB.MINIMIZE
         self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions)
@@ -1604,13 +1608,17 @@ class LinearFlowSolverVehicleType(SolverDO):
             solutions = self.retrieve_solutions([0])
         return solutions
 
-    def solve_iterative(self, parameters_milp: ParametersMilp = None, **kwargs):
+    def solve_iterative(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+    ):
         finished = False
         do_lns = kwargs.get("do_lns", True)
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
         solutions: List[TemporaryResult] = self.solve(
             parameters_milp=parameters_milp, **kwargs
         )
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         if self.clusters_version:
             subtour = SubtourAddingConstraintCluster(
                 problem=self.problem, linear_solver=self
@@ -1698,8 +1706,10 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         super().__init__(problem)
 
     def solve(
-        self, parameters_milp: ParametersMilp = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> List[TemporaryResult]:
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
         self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
@@ -1841,7 +1851,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
 
     def solve_iterative(
         self,
-        parameters_milp: ParametersMilp = None,
+        parameters_milp: Optional[ParametersMilp] = None,
         do_lns: bool = True,
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,

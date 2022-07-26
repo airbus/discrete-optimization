@@ -4,7 +4,7 @@
 import os
 from dataclasses import InitVar
 from datetime import timedelta
-from typing import Hashable, Set
+from typing import Hashable, Optional, Set
 
 from minizinc import Instance, Model, Solver
 
@@ -333,9 +333,7 @@ class CP_MSPSP_MZN(CPSolver):
         )
         return [s]
 
-    def retrieve_solutions(
-        self, result, parameters_cp: ParametersCP = ParametersCP.default()
-    ):
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
         intermediate_solutions = parameters_cp.intermediate_solution
         best_solution = None
         best_makespan = -float("inf")
@@ -469,9 +467,11 @@ class CP_MSPSP_MZN(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: ParametersCP = ParametersCP.default(), **args):
+    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if self.instance is None:
             self.init_model(**args)
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         timeout = parameters_cp.TimeLimit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(

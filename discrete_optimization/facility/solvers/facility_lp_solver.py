@@ -1,5 +1,5 @@
 import random
-from typing import Iterable
+from typing import Iterable, Optional
 
 import mip
 import numpy as np
@@ -195,7 +195,7 @@ class LP_Facility_Solver(MilpSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_milp: ParametersMilp = None, **kwargs):
+    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         if self.model is None:
@@ -424,7 +424,7 @@ class LP_Facility_Solver_CBC(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_milp: ParametersMilp = None, **kwargs):
+    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         if self.model is None:
@@ -631,9 +631,11 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         self.description_constraint = {"Im lazy."}
         print("Initialized")
 
-    def solve(self, parameters_milp: ParametersMilp, **kwargs):
+    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
         if self.model is None:
             self.init_model(**kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
         self.model.max_mip_gap = parameters_milp.MIPGap
         self.model.optimize(

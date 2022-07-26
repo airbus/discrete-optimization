@@ -1,5 +1,5 @@
 import random
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import mip
@@ -767,10 +767,12 @@ class LinearFlowSolver(SolverDO):
         return list_temporary_results
 
     def solve(
-        self, parameters_milp: ParametersMilp = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> List[TemporaryResult]:
         if self.model is None:
             self.init_model(**kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.max_seconds = parameters_milp.TimeLimit
         self.model.sense = mip.MINIMIZE
         self.model.sol_pool_size = parameters_milp.PoolSolutions
@@ -789,7 +791,11 @@ class LinearFlowSolver(SolverDO):
             solutions = self.retrieve_solutions([0])
         return solutions
 
-    def solve_iterative(self, parameters_milp: ParametersMilp = None, **kwargs):
+    def solve_iterative(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+    ):
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         finished = False
         do_lns = kwargs.get("do_lns", True)
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
@@ -1304,8 +1310,10 @@ class LinearFlowSolverVehicleType(SolverDO):
         return solutions
 
     def solve(
-        self, parameters_milp: ParametersMilp = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> List[TemporaryResult]:
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
         self.model.max_seconds = parameters_milp.TimeLimit

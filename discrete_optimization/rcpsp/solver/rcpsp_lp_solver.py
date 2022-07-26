@@ -293,10 +293,12 @@ class LP_RCPSP(MilpSolver):
         )
 
     def solve(
-        self, parameters_milp: ParametersMilp = ParametersMilp.default(), **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> ResultStorage:
         if self.model is None:
             self.init_model()
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         limit_time_s = parameters_milp.TimeLimit
         self.model.sol_pool_size = parameters_milp.PoolSolutions
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
@@ -576,10 +578,12 @@ class LP_MRCPSP(MilpSolver):
         )
 
     def solve(
-        self, parameters_milp: ParametersMilp = ParametersMilp.default(), **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         limit_time_s = parameters_milp.TimeLimit
         self.model.sol_pool_size = parameters_milp.PoolSolutions
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
@@ -916,10 +920,12 @@ class LP_MRCPSP_GUROBI(MilpSolver):
         )
 
     def solve(
-        self, parameters_milp: ParametersMilp = ParametersMilp.default(), **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
         self.model.setParam("MIPGapAbs", parameters_milp.MIPGapAbs)
         self.model.setParam("PoolSolutions", parameters_milp.PoolSolutions)

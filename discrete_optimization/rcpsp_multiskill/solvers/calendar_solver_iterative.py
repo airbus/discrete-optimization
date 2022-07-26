@@ -513,13 +513,15 @@ class SolverWithCalendarIterative(SolverDO):
 
     def solve(
         self,
-        parameters_cp: ParametersCP,
         nb_iteration_lns: int,
+        parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         **args
     ) -> ResultStorage:
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:
             max_time_seconds = 3600 * 24  # One day
