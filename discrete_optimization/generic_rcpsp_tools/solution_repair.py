@@ -1,7 +1,8 @@
 import random
-from typing import Any, Dict, Hashable, Iterable, List, Union
+from typing import Any, Dict, Hashable, Iterable, List, Optional, Union
 
 import numpy as np
+from minizinc import Instance
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
@@ -447,9 +448,9 @@ class NeighborRepairProblems(ConstraintHandler):
             CP_MS_MRCPSP_MZN_PREEMPTIVE,
             CP_MRCPSP_MZN_PREEMMPTIVE,
         ],
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(

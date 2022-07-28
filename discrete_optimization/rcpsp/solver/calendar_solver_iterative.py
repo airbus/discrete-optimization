@@ -3,6 +3,7 @@ from typing import Any, Iterable, Optional, Union
 
 import numpy as np
 from deprecation import deprecated
+from minizinc import Instance
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
@@ -218,10 +219,12 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN],
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
+        if last_result_store is None:
+            raise ValueError("This constraint need last_result_store to be not None.")
         for s, f in list(result_storage.list_solution_fits):
             if "satisfy" in s.__dict__.keys() and s.satisfy:
                 last_result_store.list_solution_fits += [(s, f)]

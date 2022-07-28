@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Hashable, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
+from minizinc import Instance
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
@@ -1396,9 +1397,9 @@ class ConstraintHandlerScheduling(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: ANY_CP_SOLVER,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1538,9 +1539,9 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: ANY_CP_SOLVER,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1621,9 +1622,9 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: ANY_CP_SOLVER,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1712,9 +1713,9 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: ANY_CP_SOLVER,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(

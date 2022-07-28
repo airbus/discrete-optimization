@@ -1,6 +1,8 @@
 import random
 from enum import Enum
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
+
+from minizinc import Instance
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -77,9 +79,9 @@ class ConstraintHandlerFixColorsCP(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: CPSolver,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         range_node = range(1, self.problem.number_of_nodes + 1)
         current_solution = result_storage.get_best_solution()
@@ -93,22 +95,28 @@ class ConstraintHandlerFixColorsCP(ConstraintHandler):
             for i in range(self.problem.number_of_nodes)
         }
         current_nb_color = max(dict_color.values())
+        list_strings = []
         for i in range_node:
             if i in subpart_color and dict_color[i] < current_nb_color:
-                child_instance.add_string(
+                str1 = (
                     "constraint color_graph["
                     + str(i)
                     + "] == "
                     + str(dict_color[i])
                     + ";\n"
                 )
-            child_instance.add_string(
+                child_instance.add_string(str1)
+                list_strings.append(str1)
+            str1 = (
                 "constraint color_graph["
                 + str(i)
                 + "] <= "
                 + str(current_nb_color)
                 + ";\n"
             )
+            child_instance.add_string(str1)
+            list_strings.append(str1)
+        return list_strings
 
 
 class PostProcessSolutionColoring(PostProcessSolution):

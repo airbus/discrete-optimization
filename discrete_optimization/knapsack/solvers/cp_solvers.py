@@ -501,10 +501,12 @@ class KnapConstraintHandler(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: CPMultidimensionalMultiScenarioSolver,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
+        if last_result_store is None:
+            raise ValueError("This constraint need last_result_store to be not None.")
         strings = []
         nb_item = cp_solver.knapsack_model.list_problem[0].nb_items
         range_item = range(nb_item)

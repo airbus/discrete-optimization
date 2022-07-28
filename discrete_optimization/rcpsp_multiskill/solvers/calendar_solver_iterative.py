@@ -6,7 +6,7 @@ from typing import Any, Iterable, Optional, Union
 import networkx as nx
 import numpy as np
 from deprecation import deprecated
-from minizinc import Status
+from minizinc import Instance, Status
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
@@ -308,8 +308,9 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: Union[CP_MS_MRCPSP_MZN],
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
+        last_result_storage: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         solution, fit = result_storage.get_best_solution_fit()
         solution: MS_RCPSPSolution = solution
@@ -321,6 +322,7 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                     list_solution_fits=[(solution, fit)],
                     mode_optim=result_storage.mode_optim,
                 ),
+                last_result_storage,
             )
         ressource_breaks, constraints, constraints_employee = get_ressource_breaks(
             self.problem_calendar, solution
@@ -424,7 +426,7 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
                 list_solution_fits=satisfiable, mode_optim=result_storage.mode_optim
             )
             self.other_constraint.adding_constraint_from_results_store(
-                cp_solver, child_instance, res
+                cp_solver, child_instance, res, last_result_storage
             )
         return ["req"] + list_strings
 
