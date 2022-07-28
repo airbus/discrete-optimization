@@ -29,6 +29,7 @@ setup(
         "tqdm>=4.62.3",
         "sortedcontainers>=2.4",
         "deprecation",
+        "typing-extensions>=4.0",
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},
