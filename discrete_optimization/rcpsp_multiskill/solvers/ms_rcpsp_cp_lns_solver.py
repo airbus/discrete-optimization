@@ -1,8 +1,9 @@
 import random
 from enum import Enum
-from typing import Any, Iterable, List
+from typing import Any, Iterable, List, Optional
 
 import numpy as np
+from minizinc import Instance
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
@@ -50,9 +51,9 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: CP_MS_MRCPSP_MZN,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         r = random.random()
         if r <= 0.2:
@@ -238,9 +239,9 @@ class ConstraintHandlerMix(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: CP_MS_MRCPSP_MZN,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         new_fitness = result_storage.get_best_solution_fit()[1]
         if self.last_index_param is not None:
@@ -282,7 +283,7 @@ class ConstraintHandlerMix(ConstraintHandler):
         self.last_index_param = choice
         self.status[self.last_index_param]["nb_usage"] += 1
         return ch.adding_constraint_from_results_store(
-            cp_solver, child_instance, result_storage
+            cp_solver, child_instance, result_storage, last_result_store
         )
 
     def remove_constraints_from_previous_iteration(

@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Any, Iterable, List, Optional
 
 import numpy as np
-from minizinc import Status
+from minizinc import Instance, Status
 
 from discrete_optimization.generic_tools.cp_tools import CPSolver, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
@@ -30,9 +30,9 @@ class ConstraintHandler:
     def adding_constraint_from_results_store(
         self,
         cp_solver: CPSolver,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         ...
 
@@ -394,9 +394,9 @@ class ConstraintHandlerMix(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: CPSolver,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         new_fitness = result_storage.get_best_solution_fit()[1]
         if self.last_index_param is not None:

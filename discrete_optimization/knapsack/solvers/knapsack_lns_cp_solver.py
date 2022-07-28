@@ -1,5 +1,7 @@
 import random
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
+
+from minizinc import Instance
 
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.knapsack.knapsack_model import (
@@ -19,9 +21,9 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: CPKnapsackMZN2,
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         subpart_item = set(
             random.sample(

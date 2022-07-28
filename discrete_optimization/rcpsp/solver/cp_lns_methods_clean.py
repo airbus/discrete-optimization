@@ -1,6 +1,7 @@
-from typing import Any, Iterable, List, Union
+from typing import Any, Iterable, List, Optional, Union
 
 from deprecation import deprecated
+from minizinc import Instance
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
@@ -84,9 +85,9 @@ class NeighborSubproblem(ConstraintHandler):
             CP_MRCPSP_MZN,
             CP_MRCPSP_MZN_PREEMMPTIVE,
         ],
-        child_instance,
+        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: ResultStorage = None,
+        last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
