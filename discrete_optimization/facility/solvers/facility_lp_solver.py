@@ -177,12 +177,11 @@ class LP_Facility_Solver(MilpSolver):
             solution = [0] * self.facility_problem.customer_count
             self.model.params.SolutionNumber = s
             for key in self.variable_decision["x"]:
-                try:
-                    value = self.variable_decision["x"][key].getAttr("Xn")
-                except:
-                    value = self.variable_decision["x"][
-                        key
-                    ]  # To deal with already fixed variable.
+                variable_decision_key = self.variable_decision["x"][key]
+                if not isinstance(variable_decision_key, int):
+                    value = variable_decision_key.getAttr("Xn")
+                else:
+                    value = variable_decision_key
                 if value >= 0.5:
                     f = key[0]
                     c = key[1]
@@ -232,17 +231,15 @@ class LP_Facility_Solver(MilpSolver):
         for key in x_var:
             f, c = key
             if f == dict_f_start[c]:
-                try:
-                    x_var[f, c].start = 1
-                    x_var[f, c].varhintval = 1
-                except:
-                    pass
+                x_var_fc = x_var[f, c]
+                if not isinstance(x_var_fc, int):
+                    x_var_fc.start = 1
+                    x_var_fc.varhintval = 1
             else:
-                try:
-                    x_var[f, c].start = 0
-                    x_var[f, c].varhintval = 0
-                except:
-                    pass
+                x_var_fc = x_var[f, c]
+                if not isinstance(x_var_fc, int):
+                    x_var_fc.start = 0
+                    x_var_fc.varhintval = 0
             if c in dict_f_fixed:
                 if f == dict_f_fixed[c]:
                     try:
@@ -407,12 +404,11 @@ class LP_Facility_Solver_CBC(SolverDO):
     def retrieve(self) -> ResultStorage:
         solution = [0] * self.facility_problem.customer_count
         for key in self.variable_decision["x"]:
-            try:
-                value = self.variable_decision["x"][key].solution_value()
-            except:
-                value = self.variable_decision["x"][
-                    key
-                ]  # To deal with already fixed variable.
+            variable_decision_key = self.variable_decision["x"][key]
+            if not isinstance(variable_decision_key, int):
+                value = variable_decision_key.solution_value()
+            else:
+                value = variable_decision_key
             if value >= 0.5:
                 f = key[0]
                 c = key[1]
@@ -651,10 +647,11 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         solution = [0] * self.facility_problem.customer_count
         for key in self.variable_decision["x"]:
-            try:
-                value = self.variable_decision["x"][key].x
-            except:
-                value = self.variable_decision["x"][key]
+            variable_decision_key = self.variable_decision["x"][key]
+            if not isinstance(variable_decision_key, int):
+                value = variable_decision_key.x
+            else:
+                value = variable_decision_key
             if value >= 0.5:
                 f = key[0]
                 c = key[1]
@@ -687,17 +684,15 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         for key in x_var:
             f, c = key
             if f == dict_f_start[c]:
-                try:
-                    x_var[f, c].start = 1
-                    x_var[f, c].varhintval = 1
-                except:
-                    pass
+                x_var_fc = x_var[f, c]
+                if not isinstance(x_var_fc, int):
+                    x_var_fc.start = 1
+                    x_var_fc.varhintval = 1
             else:
-                try:
-                    x_var[f, c].start = 0
-                    x_var[f, c].varhintval = 0
-                except:
-                    pass
+                x_var_fc = x_var[f, c]
+                if not isinstance(x_var_fc, int):
+                    x_var_fc.start = 0
+                    x_var_fc.varhintval = 0
             if c in dict_f_fixed:
                 if f == dict_f_fixed[c]:
                     try:
