@@ -36,7 +36,7 @@ path_minizinc = os.path.abspath(
 )
 
 
-class ColotingCPSolution:
+class ColoringCPSolution:
     objective: int
     __output_item: InitVar[str] = None
 
@@ -103,7 +103,7 @@ class ColoringCP(CPSolver):
         path = os.path.join(path_minizinc, file_dict[model_type])
         self.model = Model(path)
         if object_output:
-            self.model.output_type = ColotingCPSolution
+            self.model.output_type = ColoringCPSolution
             self.custom_output_type = True
         solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
         instance = Instance(solver, self.model)
