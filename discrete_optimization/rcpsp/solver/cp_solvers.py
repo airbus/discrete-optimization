@@ -1,6 +1,5 @@
 import json
 import os
-from dataclasses import InitVar
 from datetime import timedelta
 from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 
@@ -77,7 +76,7 @@ files_mzn = {
 
 class RCPSPSolCP:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
@@ -1764,7 +1763,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
 
 class MRCPSP_Result:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective

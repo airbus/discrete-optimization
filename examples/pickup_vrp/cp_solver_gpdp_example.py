@@ -1,10 +1,9 @@
 import math
 import os
 import random
-from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
-from typing import Tuple
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,7 +48,7 @@ files_mzn = {
 
 class GPDPOutput:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective

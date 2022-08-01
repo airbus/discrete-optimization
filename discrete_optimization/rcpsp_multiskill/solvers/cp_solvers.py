@@ -1,6 +1,5 @@
 import math
 import os
-from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
 from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
@@ -168,7 +167,7 @@ def add_fake_task_cp_data(
 
 class MS_RCPSPSolCP:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective

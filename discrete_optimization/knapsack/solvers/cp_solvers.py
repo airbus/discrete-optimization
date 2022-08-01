@@ -1,6 +1,5 @@
 import os
 import random
-from dataclasses import InitVar
 from datetime import timedelta
 from typing import Any, Iterable, List, Optional
 
@@ -33,7 +32,7 @@ this_path = os.path.dirname(os.path.abspath(__file__))
 
 class KnapsackSol:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective

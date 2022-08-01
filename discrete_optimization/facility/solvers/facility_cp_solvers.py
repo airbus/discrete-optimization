@@ -1,6 +1,5 @@
 import os
 import random
-from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
 from typing import Optional
@@ -50,7 +49,7 @@ file_dict = {
 
 class FacilitySolCP:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
