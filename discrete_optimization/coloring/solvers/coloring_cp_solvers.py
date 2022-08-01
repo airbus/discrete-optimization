@@ -1,6 +1,5 @@
 import os
 import random
-from dataclasses import InitVar
 from datetime import timedelta
 from enum import Enum
 from typing import Optional
@@ -38,7 +37,7 @@ path_minizinc = os.path.abspath(
 
 class ColoringCPSolution:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective

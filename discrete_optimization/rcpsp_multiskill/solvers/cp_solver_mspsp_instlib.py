@@ -2,7 +2,6 @@
 # https://github.com/youngkd/MSPSP-InstLib
 
 import os
-from dataclasses import InitVar
 from datetime import timedelta
 from typing import Hashable, Optional, Set
 
@@ -46,7 +45,7 @@ files_mzn = {
 
 class MS_RCPSPSolCP:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective

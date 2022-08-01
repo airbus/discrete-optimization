@@ -1,5 +1,4 @@
 import os
-from dataclasses import InitVar
 from datetime import timedelta
 from typing import List, Optional, Union
 
@@ -31,7 +30,7 @@ files_mzn = {
 
 class RCPSPSolCP:
     objective: int
-    __output_item: InitVar[str] = None
+    __output_item: Optional[str] = None
 
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
