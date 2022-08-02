@@ -1,12 +1,13 @@
 import random
 from enum import Enum
-from typing import Any, Iterable
+from typing import Any, Dict, Hashable, Mapping
 
 import mip
 
 from discrete_optimization.facility.facility_model import FacilityProblem
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver_PyMip,
+    MilpSolver,
     MilpSolverName,
 )
 from discrete_optimization.facility.solvers.greedy_solvers import (
@@ -74,8 +75,18 @@ class ConstraintHandlerFacility(ConstraintHandler):
         self.skip_first_iter = skip_first_iter
 
     def adding_constraint_from_results_store(
-        self, milp_solver: LP_Facility_Solver_PyMip, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+        self, milp_solver: MilpSolver, result_storage: ResultStorage
+    ) -> Mapping[Hashable, Any]:
+        if not isinstance(milp_solver, LP_Facility_Solver_PyMip):
+            raise ValueError(
+                "milp_solver must a LP_Facility_Solver_PyMip for this constraint."
+            )
+        if milp_solver.model is None:  # for mypy
+            milp_solver.init_model()
+            if milp_solver.model is None:
+                raise RuntimeError(
+                    "milp_solver.model must be not None after calling milp_solver.init_model()."
+                )
         if self.iter == 0 and self.skip_first_iter:
             print("Dummy : ")
             print(self.problem.evaluate(result_storage.get_best_solution_fit()[0]))
@@ -122,10 +133,18 @@ class ConstraintHandlerFacility(ConstraintHandler):
         return lns_constraint
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_Facility_Solver_PyMip, previous_constraints: Iterable[Any]
+        self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
     ):
-        milp_solver.model.remove(
-            [previous_constraints[k] for k in previous_constraints]
-        )
+        if not isinstance(milp_solver, LP_Facility_Solver_PyMip):
+            raise ValueError(
+                "milp_solver must a LP_Facility_Solver_PyMip for this constraint."
+            )
+        if milp_solver.model is None:  # for mypy
+            milp_solver.init_model()
+            if milp_solver.model is None:
+                raise RuntimeError(
+                    "milp_solver.model must be not None after calling milp_solver.init_model()."
+                )
+        milp_solver.model.remove(list(previous_constraints.values()))
         if milp_solver.milp_solver_name == MilpSolverName.GRB:
             milp_solver.model.solver.update()

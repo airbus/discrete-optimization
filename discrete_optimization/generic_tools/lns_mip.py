@@ -1,6 +1,6 @@
 import time
 from abc import abstractmethod
-from typing import Any, Iterable, Optional
+from typing import Any, Hashable, Mapping, Optional
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -19,12 +19,12 @@ class ConstraintHandler:
     @abstractmethod
     def adding_constraint_from_results_store(
         self, milp_solver: MilpSolver, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+    ) -> Mapping[Hashable, Any]:
         ...
 
     @abstractmethod
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: MilpSolver, previous_constraints: Iterable[Any]
+        self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
     ):
         ...
 

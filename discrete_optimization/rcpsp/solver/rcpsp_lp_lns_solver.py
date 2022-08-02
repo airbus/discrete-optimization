@@ -1,6 +1,6 @@
 import random
 from enum import Enum
-from typing import Any, Iterable, Union
+from typing import Any, Hashable, Mapping, Union
 
 import numpy as np
 
@@ -149,7 +149,7 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self, milp_solver: LP_RCPSP, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+    ) -> Mapping[Hashable, Any]:
 
         nb_jobs = self.problem.n_jobs + 2
         constraints_dict = {}
@@ -193,7 +193,7 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_RCPSP_Solver, previous_constraints: Iterable[Any]
+        self, milp_solver: LP_RCPSP_Solver, previous_constraints: Mapping[Hashable, Any]
     ):
         milp_solver.model.remove(previous_constraints["fix_start_time"])
         if milp_solver.lp_solver == LP_RCPSP_Solver.GRB:
@@ -215,7 +215,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self, milp_solver: LP_RCPSP, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+    ) -> Mapping[Hashable, Any]:
         constraints_dict = {}
         current_solution, fit = result_storage.get_best_solution_fit()
         # Starting point :
@@ -268,7 +268,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_RCPSP_Solver, previous_constraints: Iterable[Any]
+        self, milp_solver: LP_RCPSP_Solver, previous_constraints: Mapping[Hashable, Any]
     ):
         milp_solver.model.remove(previous_constraints["range_start_time"])
         if milp_solver.lp_solver == LP_RCPSP_Solver.GRB:
@@ -290,7 +290,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self, milp_solver: LP_MRCPSP, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+    ) -> Mapping[Hashable, Any]:
         current_solution, fit = result_storage.get_best_solution_fit()
         current_solution: RCPSPSolution = current_solution
         st = milp_solver.start_solution
@@ -354,7 +354,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_MRCPSP, previous_constraints: Iterable[Any]
+        self, milp_solver: LP_MRCPSP, previous_constraints: Mapping[Hashable, Any]
     ):
         milp_solver.model.remove(previous_constraints["range_start_time"])
         if milp_solver.lp_solver == LP_RCPSP_Solver.GRB:
@@ -376,7 +376,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self, milp_solver: LP_MRCPSP_GUROBI, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+    ) -> Mapping[Hashable, Any]:
         current_solution, fit = result_storage.get_best_solution_fit()
         st = milp_solver.start_solution
         if (
@@ -438,7 +438,9 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_MRCPSP_GUROBI, previous_constraints: Iterable[Any]
+        self,
+        milp_solver: LP_MRCPSP_GUROBI,
+        previous_constraints: Mapping[Hashable, Any],
     ):
         milp_solver.model.remove(previous_constraints.get("range_start_time", []))
         milp_solver.model.update()

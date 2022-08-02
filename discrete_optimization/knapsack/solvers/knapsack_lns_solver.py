@@ -1,6 +1,6 @@
 import random
 from enum import Enum
-from typing import Any, Iterable
+from typing import Any, Hashable, Mapping
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -68,7 +68,7 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self, milp_solver: LPKnapsack, result_storage: ResultStorage
-    ) -> Iterable[Any]:
+    ) -> Mapping[Hashable, Any]:
         subpart_item = set(
             random.sample(
                 range(self.problem.nb_items),
@@ -97,10 +97,8 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
         return lns_constraint
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LPKnapsack, previous_constraints: Iterable[Any]
+        self, milp_solver: LPKnapsack, previous_constraints: Mapping[Hashable, Any]
     ):
-        milp_solver.model.remove(
-            [previous_constraints[k] for k in previous_constraints]
-        )
+        milp_solver.model.remove(list(previous_constraints.values()))
         if milp_solver.milp_solver_name == MilpSolverName.GRB:
             milp_solver.model.solver.update()
