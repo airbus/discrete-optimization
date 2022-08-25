@@ -1,12 +1,21 @@
-from discrete_optimization.generic_tools.do_problem import Problem, TypeAttribute
+from discrete_optimization.generic_tools.do_problem import (
+    EncodingRegister,
+    TypeAttribute,
+)
 
 
-def get_attribute_for_type(problem: Problem, type_attribute: TypeAttribute):
-    register = problem.get_attribute_register()
+def get_attribute_for_type(
+    register: EncodingRegister, type_attribute: TypeAttribute
+) -> str:
     attributes = [
         k
         for k in register.dict_attribute_to_type
         for t in register.dict_attribute_to_type[k]["type"]
         if t == type_attribute
     ]
-    return attributes
+    if len(attributes) > 0:
+        return attributes[0]
+    else:
+        raise ValueError(
+            f"The encoding register must have at least one attribute of type {type_attribute}."
+        )

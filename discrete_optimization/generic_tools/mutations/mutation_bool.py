@@ -1,4 +1,4 @@
-from typing import List
+from typing import Iterable, Optional
 
 import numpy as np
 
@@ -14,7 +14,7 @@ from discrete_optimization.generic_tools.mutations.mutation_util import (
 
 
 class BitFlipMove(LocalMove):
-    def __init__(self, attribute, list_index_flip: List[int]):
+    def __init__(self, attribute, list_index_flip: Iterable[int]):
         self.attribute = attribute
         self.list_index_flip = list_index_flip
 
@@ -34,20 +34,21 @@ class MutationBitFlip(Mutation):
         return MutationBitFlip(problem, **kwargs)
 
     def __init__(
-        self, problem: Problem, attribute: str = None, probability_flip: float = 0.1
+        self,
+        problem: Problem,
+        attribute: Optional[str] = None,
+        probability_flip: float = 0.1,
     ):
         self.problem = problem
-        self.attribute = attribute
         self.probability_flip = probability_flip
+        register = problem.get_attribute_register()
         if attribute is None:
-            attributes = get_attribute_for_type(
-                self.problem, TypeAttribute.LIST_BOOLEAN
+            self.attribute = get_attribute_for_type(
+                register, TypeAttribute.LIST_BOOLEAN
             )
-            if len(attributes) > 0:
-                self.attribute = attributes[0]
-        self.length = problem.get_attribute_register().dict_attribute_to_type[
-            self.attribute
-        ]["n"]
+        else:
+            self.attribute = attribute
+        self.length = register.dict_attribute_to_type[self.attribute]["n"]
 
     def mutate(self, solution: Solution):
         indexes = np.where(np.random.random(self.length) <= self.probability_flip)

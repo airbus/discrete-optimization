@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
@@ -12,6 +12,9 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeAttribute,
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
+)
+from discrete_optimization.generic_tools.mutations.mutation_util import (
+    get_attribute_for_type,
 )
 
 
@@ -29,39 +32,47 @@ class MutationIntegerSpecificArity(Mutation):
     def __init__(
         self,
         problem: Problem,
-        attribute: str = None,
-        arities: List[int] = None,
+        attribute: Optional[str] = None,
+        arities: Optional[List[int]] = None,
         probability_flip: float = 0.1,
         min_value: int = 1,
     ):
         self.problem = problem
-        self.attribute = attribute
-        self.arities = arities
         self.probability_flip = probability_flip
-        self.lows = None
-        self.ups = None
-        if self.attribute is None:
-            register = problem.get_attribute_register()
-            attributes = [
-                (k, register.dict_attribute_to_type[k]["name"])
-                for k in register.dict_attribute_to_type
-                for t in register.dict_attribute_to_type[k]["type"]
-                if t == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY
-            ]
-            self.attribute = attributes[0][1]
-            self.arities = register.dict_attribute_to_type[attributes[0][0]]["arities"]
-            self.lows = lower_bound_vector_encoding_from_dict(
-                register.dict_attribute_to_type[attributes[0][0]]
+        lows = None
+        ups = None
+        register = problem.get_attribute_register()
+        if attribute is None:
+            attribute_key = get_attribute_for_type(
+                register, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY
             )
-            self.ups = upper_bound_vector_encoding_from_dict(
-                register.dict_attribute_to_type[attributes[0][0]]
+            self.attribute = register.dict_attribute_to_type[attribute_key]["name"]
+            arities = register.dict_attribute_to_type[attribute_key]["arities"]
+            lows = lower_bound_vector_encoding_from_dict(
+                register.dict_attribute_to_type[attribute_key]
             )
-        if self.lows is None:
+            ups = upper_bound_vector_encoding_from_dict(
+                register.dict_attribute_to_type[attribute_key]
+            )
+        else:
+            self.attribute = attribute
+        if arities is None:
+            attribute_key = get_attribute_for_type(
+                register, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY
+            )
+            self.arities = register.dict_attribute_to_type[attribute_key]["arities"]
+        else:
+            self.arities = arities
+        if lows is None:
             self.lows = [min_value for i in range(len(self.arities))]
-        if self.ups is None:
+        else:
+            self.lows = lows
+        if ups is None:
             self.ups = [
                 min_value + self.arities[i] - 1 for i in range(len(self.arities))
             ]
+        else:
+            self.ups = ups
         self.range_arities = [
             list(range(l, up + 1)) for l, up in zip(self.lows, self.ups)
         ]

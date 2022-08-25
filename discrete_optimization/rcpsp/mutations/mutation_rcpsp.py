@@ -1,12 +1,12 @@
 import random
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 
 from discrete_optimization.generic_tools.do_mutation import LocalMove
-from discrete_optimization.generic_tools.do_problem import (
-    EncodingRegister,
-    TypeAttribute,
+from discrete_optimization.generic_tools.do_problem import TypeAttribute
+from discrete_optimization.generic_tools.mutations.mutation_util import (
+    get_attribute_for_type,
 )
 from discrete_optimization.generic_tools.mutations.permutation_mutations import (
     Mutation,
@@ -59,23 +59,17 @@ class DeadlineMutationRCPSP(Mutation):
         self,
         problem: Problem,
         solution: Solution,
-        attribute: str = None,
+        attribute: Optional[str] = None,
         nb_swap: int = 1,
     ):
         self.problem = problem
-        self.register: EncodingRegister = solution.get_attribute_register(problem)
         self.nb_swap = nb_swap
-        self.attribute = attribute
-        if self.attribute is None:
-            attributes = [
-                k
-                for k in self.register.dict_attribute_to_type
-                for t in self.register.dict_attribute_to_type[k]["type"]
-                if t == TypeAttribute.PERMUTATION
-            ]
-            if len(attributes) > 0:
-                self.attribute = attributes[0]
-        self.length = len(self.register.dict_attribute_to_type[self.attribute]["range"])
+        register = solution.get_attribute_register(problem)
+        if attribute is None:
+            self.attribute = get_attribute_for_type(register, TypeAttribute.PERMUTATION)
+        else:
+            self.attribute = attribute
+        self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
         self.full_predecessors = self.problem.graph.ancestors_map()
 
     def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
