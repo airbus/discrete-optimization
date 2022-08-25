@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -100,7 +100,7 @@ class MutationKnapsack(Mutation):
     def build(knapsack_model: KnapsackModel, solution: Solution):
         return MutationKnapsack(knapsack_model)
 
-    def __init__(self, knapsack_model: KnapsackModel, attribute: str = None):
+    def __init__(self, knapsack_model: KnapsackModel, attribute: Optional[str] = None):
         self.knapsack_model = knapsack_model
         self.nb_items = knapsack_model.nb_items
         self.list_items = knapsack_model.list_items
@@ -111,13 +111,13 @@ class MutationKnapsack(Mutation):
         self.sum = np.sum(self.profit_per_capacity)
         self.profit_per_capacity /= self.sum
         self.sorted_by_utility = np.argsort(self.profit_per_capacity)
-        self.attribute = attribute
         if attribute is None:
-            attributes = get_attribute_for_type(
-                self.knapsack_model, TypeAttribute.LIST_BOOLEAN
+            register = knapsack_model.get_attribute_register()
+            self.attribute = get_attribute_for_type(
+                register, TypeAttribute.LIST_BOOLEAN
             )
-            if len(attributes) > 0:
-                self.attribute = attributes[0]
+        else:
+            self.attribute = attribute
 
     def switch_on(self, variable: KnapsackSolution, come_from_outside=False):
         not_used = [
