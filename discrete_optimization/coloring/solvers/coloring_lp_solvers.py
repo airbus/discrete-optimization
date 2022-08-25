@@ -1,4 +1,5 @@
-from typing import Optional
+import sys
+from typing import Dict, Hashable, Optional, Tuple, Type, Union
 
 import mip
 import networkx as nx
@@ -32,14 +33,31 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, Model, quicksum
+    from gurobipy import GRB, Constr, GenConstr, MConstr, Model, QConstr, Var, quicksum
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
+
+
+OneColorConstraints = Dict[int, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
+NeighborsConstraints = Dict[
+    Tuple[Hashable, Hashable, int], Union["Constr", "QConstr", "MConstr", "GenConstr"]
+]
+VariableDecision = Dict[str, Dict[Tuple[Hashable, int], "Var"]]
+
+
+class ConstraintsDict(TypedDict):
+    one_color_constraints: OneColorConstraints
+    constraints_neighbors: NeighborsConstraints
 
 
 class ColoringLP(MilpSolver):
     def __init__(
         self,
         coloring_problem: ColoringProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args
     ):
         self.coloring_problem = coloring_problem
@@ -53,11 +71,21 @@ class ColoringLP(MilpSolver):
         }
         self.graph = self.coloring_problem.graph
         self.model = None
-        self.variable_decision = {}
-        self.constraints_dict = {}
-        self.description_variable_description = {}
-        self.description_constraint = {}
-        self.params_objective_function = params_objective_function
+        self.variable_decision: VariableDecision = {}
+        one_color_constraints: OneColorConstraints = {}
+        constraints_neighbors: NeighborsConstraints = {}
+        self.constraints_dict: ConstraintsDict = {
+            "one_color_constraints": one_color_constraints,
+            "constraints_neighbors": constraints_neighbors,
+        }
+        self.description_variable_description = {
+            "colors_vars": {
+                "shape": (0, 0),
+                "type": bool,
+                "descr": "for each node and each color," " a binary indicator",
+            }
+        }
+        self.description_constraint: Dict[str, Dict[str, str]] = {}
         (
             self.aggreg_from_sol,
             self.aggreg_from_dict,
@@ -91,7 +119,7 @@ class ColoringLP(MilpSolver):
             self.start_solution = solution
         nb_colors = self.start_solution.nb_color
         color_model = Model("color")
-        colors_var = {}
+        colors_var: Dict[Tuple[Hashable, int], "Var"] = {}
         range_node = range(self.number_of_nodes)
         range_color = range(nb_colors)
         for node in self.nodes_name:
@@ -99,7 +127,7 @@ class ColoringLP(MilpSolver):
                 colors_var[node, color] = color_model.addVar(
                     vtype=GRB.BINARY, obj=0, name="x_" + str((node, color))
                 )
-        one_color_constraints = {}
+        one_color_constraints: OneColorConstraints = {}
         for n in range_node:
             one_color_constraints[n] = color_model.addConstr(
                 quicksum([colors_var[n, c] for c in range_color]) == 1
@@ -140,7 +168,7 @@ class ColoringLP(MilpSolver):
                 )
                 index_c += 1
         edges = g.edges()
-        constraints_neighbors = {}
+        constraints_neighbors: NeighborsConstraints = {}
         for e in edges:
             for c in range_color:
                 constraints_neighbors[(e[0], e[1], c)] = color_model.addConstr(
@@ -202,6 +230,10 @@ class ColoringLP(MilpSolver):
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
@@ -219,7 +251,7 @@ class ColoringLP_MIP(ColoringLP):
     def __init__(
         self,
         coloring_problem: ColoringProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         **args
     ):
@@ -358,6 +390,10 @@ class ColoringLP_MIP(ColoringLP):
             parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         self.model.max_mip_gap = parameters_milp.MIPGap
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
         self.model.sol_pool_size = parameters_milp.PoolSolutions

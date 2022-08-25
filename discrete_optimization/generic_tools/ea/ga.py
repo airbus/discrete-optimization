@@ -202,6 +202,7 @@ class Ga:
         )
 
         # set objective handling stuff
+        self._objective_handling: ObjectiveHandling
         if objective_handling is None:
             self._objective_handling = ObjectiveHandling.SINGLE
         else:

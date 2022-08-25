@@ -1,6 +1,6 @@
 import operator
 from enum import Enum
-from typing import List, Set
+from typing import List, Optional, Set
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -109,29 +109,18 @@ feature_function_map = {
 
 
 class ParametersGPHH:
-    set_feature: Set[FeatureEnum] = None
-    set_primitves: PrimitiveSet = None
-    tournament_ratio: float = None
-    pop_size: int = None
-    n_gen: int = None
-    min_tree_depth: int = None
-    max_tree_depth: int = None
-    crossover_rate: float = None
-    mutation_rate: float = None
-    deap_verbose: bool = None
-
     def __init__(
         self,
-        set_feature,
-        set_primitves,
-        tournament_ratio,
-        pop_size,
-        n_gen,
-        min_tree_depth,
-        max_tree_depth,
-        crossover_rate,
-        mutation_rate,
-        deap_verbose,
+        set_feature: Set[FeatureEnum],
+        set_primitves: PrimitiveSetTyped,
+        tournament_ratio: float,
+        pop_size: int,
+        n_gen: int,
+        min_tree_depth: int,
+        max_tree_depth: int,
+        crossover_rate: float,
+        mutation_rate: float,
+        deap_verbose: bool,
     ):
         self.set_feature = set_feature
         self.set_primitves = set_primitves
@@ -198,32 +187,24 @@ class ParametersGPHH:
 
 
 class GPHH(SolverDO):
-    training_domains: List[Problem]
-    verbose: bool
-    weight: int
-    pset: PrimitiveSet
-    toolbox: Toolbox
-    params_gphh: ParametersGPHH
-
     def __init__(
         self,
         training_domains: List[FacilityProblem],
         domain_model: FacilityProblem,
         weight: int = 1,
-        params_gphh: ParametersGPHH = None,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_gphh: Optional[ParametersGPHH] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         verbose: bool = False,
     ):
         self.training_domains = training_domains
         self.domain_model = domain_model
-        self.params_gphh = params_gphh
-        if self.params_gphh is None:
+        if params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
         self.set_feature = self.params_gphh.set_feature
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.verbose = verbose
-        self.pset = self.init_primitives(self.params_gphh.set_primitves)
+        self.pset: PrimitiveSet = self.init_primitives(self.params_gphh.set_primitves)
         self.weight = weight
         (
             self.aggreg_from_sol,

@@ -107,7 +107,7 @@ class ConstraintHandlerFacility(ConstraintHandler):
             if c in subpart_customer:
                 dict_f_fixed[c] = dict_f_start[c]
         x_var = milp_solver.variable_decision["x"]
-        lns_constraint = {}
+        lns_constraint: Dict[Hashable, Any] = {}
         for key in x_var:
             f, c = key
             if f == dict_f_start[c]:

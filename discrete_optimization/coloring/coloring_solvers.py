@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Tuple, Type
+
 from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     ColoringCP,
     ColoringCPModel,
@@ -19,7 +21,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-solvers = {
+solvers: Dict[str, List[Tuple[Type, Dict[str, Any]]]] = {
     "lp": [
         (
             ColoringLP,

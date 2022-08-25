@@ -2,7 +2,7 @@ import math
 from abc import abstractmethod
 from collections import namedtuple
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -25,7 +25,7 @@ class FacilitySolution(Solution):
         self,
         problem: Problem,
         facility_for_customers: List[int],
-        dict_details: Dict[str, Any] = None,
+        dict_details: Optional[Dict[str, Any]] = None,
     ):
         """
         :param problem: a FacilityProblem object.
@@ -80,7 +80,9 @@ class FacilityProblem(Problem):
     ) -> float:
         ...
 
-    def evaluate(self, variable: FacilitySolution) -> Dict[str, float]:
+    def evaluate(self, variable: Solution) -> Dict[str, float]:
+        if not isinstance(variable, FacilitySolution):
+            raise ValueError("FacilityProblem can only evaluate a FacilitySolution.")
         if variable.dict_details is not None:
             return variable.dict_details
         d = self.evaluate_cost(variable)
@@ -125,7 +127,9 @@ class FacilityProblem(Problem):
             cost += c
         return {"cost": cost, "setup_cost": setup_cost, "details": facility_details}
 
-    def satisfy(self, variable: FacilitySolution) -> bool:
+    def satisfy(self, variable: Solution) -> bool:
+        if not isinstance(variable, FacilitySolution):
+            raise ValueError("FacilityProblem can only satisfy a FacilitySolution.")
         d = self.evaluate(variable)
         return d["capacity_constraint_violation"] == 0.0
 

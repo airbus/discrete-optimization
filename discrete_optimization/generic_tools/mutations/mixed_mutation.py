@@ -10,14 +10,14 @@ class BasicPortfolioMutation(Mutation):
     def __init__(
         self,
         list_mutation: List[Mutation],
-        weight_mutation: Union[List[float], np.array],
+        weight_mutation: Union[List[float], np.ndarray],
     ):
         self.list_mutation = list_mutation
         self.weight_mutation = weight_mutation
         if isinstance(self.weight_mutation, list):
             self.weight_mutation = np.array(self.weight_mutation)
         self.weight_mutation = self.weight_mutation / np.sum(self.weight_mutation)
-        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int)
+        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int32)
 
     def mutate(self, solution: Solution):
         choice = np.random.choice(self.index_np, size=1, p=self.weight_mutation)[0]
@@ -32,14 +32,14 @@ class BasicPortfolioMutationTrack(Mutation):
     def __init__(
         self,
         list_mutation: List[Mutation],
-        weight_mutation: Union[List[float], np.array],
+        weight_mutation: Union[List[float], np.ndarray],
     ):
         self.list_mutation = list_mutation
         self.weight_mutation = weight_mutation
         if isinstance(self.weight_mutation, list):
             self.weight_mutation = np.array(self.weight_mutation)
         self.weight_mutation = self.weight_mutation / np.sum(self.weight_mutation)
-        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int)
+        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int32)
 
     def mutate(self, solution: Solution):
         choice = np.random.choice(self.index_np, size=1, p=self.weight_mutation)[0]

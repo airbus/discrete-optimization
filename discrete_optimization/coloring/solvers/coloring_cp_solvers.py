@@ -2,7 +2,7 @@ import os
 import random
 from datetime import timedelta
 from enum import Enum
-from typing import Optional
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import networkx as nx
 import pymzn
@@ -26,9 +26,13 @@ from discrete_optimization.generic_tools.cp_tools import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+    fitness_class,
+)
 
 path_minizinc = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../minizinc/")
@@ -66,7 +70,7 @@ class ColoringCP(CPSolver):
     def __init__(
         self,
         coloring_problem: ColoringProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         **args,
     ):
@@ -133,7 +137,9 @@ class ColoringCP(CPSolver):
         self.instance = instance
         self.dict_datas = {k: instance[k] for k in keys}
 
-    def export_dzn(self, file_name: str = None, keys=None):
+    def export_dzn(
+        self, file_name: Optional[str] = None, keys: Optional[Iterable[Any]] = None
+    ):
         if file_name is None:
             file_name = os.path.join(path_minizinc, "coloring_example_dzn.dzn")
         if keys is None:
@@ -148,7 +154,7 @@ class ColoringCP(CPSolver):
         intermediate_solutions = parameters_cp.intermediate_solution
         colors = []
         objectives = []
-        solutions_fit = []
+        solutions_fit: List[Tuple[Solution, fitness_class]] = []
         if intermediate_solutions:
             for i in range(len(result)):
                 if not self.custom_output_type:

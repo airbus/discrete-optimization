@@ -2,7 +2,7 @@ import os
 import random
 from datetime import timedelta
 from enum import Enum
-from typing import Optional
+from typing import List, Optional, Tuple, Union
 
 from minizinc import Instance, Model, Solver
 
@@ -23,6 +23,8 @@ from discrete_optimization.generic_tools.cp_tools import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
+    TupleFitness,
     build_aggreg_function_and_params_objective,
     get_default_objective_setup,
 )
@@ -66,16 +68,17 @@ class FacilityCP(SolverDO):
         self,
         facility_problem: FacilityProblem,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args,
     ):
         self.facility_problem = facility_problem
-        self.params_objective_function = params_objective_function
         self.cp_solver_name = cp_solver_name
-        if self.params_objective_function is None:
+        if params_objective_function is None:
             self.params_objective_function = get_default_objective_setup(
                 self.facility_problem
             )
+        else:
+            self.params_objective_function = params_objective_function
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -152,7 +155,7 @@ class FacilityCP(SolverDO):
             else:
                 list_facility += [result.dict["facility_for_customer"]]
                 objectives += [result.objective]
-        list_solutions_fit = []
+        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for facility, objective in zip(list_facility, objectives):
             facility_sol = FacilitySolution(
                 self.facility_problem, [f - 1 for f in facility]

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 from discrete_optimization.facility.facility_model import (
@@ -20,7 +22,7 @@ class GreedySolverFacility(SolverDO):
     def __init__(
         self,
         facility_problem: FacilityProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.facility_problem = facility_problem
         (
@@ -61,7 +63,7 @@ class GreedySolverDistanceBased(SolverDO):
     def __init__(
         self,
         facility_problem: FacilityProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.facility_problem = facility_problem
         (

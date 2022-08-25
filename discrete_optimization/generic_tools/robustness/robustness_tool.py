@@ -1,6 +1,6 @@
 import random
 from multiprocessing import Pool
-from typing import List
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,8 +44,8 @@ class RobustnessTool:
         self,
         base_instance: RCPSPModel,
         all_instances: List[RCPSPModel],
-        train_instance: List[RCPSPModel] = None,
-        test_instance: List[RCPSPModel] = None,
+        train_instance: Optional[List[RCPSPModel]] = None,
+        test_instance: Optional[List[RCPSPModel]] = None,
         proportion_train: float = 0.8,
     ):
         self.base_instance = base_instance

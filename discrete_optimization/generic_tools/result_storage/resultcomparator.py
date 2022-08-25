@@ -1,12 +1,12 @@
 import math
-from typing import List
+from typing import Dict, List, cast
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from discrete_optimization.generic_tools.do_problem import Problem
+from discrete_optimization.generic_tools.do_problem import Problem, TupleFitness
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     plot_pareto_2d,
@@ -36,7 +36,7 @@ class ResultComparator:
         self.objectives_str = objectives_str
         self.objective_weights = objective_weights
         self.test_problems = test_problems
-        self.reevaluated_results = {}
+        self.reevaluated_results: Dict[int, Dict[str, List[float]]] = {}
 
         if self.test_problems is not None:
             self.reevaluate_result_storages()
@@ -79,10 +79,12 @@ class ResultComparator:
         val = {}
         for i in range(len(self.list_result_storage)):
             fit_array = [
-                self.list_result_storage[i]
-                .list_solution_fits[j][1]
-                .vector_fitness[obj_index]
-                for j in range(len(self.list_result_storage[i].list_solution_fits))
+                cast(
+                    TupleFitness, fitness
+                ).vector_fitness[  # indicate to mypy that we are in multiobjective case
+                    obj_index
+                ]
+                for solution, fitness in self.list_result_storage[i].list_solution_fits
             ]  # create fit array
             if self.list_result_storage[i].maximize:
                 best_fit = max(fit_array)

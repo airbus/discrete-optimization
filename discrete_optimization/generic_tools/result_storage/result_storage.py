@@ -1,6 +1,6 @@
 import random
 from heapq import heapify, heappush, heappushpop, nlargest, nsmallest
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import matplotlib.pyplot as plt
 
@@ -11,6 +11,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     TupleFitness,
     build_aggreg_function_and_params_objective,
+    get_default_objective_setup,
 )
 
 fitness_class = Union[float, TupleFitness]
@@ -18,13 +19,13 @@ fitness_class = Union[float, TupleFitness]
 
 class ResultStorage:
     list_solution_fits: List[Tuple[Solution, fitness_class]]
-    best_solution: Solution
+    best_solution: Optional[Solution]
     map_solutions: Dict[Solution, fitness_class]
 
     def __init__(
         self,
         list_solution_fits: List[Tuple[Solution, fitness_class]],
-        best_solution: Solution = None,
+        best_solution: Optional[Solution] = None,
         mode_optim: ModeOptim = ModeOptim.MAXIMIZATION,
         limit_store: bool = True,
         nb_best_store: int = 1000,
@@ -34,7 +35,7 @@ class ResultStorage:
         self.mode_optim = mode_optim
         self.maximize = mode_optim == ModeOptim.MAXIMIZATION
         self.size_heap = 0
-        self.heap = []
+        self.heap: List[fitness_class] = []
         self.limit_store = limit_store
         self.nb_best_score = nb_best_store
         self.map_solutions = {}
@@ -174,8 +175,11 @@ def merge_results_storage(result_1: ResultStorage, result_2: ResultStorage):
 def from_solutions_to_result_storage(
     list_solution: List[Solution],
     problem: Problem,
-    params_objective_function: ParamsObjectiveFunction = None,
+    params_objective_function: Optional[ParamsObjectiveFunction] = None,
 ):
+    if params_objective_function is None:
+        params_objective_function = get_default_objective_setup(problem)
+        mode_optim = params_objective_function.sense_function
     (
         aggreg_sol,
         aggreg_dict,
@@ -183,25 +187,26 @@ def from_solutions_to_result_storage(
     ) = build_aggreg_function_and_params_objective(
         problem=problem, params_objective_function=params_objective_function
     )
-    list_solution_fit = []
+    list_solution_fit: List[Tuple[Solution, fitness_class]] = []
     for s in list_solution:
         list_solution_fit += [(s, aggreg_sol(s))]
     return ResultStorage(
         list_solution_fits=list_solution_fit,
-        mode_optim=params_objective_function.sense_function,
+        mode_optim=mode_optim,
     )
 
 
 def result_storage_to_pareto_front(
-    result_storage: ResultStorage, problem: Problem = None
+    result_storage: ResultStorage, problem: Optional[Problem] = None
 ):
-    list_solution_fitness = result_storage.list_solution_fits
-    if problem is None:
-        l = result_storage.list_solution_fits
-    else:
-        l = [(li[0], problem.evaluate_mobj(li[0])) for li in list_solution_fitness]
+    list_solution_fits = result_storage.list_solution_fits
+    if problem is not None:
+        list_solution_fits = [
+            (solution, problem.evaluate_mobj(solution))
+            for solution, _ in list_solution_fits
+        ]
     pf = ParetoFront(
-        list_solution_fits=l,
+        list_solution_fits=list_solution_fits,
         best_solution=None,
         mode_optim=result_storage.mode_optim,
         limit_store=result_storage.limit_store,
@@ -278,9 +283,13 @@ def plot_storage_2d(
 ):
     if ax is None:
         fig, ax = plt.subplots(1)
+    # Specify for mypy that we should be in the multiobjective case
+    list_solution_fits = cast(
+        List[Tuple[Solution, TupleFitness]], result_storage.list_solution_fits
+    )
     ax.scatter(
-        x=[p[1].vector_fitness[0] for p in result_storage.list_solution_fits],
-        y=[p[1].vector_fitness[1] for p in result_storage.list_solution_fits],
+        x=[p[1].vector_fitness[0] for p in list_solution_fits],
+        y=[p[1].vector_fitness[1] for p in list_solution_fits],
         color=color,
     )
     ax.set_xlabel(name_axis[0])

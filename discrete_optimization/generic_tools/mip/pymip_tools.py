@@ -1,5 +1,5 @@
 import gc
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mip
 from mip import IncumbentUpdater, Model, Var
@@ -16,7 +16,7 @@ class IncumbentStoreSolution(IncumbentUpdater):
     # Store intermediate solutions for further use.
     def __init__(self, model: Model):
         super().__init__(model=model)
-        self._solution_store = []
+        self._solution_store: List[Dict[str, Any]] = []
 
     def nb_solutions(self):
         return len(self._solution_store)
