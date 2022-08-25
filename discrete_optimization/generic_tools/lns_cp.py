@@ -1,8 +1,9 @@
 import random
+import sys
 import time
 from abc import abstractmethod
 from datetime import timedelta
-from typing import Any, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np
 from minizinc import Instance, Status
@@ -23,6 +24,11 @@ from discrete_optimization.generic_tools.lns_mip import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
 
 
 class ConstraintHandler:
@@ -50,24 +56,25 @@ class LNS_CP(SolverDO):
         cp_solver: CPSolver,
         initial_solution_provider: InitialSolution,
         constraint_handler: ConstraintHandler,
-        post_process_solution: PostProcessSolution = None,
-        params_objective_function: ParamsObjectiveFunction = None,
+        post_process_solution: Optional[PostProcessSolution] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
         self.cp_solver = cp_solver
         self.initial_solution_provider = initial_solution_provider
         self.constraint_handler = constraint_handler
-        self.post_process_solution = post_process_solution
-        if self.post_process_solution is None:
+        self.post_process_solution: PostProcessSolution
+        if post_process_solution is None:
             self.post_process_solution = TrivialPostProcessSolution()
-        self.params_objective_function = params_objective_function
+        else:
+            self.post_process_solution = post_process_solution
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,
-            params_objective_function=self.params_objective_function,
+            params_objective_function=params_objective_function,
         )
 
     def solve_lns(
@@ -86,6 +93,12 @@ class LNS_CP(SolverDO):
         if nb_iteration_no_improvement is None:
             nb_iteration_no_improvement = 2 * nb_iteration_lns
         current_nb_iteration_no_improvement = 0
+        if self.cp_solver.instance is None:
+            self.cp_solver.init_model()
+            if self.cp_solver.instance is None:  # for mypy
+                raise RuntimeError(
+                    "CP model instance must not be None after calling init_model()!"
+                )
         deb_time = time.time()
         if not skip_first_iteration:
             store_lns = self.initial_solution_provider.get_starting_solution()
@@ -104,6 +117,7 @@ class LNS_CP(SolverDO):
                 float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
             )
             store_lns = None
+        result_store: ResultStorage
         for iteration in range(nb_iteration_lns):
             print(
                 "Starting iteration n°",
@@ -217,24 +231,25 @@ class LNS_CPlex(SolverDO):
         cp_solver: CPSolver,
         initial_solution_provider: InitialSolution,
         constraint_handler: ConstraintHandler,
-        post_process_solution: PostProcessSolution = None,
-        params_objective_function: ParamsObjectiveFunction = None,
+        post_process_solution: Optional[PostProcessSolution] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
         self.cp_solver = cp_solver
         self.initial_solution_provider = initial_solution_provider
         self.constraint_handler = constraint_handler
-        self.post_process_solution = post_process_solution
-        if self.post_process_solution is None:
+        self.post_process_solution: PostProcessSolution
+        if post_process_solution is None:
             self.post_process_solution = TrivialPostProcessSolution()
-        self.params_objective_function = params_objective_function
+        else:
+            self.post_process_solution = post_process_solution
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,
-            params_objective_function=self.params_objective_function,
+            params_objective_function=params_objective_function,
         )
 
     def solve_lns(
@@ -271,6 +286,7 @@ class LNS_CPlex(SolverDO):
                 float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
             )
             store_lns = None
+        result_store: ResultStorage
         for iteration in range(nb_iteration_lns):
             print(
                 "Starting iteration n°",
@@ -355,6 +371,12 @@ class LNS_CPlex(SolverDO):
         return self.solve_lns(**kwargs)
 
 
+class ConstraintStatus(TypedDict):
+    nb_usage: int
+    nb_improvement: int
+    name: str
+
+
 class ConstraintHandlerMix(ConstraintHandler):
     def __init__(
         self,
@@ -362,24 +384,23 @@ class ConstraintHandlerMix(ConstraintHandler):
         list_constraints_handler: List[ConstraintHandler],
         list_proba: List[float],
         update_proba: bool = True,
-        tag_constraint_handler: List[str] = None,
+        tag_constraint_handler: Optional[List[str]] = None,
         sequential: bool = False,
     ):
         self.problem = problem
         self.list_constraints_handler = list_constraints_handler
-        self.tag_constraint_handler = tag_constraint_handler
         self.sequential = sequential
-        if self.tag_constraint_handler is None:
+        if tag_constraint_handler is None:
             self.tag_constraint_handler = [
                 str(i) for i in range(len(self.list_constraints_handler))
             ]
-        self.list_proba = list_proba
-        if isinstance(self.list_proba, list):
-            self.list_proba = np.array(self.list_proba)
+        else:
+            self.tag_constraint_handler = tag_constraint_handler
+        self.list_proba = np.array(list_proba)
         self.list_proba = self.list_proba / np.sum(self.list_proba)
-        self.index_np = np.array(range(len(self.list_proba)), dtype=np.int)
+        self.index_np = np.array(range(len(self.list_proba)), dtype=np.int32)
         self.current_iteration = 0
-        self.status = {
+        self.status: Dict[int, ConstraintStatus] = {
             i: {
                 "nb_usage": 0,
                 "nb_improvement": 0,
@@ -387,7 +408,7 @@ class ConstraintHandlerMix(ConstraintHandler):
             }
             for i in range(len(self.list_constraints_handler))
         }
-        self.last_index_param = None
+        self.last_index_param: Optional[int] = None
         self.last_fitness = None
         self.update_proba = update_proba
 

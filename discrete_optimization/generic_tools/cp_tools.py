@@ -6,6 +6,8 @@ from abc import abstractmethod
 from enum import Enum
 from typing import Optional
 
+from minizinc import Instance
+
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -137,10 +139,15 @@ class CPSolver(SolverDO):
     Additional function to be implemented by a CP Solver.
     """
 
+    instance: Optional[Instance]
+
     @abstractmethod
     def init_model(self, **args):
         """
         Instantiate a CP model instance
+
+        Afterwards, self.instance should not be None anymore.
+
         """
         ...
 

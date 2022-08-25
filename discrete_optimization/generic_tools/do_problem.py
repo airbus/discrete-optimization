@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, Iterable, List
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 
@@ -205,7 +205,7 @@ class MethodAggregating:
         self,
         base_method_aggregating: BaseMethodAggregating,
         percentile: float = 90.0,
-        ponderation: np.array = None,
+        ponderation: Optional[np.ndarray] = None,
     ):
         self.base_method_aggregating = base_method_aggregating
         self.percentile = percentile
@@ -317,8 +317,13 @@ def get_default_objective_setup(problem: Problem) -> ParamsObjectiveFunction:
 
 
 def build_aggreg_function_and_params_objective(
-    problem: Problem, params_objective_function: ParamsObjectiveFunction = None
-):
+    problem: Problem,
+    params_objective_function: Optional[ParamsObjectiveFunction] = None,
+) -> Tuple[
+    Callable[[Solution], float],
+    Callable[[Dict[str, float]], float],
+    ParamsObjectiveFunction,
+]:
     if params_objective_function is None:
         params_objective_function = get_default_objective_setup(problem)
     eval_sol, eval_dict = build_evaluate_function_aggregated(
@@ -328,8 +333,9 @@ def build_aggreg_function_and_params_objective(
 
 
 def build_evaluate_function_aggregated(
-    problem: Problem, params_objective_function: ParamsObjectiveFunction = None
-):
+    problem: Problem,
+    params_objective_function: Optional[ParamsObjectiveFunction] = None,
+) -> Tuple[Callable[[Solution], float], Callable[[Dict[str, float]], float]]:
     if params_objective_function is None:
         params_objective_function = get_default_objective_setup(problem)
     sign = 1
@@ -341,29 +347,29 @@ def build_evaluate_function_aggregated(
     if objective_handling == ObjectiveHandling.AGGREGATE:
         length = len(objectives)
 
-        def eval_sol(solution: Solution):
+        def eval_sol(solution: Solution) -> float:
             dict_values = problem.evaluate(solution)
             val = sum([dict_values[objectives[i]] * weights[i] for i in range(length)])
             return sign * val
 
-        def eval_from_dict_values(dict_values):
+        def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
             val = sum([dict_values[objectives[i]] * weights[i] for i in range(length)])
             return sign * val
 
     if objective_handling == ObjectiveHandling.SINGLE:
         length = len(objectives)
 
-        def eval_sol(solution: Solution):
+        def eval_sol(solution: Solution) -> float:
             dict_values = problem.evaluate(solution)
             return sign * dict_values[objectives[0]] * weights[0]
 
-        def eval_from_dict_values(dict_values):
+        def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
             return sign * dict_values[objectives[0]] * weights[0]
 
     if objective_handling == ObjectiveHandling.MULTI_OBJ:
         length = len(objectives)
 
-        def eval_sol(solution: Solution):
+        def eval_sol(solution: Solution) -> float:
             d = problem.evaluate(solution)
             return (
                 TupleFitness(
@@ -373,7 +379,7 @@ def build_evaluate_function_aggregated(
                 * sign
             )
 
-        def eval_from_dict_values(dict_values):
+        def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
             return (
                 TupleFitness(
                     np.array(

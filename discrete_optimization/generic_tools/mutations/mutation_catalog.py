@@ -1,3 +1,6 @@
+from typing import Any, Dict, Optional, Tuple, Type
+
+from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
@@ -27,7 +30,9 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
     MutationSwapTSP,
 )
 
-dictionnary_mutation = {
+dictionnary_mutation: Dict[
+    TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]
+] = {
     TypeAttribute.PERMUTATION: {
         "total_shuffle": (PermutationShuffleMutation, {}),
         "partial_shuffle": (PermutationPartialShuffleMutation, {"proportion": 0.2}),
@@ -81,7 +86,9 @@ dictionnary_mutation = {
 }
 
 
-def get_available_mutations(problem: Problem, solution: Solution = None, verbose=True):
+def get_available_mutations(
+    problem: Problem, solution: Optional[Solution] = None, verbose=True
+):
     register = problem.get_attribute_register()
     present_types = set(register.get_types())
     mutations = {}

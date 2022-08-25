@@ -2,6 +2,7 @@ import pickle
 import random
 import time
 from abc import abstractmethod
+from typing import Optional
 
 import numpy as np
 
@@ -40,7 +41,7 @@ class SimulatedAnnealing:
         restart_handler: RestartHandler,
         temperature_handler: TemperatureScheduling,
         mode_mutation: ModeMutation,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution=False,
         nb_solutions=1000,
     ):
@@ -64,13 +65,12 @@ class SimulatedAnnealing:
         self,
         initial_variable: Solution,
         nb_iteration_max: int,
-        max_time_seconds: int = None,
+        max_time_seconds: Optional[int] = None,
         pickle_result=False,
         pickle_name="debug",
         **kwargs
     ) -> ResultStorage:
         verbose = kwargs.get("verbose", False)
-        use_max_time_cut = max_time_seconds is not None
         init_time = time.time()
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
@@ -104,8 +104,10 @@ class SimulatedAnnealing:
                 nv, move = self.mutator.mutate(cur_variable)
                 objective = self.aggreg_from_dict_values(self.evaluator.evaluate(nv))
             elif self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
-                nv, move, objective = self.mutator.mutate_and_compute_obj(cur_variable)
-                objective = self.aggreg_from_dict_values(objective)
+                nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
+                    cur_variable
+                )
+                objective = self.aggreg_from_dict_values(objective_dict_values)
             if verbose:
                 print(iteration, "/", nb_iteration_max, objective, cur_objective)
             if self.mode_optim == ModeOptim.MINIMIZATION and objective < cur_objective:
@@ -157,7 +159,7 @@ class SimulatedAnnealing:
             iteration += 1
             if pickle_result and iteration % 20000 == 0:
                 pickle.dump(cur_best_variable, open(pickle_name + ".pk", "wb"))
-            if use_max_time_cut and iteration % 1000 == 0:
+            if max_time_seconds is not None and iteration % 1000 == 0:
                 if time.time() - init_time > max_time_seconds:
                     break
         store.finalize()

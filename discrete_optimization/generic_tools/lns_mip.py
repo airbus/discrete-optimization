@@ -78,24 +78,26 @@ class LNS_MILP(SolverDO):
         milp_solver: MilpSolver,
         initial_solution_provider: InitialSolution,
         constraint_handler: ConstraintHandler,
-        post_process_solution: PostProcessSolution = None,
-        params_objective_function: ParamsObjectiveFunction = None,
+        post_process_solution: Optional[PostProcessSolution] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
         self.milp_solver = milp_solver
         self.initial_solution_provider = initial_solution_provider
         self.constraint_handler = constraint_handler
-        self.post_process_solution = post_process_solution
-        if self.post_process_solution is None:
+        self.post_process_solution: PostProcessSolution
+        if post_process_solution is None:
             self.post_process_solution = TrivialPostProcessSolution()
-        self.params_objective_function = params_objective_function
+        else:
+            self.post_process_solution = post_process_solution
+
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,
-            params_objective_function=self.params_objective_function,
+            params_objective_function=params_objective_function,
         )
 
     def solve_lns(
@@ -153,6 +155,8 @@ class LNS_MILP(SolverDO):
             if skip_first_iteration and iteration == 0:
                 store_lns = result_store
             for s, f in result_store.list_solution_fits:
+                if store_lns is None:  # for mypy, should never happen
+                    raise RuntimeError("store_lns should have been initialized for now")
                 store_lns.add_solution(solution=s, fitness=f)
             print("Removing constraint:")
             self.constraint_handler.remove_constraints_from_previous_iteration(
@@ -170,4 +174,6 @@ class LNS_MILP(SolverDO):
             if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
                 print("Finish LNS with maximum no improvement iteration ")
                 break
+        if store_lns is None:  # for mypy, should never happen
+            raise RuntimeError("store_lns should have been initialized for now")
         return store_lns

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Hashable, List, Tuple
+from typing import Any, Dict, Hashable, List, Set, Tuple
 
 import networkx as nx
 
@@ -14,10 +14,10 @@ class Graph:
         self.nodes = nodes
         self.edges = edges
         self.undirected = undirected
-        self.neighbors_dict = {}
-        self.predecessors_dict = {}
-        self.edges_infos_dict = {}
-        self.nodes_infos_dict = {}
+        self.neighbors_dict: Dict[Hashable, Set[Hashable]] = {}
+        self.predecessors_dict: Dict[Hashable, Set[Hashable]] = {}
+        self.edges_infos_dict: Dict[Tuple[Hashable, Hashable], Dict[str, Any]] = {}
+        self.nodes_infos_dict: Dict[Hashable, Dict[str, Any]] = {}
         self.build_nodes_infos_dict()
         self.build_edges()
         self.nodes_name = list(self.nodes_infos_dict)

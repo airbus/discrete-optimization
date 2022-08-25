@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 import networkx as nx
 
@@ -45,7 +46,7 @@ class GreedyColoring(SolverDO):
     def __init__(
         self,
         color_problem: ColoringProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args
     ):
         self.color_problem = color_problem

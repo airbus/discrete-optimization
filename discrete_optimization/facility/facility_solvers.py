@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Tuple, Type
+
 from discrete_optimization.facility.facility_model import FacilityProblem
 from discrete_optimization.facility.solvers.facility_cp_solvers import (
     CPSolverName,
@@ -20,7 +22,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-solvers = {
+solvers: Dict[str, List[Tuple[Type, Dict[str, Any]]]] = {
     "lp": [
         (
             LP_Facility_Solver,

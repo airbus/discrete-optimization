@@ -1,5 +1,6 @@
 import pickle
 import time
+from typing import Optional
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
@@ -26,7 +27,7 @@ class HillClimber:
         mutator: Mutation,
         restart_handler: RestartHandler,
         mode_mutation: ModeMutation,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution=False,
         nb_solutions=1000,
     ):
@@ -52,7 +53,7 @@ class HillClimber:
         self,
         initial_variable: Solution,
         nb_iteration_max: int,
-        max_time_seconds: int = None,
+        max_time_seconds: Optional[int] = None,
         pickle_result=False,
         pickle_name="debug",
     ) -> ResultStorage:
@@ -77,7 +78,6 @@ class HillClimber:
         cur_best_variable = initial_variable.copy()
         cur_objective = objective
         cur_best_objective = objective
-        use_max_time_cut = max_time_seconds is not None
         init_time = time.time()
         self.restart_handler.best_fitness = objective
         iteration = 0
@@ -89,8 +89,10 @@ class HillClimber:
                 nv, move = self.mutator.mutate(cur_variable)
                 objective = self.aggreg_from_solution(nv)
             elif self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
-                nv, move, objective = self.mutator.mutate_and_compute_obj(cur_variable)
-                objective = self.aggreg_from_dict_values(objective)
+                nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
+                    cur_variable
+                )
+                objective = self.aggreg_from_dict_values(objective_dict_values)
             if self.mode_optim == ModeOptim.MINIMIZATION and objective < cur_objective:
                 accept = True
                 local_improvement = True
@@ -127,7 +129,7 @@ class HillClimber:
             iteration += 1
             if pickle_result and iteration % 20000 == 0:
                 pickle.dump(cur_best_variable, open(pickle_name + ".pk", "wb"))
-            if use_max_time_cut and iteration % 1000 == 0:
+            if max_time_seconds is not None and iteration % 1000 == 0:
                 if time.time() - init_time > max_time_seconds:
                     break
         store.finalize()
@@ -141,7 +143,7 @@ class HillClimberPareto(HillClimber):
         mutator: Mutation,
         restart_handler: RestartHandler,
         mode_mutation: ModeMutation,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution=False,
         nb_solutions=1000,
     ):
@@ -159,12 +161,11 @@ class HillClimberPareto(HillClimber):
         self,
         initial_variable: Solution,
         nb_iteration_max: int,
-        max_time_seconds: int = None,
-        update_iteration_pareto=1000,
+        max_time_seconds: Optional[int] = None,
         pickle_result=False,
         pickle_name="tsp",
+        update_iteration_pareto=1000,
     ) -> ParetoFront:
-        use_max_time_cut = max_time_seconds is not None
         init_time = time.time()
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
@@ -190,8 +191,10 @@ class HillClimberPareto(HillClimber):
                 nv, move = self.mutator.mutate(cur_variable)
                 objective = self.aggreg_from_solution(nv)
             elif self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
-                nv, move, objective = self.mutator.mutate_and_compute_obj(cur_variable)
-                objective = self.aggreg_from_dict_values(objective)
+                nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
+                    cur_variable
+                )
+                objective = self.aggreg_from_dict_values(objective_dict_values)
             if self.mode_optim == ModeOptim.MINIMIZATION and objective < cur_objective:
                 accept = True
                 local_improvement = True
@@ -239,7 +242,7 @@ class HillClimberPareto(HillClimber):
             )
             # possibly restart somewhere
             iteration += 1
-            if use_max_time_cut and iteration % 1000 == 0:
+            if max_time_seconds is not None and iteration % 1000 == 0:
                 if time.time() - init_time > max_time_seconds:
                     break
 

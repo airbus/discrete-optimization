@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 
@@ -19,9 +19,9 @@ class ColoringSolution(Solution):
     def __init__(
         self,
         problem: Problem,
-        colors: Union[List[int], np.array] = None,
-        nb_color: int = None,
-        nb_violations: int = None,
+        colors: Optional[Union[List[int], np.ndarray]] = None,
+        nb_color: Optional[int] = None,
+        nb_violations: Optional[int] = None,
     ):
         self.problem = problem
         self.colors = colors
@@ -98,23 +98,37 @@ class ColoringProblem(Problem):
             i: self.nodes_name[i] for i in range(self.number_of_nodes)
         }
 
-    def evaluate(self, variable: ColoringSolution) -> Dict[str, float]:
-        try:
-            nb_color = variable.nb_color
-        except AttributeError:
-            nb_color = None
-        if nb_color is None:
-            variable.nb_color = len(set(variable.colors))
-            variable.nb_violations = self.count_violations(variable)
+    def evaluate(self, variable: Solution) -> Dict[str, float]:
+        if not isinstance(variable, ColoringSolution):
+            raise ValueError("ColoringProblem can only evaluate a ColoringSolution.")
+        if variable.nb_color is None:
+            if variable.colors is None:
+                raise ValueError(
+                    "variable.colors must not be None if variable.nb_color is None."
+                )
+            else:
+                variable.nb_color = len(set(variable.colors))
+        if variable.nb_violations is None:
+            if variable.colors is None:
+                raise ValueError(
+                    "variable.colors must not be None if variable.nb_color is None."
+                )
+            else:
+                variable.nb_violations = self.count_violations(variable)
         return {"nb_colors": variable.nb_color, "nb_violations": variable.nb_violations}
 
-    def satisfy(self, variable: ColoringSolution) -> bool:
-        for e in self.graph.edges:
-            if (
-                variable.colors[self.index_nodes_name[e[0]]]
-                == variable.colors[self.index_nodes_name[e[1]]]
-            ):
-                return False
+    def satisfy(self, variable: Solution) -> bool:
+        if not isinstance(variable, ColoringSolution):
+            raise ValueError("ColoringProblem can only satisfy a ColoringSolution.")
+        if len(self.graph.edges) > 0:
+            if variable.colors is None:
+                raise ValueError("variable.colors must not be None")
+            for e in self.graph.edges:
+                if (
+                    variable.colors[self.index_nodes_name[e[0]]]
+                    == variable.colors[self.index_nodes_name[e[1]]]
+                ):
+                    return False
         return True
 
     def get_attribute_register(self) -> EncodingRegister:
@@ -150,14 +164,17 @@ class ColoringProblem(Problem):
         self.evaluate(solution)
         return solution
 
-    def count_violations(self, variable: ColoringSolution):
+    def count_violations(self, variable: ColoringSolution) -> int:
         val = 0
-        for e in self.graph.edges:
-            if (
-                variable.colors[self.index_nodes_name[e[0]]]
-                == variable.colors[self.index_nodes_name[e[1]]]
-            ):
-                val += 1
+        if len(self.graph.edges) > 0:
+            if variable.colors is None:
+                raise ValueError("variable.colors must not be None.")
+            for e in self.graph.edges:
+                if (
+                    variable.colors[self.index_nodes_name[e[0]]]
+                    == variable.colors[self.index_nodes_name[e[1]]]
+                ):
+                    val += 1
         return val
 
     def evaluate_from_encoding(self, int_vector, encoding_name):

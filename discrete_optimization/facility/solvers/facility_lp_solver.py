@@ -1,5 +1,6 @@
 import random
-from typing import Iterable, Optional
+import sys
+from typing import Any, Dict, Hashable, Optional, Tuple, Union
 
 import mip
 import numpy as np
@@ -25,13 +26,27 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
+
 try:
     import gurobipy
 except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, LinExpr, Model, quicksum
+    from gurobipy import (
+        GRB,
+        Constr,
+        GenConstr,
+        LinExpr,
+        MConstr,
+        Model,
+        QConstr,
+        quicksum,
+    )
 
 
 def compute_length_matrix(facility_problem: FacilityProblem):
@@ -70,15 +85,25 @@ class LP_Facility_Solver(MilpSolver):
     def __init__(
         self,
         facility_problem: FacilityProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args
     ):
         self.facility_problem = facility_problem
-        self.model = None
-        self.variable_decision = {}
-        self.constraints_dict = {}
-        self.description_variable_description = {}
-        self.description_constraint = {}
+        self.model: Optional[Model] = None
+        self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
+        self.constraints_dict: Dict[
+            str, Dict[Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
+        ] = {}
+        self.description_variable_description = {
+            "x": {
+                "shape": (0, 0),
+                "type": bool,
+                "descr": "for each facility/customer indicate"
+                " if the pair is active, meaning "
+                "that the customer c is dealt with facility f",
+            }
+        }
+        self.description_constraint: Dict[str, Dict[str, str]] = {}
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -107,7 +132,7 @@ class LP_Facility_Solver(MilpSolver):
                 n_shortest=nb_facilities,
             )
         s = Model("facilities")
-        x = {}
+        x: Dict[Tuple[int, int], Union[int, Any]] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 if matrix_fc_indicator[f, c] == 0:
@@ -119,13 +144,17 @@ class LP_Facility_Solver(MilpSolver):
         facilities = self.facility_problem.facilities
         customers = self.facility_problem.customers
         used = s.addVars(nb_facilities, vtype=GRB.BINARY, name="y")
-        constraints_customer = {}
+        constraints_customer: Dict[
+            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
+        ] = {}
         for c in range(nb_customers):
             constraints_customer[c] = s.addConstr(
                 quicksum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity = {}
+        constraint_capacity: Dict[
+            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
+        ] = {}
         for f in range(nb_facilities):
             s.addConstrs(used[f] >= x[f, c] for c in range(nb_customers))
             constraint_capacity[f] = s.addConstr(
@@ -167,13 +196,23 @@ class LP_Facility_Solver(MilpSolver):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint = {"Im lazy."}
+        self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
         print("Initialized")
 
-    def retrieve_solutions(self, range_solutions: Iterable[int]):
+    def retrieve_solutions(self, parameters_milp: ParametersMilp):
+        if self.model is None:  # for mypy
+            self.init_model()
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
+        if parameters_milp.retrieve_all_solution:
+            nSolutions = self.model.SolCount
+        else:
+            nSolutions = 1
         solutions = []
         fits = []
-        for s in range_solutions:
+        for s in range(nSolutions):
             solution = [0] * self.facility_problem.customer_count
             self.model.params.SolutionNumber = s
             for key in self.variable_decision["x"]:
@@ -199,6 +238,10 @@ class LP_Facility_Solver(MilpSolver):
             parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
         limit_time_s = parameters_milp.TimeLimit
         self.model.setParam("TimeLimit", limit_time_s)
         self.model.optimize()
@@ -208,12 +251,15 @@ class LP_Facility_Solver(MilpSolver):
         print("Objective : ", objective)
         print("Problem has", nObjectives, "objectives")
         print("Gurobi found", nSolutions, "solutions")
-        if parameters_milp.retrieve_all_solution:
-            return self.retrieve_solutions(range(nSolutions))
-        else:
-            return self.retrieve_solutions([0])
+        return self.retrieve_solutions(parameters_milp=parameters_milp)
 
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
+        if self.model is None:  # for mypy
+            self.init_model()
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
         subpart_customer = set(
             random.sample(
                 range(self.facility_problem.customer_count),
@@ -227,7 +273,9 @@ class LP_Facility_Solver(MilpSolver):
             if c in subpart_customer:
                 dict_f_fixed[c] = dict_f_start[c]
         x_var = self.variable_decision["x"]
-        lns_constraint = {}
+        lns_constraint: Dict[
+            Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]
+        ] = {}
         for key in x_var:
             f, c = key
             if f == dict_f_start[c]:
@@ -308,15 +356,25 @@ class LP_Facility_Solver_CBC(SolverDO):
     def __init__(
         self,
         facility_problem: FacilityProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args
     ):
         self.facility_problem = facility_problem
         self.model = None
-        self.variable_decision = {}
-        self.constraints_dict = {}
-        self.description_variable_description = {}
-        self.description_constraint = {}
+        self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
+        self.constraints_dict: Dict[
+            str, Dict[Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
+        ] = {}
+        self.description_variable_description = {
+            "x": {
+                "shape": (0, 0),
+                "type": bool,
+                "descr": "for each facility/customer indicate"
+                " if the pair is active, meaning "
+                "that the customer c is dealt with facility f",
+            }
+        }
+        self.description_constraint: Dict[str, Dict[str, str]] = {}
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -345,7 +403,7 @@ class LP_Facility_Solver_CBC(SolverDO):
                 n_shortest=nb_facilities,
             )
         s = pywraplp.Solver("facility", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-        x = {}
+        x: Dict[Tuple[int, int], Union[int, Any]] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 if matrix_fc_indicator[f, c] == 0:
@@ -360,13 +418,17 @@ class LP_Facility_Solver_CBC(SolverDO):
             s.BoolVar(name="y_" + str(j))
             for j in range(self.facility_problem.facility_count)
         ]
-        constraints_customer = {}
+        constraints_customer: Dict[
+            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
+        ] = {}
         for c in range(nb_customers):
             constraints_customer[c] = s.Add(
                 s.Sum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity = {}
+        constraint_capacity: Dict[
+            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
+        ] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 s.Add(used[f] >= x[f, c])
@@ -398,7 +460,7 @@ class LP_Facility_Solver_CBC(SolverDO):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint = {"Im lazy."}
+        self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
         print("Initialized")
 
     def retrieve(self) -> ResultStorage:
@@ -425,6 +487,10 @@ class LP_Facility_Solver_CBC(SolverDO):
             parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
         limit_time_s = parameters_milp.TimeLimit
         self.model.SetTimeLimit(limit_time_s * 1000)
         res = self.model.Solve()
@@ -443,6 +509,12 @@ class LP_Facility_Solver_CBC(SolverDO):
         return self.retrieve()
 
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
+        if self.model is None:  # for mypy
+            self.init_model()
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
         subpart_customer = set(
             random.sample(
                 range(self.facility_problem.customer_count),
@@ -532,7 +604,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         self,
         facility_problem: FacilityProblem,
         milp_solver_name: MilpSolverName,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args
     ):
         super().__init__(
@@ -540,7 +612,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
             params_objective_function=params_objective_function,
             **args
         )
-        self.model: mip.Model = None
+        self.model: Optional[mip.Model] = None
         self.milp_solver_name = milp_solver_name
         self.solver_name = map_solver[milp_solver_name]
 
@@ -565,7 +637,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         s = mip.Model(
             name="facilities", sense=mip.MINIMIZE, solver_name=self.solver_name
         )
-        x = {}
+        x: Dict[Tuple[int, int], Union[int, Any]] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 if matrix_fc_indicator[f, c] == 0:
@@ -630,6 +702,10 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
     def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
@@ -645,6 +721,12 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         return self.retrieve_solutions(parameters_milp)
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        if self.model is None:  # for mypy
+            self.init_model()
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
         solution = [0] * self.facility_problem.customer_count
         for key in self.variable_decision["x"]:
             variable_decision_key = self.variable_decision["x"][key]
@@ -667,6 +749,13 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         return result_store
 
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
+        if self.model is None:  # for mypy
+            self.init_model()
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must be not None after calling self.init_model()."
+                )
+
         subpart_customer = set(
             random.sample(
                 range(self.facility_problem.customer_count),
@@ -680,7 +769,9 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
             if c in subpart_customer:
                 dict_f_fixed[c] = dict_f_start[c]
         x_var = self.variable_decision["x"]
-        lns_constraint = {}
+        lns_constraint: Dict[
+            Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]
+        ] = {}
         for key in x_var:
             f, c = key
             if f == dict_f_start[c]:

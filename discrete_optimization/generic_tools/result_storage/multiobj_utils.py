@@ -2,10 +2,10 @@ import numpy as np
 
 
 class TupleFitness:
-    vector_fitness: np.array
+    vector_fitness: np.ndarray
     size: int
 
-    def __init__(self, vector_fitness: np.array, size: int):
+    def __init__(self, vector_fitness: np.ndarray, size: int):
         self.vector_fitness = vector_fitness
         self.size = size
 
