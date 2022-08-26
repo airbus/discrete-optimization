@@ -1968,6 +1968,7 @@ def update_model_lazy(
     components_global,
     edges_in_all_vehicles,
     edges_out_all_vehicles,
+    do_constraint_on_order=False,
 ):
     len_component_global = len(components_global)
     list_constraints = []
@@ -2018,7 +2019,7 @@ def update_model_lazy(
                         >= 1
                     )
                 ]
-    if len_component_global > 1 and False:
+    if len_component_global > 1 and do_constraint_on_order:
         constraints_order = {}
         try:
             variable_order = lp_solver.variable_order
