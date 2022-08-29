@@ -489,20 +489,19 @@ class PostProcessLeftShift(PostProcessSolution):
                 sol[0].satisfy = self.check_sol(
                     problem=self.rcpsp_problem, solution=s
                 ) and self.rcpsp_problem.satisfy(s)
-            if sol[0].satisfy is False or True:
-                if self.partial_solution is None:
-                    s: RCPSPSolution = sol[0]
-                    solution = RCPSPSolution(
-                        problem=self.rcpsp_problem,
-                        rcpsp_permutation=s.rcpsp_permutation,
-                        rcpsp_modes=s.rcpsp_modes,
-                    )
-                    solution.satisfy = self.check_sol(
-                        problem=self.rcpsp_problem, solution=solution
-                    ) and self.rcpsp_problem.satisfy(solution)
-                    result_storage.list_solution_fits += [
-                        (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
-                    ]
+            if self.partial_solution is None:
+                s: RCPSPSolution = sol[0]
+                solution = RCPSPSolution(
+                    problem=self.rcpsp_problem,
+                    rcpsp_permutation=s.rcpsp_permutation,
+                    rcpsp_modes=s.rcpsp_modes,
+                )
+                solution.satisfy = self.check_sol(
+                    problem=self.rcpsp_problem, solution=solution
+                ) and self.rcpsp_problem.satisfy(solution)
+                result_storage.list_solution_fits += [
+                    (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
+                ]
         if self.partial_solution is None:
             solver = LS_RCPSP_Solver(model=self.rcpsp_problem, ls_solver=LS_SOLVER.SA)
             satisfiable = [

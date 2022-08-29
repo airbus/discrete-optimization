@@ -346,15 +346,6 @@ class LNS_CPlex(SolverDO):
                             store_lns.add_solution(solution=s, fitness=f)
                 else:
                     current_nb_iteration_no_improvement += 1
-                if (
-                    skip_first_iteration
-                    and False
-                    and iteration == 0
-                    and self.problem.satisfy(bsol)
-                    and stop_first_iteration_if_optimal
-                ):
-                    print("Finish LNS because found optimal solution")
-                    break
             except Exception as e:
                 current_nb_iteration_no_improvement += 1
                 print("Failed ! reason : ", e)

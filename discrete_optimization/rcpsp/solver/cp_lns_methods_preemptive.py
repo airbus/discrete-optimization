@@ -570,43 +570,30 @@ class NeighborFixStartSubproblem(ConstraintHandler):
             )
         subtasks = set(subtasks)
         evaluation = self.problem.evaluate(current_solution)
-        if method == 0 and False:
+        if evaluation["constraint_penalty"] == 0:
             list_strings = constraints_strings(
                 current_solution=current_solution,
                 subtasks=subtasks,
-                plus_delta=2000,
-                minus_delta=2000,
-                plus_delta_2=0,
-                minus_delta_2=0,
+                plus_delta=6000,
+                minus_delta=6000,
+                plus_delta_2=1,
+                minus_delta_2=1,
+                jobs_to_fix=set(self.problem.tasks_list),
+                cp_solver=cp_solver,
+                constraint_max_time=True,
+            )
+        else:
+            list_strings = constraints_strings(
+                current_solution=current_solution,
+                subtasks=subtasks,
+                plus_delta=6000,
+                minus_delta=6000,
+                plus_delta_2=400,
+                minus_delta_2=400,
                 jobs_to_fix=set(self.problem.tasks_list),
                 cp_solver=cp_solver,
                 constraint_max_time=False,
             )
-        else:
-            if evaluation["constraint_penalty"] == 0:
-                list_strings = constraints_strings(
-                    current_solution=current_solution,
-                    subtasks=subtasks,
-                    plus_delta=6000,
-                    minus_delta=6000,
-                    plus_delta_2=1,
-                    minus_delta_2=1,
-                    jobs_to_fix=set(self.problem.tasks_list),
-                    cp_solver=cp_solver,
-                    constraint_max_time=True,
-                )
-            else:
-                list_strings = constraints_strings(
-                    current_solution=current_solution,
-                    subtasks=subtasks,
-                    plus_delta=6000,
-                    minus_delta=6000,
-                    plus_delta_2=400,
-                    minus_delta_2=400,
-                    jobs_to_fix=set(self.problem.tasks_list),
-                    cp_solver=cp_solver,
-                    constraint_max_time=False,
-                )
         for s in list_strings:
             child_instance.add_string(s)
         child_instance.add_string(
@@ -1001,19 +988,16 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                 rb, constraints = get_ressource_breaks(self.problem_calendar, solution)
                 solution.satisfy = not (any(len(rb[r]) > 0 for r in rb))
                 solution.constraints = constraints
-            if solution.satisfy is False or True:
-                if self.partial_solution is None:
-                    solution_p = RCPSPSolutionPreemptive(
-                        problem=self.problem_calendar,
-                        rcpsp_permutation=solution.rcpsp_permutation,
-                        rcpsp_modes=solution.rcpsp_modes,
-                    )
-                    solution_p.satisfy = self.check_sol(
-                        self.problem_calendar, solution_p
-                    )
-                    result_storage.list_solution_fits += [
-                        (solution_p, -self.aggreg_from_sol(solution_p))
-                    ]
+            if self.partial_solution is None:
+                solution_p = RCPSPSolutionPreemptive(
+                    problem=self.problem_calendar,
+                    rcpsp_permutation=solution.rcpsp_permutation,
+                    rcpsp_modes=solution.rcpsp_modes,
+                )
+                solution_p.satisfy = self.check_sol(self.problem_calendar, solution_p)
+                result_storage.list_solution_fits += [
+                    (solution_p, -self.aggreg_from_sol(solution_p))
+                ]
         if self.do_ls:
             solver = LS_RCPSP_Solver(
                 model=self.problem_calendar, ls_solver=LS_SOLVER.SA

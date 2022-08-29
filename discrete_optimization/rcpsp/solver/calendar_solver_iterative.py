@@ -186,20 +186,19 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                 )
                 sol[0].satisfy = not (any(len(rb[r]) > 0 for r in rb))
                 sol[0].constraints = constraints
-            if sol[0].satisfy is False or True:
-                if self.partial_solution is None:
-                    solution = RCPSPSolution(
-                        problem=self.problem_calendar,
-                        rcpsp_permutation=sol[0].rcpsp_permutation,
-                        rcpsp_modes=sol[0].rcpsp_modes,
+            if self.partial_solution is None:
+                solution = RCPSPSolution(
+                    problem=self.problem_calendar,
+                    rcpsp_permutation=sol[0].rcpsp_permutation,
+                    rcpsp_modes=sol[0].rcpsp_modes,
+                )
+                solution.satisfy = self.check_sol(self.problem_calendar, solution)
+                result_storage.list_solution_fits += [
+                    (
+                        solution,
+                        -self.problem_calendar.evaluate(solution)["makespan"],
                     )
-                    solution.satisfy = self.check_sol(self.problem_calendar, solution)
-                    result_storage.list_solution_fits += [
-                        (
-                            solution,
-                            -self.problem_calendar.evaluate(solution)["makespan"],
-                        )
-                    ]
+                ]
         return result_storage
 
 
