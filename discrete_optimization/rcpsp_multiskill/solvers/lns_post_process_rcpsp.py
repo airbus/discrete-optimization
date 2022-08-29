@@ -382,8 +382,6 @@ def sgs_variant_preemptive(
         modes=solution.modes,
         employee_usage=solution.employee_usage,
     )
-    print("New : ", problem.evaluate(new_solution), problem.satisfy(new_solution))
-    print("Old : ", problem.evaluate(solution), problem.satisfy(solution))
     return new_solution
 
 
@@ -411,7 +409,6 @@ def shift_left_method(
     problem: MS_RCPSPModel,
     predecessors_dict,
 ):
-    print("Old : ", problem.evaluate(solution), problem.satisfy(solution))
     allparts_to_schedule = []
     for t in problem.tasks_list:
         starts = solution.get_start_times_list(t)
@@ -567,8 +564,6 @@ def shift_left_method(
             ):
                 new_starting_time = t
                 break
-        if new_starting_time is None:
-            print("NONE !")
         if task not in new_proposed_schedule:
             new_proposed_schedule[task] = {
                 "starts": [new_starting_time],
@@ -641,6 +636,4 @@ def shift_left_method(
             modes=solution.modes,
             employee_usage=solution.employee_usage,
         )
-
-    print("New : ", problem.evaluate(new_solution), problem.satisfy(new_solution))
     return new_solution

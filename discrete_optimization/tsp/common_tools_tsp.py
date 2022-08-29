@@ -48,16 +48,13 @@ def build_matrice_distance(nodeCount: int, points: List[Point2D], method=None):
 def build_matrice_distance_np(nodeCount: int, points: List[Point2D]):
     matrix_x = np.ones((nodeCount, nodeCount), dtype=np.int32)
     matrix_y = np.ones((nodeCount, nodeCount), dtype=np.int32)
-    print("matrix init")
     for i in range(nodeCount):
         matrix_x[i, :] *= int(points[i].x)
         matrix_y[i, :] *= int(points[i].y)
-    print("multiplied done")
     matrix_x = matrix_x - np.transpose(matrix_x)
     matrix_y = matrix_y - np.transpose(matrix_y)
     distances = np.abs(matrix_x) + np.abs(matrix_y)
     sorted_distance = np.argsort(distances, axis=1)
-    print(sorted_distance.shape)
     return sorted_distance, distances
 
 

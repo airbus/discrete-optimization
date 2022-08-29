@@ -234,11 +234,9 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
             solution, fit = last_result_store.get_random_best_solution()
         else:
             solution, fit = last_result_store.get_random_solution()
-        print("Main calendar : Fit", fit)
         for s in self.store_constraints:
             child_instance.add_string(s)
         if "satisfy" in solution.__dict__.keys() and solution.satisfy:
-            print("adding the other constraints !")
             return self.other_constraint.adding_constraint_from_results_store(
                 cp_solver, child_instance, last_result_store, last_result_store
             )

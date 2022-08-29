@@ -277,7 +277,6 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                 sol[0].satisfy = not (any(len(rb[r]) > 0 for r in rb))
                 sol[0].satisfy = self.problem_calendar.satisfy(sol[0])
                 sol[0].constraints = constraints
-                print("Check Ressource : ", sol[0].satisfy)
             if sol[0].satisfy is False or True:
                 if self.partial_solution is None:
                     s: MS_RCPSPSolution = sol[0]
@@ -315,7 +314,6 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
         solution, fit = result_storage.get_best_solution_fit()
         solution: MS_RCPSPSolution = solution
         if "satisfy" in solution.__dict__.keys() and solution.satisfy:
-            print("adding the other constraints !")
             return self.other_constraint.adding_constraint_from_results_store(
                 cp_solver,
                 child_instance,

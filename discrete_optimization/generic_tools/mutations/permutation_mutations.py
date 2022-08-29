@@ -96,14 +96,12 @@ class PermutationPartialShuffleMutation(Mutation):
         self.register: EncodingRegister = solution.get_attribute_register(problem)
         self.attribute = attribute
         if attribute is None:
-            print("none")
             attributes = [
                 k
                 for k in self.register.dict_attribute_to_type
                 for t in self.register.dict_attribute_to_type[k]["type"]
                 if t == TypeAttribute.PERMUTATION
             ]
-            print(attributes)
             if len(attributes) > 0:
                 self.attribute = attributes[0]
         self.range_shuffle = self.register.dict_attribute_to_type[self.attribute][

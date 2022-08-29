@@ -1952,7 +1952,6 @@ class SubtourAddingConstraint:
                                     ][vv]
                                     for e0, e1 in zip(pp[:-1], pp[1:])
                                 ):
-                                    print("YES")
                                     keys = [(e0, e1) for e0, e1 in zip(pp[:-1], pp[1:])]
                                     c += [
                                         self.linear_solver.model.addConstr(
@@ -2028,13 +2027,11 @@ class ConstraintHandlerOrWarmStart:
             edges_to_add[v].update(
                 {(e0, e1) for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])}
             )
-            print("edges to add , ", edges_to_add)
             edges_missing = {
                 (v, e)
                 for e in edges_to_add[v]
                 if e not in self.linear_solver.variable_decisions["variables_edges"][v]
             }
-            print("missing : ", edges_missing)
             if len(edges_missing) > 0:
                 print("Warning")
 
@@ -2453,8 +2450,6 @@ def reevaluate_result(
                     ]
                     if len(cycles) >= 2:
                         new_connected_components_v += cycles
-                        print("1 = ", sum([x[1] for x in cycles]))
-                        print("2 = ", l)
                         print(cycles)
                         temporary_result.rebuilt_dict = {
                             v: None for v in connected_components

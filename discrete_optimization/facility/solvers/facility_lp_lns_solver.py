@@ -118,7 +118,6 @@ class ConstraintHandlerFacility(ConstraintHandler):
                         )
         if milp_solver.milp_solver_name == MilpSolverName.GRB:
             milp_solver.model.solver.update()
-        print(len(lns_constraint), " constraints")
         milp_solver.model.start = start
         return lns_constraint
 

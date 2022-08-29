@@ -133,7 +133,6 @@ class RCPSPSolution(Solution):
         else:
             sched_str = str(self.rcpsp_schedule)
         val = "RCPSP solution (rcpsp_schedule): " + sched_str
-        print("type: ", type(val))
         return val
 
     def generate_permutation_from_schedule(self):
@@ -945,10 +944,8 @@ class MultiModeRCPSPModel(RCPSPModel):
         att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
         if att == "rcpsp_modes":
             self.set_fixed_modes(sol.rcpsp_modes)
-            print("self.fixed_modes:", self.fixed_modes)
         elif att == "rcpsp_permutation":
             self.set_fixed_permutation(sol.rcpsp_permutation)
-            print("self.fixed_permutation:", self.fixed_permutation)
 
     def set_fixed_modes(self, fixed_modes):
         self.fixed_modes = fixed_modes

@@ -460,7 +460,6 @@ class CPM(SolverDO):
                                 "end_time": time + duration,
                             }
                             done.add(j)
-                            print("valid !", index)
                             for res in resource_avail_in_time:
                                 for t in range(time, time + duration):
                                     resource_avail_in_time[res][
@@ -592,7 +591,6 @@ def run_partial_classic_cpm(partial_schedule, cpm_solver):
                 if all(map_node[n]._ESD is not None for n in pred):
                     max_esd = max([map_node[n]._EFD for n in pred])
                     heappush(queue, (max_esd, next_node))
-    print(queue)
     while queue:
         time, node = heappop(queue)
         if forward and node in done_forward:

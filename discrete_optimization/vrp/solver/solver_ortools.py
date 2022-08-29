@@ -460,7 +460,6 @@ class VrpORToolsSolver(SolverDO):
             plan_output = f"Route for vehicle {vehicle_id}:\n"
             route_load = 0
             cnt = 0
-            print(vehicle_id)
             while not self.routing.IsEnd(index):
                 node_index = self.manager.IndexToNode(index)
                 if cnt != 0:
@@ -498,9 +497,7 @@ class VrpORToolsSolver(SolverDO):
             self.init_model(**kwargs)
         limit_time_s = kwargs.get("limit_time_s", 100)
         self.search_parameters.time_limit.seconds = limit_time_s
-        print("Solving")
         solution = self.routing.SolveWithParameters(self.search_parameters)
-        print(solution)
         variable_vrp = self.retrieve(solution)
         fit = self.aggreg_sol(variable_vrp)
         return ResultStorage(

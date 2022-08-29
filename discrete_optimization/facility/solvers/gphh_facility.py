@@ -220,7 +220,6 @@ class GPHH(SolverDO):
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
         self.set_feature = self.params_gphh.set_feature
-        print("self.set_feature: ", self.set_feature)
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.verbose = verbose
@@ -310,7 +309,6 @@ class GPHH(SolverDO):
             verbose=True,
         )
         self.best_heuristic = hof[0]
-        print("best_heuristic: ", self.best_heuristic)
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         result = self.build_solution(

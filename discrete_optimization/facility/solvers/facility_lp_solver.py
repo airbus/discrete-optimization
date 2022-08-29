@@ -521,14 +521,12 @@ class LP_Facility_Solver_CBC(SolverDO):
         current_solution = self.start_solution
         fit = self.facility_problem.evaluate(current_solution)
         for i in range(nb_iteration):
-            print("i, ", i)
             self.fix_decision(
                 current_solution,
                 fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
             )
             cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
             self.remove_lns_constraint()
-            print(cur_sol)
             current_solution = cur_sol
         return current_solution, fit
 
@@ -750,13 +748,11 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         current_solution = self.start_solution
         fit = self.facility_problem.evaluate(current_solution)
         for i in range(nb_iteration):
-            print("i, ", i)
             self.fix_decision(
                 current_solution,
                 fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
             )
             cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
             self.remove_lns_constraint()
-            print(cur_sol)
             current_solution = cur_sol
         return current_solution, fit

@@ -136,7 +136,6 @@ class Ga:
         self._encoding_variable_name = None
         if encoding is not None and isinstance(encoding, str):
             # check name specified is in problem register
-            print(encoding)
             if encoding in register_solution.dict_attribute_to_type.keys():
                 self._encoding_name = encoding
                 self._encoding_variable_name = register_solution.dict_attribute_to_type[

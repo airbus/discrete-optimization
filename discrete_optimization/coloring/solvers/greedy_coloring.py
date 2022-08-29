@@ -63,7 +63,6 @@ class GreedyColoring(SolverDO):
         strategy: NXGreedyColoringMethod = kwargs.get(
             "strategy", NXGreedyColoringMethod.best
         )
-        print(strategy)
         verbose: bool = kwargs.get("verbose", False)
         strategy_name = strategy.name
         if strategy_name == "best":

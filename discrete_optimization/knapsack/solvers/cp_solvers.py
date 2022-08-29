@@ -365,12 +365,10 @@ class CPMultidimensionalSolver(CPSolver):
                 objectives += [result["objective"]]
         list_solutions_fit = []
         for taken, objective in zip(l_taken, objectives):
-            print(objective)
             sol = KnapsackSolutionMultidimensional(
                 problem=self.knapsack_model, list_taken=taken
             )
             fit = self.aggreg_sol(sol)
-            print(fit)
             list_solutions_fit += [(sol, fit)]
         return ResultStorage(
             list_solution_fits=list_solutions_fit,

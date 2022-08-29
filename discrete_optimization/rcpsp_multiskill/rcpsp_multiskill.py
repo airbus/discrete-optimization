@@ -2362,7 +2362,6 @@ class MS_RCPSPModel(Problem):
                     ]
                 )
                 print("Tasks ", t1, t2)
-                print(rcpsp_sol.schedule[t1], rcpsp_sol.schedule[t2])
                 return False
         # ressource usage respected
         makespan = rcpsp_sol.schedule[self.sink_task]["end_time"]
@@ -2391,7 +2390,6 @@ class MS_RCPSPModel(Problem):
                         "res_avail: ",
                         self.resources_availability[res][t],
                     )
-                    print("3")
                     return False
 
         # Check for non-renewable resource violation

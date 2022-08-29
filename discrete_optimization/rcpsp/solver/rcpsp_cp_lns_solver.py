@@ -417,12 +417,10 @@ class ConstraintHandlerMix(ConstraintHandler):
             key: getattr(self.list_params[int(choice)], key)
             for key in self.list_params[0].__dict__.keys()
         }
-        print("Params : ", d_params)
         ch = ConstraintHandlerStartTimeInterval_CP(problem=self.problem, **d_params)
         self.current_iteration += 1
         self.last_index_param = choice
         self.status[self.last_index_param]["nb_usage"] += 1
-        print("Status ", self.status)
         return ch.adding_constraint_from_results_store(
             cp_solver, child_instance, result_storage
         )
@@ -504,7 +502,6 @@ class PostProcessLeftShift(PostProcessSolution):
                     result_storage.list_solution_fits += [
                         (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
                     ]
-                    print(result_storage.list_solution_fits[-1][1])
         if self.partial_solution is None:
             solver = LS_RCPSP_Solver(model=self.rcpsp_problem, ls_solver=LS_SOLVER.SA)
             satisfiable = [

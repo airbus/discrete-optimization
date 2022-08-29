@@ -115,7 +115,6 @@ class InitialSolutionRCPSP(InitialSolution):
         elif self.initial_method == InitialMethodRCPSP.LS:
             dummy = self.problem.get_dummy_solution()
             _, mutations = get_available_mutations(self.problem, dummy)
-            print(mutations)
             list_mutation = [
                 mutate[0].build(self.problem, dummy, **mutate[1])
                 for mutate in mutations

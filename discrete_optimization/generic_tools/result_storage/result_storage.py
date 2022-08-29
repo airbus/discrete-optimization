@@ -156,7 +156,6 @@ class ResultStorage:
                 if all_similar:
                     if j not in index_to_remove:
                         index_to_remove.append(j)
-        print("number of duplicate solutions in result storage: ", len(index_to_remove))
 
         self.list_solution_fits = [
             self.list_solution_fits[i]

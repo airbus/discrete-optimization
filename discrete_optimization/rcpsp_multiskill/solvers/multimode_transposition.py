@@ -68,9 +68,6 @@ class MultimodeTranspositionSolver(SolverDO):
         result_store = self.solver_multimode_rcpsp.solve(**kwargs)
         solution, fit = result_store.get_best_solution_fit()
         solution: RCPSPSolutionPreemptive = solution
-        print(solution.get_task_preempted())
-        print(solution.get_nb_task_preemption())
-        print(solution.get_max_preempted())
         res = rebuild_multiskill_solution_cp_based(
             multiskill_rcpsp_model=self.model,
             multimode_rcpsp_model=self.multimode_model,
@@ -128,8 +125,6 @@ def rebuild_multiskill_solution(
                     for w in worker_type_to_worker[k]
                     if all(worker_avail_in_time[w][i] for i in active_times)
                 ]
-                print("number worker", number_worker)
-                print("available = ", len(workers_available))
                 if len(workers_available) >= number_worker:
                     wavail = workers_available[:number_worker]
                     skills_needed_by_task = [

@@ -461,10 +461,7 @@ class LP_TSP_Iterative(SolverDO):
                 best_solution_rebuilt_index = iteration
             if len(sorted_connected_component) > 1:
                 edges_to_add = {(e0, e1) for e0, e1 in zip(rebuilt[:-1], rebuilt[1:])}
-                print("len rebuilt : ", len(rebuilt))
-                print("len set rebuilt (debug) ", len(set(rebuilt)))
                 if all((e in self.edges) for e in edges_to_add):
-                    print("setting default value")
                     for e in x_var:
                         if e in edges_to_add:
                             if self.method == MILPSolver.GUROBI:
@@ -589,7 +586,6 @@ def rebuild_tsp_routine(
     end_index=0,
     verbose=False,
 ):
-    print(len(node_to_component))
     rebuilded_path = list(paths_component[node_to_component[start_index]])
     component_end = node_to_component[end_index]
     component_reconnected = {node_to_component[start_index]}
@@ -661,7 +657,6 @@ def rebuild_tsp_routine(
                         backup_min_index_in_path = index_in
                         backup_min_dist = cost
             if min_out_edge is None:
-                print("Backup")
                 e = backup_min_in_edge
                 graph.add_edge(e[0], e[1], weight=evaluate_function_indexes(e[0], e[1]))
                 graph.add_edge(e[1], e[0], weight=evaluate_function_indexes(e[1], e[0]))
@@ -670,11 +665,6 @@ def rebuild_tsp_routine(
                 min_index_in_path = backup_min_index_in_path
                 min_component = backup_min_component
             len_this_component = len(paths_component[min_component])
-            if verbose:
-                print(list(range(0, -len_this_component, -1)))
-                print("len this component : ", len_this_component)
-                print("out edge :", min_out_edge)
-                print("in edge :", min_in_edge)
             index_of_in_component = indexes[min_component][min_out_edge[1]]
             new_component = [
                 paths_component[min_component][

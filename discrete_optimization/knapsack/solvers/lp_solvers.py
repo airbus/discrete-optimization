@@ -401,7 +401,6 @@ class LPKnapsack(MilpSolver):
                 )
             ]
             fits += [self.aggreg_sol(solutions[-1])]
-            print(self.aggreg_sol)
 
         return ResultStorage(
             list_solution_fits=[(sol, fit) for sol, fit in zip(solutions, fits)],

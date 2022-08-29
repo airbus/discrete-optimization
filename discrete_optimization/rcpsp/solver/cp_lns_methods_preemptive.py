@@ -541,16 +541,6 @@ class NeighborFixStartSubproblem(ConstraintHandler):
                 ),
                 (None, None),
             )
-            print(current_solution)
-            print(
-                "Index opti :",
-                [
-                    j
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
-                ],
-            )
         else:
             current_solution, fit = next(
                 (
@@ -560,16 +550,6 @@ class NeighborFixStartSubproblem(ConstraintHandler):
                     in result_storage.list_solution_fits[j][0].__dict__.keys()
                 ),
                 (None, None),
-            )
-            print(current_solution)
-            print(
-                "Index opti :",
-                [
-                    j
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
-                ],
             )
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
@@ -588,7 +568,6 @@ class NeighborFixStartSubproblem(ConstraintHandler):
                 current_solution=current_solution, neighbor_fix_problem=self
             )
         subtasks = set(subtasks)
-        print(len(subtasks), " Tasks ")
         evaluation = self.problem.evaluate(current_solution)
         if method == 0 and False:
             list_strings = constraints_strings(
@@ -738,13 +717,7 @@ def create_subproblems_problems(
         random.shuffle(sorted_constraints)
         subtasks = set()
         len_subtasks = 0
-        print("in the right code")
         j = 0
-        if len(sorted_constraints) == 0:
-            print(sorted_constraints)
-            print(current_solution.rcpsp_schedule)
-            print(neighbor_fix_problem.problem.successors)
-            print("Hell")
         while (
             j <= len(sorted_constraints) - 1
             and len_subtasks < 4 * neighbor_fix_problem.nb_jobs_subproblem
@@ -772,13 +745,10 @@ def create_subproblems_problems(
                 subtasks.update(neighbor_fix_problem.graph_rcpsp.get_pred_activities(c))
             len_subtasks = len(subtasks)
             j += 1
-            print("found problem")
-        print(len(subtasks), " tasks 1 ")
         if len_subtasks < neighbor_fix_problem.nb_jobs_subproblem:
             subtasks = create_subproblem_cut_time(
                 current_solution, neighbor_fix_problem, subtasks
             )
-        print(len(subtasks), " tasks 2")
         return subtasks
     else:
         return create_subproblem_cut_time(current_solution, neighbor_fix_problem)
@@ -816,16 +786,6 @@ class NeighborFlexibleStart(ConstraintHandler):
                 ),
                 (None, None),
             )
-            print(current_solution)
-            print(
-                "Index opti :",
-                [
-                    j
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
-                ],
-            )
         else:
             current_solution, fit = next(
                 (
@@ -835,16 +795,6 @@ class NeighborFlexibleStart(ConstraintHandler):
                     in result_storage.list_solution_fits[j][0].__dict__.keys()
                 ),
                 (None, None),
-            )
-            print(current_solution)
-            print(
-                "Index opti :",
-                [
-                    j
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
-                ],
             )
         if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
             current_solution, fit = result_storage.get_last_best_solution()
@@ -1060,7 +1010,6 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                     solution_p.satisfy = self.check_sol(
                         self.problem_calendar, solution_p
                     )
-                    print("PP ", solution_p.satisfy, -self.aggreg_from_sol(solution_p))
                     result_storage.list_solution_fits += [
                         (solution_p, -self.aggreg_from_sol(solution_p))
                     ]
@@ -1120,11 +1069,9 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
             solution, fit = last_result_store.get_random_best_solution()
         else:
             solution, fit = last_result_store.get_random_solution()
-        print("Main calendar : Fit", fit)
         for s in self.store_constraints:  # we keep trace of already
             child_instance.add_string(s)
         if "satisfy" in solution.__dict__.keys() and solution.satisfy:
-            print("adding the other constraints !")
             return self.other_constraint.adding_constraint_from_results_store(
                 cp_solver, child_instance, result_storage, last_result_store
             )
@@ -1265,12 +1212,10 @@ class ConstraintHandlerMix(ConstraintHandler):
             key: getattr(self.list_params[int(choice)], key)
             for key in self.list_params[0].__dict__.keys()
         }
-        print("Params : ", d_params)
         ch = NeighborFlexibleStart(problem=self.problem, **d_params)
         self.current_iteration += 1
         self.last_index_param = choice
         self.status[self.last_index_param]["nb_usage"] += 1
-        print("Status ", self.status)
         return ch.adding_constraint_from_results_store(
             cp_solver, child_instance, result_storage
         )
