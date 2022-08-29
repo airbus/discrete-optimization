@@ -405,7 +405,7 @@ class VRPIterativeLP_Pymip(SolverDO):
                 best_solution_objective_rebuilt = obj
                 best_solution_rebuilt_index = iteration
             iteration += 1
-            if len(component_global_all[0]) > 1 or True:
+            if len(component_global_all[0]) > 1:
                 edges_to_add = set()
                 for v in rebuilt_dict:
                     edges_to_add.update(
