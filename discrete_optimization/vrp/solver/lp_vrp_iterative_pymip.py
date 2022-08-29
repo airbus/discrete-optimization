@@ -905,19 +905,18 @@ def update_model_2(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            if True:
-                edge_in_of_interest = [
-                    e
-                    for n in s[0]
-                    for e in edges_in_customers[n]
-                    if e[0][1] not in s[0] and e[1][1] in s[0]
-                ]
-                edge_out_of_interest = [
-                    e
-                    for n in s[0]
-                    for e in edges_out_customers[n]
-                    if e[1][1] not in s[0] and e[0][1] in s[0]
-                ]
-                model.add_constr(xsum([x_var[e] for e in edge_in_of_interest]) >= 1)
-                model.add_constr(xsum([x_var[e] for e in edge_out_of_interest]) >= 1)
+            edge_in_of_interest = [
+                e
+                for n in s[0]
+                for e in edges_in_customers[n]
+                if e[0][1] not in s[0] and e[1][1] in s[0]
+            ]
+            edge_out_of_interest = [
+                e
+                for n in s[0]
+                for e in edges_out_customers[n]
+                if e[1][1] not in s[0] and e[0][1] in s[0]
+            ]
+            model.add_constr(xsum([x_var[e] for e in edge_in_of_interest]) >= 1)
+            model.add_constr(xsum([x_var[e] for e in edge_out_of_interest]) >= 1)
     model.update()

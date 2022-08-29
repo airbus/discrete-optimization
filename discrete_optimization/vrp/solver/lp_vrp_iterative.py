@@ -557,80 +557,79 @@ class VRPIterativeLP(SolverDO):
                 best_solution_objective_rebuilt = obj
                 best_solution_rebuilt_index = iteration
             iteration += 1
-            if len(component_global_all[0]) > 1 or True:
-                edges_to_add = set()
-                for v in rebuilt_dict:
-                    edges_to_add.update(
-                        {
-                            (e0, e1)
-                            for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])
-                        }
-                    )
-                edges_missing = {e for e in edges_to_add if e not in edges}
-
-                if len(edges_missing) > 0:
-                    (
-                        g,
-                        edges,
-                        edges_in_customers,
-                        edges_out_customers,
-                        edges_in_merged_graph,
-                        edges_out_merged_graph,
-                    ) = update_graph(
-                        g,
-                        edges,
-                        edges_in_customers,
-                        edges_out_customers,
-                        edges_in_merged_graph,
-                        edges_out_merged_graph,
-                        edges_missing,
-                        customers,
-                    )
-                    self.model.reset()
-                    self.model = None
-                    (
-                        tsp_model,
-                        x_var,
-                        constraint_flow_in,
-                        constraint_flow_out,
-                        constraint_on_edge,
-                    ) = init_model_lp(
-                        g=g,
-                        edges=edges,
-                        edges_in_customers=edges_in_customers,
-                        edges_out_customers=edges_out_customers,
-                        edges_in_merged_graph=edges_in_merged_graph,
-                        edges_out_merged_graph=edges_out_merged_graph,
-                        edges_warm_set=edges_warm_set,
-                        start_indexes=self.problem.start_indexes,
-                        end_indexes=self.problem.end_indexes,
-                        do_lns=do_lns,
-                        fraction=fraction,
-                        vehicle_count=self.problem.vehicle_count,
-                        vehicle_capacity=self.problem.vehicle_capacities,
-                    )
-                    self.model = tsp_model
-                    self.model.setParam("TimeLimit", limit_time_s)
-                    self.x_var = x_var
-                    self.constraint_on_edge = constraint_on_edge
-                    self.graph = g
-                    self.graph_infos = {
-                        "edges": edges,
-                        "edges_in_customers": edges_in_customers,
-                        "edges_out_customers": edges_out_customers,
-                        "edges_in_merged_graph": edges_in_merged_graph,
-                        "edges_out_merged_graph": edges_out_merged_graph,
-                        "edges_warm_set": edges_warm_set,
+            edges_to_add = set()
+            for v in rebuilt_dict:
+                edges_to_add.update(
+                    {
+                        (e0, e1)
+                        for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])
                     }
-                    edges_in_customers = self.graph_infos["edges_in_customers"]
-                    edges_out_customers = self.graph_infos["edges_out_customers"]
-                    edges_in_merged_graph = self.graph_infos["edges_in_merged_graph"]
-                    edges_out_merged_graph = self.graph_infos["edges_out_merged_graph"]
-                    edges = self.graph_infos["edges"]
-                    edges_warm_set = self.graph_infos["edges_warm_set"]
-                    for iedge in self.constraint_on_edge:
-                        self.model.remove(self.constraint_on_edge[iedge])
-                    constraint_on_edge = {}
+                )
+            edges_missing = {e for e in edges_to_add if e not in edges}
+
+            if len(edges_missing) > 0:
+                (
+                    g,
+                    edges,
+                    edges_in_customers,
+                    edges_out_customers,
+                    edges_in_merged_graph,
+                    edges_out_merged_graph,
+                ) = update_graph(
+                    g,
+                    edges,
+                    edges_in_customers,
+                    edges_out_customers,
+                    edges_in_merged_graph,
+                    edges_out_merged_graph,
+                    edges_missing,
+                    customers,
+                )
+                self.model.reset()
+                self.model = None
+                (
+                    tsp_model,
+                    x_var,
+                    constraint_flow_in,
+                    constraint_flow_out,
+                    constraint_on_edge,
+                ) = init_model_lp(
+                    g=g,
+                    edges=edges,
+                    edges_in_customers=edges_in_customers,
+                    edges_out_customers=edges_out_customers,
+                    edges_in_merged_graph=edges_in_merged_graph,
+                    edges_out_merged_graph=edges_out_merged_graph,
+                    edges_warm_set=edges_warm_set,
+                    start_indexes=self.problem.start_indexes,
+                    end_indexes=self.problem.end_indexes,
+                    do_lns=do_lns,
+                    fraction=fraction,
+                    vehicle_count=self.problem.vehicle_count,
+                    vehicle_capacity=self.problem.vehicle_capacities,
+                )
+                self.model = tsp_model
+                self.model.setParam("TimeLimit", limit_time_s)
+                self.x_var = x_var
+                self.constraint_on_edge = constraint_on_edge
+                self.graph = g
+                self.graph_infos = {
+                    "edges": edges,
+                    "edges_in_customers": edges_in_customers,
+                    "edges_out_customers": edges_out_customers,
+                    "edges_in_merged_graph": edges_in_merged_graph,
+                    "edges_out_merged_graph": edges_out_merged_graph,
+                    "edges_warm_set": edges_warm_set,
+                }
+                edges_in_customers = self.graph_infos["edges_in_customers"]
+                edges_out_customers = self.graph_infos["edges_out_customers"]
+                edges_in_merged_graph = self.graph_infos["edges_in_merged_graph"]
+                edges_out_merged_graph = self.graph_infos["edges_out_merged_graph"]
+                edges = self.graph_infos["edges"]
+                edges_warm_set = self.graph_infos["edges_warm_set"]
+                for iedge in self.constraint_on_edge:
+                    self.model.remove(self.constraint_on_edge[iedge])
+                constraint_on_edge = {}
                 edges_to_constraint = set(self.x_var.keys())
                 if do_lns:
                     edges_to_constraint = set(
@@ -1052,19 +1051,18 @@ def update_model_2(
     if len_component_global > 1:
         print("Nb component : ", len_component_global)
         for s in components_global:
-            if True:
-                edge_in_of_interest = [
-                    e
-                    for n in s[0]
-                    for e in edges_in_customers[n]
-                    if e[0][1] not in s[0] and e[1][1] in s[0]
-                ]
-                edge_out_of_interest = [
-                    e
-                    for n in s[0]
-                    for e in edges_out_customers[n]
-                    if e[1][1] not in s[0] and e[0][1] in s[0]
-                ]
-                model.addConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
-                model.addConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
+            edge_in_of_interest = [
+                e
+                for n in s[0]
+                for e in edges_in_customers[n]
+                if e[0][1] not in s[0] and e[1][1] in s[0]
+            ]
+            edge_out_of_interest = [
+                e
+                for n in s[0]
+                for e in edges_out_customers[n]
+                if e[1][1] not in s[0] and e[0][1] in s[0]
+            ]
+            model.addConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
+            model.addConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
     model.update()

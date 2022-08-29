@@ -1646,8 +1646,6 @@ def rebuild_routine(
                         backup_min_dist = cost
             if len(edge_out_of_interest) == 0:
                 return None
-            if min_out_edge is None and False:
-                return None
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
