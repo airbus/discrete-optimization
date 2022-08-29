@@ -260,8 +260,6 @@ def compute_schedule_per_resource_individual(
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
-    print("Min time ", min_time)
-    print("Max time ", max_time)
     with_calendar = rcpsp_model.is_varying_resource()
 
     array_ressource_usage = {

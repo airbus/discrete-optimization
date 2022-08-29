@@ -191,7 +191,6 @@ class RCPSPSolutionSpecial(RCPSPSolution):
         else:
             sched_str = str(self.rcpsp_schedule)
         val = "RCPSP solution (rcpsp_schedule): " + sched_str
-        print("type: ", type(val))
         return val
 
     def generate_permutation_from_schedule(self):
@@ -395,7 +394,6 @@ class RCPSPSolutionSpecialPreemptive(RCPSPSolutionPreemptive):
         else:
             sched_str = str(self.rcpsp_schedule)
         val = "RCPSP solution (rcpsp_schedule): " + sched_str
-        print("type: ", type(val))
         return val
 
     def generate_schedule_from_permutation_serial_sgs(self, do_fast=True):
@@ -1218,7 +1216,6 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
         rcpsp_schedule_feasible = False
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
-            print("last_act_id not in rcpsp_schedule")
             rcpsp_schedule[last_act_id] = {}
             rcpsp_schedule[last_act_id]["starts"] = [9999999]
             rcpsp_schedule[last_act_id]["ends"] = [9999999]

@@ -18,7 +18,6 @@ class BasicPortfolioMutation(Mutation):
             self.weight_mutation = np.array(self.weight_mutation)
         self.weight_mutation = self.weight_mutation / np.sum(self.weight_mutation)
         self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int)
-        print(len(self.list_mutation), " mutation available")
 
     def mutate(self, solution: Solution):
         choice = np.random.choice(self.index_np, size=1, p=self.weight_mutation)[0]

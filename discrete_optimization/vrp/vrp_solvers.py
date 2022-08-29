@@ -28,8 +28,6 @@ def look_for_solver(domain):
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
             available += [solver]
-    print("You have ", len(available), " solvers for your domain ")
-    print([solvers_map[a] for a in available])
     return available
 
 
@@ -38,8 +36,6 @@ def look_for_solver_class(class_domain):
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
             available += [solver]
-    print("You have ", len(available), " solvers for your domain ")
-    print([solvers_map[a] for a in available])
     return available
 
 

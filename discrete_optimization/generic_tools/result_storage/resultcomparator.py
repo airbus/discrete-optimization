@@ -154,7 +154,6 @@ class ResultComparator:
         fig, axs = plt.subplots(rows, cols)
         axis = axs.flatten()
         colors = cm.rainbow(np.linspace(0, 1, len(self.list_result_storage)))
-        print(axs.shape)
         for i, ax in zip(
             range(len(self.list_result_storage)), axis[: len(self.list_result_storage)]
         ):

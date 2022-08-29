@@ -102,7 +102,6 @@ class TSP_ORtools(SolverDO):
             route_distance += self.routing.GetArcCostForVehicle(
                 previous_index, index, 0
             )
-        print(sol)
         variableTSP = SolutionTSP(
             problem=self.tsp_model,
             start_index=self.tsp_model.start_index,

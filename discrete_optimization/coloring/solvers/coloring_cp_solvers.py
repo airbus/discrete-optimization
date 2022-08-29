@@ -113,7 +113,6 @@ class ColoringCP(CPSolver):
         if model_type in {ColoringCPModel.DEFAULT, ColoringCPModel.CLIQUES}:
             instance["include_seq_chain_constraint"] = include_seq_chain_constraint
             keys += ["include_seq_chain_constraint"]
-        print("nb colors ", nb_colors)
         keys += ["n_nodes", "n_edges", "nb_colors"]
         edges = [
             [self.index_nodes_name[e[0]] + 1, self.index_nodes_name[e[1]] + 1, e[2]]

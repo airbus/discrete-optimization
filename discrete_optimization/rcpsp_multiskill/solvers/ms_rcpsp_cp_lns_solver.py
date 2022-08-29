@@ -63,7 +63,6 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
             current_solution, fit = result_storage.get_random_best_solution()
         else:
             current_solution, fit = result_storage.get_random_solution()
-        print("Fit", fit)
         current_solution: MS_RCPSPSolution = current_solution
         max_time = max(
             [current_solution.get_end_time(x) for x in current_solution.schedule]
@@ -278,12 +277,10 @@ class ConstraintHandlerMix(ConstraintHandler):
             key: getattr(self.list_params[int(choice)], key)
             for key in self.list_params[0].__dict__.keys()
         }
-        print("Params : ", d_params)
         ch = ConstraintHandlerStartTimeInterval_CP(problem=self.problem, **d_params)
         self.current_iteration += 1
         self.last_index_param = choice
         self.status[self.last_index_param]["nb_usage"] += 1
-        print("Status ", self.status)
         return ch.adding_constraint_from_results_store(
             cp_solver, child_instance, result_storage
         )

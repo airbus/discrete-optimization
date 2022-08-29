@@ -360,8 +360,6 @@ def problem_constraints(
             else:
                 exceptions += [(task, l[1])]
     if random.random() < 0.99:
-        print("Method 1")
-        print(len(exceptions))
         exceptions = random.sample(exceptions, min(len(exceptions), 10))
         list_strings += constraint_unit_used_to_tasks_preemptive(
             tasks_set=set(
@@ -378,7 +376,6 @@ def problem_constraints(
             exceptions=exceptions,
         )
     else:
-        print("Method 2")
         employee_usage_matrix, sum_usage, employees_usage_dict = employee_usage(
             solution=current_solution, problem=current_solution.problem
         )
@@ -464,16 +461,6 @@ class NeighborRepairProblems(ConstraintHandler):
                 ),
                 (None, None),
             )
-            print(current_solution)
-            print(
-                "Index opti :",
-                [
-                    j
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
-                ],
-            )
         else:
             current_solution, fit = next(
                 (
@@ -483,16 +470,6 @@ class NeighborRepairProblems(ConstraintHandler):
                     in result_storage.list_solution_fits[j][0].__dict__.keys()
                 ),
                 (None, None),
-            )
-            print(current_solution)
-            print(
-                "Index opti :",
-                [
-                    j
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
-                ],
             )
 
         if current_solution is None:

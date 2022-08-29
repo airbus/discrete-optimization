@@ -62,7 +62,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
             for r in self.rcpsp_model.non_renewable_resources
         }
         list_edges = []
-        print("successors: ", self.rcpsp_model.successors)
         for task in sorted_tasks:
             for suc in self.rcpsp_model.successors[task]:
                 list_edges.append([task, suc])

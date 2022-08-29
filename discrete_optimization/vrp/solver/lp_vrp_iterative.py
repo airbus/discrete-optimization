@@ -26,16 +26,13 @@ else:
 def build_matrice_distance_np(customer_count: int, customers: List[Customer]):
     matrix_x = np.ones((customer_count, customer_count), dtype=np.int32)
     matrix_y = np.ones((customer_count, customer_count), dtype=np.int32)
-    print("matrix init")
     for i in range(customer_count):
         matrix_x[i, :] *= int(customers[i].x)
         matrix_y[i, :] *= int(customers[i].y)
-    print("multiplied done")
     matrix_x = matrix_x - np.transpose(matrix_x)
     matrix_y = matrix_y - np.transpose(matrix_y)
     distances = np.abs(matrix_x) + np.abs(matrix_y)
     sorted_distance = np.argsort(distances, axis=1)
-    print(sorted_distance.shape)
     return sorted_distance, distances
 
 
@@ -460,7 +457,6 @@ class VRPIterativeLP(SolverDO):
             edges_in_customers=edges_in_customers,
             edges_out_customers=edges_out_customers,
         )
-        print(edges_warm, edges_warm_set)
         do_lns = kwargs.get("do_lns", False)
         fraction = kwargs.get("fraction_lns", 0.9)
 
@@ -504,7 +500,6 @@ class VRPIterativeLP(SolverDO):
         nb_iteration_max = kwargs.get("nb_iteration_max", 20)
         if self.model is None:
             self.init_model(**kwargs)
-        print("optimizing...")
         limit_time_s = kwargs.get("limit_time_s", 10)
         self.model.setParam("TimeLimit", limit_time_s)
         self.model.optimize()
@@ -571,9 +566,7 @@ class VRPIterativeLP(SolverDO):
                             for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])
                         }
                     )
-                print("edges to add , ", edges_to_add)
                 edges_missing = {e for e in edges_to_add if e not in edges}
-                print("missing : ", edges_missing)
 
                 if len(edges_missing) > 0:
                     (
@@ -711,7 +704,6 @@ class VRPIterativeLP(SolverDO):
                 ax[1].lines = []
             plt.show()
         print("Best obj : ", best_solution_objective_rebuilt)
-        print(rebuilt_obj[best_solution_rebuilt_index])
         solution = VrpSolution(
             problem=self.problem,
             list_start_index=self.problem.start_indexes,
@@ -777,7 +769,6 @@ def rebuild_tsp_routine(
     current_component = sorted_connected_component[node_to_component[start_index]]
     path_set = set(rebuilded_path)
     total_length_path = len(rebuilded_path)
-    print(rebuilded_path)
     while len(component_reconnected) < len(sorted_connected_component):
         if (
             len(component_reconnected) == len(sorted_connected_component) - 1
@@ -861,10 +852,7 @@ def rebuild_tsp_routine(
                 min_component = backup_min_component
             len_this_component = len(paths_component[min_component])
             if verbose:
-                print(list(range(0, -len_this_component, -1)))
                 print("len this component : ", len_this_component)
-                print("out edge :", min_out_edge)
-                print("in edge :", min_in_edge)
             index_of_in_component = indexes[min_component][min_out_edge[1]]
             new_component = [
                 paths_component[min_component][
@@ -886,7 +874,6 @@ def rebuild_tsp_routine(
             path_set = set(rebuilded_path)
             total_length_path = len(rebuilded_path)
             component_reconnected.add(min_component)
-    print(rebuilded_path)
     lengths, obj, capacities = compute_length(
         start_index=start_index[1],
         end_index=end_index[1],
@@ -957,7 +944,6 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
             "Connected component : ",
             [len(connected_components[v]) for v in connected_components],
         )
-        print(x_solution)
         sorted_connected_component = {
             v: sorted(connected_components[v], key=lambda x: x[1], reverse=True)
             for v in connected_components
@@ -1010,7 +996,6 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
     print("Rebuilt : ", rebuilt_solution, rebuilt_obj)
     index_best = min(range(len(rebuilt_obj)), key=lambda x: rebuilt_obj[x])
     print(index_best, "/", len(rebuilt_obj))
-    print(rebuilt_obj)
     print("best : ", rebuilt_obj[index_best])
     return (
         solutions_list[index_best],
@@ -1050,12 +1035,6 @@ def update_model(
                     for e in edges_out_customers[n]
                     if e[1][1] not in s[0]
                 ]
-                print(edge_in_of_interest)
-                print(
-                    "Len of interest : ",
-                    len(edge_out_of_interest),
-                    len(edge_in_of_interest),
-                )
                 model.addConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
                 model.addConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
     model.update()

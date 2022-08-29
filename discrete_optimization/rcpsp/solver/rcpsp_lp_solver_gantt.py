@@ -203,7 +203,6 @@ class LP_MRCPSP_GANTT(MilpSolver):
                 }
                 for k in self.ressource_id_usage
             }
-            print(resource_id_usage)
 
     def solve(
         self, parameters_milp: ParametersMilp = ParametersMilp.default(), **kwargs

@@ -129,7 +129,6 @@ class RobustnessTool:
     def plot(self, results, image_tag=""):
         mean_makespan = np.mean(results[:, :, 1], axis=1)
         max_makespan = np.max(results[:, :, 1], axis=1)
-        print(self.tags)
         print("Mean makespan over test instances : ", mean_makespan)
         print("Max makespan over test instances : ", max_makespan)
         print("methods ", self.tags)

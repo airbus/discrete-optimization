@@ -115,7 +115,6 @@ class Nsga:
         self._encoding_variable_name = None
         if encoding is not None and isinstance(encoding, str):
             # check name specified is in problem register
-            print(encoding)
             if encoding in register_solution.dict_attribute_to_type.keys():
                 self._encoding_name = encoding
                 self._encoding_variable_name = register_solution.dict_attribute_to_type[
@@ -170,8 +169,6 @@ class Nsga:
                     "An encoding of type TypeAttribute should be specified or at least 1 TypeAttribute "
                     "should be defined in the RegisterSolution of your Problem"
                 )
-            print(register_solution.dict_attribute_to_type)
-            print(register_solution.dict_attribute_to_type.keys())
             self._encoding_name = list(register_solution.dict_attribute_to_type.keys())[
                 0
             ]
@@ -209,7 +206,6 @@ class Nsga:
         )
 
         self._objectives = objectives
-        print("_objectives: ", self._objectives)
         self._objective_weights = objective_weights
         if (
             (self._objective_weights is None)

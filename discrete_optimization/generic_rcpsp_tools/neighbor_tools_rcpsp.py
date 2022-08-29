@@ -489,7 +489,6 @@ def constraints_strings_multiskill(
                 for i in sorted_employee[int(len(sorted_employee) / 2) :]
             ]
         )
-        print(sum_usage)
         set_employees_to_fix = set(
             random.sample(
                 current_solution.problem.employees_list,
@@ -502,7 +501,6 @@ def constraints_strings_multiskill(
             cp_solver=cp_solver,
             employees_usage_dict=employees_usage_dict,
         )
-        print("Second method constraint unit")
         if params_constraints.additional_methods:
             list_strings += constraints_start_on_end(
                 current_solution, cp_solver=cp_solver, frac=0.25
@@ -730,7 +728,6 @@ def constraints_start_on_end(
             )
         s += [st]
         cnt += 1
-    print(cnt, " constraint added start on end")
     return s
 
 
@@ -765,7 +762,6 @@ def constraints_start_on_end_preemptive(
         )
         s += [st]
         cnt += 1
-    print(cnt, " constraint added start on end")
     return s
 
 
@@ -1189,7 +1185,6 @@ class NeighborConstraintBreaks(NeighborBuilder):
                     if st_min - 5 <= current_solution.get_start_time(t) <= st_max + 5
                 ]
                 subtasks = set(tasks)
-                print("neighbor constraint", len(subtasks))
                 return subtasks, self.set_tasks.difference(subtasks)
             random.shuffle(sorted_constraints)
             subtasks = set()
@@ -1222,9 +1217,6 @@ class NeighborConstraintBreaks(NeighborBuilder):
                     subtasks.update(list(self.graph.get_pred_activities(t1)))
                 len_subtasks = len(subtasks)
                 j += 1
-                print("found problem")
-                print(details_constraints)
-            print(len(subtasks), " tasks 1 ")
             if len_subtasks < self.nb_jobs_subproblem:
                 subtasks, _ = self.other.find_subtasks(
                     current_solution=current_solution, subtasks=subtasks
@@ -1232,7 +1224,6 @@ class NeighborConstraintBreaks(NeighborBuilder):
             len_subtasks = len(subtasks)
             if len_subtasks > self.nb_jobs_subproblem:
                 subtasks = random.sample(subtasks, self.nb_jobs_subproblem)
-            print(len(subtasks), " tasks selected ")
             return subtasks, self.set_tasks.difference(subtasks)
         else:
             return self.other.find_subtasks(
@@ -1259,9 +1250,6 @@ class NeighborBuilderMix(NeighborBuilder):
         self, current_solution: RCPSPSolution, subtasks: Optional[Set[Hashable]] = None
     ) -> Tuple[Set[Hashable], Set[Hashable]]:
         choice = np.random.choice(self.index_np, size=1, p=self.weight_neighbor)[0]
-        if self.verbose:
-            print(self.__class__.__name__)
-            print(self.list_neighbor[choice])
         return self.list_neighbor[choice].find_subtasks(
             current_solution=current_solution, subtasks=subtasks
         )
@@ -1289,8 +1277,6 @@ class NeighborBuilderTimeWindow(NeighborBuilder):
             self.current_time_window[0] + self.time_window_length,
             self.current_time_window[1] + self.time_window_length,
         ]
-        print("subset 1", len(tasks_of_interest))
-        print("subset 2", len(other_tasks))
         return set(tasks_of_interest), set(other_tasks)
 
     def __init__(
@@ -1764,7 +1750,6 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
                     continue
                 for i in overskill[t][s]:
                     cnt += 1
-        print(cnt, "overskill..")
         s = """array[Units] of var 0..max_time: res_load = [sum(a in Tasks, j in PREEMPTIVE)( d_preemptive[a, j] * unit_used_preemptive[w,a,j] )| w in Units ];\n"""
         ss = """array[Tasks] of var int: overskill = [sum(j in PREEMPTIVE, sk in [nb_skill] where array_skills_required[sk, i]>0)((d_preemptive[i, j]>0)*(sum(w in Units)(unit_used_preemptive[w, i, j]*skillunits[w, sk])-array_skills_required[sk, i]))|i in Tasks];\n"""
         child_instance.add_string(s)

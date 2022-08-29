@@ -495,8 +495,6 @@ class GPHH(SolverDO):
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
         self.set_feature = self.params_gphh.set_feature
-        print("self.set_feature: ", self.set_feature)
-        print("Evaluation: ", self.params_gphh.evaluation)
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.verbose = verbose

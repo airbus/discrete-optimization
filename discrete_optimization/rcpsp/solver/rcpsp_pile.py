@@ -129,8 +129,6 @@ class PileSolverRCPSP(SolverDO):
                 current_pred[neighbor]["nb"] -= 1
                 if current_pred[neighbor]["nb"] == 0:
                     available_activities.add(neighbor)
-        if verbose:
-            print(current_pred)
         queue = []
         current_time = 0
         perm = []

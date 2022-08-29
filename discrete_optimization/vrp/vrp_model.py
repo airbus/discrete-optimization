@@ -295,7 +295,6 @@ def stupid_solution(vrp_model: VrpProblem):
     for v in range(nb_vehicles):
         vehicle_tours.append([])
     vehicle_tours[0] = list(sorted(remaining_customers))
-    print(vehicle_tours)
     solution = VrpSolution(
         problem=vrp_model,
         list_start_index=vrp_model.start_indexes,

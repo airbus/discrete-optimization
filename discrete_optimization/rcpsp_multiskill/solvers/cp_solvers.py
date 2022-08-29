@@ -1394,8 +1394,6 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         verbose = args.get("verbose", True)
         if verbose:
             print(result.status)
-            if result.status == Status.UNSATISFIABLE:
-                print("HEY")
 
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 

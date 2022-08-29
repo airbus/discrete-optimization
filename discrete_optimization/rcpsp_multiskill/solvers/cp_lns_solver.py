@@ -143,7 +143,6 @@ def build_constraint_handler(rcpsp_problem, graph, **kwargs):
                 ),
             ],
         )
-        print(params_list)
         constraint_handler = NeighborSubproblem(
             problem=rcpsp_problem,
             basic_constraint_builder=basic_constraint_builder,
