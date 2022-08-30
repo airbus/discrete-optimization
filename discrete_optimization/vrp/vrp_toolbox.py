@@ -1,3 +1,4 @@
+import logging
 import math
 from collections import namedtuple
 
@@ -5,6 +6,8 @@ import networkx as nx
 import numpy as np
 
 from discrete_optimization.vrp.vrp_model import VrpProblem
+
+logger = logging.getLogger(__name__)
 
 Customer = namedtuple("Customer", ["index", "demand", "x", "y"])
 
@@ -88,7 +91,7 @@ def recompute_output(dictionary_path, customers):
 def output_result(vehicle_tours, obj, opt, vehicle_count, depot):
     # prepare the solution in the specified output format
     outputData = f"{obj:.2f} {opt}\n"
-    print(len(vehicle_tours))
+    logger.debug(len(vehicle_tours))
     for v in range(0, vehicle_count):
         outputData += (
             str(depot.index)

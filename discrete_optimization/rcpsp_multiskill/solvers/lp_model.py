@@ -1,3 +1,4 @@
+import logging
 from itertools import product
 from typing import Optional
 
@@ -21,6 +22,8 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution,
     tree,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class LP_Solver_MRSCPSP(MilpSolver):
@@ -279,7 +282,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
         if not retrieve_all_solution:
             nb_solution = 1
         list_solution_fits = []
-        print(nb_solution, " solutions found")
+        logger.debug(f"{nb_solution} solutions found")
         for s in range(nb_solution):
             rcpsp_schedule = {}
             modes = {}
@@ -328,29 +331,35 @@ class LP_Solver_MRSCPSP(MilpSolver):
             end_time = {}
             for t in self.start_times_task:
                 end_time[t] = self.end_times_task[t].xi(s)
-            print("Size schedule : ", len(rcpsp_schedule.keys()))
-            print(
-                "results",
-                "(task, mode, time)",
-                {x: results[x] for x in results if results[x] == 1.0},
+            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
+            logger.debug(
+                (
+                    "results",
+                    "(task, mode, time)",
+                    {x: results[x] for x in results if results[x] == 1.0},
+                )
             )
-            print(
-                "Employee usage : ",
-                "(employee, task, mode, time, skill)",
-                {
-                    x: employee_usage[x]
-                    for x in employee_usage
-                    if employee_usage[x] == 1.0
-                },
+            logger.debug(
+                (
+                    "Employee usage : ",
+                    "(employee, task, mode, time, skill)",
+                    {
+                        x: employee_usage[x]
+                        for x in employee_usage
+                        if employee_usage[x] == 1.0
+                    },
+                )
             )
-            print(
-                "task mode : ",
-                "(task, mode)",
-                {t: modes[t] for t in modes if modes[t] == 1.0},
+            logger.debug(
+                (
+                    "task mode : ",
+                    "(task, mode)",
+                    {t: modes[t] for t in modes if modes[t] == 1.0},
+                )
             )
-            print("durations : ", durations)
-            print("Start time ", start_time)
-            print("End time ", end_time)
+            logger.debug(f"durations : {durations}")
+            logger.debug(f"Start time {start_time}")
+            logger.debug(f"End time {end_time}")
             solution = MS_RCPSPSolution(
                 problem=self.rcpsp_model,
                 modes=modes_task,
@@ -370,10 +379,10 @@ class LP_Solver_MRSCPSP(MilpSolver):
         if self.model is None:
             import time
 
-            print("Init LP model ")
+            logger.info("Init LP model ")
             t = time.time()
             self.init_model(greedy_start=False)
-            print("LP model initialized...in ", time.time() - t, " seconds")
+            logger.info("LP model initialized...in ", time.time() - t, " seconds")
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         limit_time_s = parameters_milp.TimeLimit

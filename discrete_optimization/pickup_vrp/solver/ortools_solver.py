@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import logging
 from enum import Enum
 from functools import partial
 from typing import Any, Iterable, List, Union
@@ -15,6 +16,8 @@ from discrete_optimization.pickup_vrp.gpdp import (
     build_matrix_distance,
     build_matrix_time,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ParametersCost:
@@ -231,7 +234,7 @@ class ORToolsGPDP(SolverDO):
                 except:
                     # Works for >=ortools9.2
                     routing.SetVehicleUsedWhenEmpty(True, v)
-        print("routing init")
+        logger.info("routing init")
         if use_matrix:
             # Create and register a transit callback.
             def distance_callback(from_index, to_index):
@@ -287,7 +290,7 @@ class ORToolsGPDP(SolverDO):
         # Define cost of each arc.
         if set_transit_cost_by_default:
             routing.SetArcCostEvaluatorOfAllVehicles(transit_distance_callback_index)
-        print("Distance callback done")
+        logger.info("Distance callback done")
         if include_resource_dimension:
 
             def ressource_transition(from_index, to_index, ressource, problem, vehicle):
@@ -530,7 +533,7 @@ class ORToolsGPDP(SolverDO):
                     )
                 )
                 i += 1
-        print("cumulative done")
+        logger.info("cumulative done")
         if include_mandatory:
             mandatory_nodes = [
                 manager.NodeToIndex(self.problem.index_nodes[n])
@@ -705,7 +708,7 @@ class ORToolsGPDP(SolverDO):
         self.manager = manager
         self.routing = routing
         self.search_parameters = self.build_search_parameters(**kwargs)
-        print("Routing problem initialized ")
+        logger.info("Routing problem initialized ")
 
     def build_search_parameters(self, **kwargs):
         first_solution_strategy = kwargs.get(
@@ -739,19 +742,19 @@ class ORToolsGPDP(SolverDO):
         search_parameters.time_limit.seconds = kwargs.get("time_limit", 100)
         return search_parameters
 
-    def solve(self, search_parameters=None, verbose=True, **kwargs) -> Iterable[Any]:
+    def solve(self, search_parameters=None, **kwargs) -> Iterable[Any]:
         if search_parameters is None:
             search_parameters = self.search_parameters
         sols = []
-        callback = make_routing_monitor(self, verbose=verbose)
+        callback = make_routing_monitor(self)
         self.routing.AddAtSolutionCallback(callback)
         sols = self.routing.SolveWithParameters(search_parameters)
         return callback.sols
 
 
-def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
+def make_routing_monitor(solver: ORToolsGPDP) -> callable:
     class RoutingMonitor:
-        def __init__(self, solver: ORToolsGPDP, verbose=True):
+        def __init__(self, solver: ORToolsGPDP):
             self.model = solver.routing
             self.problem = solver.problem
             self.solver = solver
@@ -760,15 +763,12 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
             self._counter_limit = 10000000
             self.nb_solutions = 0
             self.sols = []
-            self.verbose = verbose
 
         def __call__(self):
-            if verbose:
-                print(
-                    "New solution found : " "--Cur objective : ",
-                    self.model.CostVar().Max(),
-                )
-                print(status_description[self.model.status()])
+            logger.debug(
+                f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
+            )
+            logger.debug(status_description[self.model.status()])
             if self.nb_solutions % 100 == 0:
                 self.retrieve_current_solution()
             if self.model.CostVar().Max() < self._best_objective:
@@ -807,7 +807,7 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                             for r in dimensions
                         }
                     except Exception as e:
-                        print("1,", e)
+                        logger.warning(("1,", e))
                         break
                     cnt += 1
                     for r in route_load:
@@ -816,7 +816,7 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                     try:
                         index = self.model.NextVar(index).Value()
                     except Exception as e:
-                        print("3", e)
+                        logger.warning(("3", e))
                         break
                     route_distance += self.model.GetArcCostForVehicle(
                         previous_index, index, vehicle_id
@@ -841,7 +841,7 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
                                 for r in dimensions
                             }
                         except Exception as e:
-                            print("2,", e)
+                            logger.warning(("2,", e))
                             break
             postpro_sol += [
                 (
@@ -854,7 +854,7 @@ def make_routing_monitor(solver: ORToolsGPDP, verbose=True) -> callable:
             ]
             self.sols += postpro_sol
 
-    return RoutingMonitor(solver, verbose=verbose)
+    return RoutingMonitor(solver)
 
 
 def plot_ortools_solution(result, problem: GPDP):

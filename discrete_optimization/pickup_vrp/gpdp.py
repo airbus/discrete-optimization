@@ -2,6 +2,7 @@
 # The General Pickup and Delivery Problem
 # February 1995 Transportation Science 29(1):17-29
 # https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem
+import logging
 from typing import Dict, Hashable, List, Set, Tuple
 
 import networkx as nx
@@ -16,6 +17,8 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.tsp.tsp_model import TSPModel
 from discrete_optimization.vrp.vrp_model import VrpProblem
+
+logger = logging.getLogger(__name__)
 
 
 class GPDPSolution(Solution):
@@ -151,7 +154,7 @@ class GPDP(Problem):
                     self.edges_dict[node][node1][r] = resources[r]
         self.graph = None
         if compute_graph:
-            print("compute graph")
+            logger.info("compute graph")
             self.graph = Graph(
                 nodes=[(n, self.all_nodes_dict[n]) for n in self.all_nodes_dict],
                 edges=[
@@ -162,7 +165,7 @@ class GPDP(Problem):
                 undirected=False,
                 compute_predecessors=False,
             )
-            print("done")
+            logger.info("done")
         self.clusters_dict = clusters_dict
         if self.clusters_dict is None:
             i = 0

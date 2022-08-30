@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import time
@@ -17,6 +18,9 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
+
+
+logger = logging.getLogger(__name__)
 
 
 class TemporaryResult:
@@ -893,12 +897,12 @@ class LinearFlowSolver(SolverDO):
         self.model.setParam("MIPGap", parameters_milp.MIPGap)
         self.model.setParam(grb.GRB.Param.Method, 2)
         self.model.setParam("Heuristics", 0.5)
-        print("optimizing...")
+        logger.info("optimizing...")
         self.model.optimize()
         nSolutions = self.model.SolCount
         nObjectives = self.model.NumObj
-        print("Problem has", nObjectives, "objectives")
-        print("Gurobi found", nSolutions, "solutions")
+        logger.info(f"Problem has {nObjectives} objectives")
+        logger.info(f"Gurobi found {nSolutions} solutions")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -912,7 +916,7 @@ class LinearFlowSolver(SolverDO):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
 
@@ -1004,7 +1008,7 @@ class LinearFlowSolver(SolverDO):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            print(len(solutions[0].component_global))
+            logger.debug(len(solutions[0].component_global))
             subtour.adding_component_constraints([solutions[0]])
             if (
                 max(
@@ -1596,12 +1600,12 @@ class LinearFlowSolverVehicleType(SolverDO):
         self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions)
         self.model.setParam("MIPGapAbs", parameters_milp.MIPGapAbs)
         self.model.setParam("MIPGap", parameters_milp.MIPGap)
-        print("optimizing...")
+        logger.info("optimizing...")
         self.model.optimize()
         nSolutions = self.model.SolCount
         nObjectives = self.model.NumObj
-        print("Problem has", nObjectives, "objectives")
-        print("Gurobi found", nSolutions, "solutions")
+        logger.info(f"Problem has {nObjectives} objectives")
+        logger.info(f"Gurobi found {nSolutions} solutions")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -1659,7 +1663,7 @@ class LinearFlowSolverVehicleType(SolverDO):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            print(len(solutions[0].component_global))
+            logger.debug(len(solutions[0].component_global))
             subtour.adding_component_constraints([solutions[0]])
             if (
                 max(
@@ -1724,7 +1728,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                 linear_solver=self, problem=self.problem, do_lns=False
             )
             c.adding_constraint(kwargs.get("warm_start"))
-        print("optimizing...")
+        logger.info("optimizing...")
         indexes_edges = [
             (v, e)
             for v in self.variable_decisions["variables_edges"]
@@ -1762,10 +1766,9 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                     ]
                     for v in vehicle_keys
                 }
-                print(cost)
-                print(
-                    "Cycles : ",
-                    [len(connected_components[v]) for v in connected_components],
+                logger.debug(cost)
+                logger.debug(
+                    f"Cycles : {[len(connected_components[v]) for v in connected_components]}"
                 )
                 sorted_connected_component = {
                     v: sorted(
@@ -1841,8 +1844,8 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         self.model.optimize(callback)
         nSolutions = self.model.SolCount
         nObjectives = self.model.NumObj
-        print("Problem has", nObjectives, "objectives")
-        print("Gurobi found", nSolutions, "solutions")
+        logger.info(f"Problem has {nObjectives} objectives")
+        logger.info(f"Gurobi found {nSolutions} solutions")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -1856,7 +1859,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
 
@@ -2043,7 +2046,7 @@ class ConstraintHandlerOrWarmStart:
                 if e not in self.linear_solver.variable_decisions["variables_edges"][v]
             }
             if len(edges_missing) > 0:
-                print("Warning")
+                logger.warning("Some edges are missing.")
 
         if self.do_lns:
             try:
@@ -2135,16 +2138,16 @@ class ConstraintHandlerOrWarmStart:
                             if set_ in edges_to_constraint[v]:
                                 edges_to_constraint[v].remove(set_)
 
-        print(
-            sum([len(edges_to_constraint[v]) for v in edges_to_constraint]),
-            " edges constraint over ",
-            sum(
-                [
-                    len(self.linear_solver.variable_decisions["variables_edges"][v])
-                    for v in self.linear_solver.variable_decisions["variables_edges"]
-                ]
-            ),
+        nb_edges_to_constraint = sum(
+            [len(edges_to_constraint[v]) for v in edges_to_constraint]
         )
+        nb_edges_total = sum(
+            [
+                len(self.linear_solver.variable_decisions["variables_edges"][v])
+                for v in self.linear_solver.variable_decisions["variables_edges"]
+            ]
+        )
+        logger.debug(f"{nb_edges_to_constraint} edges constraint over {nb_edges_total}")
         iedge = 0
         for v in vehicle_keys:
             if rebuilt_dict[v] is not None:
@@ -2221,7 +2224,6 @@ def rebuild_routine(
     evaluate_function_indexes,
     start_index,
     end_index,
-    verbose=False,
 ):
     rebuilded_path = list(
         paths_component[node_to_component[start_index]]
@@ -2297,11 +2299,10 @@ def rebuild_routine(
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
-            if verbose:
-                print(list(range(0, -len_this_component, -1)))
-                print("len this component : ", len_this_component)
-                print("out edge :", min_out_edge)
-                print("in edge :", min_in_edge)
+            logger.debug(list(range(0, -len_this_component, -1)))
+            logger.debug(f"len this component : {len_this_component}")
+            logger.debug(f"out edge : {min_out_edge}")
+            logger.debug(f"in edge : {min_in_edge}")
             index_of_in_component = indexes[min_component][min_out_edge[1]]
             new_component = [
                 paths_component[min_component][
@@ -2309,9 +2310,8 @@ def rebuild_routine(
                 ]
                 for i in range(0, -len_this_component, -1)
             ]
-            if verbose:
-                print("path component ", paths_component[min_component])
-                print("New component : ", new_component)
+            logger.debug(f"path component {paths_component[min_component]}")
+            logger.debug(f"New component : {new_component}")
             rebuilded_path = (
                 rebuilded_path[: (min_index_in_path + 1)]
                 + new_component
@@ -2340,7 +2340,6 @@ def rebuild_routine_variant(
     evaluate_function_indexes,
     start_index,
     end_index,
-    verbose=False,
 ):
     rebuilded_path = list(
         paths_component[node_to_component[start_index]]
@@ -2385,10 +2384,9 @@ def rebuild_routine_variant(
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
-            if verbose:
-                print(list(range(0, -len_this_component, -1)))
-                print("len this component : ", len_this_component)
-                print("out edge :", min_out_edge)
+            logger.debug(list(range(0, -len_this_component, -1)))
+            logger.debug(f"len this component : {len_this_component}")
+            logger.debug(f"out edge : {min_out_edge}")
             index_of_in_component = indexes[min_component][min_out_edge[1]]
             new_component = [
                 paths_component[min_component][
@@ -2396,9 +2394,8 @@ def rebuild_routine_variant(
                 ]
                 for i in range(0, -len_this_component, -1)
             ]
-            if verbose:
-                print("path component ", paths_component[min_component])
-                print("New component : ", new_component)
+            logger.debug(f"path component {paths_component[min_component]}")
+            logger.debug(f"New component : {new_component}")
             rebuilded_path = rebuilded_path + new_component
             path_set = set(rebuilded_path)
             component_reconnected.add(min_component)
@@ -2426,9 +2423,8 @@ def reevaluate_result(
         ]
         for v in vehicle_keys
     }
-    print(
-        "Connected component : ",
-        [len(connected_components[v]) for v in connected_components],
+    logger.debug(
+        f"Connected component : {[len(connected_components[v]) for v in connected_components]}"
     )
     sorted_connected_component = {
         v: sorted(connected_components[v], key=lambda x: x[1], reverse=True)
@@ -2456,7 +2452,7 @@ def reevaluate_result(
                     ]
                     if len(cycles) >= 2:
                         new_connected_components_v += cycles
-                        print(cycles)
+                        logger.debug(cycles)
                         temporary_result.rebuilt_dict = {
                             v: None for v in connected_components
                         }
@@ -2471,7 +2467,7 @@ def reevaluate_result(
                 connected_components[v] = new_connected_components_v
 
     nb_component_global = len(component_global)
-    print("Global : ", nb_component_global)
+    logger.debug(f"Global : {nb_component_global}")
     for v in temporary_result.graph_vehicle:
         graph_of_interest: nx.DiGraph = nx.subgraph(
             problem.graph.graph_nx,
@@ -2505,15 +2501,17 @@ def reevaluate_result(
             evaluate_function_indexes=f,
         )
         if rebuilt_dict[v] is not None:
-            print(rebuilt_dict[v])
-            print(
-                "distance :",
-                sum(
-                    [
-                        f(e, e1)
-                        for e, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])
-                    ]
-                ),
+            logger.debug(rebuilt_dict[v])
+            logger.debug(
+                (
+                    "distance :",
+                    sum(
+                        [
+                            f(e, e1)
+                            for e, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])
+                        ]
+                    ),
+                )
             )
     temporary_result.paths_component = paths_component
     temporary_result.indexes_component = indexes_component
@@ -2583,7 +2581,7 @@ def update_model_cluster_tsp(
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
             edge_in_of_interest = [
                 e
@@ -2680,7 +2678,7 @@ def update_model(
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global[:1]:
             edge_in_of_interest = [
                 e
@@ -2801,7 +2799,7 @@ def update_model_lazy(
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global[:1]:
             edge_in_of_interest = [
                 e

@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 from itertools import product
 from typing import Dict, List, Optional, Union
@@ -35,6 +36,9 @@ else:
     import gurobipy as gurobi
 
 
+logger = logging.getLogger(__name__)
+
+
 class LP_RCPSP_Solver(Enum):
     GRB = 0
     CBC = 1
@@ -69,11 +73,9 @@ class LP_RCPSP(MilpSolver):
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
         start_solution = args.get("start_solution", None)
-        verbose = args.get("verbose", False)
         if start_solution is None:
             if greedy_start:
-                if verbose:
-                    print("Computing greedy solution")
+                logger.info("Computing greedy solution")
                 greedy_solver = PileSolverRCPSP(self.rcpsp_model)
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
@@ -81,8 +83,7 @@ class LP_RCPSP(MilpSolver):
                 self.start_solution = store_solution.get_best_solution_fit()[0]
                 makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
             else:
-                if verbose:
-                    print("Get dummy solution")
+                logger.info("Get dummy solution")
                 solution = self.rcpsp_model.get_dummy_solution()
                 self.start_solution = solution
                 makespan = self.rcpsp_model.evaluate(solution)["makespan"]
@@ -101,7 +102,7 @@ class LP_RCPSP(MilpSolver):
         ]
         c = [self.rcpsp_model.resources[r] for r in resources]
         S = []
-        print("successors: ", self.rcpsp_model.successors)
+        logger.debug(f"successors: {self.rcpsp_model.successors}")
         for task in sorted_tasks:
             for suc in self.rcpsp_model.successors[task]:
                 S.append([task, suc])
@@ -266,7 +267,7 @@ class LP_RCPSP(MilpSolver):
         if not retrieve_all_solution:
             nb_solution = 1
         list_solution_fits = []
-        print(nb_solution, " solutions found")
+        logger.debug(f"{nb_solution} solutions found")
         for s in range(nb_solution):
             rcpsp_schedule = {}
             for (task_index, time) in product(self.index_task, self.index_time):
@@ -278,7 +279,7 @@ class LP_RCPSP(MilpSolver):
                         "end_time": time
                         + self.rcpsp_model.mode_details[task][1]["duration"],
                     }
-            print("Size schedule : ", len(rcpsp_schedule.keys()))
+            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
             solution = RCPSPSolution(
                 problem=self.rcpsp_model,
                 rcpsp_schedule=rcpsp_schedule,
@@ -338,11 +339,9 @@ class LP_MRCPSP(MilpSolver):
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
         start_solution = args.get("start_solution", None)
-        verbose = args.get("verbose", False)
         if start_solution is None:
             if greedy_start:
-                if verbose:
-                    print("Computing greedy solution")
+                logger.info("Computing greedy solution")
                 greedy_solver = PileSolverRCPSP(self.rcpsp_model)
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
@@ -350,8 +349,7 @@ class LP_MRCPSP(MilpSolver):
                 self.start_solution = store_solution.get_best_solution_fit()[0]
                 makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
             else:
-                if verbose:
-                    print("Get dummy solution")
+                logger.info("Get dummy solution")
                 solution = self.rcpsp_model.get_dummy_solution()
                 self.start_solution = solution
                 makespan = self.rcpsp_model.evaluate(solution)["makespan"]
@@ -538,7 +536,9 @@ class LP_MRCPSP(MilpSolver):
                             )
                         ]
             self.constraints_partial_solutions = constraints
-            print("Partial solution constraints : ", self.constraints_partial_solutions)
+            logger.debug(
+                f"Partial solution constraints : {self.constraints_partial_solutions}"
+            )
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         retrieve_all_solution = parameters_milp.retrieve_all_solution
@@ -547,7 +547,7 @@ class LP_MRCPSP(MilpSolver):
         if not retrieve_all_solution:
             nb_solution = 1
         list_solution_fits = []
-        print(nb_solution, " solutions found")
+        logger.debug(f"{nb_solution} solutions found")
         for s in range(nb_solution):
             rcpsp_schedule = {}
             modes = {}
@@ -561,7 +561,7 @@ class LP_MRCPSP(MilpSolver):
                         + self.rcpsp_model.mode_details[task][mode]["duration"],
                     }
                     modes[task] = mode
-            print("Size schedule : ", len(rcpsp_schedule.keys()))
+            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
             modes_vec = [modes[k] for k in self.rcpsp_model.tasks_list_non_dummy]
             solution = RCPSPSolution(
                 problem=self.rcpsp_model,
@@ -624,11 +624,9 @@ class LP_MRCPSP_GUROBI(MilpSolver):
         greedy_start = args.get("greedy_start", True)
         start_solution = args.get("start_solution", None)
         max_horizon = args.get("max_horizon", None)
-        verbose = args.get("verbose", False)
         if start_solution is None:
             if greedy_start:
-                if verbose:
-                    print("Computing greedy solution")
+                logger.info("Computing greedy solution")
                 if isinstance(self.rcpsp_model, RCPSPModelCalendar):
                     greedy_solver = PileSolverRCPSP_Calendar(self.rcpsp_model)
                 else:
@@ -639,8 +637,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
                 self.start_solution = store_solution.get_best_solution_fit()[0]
                 makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
             else:
-                if verbose:
-                    print("Get dummy solution")
+                logger.info("Get dummy solution")
                 solution = self.rcpsp_model.get_dummy_solution()
                 self.start_solution = solution
                 makespan = self.rcpsp_model.evaluate(solution)["makespan"]
@@ -670,7 +667,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             for r in self.rcpsp_model.non_renewable_resources
         }
         S = []
-        print("successors: ", self.rcpsp_model.successors)
+        logger.debug(f"successors: {self.rcpsp_model.successors}")
         for task in sorted_tasks:
             for suc in self.rcpsp_model.successors[task]:
                 S.append([task, suc])
@@ -879,7 +876,9 @@ class LP_MRCPSP_GUROBI(MilpSolver):
                         )
                     ]
             self.constraints_partial_solutions = constraints
-            print("Partial solution constraints : ", self.constraints_partial_solutions)
+            logger.debug(
+                f"Partial solution constraints : {self.constraints_partial_solutions}"
+            )
             self.model.update()
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
@@ -903,7 +902,7 @@ class LP_MRCPSP_GUROBI(MilpSolver):
                         + self.rcpsp_model.mode_details[task][mode]["duration"],
                     }
                     modes[task] = mode
-            print("Size schedule : ", len(rcpsp_schedule.keys()))
+            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
             modes_vec = [modes[k] for k in self.rcpsp_model.tasks_list_non_dummy]
             solution = RCPSPSolution(
                 problem=self.rcpsp_model,

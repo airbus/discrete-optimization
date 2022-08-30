@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 from datetime import timedelta
@@ -33,6 +34,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
+logger = logging.getLogger(__name__)
+
+
 path_minizinc = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../minizinc/")
 )
@@ -56,8 +60,8 @@ class FacilitySolCP:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("One solution ", self.objective)
-        print("Output ", _output_item)
+        logger.debug("One solution ", self.objective)
+        logger.debug("Output ", _output_item)
 
     def check(self) -> bool:
         return True
@@ -184,18 +188,15 @@ class FacilityCP(SolverDO):
 
     def get_solution(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedySolverDistanceBased(self.facility_problem)
             result = greedy_solver.solve()
             solution = result.get_best_solution()
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.facility_problem.get_dummy_solution()
-        print("Greedy Done")
+        logger.info("Greedy Done")
         return solution
 
     def solve_lns(self, fraction_to_fix: float = 0.9, nb_iteration: int = 10, **kwargs):
@@ -232,9 +233,9 @@ class FacilityCP(SolverDO):
                     "solve :: int_search(facility_for_customer,"
                     " input_order, indomain_min, complete) minimize(objective);\n"
                 )
-                print("Solving... ", iteration)
+                logger.debug("Solving... ", iteration)
                 res = child.solve(timeout=timedelta(seconds=limit_time_s))
-                print(res.status)
+                logger.debug(res.status)
                 if res.solution is not None and -res["objective"] > current_objective:
                     current_objective = -res["objective"]
                     current_best_solution = FacilitySolution(
@@ -246,13 +247,13 @@ class FacilityCP(SolverDO):
                         i + 1: current_best_solution.facility_for_customers[i] + 1
                         for i in range(self.facility_problem.customer_count)
                     }
-                    print(iteration, " : , ", res["objective"])
-                    print("IMPROVED : ")
+                    logger.debug(f"{iteration} :  {res['objective']}")
+                    logger.debug("IMPROVED : ")
                 else:
                     try:
-                        print(iteration, " :  ", res["objective"])
+                        logger.debug(f"{iteration} :  {res['objective']}")
                     except:
-                        print(iteration, " failed ")
+                        logger.debug(f"{iteration} :  failed")
                 iteration += 1
         fit = self.facility_problem.evaluate(current_best_solution)
         return current_best_solution, fit

@@ -1,3 +1,4 @@
+import logging
 import math
 import random
 from enum import Enum
@@ -43,6 +44,8 @@ from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints
     RCPSPSolutionSpecialPreemptive,
     compute_constraints_details,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def last_opti_solution(last_result_store: ResultStorage):
@@ -284,8 +287,10 @@ def sgs_variant(
         rcpsp_schedule_feasible=True,
         rcpsp_modes=solution.rcpsp_modes,
     )
-    print("New : ", problem.evaluate(new_solution), problem.satisfy(new_solution))
-    print("Old : ", problem.evaluate(solution), problem.satisfy(solution))
+    logger.debug(
+        ("New : ", problem.evaluate(new_solution), problem.satisfy(new_solution))
+    )
+    logger.debug(("Old : ", problem.evaluate(solution), problem.satisfy(solution)))
     return new_solution
 
 

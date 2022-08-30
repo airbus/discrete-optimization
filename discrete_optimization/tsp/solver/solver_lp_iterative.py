@@ -1,7 +1,10 @@
+import logging
 import os
 from enum import Enum
 from typing import Optional
 
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 from ortools.linear_solver import pywraplp
 
@@ -25,8 +28,8 @@ else:
     gurobi_available = True
     from gurobipy import GRB, Model, quicksum
 
-import matplotlib.pyplot as plt
-import networkx as nx
+
+logger = logging.getLogger(__name__)
 
 
 def build_graph_pruned(tsp_model: TSPModel2D):
@@ -129,7 +132,7 @@ class LP_TSP_Iterative(SolverDO):
         tsp_model: TSPModel,
         graph_builder=None,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.tsp_model = tsp_model
         self.node_count = self.tsp_model.node_count
@@ -355,14 +358,14 @@ class LP_TSP_Iterative(SolverDO):
         if plot_folder is not None:
             os.makedirs(plot_folder, exist_ok=True)
         tsp_model = self.model
-        print("optimizing...")
+        logger.info("optimizing...")
         if self.method == MILPSolver.GUROBI:
             tsp_model.optimize()
             nSolutions = tsp_model.SolCount
             nObjectives = tsp_model.NumObj
             objective = tsp_model.getObjective().getValue()
-            print("Problem has", nObjectives, "objectives")
-            print("Gurobi found", nSolutions, "solutions")
+            logger.info(f"Problem has {nObjectives} objectives")
+            logger.info(f"Gurobi found {nSolutions} solutions")
             status = tsp_model.getAttr("Status")
         if self.method == MILPSolver.CBC:
             self.model.Solve()
@@ -376,7 +379,7 @@ class LP_TSP_Iterative(SolverDO):
                 5: "MODEL_INVALID",
                 6: "NOT_SOLVED",
             }
-            print("Result :", resdict[res])
+            logger.debug(f"Result : {resdict[res]}")
             objective = self.model.Objective().Value()
         finished = False
         solutions = []
@@ -395,7 +398,7 @@ class LP_TSP_Iterative(SolverDO):
             connected_components = [
                 (set(e), len(e)) for e in nx.weakly_connected_components(g_empty)
             ]
-            print("Connected component : ", len(connected_components))
+            logger.debug(f"Connected component : {len(connected_components)}")
             sorted_connected_component = sorted(
                 connected_components, key=lambda x: x[1], reverse=True
             )
@@ -437,8 +440,8 @@ class LP_TSP_Iterative(SolverDO):
                     tsp_model.Add(
                         tsp_model.Sum([x_var[e] for e in edge_out_of_interest]) >= 1
                     )
-            print(len(node_to_component), self.node_count)
-            print(len(x_solution))
+            logger.debug((len(node_to_component), self.node_count))
+            logger.debug(len(x_solution))
             rebuilt, objective = rebuild_tsp_routine(
                 sorted_connected_component,
                 paths_component,
@@ -476,7 +479,7 @@ class LP_TSP_Iterative(SolverDO):
                             elif self.method == MILPSolver.CBC:
                                 tsp_model.SetHint([x_var[e]], [1])
                 else:
-                    print([e for e in edges_to_add if e not in self.edges])
+                    logger.debug([e for e in edges_to_add if e not in self.edges])
                 if self.method == MILPSolver.GUROBI:
                     tsp_model.update()
                     tsp_model.optimize()
@@ -490,7 +493,7 @@ class LP_TSP_Iterative(SolverDO):
                 objective = tsp_model.getObjective().getValue()
             elif self.method == MILPSolver.CBC:
                 objective = self.model.Objective().Value()
-            print("Objective : ", objective)
+            logger.debug(f"Objective : {objective}")
         if plot or plot_folder is not None:
             fig, ax = plt.subplots(1, 2, figsize=(10, 5))
             for i in range(len(solutions)):
@@ -527,8 +530,8 @@ class LP_TSP_Iterative(SolverDO):
 
             if plot:
                 plt.show()
-        print("Best solution : ", best_solution_rebuilt)
-        print(rebuilt_obj[best_solution_rebuilt_index])
+        logger.debug(f"Best solution : {best_solution_rebuilt}")
+        logger.debug(rebuilt_obj[best_solution_rebuilt_index])
         path = rebuilt_solution[best_solution_rebuilt_index]
         var_tsp = SolutionTSP(
             problem=self.tsp_model,
@@ -584,7 +587,6 @@ def rebuild_tsp_routine(
     tsp_model: TSPModel,
     start_index=0,
     end_index=0,
-    verbose=False,
 ):
     rebuilded_path = list(paths_component[node_to_component[start_index]])
     component_end = node_to_component[end_index]
@@ -672,9 +674,8 @@ def rebuild_tsp_routine(
                 ]
                 for i in range(0, -len_this_component, -1)
             ]
-            if verbose:
-                print("path component ", paths_component[min_component])
-                print("New compenent : ", new_component)
+            logger.debug(f"path component {paths_component[min_component]}")
+            logger.debug(f"New component : {new_component}")
 
             rebuilded_path = (
                 rebuilded_path[: (min_index_in_path + 1)]
@@ -696,5 +697,5 @@ def rebuild_tsp_routine(
         length=None,
     )
     fit = tsp_model.evaluate(var)
-    print("ObjRebuilt=", fit)
+    logger.debug(f"ObjRebuilt={fit}")
     return rebuilded_path, fit

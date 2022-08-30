@@ -1,3 +1,4 @@
+import logging
 import math
 from typing import Dict, List, cast
 
@@ -12,6 +13,8 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_pareto_2d,
     result_storage_to_pareto_front,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ResultComparator:
@@ -52,7 +55,7 @@ class ResultComparator:
                     self.reevaluated_results[self.list_result_storage.index(res)][
                         obj
                     ].append(val)
-        print("reevaluated_results: ", self.reevaluated_results)
+        logger.debug(f"reevaluated_results: {self.reevaluated_results}")
 
     def plot_distribution_for_objective(self, objective_str: str):
         fig, ax = plt.subplots(1, figsize=(10, 10))

@@ -83,9 +83,7 @@ def test_greedy_coloring():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = GreedyColoring(color_problem, params_objective_function=None)
-    result_store = solver.solve(
-        strategy=NXGreedyColoringMethod.connected_sequential, verbose=True
-    )
+    result_store = solver.solve(strategy=NXGreedyColoringMethod.connected_sequential)
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
 
@@ -94,7 +92,7 @@ def test_greedy_best_coloring():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = GreedyColoring(color_problem, params_objective_function=None)
-    result_store = solver.solve(strategy=NXGreedyColoringMethod.best, verbose=True)
+    result_store = solver.solve(strategy=NXGreedyColoringMethod.best)
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
 
@@ -210,7 +208,7 @@ def test_color_lp_gurobi():
         color_problem,
         params_objective_function=get_default_objective_setup(color_problem),
     )
-    result_store = solver.solve(parameters_milp=ParametersMilp.default(), verbose=True)
+    result_store = solver.solve(parameters_milp=ParametersMilp.default())
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
 

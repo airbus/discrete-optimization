@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 from datetime import timedelta
@@ -27,6 +28,7 @@ from discrete_optimization.knapsack.knapsack_model import (
     MultiScenarioMultidimensionalKnapsack,
 )
 
+logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -37,8 +39,8 @@ class KnapsackSol:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("One solution ", self.objective)
-        print("Output ", _output_item)
+        logger.debug(f"One solution {self.objective}")
+        logger.debug(f"Output {_output_item}")
 
     def check(self) -> bool:
         return True
@@ -127,7 +129,7 @@ class CPKnapsackMZN(CPSolver):
             timeout=timedelta(seconds=parameters_cp.TimeLimit),
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
-        print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
@@ -137,7 +139,7 @@ class CPKnapsackMZN2(CPSolver):
         knapsack_model: KnapsackModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.knapsack_model = knapsack_model
         self.instance = None
@@ -211,7 +213,7 @@ class CPKnapsackMZN2(CPSolver):
             timeout=timedelta(seconds=parameters_cp.TimeLimit),
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
-        print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def retrieve(self, items_taken):
@@ -271,7 +273,7 @@ class CPKnapsackMZN2(CPSolver):
                 res = child.solve(timeout=timedelta(seconds=max_time_per_iteration_s))
                 if res.solution is not None:
                     solution = self.retrieve(res["taken"])[0]
-                    print(res.status)
+                    logger.debug(res.status)
                 if res.solution is not None and res["objective"] > current_objective:
                     current_objective = res["objective"]
                     iteration += 1
@@ -280,7 +282,7 @@ class CPKnapsackMZN2(CPSolver):
                         solution.list_taken[item.index]
                         for item in self.knapsack_model.list_items
                     ]
-                    print("Improved ", current_objective)
+                    logger.debug(f"Improved {current_objective}")
                     if save_results:
                         results["taken"] += [taken_current_solution]
                         results["objective"] += [current_objective]

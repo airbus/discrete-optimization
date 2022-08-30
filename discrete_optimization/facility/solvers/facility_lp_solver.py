@@ -1,3 +1,4 @@
+import logging
 import random
 import sys
 from typing import Any, Dict, Hashable, Optional, Tuple, Union
@@ -30,6 +31,10 @@ if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
 else:
     from typing_extensions import TypedDict
+
+
+logger = logging.getLogger(__name__)
+
 
 try:
     import gurobipy
@@ -86,7 +91,7 @@ class LP_Facility_Solver(MilpSolver):
         self,
         facility_problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args
+        **args,
     ):
         self.facility_problem = facility_problem
         self.model: Optional[Model] = None
@@ -197,7 +202,7 @@ class LP_Facility_Solver(MilpSolver):
             }
         }
         self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
-        print("Initialized")
+        logger.info("Initialized")
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp):
         if self.model is None:  # for mypy
@@ -248,10 +253,11 @@ class LP_Facility_Solver(MilpSolver):
         nSolutions = self.model.SolCount
         nObjectives = self.model.NumObj
         objective = self.model.getObjective().getValue()
-        print("Objective : ", objective)
-        print("Problem has", nObjectives, "objectives")
-        print("Gurobi found", nSolutions, "solutions")
+        logger.info(f"Objective : {objective}")
+        logger.info(f"Problem has {nObjectives} objectives")
+        logger.info(f"Gurobi found {nSolutions} solutions")
         return self.retrieve_solutions(parameters_milp=parameters_milp)
+
 
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
         if self.model is None:  # for mypy
@@ -295,7 +301,7 @@ class LP_Facility_Solver(MilpSolver):
                             x_var[key] == 1, name=str((f, c))
                         )
                     except:
-                        print("failed")
+                        logger.debug("failed")
                 else:
                     try:
                         lns_constraint[(f, c)] = self.model.addConstr(
@@ -319,35 +325,32 @@ class LP_Facility_Solver(MilpSolver):
         fraction_to_fix_first_iter: float = 0.0,
         fraction_to_fix: float = 0.9,
         nb_iteration: int = 10,
-        **kwargs
+        **kwargs,
     ):
         if self.model is None:
-            print("Initialize the model")
+            logger.info("Initialize the model")
             self.init_model(**kwargs)
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedySolverFacility(self.facility_problem)
             solution, f = greedy_solver.solve().get_best_solution_fit()
             self.start_solution = solution
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.facility_problem.get_dummy_solution()
             self.start_solution = solution
         current_solution = self.start_solution
         fit = self.facility_problem.evaluate(current_solution)
         for i in range(nb_iteration):
-            print("i, ", i)
+            logger.debug(f"i, {i}")
             self.fix_decision(
                 current_solution,
                 fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
             )
             cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
             self.remove_lns_constraint()
-            print(cur_sol)
+            logger.debug(cur_sol)
             current_solution = cur_sol
         return current_solution, fit
 
@@ -357,7 +360,7 @@ class LP_Facility_Solver_CBC(SolverDO):
         self,
         facility_problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args
+        **args,
     ):
         self.facility_problem = facility_problem
         self.model = None
@@ -461,7 +464,7 @@ class LP_Facility_Solver_CBC(SolverDO):
             }
         }
         self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
-        print("Initialized")
+        logger.info("Initialized")
 
     def retrieve(self) -> ResultStorage:
         solution = [0] * self.facility_problem.customer_count
@@ -503,9 +506,9 @@ class LP_Facility_Solver_CBC(SolverDO):
             5: "MODEL_INVALID",
             6: "NOT_SOLVED",
         }
-        print("Result:", resdict[res])
+        logger.info(f"Result: {resdict[res]}")
         objective = self.model.Objective().Value()
-        print("Objective : ", objective)
+        logger.info(f"Objective : {objective}")
         return self.retrieve()
 
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
@@ -546,7 +549,7 @@ class LP_Facility_Solver_CBC(SolverDO):
                     try:
                         lns_constraint[(f, c)] = self.model.Add(x_var[key] == 1)
                     except:
-                        print("failed")
+                        logger.debug("failed")
                 else:
                     try:
                         lns_constraint[(f, c)] = self.model.Add(x_var[key] == 0)
@@ -568,22 +571,19 @@ class LP_Facility_Solver_CBC(SolverDO):
         fraction_to_fix_first_iter: float = 0.0,
         fraction_to_fix: float = 0.9,
         nb_iteration: int = 10,
-        **kwargs
+        **kwargs,
     ):
         if self.model is None:
-            print("Initialize the model")
+            logger.info("Initialize the model")
             self.init_model(**kwargs)
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedySolverFacility(self.facility_problem)
             solution, f = greedy_solver.solve().get_best_solution_fit()
             self.start_solution = solution
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.facility_problem.get_dummy_solution()
             self.start_solution = solution
         current_solution = self.start_solution
@@ -605,12 +605,12 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         facility_problem: FacilityProblem,
         milp_solver_name: MilpSolverName,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args
+        **args,
     ):
         super().__init__(
             facility_problem=facility_problem,
             params_objective_function=params_objective_function,
-            **args
+            **args,
         )
         self.model: Optional[mip.Model] = None
         self.milp_solver_name = milp_solver_name
@@ -697,7 +697,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
             }
         }
         self.description_constraint = {"Im lazy."}
-        print("Initialized")
+        logger.info("Initialized")
 
     def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
         if self.model is None:
@@ -716,8 +716,8 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         )
         nSolutions = self.model.num_solutions
         objective = self.model.objective_value
-        print("Objective : ", objective)
-        print("Solver found", nSolutions, "solutions")
+        logger.info(f"Objective : {objective}")
+        logger.info(f"Solver found {nSolutions} solutions")
         return self.retrieve_solutions(parameters_milp)
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
@@ -791,7 +791,7 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
                             x_var[key] == 1, name=str((f, c))
                         )
                     except:
-                        print("failed")
+                        logger.debug("failed")
                 else:
                     try:
                         lns_constraint[(f, c)] = self.model.addConstr(
@@ -815,22 +815,19 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         fraction_to_fix_first_iter: float = 0.0,
         fraction_to_fix: float = 0.9,
         nb_iteration: int = 10,
-        **kwargs
+        **kwargs,
     ):
         if self.model is None:
-            print("Initialize the model")
+            logger.info("Initialize the model")
             self.init_model(**kwargs)
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedySolverFacility(self.facility_problem)
             solution, f = greedy_solver.solve().get_best_solution_fit()
             self.start_solution = solution
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.facility_problem.get_dummy_solution()
             self.start_solution = solution
         current_solution = self.start_solution

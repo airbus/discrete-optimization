@@ -1,3 +1,4 @@
+import logging
 import random
 from copy import deepcopy
 from typing import Any, Dict, List
@@ -18,6 +19,8 @@ from discrete_optimization.vrp.solver.lp_vrp_iterative import (
 )
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution, compute_length
 from discrete_optimization.vrp.vrp_toolbox import length
+
+logger = logging.getLogger(__name__)
 
 
 def init_model_lp(
@@ -348,7 +351,7 @@ class VRPIterativeLP_Pymip(SolverDO):
             kwargs["do_lns"] = do_lns
             kwargs["fraction_lns"] = fraction
             self.init_model(**kwargs)
-        print("optimizing...")
+        logger.info("optimizing...")
         limit_time_s = kwargs.get("limit_time_s", 10)
         self.model.optimize(max_seconds=limit_time_s)
         objective = self.model.objective_value
@@ -400,7 +403,7 @@ class VRPIterativeLP_Pymip(SolverDO):
             nb_components += [len(components_global)]
             rebuilt_solution += [rebuilt_dict]
             rebuilt_obj += [obj]
-            print("Objective rebuilt : ", rebuilt_obj[-1])
+            logger.debug(f"Objective rebuilt : {rebuilt_obj[-1]}")
             if obj < best_solution_objective_rebuilt:
                 best_solution_objective_rebuilt = obj
                 best_solution_rebuilt_index = iteration
@@ -497,8 +500,12 @@ class VRPIterativeLP_Pymip(SolverDO):
                     edges_to_constraint.update(
                         set([e for e in edges if e[0][0] not in vehicle])
                     )
-                    print(
-                        len(edges_to_constraint), " edges constraint over ", len(edges)
+                    logger.debug(
+                        (
+                            len(edges_to_constraint),
+                            " edges constraint over ",
+                            len(edges),
+                        )
                     )
                 iedge = 0
                 x_var = self.x_var
@@ -553,7 +560,7 @@ class VRPIterativeLP_Pymip(SolverDO):
                 ax[0].lines = []
                 ax[1].lines = []
             plt.show()
-        print("Best obj : ", best_solution_objective_rebuilt)
+        logger.debug(f"Best obj : {best_solution_objective_rebuilt}")
         solution = VrpSolution(
             problem=self.problem,
             list_start_index=self.problem.start_indexes,
@@ -610,7 +617,6 @@ def rebuild_tsp_routine(
     vrp_model: VrpProblem,
     start_index,
     end_index,
-    verbose=False,
 ):
     rebuilded_path = list(paths_component[node_to_component[start_index]])
     component_end = node_to_component[end_index]
@@ -618,7 +624,7 @@ def rebuild_tsp_routine(
     current_component = sorted_connected_component[node_to_component[start_index]]
     path_set = set(rebuilded_path)
     total_length_path = len(rebuilded_path)
-    print(rebuilded_path)
+    logger.debug(rebuilded_path)
     while len(component_reconnected) < len(sorted_connected_component):
         if (
             len(component_reconnected) == len(sorted_connected_component) - 1
@@ -700,8 +706,7 @@ def rebuild_tsp_routine(
                 min_index_in_path = backup_min_index_in_path
                 min_component = backup_min_component
             len_this_component = len(paths_component[min_component])
-            if verbose:
-                print("len this component : ", len_this_component)
+            logger.debug(f"len this component : {len_this_component}")
             index_of_in_component = indexes[min_component][min_out_edge[1]]
             new_component = [
                 paths_component[min_component][
@@ -709,9 +714,8 @@ def rebuild_tsp_routine(
                 ]
                 for i in range(0, -len_this_component, -1)
             ]
-            if verbose:
-                print("path component ", paths_component[min_component])
-                print("New component : ", new_component)
+            logger.debug(f"path component {paths_component[min_component]}")
+            logger.debug(f"New component : {new_component}")
             rebuilded_path = (
                 rebuilded_path[: (min_index_in_path + 1)]
                 + new_component
@@ -779,7 +783,7 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
     components = []
     components_global = []
     solutions_list = []
-    print("Vehicle count : ", vehicle_count)
+    logger.debug(f"Vehicle count : {vehicle_count}")
     for solution in solutions:
         g_empty = solution["g_empty"]
         g_merge = solution["g_merge"]
@@ -788,9 +792,11 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
             v: [(set(e), len(e)) for e in nx.weakly_connected_components(g_empty[v])]
             for v in g_empty
         }
-        print(
-            "Connected component : ",
-            [len(connected_components[v]) for v in connected_components],
+        logger.debug(
+            (
+                "Connected component : ",
+                [len(connected_components[v]) for v in connected_components],
+            )
         )
         sorted_connected_component = {
             v: sorted(connected_components[v], key=lambda x: x[1], reverse=True)
@@ -812,7 +818,7 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
         ]
         components_global += [component_global]
         nb_component_global = len(component_global)
-        print("Global : ", nb_component_global)
+        logger.debug(f"Global : {nb_component_global}")
         for v in range(vehicle_count):
             graph_of_interest = nx.subgraph(
                 g, [e[0] for e in x_solution[v]] + [e[1] for e in x_solution[v]]
@@ -841,10 +847,10 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
             )
         rebuilt_solution += [rebuilt_dict]
         rebuilt_obj += [sum(list(objective_dict.values()))]
-    print("Rebuilt : ", rebuilt_solution, rebuilt_obj)
+    logger.debug(("Rebuilt : ", rebuilt_solution, rebuilt_obj))
     index_best = min(range(len(rebuilt_obj)), key=lambda x: rebuilt_obj[x])
-    print(index_best, "/", len(rebuilt_obj))
-    print("best : ", rebuilt_obj[index_best])
+    logger.debug(f"{index_best} / {len(rebuilt_obj)}")
+    logger.debug(f"best : {rebuilt_obj[index_best]}")
     return (
         solutions_list[index_best],
         rebuilt_solution[index_best],
@@ -866,11 +872,11 @@ def update_model(
 ):
     for vehicle in components_per_vehicle:
         comps = components_per_vehicle[vehicle]
-        print("Updating model : Nb component : ", len(comps))
+        logger.debug(f"Updating model : Nb component : {len(comps)}")
         if len(comps) > 1:
             for si in comps:
                 s = (set([x[1] for x in si[0]]), si[1])
-                print(vehicle, ":", s)
+                logger.debug(f"{vehicle} : {s}")
                 edge_in_of_interest = [
                     e
                     for n in s[0]
@@ -883,10 +889,12 @@ def update_model(
                     for e in edges_out_customers[n]
                     if e[1][1] not in s[0]
                 ]
-                print(
-                    "Len of interest : ",
-                    len(edge_out_of_interest),
-                    len(edge_in_of_interest),
+                logger.debug(
+                    (
+                        "Len of interest : ",
+                        len(edge_out_of_interest),
+                        len(edge_in_of_interest),
+                    )
                 )
                 model.add_constr(xsum([x_var[e] for e in edge_in_of_interest]) >= 1)
                 model.add_constr(xsum([x_var[e] for e in edge_out_of_interest]) >= 1)
@@ -903,7 +911,7 @@ def update_model_2(
 ):
     len_component_global = len(components_global)
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
             edge_in_of_interest = [
                 e

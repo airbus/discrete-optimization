@@ -1,3 +1,4 @@
+import logging
 import random
 from enum import Enum
 from heapq import heappop, heappush
@@ -24,6 +25,8 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_MODES
 
+logger = logging.getLogger(__name__)
+
 
 class GreedyChoice(Enum):
     MOST_SUCCESSORS = 1
@@ -41,7 +44,7 @@ class PileSolverRCPSP(SolverDO):
         self,
         rcpsp_model: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.resources = rcpsp_model.resources
@@ -86,7 +89,7 @@ class PileSolverRCPSP(SolverDO):
             params_cp.pool_solutions = 10000
             params_cp.nr_solutions = 1
             params_cp.all_solutions = False
-            result_storage = solver.solve(parameters_cp=params_cp, verbose=True)
+            result_storage = solver.solve(parameters_cp=params_cp)
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):
@@ -96,7 +99,6 @@ class PileSolverRCPSP(SolverDO):
 
     def solve(self, **kwargs) -> ResultStorage:
         greedy_choice = kwargs.get("greedy_choice", GreedyChoice.MOST_SUCCESSORS)
-        verbose = kwargs.get("verbose", False)
         current_succ = {
             k: {
                 "succs": set(self.successors_map[k]["succs"]),
@@ -133,9 +135,8 @@ class PileSolverRCPSP(SolverDO):
         current_time = 0
         perm = []
         while len(schedule) < self.n_jobs:
-            if verbose:
-                print(len(schedule))
-                print("available activities : ", available_activities)
+            logger.debug(len(schedule))
+            logger.debug("available activities : ", available_activities)
             possible_activities = [
                 n
                 for n in available_activities
@@ -145,8 +146,7 @@ class PileSolverRCPSP(SolverDO):
                     for r in current_ressource_available
                 )
             ]
-            if verbose:
-                print("Ressources : ", current_ressource_available)
+            logger.debug("Ressources : ", current_ressource_available)
             while len(possible_activities) > 0:
                 next_activity = None
                 if greedy_choice == GreedyChoice.MOST_SUCCESSORS:
@@ -203,12 +203,13 @@ class PileSolverRCPSP(SolverDO):
                         current_ressource_non_renewable[r] -= self.mode_details[
                             next_activity
                         ][self.modes_dict[next_activity]][r]
-                if verbose:
-                    print(
+                logger.debug(
+                    (
                         current_time,
                         "Current ressource available : ",
                         current_ressource_available,
                     )
+                )
                 possible_activities = [
                     n
                     for n in available_activities
@@ -230,8 +231,7 @@ class PileSolverRCPSP(SolverDO):
                     current_ressource_available[r] += self.mode_details[activity][
                         self.modes_dict[activity]
                     ][r]
-        if verbose:
-            print("Final Time ", current_time)
+        logger.debug(f"Final Time {current_time}")
         sol = RCPSPSolution(
             problem=self.rcpsp_model,
             rcpsp_permutation=perm[:-1],
@@ -254,7 +254,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
         self,
         rcpsp_model: RCPSPModelCalendar,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.resources = rcpsp_model.resources
@@ -300,7 +300,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
             params_cp.pool_solutions = 10000
             params_cp.nr_solutions = 1
             params_cp.all_solutions = False
-            result_storage = solver.solve(parameters_cp=params_cp, verbose=True)
+            result_storage = solver.solve(parameters_cp=params_cp)
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):
@@ -311,7 +311,6 @@ class PileSolverRCPSP_Calendar(SolverDO):
 
     def solve(self, **kwargs) -> ResultStorage:
         greedy_choice = kwargs.get("greedy_choice", GreedyChoice.MOST_SUCCESSORS)
-        verbose = kwargs.get("verbose", False)
         current_succ = {
             k: {
                 "succs": set(self.successors_map[k]["succs"]),
@@ -369,15 +368,13 @@ class PileSolverRCPSP_Calendar(SolverDO):
                 current_pred[neighbor]["nb"] -= 1
                 if current_pred[neighbor]["nb"] == 0:
                     available_activities.add(neighbor)
-        if verbose:
-            print(current_pred)
+        logger.debug(current_pred)
         queue = []
         current_time = 0
         perm = []
         while len(schedule) < self.n_jobs:
-            if verbose:
-                print(len(schedule), current_time)
-                print("available activities : ", available_activities)
+            logger.debug((len(schedule), current_time))
+            logger.debug(f"available activities : {available_activities}")
             possible_activities = [
                 n
                 for n in available_activities
@@ -394,8 +391,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
                     )
                 )
             ]
-            if verbose:
-                print("Ressources : ", current_ressource_available)
+            logger.debug(f"Ressources : {current_ressource_available}")
             while len(possible_activities) > 0:
                 if greedy_choice == GreedyChoice.MOST_SUCCESSORS:
                     next_activity = max(
@@ -479,8 +475,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
                             available_activities.add(neighbor)
             else:
                 current_time += 1
-        if verbose:
-            print("Final Time ", current_time)
+        logger.debug(f"Final Time {current_time}")
         sol = RCPSPSolution(
             problem=self.rcpsp_model,
             rcpsp_permutation=perm[:-1],

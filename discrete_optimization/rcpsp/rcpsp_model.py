@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
@@ -28,6 +29,8 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
     sgs_fast,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def tree():
@@ -376,7 +379,7 @@ class RCPSPModel(Problem):
         source_task=None,
         sink_task=None,
         name_task: Dict[int, str] = None,
-        **args
+        **args,
     ):
         self.resources = resources
         self.resources_list = list(self.resources.keys())
@@ -546,7 +549,7 @@ class RCPSPModel(Problem):
 
     def satisfy(self, rcpsp_sol: RCPSPSolution) -> bool:
         if rcpsp_sol.rcpsp_schedule_feasible is False:
-            print("Schedule flagged as infeasible when generated")
+            logger.debug("Schedule flagged as infeasible when generated")
             return False
         else:
             modes_dict = self.build_mode_dict(
@@ -571,7 +574,7 @@ class RCPSPModel(Problem):
                             )
                 for res in self.resources.keys():
                     if resource_usage[res] > self.get_resource_available(res, t):
-                        print(
+                        logger.debug(
                             [
                                 act
                                 for act in rcpsp_sol.rcpsp_schedule
@@ -580,15 +583,10 @@ class RCPSPModel(Problem):
                                 < rcpsp_sol.rcpsp_schedule[act]["end_time"]
                             ]
                         )
-                        print(
-                            "Time step resource violation: time: ",
-                            t,
-                            "res",
-                            res,
-                            "res_usage: ",
-                            resource_usage[res],
-                            "res_avail: ",
-                            self.resources[res],
+                        logger.debug(
+                            f"Time step resource violation: time: {t} "
+                            f"res {res} res_usage: {resource_usage[res]}"
+                            f"res_avail: {self.resources[res]}"
                         )
                         return False
 
@@ -599,15 +597,9 @@ class RCPSPModel(Problem):
                     mode = modes_dict[act_id]
                     usage += self.mode_details[act_id][mode][res]
                     if usage > self.resources[res]:
-                        print(
-                            "Non-renewable resource violation: act_id: ",
-                            act_id,
-                            "res",
-                            res,
-                            "res_usage: ",
-                            usage,
-                            "res_avail: ",
-                            self.resources[res],
+                        logger.debug(
+                            f"Non-renewable resource violation: act_id: {act_id}"
+                            f"res {res} res_usage: {usage} res_avail: {self.resources[res]}"
                         )
                         return False
             # Check precedences / successors
@@ -616,15 +608,9 @@ class RCPSPModel(Problem):
                     start_succ = rcpsp_sol.rcpsp_schedule[succ_id]["start_time"]
                     end_pred = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
                     if start_succ < end_pred:
-                        print(
-                            "Precedence relationship broken: ",
-                            act_id,
-                            "end at ",
-                            end_pred,
-                            "while ",
-                            succ_id,
-                            "start at",
-                            start_succ,
+                        logger.debug(
+                            f"Precedence relationship broken: {act_id} end at {end_pred} "
+                            f"while {succ_id} start at {start_succ}"
                         )
                         return False
 

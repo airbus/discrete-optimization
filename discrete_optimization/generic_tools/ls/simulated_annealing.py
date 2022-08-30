@@ -1,3 +1,4 @@
+import logging
 import pickle
 import random
 import time
@@ -21,6 +22,8 @@ from discrete_optimization.generic_tools.ls.local_search import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TemperatureScheduling:
@@ -68,9 +71,8 @@ class SimulatedAnnealing:
         max_time_seconds: Optional[int] = None,
         pickle_result=False,
         pickle_name="debug",
-        **kwargs
+        **kwargs,
     ) -> ResultStorage:
-        verbose = kwargs.get("verbose", False)
         init_time = time.time()
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
@@ -108,8 +110,9 @@ class SimulatedAnnealing:
                     cur_variable
                 )
                 objective = self.aggreg_from_dict_values(objective_dict_values)
-            if verbose:
-                print(iteration, "/", nb_iteration_max, objective, cur_objective)
+            logger.debug(
+                f"{iteration} / {nb_iteration_max} {objective} {cur_objective}"
+            )
             if self.mode_optim == ModeOptim.MINIMIZATION and objective < cur_objective:
                 accept = True
                 local_improvement = True
@@ -132,16 +135,15 @@ class SimulatedAnnealing:
             if accept:
                 cur_objective = objective
                 cur_variable = nv
-                if verbose:
-                    print("iter accepted ", iteration)
-                    print("acceptance ", objective)
+                logger.debug(f"iter accepted {iteration}")
+                logger.debug(f"acceptance {objective}")
             else:
                 cur_variable = move.backtrack_local_move(nv)
             if self.store_solution:
                 store.add_solution(nv.copy(), objective)
             if global_improvement:
-                print("iter ", iteration)
-                print("new obj ", objective, " better than ", cur_best_objective)
+                logger.debug(f"iter {iteration}")
+                logger.debug(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
                 cur_best_variable = cur_variable.copy()
                 if not self.store_solution:

@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Dict, Iterable, Optional
 
@@ -33,12 +34,15 @@ else:
     from gurobipy import GRB, Model, quicksum
 
 
+logger = logging.getLogger(__name__)
+
+
 class LPKnapsackGurobi(SolverDO):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.knapsack_model = knapsack_model
         self.model = None
@@ -133,12 +137,12 @@ class LPKnapsackGurobi(SolverDO):
         self.model.setParam(GRB.Param.PoolSolutions, parameter_gurobi.PoolSolutions)
         self.model.setParam("MIPGapAbs", parameter_gurobi.MIPGapAbs)
         self.model.setParam("MIPGap", parameter_gurobi.MIPGap)
-        print("optimizing...")
+        logger.info("optimizing...")
         self.model.optimize()
         nSolutions = self.model.SolCount
         nObjectives = self.model.NumObj
-        print("Problem has", nObjectives, "objectives")
-        print("Gurobi found", nSolutions, "solutions")
+        logger.info(f"Problem has {nObjectives} objectives")
+        logger.info(f"Gurobi found {nSolutions} solutions")
         if parameter_gurobi.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -182,7 +186,7 @@ class LPKnapsackGurobi(SolverDO):
             current_solution = solutions[0]
             list_solutions += [solutions[0]]
             list_objective += [solutions[0].value]
-        print("Last obj : ", list_objective[-1])
+        logger.debug(f"Last obj : {list_objective[-1]}")
         fig, ax = plt.subplots(1)
         ax.plot(list_objective)
         plt.show()
@@ -213,7 +217,7 @@ class LPKnapsackCBC(SolverDO):
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.knapsack_model = knapsack_model
         self.model = None
@@ -281,7 +285,7 @@ class LPKnapsackCBC(SolverDO):
             5: "MODEL_INVALID",
             6: "NOT_SOLVED",
         }
-        print("Result:", resdict[res])
+        logger.debug(f"Result: {resdict[res]}")
         objective = self.model.Objective().Value()
         xs = {}
         x = self.variable_decision["x"]
@@ -320,7 +324,7 @@ class LPKnapsack(MilpSolver):
         knapsack_model: KnapsackModel,
         milp_solver_name: MilpSolverName,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.knapsack_model = knapsack_model
         self.model: MyModelMilp = None
@@ -412,15 +416,15 @@ class LPKnapsack(MilpSolver):
             self.init_model(**args)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        print("optimizing...")
+        logger.info("optimizing...")
         self.model.optimize(
             max_seconds=parameters_milp.TimeLimit,
             max_solutions=parameters_milp.PoolSolutions,
         )
         nSolutions = self.model.num_solutions
         objective = self.model.objective_value
-        print("Solver found", nSolutions, "solutions")
-        print("Objective : ", objective)
+        logger.info(f"Solver found {nSolutions} solutions")
+        logger.info(f"Objective : {objective}")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -463,7 +467,7 @@ class LPKnapsack(MilpSolver):
             current_solution = solutions.get_best_solution()
             list_solutions += [solutions.get_best_solution()]
             list_objective += [solutions.get_best_solution().value]
-        print("Last obj : ", list_objective[-1])
+        logger.debug(f"Last obj : {list_objective[-1]}")
         fig, ax = plt.subplots(1)
         ax.plot(list_objective)
         plt.show()
@@ -495,7 +499,7 @@ class KnapsackORTools(SolverDO):
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         self.knapsack_model = knapsack_model
         self.model = None
@@ -525,7 +529,7 @@ class KnapsackORTools(SolverDO):
         if self.model is None:
             self.init_model(**kwargs)
         computed_value = self.model.Solve()
-        print("Total value =", computed_value)
+        logger.debug(f"Total value = {computed_value}")
         xs = {}
         weight = 0
         value = 0

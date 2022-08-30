@@ -1,3 +1,4 @@
+import logging
 import random
 from enum import Enum
 from typing import Any, Hashable, Mapping, Union
@@ -55,6 +56,8 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     PileSolverRCPSP_Calendar,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class InitialMethodRCPSP(Enum):
     DUMMY = 0
@@ -86,19 +89,19 @@ class InitialSolutionRCPSP(InitialSolution):
 
     def get_starting_solution(self) -> ResultStorage:
         if self.initial_method == InitialMethodRCPSP.PILE:
-            print("Compute greedy")
+            logger.info("Compute greedy")
             greedy_solver = PileSolverRCPSP(self.problem)
             store_solution = greedy_solver.solve(
                 greedy_choice=GreedyChoice.MOST_SUCCESSORS
             )
         if self.initial_method == InitialMethodRCPSP.PILE_CALENDAR:
-            print("Compute greedy")
+            logger.info("Compute greedy")
             greedy_solver = PileSolverRCPSP_Calendar(self.problem)
             store_solution = greedy_solver.solve(
                 greedy_choice=GreedyChoice.MOST_SUCCESSORS
             )
         elif self.initial_method == InitialMethodRCPSP.DUMMY:
-            print("Compute dummy")
+            logger.info("Compute dummy")
             solution = self.problem.get_dummy_solution()
             fit = self.aggreg(solution)
             store_solution = ResultStorage(

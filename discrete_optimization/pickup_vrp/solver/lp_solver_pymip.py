@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -8,6 +9,8 @@ import networkx as nx
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.pickup_vrp.gpdp import GPDP
+
+logger = logging.getLogger(__name__)
 
 
 class MipModelException(Exception):
@@ -778,13 +781,13 @@ class LinearFlowSolver(SolverDO):
         self.model.sol_pool_size = parameters_milp.PoolSolutions
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
         self.model.max_mip_gap = parameters_milp.MIPGap
-        print("optimizing...")
+        logger.info("optimizing...")
         self.model.optimize(
             max_seconds=parameters_milp.TimeLimit,
             max_solutions=parameters_milp.n_solutions_max,
         )
         nSolutions = self.model.num_solutions
-        print("Solver found", nSolutions, "solutions")
+        logger.info(f"Solver found {nSolutions} solutions")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -840,7 +843,7 @@ class LinearFlowSolver(SolverDO):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            print(len(solutions[0].component_global))
+            logger.debug(len(solutions[0].component_global))
             subtour.adding_component_constraints([solutions[0]])
             if (
                 max(
@@ -1321,13 +1324,13 @@ class LinearFlowSolverVehicleType(SolverDO):
         self.model.sol_pool_size = parameters_milp.PoolSolutions
         self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
         self.model.max_mip_gap = parameters_milp.MIPGap
-        print("optimizing...")
+        logger.info("optimizing...")
         self.model.optimize(
             max_seconds=parameters_milp.TimeLimit,
             max_solutions=parameters_milp.PoolSolutions,
         )
         nSolutions = self.model.num_solutions
-        print("Solver found", nSolutions, "solutions")
+        logger.info(f"Solver found {nSolutions} solutions")
         if parameters_milp.retrieve_all_solution:
             solutions = self.retrieve_solutions(list(range(nSolutions)))
         else:
@@ -1428,15 +1431,15 @@ class ConstraintHandlerOrWarmStart:
             edges_to_add[v].update(
                 {(e0, e1) for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])}
             )
-            print("edges to add , ", edges_to_add)
+            logger.debug(f"edges to add {edges_to_add}")
             edges_missing = {
                 (v, e)
                 for e in edges_to_add[v]
                 if e not in self.linear_solver.variable_decisions["variables_edges"][v]
             }
-            print("missing : ", edges_missing)
+            logger.debug(f"missing : {edges_missing}")
             if len(edges_missing) > 0:
-                print("Warning")
+                logger.warning("Some edges are missing.")
         if self.do_lns:
             for iedge in self.linear_solver.constraint_on_edge:
                 self.linear_solver.model.remove(
@@ -1490,15 +1493,19 @@ class ConstraintHandlerOrWarmStart:
                         )
                     )
                 )
-        print(
-            sum([len(edges_to_constraint[v]) for v in edges_to_constraint]),
-            " edges constraint over ",
-            sum(
-                [
-                    len(self.linear_solver.variable_decisions["variables_edges"][v])
-                    for v in self.linear_solver.variable_decisions["variables_edges"]
-                ]
-            ),
+        logger.debug(
+            (
+                sum([len(edges_to_constraint[v]) for v in edges_to_constraint]),
+                " edges constraint over ",
+                sum(
+                    [
+                        len(self.linear_solver.variable_decisions["variables_edges"][v])
+                        for v in self.linear_solver.variable_decisions[
+                            "variables_edges"
+                        ]
+                    ]
+                ),
+            )
         )
         iedge = 0
         for v in vehicle_keys:
@@ -1573,7 +1580,6 @@ def rebuild_routine(
     evaluate_function_indexes,
     start_index,
     end_index,
-    verbose=False,
 ):
     rebuilded_path = list(
         paths_component[node_to_component[start_index]]
@@ -1649,11 +1655,10 @@ def rebuild_routine(
             if min_component is None:
                 return None
             len_this_component = len(paths_component[min_component])
-            if verbose:
-                print(list(range(0, -len_this_component, -1)))
-                print("len this component : ", len_this_component)
-                print("out edge :", min_out_edge)
-                print("in edge :", min_in_edge)
+            logger.debug(list(range(0, -len_this_component, -1)))
+            logger.debug(f"len this component : ", len_this_component)
+            logger.debug(f"out edge : {min_out_edge}")
+            logger.debug(f"in edge : {min_in_edge}")
             index_of_in_component = indexes[min_component][min_out_edge[1]]
             new_component = [
                 paths_component[min_component][
@@ -1661,9 +1666,8 @@ def rebuild_routine(
                 ]
                 for i in range(0, -len_this_component, -1)
             ]
-            if verbose:
-                print("path component ", paths_component[min_component])
-                print("New component : ", new_component)
+            logger.debug(f"path component {paths_component[min_component]}")
+            logger.debug(f"New component : {new_component}")
             rebuilded_path = (
                 rebuilded_path[: (min_index_in_path + 1)]
                 + new_component
@@ -1691,9 +1695,8 @@ def reevaluate_result(temporary_result: TemporaryResult, problem: GPDP):
         ]
         for v in vehicle_keys
     }
-    print(
-        "Connected component : ",
-        [len(connected_components[v]) for v in connected_components],
+    logger.debug(
+        f"Connected component : {[len(connected_components[v]) for v in connected_components]}"
     )
     sorted_connected_component = {
         v: sorted(connected_components[v], key=lambda x: x[1], reverse=True)
@@ -1708,7 +1711,7 @@ def reevaluate_result(temporary_result: TemporaryResult, problem: GPDP):
         for e in nx.weakly_connected_components(temporary_result.graph_merge)
     ]
     nb_component_global = len(component_global)
-    print("Global : ", nb_component_global)
+    logger.debug(f"Global : {nb_component_global}")
     for v in temporary_result.graph_vehicle:
         graph_of_interest = nx.subgraph(
             problem.graph.graph_nx,
@@ -1725,7 +1728,7 @@ def reevaluate_result(temporary_result: TemporaryResult, problem: GPDP):
                 end_index=problem.target_vehicle[v],
             )
             node_to_component[v].update({p: i for p in paths_component[v][i]})
-        print("len node to component : ", len(node_to_component[v]))
+        logger.debug(f"len node to component : {len(node_to_component[v])}")
         rebuilt_dict[v] = rebuild_routine(
             sorted_connected_component=sorted_connected_component[v],
             paths_component=paths_component[v],
@@ -1804,7 +1807,7 @@ def update_model_cluster_tsp(
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
             edge_in_of_interest = [
                 e
@@ -1869,7 +1872,7 @@ def update_model(
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
             edge_in_of_interest = [
                 e
@@ -1971,7 +1974,7 @@ def update_model_lazy(
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
-        print("Nb component : ", len_component_global)
+        logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
             edge_in_of_interest = [
                 e

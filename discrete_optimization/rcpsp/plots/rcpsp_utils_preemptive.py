@@ -1,3 +1,4 @@
+import logging
 from typing import List, Union
 
 import matplotlib.cm
@@ -12,6 +13,8 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def compute_resource_consumption(
@@ -273,7 +276,6 @@ def compute_schedule_per_resource_individual(
     rcpsp_model: RCPSPModelPreemptive,
     rcpsp_sol: RCPSPSolutionPreemptive,
     resource_types_to_consider: List[str] = None,
-    verbose=False,
 ):
     modes_dict = rcpsp_model.build_mode_dict(
         rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
@@ -367,8 +369,7 @@ def compute_schedule_per_resource_individual(
                         ]
                         == 0
                     ]
-                    if verbose:
-                        print(len(availables_people_r), " people available : ")
+                    logger.debug(f"{len(availables_people_r)} people available : ")
                     if len(availables_people_r) > 0:
                         resource = min(
                             availables_people_r,
@@ -430,12 +431,12 @@ def compute_schedule_per_resource_individual(
                         # for plot purposes.
                         rneeded -= 1
                     else:
-                        print("r_needed ", rneeded)
-                        print("Ressource needed : ", resources_needed)
-                        print("ressource : ", r)
-                        print("activity : ", activity)
-                        print("Problem, can't build schedule")
-                        print(array_ressource_usage[r]["activity"])
+                        logger.debug(f"r_needed {rneeded}")
+                        logger.debug(f"Ressource needed : {resources_needed}")
+                        logger.debug(f"ressource : {r}")
+                        logger.debug(f"activity : {activity}")
+                        logger.warning("Problem, can't build schedule")
+                        logger.debug(array_ressource_usage[r]["activity"])
                         rneeded = 0
 
     return array_ressource_usage

@@ -1,3 +1,4 @@
+import logging
 import pickle
 import time
 from typing import Optional
@@ -18,6 +19,8 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ParetoFront,
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class HillClimber:
@@ -111,8 +114,8 @@ class HillClimber:
             if self.store_solution:
                 store.add_solution(nv.copy(), objective)
             if global_improvement:
-                print("iter ", iteration)
-                print("new obj ", objective, " better than ", cur_best_objective)
+                logger.debug(f"iter {iteration}")
+                logger.debug(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
                 cur_best_variable = cur_variable.copy()
                 if not self.store_solution:
@@ -222,20 +225,20 @@ class HillClimberPareto(HillClimber):
                 global_improvement = objective == cur_best_objective
                 pareto_front.add_solution(nv.copy(), objective)
             if accept:
-                print("Accept : ", objective)
+                logger.debug(f"Accept : {objective}")
                 cur_objective = objective
                 cur_variable = nv
             else:
                 cur_variable = move.backtrack_local_move(nv)
             if global_improvement:
-                print("iter ", iteration)
-                print("new obj ", objective, " better than ", cur_best_objective)
+                logger.debug(f"iter {iteration}")
+                logger.debug(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
             # Update the temperature
             self.restart_handler.update(
                 nv, objective, global_improvement, local_improvement
             )
-            print("Len pareto : ", pareto_front.len_pareto_front())
+            logger.debug(f"Len pareto : {pareto_front.len_pareto_front()}")
             # Update info in restart handler
             cur_variable, cur_objective = self.restart_handler.restart(
                 cur_variable, cur_objective

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import logging
 from enum import Enum
 
 import numpy as np
@@ -12,6 +13,8 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution
 from discrete_optimization.vrp.vrp_toolbox import build_graph
+
+logger = logging.getLogger(__name__)
 
 
 def create_data_model():
@@ -445,7 +448,7 @@ class VrpORToolsSolver(SolverDO):
         self.manager = manager
         self.routing = routing
         self.search_parameters = search_parameters
-        print("Initialized ...")
+        logger.info("Initialized ...")
 
     def retrieve(self, solution):
         vehicle_tours = []
@@ -477,10 +480,10 @@ class VrpORToolsSolver(SolverDO):
                     node_index, self.manager.IndexToNode(index)
                 )
             vehicle_tours_all[-1] += [self.manager.IndexToNode(index)]
-        print("Route distance : ", route_distance)
-        print("Vehicle tours : ", vehicle_tours)
-        print("Objective : ", objective)
-        print("Vehicle tours all : ", vehicle_tours_all)
+        logger.debug(f"Route distance : {route_distance}")
+        logger.debug(f"Vehicle tours : {vehicle_tours}")
+        logger.debug(f"Objective : {objective}")
+        logger.debug(f"Vehicle tours all : {vehicle_tours_all}")
         variable_vrp = VrpSolution(
             problem=self.problem,
             list_start_index=self.problem.start_indexes,

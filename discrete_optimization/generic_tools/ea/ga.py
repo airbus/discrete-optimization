@@ -1,3 +1,4 @@
+import logging
 import random
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -19,6 +20,8 @@ from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class DeapSelection(Enum):
@@ -98,8 +101,8 @@ class Ga:
             self._max_evals = max_evals
         else:
             self._max_evals = 100 * self._pop_size
-            print(
-                "No value specified for max_evals. Using the default 100*pop_size - This should really be set carefully"
+            logger.warning(
+                "No value specified for max_evals. Using the default 10*pop_size - This should really be set carefully"
             )
         self._mut_rate = mut_rate
         self._crossover_rate = crossover_rate
@@ -154,7 +157,7 @@ class Ga:
                     self.lows = lower_bound_vector_encoding_from_dict(encoding)
                     self.ups = upper_bound_vector_encoding_from_dict(encoding)
             else:
-                print(
+                logger.warning(
                     "Erroneous encoding provided as input (encoding name not matching encoding of problem or custom "
                     "definition not respecting encoding dict entry format, trying to use default one instead"
                 )
@@ -192,13 +195,8 @@ class Ga:
             self.lows = [0 for i in range(self.n)]
             self.ups = [1 for i in range(self.n)]
 
-        print(
-            "Encoding used by the GA: "
-            + self._encoding_name
-            + ": "
-            + str(self._encoding_type)
-            + " of length "
-            + str(self.n)
+        logger.debug(
+            f"Encoding used by the GA: {self._encoding_name}: {self._encoding_type} of length {self.n}"
         )
 
         # set objective handling stuff
@@ -216,7 +214,7 @@ class Ga:
             len(self._objectives) > 1
             and self._objective_handling == ObjectiveHandling.SINGLE
         ):
-            print(
+            logger.warning(
                 "Many objectives specified but single objective handling, using the first objective in the dictionary"
             )
 
@@ -230,7 +228,7 @@ class Ga:
                 )
             )
         ):
-            print(
+            logger.warning(
                 "Objective weight issue: no weight given or size of weights and objectives lists mismatch. "
                 "Setting all weights to default 1 value."
             )
@@ -335,7 +333,7 @@ class Ga:
         elif self._crossover == DeapCrossover.CX_PARTIALY_MATCHED:
             self._toolbox.register("mate", tools.cxPartialyMatched)
         else:
-            print("Crossover of specified type not handled!")
+            logger.warning("Crossover of specified type not handled!")
 
         # Define mutation
         self._mutation: Union[Mutation, DeapMutation]

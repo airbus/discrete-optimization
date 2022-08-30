@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import timedelta
 from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
@@ -32,6 +33,7 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
 )
 from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
 
+logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
@@ -81,8 +83,8 @@ class RCPSPSolCP:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("One solution ", self.objective)
-        print("Output ", _output_item)
+        logger.debug("One solution ", self.objective)
+        logger.debug("Output ", _output_item)
 
     def check(self) -> bool:
         return True
@@ -136,7 +138,7 @@ class CP_RCPSP_MZN(CPSolver):
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance: Instance = None
@@ -394,13 +396,11 @@ class CP_RCPSP_MZN(CPSolver):
                 free_search=parameters_cp.free_search,
             )
         except Exception as e:
-            print(e)
+            logger.warning(e)
             return None
-        verbose = args.get("verbose", False)
         self.result = result
-        if verbose:
-            print("Status : ", result.status)
-            print("Solving time : ", result.statistics.get("solveTime", None))
+        logger.debug(f"Status : {result.status}")
+        logger.debug(f"Solving time : {result.statistics.get('solveTime', None)}")
         self.stats += [(result.statistics, result.status)]
         return self.retrieve_solutions(result, parameters_cp=parameters_cp)
 
@@ -414,7 +414,7 @@ class CP_MRCPSP_MZN(CPSolver):
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance = None
@@ -737,9 +737,7 @@ class CP_MRCPSP_MZN(CPSolver):
             intermediate_solutions=intermediate_solutions,
             free_search=parameters_cp.free_search,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
@@ -750,7 +748,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             rcpsp_model, cp_solver_name, params_objective_function, **kwargs
@@ -941,9 +939,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             timeout=timedelta(seconds=timeout),
             intermediate_solutions=intermediate_solutions,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def constraint_objective_makespan(self):
@@ -997,7 +993,7 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
         rcpsp_model: RCPSPModelPreemptive,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance: Instance = None
@@ -1342,14 +1338,12 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
                 intermediate_solutions=intermediate_solutions,
                 free_search=parameters_cp.free_search,
             )
-            print(result.status)
+            logger.debug(result.status)
         except Exception as e:
-            print(e)
+            logger.warning(e)
             return None
-        verbose = args.get("verbose", False)
-        if verbose:
-            print(result.status)
-            print(result.statistics["solveTime"])
+        logger.debug(result.status)
+        logger.debug(result.statistics["solveTime"])
         return self.retrieve_solutions(result, parameters_cp=parameters_cp)
 
     def constraint_start_time_precomputed(self):
@@ -1455,7 +1449,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
         rcpsp_model: RCPSPModelPreemptive,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             rcpsp_model, cp_solver_name, params_objective_function, **kwargs
@@ -1750,14 +1744,12 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
                 intermediate_solutions=intermediate_solutions,
                 free_search=parameters_cp.free_search,
             )
-            print(result.status)
+            logger.debug(result.status)
         except Exception as e:
-            print(e)
+            logger.warning(e)
             return None
-        verbose = args.get("verbose", False)
-        if verbose:
-            print(result.status)
-            print(result.statistics["solveTime"])
+        logger.debug(result.status)
+        logger.debug(result.statistics["solveTime"])
         return self.retrieve_solutions(result, parameters_cp=parameters_cp)
 
 
@@ -1780,7 +1772,7 @@ class CP_MRCPSP_MZN_NOBOOL(CPSolver):
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance = None
@@ -2044,9 +2036,7 @@ class CP_MRCPSP_MZN_NOBOOL(CPSolver):
             timeout=timedelta(seconds=timeout),
             intermediate_solutions=intermediate_solutions,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
@@ -2144,7 +2134,7 @@ class CP_MRCPSP_MZN_MODES:
                         == p_s.task_mode[task]
                     ]
                     if len(indexes) >= 0:
-                        print("Index found : ", len(indexes))
+                        logger.debug(f"Index found : {len(indexes)}")
                         string = "constraint mrun[" + str(indexes[0]) + "] == 1;"
                         self.instance.add_string(string)
                         constraint_strings += [string]
@@ -2192,9 +2182,7 @@ class CP_MRCPSP_MZN_MODES:
             all_solutions=parameters_cp.all_solutions,
             intermediate_solutions=intermediate_solutions,
         )
-        verbose = args.get("verbose", False)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 

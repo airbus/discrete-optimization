@@ -1,3 +1,4 @@
+import logging
 import random
 from enum import Enum
 from typing import Any, Dict, Hashable, Mapping
@@ -22,6 +23,8 @@ from discrete_optimization.generic_tools.lns_mip import (
     ConstraintHandler,
     InitialSolution,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class InitialFacilityMethod(Enum):
@@ -88,8 +91,9 @@ class ConstraintHandlerFacility(ConstraintHandler):
                     "milp_solver.model must be not None after calling milp_solver.init_model()."
                 )
         if self.iter == 0 and self.skip_first_iter:
-            print("Dummy : ")
-            print(self.problem.evaluate(result_storage.get_best_solution_fit()[0]))
+            logger.debug(
+                f"Dummy : {self.problem.evaluate(result_storage.get_best_solution_fit()[0])}"
+            )
             self.iter += 1
             return {}
         subpart_customer = set(

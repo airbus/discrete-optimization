@@ -1,3 +1,4 @@
+import logging
 import random
 from copy import deepcopy
 from functools import partial
@@ -30,6 +31,8 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPSolutionPreemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_utils import intersect
+
+logger = logging.getLogger(__name__)
 
 
 class SpecialConstraintsDescription(PartialSolution):
@@ -801,15 +804,21 @@ def check_solution(
     for (t1, t2, off) in start_at_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
         if not b:
-            print("start_at_end_plus_offset NOT respected: ", t1, t2, off)
-            print(
-                solution.get_start_time(t2), " >= ", solution.get_end_time(t1), "+", off
+            logger.debug(("start_at_end_plus_offset NOT respected: ", t1, t2, off))
+            logger.debug(
+                (
+                    solution.get_start_time(t2),
+                    " >= ",
+                    solution.get_end_time(t1),
+                    "+",
+                    off,
+                )
             )
             return False
     for (t1, t2, off) in start_after_nunit:
         b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
         if not b:
-            print("start_after_nunit NOT respected: ", t1, t2, off)
+            logger.debug(("start_after_nunit NOT respected: ", t1, t2, off))
             return False
     for t1, t2 in disjunctive:
         b = intersect(
@@ -824,11 +833,13 @@ def check_solution(
                 solution.get_start_time(t)
                 < problem.special_constraints.start_times_window[t][0]
             ):
-                print(
-                    "start time 0, ",
-                    t,
-                    solution.get_start_time(t),
-                    problem.special_constraints.start_times_window[t][0],
+                logger.debug(
+                    (
+                        "start time 0, ",
+                        t,
+                        solution.get_start_time(t),
+                        problem.special_constraints.start_times_window[t][0],
+                    )
                 )
                 return False
         if problem.special_constraints.start_times_window[t][1] is not None:
@@ -836,11 +847,13 @@ def check_solution(
                 solution.get_start_time(t)
                 > problem.special_constraints.start_times_window[t][1]
             ):
-                print(
-                    "start time 1, ",
-                    t,
-                    solution.get_start_time(t),
-                    problem.special_constraints.start_times_window[t][1],
+                logger.debug(
+                    (
+                        "start time 1, ",
+                        t,
+                        solution.get_start_time(t),
+                        problem.special_constraints.start_times_window[t][1],
+                    )
                 )
                 return False
     for t in problem.special_constraints.end_times_window:
@@ -849,11 +862,13 @@ def check_solution(
                 solution.get_end_time(t)
                 < problem.special_constraints.end_times_window[t][0]
             ):
-                print(
-                    "end time 0, ",
-                    t,
-                    solution.get_end_time(t),
-                    problem.special_constraints.end_times_window[t][0],
+                logger.debug(
+                    (
+                        "end time 0, ",
+                        t,
+                        solution.get_end_time(t),
+                        problem.special_constraints.end_times_window[t][0],
+                    )
                 )
                 return False
         if problem.special_constraints.end_times_window[t][1] is not None:
@@ -861,11 +876,13 @@ def check_solution(
                 solution.get_end_time(t)
                 > problem.special_constraints.end_times_window[t][1]
             ):
-                print(
-                    "end time 1, ",
-                    t,
-                    solution.get_end_time(t),
-                    problem.special_constraints.end_times_window[t][1],
+                logger.debug(
+                    (
+                        "end time 1, ",
+                        t,
+                        solution.get_end_time(t),
+                        problem.special_constraints.end_times_window[t][1],
+                    )
                 )
                 return False
     return True
@@ -1094,7 +1111,9 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                                     res, 0
                                 )
                                 if resource_avail_in_time[res][t] < 0:
-                                    print("problem")
+                                    logger.warning(
+                                        "Resources available should not be negative"
+                                    )
                     if (
                         reached_end
                         and reached_dict[ac] is not None
@@ -1111,7 +1130,9 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
                                     res, 0
                                 )
                                 if resource_avail_in_time[res][t] < 0:
-                                    print("problem")
+                                    logger.warning(
+                                        "Resources available should not be negative"
+                                    )
                                 if (
                                     res in rcpsp_problem.non_renewable_resources
                                     and t == ends[ac][-1] - 1
@@ -1207,11 +1228,13 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
         rcpsp_schedule[act_id]["starts"] = schedules[act_id][0]
         rcpsp_schedule[act_id]["ends"] = schedules[act_id][1]
     if unfeasible_non_renewable_resources or unfeasible:
-        print(
-            "unfeasible: ",
-            unfeasible,
-            "unfeasible_non_renewable_resources: ",
-            unfeasible_non_renewable_resources,
+        logger.debug(
+            (
+                "unfeasible: ",
+                unfeasible,
+                "unfeasible_non_renewable_resources: ",
+                unfeasible_non_renewable_resources,
+            )
         )
         rcpsp_schedule_feasible = False
         last_act_id = rcpsp_problem.sink_task
@@ -1473,7 +1496,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                                     t
                                 ] -= rcpsp_problem.mode_details[ac][modes_dict[ac]][res]
                                 if resource_avail_in_time[res][t] < 0:
-                                    print("problem")
+                                    logger.warning(
+                                        "Resources available should not be negative"
+                                    )
                     if (
                         reached_end
                         and reached_dict[ac] is not None
@@ -1488,7 +1513,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
                                     t
                                 ] -= rcpsp_problem.mode_details[ac][modes_dict[ac]][res]
                                 if resource_avail_in_time[res][t] < 0:
-                                    print("problem")
+                                    logger.warning(
+                                        "Resources available should not be negative"
+                                    )
                                 if (
                                     res in rcpsp_problem.non_renewable_resources
                                     and t == ends[ac][-1] - 1

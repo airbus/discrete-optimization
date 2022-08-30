@@ -1,3 +1,4 @@
+import logging
 import operator
 import random
 from enum import Enum
@@ -26,6 +27,8 @@ from discrete_optimization.rcpsp.solver.cpm import CPM
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution_Variant,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def if_then_else(input1, output1, output2):
@@ -601,7 +604,7 @@ class GPHH(SolverDO):
             verbose=True,
         )
         self.best_heuristic = hof[0]
-        print("best_heuristic: ", self.best_heuristic)
+        logger.debug(f"best_heuristic: {self.best_heuristic}")
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         solution = self.build_solution(

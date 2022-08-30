@@ -1,3 +1,4 @@
+import logging
 import math
 from collections import defaultdict
 from copy import deepcopy
@@ -27,6 +28,8 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
     sgs_fast_preemptive,
     sgs_fast_preemptive_minduration,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def tree():
@@ -600,7 +603,7 @@ class RCPSPModelPreemptive(Problem):
 
     def satisfy(self, rcpsp_sol: RCPSPSolutionPreemptive) -> bool:
         if rcpsp_sol.rcpsp_schedule_feasible is False:
-            print("Schedule flagged as infeasible when generated")
+            logger.debug("Schedule flagged as infeasible when generated")
             return False
         else:
             modes_dict = self.build_mode_dict(
@@ -619,15 +622,11 @@ class RCPSPModelPreemptive(Problem):
                     mode = modes_dict[act_id]
                     usage += self.mode_details[act_id][mode][res]
                     if usage > self.resources[res]:
-                        print(
-                            "Non-renewable resource violation: act_id: ",
-                            act_id,
-                            "res",
-                            res,
-                            "res_usage: ",
-                            usage,
-                            "res_avail: ",
-                            self.resources[res],
+                        logger.debug(
+                            f"Non-renewable resource violation: act_id: {act_id}"
+                            f"res {res}"
+                            f"res_usage: {usage}"
+                            f"res_avail: {self.resources[res]}"
                         )
                         return False
             # Check precedences / successors
@@ -636,15 +635,10 @@ class RCPSPModelPreemptive(Problem):
                     start_succ = rcpsp_sol.rcpsp_schedule[succ_id]["starts"][0]
                     end_pred = rcpsp_sol.rcpsp_schedule[act_id]["ends"][-1]
                     if start_succ < end_pred:
-                        print(
-                            "Precedence relationship broken: ",
-                            act_id,
-                            "end at ",
-                            end_pred,
-                            "while ",
-                            succ_id,
-                            "start at",
-                            start_succ,
+                        logger.debug(
+                            f"Precedence relationship broken: {act_id}"
+                            f"end at {end_pred}"
+                            f"while {succ_id} start at {start_succ}"
                         )
                         return False
 
@@ -1209,7 +1203,7 @@ def compute_resource(
                     modes_dict[t]
                 ].get(r, 0)
                 if np.any(resource_avail_in_time[r][s:e] < 0):
-                    print("Missing ressource, " + str(__file__))
+                    logger.debug(f"Missing ressource {__file__}")
     return resource_avail_in_time
 
 

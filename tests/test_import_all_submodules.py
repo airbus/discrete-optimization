@@ -1,8 +1,11 @@
 import importlib
+import logging
 import pkgutil
 import sys
 
 import discrete_optimization
+
+logger = logging.getLogger(__name__)
 
 
 def find_abs_modules(package):
@@ -23,7 +26,9 @@ def find_abs_modules(package):
                 importlib._bootstrap._load(spec)
                 spec_list.append(spec)
             except Exception as e:
-                print(f"Could not load package {modname}, so it will be ignored ({e}).")
+                logger.warning(
+                    f"Could not load package {modname}, so it will be ignored ({e})."
+                )
         else:
             path_list.append(import_path)
     for spec in spec_list:

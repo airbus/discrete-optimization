@@ -1,3 +1,4 @@
+import logging
 import time
 
 import numpy as np
@@ -14,6 +15,8 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class KnapsackDynProg(SolverDO):
@@ -43,7 +46,6 @@ class KnapsackDynProg(SolverDO):
         max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
         max_items = min(self.knapsack_model.nb_items + 1, max_items)
         max_time_seconds = args.get("max_time_seconds", None)
-        verbose = args.get("verbose", False)
         if max_time_seconds is None:
             do_time = False
         else:
@@ -83,8 +85,7 @@ class KnapsackDynProg(SolverDO):
                 )
                 if capacity == self.capacity:
                     cur_indexes = (nb_item, capacity)
-                    if verbose:
-                        print("Cur obj : ", self.table[nb_item, capacity])
+                    logger.debug(f"Cur obj : {self.table[nb_item, capacity]}")
         taken = [0] * self.nb_items
         weight = 0
         value = 0
@@ -153,7 +154,7 @@ class KnapsackDynProg(SolverDO):
             vec_2 = vec_1[ind] + value * (ind != 0)
             self.table[nb_item, :] = np.maximum(vec_1, vec_2)
             cur_indexes = (nb_item, self.capacity)
-            print("Cur obj : ", self.table[nb_item, self.capacity])
+            logger.debug(f"Cur obj : {self.table[nb_item, self.capacity]}")
         taken = [0] * self.nb_items
         weight = 0
         value = 0

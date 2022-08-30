@@ -1676,7 +1676,7 @@ def run_tsp():
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
     )
-    results = sa.solve(solution, 30000, verbose=True)
+    results = sa.solve(solution, 30000)
     best_solution, fit = results.get_best_solution_fit()
     print("Fit ", fit)
 
