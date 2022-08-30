@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Any, Dict, List, Optional, Union
 
@@ -23,6 +24,9 @@ from discrete_optimization.generic_tools.ea.ga import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+
+logger = logging.getLogger(__name__)
 
 _default_crossovers = {
     TypeAttribute.LIST_BOOLEAN: DeapCrossover.CX_UNIFORM,
@@ -73,8 +77,8 @@ class Nsga:
             self._max_evals = max_evals
         else:
             self._max_evals = 100 * self._pop_size
-            print(
-                "No value specified for max_evals. Using the default 100*pop_size - This should really be set carefully"
+            logger.warning(
+                "No value specified for max_evals. Using the default 10*pop_size - This should really be set carefully"
             )
         self._mut_rate = mut_rate
         self._crossover_rate = crossover_rate
@@ -129,7 +133,7 @@ class Nsga:
                         self._encoding_name
                     ]["arities"]
             else:
-                print(
+                logger.warning(
                     "Erroneous encoding provided as input (encoding name not matching encoding of problem or custom "
                     "definition not respecting encoding dict entry format, trying to use default one instead"
                 )
@@ -167,13 +171,8 @@ class Nsga:
             self.arity = 2
             self.arities = [2 for i in range(self.n)]
 
-        print(
-            "Encoding used by the GA: "
-            + self._encoding_name
-            + ": "
-            + str(self._encoding_type)
-            + " of length "
-            + str(self.n)
+        logger.debug(
+            f"Encoding used by the GA: {self._encoding_name}: {self._encoding_type} of length {self.n}"
         )
 
         if isinstance(objectives, str):
@@ -185,7 +184,7 @@ class Nsga:
             objective_weights is not None
             and (len(objective_weights) != len(self._objectives))
         ):
-            print(
+            logger.warning(
                 "Objective weight issue: no weight given or size of weights and objectives lists mismatch. "
                 "Setting all weights to default 1 value."
             )
@@ -285,7 +284,7 @@ class Nsga:
         elif self._crossover == DeapCrossover.CX_PARTIALY_MATCHED:
             self._toolbox.register("mate", tools.cxPartialyMatched)
         else:
-            print("Crossover of specified type not handled!")
+            logger.warning("Crossover of specified type not handled!")
 
         # Define mutation
         self._mutation: Union[Mutation, DeapMutation]
@@ -356,11 +355,11 @@ class Nsga:
         # Compile statistics about the population
         record = stats.compile(pop)
         logbook.record(gen=0, evals=len(invalid_ind), **record)
-        print(logbook.stream)
+        logger.debug(logbook.stream)
 
         # Begin the generational process
         ngen = int(self._max_evals / self._pop_size)
-        print("ngen:", ngen)
+        logger.debug(f"ngen: {ngen}")
         for gen in range(1, ngen):
             offspring = algorithms.varAnd(
                 pop, self._toolbox, self._crossover_rate, self._mut_rate
@@ -378,7 +377,7 @@ class Nsga:
             # Compile statistics about the new population
             record = stats.compile(pop)
             logbook.record(gen=gen, evals=len(invalid_ind), **record)
-            print(logbook.stream)
+            logger.debug(logbook.stream)
 
         sols = []
         for s in pop:

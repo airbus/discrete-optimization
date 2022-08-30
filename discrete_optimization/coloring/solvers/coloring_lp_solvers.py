@@ -1,3 +1,4 @@
+import logging
 import sys
 from typing import Dict, Hashable, Optional, Tuple, Type, Union
 
@@ -41,6 +42,9 @@ else:
     from typing_extensions import TypedDict
 
 
+logger = logging.getLogger(__name__)
+
+
 OneColorConstraints = Dict[int, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
 NeighborsConstraints = Dict[
     Tuple[Hashable, Hashable, int], Union["Constr", "QConstr", "MConstr", "GenConstr"]
@@ -53,12 +57,13 @@ class ConstraintsDict(TypedDict):
     constraints_neighbors: NeighborsConstraints
 
 
+
 class ColoringLP(MilpSolver):
     def __init__(
         self,
         coloring_problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args
+        **args,
     ):
         self.coloring_problem = coloring_problem
         self.number_of_nodes = self.coloring_problem.number_of_nodes
@@ -99,22 +104,17 @@ class ColoringLP(MilpSolver):
 
     def init_model(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         use_cliques = kwargs.get("use_cliques", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
                 self.coloring_problem,
                 params_objective_function=self.params_objective_function,
             )
-            result_store = greedy_solver.solve(
-                strategy=NXGreedyColoringMethod.best, verbose=verbose
-            )
+            result_store = greedy_solver.solve(strategy=NXGreedyColoringMethod.best)
             self.start_solution = result_store.get_best_solution_fit()[0]
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.coloring_problem.get_dummy_solution()
             self.start_solution = solution
         nb_colors = self.start_solution.nb_color
@@ -241,9 +241,9 @@ class ColoringLP(MilpSolver):
         n_solutions = self.model.SolCount
         n_objectives = self.model.NumObj
         objective = self.model.getObjective().getValue()
-        print("Objective : ", objective)
-        print("Problem has", n_objectives, "objectives")
-        print("Gurobi found", n_solutions, "solutions")
+        logger.info(f"Objective : {objective}")
+        logger.info(f"Problem has {n_objectives} objectives")
+        logger.info(f"Gurobi found {n_solutions} solutions")
         return self.retrieve_solutions(parameters_milp=parameters_milp)
 
 
@@ -253,7 +253,7 @@ class ColoringLP_MIP(ColoringLP):
         coloring_problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         milp_solver_name: MilpSolverName = MilpSolverName.CBC,
-        **args
+        **args,
     ):
         super().__init__(
             coloring_problem=coloring_problem,
@@ -264,22 +264,19 @@ class ColoringLP_MIP(ColoringLP):
 
     def init_model(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         use_cliques = kwargs.get("use_cliques", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
                 self.coloring_problem,
                 params_objective_function=self.params_objective_function,
             )
             result_store = greedy_solver.solve(
-                strategy=NXGreedyColoringMethod.best, verbose=verbose
+                strategy=NXGreedyColoringMethod.best,
             )
             self.start_solution = result_store.get_best_solution_fit()[0]
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.coloring_problem.get_dummy_solution()
             self.start_solution = solution
         nb_colors = self.start_solution.nb_color
@@ -403,6 +400,6 @@ class ColoringLP_MIP(ColoringLP):
         )
         n_solutions = self.model.num_solutions
         objective = self.model.objective_value
-        print("Objective : ", objective)
-        print("Solver found", n_solutions, "solutions")
+        logger.info(f"Objective : {objective}")
+        logger.info(f"Solver found {n_solutions} solutions")
         return self.retrieve_solutions(parameters_milp=parameters_milp)

@@ -64,7 +64,6 @@ def initialize_multiscenario():
         initial_variable=solution,
         nb_iteration_max=1000000,
         pickle_result=False,
-        verbose=False,
     )
 
 

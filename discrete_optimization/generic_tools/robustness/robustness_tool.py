@@ -1,3 +1,4 @@
+import logging
 import random
 from multiprocessing import Pool
 from typing import List, Optional
@@ -37,6 +38,8 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPModel,
     RCPSPSolution,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RobustnessTool:
@@ -110,7 +113,7 @@ class RobustnessTool:
         solutions = [li.best_solution for li in l]
         results = np.zeros((len(solutions), len(self.test_instance), 3))
         for index_instance in range(len(self.test_instance)):
-            print("Evaluating in instance #", index_instance)
+            logger.debug(f"Evaluating in instance #{index_instance}")
             instance = self.test_instance[index_instance]
             for index_pareto in range(len(solutions)):
                 sol_ = RCPSPSolution(
@@ -129,9 +132,9 @@ class RobustnessTool:
     def plot(self, results, image_tag=""):
         mean_makespan = np.mean(results[:, :, 1], axis=1)
         max_makespan = np.max(results[:, :, 1], axis=1)
-        print("Mean makespan over test instances : ", mean_makespan)
-        print("Max makespan over test instances : ", max_makespan)
-        print("methods ", self.tags)
+        logger.debug(f"Mean makespan over test instances : {mean_makespan}")
+        logger.debug(f"Max makespan over test instances : {max_makespan}")
+        logger.debug(f"methods {self.tags}")
         fig, ax = plt.subplots(1, figsize=(10, 10))
         for tag, i in zip(self.tags, range(len(self.tags))):
             sns.distplot(

@@ -1,3 +1,4 @@
+import logging
 import random
 import sys
 import time
@@ -29,6 +30,9 @@ if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
 else:
     from typing_extensions import TypedDict
+
+
+logger = logging.getLogger(__name__)
 
 
 class ConstraintHandler:
@@ -85,7 +89,7 @@ class LNS_CP(SolverDO):
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        **args
+        **args,
     ) -> ResultStorage:
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:
@@ -105,10 +109,12 @@ class LNS_CP(SolverDO):
             store_lns = self.post_process_solution.build_other_solution(store_lns)
             init_solution, objective = store_lns.get_best_solution_fit()
             satisfy = self.problem.satisfy(init_solution)
-            print("Satisfy Initial solution", satisfy)
+            logger.debug(f"Satisfy Initial solution {satisfy}")
             try:
-                print("Nb task preempted = ", init_solution.get_nb_task_preemption())
-                print("Nb max preemption = ", init_solution.get_max_preempted())
+                logger.debug(
+                    f"Nb task preempted = {init_solution.get_nb_task_preemption()}"
+                )
+                logger.debug(f"Nb max preemption = {init_solution.get_max_preempted()}")
             except:
                 pass
             best_objective = objective
@@ -119,11 +125,8 @@ class LNS_CP(SolverDO):
             store_lns = None
         result_store: ResultStorage
         for iteration in range(nb_iteration_lns):
-            print(
-                "Starting iteration n°",
-                iteration,
-                " current objective ",
-                best_objective,
+            logger.debug(
+                f"Starting iteration n° {iteration} current objective {best_objective}"
             )
             with self.cp_solver.instance.branch() as child:
                 if iteration == 0 and not skip_first_iteration or iteration >= 1:
@@ -159,19 +162,21 @@ class LNS_CP(SolverDO):
                     result_store = self.cp_solver.retrieve_solutions(
                         result, parameters_cp=parameters_cp
                     )
-                    print("iteration n°", iteration, "Solved !!!")
-                    print(result.status)
+                    logger.debug(f"iteration n° {iteration} Solved !!!")
+                    logger.debug(result.status)
                     if len(result_store.list_solution_fits) > 0:
-                        print("Solved !!!")
+                        logger.debug("Solved !!!")
                         bsol, fit = result_store.get_best_solution_fit()
-                        print("Fitness Before = ", fit)
-                        print("Satisfaction Before = ", self.problem.satisfy(bsol))
-                        print("Post Process..")
+                        logger.debug(f"Fitness Before = {fit}")
+                        logger.debug(
+                            f"Satisfaction Before = {self.problem.satisfy(bsol)}"
+                        )
+                        logger.debug("Post Process..")
                         result_store = self.post_process_solution.build_other_solution(
                             result_store
                         )
                         bsol, fit = result_store.get_best_solution_fit()
-                        print("Satisfy after : ", self.problem.satisfy(bsol))
+                        logger.debug(f"Satisfy after : {self.problem.satisfy(bsol)}")
                         if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
                             if fit > best_objective:
                                 current_nb_iteration_no_improvement = 0
@@ -202,21 +207,19 @@ class LNS_CP(SolverDO):
                         and self.problem.satisfy(bsol)
                         and stop_first_iteration_if_optimal
                     ):
-                        print("Finish LNS because found optimal solution")
+                        logger.info("Finish LNS because found optimal solution")
                         break
                 except Exception as e:
                     current_nb_iteration_no_improvement += 1
-                    print("Failed ! reason : ", e)
+                    logger.warning("Failed ! reason : ", e)
                 if time.time() - deb_time > max_time_seconds:
-                    print("Finish LNS with time limit reached")
+                    logger.info("Finish LNS with time limit reached")
                     break
-                print(
-                    current_nb_iteration_no_improvement,
-                    "/",
-                    nb_iteration_no_improvement,
+                logger.debug(
+                    f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
                 )
                 if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                    print("Finish LNS with maximum no improvement iteration ")
+                    logger.info("Finish LNS with maximum no improvement iteration ")
                     break
         return store_lns
 
@@ -260,7 +263,7 @@ class LNS_CPlex(SolverDO):
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        **args
+        **args,
     ) -> ResultStorage:
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:
@@ -274,10 +277,12 @@ class LNS_CPlex(SolverDO):
             store_lns = self.post_process_solution.build_other_solution(store_lns)
             init_solution, objective = store_lns.get_best_solution_fit()
             satisfy = self.problem.satisfy(init_solution)
-            print("Satisfy Initial solution", satisfy)
+            logger.debug(f"Satisfy Initial solution {satisfy}")
             try:
-                print("Nb task preempted = ", init_solution.get_nb_task_preemption())
-                print("Nb max preemption = ", init_solution.get_max_preempted())
+                logger.debug(
+                    f"Nb task preempted = {init_solution.get_nb_task_preemption()}"
+                )
+                logger.debug(f"Nb max preemption = {init_solution.get_max_preempted()}")
             except:
                 pass
             best_objective = objective
@@ -288,11 +293,8 @@ class LNS_CPlex(SolverDO):
             store_lns = None
         result_store: ResultStorage
         for iteration in range(nb_iteration_lns):
-            print(
-                "Starting iteration n°",
-                iteration,
-                " current objective ",
-                best_objective,
+            logger.debug(
+                f"Starting iteration n° {iteration} current objective {best_objective}"
             )
             if iteration == 0 and not skip_first_iteration or iteration >= 1:
                 constraint_iterable = (
@@ -311,18 +313,18 @@ class LNS_CPlex(SolverDO):
                     result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
                 else:
                     result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
-                print("iteration n°", iteration, "Solved !!!")
+                logger.debug(f"iteration n° {iteration} Solved !!!")
                 if len(result_store.list_solution_fits) > 0:
-                    print("Solved !!!")
+                    logger.debug("Solved !!!")
                     bsol, fit = result_store.get_best_solution_fit()
-                    print("Fitness Before = ", fit)
-                    print("Satisfaction Before = ", self.problem.satisfy(bsol))
-                    print("Post Process..")
+                    logger.debug(f"Fitness Before = {fit}")
+                    logger.debug(f"Satisfaction Before = {self.problem.satisfy(bsol)}")
+                    logger.debug("Post Process..")
                     result_store = self.post_process_solution.build_other_solution(
                         result_store
                     )
                     bsol, fit = result_store.get_best_solution_fit()
-                    print("Satisfy after : ", self.problem.satisfy(bsol))
+                    logger.debug(f"Satisfy after : {self.problem.satisfy(bsol)}")
                     if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
                         if fit > best_objective:
                             current_nb_iteration_no_improvement = 0
@@ -348,13 +350,15 @@ class LNS_CPlex(SolverDO):
                     current_nb_iteration_no_improvement += 1
             except Exception as e:
                 current_nb_iteration_no_improvement += 1
-                print("Failed ! reason : ", e)
+                logger.warning(f"Failed ! reason : {e}")
             if time.time() - deb_time > max_time_seconds:
-                print("Finish LNS with time limit reached")
+                logger.info("Finish LNS with time limit reached")
                 break
-            print(current_nb_iteration_no_improvement, "/", nb_iteration_no_improvement)
+            logger.debug(
+                f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
+            )
             if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                print("Finish LNS with maximum no improvement iteration ")
+                logger.info("Finish LNS with maximum no improvement iteration ")
                 break
         return store_lns
 
@@ -455,7 +459,7 @@ class ConstraintHandlerMix(ConstraintHandler):
         self.current_iteration += 1
         self.last_index_param = choice
         self.status[self.last_index_param]["nb_usage"] += 1
-        print("Status ", self.status)
+        logger.debug(f"Status {self.status}")
         return ch.adding_constraint_from_results_store(
             cp_solver, child_instance, result_storage, last_result_store
         )

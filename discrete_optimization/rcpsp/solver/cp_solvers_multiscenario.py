@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import timedelta
 from typing import List, Optional, Union
@@ -21,6 +22,7 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
 
+logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
@@ -35,8 +37,8 @@ class RCPSPSolCP:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("One solution ", self.objective)
-        print("Output ", _output_item)
+        logger.debug(f"One solution {self.objective}")
+        logger.debug(f"Output {_output_item}")
 
     def check(self) -> bool:
         return True
@@ -90,7 +92,7 @@ class CP_MULTISCENARIO(CPSolver):
         list_rcpsp_model: List[RCPSPModel],
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.list_rcpsp_model = list_rcpsp_model
         self.instance: Instance = None
@@ -242,13 +244,15 @@ class CP_MULTISCENARIO(CPSolver):
             if sum_eval > best_makespan:
                 best_solution = tuple(ll)
                 best_makespan = sum_eval
-            print("starts found : ", start[-1])
-            print(
-                "Sum of makespan : ",
-                evaluation,
-                sum_eval / len(self.list_rcpsp_model),
-                order,
-                obj,
+            logger.debug(f"starts found : {start[-1]}")
+            logger.debug(
+                (
+                    "Sum of makespan : ",
+                    evaluation,
+                    sum_eval / len(self.list_rcpsp_model),
+                    order,
+                    obj,
+                )
             )
             list_solutions_fit += [((tuple(ll), obj), sum_eval)]
         result_storage = ResultStorage(
@@ -274,11 +278,9 @@ class CP_MULTISCENARIO(CPSolver):
                 intermediate_solutions=intermediate_solutions,
             )
         except Exception as e:
-            print(e)
+            logger.warning(e)
             return None
-        verbose = args.get("verbose", True)
         self.result = result
-        if verbose:
-            print("Status : ", result.status)
-            print("Solving time : ", result.statistics.get("solveTime", None))
+        logger.debug(f"Status : {result.status}")
+        logger.debug(f"Solving time : {result.statistics.get('solveTime', None)}")
         return self.retrieve_solutions(result, parameters_cp=parameters_cp)

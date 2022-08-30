@@ -1,6 +1,7 @@
 # Binding to use the mzn model provided by
 # https://github.com/youngkd/MSPSP-InstLib
 
+import logging
 import os
 from datetime import timedelta
 from typing import Hashable, Optional, Set
@@ -32,6 +33,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     SkillDetail,
 )
 
+logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
@@ -50,14 +52,16 @@ class MS_RCPSPSolCP:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("One solution ", self.objective)
+        logger.debug(f"One solution {self.objective}")
         if "nb_preemption_subtasks" in self.dict:
-            print("nb_preemption_subtasks", self.dict["nb_preemption_subtasks"])
+            logger.debug(
+                ("nb_preemption_subtasks", self.dict["nb_preemption_subtasks"])
+            )
         if "nb_small_tasks" in self.dict:
-            print("nb_small_tasks", self.dict["nb_small_tasks"])
+            logger.debug(("nb_small_tasks", self.dict["nb_small_tasks"]))
         keys = [k for k in self.dict if "penalty" in k]
-        print("".join([str(k) + " : " + str(self.dict[k]) + "\n" for k in keys]))
-        print(_output_item)
+        logger.debug("".join([str(k) + " : " + str(self.dict[k]) + "\n" for k in keys]))
+        logger.debug(_output_item)
 
     def check(self) -> bool:
         return True
@@ -104,7 +108,7 @@ class CP_MSPSP_MZN(CPSolver):
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance: Instance = None
@@ -478,9 +482,7 @@ class CP_MSPSP_MZN(CPSolver):
             free_search=parameters_cp.free_search,
             intermediate_solutions=intermediate_solutions,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         self.result_status = result.status
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 

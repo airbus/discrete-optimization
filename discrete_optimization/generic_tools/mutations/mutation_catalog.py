@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Optional, Tuple, Type
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
@@ -29,6 +30,9 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
     Mutation2OptIntersection,
     MutationSwapTSP,
 )
+
+
+logger = logging.getLogger(__name__)
 
 dictionnary_mutation: Dict[
     TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]
@@ -87,7 +91,7 @@ dictionnary_mutation: Dict[
 
 
 def get_available_mutations(
-    problem: Problem, solution: Optional[Solution] = None, verbose=True
+    problem: Problem, solution: Optional[Solution] = None
 ):
     register = problem.get_attribute_register()
     present_types = set(register.get_types())
@@ -99,7 +103,6 @@ def get_available_mutations(
             mutations[pr_type] = dictionnary_mutation[pr_type]
             mutations_list += list(dictionnary_mutation[pr_type].values())
             nb_mutations += len(dictionnary_mutation[pr_type])
-    if verbose:
-        print(nb_mutations, " mutation available for your problem")
-        print(mutations)
+    logger.debug(f"{nb_mutations} mutation available for your problem")
+    logger.debug(mutations)
     return mutations, mutations_list

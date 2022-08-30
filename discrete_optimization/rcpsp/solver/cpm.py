@@ -1,3 +1,4 @@
+import logging
 from heapq import heappop, heappush
 from typing import Any, Dict, List
 
@@ -18,6 +19,8 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp.rcpsp_utils import compute_graph_rcpsp
+
+logger = logging.getLogger(__name__)
 
 
 class CPMObject:
@@ -345,7 +348,7 @@ class CPM(SolverDO):
                     if time >= self.map_node[j]._LSD - 5:
                         for task in set_task:
                             resource_links_to_add += [(j, task)]
-        print("Final time : ", current_schedule[critical_path[-1]])
+        logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
         self.unlock_task_transition = unlock_task_transition
         return (
             current_schedule,
@@ -497,7 +500,7 @@ class CPM(SolverDO):
                     if time >= self.map_node[j]._LSD - 5:
                         for task in set_task:
                             resource_links_to_add += [(j, task)]
-        print("Final time : ", current_schedule[critical_path[-1]])
+        logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
         return (
             current_schedule,
             resource_links_to_add,

@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import timedelta
 from typing import Optional
@@ -17,6 +18,7 @@ from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverD
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
 
+logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -82,7 +84,7 @@ class TSP_CP_Solver(SolverDO):
             parameters_cp = ParametersCP.default()
         max_time_seconds = parameters_cp.TimeLimit
         result = self.instance.solve(timeout=timedelta(seconds=max_time_seconds))
-        print("Result = ", result)
+        logger.debug(f"Result = {result}")
         circuit = result["x"]
         path = []
         cur_pos = self.start_index

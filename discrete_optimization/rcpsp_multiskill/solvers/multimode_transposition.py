@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Set, Union
 
 import numpy as np
@@ -32,6 +33,8 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     stick_to_solution,
     stick_to_solution_preemptive,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class MultimodeTranspositionSolver(SolverDO):
@@ -188,7 +191,7 @@ def rebuild_multiskill_solution(
                                     for w in wavail:
                                         worker_avail_in_time[w][i] = False
                             else:
-                                print("Problem finding a worker")
+                                logger.warning("Problem finding a worker")
 
     if isinstance(solution_rcpsp, RCPSPSolutionPreemptive):
         return MS_RCPSPSolution_Preemptive(

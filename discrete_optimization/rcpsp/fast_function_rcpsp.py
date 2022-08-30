@@ -1,7 +1,11 @@
+import logging
+
 import numba.typed
 import numba.types
 import numpy as np
 from numba import njit
+
+logger = logging.getLogger(__name__)
 
 int32_array = numba.types.Array(numba.types.int32, 1, "C")
 
@@ -1203,7 +1207,7 @@ def sgs_fast_partial_schedule_preemptive_minduration(
                             )
                         )
                     ):
-                        print("passed")
+                        logger.debug("passed")
                         pass
                     else:
                         starts.append(current_min_time)

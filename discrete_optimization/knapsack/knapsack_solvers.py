@@ -41,7 +41,6 @@ solvers = {
                 "stop_after_n_item": True,
                 "max_items": 100,
                 "max_time_seconds": 100,
-                "verbose": False,
             },
         )
     ],

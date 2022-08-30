@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 from datetime import timedelta
@@ -38,6 +39,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     create_fake_tasks_multiskills,
 )
 
+logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
@@ -172,16 +174,18 @@ class MS_RCPSPSolCP:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("One solution ", self.objective)
+        logger.debug(f"One solution {self.objective}")
         if "nb_preemption_subtasks" in self.dict:
-            print("nb_preemption_subtasks", self.dict["nb_preemption_subtasks"])
+            logger.debug(
+                ("nb_preemption_subtasks", self.dict["nb_preemption_subtasks"])
+            )
         if "nb_small_tasks" in self.dict:
-            print("nb_small_tasks", self.dict["nb_small_tasks"])
+            logger.debug(("nb_small_tasks", self.dict["nb_small_tasks"]))
         if "res_load" in self.dict:
-            print("res_load ", self.dict["res_load"])
+            logger.debug(("res_load ", self.dict["res_load"]))
         keys = [k for k in self.dict if "penalty" in k]
-        print("".join([str(k) + " : " + str(self.dict[k]) + "\n" for k in keys]))
-        print(_output_item)
+        logger.debug("".join([str(k) + " : " + str(self.dict[k]) + "\n" for k in keys]))
+        logger.debug(_output_item)
 
     def check(self) -> bool:
         return True
@@ -199,7 +203,7 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance: Instance = None
@@ -591,7 +595,7 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         }
         instance["skillunits"] = skillunits
         keys += ["skillunits"]
-        print("Employee position CP ", self.employees_position)
+        logger.debug(f"Employee position CP {self.employees_position}")
         if not no_ressource:
             rreq = [
                 [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
@@ -793,9 +797,7 @@ class CP_MS_MRCPSP_MZN(CPSolver):
             free_search=parameters_cp.free_search,
             intermediate_solutions=intermediate_solutions,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
@@ -805,7 +807,7 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.instance: Instance = None
@@ -1133,7 +1135,7 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         }
         instance["skillunits"] = skillunits
         keys += ["skillunits"]
-        print("Employee position CP ", self.employees_position)
+        logger.debug(f"Employee position CP {self.employees_position}")
         rreq = [
             [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
             for res in resources_list
@@ -1390,9 +1392,7 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
             intermediate_solutions=intermediate_solutions,
             free_search=parameters_cp.free_search,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
 
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
@@ -1403,7 +1403,7 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             rcpsp_model, cp_solver_name, params_objective_function, **kwargs
@@ -1540,7 +1540,7 @@ class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
         }
         instance["skillunits"] = skillunits
         keys += ["skillunits"]
-        print("Employee position CP ", self.employees_position)
+        logger.debug(f"Employee position CP {self.employees_position}")
         rreq = [
             [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
             for res in resources_list
@@ -2426,7 +2426,5 @@ class PrecomputeEmployeesForTasks:
             nr_solutions=parameters_cp.nr_solutions,
             intermediate_solutions=intermediate_solutions,
         )
-        verbose = args.get("verbose", True)
-        if verbose:
-            print(result.status)
+        logger.debug(result.status)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)

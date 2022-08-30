@@ -31,7 +31,7 @@ def test_cp_sm():
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 5
-    result_storage = solver.solve(parameters_cp=parameters_cp, verbose=True)
+    result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
@@ -51,9 +51,7 @@ def test_cp_sm_intermediate_solution():
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 5
-    result_storage = solver.solve(
-        parameters_cp=parameters_cp, output_type=True, verbose=True
-    )
+    result_storage = solver.solve(parameters_cp=parameters_cp, output_type=True)
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_storage, problem=rcpsp_problem
     )
@@ -181,7 +179,7 @@ def test_cp_sm_partial_solution():
     solver.init_model(partial_solution=partial_solution)
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 5
-    result_storage = solver.solve(parameters_cp=parameters_cp, verbose=True)
+    result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     assert partial_solution.start_times == {
         j: solution.rcpsp_schedule[j]["start_time"] for j in some_constraints

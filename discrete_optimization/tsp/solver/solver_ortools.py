@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+import logging
+
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
@@ -12,6 +14,8 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
+
+logger = logging.getLogger(__name__)
 
 
 class TSP_ORtools(SolverDO):
@@ -89,7 +93,7 @@ class TSP_ORtools(SolverDO):
     def solve(self, **kwargs):
         """Prints solution on console."""
         solution = self.routing.SolveWithParameters(self.search_parameters)
-        print(f"Objective: {solution.ObjectiveValue()} miles")
+        logger.debug(f"Objective: {solution.ObjectiveValue()} miles")
         index = self.routing.Start(0)
         index_real = self.manager.IndexToNode(index)
         sol = [index_real]

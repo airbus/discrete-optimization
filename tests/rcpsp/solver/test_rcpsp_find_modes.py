@@ -11,7 +11,7 @@ def test_find_modes():
     params_cp = ParametersCP.default()
     params_cp.nr_solutions = float("inf")
     params_cp.all_solutions = True
-    result_storage = solver.solve(parameters_cp=params_cp, verbose=True)
+    result_storage = solver.solve(parameters_cp=params_cp)
     assert len(result_storage) == 12744
 
 

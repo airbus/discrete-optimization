@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 from datetime import timedelta
@@ -38,6 +39,8 @@ path_minizinc = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "../minizinc/")
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ColoringCPSolution:
     objective: int
@@ -46,8 +49,8 @@ class ColoringCPSolution:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        print("New solution ", self.objective)
-        print("Output ", _output_item)
+        logger.debug(f"New solution {self.objective}")
+        logger.debug(f"Output {_output_item}")
 
     def check(self) -> bool:
         return True
@@ -148,7 +151,7 @@ class ColoringCP(CPSolver):
             {k: self.dict_datas[k] for k in keys if k in self.dict_datas},
             fout=file_name,
         )
-        print("Successfully dumped data file ", file_name)
+        logger.info(f"Successfully dumped data file {file_name}")
 
     def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
@@ -200,31 +203,25 @@ class ColoringCP(CPSolver):
             processes=parameters_cp.nb_process if parameters_cp.multiprocess else None,
             free_search=parameters_cp.free_search,
         )
-        verbose = kwargs.get("verbose", False)
-        if verbose:
-            print("Solving finished")
-            print(result.status)
-            print(result.statistics)
+        logger.info("Solving finished")
+        logger.debug(result.status)
+        logger.debug(result.statistics)
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def get_solution(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
-        verbose = kwargs.get("verbose", False)
         if greedy_start:
-            if verbose:
-                print("Computing greedy solution")
+            logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
                 self.coloring_problem,
                 params_objective_function=self.params_objective_function,
             )
             result_store = greedy_solver.solve(
                 strategy=kwargs.get("greedy_method", NXGreedyColoringMethod.best),
-                verbose=verbose,
             )
             solution = result_store.get_best_solution_fit()[0]
         else:
-            if verbose:
-                print("Get dummy solution")
+            logger.info("Get dummy solution")
             solution = self.coloring_problem.get_dummy_solution()
         return solution
 
@@ -281,7 +278,7 @@ class ColoringCP(CPSolver):
                 result_storage = self.retrieve_solutions(
                     res, parameters_cp=parameters_cp
                 )
-                print(res.status)
+                logger.debug(res.status)
                 sol, fit = result_storage.get_best_solution_fit()
                 nb_color = self.coloring_problem.evaluate(sol)["nb_colors"]
                 if res.solution is not None and nb_color < current_nb_color:
@@ -291,13 +288,13 @@ class ColoringCP(CPSolver):
                         i + 1: current_best_solution.colors[i] + 1
                         for i in range(self.number_of_nodes)
                     }
-                    print(iteration, " : , ", fit)
-                    print("IMPROVED : ")
+                    logger.debug(f"{iteration} : {fit}")
+                    logger.debug("IMPROVED : ")
                 else:
                     try:
-                        print(iteration, " : found solution ", nb_color)
+                        logger.debug(f"{iteration} : found solution {nb_color}")
                     except:
-                        print(iteration, " failed ")
+                        logger.debug(f"{iteration} failed ")
                 iteration += 1
         fit = self.coloring_problem.evaluate(current_best_solution)
         return current_best_solution, fit

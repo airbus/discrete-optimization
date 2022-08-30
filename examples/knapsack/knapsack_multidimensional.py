@@ -73,7 +73,6 @@ def run_ls(multiscenario_model):
         initial_variable=solution,
         nb_iteration_max=60000,
         pickle_result=False,
-        verbose=False,
     )
 
 

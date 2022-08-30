@@ -122,7 +122,7 @@ def test_partial_preemptive(model):
 def test_ls(model):
     model_variant: MS_RCPSPModel_Variant = model.to_variant_model()
     solver = LS_RCPSP_Solver(model=model_variant, ls_solver=LS_SOLVER.SA)
-    result_storage = solver.solve(nb_iteration_max=5000, verbose=True)
+    result_storage = solver.solve(nb_iteration_max=5000)
     rcpsp_sol = result_storage.get_last_best_solution()[0]
     assert model.satisfy(rcpsp_sol)
     plot_resource_individual_gantt_preemptive(rcpsp_model=model, rcpsp_sol=rcpsp_sol)

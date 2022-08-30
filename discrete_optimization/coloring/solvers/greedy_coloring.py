@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 from typing import Optional
 
@@ -15,6 +16,9 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
+
 
 strategies = [
     "largest_first",
@@ -47,7 +51,7 @@ class GreedyColoring(SolverDO):
         self,
         color_problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args
+        **args,
     ):
         self.color_problem = color_problem
         self.nx_graph = self.color_problem.graph.to_networkx()
@@ -64,7 +68,6 @@ class GreedyColoring(SolverDO):
         strategy: NXGreedyColoringMethod = kwargs.get(
             "strategy", NXGreedyColoringMethod.best
         )
-        verbose: bool = kwargs.get("verbose", False)
         strategy_name = strategy.name
         if strategy_name == "best":
             strategies_to_test = strategies
@@ -80,23 +83,19 @@ class GreedyColoring(SolverDO):
                 sorted_nodes = sorted(list(colors.keys()))
                 number_colors = len(set(list(colors.values())))
                 solution = [colors[i] for i in sorted_nodes]
-                if verbose:
-                    print(strategy, " : number colors : ", number_colors)
+                logger.debug(f"{strategy} : number colors : {number_colors}")
                 if number_colors < best_nb_color:
                     best_solution = solution
                     best_nb_color = number_colors
             except Exception as e:
-                print("Failed strategy : ", strategy, e)
-                pass
-        if verbose:
-            print("best : ", best_nb_color)
+                logger.info(f"Failed strategy : {strategy} {e}")
+        logger.debug(f"best : {best_nb_color}")
         solution = ColoringSolution(
             self.color_problem, colors=best_solution, nb_color=None
         )
         solution = solution.to_reformated_solution()
         fit = self.aggreg_sol(solution)
-        if verbose:
-            print("Solution found : ", solution)
+        logger.debug(f"Solution found : {solution}")
         return ResultStorage(
             list_solution_fits=[(solution, fit)],
             best_solution=solution,

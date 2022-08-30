@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 
 import numpy as np
@@ -31,6 +32,8 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPMode
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver import (
     InitialSolutionMS_RCPSP,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class LS_SOLVER(Enum):
@@ -70,7 +73,7 @@ class LS_RCPSP_Solver(SolverDO):
             dummy = sol.get_best_solution()
         dummy = kwargs.get("init_solution", dummy)
         _, mutations = get_available_mutations(model, dummy)
-        print(mutations)
+        logger.debug(mutations)
         list_mutation = [
             mutate[0].build(model, dummy, **mutate[1])
             for mutate in mutations

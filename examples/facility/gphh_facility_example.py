@@ -49,7 +49,6 @@ def run_greedy():
         limit_time_s=20,
         greedy_start=True,
         cp_model=FacilityCPModel.DEFAULT_INT_LNS,
-        verbose=True,
     )
     print(fit)
     print(solver.aggreg_sol(solution))

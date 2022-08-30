@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Dict, List, Optional, Set, Tuple, Union
 
@@ -22,6 +23,9 @@ except ImportError:
 else:
     gurobi_available = True
     import gurobipy as gurobi
+
+
+logger = logging.getLogger(__name__)
 
 
 def intersect(i1, i2):
@@ -60,7 +64,7 @@ class LP_MRCPSP_GANTT(MilpSolver):
         rcpsp_model: RCPSPModelCalendar,
         rcpsp_solution: RCPSPSolution,
         lp_solver=MilpSolverName.CBC,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.lp_solver = lp_solver
@@ -190,7 +194,7 @@ class LP_MRCPSP_GANTT(MilpSolver):
         nb_solution = min(nb_solutions_max, self.model.num_solutions)
         if not retrieve_all_solution:
             nb_solution = 1
-        print(nb_solution, " solutions found")
+        logger.debug(f"{nb_solution} solutions found")
         for s in range(nb_solution):
             objective = self.model.objective_values[s]
             resource_id_usage = {
@@ -229,7 +233,7 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
         rcpsp_model: RCPSPModelCalendar,
         rcpsp_solution: RCPSPSolution,
         lp_solver=MilpSolverName.CBC,
-        **kwargs
+        **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
         self.lp_solver = lp_solver
@@ -397,7 +401,7 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
                     <= constraint_description.time_bounds[1]
                 )
             ]
-            print(tasks_of_interest)
+            logger.debug(tasks_of_interest)
             self.constraint_additionnal[constraint_name] += [
                 self.model.addConstr(
                     gurobi.quicksum(
@@ -425,12 +429,12 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         nb_solution = self.model.getAttr("SolCount")
-        print(nb_solution, " solutions found")
+        logger.debug(f"{nb_solution} solutions found")
         solutions = []
         for s in range(nb_solution):
             self.model.params.SolutionNumber = s
             objective = self.model.getAttr("poolObjVal")
-            print("Objective : ", objective)
+            logger.debug(f"Objective : {objective}")
             solutions += [
                 {
                     k: {
@@ -478,5 +482,5 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
                 for task in ressource_usage[k][individual]:
                     if ressource_usage[k][individual][task] >= 0.5:
                         objective.add(1 - self.ressource_id_usage[k][individual][task])
-        print("Setting new objectives = Change task objective")
+        logger.debug("Setting new objectives = Change task objective")
         self.model.setObjective(objective)

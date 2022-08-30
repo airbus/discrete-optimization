@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod
 from collections import defaultdict
 from copy import deepcopy
@@ -31,6 +32,8 @@ from discrete_optimization.rcpsp_multiskill.fast_function_ms_rcpsp import (
     sgs_fast_ms_preemptive_partial_schedule,
     sgs_fast_ms_preemptive_some_special_constraints,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def tree():
@@ -897,8 +900,8 @@ def sgs_multi_skill(solution: MS_RCPSPSolution_Variant):
                         break
                 if not skills_fulfilled:
                     unfeasible_skills = True
-                    print(
-                        "Warning. You probably didnt give the right worker named in priority_worker_per_task"
+                    logger.warning(
+                        "You probably didnt give the right worker named in priority_worker_per_task"
                     )
                     break
             if unfeasible_skills:
@@ -1782,8 +1785,8 @@ def sgs_multi_skill_partial_schedule(
                         skills_fulfilled = True
                         break
                 if not skills_fulfilled:
-                    print(
-                        "Warning. You probably didnt give the right worker named in priority_worker_per_task"
+                    logger.warning(
+                        "You probably didnt give the right worker named in priority_worker_per_task"
                     )
                     unfeasible_skills = True
                     break
@@ -2295,7 +2298,7 @@ class MS_RCPSPModel(Problem):
                         if skill in rcpsp_sol.employee_usage[task][emp]
                     ]
                     if sum(employees_used) < required_skills[skill]:
-                        print("1")
+                        logger.debug("1")
                         return False
             if task in rcpsp_sol.employee_usage:
                 employee_used = [
@@ -2313,19 +2316,21 @@ class MS_RCPSPModel(Problem):
                                 rcpsp_sol.schedule[task]["end_time"],
                             )
                         ):
-                            print("Task : ", task)
-                            print("Employee : ", e)
-                            print(
-                                e,
-                                [
-                                    self.employees[e].calendar_employee[t]
-                                    for t in range(
-                                        rcpsp_sol.schedule[task]["start_time"],
-                                        rcpsp_sol.schedule[task]["end_time"],
-                                    )
-                                ],
+                            logger.debug(f"Task : {task}")
+                            logger.debug(f"Employee : {e}")
+                            logger.debug(
+                                (
+                                    e,
+                                    [
+                                        self.employees[e].calendar_employee[t]
+                                        for t in range(
+                                            rcpsp_sol.schedule[task]["start_time"],
+                                            rcpsp_sol.schedule[task]["end_time"],
+                                        )
+                                    ],
+                                )
                             )
-                            print("Problem with employee availability")
+                            logger.warning("Problem with employee availability")
                             return False
         overlaps = [
             (t1, t2)
@@ -2353,15 +2358,15 @@ class MS_RCPSPModel(Problem):
                 k in rcpsp_sol.employee_usage.get(t2, {})
                 for k in rcpsp_sol.employee_usage.get(t1, {})
             ):
-                print("Worker working on 2 task the same time")
-                print(
+                logger.debug("Worker working on 2 task the same time")
+                logger.debug(
                     [
                         k
                         for k in rcpsp_sol.employee_usage.get(t1, {})
                         if k in rcpsp_sol.employee_usage.get(t2, {})
                     ]
                 )
-                print("Tasks ", t1, t2)
+                logger.debug(("Tasks ", t1, t2))
                 return False
         # ressource usage respected
         makespan = rcpsp_sol.schedule[self.sink_task]["end_time"]
@@ -2380,15 +2385,17 @@ class MS_RCPSPModel(Problem):
                         )
             for res in self.resources_set:
                 if resource_usage[res] > self.resources_availability[res][t]:
-                    print(
-                        "Time step resource violation: time: ",
-                        t,
-                        "res",
-                        res,
-                        "res_usage: ",
-                        resource_usage[res],
-                        "res_avail: ",
-                        self.resources_availability[res][t],
+                    logger.debug(
+                        (
+                            "Time step resource violation: time: ",
+                            t,
+                            "res",
+                            res,
+                            "res_usage: ",
+                            resource_usage[res],
+                            "res_avail: ",
+                            self.resources_availability[res][t],
+                        )
                     )
                     return False
 
@@ -2399,13 +2406,15 @@ class MS_RCPSPModel(Problem):
                 mode = rcpsp_sol.modes[act_id]
                 usage += self.mode_details[act_id][mode][res]
             if usage > self.resources_availability[res][0]:
-                print(
-                    "Non-renewable res",
-                    res,
-                    "res_usage: ",
-                    usage,
-                    "res_avail: ",
-                    self.resources_availability[res][0],
+                logger.debug(
+                    (
+                        "Non-renewable res",
+                        res,
+                        "res_usage: ",
+                        usage,
+                        "res_avail: ",
+                        self.resources_availability[res][0],
+                    )
                 )
                 return False
         # Check precedences / successors
@@ -2414,15 +2423,17 @@ class MS_RCPSPModel(Problem):
                 start_succ = rcpsp_sol.schedule[succ_id]["start_time"]
                 end_pred = rcpsp_sol.schedule[act_id]["end_time"]
                 if start_succ < end_pred:
-                    print(
-                        "Precedence relationship broken: ",
-                        act_id,
-                        "end at ",
-                        end_pred,
-                        "while ",
-                        succ_id,
-                        "start at",
-                        start_succ,
+                    logger.debug(
+                        (
+                            "Precedence relationship broken: ",
+                            act_id,
+                            "end at ",
+                            end_pred,
+                            "while ",
+                            succ_id,
+                            "start at",
+                            start_succ,
+                        )
                     )
                     return False
         return True
@@ -2451,7 +2462,7 @@ class MS_RCPSPModel(Problem):
                             if skill in rcpsp_sol.employee_usage[task][i][emp]
                         ]
                         if sum(employees_used) < required_skills[skill]:
-                            print("Not enough skills to do task :", task)
+                            logger.debug(f"Not enough skills to do task : {task}")
                             return False
             if task in rcpsp_sol.employee_usage:
                 for i in range(rcpsp_sol.get_number_of_part(task)):
@@ -2469,20 +2480,22 @@ class MS_RCPSPModel(Problem):
                                     rcpsp_sol.schedule[task]["ends"][i],
                                 )
                             ):
-                                print("Task : ", task)
-                                print("Employee : ", e)
-                                print(
-                                    rcpsp_sol.schedule[task]["starts"][i],
-                                    rcpsp_sol.schedule[task]["ends"][i],
-                                    [
-                                        self.employees[e].calendar_employee[t]
-                                        for t in range(
-                                            rcpsp_sol.schedule[task]["starts"][i],
-                                            rcpsp_sol.schedule[task]["ends"][i],
-                                        )
-                                    ],
+                                logger.debug(f"Task : {task}")
+                                logger.debug(f"Employee : {e}")
+                                logger.debug(
+                                    (
+                                        rcpsp_sol.schedule[task]["starts"][i],
+                                        rcpsp_sol.schedule[task]["ends"][i],
+                                        [
+                                            self.employees[e].calendar_employee[t]
+                                            for t in range(
+                                                rcpsp_sol.schedule[task]["starts"][i],
+                                                rcpsp_sol.schedule[task]["ends"][i],
+                                            )
+                                        ],
+                                    )
                                 )
-                                print("Problem with employee availability")
+                                logger.warning("Problem with employee availability")
                                 return False
         for employee in self.employees:
             usage = np.zeros((rcpsp_sol.get_end_time(self.sink_task) + 1))
@@ -2499,7 +2512,7 @@ class MS_RCPSPModel(Problem):
                 e = rcpsp_sol.schedule[t]["ends"][j]
                 usage[s:e] += 1
                 if np.max(usage) >= 2:
-                    print("Two task at same time for worker " + str(employee))
+                    logger.debug(f"Two task at same time for worker {employee}")
                     return False
         makespan = rcpsp_sol.get_end_time(self.sink_task)
         for t in range(makespan):
@@ -2518,15 +2531,17 @@ class MS_RCPSPModel(Problem):
                             )
             for res in self.resources_set:
                 if resource_usage[res] > self.resources_availability[res][t]:
-                    print(
-                        "Time step resource violation: time: ",
-                        t,
-                        "res",
-                        res,
-                        "res_usage: ",
-                        resource_usage[res],
-                        "res_avail: ",
-                        self.resources_availability[res][t],
+                    logger.debug(
+                        (
+                            "Time step resource violation: time: ",
+                            t,
+                            "res",
+                            res,
+                            "res_usage: ",
+                            resource_usage[res],
+                            "res_avail: ",
+                            self.resources_availability[res][t],
+                        )
                     )
                     return False
         # Check for non-renewable resource violation
@@ -2536,13 +2551,15 @@ class MS_RCPSPModel(Problem):
                 mode = rcpsp_sol.modes[act_id]
                 usage += self.mode_details[act_id][mode][res]
             if usage > self.resources_availability[res][0]:
-                print(
-                    "Non-renewable res",
-                    res,
-                    "res_usage: ",
-                    usage,
-                    "res_avail: ",
-                    self.resources_availability[res][0],
+                logger.debug(
+                    (
+                        "Non-renewable res",
+                        res,
+                        "res_usage: ",
+                        usage,
+                        "res_avail: ",
+                        self.resources_availability[res][0],
+                    )
                 )
                 return False
         # Check precedences / successors
@@ -2551,15 +2568,17 @@ class MS_RCPSPModel(Problem):
                 start_succ = rcpsp_sol.get_start_time(succ_id)
                 end_pred = rcpsp_sol.get_end_time(act_id)
                 if start_succ < end_pred:
-                    print(
-                        "Precedence relationship broken: ",
-                        act_id,
-                        "end at ",
-                        end_pred,
-                        "while ",
-                        succ_id,
-                        "start at",
-                        start_succ,
+                    logger.debug(
+                        (
+                            "Precedence relationship broken: ",
+                            act_id,
+                            "end at ",
+                            end_pred,
+                            "while ",
+                            succ_id,
+                            "start at",
+                            start_succ,
+                        )
                     )
                     return False
         return True
@@ -2816,16 +2835,15 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
         if att == "modes_vector" or att == "modes_vector_from0":
             self.set_fixed_modes(sol.modes_vector)
-            print("self.fixed_modes:", self.fixed_modes)
+            logger.debug(f"self.fixed_modes: {self.fixed_modes}")
         elif att == "priority_worker_per_task":
             self.set_fixed_priority_worker_per_task(sol.priority_worker_per_task)
-            print(
-                "self.fixed_priority_worker_per_task:",
-                self.fixed_priority_worker_per_task,
+            logger.debug(
+                f"self.fixed_priority_worker_per_task: {self.fixed_priority_worker_per_task}"
             )
         elif att == "priority_list_task":
             self.set_fixed_task_permutation(sol.priority_list_task)
-            print("self.fixed_permutation:", self.fixed_permutation)
+            logger.debug(f"self.fixed_permutation: {self.fixed_permutation}")
 
     def set_fixed_modes(self, fixed_modes):
         self.fixed_modes = fixed_modes
@@ -3473,8 +3491,8 @@ def start_together_problem_description(
                 employees_used_t2_first_part
             )
             if len(intersection_employees) > 0:
-                print("starting together constraint between task ", t1, "and", t2)
-                print(intersection_employees, " employees working on both.. !")
+                logger.debug(f"starting together constraint between task {t1} and {t2}")
+                logger.debug(f"{intersection_employees} employees working on both.. !")
             list_constraints_not_respected += [
                 (
                     "start_together",
@@ -3651,7 +3669,7 @@ def compute_overskill(problem: MS_RCPSPModel, solution: MS_RCPSPSolution_Preempt
                         if skill in solution.employee_usage[task][i][emp]
                     ]
                     if sum(skills_provided) < required_skills[skill]:
-                        print("Not enough skills to do task :", task)
+                        logger.debug(f"Not enough skills to do task : {task}")
                         return False
                     if sum(skills_provided) > required_skills[skill]:
                         if skill not in overskill[task]:

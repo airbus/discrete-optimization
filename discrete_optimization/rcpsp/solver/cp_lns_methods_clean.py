@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Iterable, List, Optional, Union
 
 from deprecation import deprecated
@@ -30,6 +31,8 @@ from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints
     RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @deprecated(
@@ -113,7 +116,7 @@ class NeighborSubproblem(ConstraintHandler):
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
         evaluation = self.problem.evaluate(current_solution)
-        print("Current Eval :", evaluation)
+        logger.debug(f"Current Eval : {evaluation}")
         if evaluation.get("constraint_penalty", 0) == 0:
             p = self.params_list[min(1, len(self.params_list) - 1)]
         else:

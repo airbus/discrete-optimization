@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Any, Dict, Hashable, Iterable, List, Optional, Union
 
@@ -49,6 +50,9 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
 )
+
+logger = logging.getLogger(__name__)
+
 
 ANY_RCPSP = Union[
     RCPSPModel,
@@ -476,11 +480,11 @@ class NeighborRepairProblems(ConstraintHandler):
         if current_solution is None:
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
-        print(current_solution.get_nb_task_preemption(), " task preempted ")
-        print(current_solution.get_max_preempted(), " most preempted task ")
-        print(current_solution.total_number_of_cut(), " total number of cut ")
+        logger.debug(f"{current_solution.get_nb_task_preemption()} task preempted")
+        logger.debug(f"{current_solution.get_max_preempted()} most preempted task")
+        logger.debug(f"{current_solution.total_number_of_cut()} total number of cut")
         evaluation = self.problem.evaluate(current_solution)
-        print("Current Eval :", evaluation)
+        logger.debug(f"Current Eval : {evaluation}")
         if evaluation.get("constraint_penalty", 0) == 0:
             p = self.params_list[1]
         else:
@@ -488,8 +492,8 @@ class NeighborRepairProblems(ConstraintHandler):
         problems = find_possible_problems_preemptive(
             model=self.problem, solution=current_solution
         )
-        print(sum([len(problems[t]) for t in problems]), " problems ?")
-        print("Problems : ", problems)
+        logger.debug(f"{sum([len(problems[t]) for t in problems])} problems ?")
+        logger.debug(f"Problems : {problems}")
         list_strings = problem_constraints(
             current_solution=current_solution,
             problems_output=problems,

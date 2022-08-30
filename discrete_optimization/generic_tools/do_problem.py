@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod
 from enum import Enum
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
@@ -7,6 +8,8 @@ import numpy as np
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
     TupleFitness,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TypeAttribute(Enum):
@@ -307,7 +310,7 @@ def get_default_objective_setup(problem: Problem) -> ParamsObjectiveFunction:
     register_objective = problem.get_objective_register()
     objs, weights = register_objective.get_list_objective_and_default_weight()
     sense = register_objective.objective_sense
-    print(sense, register_objective.objective_handling, objs, weights)
+    logger.debug((sense, register_objective.objective_handling, objs, weights))
     return ParamsObjectiveFunction(
         objective_handling=register_objective.objective_handling,
         objectives=objs,

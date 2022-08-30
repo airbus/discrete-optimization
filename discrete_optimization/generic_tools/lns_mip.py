@@ -1,3 +1,4 @@
+import logging
 import time
 from abc import abstractmethod
 from typing import Any, Hashable, Mapping, Optional
@@ -13,6 +14,8 @@ from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersM
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ConstraintHandler:
@@ -107,7 +110,7 @@ class LNS_MILP(SolverDO):
         nb_iteration_no_improvement: Optional[int] = None,
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: Optional[bool] = False,
-        **args
+        **args,
     ) -> ResultStorage:
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:
@@ -133,13 +136,13 @@ class LNS_MILP(SolverDO):
             result_store = self.milp_solver.solve(
                 parameters_milp=parameters_milp, **args
             )
-            print("Solved !!!")
+            logger.debug("Solved !!!")
             bsol, fit = result_store.get_best_solution_fit()
-            print("Fitness = ", fit)
-            print("Post Process..")
+            logger.debug(f"Fitness = {fit}")
+            logger.debug("Post Process..")
             result_store = self.post_process_solution.build_other_solution(result_store)
             bsol, fit = result_store.get_best_solution_fit()
-            print("After postpro = ", fit)
+            logger.debug(f"After postpro = {fit}")
             if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
                 if fit > best_objective:
                     current_nb_iteration_no_improvement = 0
@@ -158,21 +161,21 @@ class LNS_MILP(SolverDO):
                 if store_lns is None:  # for mypy, should never happen
                     raise RuntimeError("store_lns should have been initialized for now")
                 store_lns.add_solution(solution=s, fitness=f)
-            print("Removing constraint:")
+            logger.debug("Removing constraint:")
             self.constraint_handler.remove_constraints_from_previous_iteration(
                 milp_solver=self.milp_solver, previous_constraints=constraint_iterable
             )
-            print("Adding constraint:")
+            logger.debug("Adding constraint:")
             constraint_iterable = (
                 self.constraint_handler.adding_constraint_from_results_store(
                     milp_solver=self.milp_solver, result_storage=result_store
                 )
             )
             if time.time() - deb_time > max_time_seconds:
-                print("Finish LNS with time limit reached")
+                logger.info("Finish LNS with time limit reached")
                 break
             if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                print("Finish LNS with maximum no improvement iteration ")
+                logger.info("Finish LNS with maximum no improvement iteration ")
                 break
         if store_lns is None:  # for mypy, should never happen
             raise RuntimeError("store_lns should have been initialized for now")

@@ -1,4 +1,5 @@
 import itertools
+import logging
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -18,6 +19,8 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPMode
 from discrete_optimization.rcpsp_multiskill.solvers.cp_lns_solver import (
     InitialMethodRCPSP,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
@@ -52,7 +55,9 @@ class InitialSolutionMS_RCPSP_TaskMerger(InitialSolution):
             self.original_to_simplified_tasks_dict,
             self.simplified_to_original_tasks_dict,
         ) = merge_tasks(self.problem, self.special_constraints, self.type_of_merges)
-        print("type_simplified_rcpsp_model: ", type(self.simplified_rcpsp_model))
+        logger.debug(
+            f"type_simplified_rcpsp_model: {type(self.simplified_rcpsp_model)}"
+        )
 
         self.aggreg, _ = build_evaluate_function_aggregated(
             problem=self.problem,
@@ -255,7 +260,7 @@ def merge_tasks(
                 unseen_task.remove(st[1])
 
             if len(unseen_task) == 0:
-                print("!!!!!!!!!! ISSUE !!!!!!!!!!!!")
+                logger.warning("Length of unseen_task is null")
             unseen_task = unseen_task[0]
 
             if existing_simplified_id is None:

@@ -22,9 +22,7 @@ def test_facility_cp():
     parameters_cp = ParametersCP.default()
     parameters_cp.TimeLimit = 20
     solver.init_model(cp_model=FacilityCPModel.DEFAULT_INT, object_output=True)
-    solution, fit = solver.solve(
-        parameters_cp=parameters_cp, verbose=True
-    ).get_best_solution_fit()
+    solution, fit = solver.solve(parameters_cp=parameters_cp).get_best_solution_fit()
     assert facility_problem.satisfy(solution)
 
 
@@ -42,7 +40,6 @@ def test_facility_cp_lns():
         limit_time_s=100,
         greedy_start=True,
         cp_model=FacilityCPModel.DEFAULT_INT_LNS,
-        verbose=True,
     )
     assert facility_problem.satisfy(solution)
 

@@ -33,7 +33,6 @@ def test_facility_lp_gurobi():
     solution, fit = solver.solve(
         parameters_milp=parameters_lp,
         use_matrix_indicator_heuristic=False,
-        verbose=True,
     ).get_best_solution_fit()
     assert color_problem.satisfy(solution)
 
@@ -47,7 +46,6 @@ def test_facility_lp_cbc():
     solution, fit = solver.solve(
         parameters_milp=parameters_lp,
         use_matrix_indicator_heuristic=False,
-        verbose=True,
     ).get_best_solution_fit()
     assert color_problem.satisfy(solution)
 
@@ -67,7 +65,6 @@ def test_facility_lp_pymip():
     result_store = solver.solve(
         parameters_milp=parameters_lp,
         use_matrix_indicator_heuristic=False,
-        verbose=True,
     )
     solution = result_store.get_best_solution_fit()[0]
     assert facility_problem.satisfy(solution)
@@ -88,7 +85,6 @@ def test_facility_lp_lns_gurobi():
         nb_iteration=3,
         greedy_start=True,
         parameters_milp=parameters_lp,
-        verbose=True,
     )
     assert color_problem.satisfy(solution)
 

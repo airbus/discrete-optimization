@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 from datetime import timedelta
@@ -35,6 +36,8 @@ from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver impor
     InitialMethodRCPSP,
     InitialSolutionMS_RCPSP,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @deprecated(deprecated_in="0.1")
@@ -445,7 +448,7 @@ class SolverWithCalendarIterative(SolverDO):
         problem_calendar: MS_RCPSPModel,
         partial_solution: PartialSolution = None,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_FAST,
-        **kwargs
+        **kwargs,
     ):
         self.problem_calendar = problem_calendar
         self.problem_no_calendar = self.problem_calendar.copy()
@@ -475,7 +478,7 @@ class SolverWithCalendarIterative(SolverDO):
         solver = CP_MS_MRCPSP_MZN(
             rcpsp_model=self.problem_no_calendar,
             cp_solver_name=CPSolverName.CHUFFED,
-            **kwargs
+            **kwargs,
         )
         solver.init_model(
             output_type=True,
@@ -483,7 +486,7 @@ class SolverWithCalendarIterative(SolverDO):
             partial_solution=partial_solution,
             add_calendar_constraint_unit=False,
             exact_skills_need=False,
-            **kwargs
+            **kwargs,
         )
         parameters_cp = ParametersCP.default()
         parameters_cp.TimeLimit = 500
@@ -519,7 +522,7 @@ class SolverWithCalendarIterative(SolverDO):
         nb_iteration_no_improvement: Optional[int] = None,
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
-        **args
+        **args,
     ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
@@ -539,7 +542,7 @@ class SolverWithCalendarIterative(SolverDO):
             init_solution, objective = store_lns.get_best_solution_fit()
             best_solution = init_solution.copy()
             satisfy = self.problem_calendar.satisfy(init_solution)
-            print("Satisfy ", satisfy)
+            logger.debug(f"Satisfy {satisfy}")
             best_objective = objective
         else:
             best_objective = (
@@ -550,25 +553,29 @@ class SolverWithCalendarIterative(SolverDO):
             store_with_all = None
         constraint_to_keep = set()
         for iteration in range(nb_iteration_lns):
-            print(
-                "Starting iteration n°",
-                iteration,
-                " current objective ",
-                best_objective,
+            logger.debug(
+                (
+                    "Starting iteration n°",
+                    iteration,
+                    " current objective ",
+                    best_objective,
+                )
             )
             try:
-                print(
-                    "Best feasible solution ",
-                    max(
-                        [
-                            f
-                            for s, f in store_with_all.list_solution_fits
-                            if "satisfy" in s.__dict__.keys() and s.satisfy
-                        ]
-                    ),
+                logger.debug(
+                    (
+                        "Best feasible solution ",
+                        max(
+                            [
+                                f
+                                for s, f in store_with_all.list_solution_fits
+                                if "satisfy" in s.__dict__.keys() and s.satisfy
+                            ]
+                        ),
+                    )
                 )
             except:
-                print("No Feasible solution yet")
+                logger.warning("No Feasible solution yet")
             with self.cp_solver.instance.branch() as child:
                 if iteration == 0 and not skip_first_iteration or iteration >= 1:
                     for c in constraint_to_keep:
@@ -599,20 +606,20 @@ class SolverWithCalendarIterative(SolverDO):
                     result_store = self.cp_solver.retrieve_solutions(
                         result, parameters_cp=parameters_cp
                     )
-                    print("iteration n°", iteration, "Solved !!!")
-                    print(result.status)
+                    logger.debug(f"iteration n°{iteration} Solved !!!")
+                    logger.debug(result.status)
                     if len(result_store.list_solution_fits) > 0:
-                        print("Solved !!!")
+                        logger.debug("Solved !!!")
                         bsol, fit = result_store.get_best_solution_fit()
-                        print("Fitness = ", fit)
-                        print("Post Process..")
-                        print("Satisfy best current sol : ")
-                        print(self.problem_calendar.satisfy(bsol))
+                        logger.debug(f"Fitness = {fit}")
+                        logger.debug("Post Process..")
+                        logger.debug("Satisfy best current sol : ")
+                        logger.debug(self.problem_calendar.satisfy(bsol))
                         result_store = self.post_process_solution.build_other_solution(
                             result_store
                         )
                         bsol, fit = result_store.get_best_solution_fit()
-                        print("After postpro = ", fit)
+                        logger.debug(f"After postpro = {fit}")
                         if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
                             if fit > best_objective:
                                 current_nb_iteration_no_improvement = 0
@@ -651,20 +658,18 @@ class SolverWithCalendarIterative(SolverDO):
                         and iteration == 0
                         and best_solution.satisfy
                     ):
-                        print("Finish LNS because found optimal solution")
+                        logger.info("Finish LNS because found optimal solution")
                         break
                 except Exception as e:
                     current_nb_iteration_no_improvement += 1
-                    print("Failed ! reason : ", e)
+                    logger.warning(f"Failed ! reason : {e}")
                 if time.time() - deb_time > max_time_seconds:
-                    print("Finish LNS with time limit reached")
+                    logger.info("Finish LNS with time limit reached")
                     break
-                print(
-                    current_nb_iteration_no_improvement,
-                    "/",
-                    nb_iteration_no_improvement,
+                logger.debug(
+                    f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
                 )
                 if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                    print("Finish LNS with maximum no improvement iteration ")
+                    logger.info("Finish LNS with maximum no improvement iteration ")
                     break
         return store_with_all

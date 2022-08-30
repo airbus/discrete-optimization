@@ -1,3 +1,4 @@
+import logging
 import math
 import random
 from abc import abstractmethod
@@ -58,6 +59,9 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
 )
+
+logger = logging.getLogger(__name__)
+
 
 ANY_RCPSP = Union[
     RCPSPModel,
@@ -1327,9 +1331,8 @@ class BasicConstraintBuilder:
         subtasks_1, subtasks_2 = self.neighbor_builder.find_subtasks(
             current_solution=current_solution
         )
-        if self.verbose:
-            print(self.__class__.__name__)
-            print(len(subtasks_1), " in first set ", len(subtasks_2), " in second set ")
+        logger.debug(self.__class__.__name__)
+        logger.debug(f"{len(subtasks_1)} in first set, {len(subtasks_2)} in second set")
         list_strings = self.func(
             current_solution=current_solution,
             cp_solver=cp_solver,
@@ -1425,9 +1428,8 @@ class ConstraintHandlerScheduling(ConstraintHandler):
             current_solution, fit = result_storage.get_last_best_solution()
         current_solution: RCPSPSolutionPreemptive = current_solution
         evaluation = self.problem.evaluate(current_solution)
-        if self.verbose:
-            print("logging ", self.__class__.__name__)
-            print("Current Eval :", evaluation)
+        logger.debug(self.__class__.__name__)
+        logger.debug(f"Current Eval : {evaluation}")
         if evaluation.get("constraint_penalty", 0) == 0:
             p = self.params_list[0]
         else:
@@ -1476,7 +1478,7 @@ class ConstraintHandlerScheduling(ConstraintHandler):
                     child_instance.add_string(s)
                 child_instance.add_string("constraint sec_objective==0;\n")
             except Exception as e:
-                print(
+                logger.warning(
                     "Hard constraint failed no method add_hard_special_constraints inside your cpsolver class,"
                     " but the code should work fine anyway !"
                 )
