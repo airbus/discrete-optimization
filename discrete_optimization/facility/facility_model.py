@@ -80,9 +80,7 @@ class FacilityProblem(Problem):
     ) -> float:
         ...
 
-    def evaluate(self, variable: Solution) -> Dict[str, float]:
-        if not isinstance(variable, FacilitySolution):
-            raise ValueError("FacilityProblem can only evaluate a FacilitySolution.")
+    def evaluate(self, variable: FacilitySolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.dict_details is not None:
             return variable.dict_details
         d = self.evaluate_cost(variable)
@@ -127,9 +125,7 @@ class FacilityProblem(Problem):
             cost += c
         return {"cost": cost, "setup_cost": setup_cost, "details": facility_details}
 
-    def satisfy(self, variable: Solution) -> bool:
-        if not isinstance(variable, FacilitySolution):
-            raise ValueError("FacilityProblem can only satisfy a FacilitySolution.")
+    def satisfy(self, variable: FacilitySolution) -> bool:  # type: ignore # avoid isinstance checks for efficiency
         d = self.evaluate(variable)
         return d["capacity_constraint_violation"] == 0.0
 

@@ -98,9 +98,7 @@ class ColoringProblem(Problem):
             i: self.nodes_name[i] for i in range(self.number_of_nodes)
         }
 
-    def evaluate(self, variable: Solution) -> Dict[str, float]:
-        if not isinstance(variable, ColoringSolution):
-            raise ValueError("ColoringProblem can only evaluate a ColoringSolution.")
+    def evaluate(self, variable: ColoringSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.nb_color is None:
             if variable.colors is None:
                 raise ValueError(
@@ -117,9 +115,7 @@ class ColoringProblem(Problem):
                 variable.nb_violations = self.count_violations(variable)
         return {"nb_colors": variable.nb_color, "nb_violations": variable.nb_violations}
 
-    def satisfy(self, variable: Solution) -> bool:
-        if not isinstance(variable, ColoringSolution):
-            raise ValueError("ColoringProblem can only satisfy a ColoringSolution.")
+    def satisfy(self, variable: ColoringSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
         if len(self.graph.edges) > 0:
             if variable.colors is None:
                 raise ValueError("variable.colors must not be None")
