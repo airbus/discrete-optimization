@@ -258,7 +258,6 @@ class LP_Facility_Solver(MilpSolver):
         logger.info(f"Gurobi found {nSolutions} solutions")
         return self.retrieve_solutions(parameters_milp=parameters_milp)
 
-
     def fix_decision_fo_customer(self, current_solution, fraction_to_fix: float = 0.9):
         if self.model is None:  # for mypy
             self.init_model()

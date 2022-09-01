@@ -25,7 +25,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-
 logger = logging.getLogger(__name__)
 
 _default_crossovers = {

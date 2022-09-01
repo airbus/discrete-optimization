@@ -57,7 +57,6 @@ class ConstraintsDict(TypedDict):
     constraints_neighbors: NeighborsConstraints
 
 
-
 class ColoringLP(MilpSolver):
     def __init__(
         self,
