@@ -293,7 +293,6 @@ def build_constraint_handler_cut_part(rcpsp_problem: ANY_RCPSP, graph=None, **kw
         neighbor_builder=n1,
         preemptive=kwargs.get("preemptive", False),
         multiskill=kwargs.get("multiskill", False),
-        verbose=kwargs.get("verbose", False),
     )
     params_list = kwargs.get(
         "params_list",
@@ -322,7 +321,6 @@ def build_constraint_handler_cut_part(rcpsp_problem: ANY_RCPSP, graph=None, **kw
         objective_subproblem=kwargs.get(
             "objective_subproblem", ObjectiveSubproblem.GLOBAL_MAKESPAN
         ),
-        verbose=kwargs.get("verbose", False),
     )
     return constraint_handler
 

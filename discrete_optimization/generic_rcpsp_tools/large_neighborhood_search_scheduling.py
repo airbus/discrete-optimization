@@ -316,7 +316,6 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             basic_constraint_builder=basic_constraint_builder,
             params_list=params_list,
             use_makespan_of_subtasks=kwargs.get("use_makespan_of_subtasks", False),
-            verbose=kwargs.get("verbose", False),
         )
     elif constraint_handler_type == ConstraintHandlerType.SOLUTION_REPAIR:
         params_list = kwargs.get(
