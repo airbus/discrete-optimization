@@ -31,7 +31,6 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
     MutationSwapTSP,
 )
 
-
 logger = logging.getLogger(__name__)
 
 dictionnary_mutation: Dict[
@@ -90,9 +89,7 @@ dictionnary_mutation: Dict[
 }
 
 
-def get_available_mutations(
-    problem: Problem, solution: Optional[Solution] = None
-):
+def get_available_mutations(problem: Problem, solution: Optional[Solution] = None):
     register = problem.get_attribute_register()
     present_types = set(register.get_types())
     mutations = {}
