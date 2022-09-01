@@ -194,7 +194,6 @@ class GPHH(SolverDO):
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        verbose: bool = False,
     ):
         self.training_domains = training_domains
         self.domain_model = domain_model
@@ -203,7 +202,6 @@ class GPHH(SolverDO):
         self.set_feature = self.params_gphh.set_feature
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
-        self.verbose = verbose
         self.pset: PrimitiveSet = self.init_primitives(self.params_gphh.set_primitves)
         self.weight = weight
         (
