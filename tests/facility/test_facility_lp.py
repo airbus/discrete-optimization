@@ -71,23 +71,5 @@ def test_facility_lp_pymip():
     facility_problem.evaluate(solution)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_facility_lp_lns_gurobi():
-    file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
-    color_problem = parse_file(file)
-    solver = LP_Facility_Solver(color_problem)
-    parameters_lp = ParametersMilp.default()
-    parameters_lp.TimeLimit = 20
-    solution, fit = solver.solve_lns(
-        use_matrix_indicator_heuristic=False,
-        fraction_to_fix_first_iter=0,
-        fraction_to_fix=0.3,
-        nb_iteration=3,
-        greedy_start=True,
-        parameters_milp=parameters_lp,
-    )
-    assert color_problem.satisfy(solution)
-
-
 if __name__ == "__main__":
     test_facility_lp_cbc()
