@@ -18,6 +18,7 @@ from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
 )
 from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
     CPSolverName,
     ParametersCP,
     map_cp_solver_name,
@@ -67,7 +68,7 @@ class FacilitySolCP:
         return True
 
 
-class FacilityCP(SolverDO):
+class FacilityCP(CPSolver):
     def __init__(
         self,
         facility_problem: FacilityProblem,
