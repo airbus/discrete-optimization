@@ -149,48 +149,6 @@ class LPKnapsackGurobi(SolverDO):
             solutions = self.retrieve_solutions([0])
         return solutions
 
-    def solve_lns(
-        self,
-        parameter_gurobi: ParametersMilp,
-        init_solution: KnapsackSolution,
-        fraction_decision_fixed: float,
-        nb_iteration_max: int,
-    ):
-        self.model.setParam("TimeLimit", parameter_gurobi.TimeLimit)
-        self.model.setParam("OutputFlag", 0)
-        self.model.modelSense = GRB.MAXIMIZE
-        self.model.setParam(GRB.Param.PoolSolutions, parameter_gurobi.PoolSolutions)
-        self.model.setParam("MIPGapAbs", parameter_gurobi.MIPGapAbs)
-        self.model.setParam("MIPGap", parameter_gurobi.MIPGap)
-        current_solution = init_solution
-        constraints = {}
-        list_solutions = [current_solution]
-        list_objective = [current_solution.value]
-        for k in trange(nb_iteration_max):
-            for c in constraints:
-                self.model.remove(constraints[c])
-            self.add_init_solution(current_solution)
-            fixed_variable = set(
-                random.sample(
-                    self.variable_decision["x"].keys(),
-                    int(fraction_decision_fixed * len(self.variable_decision["x"])),
-                )
-            )
-            constraints = self.fix_decision(current_solution, fixed_variable)
-            self.model.optimize()
-            nSolutions = self.model.SolCount
-            if parameter_gurobi.retrieve_all_solution:
-                solutions = self.retrieve_solutions(list(range(nSolutions)))
-            else:
-                solutions = self.retrieve_solutions([0])
-            current_solution = solutions[0]
-            list_solutions += [solutions[0]]
-            list_objective += [solutions[0].value]
-        logger.debug(f"Last obj : {list_objective[-1]}")
-        fig, ax = plt.subplots(1)
-        ax.plot(list_objective)
-        plt.show()
-
     def add_init_solution(self, init_solution: KnapsackSolution):
         for i in self.variable_decision["x"]:
             self.variable_decision["x"][i].start = init_solution.list_taken[i]
@@ -430,47 +388,6 @@ class LPKnapsack(MilpSolver):
         else:
             solutions = self.retrieve_solutions([0])
         return solutions
-
-    def solve_lns(
-        self,
-        parameter_gurobi: ParametersMilp,
-        init_solution: KnapsackSolution,
-        fraction_decision_fixed: float,
-        nb_iteration_max: int,
-    ):
-        if self.model is None:
-            self.init_model()
-        current_solution = init_solution
-        constraints = {}
-        list_solutions = [current_solution]
-        list_objective = [current_solution.value]
-        for k in trange(nb_iteration_max):
-            for c in constraints:
-                self.model.remove(constraints[c])
-            self.add_init_solution(current_solution)
-            fixed_variable = set(
-                random.sample(
-                    self.variable_decision["x"].keys(),
-                    int(fraction_decision_fixed * len(self.variable_decision["x"])),
-                )
-            )
-            constraints = self.fix_decision(current_solution, fixed_variable)
-            self.model.optimize(
-                max_seconds=parameter_gurobi.TimeLimit,
-                max_solutions=parameter_gurobi.PoolSolutions,
-            )
-            nSolutions = self.model.num_solutions
-            if parameter_gurobi.retrieve_all_solution:
-                solutions = self.retrieve_solutions(list(range(nSolutions)))
-            else:
-                solutions = self.retrieve_solutions([0])
-            current_solution = solutions.get_best_solution()
-            list_solutions += [solutions.get_best_solution()]
-            list_objective += [solutions.get_best_solution().value]
-        logger.debug(f"Last obj : {list_objective[-1]}")
-        fig, ax = plt.subplots(1)
-        ax.plot(list_objective)
-        plt.show()
 
     def add_init_solution(self, init_solution: KnapsackSolution):
         start = []

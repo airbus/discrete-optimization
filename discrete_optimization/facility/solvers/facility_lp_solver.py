@@ -319,40 +319,6 @@ class LP_Facility_Solver(MilpSolver):
         for k in self.constraints_dict["lns"]:
             self.model.remove(self.constraints_dict["lns"][k])
 
-    def solve_lns(
-        self,
-        fraction_to_fix_first_iter: float = 0.0,
-        fraction_to_fix: float = 0.9,
-        nb_iteration: int = 10,
-        **kwargs,
-    ):
-        if self.model is None:
-            logger.info("Initialize the model")
-            self.init_model(**kwargs)
-        greedy_start = kwargs.get("greedy_start", True)
-        if greedy_start:
-            logger.info("Computing greedy solution")
-            greedy_solver = GreedySolverFacility(self.facility_problem)
-            solution, f = greedy_solver.solve().get_best_solution_fit()
-            self.start_solution = solution
-        else:
-            logger.info("Get dummy solution")
-            solution = self.facility_problem.get_dummy_solution()
-            self.start_solution = solution
-        current_solution = self.start_solution
-        fit = self.facility_problem.evaluate(current_solution)
-        for i in range(nb_iteration):
-            logger.debug(f"i, {i}")
-            self.fix_decision(
-                current_solution,
-                fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
-            )
-            cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
-            self.remove_lns_constraint()
-            logger.debug(cur_sol)
-            current_solution = cur_sol
-        return current_solution, fit
-
 
 class LP_Facility_Solver_CBC(SolverDO):
     def __init__(
@@ -565,38 +531,6 @@ class LP_Facility_Solver_CBC(SolverDO):
         for k in self.constraints_dict["lns"]:
             self.model.remove(self.constraints_dict["lns"][k])
 
-    def solve_lns(
-        self,
-        fraction_to_fix_first_iter: float = 0.0,
-        fraction_to_fix: float = 0.9,
-        nb_iteration: int = 10,
-        **kwargs,
-    ):
-        if self.model is None:
-            logger.info("Initialize the model")
-            self.init_model(**kwargs)
-        greedy_start = kwargs.get("greedy_start", True)
-        if greedy_start:
-            logger.info("Computing greedy solution")
-            greedy_solver = GreedySolverFacility(self.facility_problem)
-            solution, f = greedy_solver.solve().get_best_solution_fit()
-            self.start_solution = solution
-        else:
-            logger.info("Get dummy solution")
-            solution = self.facility_problem.get_dummy_solution()
-            self.start_solution = solution
-        current_solution = self.start_solution
-        fit = self.facility_problem.evaluate(current_solution)
-        for i in range(nb_iteration):
-            self.fix_decision(
-                current_solution,
-                fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
-            )
-            cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
-            self.remove_lns_constraint()
-            current_solution = cur_sol
-        return current_solution, fit
-
 
 class LP_Facility_Solver_PyMip(LP_Facility_Solver):
     def __init__(
@@ -808,35 +742,3 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
     def remove_lns_constraint(self):
         for k in self.constraints_dict["lns"]:
             self.model.remove(self.constraints_dict["lns"][k])
-
-    def solve_lns(
-        self,
-        fraction_to_fix_first_iter: float = 0.0,
-        fraction_to_fix: float = 0.9,
-        nb_iteration: int = 10,
-        **kwargs,
-    ):
-        if self.model is None:
-            logger.info("Initialize the model")
-            self.init_model(**kwargs)
-        greedy_start = kwargs.get("greedy_start", True)
-        if greedy_start:
-            logger.info("Computing greedy solution")
-            greedy_solver = GreedySolverFacility(self.facility_problem)
-            solution, f = greedy_solver.solve().get_best_solution_fit()
-            self.start_solution = solution
-        else:
-            logger.info("Get dummy solution")
-            solution = self.facility_problem.get_dummy_solution()
-            self.start_solution = solution
-        current_solution = self.start_solution
-        fit = self.facility_problem.evaluate(current_solution)
-        for i in range(nb_iteration):
-            self.fix_decision(
-                current_solution,
-                fraction_to_fix if i > 0 else fraction_to_fix_first_iter,
-            )
-            cur_sol, fit = self.solve(**kwargs).get_best_solution_fit()
-            self.remove_lns_constraint()
-            current_solution = cur_sol
-        return current_solution, fit
