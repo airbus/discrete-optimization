@@ -26,7 +26,7 @@ from discrete_optimization.rcpsp.rcpsp_model import (
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
-def test_single_mode_moo_benchmark():
+def run_single_mode_moo_benchmark():
 
     # Problem initialisation
     files = get_data_available()
@@ -108,7 +108,7 @@ def test_single_mode_moo_benchmark():
     plt.show()
 
 
-def test_single_mode_robustness_benchmark():
+def run_single_mode_robustness_benchmark():
 
     # Problem initialisation
     files = get_data_available()
@@ -222,4 +222,4 @@ def test_single_mode_robustness_benchmark():
 
 if __name__ == "__main__":
     # test_single_mode_moo_benchmark()
-    test_single_mode_robustness_benchmark()
+    run_single_mode_robustness_benchmark()

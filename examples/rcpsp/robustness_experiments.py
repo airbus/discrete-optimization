@@ -420,7 +420,3 @@ def local_search_aggregated(
 
 if __name__ == "__main__":
     run_cp_multiscenario()
-    # local_search_aggregated(postpro=True,
-    #                         nb_iteration=2000,
-    #                         merge_apriori=True,
-    #                         merge_aposteriori=True)

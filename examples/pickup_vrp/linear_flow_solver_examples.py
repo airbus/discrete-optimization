@@ -5,6 +5,7 @@ from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
     plot_solution,
+    plt,
 )
 
 try:
@@ -36,3 +37,8 @@ def example_ortools_example():
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
     plot_solution(solutions[-1], gpdp)
+    plt.show()
+
+
+if __name__ == "__main__":
+    example_ortools_example()

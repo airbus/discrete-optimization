@@ -11,6 +11,7 @@ from discrete_optimization.generic_tools.ls.local_search import (
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
+    logger,
 )
 from discrete_optimization.generic_tools.mutations.mixed_mutation import (
     BasicPortfolioMutation,
@@ -60,10 +61,11 @@ def initialize_multiscenario():
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
         mode_mutation=ModeMutation.MUTATE,
     )
-    sa.solve(
-        initial_variable=solution,
-        nb_iteration_max=1000000,
-        pickle_result=False,
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
+    res = sa.solve(
+        initial_variable=solution, nb_iteration_max=5000, pickle_result=False
     )
 
 
