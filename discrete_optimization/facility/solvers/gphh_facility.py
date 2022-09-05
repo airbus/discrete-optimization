@@ -197,9 +197,10 @@ class GPHH(SolverDO):
     ):
         self.training_domains = training_domains
         self.domain_model = domain_model
-        self.params_gphh = params_gphh
         if params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
+        else:
+            self.params_gphh = params_gphh
         self.set_feature = self.params_gphh.set_feature
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
