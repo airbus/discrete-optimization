@@ -385,10 +385,10 @@ class LP_Solver_MRSCPSP(MilpSolver):
             logger.info("LP model initialized...in ", time.time() - t, " seconds")
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        limit_time_s = parameters_milp.TimeLimit
-        self.model.sol_pool_size = parameters_milp.PoolSolutions
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.max_mip_gap = parameters_milp.MIPGap
+        limit_time_s = parameters_milp.time_limit
+        self.model.sol_pool_size = parameters_milp.pool_solutions
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.max_mip_gap = parameters_milp.mip_gap
         self.model.optimize(
             max_seconds=limit_time_s, max_solutions=parameters_milp.n_solutions_max
         )

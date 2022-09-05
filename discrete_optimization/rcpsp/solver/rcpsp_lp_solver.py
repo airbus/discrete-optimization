@@ -300,10 +300,10 @@ class LP_RCPSP(MilpSolver):
             self.init_model()
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        limit_time_s = parameters_milp.TimeLimit
-        self.model.sol_pool_size = parameters_milp.PoolSolutions
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.max_mip_gap = parameters_milp.MIPGap
+        limit_time_s = parameters_milp.time_limit
+        self.model.sol_pool_size = parameters_milp.pool_solutions
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.max_mip_gap = parameters_milp.mip_gap
         self.model.optimize(
             max_seconds=limit_time_s, max_solutions=parameters_milp.n_solutions_max
         )
@@ -584,10 +584,10 @@ class LP_MRCPSP(MilpSolver):
             self.init_model(greedy_start=False, **kwargs)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        limit_time_s = parameters_milp.TimeLimit
-        self.model.sol_pool_size = parameters_milp.PoolSolutions
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.max_mip_gap = parameters_milp.MIPGap
+        limit_time_s = parameters_milp.time_limit
+        self.model.sol_pool_size = parameters_milp.pool_solutions
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.max_mip_gap = parameters_milp.mip_gap
         self.model.optimize(
             max_seconds=limit_time_s, max_solutions=parameters_milp.n_solutions_max
         )
@@ -925,9 +925,9 @@ class LP_MRCPSP_GUROBI(MilpSolver):
             self.init_model(greedy_start=False, **kwargs)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
-        self.model.setParam("MIPGapAbs", parameters_milp.MIPGapAbs)
-        self.model.setParam("PoolSolutions", parameters_milp.PoolSolutions)
+        self.model.setParam("TimeLimit", parameters_milp.time_limit)
+        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
+        self.model.setParam("PoolSolutions", parameters_milp.pool_solutions)
         self.model.modelSense = gurobi.GRB.MINIMIZE
         self.model.optimize()
         return self.retrieve_solutions(parameters_milp)

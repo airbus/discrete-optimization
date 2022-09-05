@@ -247,7 +247,7 @@ class LP_Facility_Solver(MilpSolver):
                 raise RuntimeError(
                     "self.model must be not None after calling self.init_model()."
                 )
-        limit_time_s = parameters_milp.TimeLimit
+        limit_time_s = parameters_milp.time_limit
         self.model.setParam("TimeLimit", limit_time_s)
         self.model.optimize()
         nSolutions = self.model.SolCount
@@ -398,7 +398,7 @@ class LP_Facility_Solver_CBC(SolverDO):
                 raise RuntimeError(
                     "self.model must be not None after calling self.init_model()."
                 )
-        limit_time_s = parameters_milp.TimeLimit
+        limit_time_s = parameters_milp.time_limit
         self.model.SetTimeLimit(limit_time_s * 1000)
         res = self.model.Solve()
         resdict = {
@@ -525,11 +525,11 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
                 )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.max_mip_gap = parameters_milp.MIPGap
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.max_mip_gap = parameters_milp.mip_gap
         self.model.optimize(
             max_solutions=parameters_milp.n_solutions_max,
-            max_seconds=parameters_milp.TimeLimit,
+            max_seconds=parameters_milp.time_limit,
         )
         nSolutions = self.model.num_solutions
         objective = self.model.objective_value

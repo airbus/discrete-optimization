@@ -19,27 +19,20 @@ map_solver = {MilpSolverName.GRB: mip.GRB, MilpSolverName.CBC: mip.CBC}
 
 
 class ParametersMilp:
-    TimeLimit: int
-    PoolSolutions: int
-    MIPGapAbs: float
-    MIPGap: float
-    retrieve_all_solution: bool
-    pool_search_mode: int
-
     def __init__(
         self,
-        time_limit,
-        pool_solutions,
-        mip_gap_abs,
-        mip_gap,
+        time_limit: int,
+        pool_solutions: int,
+        mip_gap_abs: float,
+        mip_gap: float,
         retrieve_all_solution: bool,
         n_solutions_max: int,
         pool_search_mode: int = 0,
     ):
-        self.TimeLimit = time_limit
-        self.PoolSolutions = pool_solutions
-        self.MIPGapAbs = mip_gap_abs
-        self.MIPGap = mip_gap
+        self.time_limit = time_limit
+        self.pool_solutions = pool_solutions
+        self.mip_gap_abs = mip_gap_abs
+        self.mip_gap = mip_gap
         self.retrieve_all_solution = retrieve_all_solution
         self.n_solutions_max = n_solutions_max
         self.pool_search_mode = pool_search_mode

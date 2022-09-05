@@ -132,11 +132,11 @@ class LPKnapsackGurobi(SolverDO):
     def solve(self, parameter_gurobi: ParametersMilp, **kwargs):
         if self.model is None:
             self.init_model(**kwargs)
-        self.model.setParam("TimeLimit", parameter_gurobi.TimeLimit)
+        self.model.setParam("TimeLimit", parameter_gurobi.time_limit)
         self.model.modelSense = GRB.MAXIMIZE
-        self.model.setParam(GRB.Param.PoolSolutions, parameter_gurobi.PoolSolutions)
-        self.model.setParam("MIPGapAbs", parameter_gurobi.MIPGapAbs)
-        self.model.setParam("MIPGap", parameter_gurobi.MIPGap)
+        self.model.setParam(GRB.Param.PoolSolutions, parameter_gurobi.pool_solutions)
+        self.model.setParam("MIPGapAbs", parameter_gurobi.mip_gap_abs)
+        self.model.setParam("MIPGap", parameter_gurobi.mip_gap)
         logger.info("optimizing...")
         self.model.optimize()
         nSolutions = self.model.SolCount
@@ -363,8 +363,8 @@ class LPKnapsack(MilpSolver):
             parameters_milp = ParametersMilp.default()
         logger.info("optimizing...")
         self.model.optimize(
-            max_seconds=parameters_milp.TimeLimit,
-            max_solutions=parameters_milp.PoolSolutions,
+            max_seconds=parameters_milp.time_limit,
+            max_solutions=parameters_milp.pool_solutions,
         )
         nSolutions = self.model.num_solutions
         objective = self.model.objective_value
