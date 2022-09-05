@@ -235,7 +235,7 @@ class ColoringLP(MilpSolver):
                 )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
+        self.model.setParam("TimeLimit", parameters_milp.time_limit)
         self.model.optimize()
         n_solutions = self.model.SolCount
         n_objectives = self.model.NumObj
@@ -390,11 +390,11 @@ class ColoringLP_MIP(ColoringLP):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        self.model.max_mip_gap = parameters_milp.MIPGap
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.sol_pool_size = parameters_milp.PoolSolutions
+        self.model.max_mip_gap = parameters_milp.mip_gap
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.sol_pool_size = parameters_milp.pool_solutions
         self.model.optimize(
-            max_seconds=parameters_milp.TimeLimit,
+            max_seconds=parameters_milp.time_limit,
             max_solutions=parameters_milp.n_solutions_max,
         )
         n_solutions = self.model.num_solutions

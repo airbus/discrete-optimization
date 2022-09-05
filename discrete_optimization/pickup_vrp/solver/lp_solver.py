@@ -890,11 +890,11 @@ class LinearFlowSolver(SolverDO):
             self.init_model(**kwargs)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
+        self.model.setParam("TimeLimit", parameters_milp.time_limit)
         self.model.modelSense = grb.GRB.MINIMIZE
-        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions)
-        self.model.setParam("MIPGapAbs", parameters_milp.MIPGapAbs)
-        self.model.setParam("MIPGap", parameters_milp.MIPGap)
+        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.pool_solutions)
+        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
+        self.model.setParam("MIPGap", parameters_milp.mip_gap)
         self.model.setParam(grb.GRB.Param.Method, 2)
         self.model.setParam("Heuristics", 0.5)
         logger.info("optimizing...")
@@ -1595,11 +1595,11 @@ class LinearFlowSolverVehicleType(SolverDO):
             self.init_model(**kwargs)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
+        self.model.setParam("TimeLimit", parameters_milp.time_limit)
         self.model.modelSense = grb.GRB.MINIMIZE
-        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions)
-        self.model.setParam("MIPGapAbs", parameters_milp.MIPGapAbs)
-        self.model.setParam("MIPGap", parameters_milp.MIPGap)
+        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.pool_solutions)
+        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
+        self.model.setParam("MIPGap", parameters_milp.mip_gap)
         logger.info("optimizing...")
         self.model.optimize()
         nSolutions = self.model.SolCount
@@ -1716,11 +1716,11 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
-        self.model.setParam("TimeLimit", parameters_milp.TimeLimit)
+        self.model.setParam("TimeLimit", parameters_milp.time_limit)
         self.model.modelSense = grb.GRB.MINIMIZE
-        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.PoolSolutions)
-        self.model.setParam("MIPGapAbs", parameters_milp.MIPGapAbs)
-        self.model.setParam("MIPGap", parameters_milp.MIPGap)
+        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.pool_solutions)
+        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
+        self.model.setParam("MIPGap", parameters_milp.mip_gap)
 
         self.model.setParam(grb.GRB.Param.Method, 2)
         if "warm_start" in kwargs and not kwargs.get("no_warm_start", False):

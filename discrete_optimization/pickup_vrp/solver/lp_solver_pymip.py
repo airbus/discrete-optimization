@@ -776,14 +776,14 @@ class LinearFlowSolver(SolverDO):
             self.init_model(**kwargs)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.max_seconds = parameters_milp.TimeLimit
+        self.model.max_seconds = parameters_milp.time_limit
         self.model.sense = mip.MINIMIZE
-        self.model.sol_pool_size = parameters_milp.PoolSolutions
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.max_mip_gap = parameters_milp.MIPGap
+        self.model.sol_pool_size = parameters_milp.pool_solutions
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.max_mip_gap = parameters_milp.mip_gap
         logger.info("optimizing...")
         self.model.optimize(
-            max_seconds=parameters_milp.TimeLimit,
+            max_seconds=parameters_milp.time_limit,
             max_solutions=parameters_milp.n_solutions_max,
         )
         nSolutions = self.model.num_solutions
@@ -1319,15 +1319,15 @@ class LinearFlowSolverVehicleType(SolverDO):
             parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
-        self.model.max_seconds = parameters_milp.TimeLimit
+        self.model.max_seconds = parameters_milp.time_limit
         self.model.sense = mip.MINIMIZE
-        self.model.sol_pool_size = parameters_milp.PoolSolutions
-        self.model.max_mip_gap_abs = parameters_milp.MIPGapAbs
-        self.model.max_mip_gap = parameters_milp.MIPGap
+        self.model.sol_pool_size = parameters_milp.pool_solutions
+        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
+        self.model.max_mip_gap = parameters_milp.mip_gap
         logger.info("optimizing...")
         self.model.optimize(
-            max_seconds=parameters_milp.TimeLimit,
-            max_solutions=parameters_milp.PoolSolutions,
+            max_seconds=parameters_milp.time_limit,
+            max_solutions=parameters_milp.pool_solutions,
         )
         nSolutions = self.model.num_solutions
         logger.info(f"Solver found {nSolutions} solutions")
