@@ -149,19 +149,6 @@ class LPKnapsackGurobi(SolverDO):
             solutions = self.retrieve_solutions([0])
         return solutions
 
-    def add_init_solution(self, init_solution: KnapsackSolution):
-        for i in self.variable_decision["x"]:
-            self.variable_decision["x"][i].start = init_solution.list_taken[i]
-            self.variable_decision["x"][i].varhintval = init_solution.list_taken[i]
-
-    def fix_decision(self, init_solution: KnapsackSolution, fixed_variable_keys):
-        constraints = {}
-        for i in fixed_variable_keys:
-            constraints[i] = self.model.addConstr(
-                self.variable_decision["x"][i] == init_solution.list_taken[i]
-            )
-        return constraints
-
     def describe_the_model(self):
         return (
             str(self.description_variable_description)
@@ -388,20 +375,6 @@ class LPKnapsack(MilpSolver):
         else:
             solutions = self.retrieve_solutions([0])
         return solutions
-
-    def add_init_solution(self, init_solution: KnapsackSolution):
-        start = []
-        for i in self.variable_decision["x"]:
-            start += [(self.variable_decision["x"][i], init_solution.list_taken[i])]
-        self.model.start = start
-
-    def fix_decision(self, init_solution: KnapsackSolution, fixed_variable_keys):
-        constraints = {}
-        for i in fixed_variable_keys:
-            constraints[i] = self.model.add_constr(
-                self.variable_decision["x"][i] == init_solution.list_taken[i]
-            )
-        return constraints
 
     def describe_the_model(self):
         return (
