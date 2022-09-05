@@ -25,8 +25,8 @@ def test_knapsack_lns():
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_cp = ParametersCP.default()
-    params_cp.TimeLimit = 10
-    params_cp.TimeLimit_iter0 = 1
+    params_cp.time_limit = 10
+    params_cp.time_limit_iter0 = 1
     solver = CPKnapsackMZN2(
         model,
         cp_solver_name=CPSolverName.CHUFFED,

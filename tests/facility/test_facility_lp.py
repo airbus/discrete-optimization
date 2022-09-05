@@ -29,7 +29,7 @@ def test_facility_lp_gurobi():
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
     parameters_lp = ParametersMilp.default()
-    parameters_lp.TimeLimit = 20
+    parameters_lp.time_limit = 20
     solution, fit = solver.solve(
         parameters_milp=parameters_lp,
         use_matrix_indicator_heuristic=False,
@@ -42,7 +42,7 @@ def test_facility_lp_cbc():
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_CBC(color_problem)
     parameters_lp = ParametersMilp.default()
-    parameters_lp.TimeLimit = 20
+    parameters_lp.time_limit = 20
     solution, fit = solver.solve(
         parameters_milp=parameters_lp,
         use_matrix_indicator_heuristic=False,
@@ -56,7 +56,7 @@ def test_facility_lp_pymip():
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
     parameters_lp = ParametersMilp.default()
-    parameters_lp.TimeLimit = 20
+    parameters_lp.time_limit = 20
     solver = LP_Facility_Solver_PyMip(
         facility_problem,
         milp_solver_name=MilpSolverName.CBC,

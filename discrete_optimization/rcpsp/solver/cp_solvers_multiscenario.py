@@ -270,7 +270,7 @@ class CP_MULTISCENARIO(CPSolver):
             self.init_model(**args)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         try:
             result = self.instance.solve(

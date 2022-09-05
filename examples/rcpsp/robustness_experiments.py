@@ -166,7 +166,7 @@ def run_cp_multiscenario():
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
     )
     params_cp = ParametersCP.default()
-    params_cp.TimeLimit = 500
+    params_cp.time_limit = 500
     params_cp.free_search = True
     result = solver.solve(parameters_cp=params_cp)
     solution_fit = result.list_solution_fits

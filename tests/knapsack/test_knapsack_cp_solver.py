@@ -16,7 +16,7 @@ def test_cp_knapsack_1():
     cp_model = CPKnapsackMZN(knapsack_model)
     cp_model.init_model()
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 10
+    parameters_cp.time_limit = 10
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     sol, fit = result_storage.get_best_solution_fit()
     assert isinstance(result_storage.list_solution_fits[0][0], KnapsackSolution)
@@ -29,7 +29,7 @@ def test_cp_knapsack_2():
     cp_model = CPKnapsackMZN2(knapsack_model)
     cp_model.init_model()
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 10
+    parameters_cp.time_limit = 10
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     sol, fit = result_storage.get_best_solution_fit()
     assert isinstance(result_storage.list_solution_fits[0][0], KnapsackSolution)

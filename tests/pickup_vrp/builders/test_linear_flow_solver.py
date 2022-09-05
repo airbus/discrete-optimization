@@ -32,7 +32,7 @@ def test_tsp():
     )
     p = ParametersMilp.default()
 
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
@@ -52,7 +52,7 @@ def test_tsp_simplified():
     )
     p = ParametersMilp.default()
 
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
@@ -71,7 +71,7 @@ def test_vrp():
     )
     p = ParametersMilp.default()
 
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
@@ -92,7 +92,7 @@ def test_vrp_simplified():
     )
     p = ParametersMilp.default()
 
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
@@ -110,7 +110,7 @@ def test_selective_tsp():
         include_time_evolution=False,
     )
     p = ParametersMilp.default()
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
@@ -128,7 +128,7 @@ def test_selective_vrp():
         include_time_evolution=False,
     )
     p = ParametersMilp.default()
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )

@@ -143,7 +143,7 @@ class LNS_CP(SolverDO):
                 try:
                     if iteration == 0:
                         result = child.solve(
-                            timeout=timedelta(seconds=parameters_cp.TimeLimit_iter0),
+                            timeout=timedelta(seconds=parameters_cp.time_limit_iter0),
                             intermediate_solutions=parameters_cp.intermediate_solution,
                             free_search=parameters_cp.free_search,
                             processes=None
@@ -152,7 +152,7 @@ class LNS_CP(SolverDO):
                         )
                     else:
                         result = child.solve(
-                            timeout=timedelta(seconds=parameters_cp.TimeLimit),
+                            timeout=timedelta(seconds=parameters_cp.time_limit),
                             intermediate_solutions=parameters_cp.intermediate_solution,
                             free_search=parameters_cp.free_search,
                             processes=None
@@ -309,7 +309,7 @@ class LNS_CPlex(SolverDO):
             try:
                 if iteration == 0:
                     p = parameters_cp.default()
-                    p.TimeLimit = parameters_cp.TimeLimit_iter0
+                    p.time_limit = parameters_cp.time_limit_iter0
                     result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
                 else:
                     result_store = self.cp_solver.solve(parameters_cp=parameters_cp)

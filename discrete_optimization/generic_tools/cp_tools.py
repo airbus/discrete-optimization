@@ -43,9 +43,8 @@ class ParametersCP:
     Parameters that can be used by any cp - solver
     """
 
-    TimeLimit: int
-    TimeLimit_iter0: int
-    PoolSolutions: int
+    time_limit: int
+    time_limit_iter0: int
     intermediate_solution: bool
     all_solutions: bool
     nr_solutions: int
@@ -56,10 +55,10 @@ class ParametersCP:
     def __init__(
         self,
         time_limit,
-        pool_solutions,
         intermediate_solution: bool,
         all_solutions: bool,
         nr_solutions: int,
+        time_limit_iter0=None,
         free_search: bool = False,
         multiprocess: bool = False,
         nb_process: int = 1,
@@ -67,14 +66,15 @@ class ParametersCP:
         """
 
         :param time_limit: in seconds, the time limit of solving the cp model
-        :param pool_solutions:
         :param intermediate_solution: retrieve intermediate solutions
         :param all_solutions: returns all solutions found by the cp solver
         :param nr_solutions: the requested number of solutions
         """
-        self.TimeLimit = time_limit
-        self.TimeLimit_iter0 = time_limit
-        self.PoolSolutions = pool_solutions
+        self.time_limit = time_limit
+        if time_limit_iter0 is None:
+            self.time_limit_iter0 = time_limit
+        else:
+            self.time_limit_iter0 = time_limit_iter0
         self.intermediate_solution = intermediate_solution
         self.all_solutions = all_solutions
         self.nr_solutions = nr_solutions
@@ -86,7 +86,6 @@ class ParametersCP:
     def default():
         return ParametersCP(
             time_limit=100,
-            pool_solutions=10000,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -97,7 +96,6 @@ class ParametersCP:
     def default_fast_lns():
         return ParametersCP(
             time_limit=10,
-            pool_solutions=10000,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -108,7 +106,6 @@ class ParametersCP:
     def default_free():
         return ParametersCP(
             time_limit=100,
-            pool_solutions=10000,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -117,12 +114,14 @@ class ParametersCP:
 
     def copy(self):
         return ParametersCP(
-            time_limit=self.TimeLimit,
-            pool_solutions=self.PoolSolutions,
+            time_limit=self.time_limit,
+            time_limit_iter0=self.time_limit_iter0,
             intermediate_solution=self.intermediate_solution,
             all_solutions=self.all_solutions,
             nr_solutions=self.nr_solutions,
             free_search=self.free_search,
+            multiprocess=self.multiprocess,
+            nb_process=self.nb_process,
         )
 
 

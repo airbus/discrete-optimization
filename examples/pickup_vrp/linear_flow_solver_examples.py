@@ -31,7 +31,7 @@ def example_ortools_example():
         include_time_evolution=False,
     )
     p = ParametersMilp.default()
-    p.TimeLimit = 100
+    p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )

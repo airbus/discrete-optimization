@@ -387,7 +387,7 @@ class CP_RCPSP_MZN(CPSolver):
             parameters_cp = ParametersCP.default()
         if self.instance is None:
             self.init_model(**args)
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         try:
             result = self.instance.solve(
@@ -730,7 +730,7 @@ class CP_MRCPSP_MZN(CPSolver):
             parameters_cp = ParametersCP.default()
         if self.instance is None:
             self.init_model(**args)
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
             timeout=timedelta(seconds=timeout),
@@ -933,7 +933,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             parameters_cp = ParametersCP.default()
         if self.instance is None:
             self.init_model(**args)
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
             timeout=timedelta(seconds=timeout),
@@ -1330,7 +1330,7 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
             self.init_model(**args)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         try:
             result = self.instance.solve(
@@ -1736,7 +1736,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
             self.init_model(**args)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         try:
             result = self.instance.solve(
@@ -2030,7 +2030,7 @@ class CP_MRCPSP_MZN_NOBOOL(CPSolver):
             self.init_model(**args)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
             timeout=timedelta(seconds=timeout),
@@ -2172,7 +2172,7 @@ class CP_MRCPSP_MZN_MODES:
             self.init_model(**args)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.TimeLimit
+        timeout = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
             timeout=timedelta(seconds=timeout),

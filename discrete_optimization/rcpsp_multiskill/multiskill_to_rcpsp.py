@@ -43,7 +43,6 @@ class MultiSkillToRCPSP:
     ):
         params_cp = ParametersCP(
             time_limit=30,
-            pool_solutions=10000,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=100,
