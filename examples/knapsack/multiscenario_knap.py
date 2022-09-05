@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
@@ -11,7 +12,6 @@ from discrete_optimization.generic_tools.ls.local_search import (
 from discrete_optimization.generic_tools.ls.simulated_annealing import (
     SimulatedAnnealing,
     TemperatureSchedulingFactor,
-    logger,
 )
 from discrete_optimization.generic_tools.mutations.mixed_mutation import (
     BasicPortfolioMutation,
@@ -61,7 +61,6 @@ def initialize_multiscenario():
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
         mode_mutation=ModeMutation.MUTATE,
     )
-    import logging
 
     logging.basicConfig(level=logging.DEBUG)
     res = sa.solve(
