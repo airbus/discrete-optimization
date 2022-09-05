@@ -1676,13 +1676,11 @@ def run_tsp():
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
     )
-    results = sa.solve(solution, 30000)
+    results = sa.solve(solution, 100000)
     best_solution, fit = results.get_best_solution_fit()
     print("Fit ", fit)
-
     plot_tsp_solution(tsp_model=tsp_model, solution=best_solution)
     plt.show()
-    print("HEY")
 
 
 if __name__ == "__main__":

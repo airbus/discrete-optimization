@@ -15,9 +15,9 @@ def run_gphh():
     params_gphh.n_gen = 50
     params_gphh.min_tree_depth = 1
     params_gphh.max_tree_depth = 6
-    gphh_solver = GPHH(training_domains=[model],
-                       domain_model=model,
-                       params_gphh=params_gphh)
+    gphh_solver = GPHH(
+        training_domains=[model], domain_model=model, params_gphh=params_gphh
+    )
     gphh_solver.init_model()
     rs = gphh_solver.solve()
     sol, fit = rs.get_best_solution_fit()

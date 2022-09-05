@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import random
@@ -40,161 +41,6 @@ def load_tsp_and_transform():
     file_path = files_available[1]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
-
-
-def create_selective_tsp():
-    number_vehicle = 1
-    nb_nodes_transportation = 300
-    nodes_transportation = set(range(1, nb_nodes_transportation))
-    nodes_origin = {0}
-    nodes_target = {nb_nodes_transportation}
-    list_pickup_deliverable = []
-    origin_vehicle = {0: 0}
-    target_vehicle = {0: nb_nodes_transportation}
-    resources_set = set()
-    capacities = {0: {}}
-    resources_flow_node = {i: {} for i in range(nb_nodes_transportation + 1)}
-    resources_flow_edges = {
-        i: {j: {} for j in range(nb_nodes_transportation + 1) if j != i}
-        for i in range(nb_nodes_transportation + 1)
-    }
-
-    coordinates = np.random.randint(-20, 20, size=(nb_nodes_transportation + 1, 2))
-
-    distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
-    distance_delta_dict = {
-        i: {
-            j: int(distance_delta[i, j])
-            for j in range(nb_nodes_transportation + 1)
-            if j != i
-        }
-        for i in range(nb_nodes_transportation + 1)
-    }
-    time_delta_dict = {
-        i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
-        for i in distance_delta_dict
-    }
-
-    nb_clusters = int(nb_nodes_transportation / 10)
-    kmeans = KMeans(n_clusters=nb_clusters, random_state=0).fit(coordinates)
-    labels = kmeans.labels_
-    coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
-    clusters_dict = {i: i + 1 for i in range(nb_nodes_transportation + 1)}
-    for i in clusters_dict:
-        clusters_dict[i] = labels[i]
-    clusters_dict[target_vehicle[0]] = max(labels)
-    clusters_dict[origin_vehicle[0]] = min(labels)
-    return GPDP(
-        number_vehicle=number_vehicle,
-        nodes_transportation=nodes_transportation,
-        nodes_origin=nodes_origin,
-        nodes_target=nodes_target,
-        list_pickup_deliverable=list_pickup_deliverable,
-        origin_vehicle=origin_vehicle,
-        target_vehicle=target_vehicle,
-        resources_set=resources_set,
-        capacities=capacities,
-        resources_flow_edges=resources_flow_edges,
-        resources_flow_node=resources_flow_node,
-        distance_delta=distance_delta_dict,
-        time_delta=time_delta_dict,
-        coordinates_2d=coordinates,
-        clusters_dict=clusters_dict,
-    )
-
-
-def create_pickup_and_delivery(
-    number_of_node=100,
-    include_cluster=False,
-    include_pickup=True,
-    pickup_per_cluster=False,
-):
-    number_vehicle = 1
-    nb_nodes_transportation = number_of_node
-    nodes_transportation = set(range(1, nb_nodes_transportation))
-    nodes_origin = {0}
-    nodes_target = {nb_nodes_transportation}
-    origin_vehicle = {0: 0}
-    target_vehicle = {0: nb_nodes_transportation}
-    resources_set = set()
-    capacities = {0: {}}
-    resources_flow_node = {i: {} for i in range(nb_nodes_transportation + 1)}
-    resources_flow_edges = {
-        i: {j: {} for j in range(nb_nodes_transportation + 1) if j != i}
-        for i in range(nb_nodes_transportation + 1)
-    }
-
-    coordinates = np.random.randint(-20, 20, size=(nb_nodes_transportation + 1, 2))
-
-    distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
-    distance_delta_dict = {
-        i: {
-            j: int(distance_delta[i, j])
-            for j in range(nb_nodes_transportation + 1)
-            if j != i
-        }
-        for i in range(nb_nodes_transportation + 1)
-    }
-    time_delta_dict = {
-        i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
-        for i in distance_delta_dict
-    }
-    clusters_dict = {i: i + 1 for i in range(nb_nodes_transportation + 1)}
-    if include_cluster:
-        nb_clusters = max(int(nb_nodes_transportation / 10), 2)
-        kmeans = KMeans(n_clusters=nb_clusters, random_state=0).fit(coordinates)
-        labels = kmeans.labels_
-        coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
-        for i in clusters_dict:
-            clusters_dict[i] = labels[i]
-        clusters_dict[target_vehicle[0]] = max(labels)
-        clusters_dict[origin_vehicle[0]] = min(labels)
-    list_pickup_deliverable = []
-    list_pickup_deliverable_per_cluster = []
-    if include_pickup:
-        if not pickup_per_cluster:
-            nodes_possible = set(clusters_dict.keys())
-            nodes_possible.remove(0)
-            nodes_possible.remove(nb_nodes_transportation)
-            n = len(nodes_possible) // 8
-            for j in range(n):
-                k1 = random.choice(list(nodes_possible))
-                nodes_possible.remove(k1)
-                k2 = random.choice(list(nodes_possible))
-                nodes_possible.remove(k2)
-                list_pickup_deliverable += [({k1}, {k2})]
-        else:
-            cluster_possible = set(clusters_dict.values())
-            cluster_possible.remove(clusters_dict[target_vehicle[0]])
-            if clusters_dict[origin_vehicle[0]] != clusters_dict[target_vehicle[0]]:
-                cluster_possible.remove(clusters_dict[origin_vehicle[0]])
-            n = len(cluster_possible) // 4
-            for j in range(n):
-                cluster_1 = random.choice(list(cluster_possible))
-                cluster_possible.remove(cluster_1)
-                cluster_2 = random.choice(list(cluster_possible))
-                cluster_possible.remove(cluster_2)
-                list_pickup_deliverable_per_cluster += [({cluster_1}, {cluster_2})]
-    return GPDP(
-        number_vehicle=number_vehicle,
-        nodes_transportation=nodes_transportation,
-        nodes_origin=nodes_origin,
-        nodes_target=nodes_target,
-        list_pickup_deliverable=list_pickup_deliverable,
-        origin_vehicle=origin_vehicle,
-        target_vehicle=target_vehicle,
-        resources_set=resources_set,
-        capacities=capacities,
-        resources_flow_edges=resources_flow_edges,
-        resources_flow_node=resources_flow_node,
-        distance_delta=distance_delta_dict,
-        time_delta=time_delta_dict,
-        coordinates_2d=coordinates,
-        clusters_dict=clusters_dict,
-        list_pickup_deliverable_per_cluster=list_pickup_deliverable_per_cluster,
-    )
 
 
 def debug_lp():
@@ -372,6 +218,7 @@ def run_ortools_pickup_delivery():
         time_limit=100,
         n_solutions=10000,
     )
+    logging.basicConfig(level=logging.DEBUG)
     results = solver.solve()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     check_solution(res_to_plot[0], model)

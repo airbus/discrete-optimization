@@ -42,7 +42,7 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
 )
 
 
-def test_cp_multidimensional():
+def run_cp_multidimensional():
     one_file = get_data_available()[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
@@ -76,7 +76,7 @@ def run_ls(multiscenario_model):
     )
 
 
-def test_cp_multidimensional_multiscenario():
+def run_cp_multidimensional_multiscenario():
     one_file = get_data_available()[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
@@ -118,4 +118,5 @@ def test_cp_multidimensional_multiscenario():
 
 
 if __name__ == "__main__":
-    test_cp_multidimensional_multiscenario()
+    run_cp_multidimensional()
+    run_cp_multidimensional_multiscenario()
