@@ -258,9 +258,10 @@ class ORToolsGPDP(SolverDO):
         if include_equilibrate_charge:
             charge = routing.RegisterTransitCallback(lambda i, j: 1)
             charge_constraint = kwargs.get("charge_constraint", {})
-            max_charge = len(self.problem.list_nodes)
             if all(charge_constraint[i][1] is not None for i in charge_constraint):
                 max_charge = max([charge_constraint[i][1] for i in charge_constraint])
+            else:
+                max_charge = len(self.problem.list_nodes)
             routing.AddDimension(
                 charge,
                 0,
