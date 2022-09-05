@@ -126,7 +126,7 @@ class CPKnapsackMZN(CPSolver):
         if self.instance is None:
             self.init_model(**args)
         result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.TimeLimit),
+            timeout=timedelta(seconds=parameters_cp.time_limit),
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
         logger.debug(result.status)
@@ -210,7 +210,7 @@ class CPKnapsackMZN2(CPSolver):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.TimeLimit),
+            timeout=timedelta(seconds=parameters_cp.time_limit),
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
         logger.debug(result.status)
@@ -320,7 +320,7 @@ class CPMultidimensionalSolver(CPSolver):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.TimeLimit),
+            timeout=timedelta(seconds=parameters_cp.time_limit),
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
@@ -422,7 +422,7 @@ class CPMultidimensionalMultiScenarioSolver(CPSolver):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.TimeLimit),
+            timeout=timedelta(seconds=parameters_cp.time_limit),
             intermediate_solutions=parameters_cp.intermediate_solution,
         )
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)

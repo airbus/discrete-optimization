@@ -20,7 +20,7 @@ def test_facility_cp():
     facility_problem = parse_file(file)
     solver = FacilityCP(facility_problem)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 20
+    parameters_cp.time_limit = 20
     solver.init_model(cp_model=FacilityCPModel.DEFAULT_INT, object_output=True)
     solution, fit = solver.solve(parameters_cp=parameters_cp).get_best_solution_fit()
     assert facility_problem.satisfy(solution)

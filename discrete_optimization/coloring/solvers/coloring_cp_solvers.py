@@ -195,7 +195,7 @@ class ColoringCP(CPSolver):
             parameters_cp = ParametersCP.default()
         if self.model is None:
             self.init_model(**kwargs)
-        limit_time_s = parameters_cp.TimeLimit
+        limit_time_s = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
         result = self.instance.solve(
             timeout=timedelta(seconds=limit_time_s),

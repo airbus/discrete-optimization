@@ -489,8 +489,8 @@ class SolverWithCalendarIterative(SolverDO):
             **kwargs,
         )
         parameters_cp = ParametersCP.default()
-        parameters_cp.TimeLimit = 500
-        parameters_cp.TimeLimit_iter0 = 500
+        parameters_cp.time_limit = 500
+        parameters_cp.time_limit_iter0 = 500
         params_objective_function = get_default_objective_setup(
             problem=self.problem_no_calendar
         )
@@ -595,12 +595,12 @@ class SolverWithCalendarIterative(SolverDO):
                 try:
                     if iteration == 0:
                         result = child.solve(
-                            timeout=timedelta(seconds=parameters_cp.TimeLimit_iter0),
+                            timeout=timedelta(seconds=parameters_cp.time_limit_iter0),
                             intermediate_solutions=parameters_cp.intermediate_solution,
                         )
                     else:
                         result = child.solve(
-                            timeout=timedelta(seconds=parameters_cp.TimeLimit),
+                            timeout=timedelta(seconds=parameters_cp.time_limit),
                             intermediate_solutions=parameters_cp.intermediate_solution,
                         )
                     result_store = self.cp_solver.retrieve_solutions(

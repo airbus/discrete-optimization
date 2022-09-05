@@ -17,7 +17,7 @@ def test_int_cp():
         model, model_type=model_type, cp_solver_name=CPSolverName.CHUFFED
     )
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 20
+    parameters_cp.time_limit = 20
     cp_solver.init_model()
     var, fit = cp_solver.solve(parameters_cp=parameters_cp).get_best_solution_fit()
     assert model.satisfy(var)
@@ -32,7 +32,7 @@ def test_float_cp():
         model, model_type=model_type, cp_solver_name=CPSolverName.GECODE
     )  # CHUFFED WONT WORK FOR FLOAT
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 20
+    parameters_cp.time_limit = 20
     cp_solver.init_model()
     var, fit = cp_solver.solve(parameters_cp=parameters_cp).get_best_solution_fit()
     assert model.satisfy(var)

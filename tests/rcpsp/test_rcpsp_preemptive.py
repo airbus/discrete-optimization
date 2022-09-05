@@ -168,7 +168,7 @@ def test_preemptive_cp_alamano():
         max_preempted=20,
     )
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 100
+    parameters_cp.time_limit = 100
     result_store = solver.solve(parameters_cp=parameters_cp)
     best_solution = result_store.get_best_solution()
 
@@ -193,7 +193,7 @@ def test_preemptive_multimode_cp_alamano():
         max_preempted=20,
     )
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 100
+    parameters_cp.time_limit = 100
     result_store = solver.solve(parameters_cp=parameters_cp)
     best_solution = result_store.get_best_solution()
 
@@ -217,7 +217,7 @@ def test_preemptive_cp_psplib():
         max_preempted=20,
     )
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 100
+    parameters_cp.time_limit = 100
     result_store = solver.solve(parameters_cp=parameters_cp)
     best_solution = result_store.get_best_solution()
     assert rcpsp_problem.satisfy(best_solution)
@@ -240,7 +240,7 @@ def test_preemptive_multimode_cp_psplib():
         max_preempted=20,
     )
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 100
+    parameters_cp.time_limit = 100
     result_store = solver.solve(parameters_cp=parameters_cp)
     best_solution = result_store.get_best_solution()
     assert rcpsp_problem.satisfy(best_solution)

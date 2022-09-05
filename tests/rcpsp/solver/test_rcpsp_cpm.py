@@ -26,7 +26,7 @@ def test_cpm_sm():
     solver = CP_RCPSP_MZN(rcpsp_problem)
     solver.init_model()
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     result_storage = solver.solve(parameters_cp=parameters_cp)
     solution_cp, fit_cp = result_storage.get_best_solution_fit()
     assert fit_dummy <= fit_cp

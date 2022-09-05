@@ -76,7 +76,7 @@ def test_rcpsp_sm_lp_cbc_partial():
     solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
     solver.init_model(partial_solution=partial_solution_for_lp, greedy_start=False)
     params_milp = ParametersMilp.default()
-    params_milp.TimeLimit = 20
+    params_milp.time_limit = 20
     store = solver.solve(parameters_milp=params_milp)
     solution, fit = store.get_best_solution_fit()
     solution: RCPSPSolution = solution  # just for autocompletion.

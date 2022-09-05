@@ -103,7 +103,7 @@ def test_cp_multidimensional_multiscenario():
         constraint_handler=KnapConstraintHandler(fraction_fix=0.93),
     )
     p = ParametersCP.default()
-    p.TimeLimit = 5
+    p.time_limit = 5
     r_lns = lns.solve_lns(
         parameters_cp=p,
         nb_iteration_lns=1000,

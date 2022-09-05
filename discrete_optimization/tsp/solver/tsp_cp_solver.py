@@ -82,7 +82,7 @@ class TSP_CP_Solver(SolverDO):
     def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        max_time_seconds = parameters_cp.TimeLimit
+        max_time_seconds = parameters_cp.time_limit
         result = self.instance.solve(timeout=timedelta(seconds=max_time_seconds))
         logger.debug(f"Result = {result}")
         circuit = result["x"]

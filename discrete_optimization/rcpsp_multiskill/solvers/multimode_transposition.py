@@ -247,6 +247,6 @@ def rebuild_multiskill_solution_cp_based(
         for s in strings:
             model.instance.add_string(s)
     params_cp = ParametersCP.default()
-    params_cp.TimeLimit = 3600
+    params_cp.time_limit = 3600
     result_store = model.solve(parameters_cp=params_cp)
     return result_store

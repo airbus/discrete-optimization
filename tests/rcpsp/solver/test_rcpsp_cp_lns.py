@@ -37,7 +37,7 @@ def test_lns_sm():
     )
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     params_objective_function = get_default_objective_setup(problem=rcpsp_problem)
     constraint_handler = ConstraintHandlerStartTimeInterval_CP(
         problem=rcpsp_problem,
@@ -85,7 +85,7 @@ def test_lns_mm():
     )
     solver.init_model()
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     params_objective_function = get_default_objective_setup(problem=rcpsp_problem)
     constraint_handler = ConstraintHandlerStartTimeInterval_CP(
         problem=rcpsp_problem, fraction_to_fix=0.7, minus_delta=5, plus_delta=5
@@ -123,7 +123,7 @@ def test_lns_solver():
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 20
+    parameters_cp.time_limit = 20
     lns_solver = LNS_CP_RCPSP_SOLVER(
         rcpsp_model=rcpsp_problem, option_neighbor=OptionNeighbor.MIX_ALL
     )

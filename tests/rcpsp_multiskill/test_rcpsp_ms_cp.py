@@ -199,7 +199,7 @@ def test_cp_toy_model():
     )
     parameters_cp = ParametersCP.default()
     parameters_cp.intermediate_solution = True
-    parameters_cp.TimeLimit = 200
+    parameters_cp.time_limit = 200
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
@@ -232,7 +232,7 @@ def test_cp_imopse():
     # but can be a good thing to be used in findmus algo
     # with free_search=False, you get first results after 10 seconds or so, but good quality.
     parameters_cp.intermediate_solution = True
-    parameters_cp.TimeLimit = 30
+    parameters_cp.time_limit = 30
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
@@ -260,8 +260,8 @@ def test_lns_small_neighbor():
     parameters_cp = ParametersCP.default()
     parameters_cp.intermediate_solution = True
     parameters_cp.all_solutions = False
-    parameters_cp.TimeLimit = 10
-    parameters_cp.TimeLimit_iter0 = 10
+    parameters_cp.time_limit = 10
+    parameters_cp.time_limit_iter0 = 10
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
         nb_iteration_lns=100,
@@ -299,8 +299,8 @@ def test_lns():
     parameters_cp = ParametersCP.default()
     parameters_cp.intermediate_solution = True
     parameters_cp.all_solutions = False
-    parameters_cp.TimeLimit = 10
-    parameters_cp.TimeLimit_iter0 = 10
+    parameters_cp.time_limit = 10
+    parameters_cp.time_limit_iter0 = 10
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
         nb_iteration_lns=100,

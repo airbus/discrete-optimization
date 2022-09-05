@@ -30,7 +30,7 @@ def test_cp_sm():
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
@@ -50,7 +50,7 @@ def test_cp_sm_intermediate_solution():
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     result_storage = solver.solve(parameters_cp=parameters_cp, output_type=True)
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_storage, problem=rcpsp_problem
@@ -101,7 +101,7 @@ def test_cp_sm_robust():
     solver_average = CP_RCPSP_MZN(rcpsp_model=average)
     solver_original = CP_RCPSP_MZN(rcpsp_model=rcpsp_model)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     sol_original, fit_original = solver_original.solve(
         parameters_cp=parameters_cp
     ).get_best_solution_fit()
@@ -145,7 +145,7 @@ def test_cp_mm_integer_vs_bool():
             solver = solver_name(rcpsp_problem)
             solver.init_model()
             parameters_cp = ParametersCP.default()
-            parameters_cp.TimeLimit = 5
+            parameters_cp.time_limit = 5
             result_storage = solver.solve(parameters_cp=parameters_cp)
             solution = result_storage.get_best_solution()
             makespans.append(rcpsp_problem.evaluate(solution)["makespan"])
@@ -158,7 +158,7 @@ def test_cp_mm_intermediate_solution():
     rcpsp_problem = parse_file(file)
     solver = CP_MRCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     result_storage = solver.solve(parameters_cp=parameters_cp)
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_storage, problem=rcpsp_problem
@@ -178,7 +178,7 @@ def test_cp_sm_partial_solution():
     partial_solution = PartialSolution(task_mode=None, start_times=some_constraints)
     solver.init_model(partial_solution=partial_solution)
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 5
+    parameters_cp.time_limit = 5
     result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     assert partial_solution.start_times == {
