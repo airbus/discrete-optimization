@@ -5,10 +5,13 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import networkx as nx
 from mip import BINARY, MINIMIZE, Model, xsum
 
+from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
     ParametersMilp,
+    PymipMilpSolver,
     map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -58,16 +61,14 @@ class ConstraintWorkDuration:
         self.working_time_upper_bound = working_time_upper_bound
 
 
-class LP_MRCPSP_GANTT(MilpSolver):
+class _Base_LP_MRCPSP_GANTT(MilpSolver):
     def __init__(
         self,
         rcpsp_model: RCPSPModelCalendar,
         rcpsp_solution: RCPSPSolution,
-        lp_solver=MilpSolverName.CBC,
         **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
-        self.lp_solver = lp_solver
         self.rcpsp_solution = rcpsp_solution
         self.jobs = sorted(list(self.rcpsp_model.mode_details.keys()))
         self.modes_dict = {
@@ -107,6 +108,50 @@ class LP_MRCPSP_GANTT(MilpSolver):
                 self.graph_intersection_time.add_edge(t, tt)
         cliques = [c for c in nx.find_cliques(self.graph_intersection_time)]
         self.cliques = cliques
+        self.sense_optim = ModeOptim.MINIMIZATION
+        self.constraint_additionnal = {}
+
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits = []
+        for s in range(n_solutions):
+            objective = self.get_obj_value_for_ith_solution(s)
+            resource_id_usage = {
+                k: {
+                    individual: {
+                        task: self.get_var_value_for_ith_solution(resource_usage, s)
+                        for task, resource_usage in self.ressource_id_usage[k][
+                            individual
+                        ].items()
+                    }
+                    for individual in self.ressource_id_usage[k]
+                }
+                for k in self.ressource_id_usage
+            }
+            list_solution_fits.append((resource_id_usage, objective))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.sense_optim,
+        )
+
+
+class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
+    def __init__(
+        self,
+        rcpsp_model: RCPSPModelCalendar,
+        rcpsp_solution: RCPSPSolution,
+        lp_solver=MilpSolverName.CBC,
+        **kwargs,
+    ):
+        super().__init__(
+            rcpsp_model=rcpsp_model,
+            rcpsp_solution=rcpsp_solution,
+            **kwargs,
+        )
+        self.lp_solver = lp_solver
 
     def init_model(self, **args):
         self.model = Model(sense=MINIMIZE, solver_name=map_solver[self.lp_solver])
@@ -188,96 +233,10 @@ class LP_MRCPSP_GANTT(MilpSolver):
                             <= 1
                         )
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        retrieve_all_solution = parameters_milp.retrieve_all_solution
-        nb_solutions_max = parameters_milp.n_solutions_max
-        nb_solution = min(nb_solutions_max, self.model.num_solutions)
-        if not retrieve_all_solution:
-            nb_solution = 1
-        logger.debug(f"{nb_solution} solutions found")
-        for s in range(nb_solution):
-            objective = self.model.objective_values[s]
-            resource_id_usage = {
-                k: {
-                    individual: {
-                        task: self.ressource_id_usage[k][individual][task].xi(s)
-                        for task in self.ressource_id_usage[k][individual]
-                    }
-                    for individual in self.ressource_id_usage[k]
-                }
-                for k in self.ressource_id_usage
-            }
-
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> ResultStorage:
-        if self.model is None:
-            self.init_model(greedy_start=False, **kwargs)
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        limit_time_s = parameters_milp.time_limit
-        self.model.sol_pool_size = parameters_milp.pool_solutions
-        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
-        self.model.max_mip_gap = parameters_milp.mip_gap
-        self.model.optimize(
-            max_seconds=limit_time_s, max_solutions=parameters_milp.n_solutions_max
-        )
-        return self.retrieve_solutions(parameters_milp)
-
 
 # gurobi solver which is ussefull to get a pool of solution (indeed, using the other one we dont have usually a lot of
 # ssolution since we converge rapidly to the "optimum" (we don't have an objective value..)
-class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
-    def __init__(
-        self,
-        rcpsp_model: RCPSPModelCalendar,
-        rcpsp_solution: RCPSPSolution,
-        lp_solver=MilpSolverName.CBC,
-        **kwargs,
-    ):
-        self.rcpsp_model = rcpsp_model
-        self.lp_solver = lp_solver
-        self.rcpsp_solution = rcpsp_solution
-        self.jobs = sorted(list(self.rcpsp_model.mode_details.keys()))
-        self.modes_dict = {
-            i + 2: self.rcpsp_solution.rcpsp_modes[i]
-            for i in range(len(self.rcpsp_solution.rcpsp_modes))
-        }
-        self.modes_dict[1] = 1
-        self.modes_dict[self.jobs[-1]] = 1
-        self.rcpsp_schedule = self.rcpsp_solution.rcpsp_schedule
-        self.start_times_dict = {}
-        for task in self.rcpsp_schedule:
-            t = self.rcpsp_schedule[task]["start_time"]
-            if t not in self.start_times_dict:
-                self.start_times_dict[t] = set()
-            self.start_times_dict[t].add((task, t))
-        self.graph_intersection_time = nx.Graph()
-        for t in self.jobs:
-            self.graph_intersection_time.add_node(t)
-        for t in self.jobs:
-            intersected_jobs = [
-                task
-                for task in self.rcpsp_schedule
-                if intersect(
-                    [
-                        self.rcpsp_schedule[task]["start_time"],
-                        self.rcpsp_schedule[task]["end_time"],
-                    ],
-                    [
-                        self.rcpsp_schedule[t]["start_time"],
-                        self.rcpsp_schedule[t]["end_time"],
-                    ],
-                )
-                is not None
-                and t != task
-            ]
-            for tt in intersected_jobs:
-                self.graph_intersection_time.add_edge(t, tt)
-        cliques = [c for c in nx.find_cliques(self.graph_intersection_time)]
-        self.cliques = cliques
-        self.constraint_additionnal = {}
-
+class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
     def init_model(self, **args):
         self.model = gurobi.Model("Gantt")
         self.ressource_id_usage = {
@@ -353,6 +312,7 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
                             )
                             <= 1
                         )
+        self.model.modelSense = gurobi.GRB.MINIMIZE
 
     def adding_constraint(
         self,
@@ -428,46 +388,30 @@ class LP_MRCPSP_GANTT_GUROBI(MilpSolver):
             self.model.update()
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        nb_solution = self.model.getAttr("SolCount")
-        logger.debug(f"{nb_solution} solutions found")
-        solutions = []
-        for s in range(nb_solution):
-            self.model.params.SolutionNumber = s
-            objective = self.model.getAttr("poolObjVal")
-            logger.debug(f"Objective : {objective}")
-            solutions += [
-                {
-                    k: {
-                        individual: {
-                            task: self.ressource_id_usage[k][individual][task].getAttr(
-                                "Xn"
-                            )
-                            for task in self.ressource_id_usage[k][individual]
-                        }
-                        for individual in self.ressource_id_usage[k]
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits = []
+        for s in range(n_solutions):
+            objective = self.get_pool_obj_value_for_ith_solution(s)
+            resource_id_usage = {
+                k: {
+                    individual: {
+                        task: self.get_var_value_for_ith_solution(resource_usage, s)
+                        for task, resource_usage in self.ressource_id_usage[k][
+                            individual
+                        ].items()
                     }
-                    for k in self.ressource_id_usage
+                    for individual in self.ressource_id_usage[k]
                 }
-            ]
-        return solutions
-
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> ResultStorage:
-        if self.model is None:
-            self.init_model(greedy_start=False, **kwargs)
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        self.model.modelSense = kwargs.get("sense", gurobi.GRB.MINIMIZE)
-        self.model.setParam(
-            gurobi.GRB.Param.PoolSolutions, parameters_milp.pool_solutions
+                for k in self.ressource_id_usage
+            }
+            list_solution_fits.append((resource_id_usage, objective))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.sense_optim,
         )
-        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
-        self.model.setParam("MIPGap", parameters_milp.mip_gap)
-        self.model.setParam("TimeLimit", parameters_milp.time_limit)
-        self.model.setParam("PoolSearchMode", parameters_milp.pool_search_mode)
-        self.model.optimize()
-        return self.retrieve_solutions(parameters_milp)
 
     def build_objective_function_from_a_solution(
         self,
