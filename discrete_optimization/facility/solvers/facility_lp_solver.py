@@ -1,6 +1,4 @@
 import logging
-import random
-import sys
 from typing import Any, Dict, Hashable, Optional, Tuple, Union
 
 import mip
@@ -11,27 +9,22 @@ from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
 )
-from discrete_optimization.facility.solvers.greedy_solvers import GreedySolverFacility
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
     ParametersMilp,
+    PymipMilpSolver,
     map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pylint: disable=no-name-in-module
-else:
-    from typing_extensions import TypedDict
-
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +79,9 @@ def prune_search_space(
     return matrix_fc_indicator, matrix_distance
 
 
-class LP_Facility_Solver(MilpSolver):
+class _LPFacilitySolverBase(MilpSolver):
+    """Base class for Facility LP solvers."""
+
     def __init__(
         self,
         facility_problem: FacilityProblem,
@@ -94,7 +89,7 @@ class LP_Facility_Solver(MilpSolver):
         **args,
     ):
         self.facility_problem = facility_problem
-        self.model: Optional[Model] = None
+        self.model = None
         self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
         self.constraints_dict: Dict[
             str, Dict[Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
@@ -118,6 +113,38 @@ class LP_Facility_Solver(MilpSolver):
             params_objective_function=params_objective_function,
         )
 
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits = []
+        for s in range(n_solutions):
+            solution = [0] * self.facility_problem.customer_count
+            for (
+                variable_decision_key,
+                variable_decision_value,
+            ) in self.variable_decision["x"].items():
+                if not isinstance(variable_decision_value, int):
+                    value = self.get_var_value_for_ith_solution(
+                        variable_decision_value, s
+                    )
+                else:
+                    value = variable_decision_value
+                if value >= 0.5:
+                    f = variable_decision_key[0]
+                    c = variable_decision_key[1]
+                    solution[c] = f
+            solution = FacilitySolution(self.facility_problem, solution)
+            fit = self.aggreg_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
+
+class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
     def init_model(self, **kwargs):
         nb_facilities = self.facility_problem.facility_count
         nb_customers = self.facility_problem.customer_count
@@ -204,59 +231,11 @@ class LP_Facility_Solver(MilpSolver):
         self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
         logger.info("Initialized")
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp):
-        if self.model is None:  # for mypy
-            self.init_model()
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must be not None after calling self.init_model()."
-                )
-        if parameters_milp.retrieve_all_solution:
-            nSolutions = self.model.SolCount
-        else:
-            nSolutions = 1
-        solutions = []
-        fits = []
-        for s in range(nSolutions):
-            solution = [0] * self.facility_problem.customer_count
-            self.model.params.SolutionNumber = s
-            for key in self.variable_decision["x"]:
-                variable_decision_key = self.variable_decision["x"][key]
-                if not isinstance(variable_decision_key, int):
-                    value = variable_decision_key.getAttr("Xn")
-                else:
-                    value = variable_decision_key
-                if value >= 0.5:
-                    f = key[0]
-                    c = key[1]
-                    solution[c] = f
-            facility_solution = FacilitySolution(self.facility_problem, solution)
-            solutions += [facility_solution]
-            fits += [self.aggreg_sol(solutions[-1])]
-        return ResultStorage(
-            list_solution_fits=[(sol, fit) for sol, fit in zip(solutions, fits)],
-            mode_optim=self.params_objective_function.sense_function,
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        # We call explicitely the method to be sure getting the proper one
+        return _LPFacilitySolverBase.retrieve_solutions(
+            self, parameters_milp=parameters_milp
         )
-
-    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:  # for mypy
-                raise RuntimeError(
-                    "self.model must be not None after calling self.init_model()."
-                )
-        limit_time_s = parameters_milp.time_limit
-        self.model.setParam("TimeLimit", limit_time_s)
-        self.model.optimize()
-        nSolutions = self.model.SolCount
-        nObjectives = self.model.NumObj
-        objective = self.model.getObjective().getValue()
-        logger.info(f"Objective : {objective}")
-        logger.info(f"Problem has {nObjectives} objectives")
-        logger.info(f"Gurobi found {nSolutions} solutions")
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
 
 
 class LP_Facility_Solver_CBC(SolverDO):
@@ -416,7 +395,7 @@ class LP_Facility_Solver_CBC(SolverDO):
         return self.retrieve()
 
 
-class LP_Facility_Solver_PyMip(LP_Facility_Solver):
+class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
     def __init__(
         self,
         facility_problem: FacilityProblem,
@@ -429,7 +408,6 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
             params_objective_function=params_objective_function,
             **args,
         )
-        self.model: Optional[mip.Model] = None
         self.milp_solver_name = milp_solver_name
         self.solver_name = map_solver[milp_solver_name]
 
@@ -516,51 +494,8 @@ class LP_Facility_Solver_PyMip(LP_Facility_Solver):
         self.description_constraint = {"Im lazy."}
         logger.info("Initialized")
 
-    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:  # for mypy
-                raise RuntimeError(
-                    "self.model must be not None after calling self.init_model()."
-                )
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
-        self.model.max_mip_gap = parameters_milp.mip_gap
-        self.model.optimize(
-            max_solutions=parameters_milp.n_solutions_max,
-            max_seconds=parameters_milp.time_limit,
-        )
-        nSolutions = self.model.num_solutions
-        objective = self.model.objective_value
-        logger.info(f"Objective : {objective}")
-        logger.info(f"Solver found {nSolutions} solutions")
-        return self.retrieve_solutions(parameters_milp)
-
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if self.model is None:  # for mypy
-            self.init_model()
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must be not None after calling self.init_model()."
-                )
-        solution = [0] * self.facility_problem.customer_count
-        for key in self.variable_decision["x"]:
-            variable_decision_key = self.variable_decision["x"][key]
-            if not isinstance(variable_decision_key, int):
-                value = variable_decision_key.x
-            else:
-                value = variable_decision_key
-            if value >= 0.5:
-                f = key[0]
-                c = key[1]
-                solution[c] = f
-        facility_solution = FacilitySolution(self.facility_problem, solution)
-        result_store = ResultStorage(
-            list_solution_fits=[
-                (facility_solution, self.aggreg_sol(facility_solution))
-            ],
-            best_solution=facility_solution,
-            mode_optim=self.params_objective_function.sense_function,
+        # We call explicitely the method to be sure getting the proper one
+        return _LPFacilitySolverBase.retrieve_solutions(
+            self, parameters_milp=parameters_milp
         )
-        return result_store

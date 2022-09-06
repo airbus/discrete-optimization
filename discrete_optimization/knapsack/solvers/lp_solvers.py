@@ -1,12 +1,9 @@
 import logging
-import random
-from typing import Dict, Iterable, Optional
+from typing import Dict, Optional
 
-import matplotlib.pyplot as plt
 from mip import BINARY, MAXIMIZE, xsum
 from ortools.algorithms import pywrapknapsack_solver
 from ortools.linear_solver import pywraplp
-from tqdm import trange
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -14,9 +11,11 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
     ParametersMilp,
+    PymipMilpSolver,
     map_solver,
 )
 from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
@@ -37,15 +36,16 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class LPKnapsackGurobi(SolverDO):
+class _BaseLPKnapsack(MilpSolver):
+    """Base class for Knapsack LP solvers."""
+
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args,
     ):
         self.knapsack_model = knapsack_model
-        self.model = None
         self.variable_decision = {}
         self.constraints_dict = {}
         self.description_variable_description = {}
@@ -59,6 +59,42 @@ class LPKnapsackGurobi(SolverDO):
             params_objective_function=params_objective_function,
         )
 
+    def retrieve_solutions(self, parameters_milp: ParametersMilp):
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits = []
+        for s in range(n_solutions):
+            weight = 0.0
+            xs = {}
+            for (
+                variable_decision_key,
+                variable_decision_value,
+            ) in self.variable_decision["x"].items():
+                value = self.get_var_value_for_ith_solution(variable_decision_value, s)
+                if value <= 0.1:
+                    xs[variable_decision_key] = 0
+                    continue
+                xs[variable_decision_key] = 1
+                weight += self.knapsack_model.index_to_item[
+                    variable_decision_key
+                ].weight
+            solution = KnapsackSolution(
+                problem=self.knapsack_model,
+                value=self.get_obj_value_for_ith_solution(s),
+                weight=weight,
+                list_taken=[xs[e] for e in sorted(xs)],
+            )
+            fit = self.aggreg_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
+
+class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
     def init_model(self, **args):
         warm_start = args.get("warm_start", {})
         self.model = Model("Knapsack")
@@ -100,68 +136,16 @@ class LPKnapsackGurobi(SolverDO):
         self.model.setParam("MIPGapAbs", 0.00001)
         self.model.setParam("MIPGap", 0.00000001)
 
-    def retrieve_solutions(self, range_solutions: Iterable[int]):
-        solutions = []
-        fits = []
-        for s in range_solutions:
-            weight = 0
-            xs = {}
-            self.model.params.SolutionNumber = s
-            obj = self.model.getAttr("ObjVal")
-            for e in self.variable_decision["x"]:
-                value = self.variable_decision["x"][e].getAttr("Xn")
-                if value <= 0.1:
-                    xs[e] = 0
-                    continue
-                xs[e] = 1
-                weight += self.knapsack_model.index_to_item[e].weight
-            solutions += [
-                KnapsackSolution(
-                    problem=self.knapsack_model,
-                    value=obj,
-                    weight=weight,
-                    list_taken=[xs[e] for e in sorted(xs)],
-                )
-            ]
-            fits += [self.aggreg_sol(solutions[-1])]
-        return ResultStorage(
-            list_solution_fits=[(s, f) for s, f in zip(solutions, fits)],
-            mode_optim=self.params_objective_function.sense_function,
-        )
-
-    def solve(self, parameter_gurobi: ParametersMilp, **kwargs):
-        if self.model is None:
-            self.init_model(**kwargs)
-        self.model.setParam("TimeLimit", parameter_gurobi.time_limit)
-        self.model.modelSense = GRB.MAXIMIZE
-        self.model.setParam(GRB.Param.PoolSolutions, parameter_gurobi.pool_solutions)
-        self.model.setParam("MIPGapAbs", parameter_gurobi.mip_gap_abs)
-        self.model.setParam("MIPGap", parameter_gurobi.mip_gap)
-        logger.info("optimizing...")
-        self.model.optimize()
-        nSolutions = self.model.SolCount
-        nObjectives = self.model.NumObj
-        logger.info(f"Problem has {nObjectives} objectives")
-        logger.info(f"Gurobi found {nSolutions} solutions")
-        if parameter_gurobi.retrieve_all_solution:
-            solutions = self.retrieve_solutions(list(range(nSolutions)))
-        else:
-            solutions = self.retrieve_solutions([0])
-        return solutions
-
-    def describe_the_model(self):
-        return (
-            str(self.description_variable_description)
-            + "\n"
-            + str(self.description_constraint)
-        )
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        # We call explicitely the method to be sure getting the proper one
+        return _BaseLPKnapsack.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
 class LPKnapsackCBC(SolverDO):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args,
     ):
         self.knapsack_model = knapsack_model
@@ -179,7 +163,7 @@ class LPKnapsackCBC(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, warm_start: Dict[int, int] = None):
+    def init_model(self, warm_start: Optional[Dict[int, int]] = None):
         if warm_start is None:
             warm_start = {}
         self.variable_decision = {"x": {}}
@@ -254,39 +238,23 @@ class LPKnapsackCBC(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def describe_the_model(self):
-        return (
-            str(self.description_variable_description)
-            + "\n"
-            + str(self.description_constraint)
-        )
-
 
 # Can use GRB or CBC
-class LPKnapsack(MilpSolver):
+class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         milp_solver_name: MilpSolverName,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args,
     ):
-        self.knapsack_model = knapsack_model
-        self.model: MyModelMilp = None
+        super().__init__(
+            knapsack_model=knapsack_model,
+            params_objective_function=params_objective_function,
+            **args,
+        )
         self.milp_solver_name = milp_solver_name
         self.solver_name = map_solver[milp_solver_name]
-        self.variable_decision = {}
-        self.constraints_dict = {}
-        self.description_variable_description = {}
-        self.description_constraint = {}
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(self, **args):
         warm_start = args.get("warm_start", {})
@@ -326,69 +294,16 @@ class LPKnapsack(MilpSolver):
         )
         self.model.update()
 
-    def retrieve_solutions(self, range_solutions: Iterable[int]):
-        solutions = []
-        fits = []
-        for s in range_solutions:
-            weight = 0
-            xs = {}
-            value_kp = 0
-            for e in self.variable_decision["x"]:
-                value = self.variable_decision["x"][e].xi(s)
-                if value <= 0.1:
-                    xs[e] = 0
-                    continue
-                xs[e] = 1
-                weight += self.knapsack_model.index_to_item[e].weight
-                value_kp += self.knapsack_model.index_to_item[e].value
-            solutions += [
-                KnapsackSolution(
-                    problem=self.knapsack_model,
-                    value=value_kp,
-                    weight=weight,
-                    list_taken=[xs[e] for e in sorted(xs)],
-                )
-            ]
-            fits += [self.aggreg_sol(solutions[-1])]
-
-        return ResultStorage(
-            list_solution_fits=[(sol, fit) for sol, fit in zip(solutions, fits)],
-            mode_optim=self.params_objective_function.sense_function,
-        )
-
-    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **args):
-        if self.model is None:
-            self.init_model(**args)
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        logger.info("optimizing...")
-        self.model.optimize(
-            max_seconds=parameters_milp.time_limit,
-            max_solutions=parameters_milp.pool_solutions,
-        )
-        nSolutions = self.model.num_solutions
-        objective = self.model.objective_value
-        logger.info(f"Solver found {nSolutions} solutions")
-        logger.info(f"Objective : {objective}")
-        if parameters_milp.retrieve_all_solution:
-            solutions = self.retrieve_solutions(list(range(nSolutions)))
-        else:
-            solutions = self.retrieve_solutions([0])
-        return solutions
-
-    def describe_the_model(self):
-        return (
-            str(self.description_variable_description)
-            + "\n"
-            + str(self.description_constraint)
-        )
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        # We call explicitely the method to be sure getting the proper one
+        return _BaseLPKnapsack.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
 class KnapsackORTools(SolverDO):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **args,
     ):
         self.knapsack_model = knapsack_model

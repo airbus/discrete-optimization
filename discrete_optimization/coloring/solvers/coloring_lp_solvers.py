@@ -19,9 +19,11 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
     ParametersMilp,
+    PymipMilpSolver,
     map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -57,12 +59,14 @@ class ConstraintsDict(TypedDict):
     constraints_neighbors: NeighborsConstraints
 
 
-class ColoringLP(MilpSolver):
+class _BaseColoringLP(MilpSolver):
+    """Base class for Coloring LP solvers."""
+
     def __init__(
         self,
         coloring_problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs,
     ):
         self.coloring_problem = coloring_problem
         self.number_of_nodes = self.coloring_problem.number_of_nodes
@@ -100,6 +104,35 @@ class ColoringLP(MilpSolver):
         )
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution = None
+
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits = []
+        for s in range(n_solutions):
+            solution = [0] * self.number_of_nodes
+            for (
+                variable_decision_key,
+                variable_decision_value,
+            ) in self.variable_decision["colors_var"].items():
+                value = self.get_var_value_for_ith_solution(variable_decision_value, s)
+                if value >= 0.5:
+                    node = variable_decision_key[0]
+                    color = variable_decision_key[1]
+                    solution[self.index_nodes_name[node]] = color
+            solution = ColoringSolution(self.coloring_problem, solution)
+            fit = self.aggreg_from_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.sense_optim,
+        )
+
+
+class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
+    """Coloring LP solver based on gurobipy library."""
 
     def init_model(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
@@ -209,57 +242,27 @@ class ColoringLP(MilpSolver):
         }
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        solution = [0] * self.number_of_nodes
-        for key in self.variable_decision["colors_var"]:
-            value = self.variable_decision["colors_var"][key].getAttr("X")
-            if value >= 0.5:
-                node = key[0]
-                color = key[1]
-                solution[self.index_nodes_name[node]] = color
-        color_solution = ColoringSolution(self.coloring_problem, solution)
-        fit = self.aggreg_from_sol(color_solution)
-        return ResultStorage(
-            list_solution_fits=[(color_solution, fit)],
-            best_solution=color_solution,
-            mode_optim=self.sense_optim,
-        )
-
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> ResultStorage:
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.time_limit)
-        self.model.optimize()
-        n_solutions = self.model.SolCount
-        n_objectives = self.model.NumObj
-        objective = self.model.getObjective().getValue()
-        logger.info(f"Objective : {objective}")
-        logger.info(f"Problem has {n_objectives} objectives")
-        logger.info(f"Gurobi found {n_solutions} solutions")
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
+        # We call explicitely the method to be sure getting the proper one
+        return _BaseColoringLP.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
-class ColoringLP_MIP(ColoringLP):
+class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
+    """Coloring LP solver based on pymip library."""
+
     def __init__(
         self,
         coloring_problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         milp_solver_name: MilpSolverName = MilpSolverName.CBC,
-        **args,
+        **kwargs,
     ):
         super().__init__(
             coloring_problem=coloring_problem,
             params_objective_function=params_objective_function,
+            **kwargs,
         )
         self.milp_solver_name = milp_solver_name
-        self.solver_name = map_solver[self.milp_solver_name]
+        self.solver_name = map_solver[milp_solver_name]
 
     def init_model(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
@@ -364,41 +367,5 @@ class ColoringLP_MIP(ColoringLP):
         }
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        solution = [0] * self.number_of_nodes
-        for key in self.variable_decision["colors_var"]:
-            value = self.variable_decision["colors_var"][key].x
-            if value >= 0.5:
-                node = key[0]
-                color = key[1]
-                solution[self.index_nodes_name[node]] = color
-        color_solution = ColoringSolution(self.coloring_problem, solution)
-        fit = self.aggreg_from_sol(color_solution)
-        return ResultStorage(
-            list_solution_fits=[(color_solution, fit)],
-            best_solution=color_solution,
-            mode_optim=self.sense_optim,
-        )
-
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> ResultStorage:
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        self.model.max_mip_gap = parameters_milp.mip_gap
-        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
-        self.model.sol_pool_size = parameters_milp.pool_solutions
-        self.model.optimize(
-            max_seconds=parameters_milp.time_limit,
-            max_solutions=parameters_milp.n_solutions_max,
-        )
-        n_solutions = self.model.num_solutions
-        objective = self.model.objective_value
-        logger.info(f"Objective : {objective}")
-        logger.info(f"Solver found {n_solutions} solutions")
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
+        # We call explicitely the method to be sure getting the proper one
+        return _BaseColoringLP.retrieve_solutions(self, parameters_milp=parameters_milp)

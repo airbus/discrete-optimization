@@ -1,4 +1,5 @@
 import logging
+import time
 from itertools import product
 from typing import Optional
 
@@ -9,9 +10,9 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lp_tools import (
-    MilpSolver,
     MilpSolverName,
     ParametersMilp,
+    PymipMilpSolver,
     map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -26,7 +27,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 logger = logging.getLogger(__name__)
 
 
-class LP_Solver_MRSCPSP(MilpSolver):
+class LP_Solver_MRSCPSP(PymipMilpSolver):
     def __init__(
         self,
         rcpsp_model: MS_RCPSPModel,
@@ -35,7 +36,6 @@ class LP_Solver_MRSCPSP(MilpSolver):
         **kwargs,
     ):
         self.rcpsp_model = rcpsp_model
-        self.model: Model = None
         self.lp_solver = lp_solver
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
@@ -276,14 +276,12 @@ class LP_Solver_MRSCPSP(MilpSolver):
         self.model.objective = self.start_times_task[max(self.start_times_task)]
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        retrieve_all_solution = parameters_milp.retrieve_all_solution
-        nb_solutions_max = parameters_milp.n_solutions_max
-        nb_solution = min(nb_solutions_max, self.model.num_solutions)
-        if not retrieve_all_solution:
-            nb_solution = 1
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
         list_solution_fits = []
-        logger.debug(f"{nb_solution} solutions found")
-        for s in range(nb_solution):
+        for s in range(n_solutions):
             rcpsp_schedule = {}
             modes = {}
             results = {}
@@ -291,8 +289,8 @@ class LP_Solver_MRSCPSP(MilpSolver):
             employee_usage_solution = {}
             for task in self.start_times:
                 for mode in self.start_times[task]:
-                    for t in self.start_times[task][mode]:
-                        value = self.start_times[task][mode][t].xi(s)
+                    for t, start_time in self.start_times[task][mode].items():
+                        value = self.get_var_value_for_ith_solution(start_time, s)
                         results[(task, mode, t)] = value
                         if value >= 0.5:
                             rcpsp_schedule[task] = {
@@ -306,7 +304,9 @@ class LP_Solver_MRSCPSP(MilpSolver):
                             }
                             modes[task] = mode
             for t in self.employee_usage:
-                employee_usage[t] = self.employee_usage[t].xi(s)
+                employee_usage[t] = self.get_var_value_for_ith_solution(
+                    self.employee_usage[t], s
+                )
                 if employee_usage[t] >= 0.5:
                     if t[1] not in employee_usage_solution:
                         employee_usage_solution[t[1]] = {}
@@ -318,19 +318,23 @@ class LP_Solver_MRSCPSP(MilpSolver):
             modes = {}
             modes_task = {}
             for t in self.modes:
-                for m in self.modes[t]:
-                    modes[(t, m)] = self.modes[t][m].xi(s)
+                for m, mode in self.modes[t].items():
+                    modes[(t, m)] = self.get_var_value_for_ith_solution(mode, s)
                     if modes[(t, m)] >= 0.5:
                         modes_task[t] = m
             durations = {}
             for t in self.durations:
-                durations[t] = self.durations[t].xi(s)
+                durations[t] = self.get_var_value_for_ith_solution(self.durations[t], s)
             start_time = {}
             for t in self.start_times_task:
-                start_time[t] = self.start_times_task[t].xi(s)
+                start_time[t] = self.get_var_value_for_ith_solution(
+                    self.start_times_task[t], s
+                )
             end_time = {}
             for t in self.start_times_task:
-                end_time[t] = self.end_times_task[t].xi(s)
+                end_time[t] = self.get_var_value_for_ith_solution(
+                    self.end_times_task[t], s
+                )
             logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
             logger.debug(
                 (
@@ -367,7 +371,7 @@ class LP_Solver_MRSCPSP(MilpSolver):
                 employee_usage=employee_usage_solution,
             )
             fit = self.aggreg_from_sol(solution)
-            list_solution_fits += [(solution, fit)]
+            list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
             mode_optim=self.params_objective_function.sense_function,
@@ -377,19 +381,8 @@ class LP_Solver_MRSCPSP(MilpSolver):
         self, parameters_milp: Optional[ParametersMilp] = None, **args
     ) -> ResultStorage:
         if self.model is None:
-            import time
-
             logger.info("Init LP model ")
             t = time.time()
-            self.init_model(greedy_start=False)
+            self.init_model(greedy_start=False, **args)
             logger.info("LP model initialized...in ", time.time() - t, " seconds")
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        limit_time_s = parameters_milp.time_limit
-        self.model.sol_pool_size = parameters_milp.pool_solutions
-        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
-        self.model.max_mip_gap = parameters_milp.mip_gap
-        self.model.optimize(
-            max_seconds=limit_time_s, max_solutions=parameters_milp.n_solutions_max
-        )
-        return self.retrieve_solutions(parameters_milp)
+        return super().solve(parameters_milp=parameters_milp, **args)
