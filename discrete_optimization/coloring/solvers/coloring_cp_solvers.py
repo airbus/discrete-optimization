@@ -20,8 +20,8 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     NXGreedyColoringMethod,
 )
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     map_cp_solver_name,
 )
@@ -69,14 +69,16 @@ file_dict = {
 }
 
 
-class ColoringCP(CPSolver):
+class ColoringCP(MinizincCPSolver):
     def __init__(
         self,
         coloring_problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
+        silent_solve_error: bool = False,
         **args,
     ):
+        self.silent_solve_error = silent_solve_error
         self.coloring_problem = coloring_problem
         self.number_of_nodes = self.coloring_problem.number_of_nodes
         self.number_of_edges = len(self.coloring_problem.graph.edges_infos_dict)
@@ -84,8 +86,6 @@ class ColoringCP(CPSolver):
         self.index_nodes_name = self.coloring_problem.index_nodes_name
         self.index_to_nodes_name = self.coloring_problem.index_to_nodes_name
         self.graph = self.coloring_problem.graph
-        self.model: Model = None
-        self.instance: Instance = None
         self.custom_output_type = False
         self.g = None
         (
@@ -187,26 +187,6 @@ class ColoringCP(CPSolver):
             limit_store=False,
             mode_optim=self.params_objective_function.sense_function,
         )
-
-    def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs
-    ) -> ResultStorage:
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        if self.model is None:
-            self.init_model(**kwargs)
-        limit_time_s = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=limit_time_s),
-            intermediate_solutions=intermediate_solutions,
-            processes=parameters_cp.nb_process if parameters_cp.multiprocess else None,
-            free_search=parameters_cp.free_search,
-        )
-        logger.info("Solving finished")
-        logger.debug(result.status)
-        logger.debug(result.statistics)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def get_solution(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)

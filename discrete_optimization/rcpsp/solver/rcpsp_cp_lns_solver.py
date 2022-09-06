@@ -5,7 +5,11 @@ from typing import Any, Iterable, List, Optional, Union
 import numpy as np
 from minizinc import Instance
 
-from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
+    CPSolverName,
+    ParametersCP,
+)
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import (
     LNS_CP,
@@ -25,7 +29,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_WITH_FAKE_TASK,
     CP_RCPSP_MZN,
-    CPSolver,
 )
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (

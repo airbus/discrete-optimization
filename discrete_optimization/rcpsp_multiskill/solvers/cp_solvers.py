@@ -12,8 +12,8 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_unrelated_task,
 )
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     SignEnum,
     map_cp_solver_name,
@@ -197,16 +197,17 @@ class SearchStrategyMS_MRCPSP(Enum):
     NONE = "none"
 
 
-class CP_MS_MRCPSP_MZN(CPSolver):
+class CP_MS_MRCPSP_MZN(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance: Instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
@@ -785,32 +786,18 @@ class CP_MS_MRCPSP_MZN(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=timeout),
-            free_search=parameters_cp.free_search,
-            intermediate_solutions=intermediate_solutions,
-        )
-        logger.debug(result.status)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
-
-class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
+class CP_MS_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance: Instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
@@ -1380,35 +1367,8 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=timeout),
-            intermediate_solutions=intermediate_solutions,
-            free_search=parameters_cp.free_search,
-        )
-        logger.debug(result.status)
-
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
-
 
 class CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(CP_MS_MRCPSP_MZN_PREEMPTIVE):
-    def __init__(
-        self,
-        rcpsp_model: MS_RCPSPModel,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
-        params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs,
-    ):
-        super().__init__(
-            rcpsp_model, cp_solver_name, params_objective_function, **kwargs
-        )
-
     def init_model(self, **args):
         model_type = args.get("model_type", "ms_rcpsp_partial_preemptive")
         model = Model(files_mzn[model_type])

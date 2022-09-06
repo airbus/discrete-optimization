@@ -8,8 +8,8 @@ from deprecation import deprecated
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     SignEnum,
     map_cp_solver_name,
@@ -132,16 +132,17 @@ def add_fake_task_cp_data(
         return dict_to_add_in_instance
 
 
-class CP_RCPSP_MZN(CPSolver):
+class CP_RCPSP_MZN(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = True,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance: Instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
@@ -382,42 +383,21 @@ class CP_RCPSP_MZN(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        if self.instance is None:
-            self.init_model(**args)
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        try:
-            result = self.instance.solve(
-                timeout=timedelta(seconds=timeout),
-                intermediate_solutions=intermediate_solutions,
-                free_search=parameters_cp.free_search,
-            )
-        except Exception as e:
-            logger.warning(e)
-            return None
-        self.result = result
-        logger.debug(f"Status : {result.status}")
-        logger.debug(f"Solving time : {result.statistics.get('solveTime', None)}")
-        self.stats += [(result.statistics, result.status)]
-        return self.retrieve_solutions(result, parameters_cp=parameters_cp)
-
     def get_stats(self):
         return self.stats
 
 
-class CP_MRCPSP_MZN(CPSolver):
+class CP_MRCPSP_MZN(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
@@ -725,21 +705,6 @@ class CP_MRCPSP_MZN(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        if self.instance is None:
-            self.init_model(**args)
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=timeout),
-            intermediate_solutions=intermediate_solutions,
-            free_search=parameters_cp.free_search,
-        )
-        logger.debug(result.status)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
-
 
 @deprecated(deprecated_in="0.1")
 class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
@@ -748,10 +713,15 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
         super().__init__(
-            rcpsp_model, cp_solver_name, params_objective_function, **kwargs
+            rcpsp_model=rcpsp_model,
+            cp_solver_name=cp_solver_name,
+            params_objective_function=params_objective_function,
+            silent_solve_error=silent_solve_error,
+            **kwargs,
         )
         self.fake_tasks = create_fake_tasks(rcpsp_problem=rcpsp_model)
 
@@ -928,20 +898,6 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        if self.instance is None:
-            self.init_model(**args)
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=timeout),
-            intermediate_solutions=intermediate_solutions,
-        )
-        logger.debug(result.status)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
-
     def constraint_objective_makespan(self):
         s = """constraint forall ( i in Act where suc[i] == {} )
                 (start[i] + adur[i] <= objective);\n"""
@@ -987,16 +943,17 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         return [s]
 
 
-class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
+class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: RCPSPModelPreemptive,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = True,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance: Instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
@@ -1325,27 +1282,6 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        try:
-            result = self.instance.solve(
-                timeout=timedelta(seconds=timeout),
-                intermediate_solutions=intermediate_solutions,
-                free_search=parameters_cp.free_search,
-            )
-            logger.debug(result.status)
-        except Exception as e:
-            logger.warning(e)
-            return None
-        logger.debug(result.status)
-        logger.debug(result.statistics["solveTime"])
-        return self.retrieve_solutions(result, parameters_cp=parameters_cp)
-
     def constraint_start_time_precomputed(self):
         intervals = precompute_posssible_starting_time_interval(self.rcpsp_model)
         list_strings = []
@@ -1444,17 +1380,6 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CPSolver):
 
 
 class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
-    def __init__(
-        self,
-        rcpsp_model: RCPSPModelPreemptive,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
-        params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs,
-    ):
-        super().__init__(
-            rcpsp_model, cp_solver_name, params_objective_function, **kwargs
-        )
-
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-preemptive")
         add_objective_makespan = args.get("add_objective_makespan", True)
@@ -1731,27 +1656,6 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
         )
         return result_storage
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        try:
-            result = self.instance.solve(
-                timeout=timedelta(seconds=timeout),
-                intermediate_solutions=intermediate_solutions,
-                free_search=parameters_cp.free_search,
-            )
-            logger.debug(result.status)
-        except Exception as e:
-            logger.warning(e)
-            return None
-        logger.debug(result.status)
-        logger.debug(result.statistics["solveTime"])
-        return self.retrieve_solutions(result, parameters_cp=parameters_cp)
-
 
 class MRCPSP_Result:
     objective: int
@@ -1766,16 +1670,17 @@ class MRCPSP_Result:
         return True
 
 
-class CP_MRCPSP_MZN_NOBOOL(CPSolver):
+class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
@@ -2024,20 +1929,6 @@ class CP_MRCPSP_MZN_NOBOOL(CPSolver):
             limit_store=False,
         )
         return result_storage
-
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=timeout),
-            intermediate_solutions=intermediate_solutions,
-        )
-        logger.debug(result.status)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
 class CP_MRCPSP_MZN_MODES:

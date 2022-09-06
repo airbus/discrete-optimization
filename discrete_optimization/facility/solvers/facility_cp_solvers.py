@@ -18,8 +18,8 @@ from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
 )
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     map_cp_solver_name,
 )
@@ -68,14 +68,16 @@ class FacilitySolCP:
         return True
 
 
-class FacilityCP(CPSolver):
+class FacilityCP(MinizincCPSolver):
     def __init__(
         self,
         facility_problem: FacilityProblem,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        silent_solve_error: bool = False,
         **args,
     ):
+        self.silent_solve_error = silent_solve_error
         self.facility_problem = facility_problem
         self.cp_solver_name = cp_solver_name
         if params_objective_function is None:
@@ -92,8 +94,6 @@ class FacilityCP(CPSolver):
             problem=self.facility_problem,
             params_objective_function=params_objective_function,
         )
-        self.model = None
-        self.instance: Instance = None
         self.custom_output_type = False
 
     def init_model(self, **kwargs):
@@ -172,20 +172,6 @@ class FacilityCP(CPSolver):
             best_solution=None,
             mode_optim=self.params_objective_function.sense_function,
         )
-
-    def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs
-    ) -> ResultStorage:
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        if self.model is None:
-            self.init_model(**kwargs)
-        limit_time_s = parameters_cp.time_limit
-        result = self.instance.solve(
-            timeout=timedelta(seconds=limit_time_s),
-            intermediate_solutions=parameters_cp.intermediate_solution,
-        )
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
     def get_solution(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
