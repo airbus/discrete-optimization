@@ -2,16 +2,20 @@
 Constraint programming common utilities and class that should be used by any solver using CP
 
 """
+import logging
 from abc import abstractmethod
+from datetime import timedelta
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
-from minizinc import Instance
+from minizinc import Instance, Model
 
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CPSolverName(Enum):
@@ -138,7 +142,7 @@ class CPSolver(SolverDO):
     Additional function to be implemented by a CP Solver.
     """
 
-    instance: Optional[Instance]
+    instance: Optional[Any]
 
     @abstractmethod
     def init_model(self, **args):
@@ -165,3 +169,53 @@ class CPSolver(SolverDO):
         self, parameters_cp: Optional[ParametersCP] = None, **args
     ) -> ResultStorage:
         ...
+
+
+class MinizincCPSolver(CPSolver):
+    """CP solver wrapping a minizinc solver."""
+
+    instance: Optional[Instance] = None
+    silent_solve_error: bool = False
+    """If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned."""
+
+    def solve(
+        self, parameters_cp: Optional[ParametersCP] = None, **kwargs
+    ) -> ResultStorage:
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
+        if self.instance is None:
+            self.init_model(**kwargs)
+            if self.instance is None:
+                raise RuntimeError(
+                    "self.instance must not be None after self.init_model()."
+                )
+        limit_time_s = parameters_cp.time_limit
+        intermediate_solutions = parameters_cp.intermediate_solution
+        if self.silent_solve_error:
+            try:
+                result = self.instance.solve(
+                    timeout=timedelta(seconds=limit_time_s),
+                    intermediate_solutions=intermediate_solutions,
+                    processes=parameters_cp.nb_process
+                    if parameters_cp.multiprocess
+                    else None,
+                    free_search=parameters_cp.free_search,
+                )
+            except Exception as e:
+                logger.warning(e)
+                return ResultStorage(
+                    list_solution_fits=[],
+                )
+        else:
+            result = self.instance.solve(
+                timeout=timedelta(seconds=limit_time_s),
+                intermediate_solutions=intermediate_solutions,
+                processes=parameters_cp.nb_process
+                if parameters_cp.multiprocess
+                else None,
+                free_search=parameters_cp.free_search,
+            )
+        logger.info("Solving finished")
+        logger.debug(result.status)
+        logger.debug(result.statistics)
+        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
