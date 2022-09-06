@@ -7,8 +7,8 @@ from typing import Any, Iterable, List, Optional
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     map_cp_solver_name,
 )
@@ -46,15 +46,17 @@ class KnapsackSol:
         return True
 
 
-class CPKnapsackMZN(CPSolver):
+class CPKnapsackMZN(MinizincCPSolver):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
+        **args,
     ):
+        self.silent_solve_error = silent_solve_error
         self.knapsack_model = knapsack_model
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
         (
@@ -120,29 +122,18 @@ class CPKnapsackMZN(CPSolver):
         instance["max_capacity"] = self.knapsack_model.max_capacity
         self.instance = instance
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        if self.instance is None:
-            self.init_model(**args)
-        result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.time_limit),
-            intermediate_solutions=parameters_cp.intermediate_solution,
-        )
-        logger.debug(result.status)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
-
-class CPKnapsackMZN2(CPSolver):
+class CPKnapsackMZN2(MinizincCPSolver):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **args,
     ):
+        self.silent_solve_error = silent_solve_error
         self.knapsack_model = knapsack_model
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         (
             self.aggreg_sol,
@@ -204,18 +195,6 @@ class CPKnapsackMZN2(CPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.time_limit),
-            intermediate_solutions=parameters_cp.intermediate_solution,
-        )
-        logger.debug(result.status)
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
-
     def retrieve(self, items_taken):
         taken = [0] * self.knapsack_model.nb_items
         weight = 0
@@ -235,15 +214,17 @@ class CPKnapsackMZN2(CPSolver):
         ]
 
 
-class CPMultidimensionalSolver(CPSolver):
+class CPMultidimensionalSolver(MinizincCPSolver):
     def __init__(
         self,
         knapsack_model: MultidimensionalKnapsack,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
+        **args,
     ):
+        self.silent_solve_error = silent_solve_error
         self.knapsack_model = knapsack_model
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
         (
@@ -314,27 +295,18 @@ class CPMultidimensionalSolver(CPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.time_limit),
-            intermediate_solutions=parameters_cp.intermediate_solution,
-        )
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
-
-class CPMultidimensionalMultiScenarioSolver(CPSolver):
+class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
     def __init__(
         self,
         knapsack_model: MultiScenarioMultidimensionalKnapsack,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
+        **args,
     ):
+        self.silent_solve_error = silent_solve_error
         self.knapsack_model = knapsack_model
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
         (
@@ -415,17 +387,6 @@ class CPMultidimensionalMultiScenarioSolver(CPSolver):
             best_solution=None,
             mode_optim=self.params_objective_function.sense_function,
         )
-
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        result = self.instance.solve(
-            timeout=timedelta(seconds=parameters_cp.time_limit),
-            intermediate_solutions=parameters_cp.intermediate_solution,
-        )
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
 class KnapConstraintHandler(ConstraintHandler):

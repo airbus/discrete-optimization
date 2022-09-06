@@ -12,7 +12,7 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
     GraphRCPSPSpecialConstraints,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
+from discrete_optimization.generic_tools.cp_tools import CPSolver, SignEnum
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -35,7 +35,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_PREEMMPTIVE,
     CP_RCPSP_MZN,
     CP_RCPSP_MZN_PREEMMPTIVE,
-    CPSolver,
 )
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (

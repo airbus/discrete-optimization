@@ -6,8 +6,8 @@ from typing import List, Optional, Union
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     map_cp_solver_name,
 )
@@ -86,16 +86,17 @@ def add_fake_task_cp_data(
         return dict_to_add_in_instance
 
 
-class CP_MULTISCENARIO(CPSolver):
+class CP_MULTISCENARIO(MinizincCPSolver):
     def __init__(
         self,
         list_rcpsp_model: List[RCPSPModel],
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = True,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.list_rcpsp_model = list_rcpsp_model
-        self.instance: Instance = None
         self.cp_solver_name = cp_solver_name
         self.base_rcpsp_model = list_rcpsp_model[0]
         self.key_decision_variable = [
@@ -262,25 +263,3 @@ class CP_MULTISCENARIO(CPSolver):
             limit_store=False,
         )
         return result_storage
-
-    def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **args
-    ) -> ResultStorage:
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        try:
-            result = self.instance.solve(
-                timeout=timedelta(seconds=timeout),
-                intermediate_solutions=intermediate_solutions,
-            )
-        except Exception as e:
-            logger.warning(e)
-            return None
-        self.result = result
-        logger.debug(f"Status : {result.status}")
-        logger.debug(f"Solving time : {result.statistics.get('solveTime', None)}")
-        return self.retrieve_solutions(result, parameters_cp=parameters_cp)

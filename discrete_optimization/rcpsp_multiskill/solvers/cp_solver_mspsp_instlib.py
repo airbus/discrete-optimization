@@ -13,8 +13,8 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_unrelated_task,
 )
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     SignEnum,
     map_cp_solver_name,
@@ -102,16 +102,17 @@ def create_usefull_res_data(rcpsp_model: MS_RCPSPModel):
     return useful_res, potential_act
 
 
-class CP_MSPSP_MZN(CPSolver):
+class CP_MSPSP_MZN(MinizincCPSolver):
     def __init__(
         self,
         rcpsp_model: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
+        self.silent_solve_error = silent_solve_error
         self.rcpsp_model = rcpsp_model
-        self.instance: Instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
@@ -469,22 +470,6 @@ class CP_MSPSP_MZN(CPSolver):
             limit_store=False,
         )
         return result_storage
-
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if self.instance is None:
-            self.init_model(**args)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        timeout = parameters_cp.time_limit
-        intermediate_solutions = parameters_cp.intermediate_solution
-        result = self.instance.solve(
-            timeout=timedelta(seconds=timeout),
-            free_search=parameters_cp.free_search,
-            intermediate_solutions=intermediate_solutions,
-        )
-        logger.debug(result.status)
-        self.result_status = result.status
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
 def chuffed_specific_code():
