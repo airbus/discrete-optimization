@@ -5,7 +5,7 @@ from discrete_optimization.generic_tools.do_problem import (
     get_default_objective_setup,
 )
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
@@ -24,18 +24,14 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
 )
-from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
-    LP_MRCPSP,
-    LP_RCPSP,
-    LP_RCPSP_Solver,
-)
+from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
 
 
 def test_lns_sm():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
-    solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
+    solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model(greedy_start=False)
     parameters_milp = ParametersMilp(
         time_limit=10,
@@ -90,7 +86,7 @@ def test_lns_mm():
     )
     solver = LP_MRCPSP(
         rcpsp_model=rcpsp_problem,
-        lp_solver=LP_RCPSP_Solver.CBC,
+        lp_solver=MilpSolverName.CBC,
         params_objective_function=params_objective_function,
     )
     solver.init_model(greedy_start=False)

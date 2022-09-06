@@ -1,9 +1,8 @@
 import logging
-from enum import Enum
 from itertools import product
 from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
 
-from mip import BINARY, CBC, GRB, INTEGER, MINIMIZE, Model, Var, xsum
+from mip import BINARY, INTEGER, MINIMIZE, Model, Var, xsum
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -12,8 +11,10 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
+    MilpSolverName,
     ParametersMilp,
     PymipMilpSolver,
+    map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -44,16 +45,11 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class LP_RCPSP_Solver(Enum):
-    GRB = 0
-    CBC = 1
-
-
 class LP_RCPSP(PymipMilpSolver):
     def __init__(
         self,
         rcpsp_model: SingleModeRCPSPModel,
-        lp_solver: LP_RCPSP_Solver = LP_RCPSP_Solver.CBC,
+        lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
@@ -68,10 +64,8 @@ class LP_RCPSP(PymipMilpSolver):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-        if lp_solver == LP_RCPSP_Solver.GRB:
-            self.lp_solver = GRB
-        else:
-            self.lp_solver = CBC
+        self.lp_solver = lp_solver
+        self.solver_name = map_solver[lp_solver]
 
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
@@ -111,7 +105,7 @@ class LP_RCPSP(PymipMilpSolver):
                 S.append([task, suc])
         # we have a better self.T to limit the number of variables :
         self.index_time = range(int(makespan + 1))
-        self.model = Model(sense=MINIMIZE, solver_name=self.lp_solver)
+        self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
         self.x: List[List[Var]] = [
             [
                 self.model.add_var(name=f"x({task},{t})", var_type=BINARY)
@@ -355,7 +349,7 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
     def __init__(
         self,
         rcpsp_model: SingleModeRCPSPModel,
-        lp_solver: LP_RCPSP_Solver = LP_RCPSP_Solver.CBC,
+        lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
@@ -364,10 +358,8 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        if lp_solver == LP_RCPSP_Solver.GRB:
-            self.lp_solver = GRB
-        else:
-            self.lp_solver = CBC
+        self.lp_solver = lp_solver
+        self.solver_name = map_solver[lp_solver]
 
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
@@ -422,7 +414,7 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         # we have a better self.T to limit the number of variables :
         if self.start_solution.rcpsp_schedule_feasible:
             self.index_time = range(int(makespan + 1))
-        self.model = Model(sense=MINIMIZE, solver_name=self.lp_solver)
+        self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
         self.x: Dict[Tuple[Hashable, int, int], Var] = {}
         last_task = self.rcpsp_model.sink_task
         variable_per_task = {}

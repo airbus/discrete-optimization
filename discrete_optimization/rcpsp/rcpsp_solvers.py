@@ -9,7 +9,7 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -42,11 +42,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_ga_solver import (
     GA_RCPSP_Solver,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import LNS_LP_RCPSP_SOLVER
-from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
-    LP_MRCPSP,
-    LP_RCPSP,
-    LP_RCPSP_Solver,
-)
+from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     GreedyChoice,
     PileSolverRCPSP,
@@ -62,14 +58,14 @@ solvers = {
         (
             LP_RCPSP,
             {
-                "lp_solver": LP_RCPSP_Solver.CBC,
+                "lp_solver": MilpSolverName.CBC,
                 "parameters_milp": ParametersMilp.default(),
             },
         ),
         (
             LP_MRCPSP,
             {
-                "lp_solver": LP_RCPSP_Solver.CBC,
+                "lp_solver": MilpSolverName.CBC,
                 "parameters_milp": ParametersMilp.default(),
             },
         ),
@@ -112,7 +108,7 @@ solvers = {
     "lns": [
         (
             LNS_LP_RCPSP_SOLVER,
-            {"nb_iteration_lns": 100, "lp_solver": LP_RCPSP_Solver.CBC},
+            {"nb_iteration_lns": 100, "lp_solver": MilpSolverName.CBC},
         ),
         (
             LNS_CP_RCPSP_SOLVER,
@@ -122,7 +118,7 @@ solvers = {
     "lns-lp": [
         (
             LNS_LP_RCPSP_SOLVER,
-            {"nb_iteration_lns": 100, "lp_solver": LP_RCPSP_Solver.CBC},
+            {"nb_iteration_lns": 100, "lp_solver": MilpSolverName.CBC},
         )
     ],
     "lns-cp": [
