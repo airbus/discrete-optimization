@@ -49,7 +49,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
     LP_MRCPSP,
     LP_MRCPSP_GUROBI,
     LP_RCPSP,
-    LP_RCPSP_Solver,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     GreedyChoice,
@@ -192,7 +191,7 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
                             milp_solver.x[milp_solver.index_in_var[job_to_fix]][t] == 0
                         )
                     )
-            if milp_solver.lp_solver == mip.GRB:
+            if milp_solver.solver_name == mip.GRB:
                 milp_solver.model.solver.update()
         return constraints_dict
 
@@ -200,7 +199,7 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
         self, milp_solver: LP_RCPSP, previous_constraints: Mapping[Hashable, Any]
     ):
         milp_solver.model.remove(previous_constraints["fix_start_time"])
-        if milp_solver.lp_solver == mip.GRB:
+        if milp_solver.solver_name == mip.GRB:
             milp_solver.model.solver.update()
 
 
@@ -267,7 +266,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
                             milp_solver.x[milp_solver.index_in_var[job]][t] == 0
                         )
                     )
-        if milp_solver.lp_solver == mip.GRB:
+        if milp_solver.solver_name == mip.GRB:
             milp_solver.model.solver.update()
         return constraints_dict
 
@@ -275,7 +274,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
         self, milp_solver: LP_RCPSP, previous_constraints: Mapping[Hashable, Any]
     ):
         milp_solver.model.remove(previous_constraints["range_start_time"])
-        if milp_solver.lp_solver == mip.GRB:
+        if milp_solver.solver_name == mip.GRB:
             milp_solver.model.solver.update()
 
 
@@ -353,7 +352,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
                     constraints_dict["range_start_time"].append(
                         milp_solver.model.add_constr(milp_solver.x[key] == 0)
                     )
-        if milp_solver.lp_solver == mip.GRB:
+        if milp_solver.solver_name == mip.GRB:
             milp_solver.model.solver.update()
         return constraints_dict
 
@@ -361,7 +360,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
         self, milp_solver: LP_MRCPSP, previous_constraints: Mapping[Hashable, Any]
     ):
         milp_solver.model.remove(previous_constraints["range_start_time"])
-        if milp_solver.lp_solver == mip.GRB:
+        if milp_solver.solver_name == mip.GRB:
             milp_solver.model.solver.update()
 
 

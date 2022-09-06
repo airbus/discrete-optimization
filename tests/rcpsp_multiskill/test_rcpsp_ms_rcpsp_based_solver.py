@@ -1,10 +1,7 @@
 from typing import Dict, List, Set
 
-from discrete_optimization.rcpsp.rcpsp_solvers import (
-    LP_MRCPSP,
-    LP_RCPSP_Solver,
-    solvers,
-)
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName
+from discrete_optimization.rcpsp.rcpsp_solvers import LP_MRCPSP, solvers
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel_Variant,
@@ -97,7 +94,7 @@ def test_rcpsp_based():
         for j in range(len(solvers[k]))
         if solvers[k][j][0] == method
     ][0]
-    params["lp_solver"] = LP_RCPSP_Solver.CBC
+    params["lp_solver"] = MilpSolverName.CBC
     solver = Solver_RCPSP_Based(model=model, method=method, **params)
     result = solver.solve()
     solution: MS_RCPSPSolution = result.get_best_solution()

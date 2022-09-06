@@ -1,4 +1,4 @@
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -13,18 +13,14 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,
 )
-from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
-    LP_MRCPSP,
-    LP_RCPSP,
-    LP_RCPSP_Solver,
-)
+from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
 
 
 def test_rcpsp_sm_lp_cbc():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
-    solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
+    solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model()
     results_storage: ResultStorage = solver.solve(
         parameters_milp=ParametersMilp.default()
@@ -45,7 +41,7 @@ def test_rcpsp_mm_lp_cbc():
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem: MultiModeRCPSPModel = parse_file(file)
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
-    solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
+    solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model(greedy_start=False)
     results_storage: ResultStorage = solver.solve(
         parameters_milp=ParametersMilp.default()
@@ -73,7 +69,7 @@ def test_rcpsp_sm_lp_cbc_partial():
     }
     partial_solution = PartialSolution(task_mode=None, start_times=some_constraints)
     partial_solution_for_lp = partial_solution
-    solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=LP_RCPSP_Solver.CBC)
+    solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model(partial_solution=partial_solution_for_lp, greedy_start=False)
     params_milp = ParametersMilp.default()
     params_milp.time_limit = 20
