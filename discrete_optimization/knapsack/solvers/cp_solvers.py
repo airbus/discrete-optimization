@@ -74,11 +74,11 @@ class CPKnapsackMZN(MinizincCPSolver):
         objectives = []
         if intermediate_solutions:
             for i in range(len(result)):
-                l_items += [result[i, "list_items"]]
-                objectives += [result[i, "objective"]]
+                l_items.append(result[i, "list_items"])
+                objectives.append(result[i, "objective"])
         else:
-            l_items += [result["list_items"]]
-            objectives += [result["objective"]]
+            l_items.append(result["list_items"])
+            objectives.append(result["objective"])
         list_solutions_fit = []
         for items, objective in zip(l_items, objectives):
             taken = [0] * self.knapsack_model.nb_items
@@ -96,7 +96,7 @@ class CPKnapsackMZN(MinizincCPSolver):
                 list_taken=taken,
             )
             fit = self.aggreg_sol(sol)
-            list_solutions_fit += [(sol, fit)]
+            list_solutions_fit.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=None,
@@ -168,9 +168,9 @@ class CPKnapsackMZN2(MinizincCPSolver):
         intermediate_solution = parameters_cp.intermediate_solution
         if intermediate_solution:
             for i in range(len(result)):
-                l_items_taken += [result[i, "taken"]]
+                l_items_taken.append(result[i, "taken"])
         else:
-            l_items_taken += [result["taken"]]
+            l_items_taken.append(result["taken"])
         list_solution_fits = []
         for items_taken in l_items_taken:
             taken = [0] * self.knapsack_model.nb_items
@@ -188,7 +188,7 @@ class CPKnapsackMZN2(MinizincCPSolver):
                 list_taken=taken,
             )
             fit = self.aggreg_sol(sol)
-            list_solution_fits += [(sol, fit)]
+            list_solution_fits.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
             best_solution=None,
@@ -270,25 +270,25 @@ class CPMultidimensionalSolver(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if self.custom_output_type:
-                    l_taken += [result[i].dict["taken"]]
-                    objectives += [result[i].objective]
+                    l_taken.append(result[i].dict["taken"])
+                    objectives.append(result[i].objective)
                 else:
-                    l_taken += [result[i, "taken"]]
-                    objectives += [result[i, "objective"]]
+                    l_taken.append(result[i, "taken"])
+                    objectives.append(result[i, "objective"])
         else:
             if self.custom_output_type:
-                l_taken += [result.dict["taken"]]
-                objectives += [result.objective]
+                l_taken.append(result.dict["taken"])
+                objectives.append(result.objective)
             else:
-                l_taken += [result["taken"]]
-                objectives += [result["objective"]]
+                l_taken.append(result["taken"])
+                objectives.append(result["objective"])
         list_solutions_fit = []
         for taken, objective in zip(l_taken, objectives):
             sol = KnapsackSolutionMultidimensional(
                 problem=self.knapsack_model, list_taken=taken
             )
             fit = self.aggreg_sol(sol)
-            list_solutions_fit += [(sol, fit)]
+            list_solutions_fit.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=None,
@@ -363,15 +363,15 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if self.custom_output_type:
-                    l_taken += [result[i].dict["taken"]]
-                    objectives += [result[i].objective]
+                    l_taken.append(result[i].dict["taken"])
+                    objectives.append(result[i].objective)
                 else:
-                    l_taken += [result[i, "taken"]]
-                    objectives += [result[i, "objective"]]
+                    l_taken.append(result[i, "taken"])
+                    objectives.append(result[i, "objective"])
         else:
             if self.custom_output_type:
-                l_taken += [result.dict["taken"]]
-                objectives += [result.objective]
+                l_taken.append(result.dict["taken"])
+                objectives.append(result.objective)
             else:
                 l_taken += [result["taken"]]
                 objectives += [result["objective"]]
@@ -381,7 +381,7 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
                 problem=self.knapsack_model, list_taken=taken
             )
             fit = self.aggreg_sol(sol)
-            list_solutions_fit += [(sol, fit)]
+            list_solutions_fit.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=None,
