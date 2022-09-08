@@ -161,18 +161,18 @@ class ColoringCP(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if not self.custom_output_type:
-                    colors += [result[i, "color_graph"]]
-                    objectives += [result[i, "objective"]]
+                    colors.append(result[i, "color_graph"])
+                    objectives.append(result[i, "objective"])
                 else:
-                    colors += [result[i].dict["color_graph"]]
-                    objectives += [result[i].objective]
+                    colors.append(result[i].dict["color_graph"])
+                    objectives.append(result[i].objective)
         else:
             if not self.custom_output_type:
-                colors += [result["color_graph"]]
-                objectives += [result["objective"]]
+                colors.append(result["color_graph"])
+                objectives.append(result["objective"])
             else:
-                colors += [result.dict["color_graph"]]
-                objectives += [result.objective]
+                colors.append(result.dict["color_graph"])
+                objectives.append(result.objective)
         for k in range(len(colors)):
             sol = [
                 colors[k][self.index_nodes_name[self.nodes_name[i]]] - 1
@@ -180,7 +180,7 @@ class ColoringCP(MinizincCPSolver):
             ]
             color_sol = ColoringSolution(self.coloring_problem, sol)
             fit = self.aggreg_sol(color_sol)
-            solutions_fit += [(color_sol, fit)]
+            solutions_fit.append((color_sol, fit))
 
         return ResultStorage(
             list_solution_fits=solutions_fit,

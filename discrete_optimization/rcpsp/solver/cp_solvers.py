@@ -346,12 +346,12 @@ class CP_RCPSP_MZN(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if isinstance(result[i], RCPSPSolCP):
-                    starts += [result[i].dict["s"]]
+                    starts.append(result[i].dict["s"])
                 else:
-                    starts += [result[i, "s"]]
+                    starts.append(result[i, "s"])
         else:
             if isinstance(result, RCPSPSolCP):
-                starts += [result.dict["s"]]
+                starts.append(result.dict["s"])
             else:
                 starts = [result["s"]]
 
@@ -374,7 +374,7 @@ class CP_RCPSP_MZN(MinizincCPSolver):
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
-            list_solutions_fit += [(sol, objective)]
+            list_solutions_fit.append((sol, objective))
         result_storage = ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=best_solution,
@@ -656,18 +656,18 @@ class CP_MRCPSP_MZN(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if isinstance(result[i], RCPSPSolCP):
-                    starts += [result[i].dict["start"]]
-                    mruns += [result[i].dict["mrun"]]
+                    starts.append(result[i].dict["start"])
+                    mruns.append(result[i].dict["mrun"])
                 else:
-                    starts += [result[i, "start"]]
-                    mruns += [result[i, "mrun"]]
+                    starts.append(result[i, "start"])
+                    mruns.append(result[i, "mrun"])
         else:
             if isinstance(result, RCPSPSolCP):
-                starts += [result.dict["start"]]
-                mruns += [result.dict["mrun"]]
+                starts.append(result.dict["start"])
+                mruns.append(result.dict["mrun"])
             else:
-                starts = [result["start"]]
-                mruns = [result["mrun"]]
+                starts.append(result["start"])
+                mruns.append(result["mrun"])
         for start_times, mrun in zip(starts, mruns):
             modes_dict = {}
             for i in range(len(mrun)):
@@ -696,7 +696,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver):
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
-            list_solutions_fit += [(sol, objective)]
+            list_solutions_fit.append((sol, objective))
         result_storage = ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=best_solution,
@@ -849,15 +849,15 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         if intermediate_solutions:
             for i in range(len(result)):
                 if isinstance(result[i], RCPSPSolCP):
-                    starts += [result[i].dict["start"]]
-                    mruns += [result[i].dict["mrun"]]
+                    starts.append(result[i].dict["start"])
+                    mruns.append(result[i].dict["mrun"])
                 else:
-                    starts += [result[i, "start"]]
-                    mruns += [result[i, "mrun"]]
+                    starts.append(result[i, "start"])
+                    mruns.append(result[i, "mrun"])
         else:
             if isinstance(result, RCPSPSolCP):
-                starts += [result.dict["start"]]
-                mruns += [result.dict["mrun"]]
+                starts.append(result.dict["start"])
+                mruns.append(result.dict["mrun"])
             else:
                 starts = [result["start"]]
                 mruns = [result["mrun"]]
@@ -889,7 +889,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
-            list_solutions_fit += [(sol, objective)]
+            list_solutions_fit.append((sol, objective))
         result_storage = ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=best_solution,
@@ -1222,27 +1222,27 @@ class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if isinstance(result[i], RCPSPSolCP):
-                    starts += [result[i].dict["s"]]
-                    starts_preemptive += [result[i].dict["s_preemptive"]]
-                    duration_preemptive += [result[i].dict["d_preemptive"]]
-                    objectives_cp += [result[i].objective]
+                    starts.append(result[i].dict["s"])
+                    starts_preemptive.append(result[i].dict["s_preemptive"])
+                    duration_preemptive.append(result[i].dict["d_preemptive"])
+                    objectives_cp.append(result[i].objective)
                 else:
-                    starts += [result[i, "s"]]
-                    starts_preemptive += [result[i, "s_preemptive"]]
-                    duration_preemptive += [result[i, "d_preemptive"]]
-                    objectives_cp += [result[i, "objective"]]
+                    starts.append(result[i, "s"])
+                    starts_preemptive.append(result[i, "s_preemptive"])
+                    duration_preemptive.append(result[i, "d_preemptive"])
+                    objectives_cp.append(result[i, "objective"])
 
         else:
             if isinstance(result, RCPSPSolCP):
-                starts += [result.dict["s"]]
-                starts_preemptive += [result.dict["s_preemptive"]]
-                duration_preemptive += [result.dict["d_preemptive"]]
-                objectives_cp += [result.objective]
+                starts.append(result.dict["s"])
+                starts_preemptive.append(result.dict["s_preemptive"])
+                duration_preemptive.append(result.dict["d_preemptive"])
+                objectives_cp.append(result.objective)
             else:
                 starts = [result["s"]]
                 starts_preemptive = [result["s_preemptive"]]
                 duration_preemptive = [result["d_preemptive"]]
-                objectives_cp += [result["objective"]]
+                objectives_cp.append(result["objective"])
 
         for i in range(len(starts)):
             rcpsp_schedule = {}
@@ -1251,8 +1251,8 @@ class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver):
                 ends_k = []
                 for j in range(len(starts_preemptive[i][k])):
                     if j == 0 or duration_preemptive[i][k][j] != 0:
-                        starts_k += [starts_preemptive[i][k][j]]
-                        ends_k += [starts_k[-1] + duration_preemptive[i][k][j]]
+                        starts_k.append(starts_preemptive[i][k][j])
+                        ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
                 rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
                     "starts": starts_k,
                     "ends": ends_k,
@@ -1269,7 +1269,7 @@ class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver):
             if objectives_cp[i] < best_objectives_cp:
                 index_best = i
                 best_objectives_cp = objectives_cp[i]
-            list_solutions_fit += [(sol, objective)]
+            list_solutions_fit.append((sol, objective))
         if len(list_solutions_fit) > 0:
             list_solutions_fit[index_best][
                 0
@@ -1585,30 +1585,30 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
         if intermediate_solutions:
             for i in range(len(result)):
                 if isinstance(result[i], RCPSPSolCP):
-                    starts += [result[i].dict["s"]]
-                    starts_preemptive += [result[i].dict["s_preemptive"]]
-                    duration_preemptive += [result[i].dict["d_preemptive"]]
-                    modes += [result[i].dict["mrun"]]
-                    objectives_cp += [result[i].objective]
+                    starts.append(result[i].dict["s"])
+                    starts_preemptive.append(result[i].dict["s_preemptive"])
+                    duration_preemptive.append(result[i].dict["d_preemptive"])
+                    modes.append(result[i].dict["mrun"])
+                    objectives_cp.append(result[i].objective)
                 else:
-                    starts += [result[i, "s"]]
-                    starts_preemptive += [result[i, "s_preemptive"]]
-                    duration_preemptive += [result[i, "d_preemptive"]]
-                    modes += [result[i, "mrun"]]
-                    objectives_cp += [result[i, "objective"]]
+                    starts.append(result[i, "s"])
+                    starts_preemptive.append(result[i, "s_preemptive"])
+                    duration_preemptive.append(result[i, "d_preemptive"])
+                    modes.append(result[i, "mrun"])
+                    objectives_cp.append(result[i, "objective"])
         else:
             if isinstance(result, RCPSPSolCP):
-                starts += [result.dict["s"]]
-                starts_preemptive += [result.dict["s_preemptive"]]
-                duration_preemptive += [result.dict["d_preemptive"]]
-                modes += [result.dict["mrun"]]
-                objectives_cp += [result.objective]
+                starts.append(result.dict["s"])
+                starts_preemptive.append(result.dict["s_preemptive"])
+                duration_preemptive.append(result.dict["d_preemptive"])
+                modes.append(result.dict["mrun"])
+                objectives_cp.append(result.objective)
             else:
                 starts = [result["s"]]
                 starts_preemptive = [result["s_preemptive"]]
                 duration_preemptive = [result["d_preemptive"]]
-                modes += [result["mrun"]]
-                objectives_cp += [result["objective"]]
+                modes.append(result["mrun"])
+                objectives_cp.append(result["objective"])
         for i in range(len(starts)):
             rcpsp_schedule = {}
             modes_dict = {}
@@ -1622,8 +1622,8 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
                 ends_k = []
                 for j in range(len(starts_preemptive[i][k])):
                     if j == 0 or duration_preemptive[i][k][j] != 0:
-                        starts_k += [starts_preemptive[i][k][j]]
-                        ends_k += [starts_k[-1] + duration_preemptive[i][k][j]]
+                        starts_k.append(starts_preemptive[i][k][j])
+                        ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
                 rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
                     "starts": starts_k,
                     "ends": ends_k,
@@ -1643,7 +1643,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
             if objectives_cp[i] < best_objectives_cp:
                 index_best = i
                 best_objectives_cp = objectives_cp[i]
-            list_solutions_fit += [(sol, objective)]
+            list_solutions_fit.append((sol, objective))
         if len(list_solutions_fit) > 0:
             list_solutions_fit[index_best][
                 0
@@ -1891,9 +1891,9 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver):
         object_result: List[MRCPSP_Result] = []
         if intermediate_solutions:
             for i in range(len(result)):
-                object_result += [result[i]]
+                object_result.append(result[i])
         else:
-            object_result += [result]
+            object_result.append(result)
         for res in object_result:
             modes_dict = {}
             for j in range(len(res.mode_chosen)):
@@ -1921,7 +1921,7 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver):
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
-            list_solutions_fit += [(sol, objective)]
+            list_solutions_fit.append((sol, objective))
         result_storage = ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=best_solution,
@@ -2037,9 +2037,9 @@ class CP_MRCPSP_MZN_MODES:
         mruns = []
         if intermediate_solutions:
             for i in range(len(result)):
-                mruns += [result[i, "mrun"]]
+                mruns.append(result[i, "mrun"])
         else:
-            mruns += [result["mrun"]]
+            mruns.append(result["mrun"])
         all_modes = []
         for mrun in mruns:
             modes = [1] * (self.rcpsp_model.n_jobs_non_dummy + 2)
@@ -2055,7 +2055,7 @@ class CP_MRCPSP_MZN_MODES:
                     modes[self.modeindex_map[i + 1]["task"] - 1] = self.modeindex_map[
                         i + 1
                     ]["original_mode_index"]
-            all_modes += [modes]
+            all_modes.append(modes)
         return all_modes
 
     def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):

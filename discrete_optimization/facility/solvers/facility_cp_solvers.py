@@ -148,25 +148,25 @@ class FacilityCP(MinizincCPSolver):
         if intermediate_solutions:
             for i in range(len(result)):
                 if not self.custom_output_type:
-                    list_facility += [result[i, "facility_for_customer"]]
-                    objectives += [result[i, "objective"]]
+                    list_facility.append(result[i, "facility_for_customer"])
+                    objectives.append(result[i, "objective"])
                 else:
-                    list_facility += [result[i].dict["facility_for_customer"]]
-                    objectives += [result[i].objective]
+                    list_facility.append(result[i].dict["facility_for_customer"])
+                    objectives.append(result[i].objective)
         else:
             if not self.custom_output_type:
-                list_facility += [result["facility_for_customer"]]
-                objectives += [result["objective"]]
+                list_facility.append(result["facility_for_customer"])
+                objectives.append(result["objective"])
             else:
-                list_facility += [result.dict["facility_for_customer"]]
-                objectives += [result.objective]
+                list_facility.append(result.dict["facility_for_customer"])
+                objectives.append(result.objective)
         list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for facility, objective in zip(list_facility, objectives):
             facility_sol = FacilitySolution(
                 self.facility_problem, [f - 1 for f in facility]
             )
             fit = self.aggreg_sol(facility_sol)
-            list_solutions_fit += [(facility_sol, fit)]
+            list_solutions_fit.append((facility_sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
             best_solution=None,
