@@ -1,7 +1,6 @@
 import logging
 import os
-from datetime import timedelta
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from minizinc import Instance, Model, Solver
 
@@ -13,9 +12,13 @@ from discrete_optimization.generic_tools.cp_tools import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+    fitness_class,
+)
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
 
@@ -34,7 +37,7 @@ class TSP_CP_Solver(MinizincCPSolver):
         tsp_model: TSPModel,
         model_type: TSP_CPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
     ):
         self.silent_solve_error = silent_solve_error
@@ -82,7 +85,25 @@ class TSP_CP_Solver(MinizincCPSolver):
         self.instance = instance
 
     def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        circuit = result["x"]
+        intermediate_solutions = parameters_cp.intermediate_solution
+        solutions_fit: List[Tuple[Solution, fitness_class]] = []
+        if intermediate_solutions:
+            for i in range(len(result)):
+                circuit = result[i, "x"]
+                var_tsp = self._retrieve_solution_from_circuit(circuit)
+                fit = self.aggreg_sol(var_tsp)
+                solutions_fit.append((var_tsp, fit))
+        else:
+            circuit = result["x"]
+            var_tsp = self._retrieve_solution_from_circuit(circuit)
+            fit = self.aggreg_sol(var_tsp)
+            solutions_fit.append((var_tsp, fit))
+        return ResultStorage(
+            list_solution_fits=solutions_fit,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
+    def _retrieve_solution_from_circuit(self, circuit) -> SolutionTSP:
         path = []
         cur_pos = self.start_index
         init = False
@@ -91,16 +112,11 @@ class TSP_CP_Solver(MinizincCPSolver):
             path += [next_pos]
             cur_pos = next_pos
             init = True
-        var_tsp = SolutionTSP(
+        return SolutionTSP(
             problem=self.tsp_model,
             start_index=self.start_index,
             end_index=self.end_index,
             permutation=path[:-1],
             length=None,
             lengths=None,
-        )
-        fit = self.aggreg_sol(var_tsp)
-        return ResultStorage(
-            list_solution_fits=[(var_tsp, fit)],
-            mode_optim=self.params_objective_function.sense_function,
         )
