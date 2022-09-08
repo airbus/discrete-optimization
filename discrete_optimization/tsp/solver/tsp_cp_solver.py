@@ -7,6 +7,7 @@ from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
+    MinizincCPSolver,
     ParametersCP,
     map_cp_solver_name,
 )
@@ -27,19 +28,20 @@ class TSP_CPModel:
     INT_VERSION = 1
 
 
-class TSP_CP_Solver(SolverDO):
+class TSP_CP_Solver(MinizincCPSolver):
     def __init__(
         self,
         tsp_model: TSPModel,
         model_type: TSP_CPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = False,
     ):
+        self.silent_solve_error = silent_solve_error
         self.tsp_model = tsp_model
         self.model_type = model_type
         self.start_index = self.tsp_model.start_index
         self.end_index = self.tsp_model.end_index
-        self.instance = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["x"]
 
@@ -79,12 +81,7 @@ class TSP_CP_Solver(SolverDO):
         instance["end"] = self.end_index + 1
         self.instance = instance
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **args):
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        max_time_seconds = parameters_cp.time_limit
-        result = self.instance.solve(timeout=timedelta(seconds=max_time_seconds))
-        logger.debug(f"Result = {result}")
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
         circuit = result["x"]
         path = []
         cur_pos = self.start_index
