@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
     LargeNeighborhoodSearchScheduling,
@@ -336,3 +336,10 @@ def return_solver(method, rcpsp_model: RCPSPModel, **args) -> ResultStorage:
     except:
         pass
     return solver
+
+
+def get_solver_default_arguments(method) -> Dict[str, Any]:
+    try:
+        return solvers_map[method][1]
+    except KeyError:
+        raise KeyError(f"{method} is not in the list of available solvers for RCPSP.")
