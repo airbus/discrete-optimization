@@ -89,15 +89,3 @@ def test_multiskill_imopse():
     solution, fit = result_store.get_best_solution_fit()
     model.evaluate(solution)
     assert model.satisfy(solution)
-    rebuilt_sol_rcpsp = RCPSPSolution(
-        problem=model_rcpsp,
-        rcpsp_permutation=None,
-        rcpsp_schedule=solution.schedule,
-        rcpsp_modes=[solution.modes[x] for x in range(2, model.n_jobs_non_dummy + 2)],
-    )
-    plot_ressource_view(model_rcpsp, rebuilt_sol_rcpsp)
-    plot_resource_individual_gantt(
-        rcpsp_model=model_rcpsp,
-        rcpsp_sol=rebuilt_sol_rcpsp,
-        resource_types_to_consider=["worker"],
-    )

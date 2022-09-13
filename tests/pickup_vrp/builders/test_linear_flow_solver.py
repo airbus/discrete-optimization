@@ -91,7 +91,6 @@ def test_vrp_simplified():
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
     p = ParametersMilp.default()
-
     p.time_limit = 100
     solutions = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False

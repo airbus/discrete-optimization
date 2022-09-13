@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -41,6 +43,8 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
     ParametersCP,
 )
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 def run_cp_multidimensional():
     one_file = get_data_available()[10]
@@ -48,7 +52,9 @@ def run_cp_multidimensional():
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
     cp_solver = CPMultidimensionalSolver(knapsack_model=multidimensional_knapsack)
     cp_solver.init_model(output_type=True)
-    cp_solver.solve(parameters_cp=ParametersCP.default())
+    params_cp = ParametersCP.default()
+    params_cp.time_limit = 5
+    cp_solver.solve(parameters_cp=params_cp)
 
 
 def run_ls(multiscenario_model):
@@ -71,7 +77,7 @@ def run_ls(multiscenario_model):
     )
     return sa.solve(
         initial_variable=solution,
-        nb_iteration_max=60000,
+        nb_iteration_max=3000,
         pickle_result=False,
     )
 
@@ -106,9 +112,9 @@ def run_cp_multidimensional_multiscenario():
     p.time_limit = 5
     r_lns = lns.solve_lns(
         parameters_cp=p,
-        nb_iteration_lns=1000,
+        nb_iteration_lns=100,
         nb_iteration_no_improvement=1000,
-        max_time_seconds=140,
+        max_time_seconds=30,
     )
     plot_fitness(r_lns, title="LNS results")
     print(r_lns.get_best_solution_fit()[1])

@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import random
@@ -44,6 +45,8 @@ files_mzn = {
         this_path, "../../discrete_optimization/pickup_vrp/minizinc/gpdp_resources.mzn"
     ),
 }
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class GPDPOutput:
@@ -131,7 +134,7 @@ def script_example():
         for i in range(time_delta.shape[0])
     ]
     result = instance.solve(
-        timeout=timedelta(seconds=100), intermediate_solutions=True, free_search=False
+        timeout=timedelta(seconds=20), intermediate_solutions=True, free_search=False
     )
     results = []
     for i in range(len(result)):
@@ -161,7 +164,7 @@ def script_example():
         ax.set_title("iter " + str(i) + " obj=" + str(int(results[i][1])))
         plt.draw()
         plt.pause(0.5)
-        ax.lines = []
+        ax.clear()
     plt.show()
 
 
@@ -214,7 +217,7 @@ def script_example_lns():
         for j in range(len(cut_parts[v])):
             dummy_solution[v][j + 1] = cut_parts[v][j] + 1
 
-    for i in range(100):
+    for i in range(8):
         with instance.branch() as child:
             if i > 0:
                 last_result = results[-1]
@@ -299,7 +302,7 @@ def script_example_lns():
                 )
 
             result = child.solve(
-                timeout=timedelta(seconds=20),
+                timeout=timedelta(seconds=10),
                 intermediate_solutions=True,
                 free_search=False,
             )
@@ -337,7 +340,7 @@ def script_example_lns():
         ax.set_title("iter " + str(i) + " obj=" + str(int(results[i][1])))
         plt.draw()
         plt.pause(0.05)
-        ax.lines = []
+        ax.clear()
     plt.show()
 
 
@@ -406,7 +409,7 @@ def script_example_flow():
         ax.set_title("iter " + str(i) + " obj=" + str(int(results[i][1])))
         plt.draw()
         plt.pause(0.05)
-        ax.lines = []
+        ax.clear()
     plt.show()
     print(result.status)
     print("HEY")
@@ -1676,7 +1679,7 @@ def run_tsp():
         ),
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
     )
-    results = sa.solve(solution, 100000)
+    results = sa.solve(solution, nb_iteration_max=10000)
     best_solution, fit = results.get_best_solution_fit()
     print("Fit ", fit)
     plot_tsp_solution(tsp_model=tsp_model, solution=best_solution)
@@ -1685,3 +1688,6 @@ def run_tsp():
 
 if __name__ == "__main__":
     run_tsp()
+    script_example()
+    script_example_lns()
+    script_example_flow()
