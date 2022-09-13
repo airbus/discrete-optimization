@@ -27,25 +27,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout source code
-          uses: actions/checkout@v2
-        - name: Install build dependencies
-          run: pip install -U setuptools wheel
-        - name: Update version number according to pushed tag
-          if: startsWith(github.ref, 'refs/tags/v')
-          run: |
-            VERSION=${GITHUB_REF/refs\/tags\/v/}  # stripping "refs/tags/v"
-            echo $VERSION
-            # Replace in-place version number in package __init__.py, also used by setup.py
-            sed -i -e "s/^__version__\s*=.*$/__version__ = \"${VERSION}\"/g" discrete_optimization/__init__.py
-            cat discrete_optimization/__init__.py
-        - name: Build discrete-optimization wheel
-          run: python setup.py bdist_wheel
-        - name: Upload as build artifacts
-          uses: actions/upload-artifact@v2
-          with:
-            name: wheels
-            path: dist/*.whl
+      - name: Checkout source code
+        uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: pip install -U setuptools wheel
+      - name: Update version number according to pushed tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}  # stripping "refs/tags/v"
+          echo $VERSION
+          # Replace in-place version number in package __init__.py, also used by setup.py
+          sed -i -e "s/^__version__\s*=.*$/__version__ = \"${VERSION}\"/g" discrete_optimization/__init__.py
+          cat discrete_optimization/__init__.py
+      - name: Build discrete-optimization wheel
+        run: python setup.py bdist_wheel
+      - name: Upload as build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist/*.whl
 
   test:
     needs: build
