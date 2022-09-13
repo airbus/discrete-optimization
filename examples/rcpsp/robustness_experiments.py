@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 from collections import defaultdict
@@ -51,6 +52,8 @@ from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import (
     ParametersCP,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import Executor
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def tree():
@@ -122,6 +125,8 @@ def run_cp_multiscenario():
 
     for m in list_rcpsp_model:
         m.update_functions()
+    for model in list_rcpsp_model:
+        model.costs["mean_resource_reserve"] = True
     dummy = list_rcpsp_model[0].get_dummy_solution()
     model_aggreg_mean = Aggreg_RCPSPModel(
         list_problem=list_rcpsp_model,
@@ -166,7 +171,7 @@ def run_cp_multiscenario():
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
     )
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 500
+    params_cp.time_limit = 50
     params_cp.free_search = True
     result = solver.solve(parameters_cp=params_cp)
     solution_fit = result.list_solution_fits

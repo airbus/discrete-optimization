@@ -29,6 +29,8 @@ from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     plot_ortools_solution,
 )
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 def load_vrp_and_transform():
     file_path = vrp_parser.get_data_available()[1]
@@ -50,11 +52,13 @@ def debug_lp():
         files_available = tsp_parser.get_data_available()
         file_path = files_available[16]
         tsp_model = tsp_parser.parse_file(file_path)
-        gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model)
+        gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
     else:
         file_path = vrp_parser.get_data_available()[1]
         vrp_model = vrp_parser.parse_file(file_path)
-        gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
+        gpdp = ProxyClass.from_vrp_model_to_gpdp(
+            vrp_model=vrp_model, compute_graph=True
+        )
     simplify = False
     if simplify:
         gpdp = build_pruned_problem(gpdp)
@@ -64,9 +68,10 @@ def debug_lp():
     p = ParametersMilp.default()
     p.time_limit = 2000
     solutions = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=100, include_subtour=False
+        parameters_milp=p, do_lns=False, nb_iteration_max=4, include_subtour=False
     )
     plot_solution(solutions[-1], gpdp)
+    plt.show()
 
 
 def selective_tsp():
@@ -78,10 +83,11 @@ def selective_tsp():
         one_visit_per_cluster=True, one_visit_per_node=False, include_subtour=False
     )
     solutions = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=True, nb_iteration_max=200, include_subtour=False
+        parameters_milp=p, do_lns=True, nb_iteration_max=4, include_subtour=False
     )
     print(solutions[-1].flow_solution)
     plot_solution(solutions[-1], gpdp)
+    plt.show()
 
 
 def vrp_capacity():
@@ -90,7 +96,7 @@ def vrp_capacity():
     vrp_model = vrp_parser.parse_file(file_path)
     print("Nb vehicle : ", vrp_model.vehicle_count)
     print("Capacities : ", vrp_model.vehicle_capacities)
-    gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
+    gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model, compute_graph=True)
     simplify = False
     if simplify:
         gpdp = build_pruned_problem(gpdp)
@@ -106,9 +112,10 @@ def vrp_capacity():
         include_time_evolution=False,
     )
     solutions = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=True, nb_iteration_max=500
+        parameters_milp=p, do_lns=True, nb_iteration_max=4
     )
     plot_solution(solutions[-1], gpdp)
+    plt.show()
 
 
 def run_ortools_solver():
@@ -330,8 +337,10 @@ def create_examples_script(folder_to_save):
 
 
 if __name__ == "__main__":
+    debug_lp()
+    selective_tsp()
+    vrp_capacity()
+    run_ortools_solver()
     run_ortools_pickup_delivery()
-    # run_ortools_solver_selective()
-    # create_examples_script()
-    # selective_tsp()
-    # run_ortools_pickup_delivery()
+    run_ortools_solver_selective()
+    run_ortools_pickup_delivery_cluster()

@@ -12,7 +12,7 @@ def run_gphh():
     params_gphh.pop_size = 25
     params_gphh.crossover_rate = 0.7
     params_gphh.mutation_rate = 0.1
-    params_gphh.n_gen = 50
+    params_gphh.n_gen = 10
     params_gphh.min_tree_depth = 1
     params_gphh.max_tree_depth = 6
     gphh_solver = GPHH(

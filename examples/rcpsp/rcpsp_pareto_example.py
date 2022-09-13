@@ -221,5 +221,5 @@ def run_single_mode_robustness_benchmark():
 
 
 if __name__ == "__main__":
-    # test_single_mode_moo_benchmark()
+    run_single_mode_moo_benchmark()
     run_single_mode_robustness_benchmark()

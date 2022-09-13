@@ -1,3 +1,4 @@
+import logging
 import time
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,8 @@ from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     local_search_metaheuristic_enum,
     plot_ortools_solution,
 )
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def run_time_windows():
@@ -37,14 +40,6 @@ def run_time_windows():
     t_deb = time.time()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     dimension_data = res_to_plot[1]
-    print(res_to_plot[0])
-    for vehicle, node in dimension_data:
-        time_node = dimension_data[(vehicle, node)]["Time"]
-        print(
-            time_node,
-            " obtained : constraint : ",
-            gpdp.time_windows_nodes.get(node, "not here"),
-        )
     plot_ortools_solution(res_to_plot, gpdp)
     plt.show()
 
@@ -73,16 +68,6 @@ def run_pickup():
     results = solver.solve()
     t_deb = time.time()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
-    dimension_data = res_to_plot[1]
-    print(res_to_plot[0])
-    print(gpdp.list_pickup_deliverable)
-    for vehicle, node in dimension_data:
-        time_node = dimension_data[(vehicle, node)]["Time"]
-        print(
-            time_node,
-            " obtained : constraint : ",
-            gpdp.time_windows_nodes.get(node, "not here"),
-        )
     plot_ortools_solution(res_to_plot, gpdp)
     plt.show()
 
@@ -118,21 +103,12 @@ def run_demand():
         n_solutions=200,
     )
     results = solver.solve()
-    t_deb = time.time()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
-    dimension_data = res_to_plot[1]
-    print(res_to_plot[0])
-    print(gpdp.list_pickup_deliverable)
-    for vehicle, node in dimension_data:
-        time_node = dimension_data[(vehicle, node)]["Time"]
-        print(
-            time_node,
-            " obtained : constraint : ",
-            gpdp.time_windows_nodes.get(node, "not here"),
-        )
     plot_ortools_solution(res_to_plot, gpdp)
     plt.show()
 
 
 if __name__ == "__main__":
+    run_time_windows()
+    run_pickup()
     run_demand()
