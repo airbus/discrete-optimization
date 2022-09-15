@@ -19,7 +19,6 @@ The library also contains implementation of several classic discrete optimizatio
 * Facility Location Problem (FLP)
 * Resource Constrained Project Scheduling Problem (RCPSP). Several variants of RCPSP are available
 * Graph Colouring Problem (GCP)
-* Travelling thief Problem (TTP)
 
 In addition, the library contains functionalities to enable robust optimization
 through different scenario handling mechanisms) and multi-objective optimization
@@ -28,17 +27,31 @@ through different scenario handling mechanisms) and multi-objective optimization
 
 ## Installation
 
+### Prerequisites
+
 - Install [minizinc](https://www.minizinc.org/).
 - Optionally, install [gurobi](https://www.gurobi.com/) with its python binding (gurobipy)
   and an appropriate license, if you want to try solvers that make use of gurobi.
 
   NB: If you just do `pip install gurobipy`, you get a minimal license which does not allow to use it on "real" models.
-- Install discrete-optimization:
-    ```shell
-    git clone https://github.com/airbus/discrete-optimization.git
-    cd discrete-optimization
-    pip install --editable .
-    ```
+
+### Normal install
+
+Install discrete-optimization from pip:
+
+```shell
+pip install discrete-optimization
+```
+
+### Install in developer mode
+
+You can also install the library directly from the repository in developer mode:
+
+```shell
+git clone https://github.com/airbus/discrete-optimization.git
+cd discrete-optimization
+pip install --editable .
+```
 
 
 If you encounter any problem during installation,
@@ -50,27 +63,31 @@ on the repository.
 
 ### Notebooks
 
-*[work in progress]*
+In the `notebooks` directory of the repository, you will find several jupyter notebooks demonstrating
+how the library can be used
+- on a knapsack problem,
+- on a scheduling problem (RCPSP).
 
-In the `notebooks` directory, you will find several jupyter notebooks demonstrating
-how the library can be used on a scheduling problem (RCPSP).
-
-[//]: # (The notebooks are well commented, highlighting different approaches
-and demonstrating the use of different solvers.)
 
 ### Scripts
 
-The `examples` directory gather several scripts using the different features of
+The `examples` directory of the repository gather several scripts using the different features of
 the library and how to instantiate different problem instances and solvers.
 
 
 ## Unit tests
 
-To test the library, you can install the library with the additional necessaries dependencies with
+Unit tests are available in `tests/` directory of the repository.
+To test the library, you can install the library
+with the "test" extra dependencies by typing
 ```shell
+git clone https://github.com/airbus/discrete-optimization.git
+cd discrete-optimization
 pip install --editable .[test]
 ```
+
+
 Then run pytest on tests folder:
 ```shell
-pytest -vv tests
+pytest -v tests
 ```
