@@ -37,6 +37,7 @@ class FacilitySolution(Solution):
         See problem.evaluate(sol) implementation for FacilityProblem
 
     """
+
     def __init__(
         self,
         problem: Problem,
@@ -80,6 +81,7 @@ class FacilityProblem(Problem):
 
 
     """
+
     def __init__(
         self,
         facility_count: int,

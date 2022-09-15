@@ -1,7 +1,7 @@
 """Base module for the problem implementation in discrete-optimization library."""
+import logging
 from abc import abstractmethod
 from enum import Enum
-import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
@@ -19,6 +19,7 @@ class TypeAttribute(Enum):
     This specification will be particularly usefull if you want to give a try to local search algorithms, which will use
     the information to use the right local moves.
     """
+
     LIST_INTEGER = 0
     LIST_BOOLEAN = 1
     PERMUTATION = 2
@@ -34,6 +35,7 @@ class TypeAttribute(Enum):
 
 class ModeOptim(Enum):
     """Enum class to specify minimization or maximization problems."""
+
     MAXIMIZATION = 0
     MINIMIZATION = 1
 
@@ -56,6 +58,7 @@ class EncodingRegister:
             }
         }
     """
+
     dict_attribute_to_type: Dict[str, Any]
 
     def __init__(self, dict_attribute_to_type: Dict[str, Any]):
@@ -134,6 +137,7 @@ class ObjectiveHandling(Enum):
     When AGGREGATE, the problems has several KPI to combine with different ponderations.
     When MULTI_OBJ, pareto optimisation will be done if possible.
     """
+
     SINGLE = 0
     AGGREGATE = 1
     MULTI_OBJ = 2
@@ -141,6 +145,7 @@ class ObjectiveHandling(Enum):
 
 class TypeObjective(Enum):
     """Enum class to specify what should each KPI are."""
+
     OBJECTIVE = 0
     PENALTY = 1
 
@@ -170,6 +175,7 @@ class ObjectiveRegister:
 
 
     """
+
     objective_sense: ModeOptim
     objective_handling: ObjectiveHandling
     dict_objective_to_doc: Dict[str, Any]
@@ -205,6 +211,7 @@ class ObjectiveRegister:
 
 class Solution:
     """Base class for a solution to a Problem."""
+
     @abstractmethod
     def copy(self) -> "Solution":
         """Deep copy of the solution.
@@ -256,6 +263,7 @@ class Solution:
 
 class Problem:
     """Base class for a discrete optimization problem."""
+
     @abstractmethod
     def evaluate(self, variable: Solution) -> Dict[str, float]:
         """Evaluate a given solution object for the given problem.
@@ -343,15 +351,16 @@ class Problem:
 
 class BaseMethodAggregating(Enum):
     """Enum class used to specify how an evaluation of a multiscenario problem should be aggregated."""
+
     MEAN = 0
     """averaging over scenarios"""
     MEDIAN = 1
     """taking the median over scenarios"""
     PERCENTILE = 2
-    """take a given percentile over scenario (the percentile value is given as additional parameter 
+    """take a given percentile over scenario (the percentile value is given as additional parameter
     in MethodAggregating object"""
     PONDERATION = 3
-    """ponderate the different scenario with different weights. 
+    """ponderate the different scenario with different weights.
     (MEAN would be equivalent with equal ponderation for example) """
     MIN = 4
     """Take the min value over the scenarios"""
@@ -368,6 +377,7 @@ class MethodAggregating:
         ponderation (np.array): if base_method_aggregating==BaseMethodAggregating.PONDERATION, then the ponderation value used will be this one.
          It should be the same size as the number of scenario in the RobustProblem
     """
+
     def __init__(
         self,
         base_method_aggregating: BaseMethodAggregating,
@@ -386,6 +396,7 @@ class RobustProblem(Problem):
         list_problem (List[Problem]): List of Problems corresponding to different scenarios.
         method_aggregating (MethodAggregating): specifies how the evaluation on each scenario should be merged
     """
+
     def __init__(
         self, list_problem: List[Problem], method_aggregating: MethodAggregating
     ):
@@ -482,6 +493,7 @@ class ParamsObjectiveFunction:
 
     This class has been implemented after ObjectiveRegister to be able to call solvers and use user choice optimization.
     """
+
     objective_handling: ObjectiveHandling
     objectives: List[str]
     weights: List[float]

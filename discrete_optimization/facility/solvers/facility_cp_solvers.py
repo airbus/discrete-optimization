@@ -1,11 +1,11 @@
 import logging
 import os
-from deprecation import deprecated
 import random
 from datetime import timedelta
 from enum import Enum
 from typing import List, Optional, Tuple, Union
 
+from deprecation import deprecated
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.facility.facility_model import (
@@ -79,6 +79,7 @@ class FacilityCP(MinizincCPSolver):
         silent_solve_error (bool): if True, raise a warning instead of an error if the underlying instance.solve() crashes
         **args: unused
     """
+
     def __init__(
         self,
         facility_problem: FacilityProblem,
@@ -193,7 +194,9 @@ class FacilityCP(MinizincCPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    @deprecated(deprecated_in="0.1", details="Use rather initial solution provider utilities")
+    @deprecated(
+        deprecated_in="0.1", details="Use rather initial solution provider utilities"
+    )
     def get_solution(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
         if greedy_start:

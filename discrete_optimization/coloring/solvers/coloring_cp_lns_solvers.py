@@ -160,6 +160,7 @@ class PostProcessSolutionColoring(PostProcessSolution):
         problem (ColoringProblem): coloring instance
         params_objective_function (ParamsObjectiveFunction): params of the objective function
     """
+
     def __init__(
         self,
         problem: ColoringProblem,

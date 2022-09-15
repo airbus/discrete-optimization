@@ -37,6 +37,7 @@ class ColoringSolution(Solution):
                                   (be careful to keep coherence between colors and nb_color !)
 
     """
+
     def __init__(
         self,
         problem: Problem,
@@ -166,6 +167,7 @@ class ColoringProblem(Problem):
         index_to_nodes_name (Dict[int, Hashable]): index->node_name
 
     """
+
     def __init__(self, graph: Graph):
         self.graph = graph
         self.number_of_nodes = len(self.graph.nodes_infos_dict)

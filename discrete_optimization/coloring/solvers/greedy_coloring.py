@@ -1,6 +1,6 @@
 """Greedy solvers for coloring problem : binding from networkx library methods."""
-from enum import Enum
 import logging
+from enum import Enum
 from typing import Optional
 
 import networkx as nx
