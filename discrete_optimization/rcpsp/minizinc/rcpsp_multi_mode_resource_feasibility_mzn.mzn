@@ -64,8 +64,6 @@ array[Res] of int: rweight;    % Resource weights
 %---------------------------------------------------------------------------%
 % Variables
 
-int: UB = sum(i in Act)(max([mdur[m] | m in mode[i]]));
-
 array[Mod] of var bool: mrun;
 array[Act] of var 0..max_makespan: start;
 array[Act] of var min(mdur)..max(mdur): adur = [let {var {mdur[m] | m in mode[i]}: x} in x | i in Act];
@@ -74,10 +72,6 @@ var 0..max_makespan: objective;
 
 %--- MOVED HERE FOR RESOURCE FEASIBILITY STUDY ---%
 array[Res] of var int: rcap;     % Resource capacity
-%constraint rcap[1]<6;
-%constraint rcap[2]<5;
-%constraint rcap[3]<5;
-
 %-------------------------------------------------%
 
 %---------------------------------------------------------------------------%
@@ -223,17 +217,19 @@ predicate post_noc_cumu(int: i, int: j) =
 
     % Posting of the redundant NOCs
     %
-constraint redundant_constraint(
-    forall(i,j in Act where i < j /\ can_act_be_disjunct(i, j))(
-        if are_act_disjunct(i, j) then
-            % Activities are disjunct all mode combinations
-            post_noc_disj(i, j)
-        else
-            % Activities might be disjunct
-            post_noc_rres(i, j)
-        endif
-    )
-);
+bool: add_redundant_constraints=false;
+constraint if add_redundant_constraints then
+                redundant_constraint(
+                            forall(i,j in Act where i < j /\ can_act_be_disjunct(i, j))(
+                                if are_act_disjunct(i, j) then
+                                    % Activities are disjunct all mode combinations
+                                    post_noc_disj(i, j)
+                                else
+                                    % Activities might be disjunct
+                                    post_noc_rres(i, j)
+                                endif
+                            ))
+           endif;
 
 
 %---------------------------------------------------------------------------%
@@ -248,9 +244,9 @@ solve
     %-----------------------------------------------%
 
 ann: durThenStartThenMode = seq_search([
-        int_search(adur, smallest, indomain_min, complete),
         int_search(start, smallest, indomain_min, complete),
-        int_search(rcap, smallest, indomain_min, complete),
+        int_search(rcap, smallest, indomain_max, complete),
+        int_search(adur, smallest, indomain_min, complete),
         bool_search(mrun, input_order, indomain_max, complete)
     ]);
 

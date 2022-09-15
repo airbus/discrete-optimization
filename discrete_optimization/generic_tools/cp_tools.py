@@ -60,6 +60,7 @@ class ParametersCP:
     free_search: bool
     multiprocess: bool
     nb_process: int
+    optimisation_level: int
 
     def __init__(
         self,
@@ -71,6 +72,7 @@ class ParametersCP:
         free_search: bool = False,
         multiprocess: bool = False,
         nb_process: int = 1,
+        optimisation_level: int = 1,
     ):
         """
 
@@ -90,6 +92,7 @@ class ParametersCP:
         self.free_search = free_search
         self.multiprocess = multiprocess
         self.nb_process = nb_process
+        self.optimisation_level = optimisation_level
 
     @staticmethod
     def default():
@@ -99,6 +102,7 @@ class ParametersCP:
             all_solutions=False,
             nr_solutions=1000,
             free_search=False,
+            optimisation_level=1,
         )
 
     @staticmethod
@@ -205,6 +209,7 @@ class MinizincCPSolver(CPSolver):
                     if parameters_cp.multiprocess
                     else None,
                     free_search=parameters_cp.free_search,
+                    optimisation_level=parameters_cp.optimisation_level,
                 )
             except Exception as e:
                 logger.warning(e)
@@ -219,6 +224,7 @@ class MinizincCPSolver(CPSolver):
                 if parameters_cp.multiprocess
                 else None,
                 free_search=parameters_cp.free_search,
+                optimisation_level=parameters_cp.optimisation_level,
             )
         logger.info("Solving finished")
         logger.debug(result.status)

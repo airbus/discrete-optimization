@@ -1308,3 +1308,33 @@ def compute_mean_ressource(
         )
     )
     return mean_resource_reserve
+
+
+@njit
+def compute_ressource_consumption(
+    modes_array,
+    consumption_array,
+    start_array,
+    end_array,
+    horizon,
+    ressource_available,
+    ressource_renewable,
+):
+    new_horizon = horizon
+    resource_avail_in_time = {}
+    for index in range(ressource_available.shape[0]):
+        resource_avail_in_time[index] = np.zeros(new_horizon + 1)
+    nb_task = start_array.shape[0]
+    for t in range(nb_task):
+        start_time = start_array[t]
+        end_time = end_array[t]
+        for res_index in resource_avail_in_time:
+            if ressource_renewable[res_index]:
+                resource_avail_in_time[res_index][
+                    start_time:end_time
+                ] += consumption_array[t, modes_array[t], res_index]
+            else:
+                resource_avail_in_time[res_index][start_time:] += consumption_array[
+                    t, modes_array[t], res_index
+                ]
+    return resource_avail_in_time

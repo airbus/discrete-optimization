@@ -77,6 +77,9 @@ files_mzn = {
         this_path, "../minizinc/rcpsp_multi_mode_resource_feasibility_mzn.mzn"
     ),
     "modes": os.path.join(this_path, "../minizinc/mrcpsp_mode_satisfy.mzn"),
+    "single_resource": os.path.join(
+        this_path,
+        "../minizinc/rcpsp_single_mode_resource.mzn"),
 }
 
 
