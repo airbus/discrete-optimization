@@ -61,6 +61,11 @@ set of int: Times = 0..max_time;     % Possible start times
 
 array [Tasks] of var Times: s;  % The start times
 var 0..max_time: objective      ;  % The project duration (makespan)
+array[Res] of var 0..max(rc): res_used;
+constraint forall(r in Res)(res_used[r]<=rc[r]);
+
+% lower bound...
+constraint forall(i in Tasks, k in Res)(rr[k, i]<=res_used[k]);
 
 %-----------------------------------------------------------------------------%
 % Constraints.
@@ -75,15 +80,18 @@ constraint
 
     % Redundant non-overlapping constraints
     %
+bool: non_overlap_constraint = false;
 constraint
-    forall ( i, j in Tasks where i < j )
-    (
-        if exists(r in Res)(rr[r, i] + rr[r, j] > rc[r]) then
-            s[i] + d[i] <= s[j]   \/ s[j] + d[j] <= s[i]
-        else
-            true
-        endif
-    );
+    if non_overlap_constraint then
+        forall ( i, j in Tasks where i < j )
+        (
+            if exists(r in Res)(rr[r, i] + rr[r, j] > rc[r]) then
+                s[i] + d[i] <= s[j]   \/ s[j] + d[j] <= s[i]
+            else
+                true
+            endif
+        )
+    endif;
 
 
 constraint forall(r in Res)(
@@ -136,6 +144,37 @@ constraint
          )
      );
 
+constraint
+     forall ( r in Res )
+     (
+         let {
+             set of int: RTasks =
+                             { i | i in Tasks
+                             where rr[r, i] > 0 /\ d[i] > 0 },
+             int: sum_rr = sum(i in RTasks)(rr[r, i])
+         } in (
+             if RTasks != {} then
+                 if include_fake_tasks  then
+                    let{set of FakeAct: FTasks = {j | j in FakeAct where fakereq[r, j]>0}}
+                      in(
+                        cumulative([ s[i] | i in RTasks ]++[fakestart[p] | p in FTasks],
+                                   [ d[i] | i in RTasks ]++[fakedur[p] | p in FTasks],
+                                   [ rr[r, i] | i in RTasks ]++[fakereq[r, p] | p in FTasks],
+                                   res_used[r])
+                        )
+                 else if sum_rr > rc[r] then
+                        cumulative([ s[i] | i in RTasks ],
+                                   [ d[i] | i in RTasks ],
+                                   [ rr[r, i] | i in RTasks ],
+                                   res_used[r])
+                      else
+                        true
+                      endif
+                 endif
+             endif
+         )
+     );
+
 % Makespan constraints
 bool: add_objective_makespan; % by default True. but by setting it false you can modify your objective function outside (i.e minizinc pyyhon)
 constraint(if add_objective_makespan then
@@ -162,9 +201,10 @@ constraint (if ignore_sec_objective then
 
 %solve satisfy;
 solve
-   :: int_search( s ++ [objective], smallest, indomain_min) %, complete )
+   :: seq_search([int_search(s, smallest, indomain_min, complete),
+                  int_search(res_used, smallest, indomain_max, complete)])
    %:: int_search( s ++ [objective], smallest, indomain_min, complete) %, complete )
-   minimize objective+sec_objective;
+   minimize sum(res_used);
 
 %-----------------------------------------------------------------------------%
 output ["makespan = ", show(objective), "\n",
