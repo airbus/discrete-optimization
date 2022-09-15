@@ -1,7 +1,7 @@
 """Linear programming models and solve functions for Coloring problem."""
 import logging
 import sys
-from typing import Dict, Hashable, Optional, Tuple, Type, Union
+from typing import Dict, Hashable, List, Optional, Tuple, Union
 
 import mip
 import networkx as nx
@@ -17,6 +17,7 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lp_tools import (
@@ -29,6 +30,7 @@ from discrete_optimization.generic_tools.lp_tools import (
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+    TupleFitness,
 )
 
 try:
@@ -111,9 +113,9 @@ class _BaseColoringLP(MilpSolver):
             n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
         else:
             n_solutions = 1
-        list_solution_fits = []
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for s in range(n_solutions):
-            solution = [0] * self.number_of_nodes
+            colors = [0] * self.number_of_nodes
             for (
                 variable_decision_key,
                 variable_decision_value,
@@ -122,8 +124,8 @@ class _BaseColoringLP(MilpSolver):
                 if value >= 0.5:
                     node = variable_decision_key[0]
                     color = variable_decision_key[1]
-                    solution[self.index_nodes_name[node]] = color
-            solution = ColoringSolution(self.coloring_problem, solution)
+                    colors[self.index_nodes_name[node]] = color
+            solution = ColoringSolution(self.coloring_problem, colors)
             fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(

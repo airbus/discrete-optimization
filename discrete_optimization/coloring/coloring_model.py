@@ -60,9 +60,16 @@ class ColoringSolution(Solution):
         Returns: A copy that can be considered as a deep copy of the current object.
 
         """
+        colors: Optional[Union[List[int], np.ndarray]]
+        if self.colors is None:
+            colors = None
+        elif isinstance(self.colors, np.ndarray):
+            colors = np.array(self.colors)
+        else:
+            colors = list(self.colors)
         return ColoringSolution(
             problem=self.problem,
-            colors=list(self.colors),
+            colors=colors,
             nb_color=self.nb_color,
             nb_violations=self.nb_violations,
         )
@@ -96,9 +103,18 @@ class ColoringSolution(Solution):
         Returns: New ColoringSolution object with value precede chain property.
 
         """
+        colors: List[int]
+        if self.colors is None:
+            raise ValueError(
+                "self.colors should not be None when calling to_reformated_solution()"
+            )
+        elif isinstance(self.colors, np.ndarray):
+            colors = self.colors.tolist()
+        else:
+            colors = self.colors
         sol = ColoringSolution(
             problem=self.problem,
-            colors=transform_color_values_to_value_precede(self.colors),
+            colors=transform_color_values_to_value_precede(colors),
             nb_color=self.nb_color,
             nb_violations=self.nb_violations,
         )
@@ -116,7 +132,7 @@ class ColoringSolution(Solution):
             + str(self.colors)
         )
 
-    def change_problem(self, new_problem: "ColoringProblem"):
+    def change_problem(self, new_problem: Problem):
         """Change the reference to the problem instance of the solution.
 
         If two coloring problems have the same number of nodes, we can build a solution of the problem
@@ -128,12 +144,18 @@ class ColoringSolution(Solution):
         Returns: None, but change in place the object
 
         """
-        self.__init__(
-            problem=new_problem,
-            colors=list(self.colors),
-            nb_color=self.nb_color,
-            nb_violations=self.nb_violations,
-        )
+        if not isinstance(new_problem, ColoringProblem):
+            raise ValueError(
+                "new_problem must a ColoringProblem for a ColoringSolution."
+            )
+        colors: Optional[Union[List[int], np.ndarray]]
+        if self.colors is None:
+            self.colors = None
+        elif isinstance(self.colors, np.ndarray):
+            self.colors = np.array(self.colors)
+        else:
+            self.colors = list(self.colors)
+        self.problem = new_problem
 
 
 def transform_color_values_to_value_precede(color_vector: List[int]):
