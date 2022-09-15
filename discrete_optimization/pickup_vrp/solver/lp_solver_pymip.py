@@ -1656,7 +1656,7 @@ def rebuild_routine(
                 return None
             len_this_component = len(paths_component[min_component])
             logger.debug(list(range(0, -len_this_component, -1)))
-            logger.debug(f"len this component : ", len_this_component)
+            logger.debug(f"len this component : {len_this_component}")
             logger.debug(f"out edge : {min_out_edge}")
             logger.debug(f"in edge : {min_in_edge}")
             index_of_in_component = indexes[min_component][min_out_edge[1]]

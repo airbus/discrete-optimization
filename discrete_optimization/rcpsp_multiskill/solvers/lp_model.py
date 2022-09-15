@@ -384,5 +384,5 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
             logger.info("Init LP model ")
             t = time.time()
             self.init_model(greedy_start=False, **args)
-            logger.info("LP model initialized...in ", time.time() - t, " seconds")
+            logger.info(f"LP model initialized...in {time.time() - t} seconds")
         return super().solve(parameters_milp=parameters_milp, **args)
