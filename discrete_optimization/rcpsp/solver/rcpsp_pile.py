@@ -135,7 +135,7 @@ class PileSolverRCPSP(SolverDO):
         perm = []
         while len(schedule) < self.n_jobs:
             logger.debug(len(schedule))
-            logger.debug("available activities : ", available_activities)
+            logger.debug(f"available activities : {available_activities}")
             possible_activities = [
                 n
                 for n in available_activities
@@ -145,7 +145,7 @@ class PileSolverRCPSP(SolverDO):
                     for r in current_ressource_available
                 )
             ]
-            logger.debug("Ressources : ", current_ressource_available)
+            logger.debug(f"Ressources : {current_ressource_available}")
             while len(possible_activities) > 0:
                 next_activity = None
                 if greedy_choice == GreedyChoice.MOST_SUCCESSORS:

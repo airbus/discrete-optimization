@@ -61,8 +61,8 @@ class FacilitySolCP:
     def __init__(self, objective, _output_item, **kwargs):
         self.objective = objective
         self.dict = kwargs
-        logger.debug("One solution ", self.objective)
-        logger.debug("Output ", _output_item)
+        logger.debug(f"One solution {self.objective}")
+        logger.debug(f"Output {_output_item}")
 
     def check(self) -> bool:
         return True
