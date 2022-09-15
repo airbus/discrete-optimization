@@ -1,7 +1,7 @@
 """Large neighborhood search + Linear programming toolbox for coloring problem."""
 import random
 from enum import Enum
-from typing import Any, Hashable, Mapping
+from typing import Any, Dict, Hashable, Mapping
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
 from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
@@ -111,7 +111,7 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
             if n in subpart_color and dict_color_start[n] <= max_color - 1:
                 dict_color_fixed[n] = dict_color_start[n]
         colors_var = milp_solver.variable_decision["colors_var"]
-        lns_constraint = {}
+        lns_constraint: Dict[Hashable, Any] = {}
         for key in colors_var:
             n, c = key
             if c == dict_color_start[n]:
@@ -189,7 +189,7 @@ class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
             if n in subpart_color and dict_color_start[n] <= max_color - 1:
                 dict_color_fixed[n] = dict_color_start[n]
         colors_var = milp_solver.variable_decision["colors_var"]
-        lns_constraint = {}
+        lns_constraint: Dict[Hashable, Any] = {}
         start = []
         for key in colors_var:
             n, c = key
