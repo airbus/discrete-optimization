@@ -1,5 +1,6 @@
 import logging
 import os
+from deprecation import deprecated
 import random
 from datetime import timedelta
 from enum import Enum
@@ -192,6 +193,7 @@ class FacilityCP(MinizincCPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
+    @deprecated(deprecated_in="0.1", details="Use rather initial solution provider utilities")
     def get_solution(self, **kwargs):
         greedy_start = kwargs.get("greedy_start", True)
         if greedy_start:
