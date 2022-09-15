@@ -35,3 +35,22 @@ repos:
     hooks:
       - id: black
         language_version: python3
+
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.1.1
+    hooks:
+      - id: nbqa-isort
+        args: ["--profile=black"]
+      - id: nbqa-black
+      - id: nbqa
+        entry: nbqa pycln
+        name: nbqa-pycln
+        alias: nbqa-pycln
+        additional_dependencies: [pycln]
+        args: ["--all"]
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.5.0
+    hooks:
+      - id: nbstripout
+        files: ^notebooks/
