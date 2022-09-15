@@ -9,6 +9,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 
 class SolverDO:
     """Base class for a discrete-optimization solver."""
+
     @abstractmethod
     def solve(self, **kwargs) -> ResultStorage:
         """Generic solving function.

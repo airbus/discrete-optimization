@@ -142,7 +142,6 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
 
     """
 
-
     def init_model(self, **kwargs):
         """Initialize the gurobi model.
 

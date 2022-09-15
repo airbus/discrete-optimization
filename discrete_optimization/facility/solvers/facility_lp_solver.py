@@ -49,7 +49,9 @@ else:
     )
 
 
-def compute_length_matrix(facility_problem: FacilityProblem) -> Tuple[np.array, np.array, np.array]:
+def compute_length_matrix(
+    facility_problem: FacilityProblem,
+) -> Tuple[np.array, np.array, np.array]:
     """Precompute all the cost of allocation in a matrix form.
 
     A matrix "closest" is also computed, sorting for each customers the facility by distance.
@@ -179,6 +181,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         params_objective_function (ParamsObjectiveFunction): objective function parameters
                         (however this is just used for the ResultStorage creation, not in the optimisation)
     """
+
     def init_model(self, **kwargs):
         """
 
@@ -283,8 +286,8 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
 
 
 class LP_Facility_Solver_CBC(SolverDO):
-    """Milp formulation using cbc solver.
-    """
+    """Milp formulation using cbc solver."""
+
     def __init__(
         self,
         facility_problem: FacilityProblem,
@@ -448,6 +451,7 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         Gurobi and CBC are available backends.
 
     """
+
     def __init__(
         self,
         facility_problem: FacilityProblem,

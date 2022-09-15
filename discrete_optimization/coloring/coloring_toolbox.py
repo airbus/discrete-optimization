@@ -1,5 +1,6 @@
+from typing import Hashable, List, Tuple
+
 import networkx as nx
-from typing import Tuple, List, Hashable
 
 
 def compute_cliques(g: nx.Graph, nb_max=None) -> Tuple[List[List[Hashable]], bool]:

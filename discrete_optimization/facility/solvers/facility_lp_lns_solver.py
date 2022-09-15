@@ -39,6 +39,7 @@ class InitialFacilitySolution(InitialSolution):
         problem (FacilityProblem): input coloring problem
         initial_method (InitialFacilityMethod): the method to use to provide the initial solution.
     """
+
     def __init__(
         self,
         problem: FacilityProblem,

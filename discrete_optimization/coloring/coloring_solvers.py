@@ -80,6 +80,7 @@ def look_for_solver(domain: "ColoringProblem"):
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
+
 def look_for_solver_class(class_domain):
     """Given a class domain, return a list of class of solvers.
 
