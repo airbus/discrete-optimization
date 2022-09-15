@@ -78,8 +78,8 @@ files_mzn = {
     ),
     "modes": os.path.join(this_path, "../minizinc/mrcpsp_mode_satisfy.mzn"),
     "single_resource": os.path.join(
-        this_path,
-        "../minizinc/rcpsp_single_mode_resource.mzn"),
+        this_path, "../minizinc/rcpsp_single_mode_resource.mzn"
+    ),
 }
 
 
