@@ -1,6 +1,6 @@
 """Linear programming models and solve functions for facility location problem."""
 import logging
-from typing import Any, Dict, Hashable, Optional, Tuple, Union
+from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
 
 import mip
 import numpy as np
@@ -13,6 +13,7 @@ from discrete_optimization.facility.facility_model import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -26,6 +27,7 @@ from discrete_optimization.generic_tools.lp_tools import (
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+    TupleFitness,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,7 +53,7 @@ else:
 
 def compute_length_matrix(
     facility_problem: FacilityProblem,
-) -> Tuple[np.array, np.array, np.array]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Precompute all the cost of allocation in a matrix form.
 
     A matrix "closest" is also computed, sorting for each customers the facility by distance.
@@ -79,7 +81,7 @@ def compute_length_matrix(
 
 def prune_search_space(
     facility_problem: FacilityProblem, n_cheapest: int = 10, n_shortest=10
-) -> Tuple[np.array, np.array]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Utility function that can prune the search space.
 
     Output of this function will be used to :
@@ -147,9 +149,9 @@ class _LPFacilitySolverBase(MilpSolver):
             n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
         else:
             n_solutions = 1
-        list_solution_fits = []
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for s in range(n_solutions):
-            solution = [0] * self.facility_problem.customer_count
+            facility_for_customer = [0] * self.facility_problem.customer_count
             for (
                 variable_decision_key,
                 variable_decision_value,
@@ -163,8 +165,8 @@ class _LPFacilitySolverBase(MilpSolver):
                 if value >= 0.5:
                     f = variable_decision_key[0]
                     c = variable_decision_key[1]
-                    solution[c] = f
-            solution = FacilitySolution(self.facility_problem, solution)
+                    facility_for_customer[c] = f
+            solution = FacilitySolution(self.facility_problem, facility_for_customer)
             fit = self.aggreg_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(

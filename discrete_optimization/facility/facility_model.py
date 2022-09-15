@@ -139,16 +139,20 @@ class FacilityProblem(Problem):
         Returns: kpi of the solution
 
         """
-        kp_sol = None
+        kp_sol: FacilitySolution
         if encoding_name == "facility_for_customers":
             kp_sol = FacilitySolution(problem=self, facility_for_customers=int_vector)
         elif encoding_name == "custom":
             kwargs = {encoding_name: int_vector, "problem": self}
             kp_sol = FacilitySolution(**kwargs)
+        else:
+            raise ValueError(
+                f"encoding_name must be 'facility_for_customers' or 'custom'"
+            )
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate_cost(self, variable: FacilitySolution) -> Dict[str, float]:
+    def evaluate_cost(self, variable: FacilitySolution) -> Dict[str, Any]:
         """Compute the allocation cost of the solution along with setup cost too.
 
         Args:
