@@ -35,7 +35,7 @@ through different scenario handling mechanisms) and multi-objective optimization
 
   NB: If you just do `pip install gurobipy`, you get a minimal license which does not allow to use it on "real" models.
 
-### Normal install
+### Normal install
 
 Install discrete-optimization from pip:
 
@@ -43,7 +43,7 @@ Install discrete-optimization from pip:
 pip install discrete-optimization
 ```
 
-### Install in developer mode
+### Install in developer mode
 
 You can also install the library directly from the repository in developer mode:
 
@@ -69,7 +69,7 @@ how the library can be used
 - on a scheduling problem (RCPSP).
 
 
-### Scripts
+### Scripts
 
 The `examples` directory of the repository gather several scripts using the different features of
 the library and how to instantiate different problem instances and solvers.
