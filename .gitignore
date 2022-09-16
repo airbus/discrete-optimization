@@ -1,0 +1,24 @@
+# Mac
+.DS_Store
+
+# IDE
+.*/
+
+# Python
+__pycache__/
+.python-version
+
+# Temp files
+*.tmp
+
+# Build files
+build/
+dist/
+
+# Docs built/generated files
+docs/build
+docs/source/api/*
+!docs/source/api/modules.md
+
+# coverage
+.coverage
