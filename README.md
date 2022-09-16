@@ -91,3 +91,11 @@ Then run pytest on tests folder:
 ```shell
 pytest -v tests
 ```
+
+
+## License
+
+This software is under the MIT License that can be found in the [LICENSE](./LICENSE) file at the root of the repository.
+
+Some minzinc models have been adapted from files coming from https://github.com/MiniZinc/minizinc-benchmarks,
+under the same [license](https://github.com/MiniZinc/minizinc-benchmarks/blob/master/LICENSE).
