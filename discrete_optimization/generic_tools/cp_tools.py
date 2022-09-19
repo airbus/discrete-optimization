@@ -2,6 +2,11 @@
 Constraint programming common utilities and class that should be used by any solver using CP
 
 """
+
+#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 import logging
 from abc import abstractmethod
 from datetime import timedelta

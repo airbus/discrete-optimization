@@ -3,6 +3,11 @@
 Graph coloring problem consists at assigning different colors to vertexes in a graph.
 The only constraint is that adjacent vertices should be colored by different colors
 """
+
+#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 from typing import Dict, List, Optional, Union
 
 import numpy as np

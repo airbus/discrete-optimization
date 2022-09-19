@@ -1,3 +1,7 @@
+#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 from discrete_optimization.tsp.mutation.mutation_tsp import MutationSwapTSP
 from discrete_optimization.tsp.tsp_model import compute_length
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
