@@ -1,3 +1,8 @@
+#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
+
 def generic_mutate_wrapper(
     individual, problem, encoding_name, indpb, solution_fn, custom_mutation
 ):

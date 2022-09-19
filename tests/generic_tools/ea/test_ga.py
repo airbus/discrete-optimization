@@ -1,3 +1,7 @@
+#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 import discrete_optimization.knapsack.knapsack_parser as knapsack_parser
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup

@@ -1,4 +1,9 @@
 """Linear programming models and solve functions for Coloring problem."""
+
+#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 import logging
 import sys
 from typing import Dict, Hashable, List, Optional, Tuple, Union
