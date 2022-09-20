@@ -190,16 +190,22 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                                 - self.start_times[task][mode][t]
                                 <= 0
                             )
+                            len_calendar = len(
+                                self.rcpsp_model.employees[employee].calendar_employee
+                            )
                             if any(
                                 not self.rcpsp_model.employees[
                                     employee
                                 ].calendar_employee[tt]
                                 for tt in range(
                                     t,
-                                    t
-                                    + self.rcpsp_model.mode_details[task][mode][
-                                        "duration"
-                                    ],
+                                    min(
+                                        t
+                                        + self.rcpsp_model.mode_details[task][mode][
+                                            "duration"
+                                        ],
+                                        len_calendar,
+                                    ),
                                 )
                             ):
                                 self.model.add_constr(
