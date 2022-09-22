@@ -97,5 +97,6 @@ pytest -v tests
 
 This software is under the MIT License that can be found in the [LICENSE](./LICENSE) file at the root of the repository.
 
-Some minzinc models have been adapted from files coming from https://github.com/MiniZinc/minizinc-benchmarks,
-under the same [license](https://github.com/MiniZinc/minizinc-benchmarks/blob/master/LICENSE).
+Some minzinc models have been adapted from files coming from
+- https://github.com/MiniZinc/minizinc-benchmarks under the same [license](https://github.com/MiniZinc/minizinc-benchmarks/blob/master/LICENSE),
+- https://github.com/youngkd/MSPSP-InstLib for which we have the written authorization of the author.
