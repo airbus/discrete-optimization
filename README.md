@@ -29,7 +29,8 @@ through different scenario handling mechanisms) and multi-objective optimization
 
 ### Prerequisites
 
-- Install [minizinc](https://www.minizinc.org/).
+- Install [minizinc](https://www.minizinc.org/), at least version 2.6, and update the `PATH` environment variable
+so that it can be found by Python. See [minizinc documentation](https://www.minizinc.org/doc-latest/en/installation.html) for more details.
 - Optionally, install [gurobi](https://www.gurobi.com/) with its python binding (gurobipy)
   and an appropriate license, if you want to try solvers that make use of gurobi.
 
