@@ -47,7 +47,7 @@ setup(
     install_requires=[
         "shapely>=1.7",
         "mip>=1.13",
-        "minizinc>=0.4.2",
+        "minizinc>=0.6.0",
         "deap>=1.3.1",
         "networkx>=2.5  ",
         "numba>=0.50",
