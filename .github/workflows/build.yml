@@ -162,10 +162,9 @@ jobs:
           key: data-${{ hashFiles('discrete_optimization/datasets.py') }}
       - name: Fetch data for tests
         if: steps.cache-data.outputs.cache-hit != 'true'
-        shell: python3 {0}
         run: |
-          from discrete_optimization.datasets import fetch_all_datasets
-          fetch_all_datasets()
+          export PATH=$PATH:${{ matrix.minizinc_path }}
+          python -m discrete_optimization.datasets
       - name: Test with pytest (no coverage)
         if: ${{ !matrix.coverage }}
         run: |
