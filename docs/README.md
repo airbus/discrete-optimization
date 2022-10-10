@@ -25,6 +25,15 @@ rm source/api/discrete_optimization*.rst
 and then regenerate all files with the above command to be sure not to left a file
 corresponding to an old version of the code.
 
+## Generate notebooks list
+
+We generate a file notebooks.md from a template file notebooks.template.md, by including the
+list of available notebooks, with the command
+
+```shell
+cd docs/
+python generate_nb_index.py
+```
 
 ## Build doc
 
