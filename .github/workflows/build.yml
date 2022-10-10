@@ -18,17 +18,17 @@ jobs:
   linters:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-      - uses: pre-commit/action@v2.0.0
+      - uses: pre-commit/action@v3.0.0
 
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install build dependencies
         run: pip install -U setuptools wheel
       - name: Update version number according to pushed tag
@@ -42,7 +42,7 @@ jobs:
       - name: Build discrete-optimization wheel
         run: python setup.py bdist_wheel
       - name: Upload as build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist/*.whl
@@ -96,15 +96,16 @@ jobs:
         shell: bash
     steps:
       - name: Checkout discrete-optimization source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Download artifacts
-        uses: actions/download-artifact@v1.0.0
+        uses: actions/download-artifact@v3
         with:
           name: wheels
+          path: wheels
       - name: Create bin/
         run: mkdir -p bin
       - name: get MininZinc path to cache
@@ -113,7 +114,7 @@ jobs:
           echo "::set-output name=path::${{ matrix.minizinc_cache_path }}"
       - name: Restore MiniZinc cache
         id: cache-minizinc
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.get-mzn-cache-path.outputs.path }}
           key: ${{ matrix.minizinc_url }}
@@ -138,7 +139,7 @@ jobs:
           echo "::set-output name=dir::$(pip cache dir)"
       - name: Restore pip cache
         id: cache-pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.get-pip-cache-dir.outputs.dir }}
           key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
@@ -156,7 +157,7 @@ jobs:
           fi
       - name: Restore tests data cache
         id: cache-data
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/discrete_optimization_data
           key: data-${{ hashFiles('discrete_optimization/datasets.py') }}
@@ -203,9 +204,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Download wheels artifact
-        uses: actions/download-artifact@v1.0.0
+        uses: actions/download-artifact@v3
         with:
           name: wheels
+          path: wheels
       - name: Create the github release
         uses: softprops/action-gh-release@v1
         with:
