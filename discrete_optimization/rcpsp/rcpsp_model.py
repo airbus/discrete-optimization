@@ -706,6 +706,9 @@ class RCPSPModel(Problem):
     def copy(self):
         return RCPSPModel(
             resources=self.resources,
+            tasks_list=self.tasks_list,
+            source_task=self.source_task,
+            sink_task=self.sink_task,
             non_renewable_resources=self.non_renewable_resources,
             mode_details=deepcopy(self.mode_details),
             successors=deepcopy(self.successors),
