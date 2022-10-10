@@ -29,7 +29,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = ["*.template.*"]
 
 # myST configuration
 myst_enable_extensions = [
