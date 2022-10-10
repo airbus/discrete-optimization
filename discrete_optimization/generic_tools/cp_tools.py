@@ -135,6 +135,7 @@ class ParametersCP:
             free_search=self.free_search,
             multiprocess=self.multiprocess,
             nb_process=self.nb_process,
+            optimisation_level=self.optimisation_level,
         )
 
 
