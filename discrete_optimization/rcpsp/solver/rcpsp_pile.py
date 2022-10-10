@@ -186,7 +186,8 @@ class PileSolverRCPSP(SolverDO):
                 if greedy_choice == GreedyChoice.TOTALLY_RANDOM:
                     next_activity = random.choice(possible_activities)
                 available_activities.remove(next_activity)
-                perm += [next_activity - 2]
+                if next_activity in self.rcpsp_model.index_task_non_dummy:
+                    perm += [self.rcpsp_model.index_task_non_dummy[next_activity]]
                 schedule[next_activity] = {}
                 schedule[next_activity]["start_time"] = current_time
                 schedule[next_activity]["end_time"] = (
