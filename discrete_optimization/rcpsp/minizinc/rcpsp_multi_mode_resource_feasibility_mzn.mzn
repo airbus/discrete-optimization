@@ -68,10 +68,15 @@ array[Mod] of var bool: mrun;
 array[Act] of var 0..max_makespan: start;
 array[Act] of var min(mdur)..max(mdur): adur = [let {var {mdur[m] | m in mode[i]}: x} in x | i in Act];
 array[Res,Act] of var min_mrreq..max_mrreq: arreq = array2d(Res,Act,[let {var {mrreq[k,m] | m in mode[i]}: x} in x | k in Res, i in Act]);
-var 0..max_makespan: objective;
 
 %--- MOVED HERE FOR RESOURCE FEASIBILITY STUDY ---%
 array[Res] of var int: rcap;     % Resource capacity
+array[Res] of int: rcap_max;
+array[Res] of int: rcap_min;
+constraint forall(r in Res)(rcap[r]<=rcap_max[r]);
+constraint forall(r in Res)(rcap[r]>=rcap_min[r]);
+int: max_rweight = max(rweight);
+var int: objective_resource = sum (i in Res) (rweight[i] * rcap[i]);
 %-------------------------------------------------%
 
 %---------------------------------------------------------------------------%
@@ -111,13 +116,10 @@ constraint forall(k in NRes)(sum(i in Act)(arreq[k,i]) <= rcap[k]);
     % Objective constraints
     %
 constraint redundant_constraint(
-    forall(i in Act where succ[i]={})(start[i] + adur[i] <= objective)
+    forall(i in Act where succ[i]={})(start[i] + adur[i] <= max_makespan)
 );
-constraint objective = max(i in Act where succ[i]={})(start[i] + adur[i]);
+constraint max_makespan >= max(i in Act where succ[i]={})(start[i] + adur[i]);
 
-%--- ADDED FOR RESOURCE FEASIBILITY STUDY ---%
-constraint objective <= max_makespan;
-%--------------------------------------------%
 
 %---------------------------------------------------------------------------%
 % Non-overlapping constraints (NOC)
@@ -217,7 +219,7 @@ predicate post_noc_cumu(int: i, int: j) =
 
     % Posting of the redundant NOCs
     %
-bool: add_redundant_constraints=false;
+bool: add_redundant_constraints;
 constraint if add_redundant_constraints then
                 redundant_constraint(
                             forall(i,j in Act where i < j /\ can_act_be_disjunct(i, j))(
@@ -232,6 +234,7 @@ constraint if add_redundant_constraints then
            endif;
 
 
+
 %---------------------------------------------------------------------------%
 % Solve item
 
@@ -240,7 +243,7 @@ solve
     %:: seq_search([int_search(start, smallest, indomain_min),
     %               int_search(rcap, input_order, indomain_min)])
     %--- MODIFIED FOR RESOURCE FEASIBILITY STUDY ---%
-    minimize sum (i in Res) (rweight[i] * rcap[i]);
+    minimize objective_resource;
     %-----------------------------------------------%
 
 ann: durThenStartThenMode = seq_search([
@@ -256,6 +259,6 @@ ann: durThenStartThenMode = seq_search([
 output [
     "start = \(start);\n",
     "mrun = \(mrun);\n",
-    "objective = \(objective);\n",
+    "objective = \(objective_resource);\n",
     "rcap = \(rcap);\n"
 ];

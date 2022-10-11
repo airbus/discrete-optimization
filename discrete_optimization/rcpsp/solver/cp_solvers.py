@@ -509,6 +509,17 @@ class CP_MRCPSP_MZN(MinizincCPSolver):
         if model_type == "multi-resource-feasibility":
             instance["rweight"] = args.get("rweight", [1] * len(resources_list))
             instance["max_makespan"] = max_time
+            instance["add_redundant_constraints"] = args.get(
+                "add_redundant_constraints", False
+            )
+            instance["rcap_max"] = args.get(
+                "rcap_max",
+                [
+                    self.rcpsp_model.get_max_resource_capacity(res)
+                    for res in resources_list
+                ],
+            )
+            instance["rcap_min"] = args.get("rcap_max", [0 for res in resources_list])
             keys += ["rweight", "max_makespan"]
         rtype = [
             2 if res in self.rcpsp_model.non_renewable_resources else 1
