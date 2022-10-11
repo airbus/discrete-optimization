@@ -216,7 +216,136 @@ jobs:
             tmp/coverage.xml
             tmp/coverage_html
 
+  build-doc:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      python-version: "3.9"
+      minizinc_path: $(pwd)/bin
+      minizinc_cache_path: $(pwd)/bin/minizinc
+      minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
+      minizinc_downloaded_filepath: bin/minizinc
+      minizinc_install_cmdline: sudo chmod +x bin/minizinc
+    steps:
+      - name: Set env variables for github+binder links in doc
+        run: |
+          # binder environment repo and branch
+          AUTODOC_BINDER_ENV_GH_REPO_NAME="airbus/discrete-optimization"
+          AUTODOC_BINDER_ENV_GH_BRANCH="binder"
+          # notebooks source repo and branch depending if it is a commit push or a PR
+          if [[ $GITHUB_REF == refs/pull* ]];
+          then
+              AUTODOC_NOTEBOOKS_REPO_URL="${GITHUB_SERVER_URL}/${{ github.event.pull_request.head.repo.full_name }}"
+              AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_HEAD_REF}
+          elif [[ $GITHUB_REF == refs/heads* ]];
+          then
+              AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+              AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/heads\//}
+          fi
+          # export in GITHUB_ENV for next steps
+          echo "AUTODOC_BINDER_ENV_GH_REPO_NAME=${AUTODOC_BINDER_ENV_GH_REPO_NAME}" >> $GITHUB_ENV
+          echo "AUTODOC_BINDER_ENV_GH_BRANCH=${AUTODOC_BINDER_ENV_GH_BRANCH}" >> $GITHUB_ENV
+          echo "AUTODOC_NOTEBOOKS_REPO_URL=${AUTODOC_NOTEBOOKS_REPO_URL}" >> $GITHUB_ENV
+          echo "AUTODOC_NOTEBOOKS_BRANCH=${AUTODOC_NOTEBOOKS_BRANCH}" >> $GITHUB_ENV
+          # check computed variables
+          echo "Binder env: ${AUTODOC_BINDER_ENV_GH_REPO_NAME}/${AUTODOC_BINDER_ENV_GH_BRANCH}"
+          echo "Notebooks source: ${AUTODOC_NOTEBOOKS_REPO_URL}/tree/${AUTODOC_NOTEBOOKS_BRANCH}"
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.python-version }}
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: wheels
+      - name: Create bin/
+        run: mkdir -p bin
+      - name: get MininZinc path to cache
+        id: get-mzn-cache-path
+        run: |
+          echo "::set-output name=path::${{ env.minizinc_cache_path }}"
+      - name: Restore MiniZinc cache
+        id: cache-minizinc
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.get-mzn-cache-path.outputs.path }}
+          key: ${{ env.minizinc_url }}
+      - name: Download MiniZinc
+        if: steps.cache-minizinc.outputs.cache-hit != 'true'
+        run: |
+          curl -o "${{ env.minizinc_downloaded_filepath }}" -L ${{ env.minizinc_url }}
+      - name: Install MiniZinc
+        if: steps.cache-minizinc.outputs.cache-hit != 'true'
+        run: |
+          ${{ env.minizinc_install_cmdline }}
+      - name: Add MiniZinc to PATH
+        run: |
+          echo ${{ env.minizinc_path }}
+          echo ${{ env.minizinc_path }} >> $GITHUB_PATH
+      - name: Get pip cache dir
+        id: get-pip-cache-dir
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"
+      - name: Restore pip cache
+        id: cache-pip
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.get-pip-cache-dir.outputs.dir }}
+          key: pip-doc-${{ env.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('docs/requirements.txt') }}
+          restore-keys: |
+            pip-doc-${{ env.python-version }}-${{ hashFiles('setup.py') }}-
+            pip-doc-${{ env.python-version }}-
+            pip-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('setup.py') }}
+            pip-${{ runner.os }}-${{ env.python-version }}-
+      - name: Install doc dependencies
+        run: |
+          python -m pip install -U pip
+          wheelfile=$(ls ./wheels/discrete_optimization*.whl)
+          pip install ${wheelfile}
+          pip install -r docs/requirements.txt
+      - name: generate documentation
+        run: |
+          cd docs
+          # generate api doc source files
+          sphinx-apidoc -o source/api -f -T ../discrete_optimization
+          # generate available notebooks list
+          python generate_nb_index.py
+          # build doc html pages
+          sphinx-build -M html source build
+          # specify it is a nojekyll site
+          touch build/html/.nojekyll
+      - name: upload as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: doc
+          path: docs/build/html
+
+  deploy-master-doc:
+    # for default branch
+    needs: [build-doc, test]
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: doc
+          path: docs/build/html
+      - name: Deploy documentation in root folder on GH pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: docs/build/html # The folder the action should deploy.
+          target-folder: /${{ github.event.repository.default_branch }} # The folder the action should deploy to.
+          commit-message: publish documentation for ${{ github.event.repository.default_branch }}
+
   deploy:
+    # for release tags
     runs-on: ubuntu-latest
     needs: test
     if: startsWith(github.ref, 'refs/tags/v')
@@ -248,3 +377,27 @@ jobs:
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           packages_dir: wheels/
+
+  deploy-release-doc:
+    # for release tags
+    needs: [build-doc, deploy]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get doc version name
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}  # stripping "refs/tags/v"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: doc
+          path: docs/build/html
+      - name: Deploy documentation in a version subfolder on GH pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: docs/build/html # The folder the action should deploy.
+          target-folder: /${{ env.VERSION }} # The folder the action should deploy to.
+          commit-message: publish documentation for ${{ env.VERSION }}
