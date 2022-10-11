@@ -238,7 +238,7 @@ class PileSolverRCPSP(SolverDO):
         logger.debug(f"Final Time {current_time}")
         sol = RCPSPSolution(
             problem=self.rcpsp_model,
-            rcpsp_permutation=perm[:-1],
+            rcpsp_permutation=perm,
             rcpsp_schedule=schedule,
             rcpsp_modes=[
                 self.modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
