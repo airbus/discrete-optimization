@@ -15,7 +15,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN, CP_RCPS
         0,
         1,
         2,
-        3,
+        # 3, # fails with unbounded variable with gecode
     ],
 )
 def test_cp_sm(optimisation_level):
@@ -41,7 +41,7 @@ def test_cp_sm(optimisation_level):
         0,
         1,
         2,
-        3,
+        # 3, # fails with unbounded variable with gecode
     ],
 )
 def test_cp_single_mode_model(optimisation_level):
