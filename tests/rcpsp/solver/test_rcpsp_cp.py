@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import pytest
+
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     result_storage_to_pareto_front,
@@ -27,14 +29,24 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
 )
 
 
-def test_cp_sm():
+@pytest.mark.parametrize(
+    "optimisation_level",
+    [
+        0,
+        1,
+        2,
+        3,
+    ],
+)
+def test_cp_sm(optimisation_level):
     files_available = get_data_available()
-    file = [f for f in files_available if "j1201_5.sm" in f][0]
+    file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 5
+    parameters_cp.time_limit = 10
+    parameters_cp.optimisation_level = optimisation_level
     result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
