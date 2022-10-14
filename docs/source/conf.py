@@ -3,6 +3,7 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
 from subprocess import DEVNULL, CalledProcessError, check_output
 
 import discrete_optimization
@@ -77,7 +78,15 @@ napoleon_numpy_docstring = False
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_show_sourcelink = False
-
 html_theme_options = {
     "style_external_links": True,
+}
+
+html_js_files = ["versions.js"]
+AUTODOC_SHOW_VERSIONS = (
+    os.environ.get("AUTODOC_SHOW_VERSIONS", "True").lower() != "false"
+)
+html_context = {
+    "AUTODOC_SHOW_VERSIONS": AUTODOC_SHOW_VERSIONS,
+    "current_version": version,
 }
