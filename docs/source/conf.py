@@ -3,6 +3,8 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+from subprocess import DEVNULL, CalledProcessError, check_output
+
 import discrete_optimization
 
 # -- Project information -----------------------------------------------------
@@ -11,8 +13,17 @@ project = "discrete-optimization"
 copyright = "2022, Airbus"
 author = "Airbus"
 
-release = discrete_optimization.__version__
-version = release  # could be the 2 first numbers x.y
+DEFAULT_VERSION_NUMBER = "0.0.0"
+GIT_SYMREF_CMD = ["git", "symbolic-ref", "--short", "HEAD"]
+
+version = discrete_optimization.__version__
+if version == DEFAULT_VERSION_NUMBER:
+    # not a release but rather dev doc => we try to use the current branch name instead of version 0.0.0
+    try:
+        version = check_output(GIT_SYMREF_CMD, stderr=DEVNULL, encoding="utf-8")
+    except CalledProcessError:
+        pass
+release = version
 
 master_doc = "index"
 language = "en"
