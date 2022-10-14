@@ -401,3 +401,42 @@ jobs:
           folder: docs/build/html # The folder the action should deploy.
           target-folder: /${{ env.VERSION }} # The folder the action should deploy to.
           commit-message: publish documentation for ${{ env.VERSION }}
+
+  update-doc-versions:
+    # triggers even if only one needed job succeeded (typically at least one will be skipped)
+    needs: [deploy-release-doc, deploy-master-doc]
+    if: |
+      always()
+      && (
+        (needs.deploy-master-doc.result == 'success')
+        || (needs.deploy-release-doc.result == 'success')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+      - uses: actions/setup-python@v4
+      - name: Generate versions.json
+        shell: python3 {0}
+        run: |
+          import json
+          from pathlib import Path
+
+          cwd = Path.cwd()
+          versions = sorted((item.name for item in cwd.iterdir()
+                             if item.is_dir() and not item.name.startswith('.')),
+                            reverse=True)
+          target_dir = Path('gh-pages')
+          target_dir.mkdir(parents=True)
+          target_file = target_dir / 'versions.json'
+          with target_file.open('w') as f:
+              json.dump(versions, f)
+      - name: Commit versions.json
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: gh-pages # The folder the action should deploy.
+          target-folder: / # The folder the action should deploy to.
+          commit-message: update versions.json
+          clean: false  # do not remove other files (including whole doc versions)
