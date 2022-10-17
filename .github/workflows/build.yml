@@ -19,9 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: create requirements.txt so that pip cache with setup-python works
+        run: echo "pre-commit" > requirements_precommit.txt
       - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
+          cache: "pip"
+          cache-dependency-path: requirements_precommit.txt
       - name: install pre-commit
         run: python -m pip install pre-commit
       - name: get cached pre-commit hooks
@@ -37,6 +41,14 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
+      - name: create requirements.txt so that pip cache with setup-python works
+        run:
+          echo "build" > requirements_build.txt
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+          cache: "pip"
+          cache-dependency-path: requirements_build.txt
       - name: Install build dependencies
         run: pip install -U build
       - name: Update version number according to pushed tag
@@ -109,6 +121,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -141,18 +155,6 @@ jobs:
       - name: Test minizinc install
         run: |
           minizinc --version
-      - name: Get pip cache dir
-        id: get-pip-cache-dir
-        run: |
-          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-      - name: Restore pip cache
-        id: cache-pip
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.get-pip-cache-dir.outputs.dir }}
-          key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            pip-${{ runner.os }}-${{ matrix.python-version }}-
       - name: Install test dependencies
         run: |
           python -m pip install -U pip
