@@ -257,6 +257,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.python-version }}
+          cache: "pip"
+          cache-dependency-path: |
+            setup.py
+            docs/requirements.txt
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -267,7 +271,7 @@ jobs:
       - name: get MininZinc path to cache
         id: get-mzn-cache-path
         run: |
-          echo "::set-output name=path::${{ env.minizinc_cache_path }}"
+          echo "path=${{ env.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
       - name: Restore MiniZinc cache
         id: cache-minizinc
         uses: actions/cache@v3
@@ -286,21 +290,6 @@ jobs:
         run: |
           echo ${{ env.minizinc_path }}
           echo ${{ env.minizinc_path }} >> $GITHUB_PATH
-      - name: Get pip cache dir
-        id: get-pip-cache-dir
-        run: |
-          echo "::set-output name=dir::$(pip cache dir)"
-      - name: Restore pip cache
-        id: cache-pip
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.get-pip-cache-dir.outputs.dir }}
-          key: pip-doc-${{ env.python-version }}-${{ hashFiles('setup.py') }}-${{ hashFiles('docs/requirements.txt') }}
-          restore-keys: |
-            pip-doc-${{ env.python-version }}-${{ hashFiles('setup.py') }}-
-            pip-doc-${{ env.python-version }}-
-            pip-${{ runner.os }}-${{ env.python-version }}-${{ hashFiles('setup.py') }}
-            pip-${{ runner.os }}-${{ env.python-version }}-
       - name: Install doc dependencies
         run: |
           python -m pip install -U pip
