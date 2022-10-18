@@ -177,18 +177,26 @@ jobs:
       - name: Test with pytest (no coverage)
         if: ${{ !matrix.coverage }}
         run: |
+          # configure minizinc
           export PATH=$PATH:${{ matrix.minizinc_path }}
+          # show library path used
+          pytest -s tests/show_do_path.py
+          # run test suite
           NUMBA_BOUNDSCHECK=1 pytest \
             -v --durations=0 --durations-min=10 \
             tests
       - name: Test with pytest (with coverage)
         if: ${{ matrix.coverage }}
         run: |
+          # configure minizinc
           export PATH=$PATH:${{ matrix.minizinc_path }}
           # create a tmp directory from which running the tests
           # so that "--cov discrete_optimization" look for package installed via the wheel
           # instead of the source directory in the repository (which would lead to a coverage of 0%)
           mkdir -p tmp && cd tmp
+          # show library path used
+          pytest -s ../tests/show_do_path.py
+          # run test suite
           NUMBA_BOUNDSCHECK=1 pytest \
             --cov discrete_optimization  \
             --cov-report xml:coverage.xml \
