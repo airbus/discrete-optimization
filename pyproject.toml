@@ -46,6 +46,7 @@ dependencies = [
     "sortedcontainers>=2.4",
     "deprecation",
     "typing-extensions>=4.0",
+    "cpmpy>=0.9.9",
 ]
 dynamic = ["version"]
 
