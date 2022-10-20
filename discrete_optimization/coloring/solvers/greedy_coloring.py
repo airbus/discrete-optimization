@@ -72,7 +72,7 @@ class GreedyColoring(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs) -> ResultStorage:
         """Run the greedy solver for the given problem.
 
         Keyword Args:
