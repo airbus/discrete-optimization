@@ -63,3 +63,6 @@ include = ["discrete_optimization*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "discrete_optimization.__version__"}
+
+[tool.mypy]
+ignore_missing_imports = true
