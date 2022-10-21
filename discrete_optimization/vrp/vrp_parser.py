@@ -25,9 +25,14 @@ def get_data_available(
         data_home = get_data_home(data_home=data_home)
         data_folder = f"{data_home}/vrp"
 
-    return [
-        os.path.abspath(os.path.join(data_folder, f)) for f in os.listdir(data_folder)
-    ]
+    try:
+        datasets = [
+            os.path.abspath(os.path.join(data_folder, f))
+            for f in os.listdir(data_folder)
+        ]
+    except FileNotFoundError:
+        datasets = []
+    return datasets
 
 
 def parse_input(input_data, start_index=0, end_index=0, vehicle_count=None):

@@ -29,9 +29,12 @@ def get_data_available(
         data_home = get_data_home(data_home=data_home)
         data_folder = f"{data_home}/rcpsp"
 
-    files = [
-        f for f in os.listdir(data_folder) if f.endswith(".sm") or f.endswith(".mm")
-    ]
+    try:
+        files = [
+            f for f in os.listdir(data_folder) if f.endswith(".sm") or f.endswith(".mm")
+        ]
+    except FileNotFoundError:
+        files = []
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
