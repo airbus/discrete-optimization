@@ -53,3 +53,7 @@ def test_importing_all_submodules():
             f"{len(modules_with_errors)} submodules of discrete_optimization cannot be imported\n"
             + f"{modules_with_errors}"
         )
+
+
+if __name__ == "__main__":
+    test_importing_all_submodules()

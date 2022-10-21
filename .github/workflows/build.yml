@@ -155,9 +155,19 @@ jobs:
       - name: Test minizinc install
         run: |
           minizinc --version
-      - name: Install test dependencies
+      - name: Install only discrete-optimization
         run: |
           python -m pip install -U pip
+          wheelfile=$(ls ./wheels/discrete_optimization*.whl)
+          pip install ${wheelfile}
+      - name: Check imports are working
+        run: |
+          # configure minizinc
+          export PATH=$PATH:${{ matrix.minizinc_path }}
+          # check imports
+          python tests/test_import_all_submodules.py
+      - name: Install test dependencies
+        run: |
           wheelfile=$(ls ./wheels/discrete_optimization*.whl)
           pip install ${wheelfile}[test]
           if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
