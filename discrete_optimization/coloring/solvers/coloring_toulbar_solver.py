@@ -43,7 +43,7 @@ class ToulbarColoringSolver(SolverDO):
         ) = build_aggreg_function_and_params_objective(
             self.problem, params_objective_function=params_objective_function
         )
-        self.model: pytoulbar2.CFN = None
+        self.model: Optional[pytoulbar2.CFN] = None
 
     def init_model(self, **args):
         number_nodes = self.problem.number_of_nodes
@@ -150,6 +150,10 @@ class ToulbarColoringSolver(SolverDO):
     def solve(self, **kwargs) -> ResultStorage:
         if self.model is None:
             self.init_model()
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         print("model init.")
         time_limit = kwargs.get("time_limit", 20)
         self.model.CFN.timer(time_limit)
