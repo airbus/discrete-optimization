@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export PATH="$(pwd)/minizinc_install/squashfs-root/usr/bin/":$PATH
+exec "$@"
