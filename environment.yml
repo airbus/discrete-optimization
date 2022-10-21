@@ -7,3 +7,4 @@ dependencies:
   - pip:
       - discrete-optimization==0.2.0
       - nbgitpuller
+      - scipy
