@@ -86,10 +86,10 @@ class GreedyColoring(SolverDO):
             results (ResultStorage) : storage of solution found by the greedy solver.
 
         """
-        strategy: NXGreedyColoringMethod = kwargs.get(
+        greedy_strategy: NXGreedyColoringMethod = kwargs.get(
             "strategy", NXGreedyColoringMethod.best
         )
-        strategy_name = strategy.name
+        strategy_name = greedy_strategy.name
         if strategy_name == "best":
             strategies_to_test = strategies
         else:
@@ -103,10 +103,10 @@ class GreedyColoring(SolverDO):
                 )
                 sorted_nodes = sorted(list(colors.keys()))
                 number_colors = len(set(list(colors.values())))
-                solution = [colors[i] for i in sorted_nodes]
+                raw_solution = [colors[i] for i in sorted_nodes]
                 logger.debug(f"{strategy} : number colors : {number_colors}")
                 if number_colors < best_nb_color:
-                    best_solution = solution
+                    best_solution = raw_solution
                     best_nb_color = number_colors
             except Exception as e:
                 logger.info(f"Failed strategy : {strategy} {e}")
