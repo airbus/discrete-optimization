@@ -47,6 +47,7 @@ dependencies = [
     "deprecation",
     "typing-extensions>=4.0",
     "cpmpy>=0.9.9",
+    "scipy",
 ]
 dynamic = ["version"]
 
