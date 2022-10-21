@@ -25,11 +25,14 @@ def get_data_available(
         data_home = get_data_home(data_home=data_home)
         data_folder = f"{data_home}/tsp"
 
-    files = [
-        f
-        for f in os.listdir(data_folder)
-        if not f.endswith(".pk") and not f.endswith(".json")
-    ]
+    try:
+        files = [
+            f
+            for f in os.listdir(data_folder)
+            if not f.endswith(".pk") and not f.endswith(".json")
+        ]
+    except FileNotFoundError:
+        files = []
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
