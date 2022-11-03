@@ -36,8 +36,21 @@ jobs:
       - name: pre-commit checks
         run: pre-commit run --show-diff-on-failure --color=always
 
+  trigger:
+    # store trigger reason
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.reason.outputs.is_release }}
+      is_push_on_default_branch: ${{ steps.reason.outputs.is_push_on_default_branch }}
+    steps:
+      - id: reason
+        run: |
+          echo "is_release=${{ startsWith(github.ref, 'refs/tags/v') }}" >> $GITHUB_OUTPUT
+          echo "is_push_on_default_branch=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}" >> $GITHUB_OUTPUT
+
   build:
     runs-on: ubuntu-latest
+    needs: trigger
     outputs:
       do_version: ${{ steps.get_wheel_version.outputs.version }}
     steps:
@@ -54,7 +67,7 @@ jobs:
       - name: Install build dependencies
         run: pip install -U build
       - name: Update version number according to pushed tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: needs.trigger.outputs.is_release == 'true'
         run: |
           VERSION=${GITHUB_REF/refs\/tags\/v/}  # stripping "refs/tags/v"
           echo $VERSION
@@ -338,8 +351,8 @@ jobs:
 
   deploy-master-doc:
     # for default branch
-    needs: [build-doc, test]
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: [trigger, build-doc, test]
+    if: needs.trigger.outputs.is_push_on_default_branch == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -359,8 +372,8 @@ jobs:
   deploy:
     # for release tags
     runs-on: ubuntu-latest
-    needs: test
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [trigger, test]
+    if: needs.trigger.outputs.is_release == 'true'
     steps:
       - name: Download wheels artifact
         uses: actions/download-artifact@v3
@@ -392,8 +405,8 @@ jobs:
 
   deploy-release-doc:
     # for release tags
-    needs: [build-doc, deploy]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [trigger, build-doc, deploy]
+    if: needs.trigger.outputs.is_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
