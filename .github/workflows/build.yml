@@ -38,6 +38,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    outputs:
+      do_version: ${{ steps.get_wheel_version.outputs.version }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -66,6 +68,13 @@ jobs:
         with:
           name: wheels
           path: dist/*.whl
+      - name: get wheel version and save it
+        id: get_wheel_version
+        run: |
+          wheelfile=$(ls ./dist/discrete_optimization*.whl)
+          version=$(python -c "print('$wheelfile'.split('-')[1])")
+          echo "version=$version"
+          echo "version=$version" >> $GITHUB_OUTPUT
 
   test:
     needs: build
@@ -388,10 +397,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Get doc version name
-        run: |
-          VERSION=${GITHUB_REF/refs\/tags\/v/}  # stripping "refs/tags/v"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -402,8 +407,8 @@ jobs:
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: docs/build/html # The folder the action should deploy.
-          target-folder: /${{ env.VERSION }} # The folder the action should deploy to.
-          commit-message: publish documentation for ${{ env.VERSION }}
+          target-folder: /${{ needs.build.outputs.do_version }} # The folder the action should deploy to.
+          commit-message: publish documentation for ${{ needs.build.outputs.do_version }}
 
   update-doc-versions:
     # triggers even if only one needed job succeeded (typically at least one will be skipped)
