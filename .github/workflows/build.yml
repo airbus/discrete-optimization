@@ -248,9 +248,84 @@ jobs:
             tmp/coverage.xml
             tmp/coverage_html
 
+  create-binder-env:
+    runs-on: ubuntu-latest
+    needs: [trigger, build]
+    env:
+      BINDER_ENV_DEFAULT_REF: binder  # default reference: binder branch
+    outputs:
+      binder_env_ref: ${{ steps.get_binder_env_ref.outputs.binder_env_ref }}
+    steps:
+      - name: Initialize binder env reference
+        run: echo "BINDER_ENV_REF=$BINDER_ENV_DEFAULT_REF" >> $GITHUB_ENV
+      - name: Checkout binder branch
+        if: |
+          (needs.trigger.outputs.is_push_on_default_branch == 'true')
+          || (needs.trigger.outputs.is_release == 'true')
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.BINDER_ENV_DEFAULT_REF }}
+      - name: Update environment.yml and binder env reference
+        if: |
+          (needs.trigger.outputs.is_push_on_default_branch == 'true')
+          || (needs.trigger.outputs.is_release == 'true')
+        run: |
+          if ${{ needs.trigger.outputs.is_release == 'true' }}; then
+            # RELEASE MODE
+            # Specify the proper discrete-optimization version
+            sed_replacement_pattern="\1- discrete-optimization==${{ needs.build.outputs.do_version }}"
+            if ${{ github.repository != 'airbus/discrete-optimization' && secrets.TEST_PYPI_API_TOKEN != '' }} == 'true'; then
+              # release to be deployed on TestPyPI
+              sed_replacement_pattern="${sed_replacement_pattern}\n\1- --extra-index-url https://test.pypi.org/simple/"
+            fi
+            sed_command="s|\(\s*\)-.*egg=discrete-optimization$|${sed_replacement_pattern}|"
+            echo $sed_command
+            sed -i -e "$sed_command" environment.yml
+            cat environment.yml
+            # Commit new environment
+            git config user.name "Actions"
+            git config user.email "actions@github.com"
+            git commit environment.yml -m "Specify binder environment for release ${{ needs.build.outputs.do_version }}"
+            # Get sha1 to be used by binder for the environment, update the binder env reference
+            echo "BINDER_ENV_REF=$(git rev-parse --verify HEAD)" >> $GITHUB_ENV
+            # Revert for the default branch binder env
+            git revert HEAD -n
+            git commit -m "Specify binder environment for default branch"
+          else
+            # DEFAULT BRANCH MODE
+            # Specify the proper discrete-optimization version (current master sha1)
+            pip_spec="git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}@${GITHUB_SHA}#egg=discrete-optimization"
+            echo $pip_spec
+            sed -i -e "s|\(\s*\)-.*egg=discrete-optimization$|\1- ${pip_spec}|" environment.yml
+            cat environment.yml
+            # Commit new environment
+            git config user.name "Actions"
+            git config user.email "actions@github.com"
+            git commit environment.yml -m "Specify binder environment for default branch"
+          fi
+          # Push binder branch with the updated environment
+          git push origin $BINDER_ENV_DEFAULT_REF
+      - name: Store binder env reference
+        id: get_binder_env_ref
+        run: |
+          echo "binder_env_ref=$BINDER_ENV_REF"
+          echo "binder_env_ref=$BINDER_ENV_REF" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v3  # checkout triggering branch to get scripts/trigger_binder.sh
+      - name: Trigger a build for default binder env ref on each BinderHub deployments in the mybinder.org federation
+        if: |
+          (needs.trigger.outputs.is_push_on_default_branch == 'true')
+          || (needs.trigger.outputs.is_release == 'true')
+        run: |
+          binder_env_full_ref=${GITHUB_REPOSITORY}/${BINDER_ENV_DEFAULT_REF}
+          echo Triggering binder environment build for ${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://gke.mybinder.org/build/gh/${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://ovh.mybinder.org/build/gh/${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://turing.mybinder.org/build/gh/${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://gesis.mybinder.org/build/gh/${binder_env_full_ref}
+
   build-doc:
     runs-on: ubuntu-latest
-    needs: build
+    needs: create-binder-env
     env:
       python-version: "3.9"
       minizinc_path: $(pwd)/bin
@@ -262,8 +337,8 @@ jobs:
       - name: Set env variables for github+binder links in doc
         run: |
           # binder environment repo and branch
-          AUTODOC_BINDER_ENV_GH_REPO_NAME="airbus/discrete-optimization"
-          AUTODOC_BINDER_ENV_GH_BRANCH="binder"
+          AUTODOC_BINDER_ENV_GH_REPO_NAME="${GITHUB_REPOSITORY}"
+          AUTODOC_BINDER_ENV_GH_BRANCH="${{ needs.create-binder-env.outputs.binder_env_ref }}"
           # notebooks source repo and branch depending if it is a commit push or a PR
           if [[ $GITHUB_REF == refs/pull* ]];
           then
@@ -351,7 +426,7 @@ jobs:
 
   deploy-master-doc:
     # for default branch
-    needs: [trigger, build-doc, test]
+    needs: [trigger, create-binder-env, build-doc, test]
     if: needs.trigger.outputs.is_push_on_default_branch == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -361,7 +436,7 @@ jobs:
         with:
           name: doc
           path: docs/build/html
-      - name: Deploy documentation in root folder on GH pages
+      - name: Deploy documentation in a version subfolder on GH pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages # The branch the action should deploy to.
@@ -405,11 +480,19 @@ jobs:
 
   deploy-release-doc:
     # for release tags
-    needs: [trigger, build-doc, deploy]
+    needs: [trigger, build, create-binder-env, build-doc, deploy]
     if: needs.trigger.outputs.is_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Trigger a prebuild of release environment on each BinderHub deployments in the mybinder.org federation (now that the release is available)
+        run: |
+          binder_env_full_ref=${GITHUB_REPOSITORY}/${{ needs.create-binder-env.outputs.binder_env_ref }}
+          echo Triggering binder environment build for ${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://gke.mybinder.org/build/gh/${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://ovh.mybinder.org/build/gh/${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://turing.mybinder.org/build/gh/${binder_env_full_ref}
+          bash scripts/trigger_binder.sh https://gesis.mybinder.org/build/gh/${binder_env_full_ref}
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
