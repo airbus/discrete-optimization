@@ -1069,8 +1069,8 @@ class MethodRobustification:
 
 def create_poisson_laws_duration(rcpsp_model: RCPSPModel, range_around_mean=3):
     poisson_dict = {}
-    source = 1
-    sink = rcpsp_model.n_jobs + 2
+    source = rcpsp_model.source_task
+    sink = rcpsp_model.sink_task
     for job in rcpsp_model.mode_details:
         poisson_dict[job] = {}
         for mode in rcpsp_model.mode_details[job]:
@@ -1091,8 +1091,8 @@ def create_poisson_laws_duration(rcpsp_model: RCPSPModel, range_around_mean=3):
 
 def create_poisson_laws_resource(rcpsp_model: RCPSPModel, range_around_mean=1):
     poisson_dict = {}
-    source = 1
-    sink = rcpsp_model.n_jobs + 2
+    source = rcpsp_model.source_task
+    sink = rcpsp_model.sink_task
     limit_resource = rcpsp_model.resources
     resources = rcpsp_model.resources_list
     resources_non_renewable = rcpsp_model.non_renewable_resources
@@ -1197,7 +1197,10 @@ class UncertainRCPSPModel:
     def create_rcpsp_model(self, method_robustification: MethodRobustification):
         model = self.base_rcpsp_model.copy()
         for activity in self.probas:
-            if activity in {self.base_rcpsp_model.source_task, self.base_rcpsp_model.sink_task}:
+            if activity in {
+                self.base_rcpsp_model.source_task,
+                self.base_rcpsp_model.sink_task,
+            }:
                 continue
             for mode in self.probas[activity]:
                 for detail in self.probas[activity][mode]:
