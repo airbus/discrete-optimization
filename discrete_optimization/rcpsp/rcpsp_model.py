@@ -1197,7 +1197,7 @@ class UncertainRCPSPModel:
     def create_rcpsp_model(self, method_robustification: MethodRobustification):
         model = self.base_rcpsp_model.copy()
         for activity in self.probas:
-            if activity in {self.base_rcpsp_model.n_jobs + 2, 1}:
+            if activity in {self.base_rcpsp_model.source_task, self.base_rcpsp_model.sink_task}:
                 continue
             for mode in self.probas[activity]:
                 for detail in self.probas[activity][mode]:
