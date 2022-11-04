@@ -251,6 +251,10 @@ jobs:
           then
               AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
               AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/heads\//}
+          elif [[ $GITHUB_REF == refs/tags* ]];
+          then
+              AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+              AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/tags\//}
           fi
           # export in GITHUB_ENV for next steps
           echo "AUTODOC_BINDER_ENV_GH_REPO_NAME=${AUTODOC_BINDER_ENV_GH_REPO_NAME}" >> $GITHUB_ENV
