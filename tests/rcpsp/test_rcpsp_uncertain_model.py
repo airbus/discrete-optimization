@@ -312,7 +312,7 @@ def test_uncertain_resources_sm():
         119: {1: {"duration": 3, "R1": 1, "R2": 1, "R3": 1, "R4": 8}},
         120: {1: {"duration": 8, "R1": 1, "R2": 8, "R3": 1, "R4": 1}},
         121: {1: {"duration": 9, "R1": 7, "R2": 1, "R3": 1, "R4": 1}},
-        122: {1: {"duration": 0, "R1": 1, "R2": 1, "R3": 1, "R4": 1}},
+        122: {1: {"duration": 0, "R1": 0, "R2": 0, "R3": 0, "R4": 0}},
     }
     best_model = uncertain_model.create_rcpsp_model(
         MethodRobustification(
@@ -707,7 +707,7 @@ def test_uncertain_resources_sm():
         119: {1: {"duration": 3, "R1": 1, "R2": 1, "R3": 1, "R4": 8}},
         120: {1: {"duration": 8, "R1": 1, "R2": 8, "R3": 1, "R4": 1}},
         121: {1: {"duration": 9, "R1": 7, "R2": 1, "R3": 1, "R4": 1}},
-        122: {1: {"duration": 0, "R1": 1, "R2": 1, "R3": 1, "R4": 1}},
+        122: {1: {"duration": 0, "R1": 0, "R2": 0, "R3": 0, "R4": 0}},
     }
 
 
