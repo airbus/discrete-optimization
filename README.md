@@ -27,71 +27,28 @@ through different scenario handling mechanisms) and multi-objective optimization
 
 ## Installation
 
-### Prerequisites
-
-- Install [minizinc](https://www.minizinc.org/), at least version 2.6, and update the `PATH` environment variable
-so that it can be found by Python. See [minizinc documentation](https://www.minizinc.org/doc-latest/en/installation.html) for more details.
-- Optionally, install [gurobi](https://www.gurobi.com/) with its python binding (gurobipy)
-  and an appropriate license, if you want to try solvers that make use of gurobi.
-
-  NB: If you just do `pip install gurobipy`, you get a minimal license which does not allow to use it on "real" models.
-
-### Normal install
-
-Install discrete-optimization from pip:
-
+Quick version:
 ```shell
 pip install discrete-optimization
 ```
+For more details, see the [online documentation](https://airbus.github.io/discrete-optimization/master/install).
 
-### Install in developer mode
+## Documentation
 
-You can also install the library directly from the repository in developer mode:
-
-```shell
-git clone https://github.com/airbus/discrete-optimization.git
-cd discrete-optimization
-pip install --editable .
-```
-
-
-If you encounter any problem during installation,
-please fill an [issue](https://github.com/airbus/discrete-optimization/issues)
-on the repository.
-
+The latest documentation is available [online](https://airbus.github.io/discrete-optimization).
 
 ## Examples
 
-### Notebooks
+Some educational notebooks are available in `notebooks/` folder.
+Links to launch them online with [binder](https://mybinder.org/) are provided in the
+[Notebooks section](https://airbus.github.io/discrete-optimization/master/notebooks) of the online documentation.
 
-In the `notebooks` directory of the repository, you will find several jupyter notebooks demonstrating
-how the library can be used
-- on a knapsack problem,
-- on a scheduling problem (RCPSP).
+More examples can be found as Python scripts in the `examples/` folder, using the different features of
+the library and showing how to instantiate different problem instances and solvers.
 
+## Contributing
 
-### Scripts
-
-The `examples` directory of the repository gather several scripts using the different features of
-the library and how to instantiate different problem instances and solvers.
-
-
-## Unit tests
-
-Unit tests are available in `tests/` directory of the repository.
-To test the library, you can install the library
-with the "test" extra dependencies by typing
-```shell
-git clone https://github.com/airbus/discrete-optimization.git
-cd discrete-optimization
-pip install --editable .[test]
-```
-
-
-Then run pytest on tests folder:
-```shell
-pytest -v tests
-```
+See more about how to contribute in the [online documentation](https://airbus.github.io/discrete-optimization/master/contribute).
 
 
 ## License
