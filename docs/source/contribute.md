@@ -72,9 +72,12 @@ do-venv\Scripts\activate
 
 We use the option `--editable` (or `-e`) of `pip install`.
 
+> **Note**: you need a version of pip >=21.3 to be able to install in editable mode a project using a `pyproject.toml` file.
+
 ```shell
 git clone https://github.com/airbus/discrete-optimization.git
 cd discrete-optimization
+pip install -U pip
 pip install -e .
 ```
 
