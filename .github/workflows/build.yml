@@ -99,19 +99,19 @@ jobs:
         wo_gurobi: ["", "without gurobi"]
         include:
           - os: "ubuntu-latest"
-            minizinc_path: $(pwd)/bin
-            minizinc_cache_path: $(pwd)/bin/minizinc
+            minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
+            minizinc_cache_path: $(pwd)/bin/squashfs-root
             minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
-            minizinc_downloaded_filepath: bin/minizinc
-            minizinc_install_cmdline: sudo chmod +x bin/minizinc
+            minizinc_downloaded_filepath: bin/minizinc.AppImage
+            minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
           - os: "macos-latest"
-            minizinc_path: $(pwd)/bin/MiniZincIDE.app/Contents/Resources
+            minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/MiniZincIDE.app/Contents/Resources
             minizinc_cache_path: $(pwd)/bin/MiniZincIDE.app
             minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled.dmg
             minizinc_downloaded_filepath: bin/minizinc.dmg
             minizinc_install_cmdline: sudo hdiutil attach bin/minizinc.dmg; sudo cp -R /Volumes/MiniZinc*/MiniZincIDE.app bin/.
           - os: "windows-latest"
-            minizinc_path: ~/AppData/Local/Programs/MiniZinc
+            minizinc_config_cmdline: export PATH=$PATH:~/AppData/Local/Programs/MiniZinc
             minizinc_cache_path: ~/AppData/Local/Programs/MiniZinc
             minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled-setup-win64.exe
             minizinc_downloaded_filepath: minizinc_setup.exe
@@ -170,12 +170,9 @@ jobs:
         if: steps.cache-minizinc.outputs.cache-hit != 'true'
         run: |
           ${{ matrix.minizinc_install_cmdline }}
-      - name: Add MiniZinc to PATH
-        run: |
-          echo ${{ matrix.minizinc_path }}
-          echo ${{ matrix.minizinc_path }} >> $GITHUB_PATH
       - name: Test minizinc install
         run: |
+          ${{ matrix.minizinc_config_cmdline }}
           minizinc --version
       - name: Install only discrete-optimization
         run: |
@@ -185,7 +182,7 @@ jobs:
       - name: Check imports are working
         run: |
           # configure minizinc
-          export PATH=$PATH:${{ matrix.minizinc_path }}
+          ${{ matrix.minizinc_config_cmdline }}
           # check imports
           python tests/test_import_all_submodules.py
       - name: Install test dependencies
@@ -206,13 +203,13 @@ jobs:
       - name: Fetch data for tests
         if: steps.cache-data.outputs.cache-hit != 'true'
         run: |
-          export PATH=$PATH:${{ matrix.minizinc_path }}
+          ${{ matrix.minizinc_config_cmdline }}
           python -m discrete_optimization.datasets
       - name: Test with pytest (no coverage)
         if: ${{ !matrix.coverage }}
         run: |
           # configure minizinc
-          export PATH=$PATH:${{ matrix.minizinc_path }}
+          ${{ matrix.minizinc_config_cmdline }}
           # show library path used
           pytest -s tests/show_do_path.py
           # run test suite
@@ -223,7 +220,7 @@ jobs:
         if: ${{ matrix.coverage }}
         run: |
           # configure minizinc
-          export PATH=$PATH:${{ matrix.minizinc_path }}
+          ${{ matrix.minizinc_config_cmdline }}
           # create a tmp directory from which running the tests
           # so that "--cov discrete_optimization" look for package installed via the wheel
           # instead of the source directory in the repository (which would lead to a coverage of 0%)
@@ -328,11 +325,11 @@ jobs:
     needs: create-binder-env
     env:
       python-version: "3.9"
-      minizinc_path: $(pwd)/bin
-      minizinc_cache_path: $(pwd)/bin/minizinc
+      minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
+      minizinc_cache_path: $(pwd)/bin/squashfs-root
       minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
-      minizinc_downloaded_filepath: bin/minizinc
-      minizinc_install_cmdline: sudo chmod +x bin/minizinc
+      minizinc_downloaded_filepath: bin/minizinc.AppImage
+      minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
     steps:
       - name: Set env variables for github+binder links in doc
         run: |
@@ -397,10 +394,6 @@ jobs:
         if: steps.cache-minizinc.outputs.cache-hit != 'true'
         run: |
           ${{ env.minizinc_install_cmdline }}
-      - name: Add MiniZinc to PATH
-        run: |
-          echo ${{ env.minizinc_path }}
-          echo ${{ env.minizinc_path }} >> $GITHUB_PATH
       - name: Install doc dependencies
         run: |
           python -m pip install -U pip
@@ -409,6 +402,9 @@ jobs:
           pip install -r docs/requirements.txt
       - name: generate documentation
         run: |
+          # configure minzinc (beware: paths are relative to default working directory)
+          ${{ env.minizinc_config_cmdline }}
+          # move to documentation directory
           cd docs
           # generate api doc source files
           sphinx-apidoc -o source/api -f -T ../discrete_optimization
