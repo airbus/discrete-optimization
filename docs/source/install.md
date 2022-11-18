@@ -37,7 +37,7 @@ export PATH="$(pwd)/minizinc_install/squashfs-root/usr/bin/":$PATH
 minizinc --version
 ```
 
-#### MacOs command line
+#### MacOs command line
 ```
 mkdir minizinc_install
 curl -o minizinc.dmg -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled.dmg
@@ -47,7 +47,7 @@ export PATH="$(pwd)/minizinc_install/MiniZincIDE.app/Contents/Resources":$PATH
 minizinc --version
 ```
 
-#### Windows command line
+#### Windows command line
 Works on Windows Server 2022 with bash shell:
 ```
 mkdir minizinc_install
