@@ -32,6 +32,7 @@ curl -o minizinc.AppImage -L https://github.com/MiniZinc/MiniZincIDE/releases/do
 chmod +x minizinc.AppImage
 ./minizinc.AppImage --appimage-extract
 cd ..
+export LD_LIBRARY_PATH="$(pwd)/minizinc_install/squashfs-root/usr/lib/":$LD_LIBRARY_PATH
 export PATH="$(pwd)/minizinc_install/squashfs-root/usr/bin/":$PATH
 minizinc --version
 ```
