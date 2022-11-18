@@ -10,7 +10,7 @@ See [minizinc documentation](https://www.minizinc.org/doc-latest/en/installation
 
 > **Tip:** You can easily install minizinc from the command line which can be useful when on cloud.
 > In order to make life easier to clous users, we reproduce the necessary lines. Pleas be careful that this
-> is not an official documentation for minzinc and that the following lines can stop working without notice
+> is not an official documentation for minizinc and that the following lines can stop working without notice
 > as we do not test them.
 
 #### Linux command line
