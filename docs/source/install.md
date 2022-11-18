@@ -57,6 +57,19 @@ export PATH="~/AppData/Local/Programs/MiniZinc":$PATH
 minizinc --version
 ```
 
+#### Skipping minizinc version check
+
+It may happen that you need to use only a part of the library which is not relying on minizinc at all,
+and that you do not want to install minzinc.
+This can be troublesome as the minizinc binary version is checked at library import.
+We provide a way to bypass this check by setting the environment variable DO_SKIP_MZN_CHECK:
+```shell
+export DO_SKIP_MZN_CHECK=1
+```
+Please note however that the library is never tested without minizinc (or minizinc versions < 2.6).
+Most modules related to solvers will fail to be imported without minizinc as they are heavily relying on it.
+
+
 ### Python 3.7+ environment
 
 The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
