@@ -8,10 +8,10 @@ You need to install [minizinc](https://www.minizinc.org/) (version greater than 
 so that it can be found by Python.
 See [minizinc documentation](https://www.minizinc.org/doc-latest/en/installation.html) for more details.
 
-> **Tip:** You can easily install minizinc from the command line which can be useful when on cloud.
-> In order to make life easier to clous users, we reproduce the necessary lines. Pleas be careful that this
+> **Tip:** You can easily install minizinc from the command line, which can be useful when on cloud.
+> In order to make life easier to cloud users, we reproduce below the necessary lines. Please be careful that this
 > is not an official documentation for minizinc and that the following lines can stop working without notice
-> as we do not test them.
+> as we do not test them automatically.
 
 #### Linux command line
 On a Linux distribution, you can use the bundled [minizinc AppImage](https://www.minizinc.org/doc-latest/en/installation.html#appimage).
