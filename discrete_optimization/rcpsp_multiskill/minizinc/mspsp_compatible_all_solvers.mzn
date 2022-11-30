@@ -1,11 +1,11 @@
 % Author: Kenneth Young 2017
 % Multi-Skill Project Scheduling Problem
 % Constraint Programming model
+% Adapted by Airbus to fit the library needs.
 
 include "cumulative.mzn";
 include "disjunctive.mzn";
 include "redefinitions.mzn";
-include "chuffed.mzn";
 
 0..1: full_output;
 
@@ -47,10 +47,14 @@ array[ACT,RESOURCE] of var bool: assign; % assignment of resources to activities
 array[ACT,RESOURCE,SKILL] of var bool: contrib; % skill contribution assignment
 array[UNREL] of var bool: overlap; % overlapping of unrelated activities
 
-var TIME: makespan;  % makespan
+var TIME: makespan= start[nActs];  % makespan
+var int: objective;
 bool: add_objective_makespan;
-constraint if add_objective_makespan then makespan=start[nActs] else true endif;
-var -1000..1000: sec_objective;
+constraint objective>=0;
+constraint sec_objective>=0;
+constraint if add_objective_makespan then objective == makespan
+           endif;
+var int: sec_objective;
 bool: ignore_sec_objective;
 constraint if ignore_sec_objective then sec_objective=0 else true endif;
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
@@ -164,71 +168,20 @@ ann: overlap_Then_assign_Then_start =
 ann: overlap_Then_contrib_Then_start =
               seq_search([ overlap_s, contrib_s, start_s ]);
 
-% Priority Searches
-ann: priority_search;
 
-ann: priority_input_order =
-  priority_search(start,
-                  [seq_search([
-                      int_search([start[a]], input_order, indomain_min, complete),
-                      bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],
-                                  input_order, indomain_max, complete)])
-                   | a in ACT ],
-                   input_order, complete);
-ann: priority_smallest =
-  priority_search(start,
-                  [seq_search([
-                      int_search([start[a]], input_order, indomain_min, complete),
-                      bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],
-                                  input_order, indomain_max, complete)])
-                   | a in ACT ],
-                   smallest, complete);
 
 array[RESOURCE] of var TIME: res_load = [
     sum(a in ACT)( dur[a] * assign[a,r] )
 | r in RESOURCE ];
 
-ann: priority_smallest_load =
-    priority_search(start,
-        [
-            seq_search([
-                int_search([start[a]], input_order, indomain_min, complete),
-                priority_search(res_load,
-                    [
-                        seq_search([
-                            bool_search([assign[a,r]], input_order, indomain_max, complete),
-                            bool_search([contrib[a,r,s] | s in SKILL],  input_order, indomain_max, complete)
-                        ])
-                    | r in RESOURCE],
-                    smallest, complete)
-            ])
-        | a in ACT ],
-        smallest, complete);
 
-ann: priority_smallest_largest =
-  priority_search(start,
-                  [seq_search([
-                      int_search([start[a]], input_order, indomain_min, complete),
-                      bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],
-                                  input_order, indomain_max, complete)])
-                   | a in ACT ],
-                   smallest_largest, complete);
-
-ann: priority_first_fail =
-  priority_search(start,
-                  [seq_search([
-                      int_search([start[a]], input_order, indomain_min, complete),
-                      bool_search([contrib[a,r,s] | r in RESOURCE, s in SKILL],
-                                  input_order, indomain_max, complete)])
-                   | a in ACT ],
-                   first_fail, complete);
 
 
 ann: my_search;
 
 % Solve
 solve :: my_search
-minimize makespan;
+minimize objective+sec_objective;
 % satisfy;
 
 
@@ -239,7 +192,7 @@ if full_output == 0 then
   ["makespan = " ++ show(makespan) ++ "\n"]
 elseif full_output == 1 then
   ["makespan = " ++ show(makespan) ++ "\n"] ++
-  ["sec_objective = " ++ show(sec_objective) ++ "\n"]++
+  ["sec obj ="++show(sec_objective)++"\n"] ++
   ["start times = " ++ show(start) ++ "\n"] ++
   ["assignment = " ++ show(assign) ++ "\n"] ++
   ["contribution = " ++ show(contrib) ++ "\n"]
