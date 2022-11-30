@@ -31,6 +31,9 @@ PSPLIB_DATASETS = {
 IMOPSE_DATASET_URL = "http://imopse.ii.pwr.wroc.pl/files/imopse_validator_pack.zip"
 IMOPSE_DATASET_RELATIVE_PATH = "IMOPSE/dataset_def.zip"
 
+MSLIB_REPO_URL = "https://github.com/youngkd/MSPSP-InstLib"
+MSLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
+
 
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the discrete-optimization data directory.
@@ -154,6 +157,42 @@ def fetch_data_from_imopse(data_home: Optional[str] = None):
 
     finally:
         # remove temporary files
+        urlcleanup()
+
+
+def fetch_data_from_mslib_repo(data_home: Optional[str] = None):
+    """Fetch data from youngkd repo. (for multiskill rcpsp)
+
+    https://github.com/youngkd/MSPSP-InstLib
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # download in a temporary file the repo data
+    url = f"{MSLIB_REPO_URL}/archive/{MSLIB_REPO_URL_SHA1}.zip"
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_dir = f"{data_home}/MSPSP_Instances"
+            os.makedirs(dataset_dir, exist_ok=True)
+            dataset_prefix_in_zip = f"{rootdir}/instances/"
+            for name in namelist:
+                if name.startswith(dataset_prefix_in_zip):
+                    zipf.extract(name, path=dataset_dir)
+            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
+                os.replace(
+                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
+                )
+            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+    finally:
         urlcleanup()
 
 
