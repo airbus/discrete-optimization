@@ -42,7 +42,6 @@ this_path = os.path.dirname(os.path.abspath(__file__))
 
 files_mzn = {
     "mspsp": os.path.join(this_path, "../minizinc/mspsp.mzn"),
-    "mspsp_two_obj": os.path.join(this_path, "../minizinc/mspsp_wip.mzn"),
     "mspsp_compatible": os.path.join(
         this_path, "../minizinc/mspsp_compatible_all_solvers.mzn"
     ),

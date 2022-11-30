@@ -1,6 +1,7 @@
 % Author: Kenneth Young 2017
 % Multi-Skill Project Scheduling Problem
 % Constraint Programming model
+% Adapted by Airbus to fit the library needs.
 
 include "cumulative.mzn";
 include "disjunctive.mzn";
