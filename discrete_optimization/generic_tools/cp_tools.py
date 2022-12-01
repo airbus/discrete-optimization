@@ -11,9 +11,9 @@ import logging
 from abc import abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
-from minizinc import Instance, Model
+from minizinc import Instance, Status
 
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -147,12 +147,28 @@ class SignEnum(Enum):
     UP = ">"
 
 
+class StatusSolver(Enum):
+    SATISFIED = "SATISFIED"
+    UNSATISFIABLE = "UNSATISFIABLE"
+    OPTIMAL = "OPTIMAL"
+    UNKNOWN = "UNKNOWN"
+
+
+map_mzn_status_to_do_status = {
+    Status.SATISFIED: StatusSolver.SATISFIED,
+    Status.UNSATISFIABLE: StatusSolver.UNSATISFIABLE,
+    Status.OPTIMAL_SOLUTION: StatusSolver.OPTIMAL,
+    Status.UNKNOWN: StatusSolver.UNKNOWN,
+}
+
+
 class CPSolver(SolverDO):
     """
     Additional function to be implemented by a CP Solver.
     """
 
     instance: Optional[Any]
+    status_solver: Optional[StatusSolver] = None
 
     @abstractmethod
     def init_model(self, **args):
@@ -179,6 +195,9 @@ class CPSolver(SolverDO):
         self, parameters_cp: Optional[ParametersCP] = None, **args
     ) -> ResultStorage:
         ...
+
+    def get_status_solver(self) -> Union[StatusSolver, None]:
+        return self.status_solver
 
 
 class MinizincCPSolver(CPSolver):
@@ -230,4 +249,5 @@ class MinizincCPSolver(CPSolver):
         logger.info("Solving finished")
         logger.debug(result.status)
         logger.debug(result.statistics)
+        self.status_solver = map_mzn_status_to_do_status[result.status]
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
