@@ -21,7 +21,7 @@ version = discrete_optimization.__version__
 if version == DEFAULT_VERSION_NUMBER:
     # not a release but rather dev doc => we try to use the current branch name instead of version 0.0.0
     try:
-        version = check_output(GIT_SYMREF_CMD, stderr=DEVNULL, encoding="utf-8")
+        version = check_output(GIT_SYMREF_CMD, stderr=DEVNULL, encoding="utf-8").strip()
     except CalledProcessError:
         pass
 release = version
