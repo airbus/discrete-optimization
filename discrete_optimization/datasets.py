@@ -240,4 +240,4 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_data_from_mslib()
+    fetch_all_datasets()
