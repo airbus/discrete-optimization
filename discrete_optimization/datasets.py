@@ -31,8 +31,12 @@ PSPLIB_DATASETS = {
 IMOPSE_DATASET_URL = "http://imopse.ii.pwr.wroc.pl/files/imopse_validator_pack.zip"
 IMOPSE_DATASET_RELATIVE_PATH = "IMOPSE/dataset_def.zip"
 
-MSLIB_REPO_URL = "https://github.com/youngkd/MSPSP-InstLib"
-MSLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
+MSPSPLIB_REPO_URL = "https://github.com/youngkd/MSPSP-InstLib"
+MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
+
+
+MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
+MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
 
 
 def get_data_home(data_home: Optional[str] = None) -> str:
@@ -160,7 +164,7 @@ def fetch_data_from_imopse(data_home: Optional[str] = None):
         urlcleanup()
 
 
-def fetch_data_from_mslib_repo(data_home: Optional[str] = None):
+def fetch_data_from_mspsplib_repo(data_home: Optional[str] = None):
     """Fetch data from youngkd repo. (for multiskill rcpsp)
 
     https://github.com/youngkd/MSPSP-InstLib
@@ -174,7 +178,7 @@ def fetch_data_from_mslib_repo(data_home: Optional[str] = None):
     data_home = get_data_home(data_home=data_home)
 
     # download in a temporary file the repo data
-    url = f"{MSLIB_REPO_URL}/archive/{MSLIB_REPO_URL_SHA1}.zip"
+    url = f"{MSPSPLIB_REPO_URL}/archive/{MSPSPLIB_REPO_URL_SHA1}.zip"
     try:
         local_file_path, headers = urlretrieve(url)
         # extract only data
@@ -196,6 +200,32 @@ def fetch_data_from_mslib_repo(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_mslib(data_home: Optional[str] = None):
+    """Fetch data from MSLIB for rcpsp_multiskill examples.
+    cf https://www.projectmanagement.ugent.be/research/project_scheduling/MSRCPSP
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp_multiskill data directory
+    rcpsp_multiskill_dir = f"{data_home}/rcpsp_multiskill_mslib"
+    os.makedirs(rcpsp_multiskill_dir, exist_ok=True)
+
+    try:
+        # download dataset
+        local_file_path, headers = urlretrieve(MSLIB_DATASET_URL)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # extract only data
+            with zipfile.ZipFile(local_file_path) as zipf:
+                zipf.extractall(path=rcpsp_multiskill_dir)
+    finally:
+        # remove temporary files
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -210,4 +240,4 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_all_datasets()
+    fetch_data_from_mslib()

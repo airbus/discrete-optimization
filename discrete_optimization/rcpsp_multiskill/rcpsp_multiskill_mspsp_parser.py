@@ -9,7 +9,7 @@ from typing import Optional
 import numpy as np
 import pymzn
 
-from discrete_optimization.datasets import fetch_data_from_mslib_repo, get_data_home
+from discrete_optimization.datasets import fetch_data_from_mspsplib_repo, get_data_home
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
@@ -28,7 +28,7 @@ def get_data_available_mspsp(
         data_folder = f"{data_home}/MSPSP_Instances"
         if not os.path.exists(data_folder):
             logger.info(f"Fetching data from MSPSP_Lib repo")
-            fetch_data_from_mslib_repo(data_home)
+            fetch_data_from_mspsplib_repo(data_home)
     try:
         file_paths = {}
         for sub_folder in os.listdir(data_folder):
