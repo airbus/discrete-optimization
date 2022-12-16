@@ -300,7 +300,7 @@ class Problem:
         dict_values = self.evaluate(variable)
         return TupleFitness(np.array([dict_values[k] for k in keys]), len(keys))
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]):
+    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
         """Return an multiobjective fitness from a dictionnary of kpi (output of evaluate function).
 
         It consists in flattening the evaluate() function and put in an array.
