@@ -7,7 +7,7 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -398,12 +398,13 @@ class RobustProblem(Problem):
     """Problem built from a list of other problem (that should be considered as "scenario" optimisation problems).
 
     Attributes:
-        list_problem (List[Problem]): List of Problems corresponding to different scenarios.
-        method_aggregating (MethodAggregating): specifies how the evaluation on each scenario should be merged
+        list_problem: List of Problems corresponding to different scenarios.
+        method_aggregating: specifies how the evaluation on each scenario should be merged
+
     """
 
     def __init__(
-        self, list_problem: List[Problem], method_aggregating: MethodAggregating
+        self, list_problem: Sequence[Problem], method_aggregating: MethodAggregating
     ):
         self.list_problem = list_problem
         self.method_aggregating = method_aggregating

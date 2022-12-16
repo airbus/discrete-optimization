@@ -7,7 +7,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Tuple, Union
+from typing import Dict, Hashable, Iterable, List, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -984,10 +984,8 @@ class MultiModeRCPSPModel(RCPSPModel):
 
 
 class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):
-    list_problems: List[RCPSPModel]
-
     def __init__(
-        self, list_problem: List[RCPSPModel], method_aggregating: MethodAggregating
+        self, list_problem: Sequence[RCPSPModel], method_aggregating: MethodAggregating
     ):
         RobustProblem.__init__(
             self, list_problem=list_problem, method_aggregating=method_aggregating
