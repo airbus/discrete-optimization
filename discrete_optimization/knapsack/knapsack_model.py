@@ -4,7 +4,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, List, NamedTuple
+from typing import Dict, List, Sequence
 
 import numpy as np
 
@@ -439,7 +439,7 @@ class MultidimensionalKnapsack(Problem):
 class MultiScenarioMultidimensionalKnapsack(RobustProblem):
     def __init__(
         self,
-        list_problem: List[MultidimensionalKnapsack],
+        list_problem: Sequence[MultidimensionalKnapsack],
         method_aggregating: MethodAggregating,
     ):
         super().__init__(list_problem, method_aggregating)
