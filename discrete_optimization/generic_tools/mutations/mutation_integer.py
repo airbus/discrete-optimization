@@ -24,7 +24,9 @@ from discrete_optimization.generic_tools.mutations.mutation_util import (
 
 class MutationIntegerSpecificArity(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(
+        problem: Problem, solution: Solution, **kwargs
+    ) -> "MutationIntegerSpecificArity":
         return MutationIntegerSpecificArity(
             problem,
             attribute=kwargs.get("attribute", None),

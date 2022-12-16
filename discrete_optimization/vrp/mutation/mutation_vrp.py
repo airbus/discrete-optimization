@@ -121,7 +121,9 @@ class RelocateMove(LocalMove):
 
 class MutationRelocate(Mutation):
     @staticmethod
-    def build(problem: VrpProblem, solution: VrpSolution, **kwargs):
+    def build(
+        problem: VrpProblem, solution: VrpSolution, **kwargs
+    ) -> "MutationRelocate":
         return MutationRelocate(problem)
 
     def __init__(self, vrp_model: VrpProblem):
@@ -266,7 +268,7 @@ class SwapMove(LocalMove):
 
 class MutationSwap(Mutation):
     @staticmethod
-    def build(problem: VrpProblem, solution: VrpSolution, **kwargs):
+    def build(problem: VrpProblem, solution: VrpSolution, **kwargs) -> "MutationSwap":
         return MutationRelocate(problem)
 
     def __init__(self, vrp_model: VrpProblem):
@@ -325,7 +327,9 @@ class MutationTwoOptVRP(Mutation):
     node_count: int
 
     @staticmethod
-    def build(problem: VrpProblem, solution: VrpSolution, **kwargs):
+    def build(
+        problem: VrpProblem, solution: VrpSolution, **kwargs
+    ) -> "MutationTwoOptVRP":
         return MutationTwoOptVRP(problem, **kwargs)
 
     def __init__(

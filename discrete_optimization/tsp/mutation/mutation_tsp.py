@@ -80,7 +80,7 @@ class Mutation2Opt(Mutation):
     points: List[Point]
 
     @staticmethod
-    def build(problem: TSPModel2D, solution: SolutionTSP, **kwargs):
+    def build(problem: TSPModel2D, solution: SolutionTSP, **kwargs) -> "Mutation2Opt":
         return Mutation2Opt(problem, **kwargs)
 
     def __init__(
@@ -336,7 +336,7 @@ class SwapTSPMove(LocalMove):
 
 class MutationSwapTSP(Mutation):
     @staticmethod
-    def build(problem: TSPModel, solution: SolutionTSP, **kwargs):
+    def build(problem: TSPModel, solution: SolutionTSP, **kwargs) -> "MutationSwapTSP":
         return MutationSwapTSP(problem)
 
     def __init__(self, tsp_model: TSPModel):

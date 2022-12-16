@@ -41,7 +41,9 @@ class ShuffleMove(LocalMove):
 
 class PermutationShuffleMutation(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(
+        problem: Problem, solution: Solution, **kwargs
+    ) -> "PermutationShuffleMutation":
         return PermutationShuffleMutation(problem, solution)
 
     def __init__(
@@ -77,7 +79,9 @@ class PermutationShuffleMutation(Mutation):
 
 class PermutationPartialShuffleMutation(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(
+        problem: Problem, solution: Solution, **kwargs
+    ) -> "PermutationPartialShuffleMutation":
         return PermutationPartialShuffleMutation(
             problem,
             solution,
@@ -145,7 +149,7 @@ class SwapsLocalMove(LocalMove):
 
 class PermutationSwap(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(problem: Problem, solution: Solution, **kwargs) -> "PermutationSwap":
         return PermutationSwap(
             problem,
             solution,
@@ -207,7 +211,7 @@ class TwoOptMove(LocalMove):
 
 class TwoOptMutation(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(problem: Problem, solution: Solution, **kwargs) -> "TwoOptMutation":
         return TwoOptMutation(
             problem, solution, attribute=kwargs.get("attribute", None)
         )

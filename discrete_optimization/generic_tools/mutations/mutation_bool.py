@@ -34,7 +34,7 @@ class BitFlipMove(LocalMove):
 
 class MutationBitFlip(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(problem: Problem, solution: Solution, **kwargs) -> "MutationBitFlip":
         return MutationBitFlip(problem, **kwargs)
 
     def __init__(
