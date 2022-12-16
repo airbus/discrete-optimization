@@ -63,6 +63,10 @@ def greedy_using_queue(
 def best_of_greedy(knapsack_model: KnapsackModel) -> KnapsackSolution:
     result1 = greedy_using_queue(knapsack_model, compute_density)
     result2 = greedy_using_queue(knapsack_model, compute_density_and_penalty)
+    if result1.value is None or result2.value is None:
+        raise RuntimeError(
+            "result1.value and result2.value should not be None at this point."
+        )
     return result1 if result1.value > result2.value else result2
 
 

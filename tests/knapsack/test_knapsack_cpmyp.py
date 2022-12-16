@@ -8,16 +8,12 @@ from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.knapsack.solvers.knapsack_cpmpy import (
-    CPMPYKnapsackSolver,
-    SolverLookup,
-)
+from discrete_optimization.knapsack.solvers.knapsack_cpmpy import CPMPYKnapsackSolver
 
 
 def test_knapsack_cpmyp():
     file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_model = parse_file(file)
-    a = SolverLookup.base_solvers()
     solver = CPMPYKnapsackSolver(problem=knapsack_model)
     solver.init_model()
     parameters_cp = ParametersCP.default()
