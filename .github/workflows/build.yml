@@ -312,7 +312,12 @@ jobs:
             # Commit new environment
             git config user.name "Actions"
             git config user.email "actions@github.com"
-            git commit environment.yml -m "Specify binder environment for default branch"
+            git add environment.yml
+            if ! git diff-index --quiet HEAD -- environment.yml; then
+              # commit only if a difference (else would raise an error)
+              # no diff could happen if relaunching the whole workflow while this action was successful
+              git commit -m "Specify binder environment for default branch"
+            fi
           fi
           # Push binder branch with the updated environment
           git push origin $BINDER_ENV_DEFAULT_REF
