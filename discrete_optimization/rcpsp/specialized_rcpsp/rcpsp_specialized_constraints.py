@@ -6,7 +6,7 @@ import logging
 import random
 from copy import deepcopy
 from functools import partial
-from typing import Dict, Hashable, List, Tuple, Union
+from typing import Dict, Hashable, List, Tuple, Type, Union
 
 import networkx as nx
 import numpy as np
@@ -16,6 +16,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
+    Solution,
     TypeObjective,
 )
 from discrete_optimization.rcpsp.fast_function_rcpsp import (
@@ -358,7 +359,7 @@ class RCPSPModelSpecialConstraints(RCPSPModel):
         )
         return sol
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return RCPSPSolutionSpecial
 
 
@@ -615,7 +616,7 @@ class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
         )
         return sol
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return RCPSPSolutionSpecialPreemptive
 
 

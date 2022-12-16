@@ -4,7 +4,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Type
 
 import numpy as np
 
@@ -193,7 +193,7 @@ class KnapsackModel(Problem):
         self.evaluate(kp_sol)
         return kp_sol
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return KnapsackSolution
 
 
@@ -425,7 +425,7 @@ class MultidimensionalKnapsack(Problem):
         self.evaluate(kp_sol)
         return kp_sol
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return KnapsackSolutionMultidimensional
 
     def copy(self):

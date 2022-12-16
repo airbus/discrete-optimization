@@ -8,7 +8,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Tuple, Union
+from typing import Dict, Hashable, Iterable, List, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -648,7 +648,7 @@ class RCPSPModelPreemptive(Problem):
 
             return True
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return RCPSPSolutionPreemptive
 
     def get_attribute_register(self) -> EncodingRegister:

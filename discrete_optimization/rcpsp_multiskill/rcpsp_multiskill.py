@@ -8,7 +8,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type, Union
 
 import numpy as np
 import scipy.stats as ss
@@ -2596,8 +2596,8 @@ class MS_RCPSPModel(Problem):
         val += "\nSpecial constraints : " + str(self.do_special_constraints)
         return val
 
-    def get_solution_type(self):
-        return None
+    def get_solution_type(self) -> Type[Solution]:
+        return MS_RCPSPSolution
 
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {
@@ -2919,7 +2919,7 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         objectives = self.evaluate(rcpsp_sol)
         return objectives
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         if not self.preemptive:
             return MS_RCPSPSolution_Variant
         else:

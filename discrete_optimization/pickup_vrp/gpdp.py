@@ -7,7 +7,7 @@
 # February 1995 Transportation Science 29(1):17-29
 # https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem
 import logging
-from typing import Dict, Hashable, List, Set, Tuple
+from typing import Dict, Hashable, List, Set, Tuple, Type
 
 import networkx as nx
 import numpy as np
@@ -266,7 +266,7 @@ class GPDP(Problem):
     def get_attribute_register(self) -> EncodingRegister:
         pass
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return GPDPSolution
 
     def get_objective_register(self) -> ObjectiveRegister:

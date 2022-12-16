@@ -8,7 +8,7 @@ from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 from numba import njit
@@ -241,7 +241,7 @@ class TSPModel(Problem):
         ]
         return perm_from0
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return SolutionTSP
 
     def get_attribute_register(self) -> EncodingRegister:
