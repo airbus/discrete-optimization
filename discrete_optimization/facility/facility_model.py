@@ -14,7 +14,7 @@ import math
 from abc import abstractmethod
 from collections import namedtuple
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
 
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -223,7 +223,7 @@ class FacilityProblem(Problem):
         """
         return FacilitySolution(self, [0] * self.customer_count)
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return FacilitySolution
 
     def get_objective_register(self) -> ObjectiveRegister:

@@ -7,7 +7,16 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Sequence, Tuple, Union
+from typing import (
+    Dict,
+    Hashable,
+    Iterable,
+    List,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -630,7 +639,7 @@ class RCPSPModel(Problem):
         )
         return val
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return RCPSPSolution
 
     def get_attribute_register(self) -> EncodingRegister:

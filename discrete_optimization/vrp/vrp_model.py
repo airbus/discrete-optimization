@@ -6,7 +6,7 @@ import math
 from abc import abstractmethod
 from copy import deepcopy
 from functools import partial
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 from numba import njit
@@ -134,7 +134,7 @@ class VrpProblem(Problem):
         }
         return EncodingRegister(dict_encoding)
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         return VrpSolution
 
     def get_objective_register(self) -> ObjectiveRegister:

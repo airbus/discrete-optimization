@@ -7,7 +7,7 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
 
@@ -337,7 +337,7 @@ class Problem:
         ...
 
     @abstractmethod
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         """Returns the class implementation of a Solution.
 
         Returns (class): class object of the given Problem.
@@ -485,7 +485,7 @@ class RobustProblem(Problem):
         """See ```Problem.get_attribute_register``` doc."""
         return self.list_problem[0].get_attribute_register()
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         """See ```Problem.get_solution_type``` doc."""
         return self.list_problem[0].get_solution_type()
 

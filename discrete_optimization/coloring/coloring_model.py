@@ -8,7 +8,7 @@ The only constraint is that adjacent vertices should be colored by different col
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
 
@@ -267,7 +267,7 @@ class ColoringProblem(Problem):
         }
         return EncodingRegister(dict_register)
 
-    def get_solution_type(self):
+    def get_solution_type(self) -> Type[Solution]:
         """Returns the class of a solution instance for ColoringProblem."""
         return ColoringSolution
 
