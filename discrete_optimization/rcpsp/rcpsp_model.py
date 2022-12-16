@@ -533,7 +533,7 @@ class RCPSPModel(Problem):
     def evaluate_mobj(self, rcpsp_sol: RCPSPSolution):
         return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]):
+    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
         return TupleFitness(
             np.array([-dict_values["makespan"], dict_values["mean_resource_reserve"]]),
             2,

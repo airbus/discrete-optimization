@@ -234,7 +234,7 @@ class KnapsackModel_Mobj(KnapsackModel):
         res["weight"] = weight
         return res
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]):
+    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
         return TupleFitness(
             np.array([dict_values["value"], -dict_values["heaviest_item"]]), 2
         )
