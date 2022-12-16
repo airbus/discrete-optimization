@@ -67,7 +67,9 @@ class KnapsackMutationSingleBitFlip(Mutation):
         return new_sol, move, obj
 
     @staticmethod
-    def build(knapsack_model: KnapsackModel, solution: Solution):
+    def build(
+        knapsack_model: KnapsackModel, solution: Solution
+    ) -> "KnapsackMutationSingleBitFlip":
         return KnapsackMutationSingleBitFlip(knapsack_model)
 
 
@@ -101,7 +103,7 @@ class BitFlipMoveKP(LocalMove):
 
 class MutationKnapsack(Mutation):
     @staticmethod
-    def build(knapsack_model: KnapsackModel, solution: Solution):
+    def build(knapsack_model: KnapsackModel, solution: Solution) -> "MutationKnapsack":
         return MutationKnapsack(knapsack_model)
 
     def __init__(self, knapsack_model: KnapsackModel, attribute: Optional[str] = None):

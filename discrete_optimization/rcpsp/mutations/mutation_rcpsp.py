@@ -25,7 +25,9 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 
 class PermutationMutationRCPSP(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(
+        problem: Problem, solution: Solution, **kwargs
+    ) -> "PermutationMutationRCPSP":
         other_mutation = kwargs.get("other_mutation", PermutationShuffleMutation)
         other_mutation = other_mutation.build(problem, solution, **kwargs)
         return PermutationMutationRCPSP(
@@ -127,5 +129,7 @@ class DeadlineMutationRCPSP(Mutation):
         return sol, move, obj
 
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
+    def build(
+        problem: Problem, solution: Solution, **kwargs
+    ) -> "DeadlineMutationRCPSP":
         return DeadlineMutationRCPSP(problem, solution)

@@ -39,8 +39,8 @@ class LocalMoveDefault(LocalMove):
 
 class Mutation:
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs):
-        return NotImplementedError("Please implement it !")
+    def build(problem: Problem, solution: Solution, **kwargs) -> "Mutation":
+        raise NotImplementedError("Please implement it !")
 
     @abstractmethod
     def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
