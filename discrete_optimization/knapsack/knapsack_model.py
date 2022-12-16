@@ -4,7 +4,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, List, Sequence, Type
+from typing import Dict, List, Optional, Sequence, Type, cast
 
 import numpy as np
 
@@ -41,11 +41,13 @@ class Item:
 
 
 class KnapsackSolution(Solution):
-    value: float
-    weight: float
-    list_taken: List[bool]
-
-    def __init__(self, problem, list_taken, value=None, weight=None):
+    def __init__(
+        self,
+        problem: "KnapsackModel",
+        list_taken: List[int],
+        value: Optional[float] = None,
+        weight: Optional[float] = None,
+    ):
         self.problem = problem
         self.value = value
         self.weight = weight
@@ -67,13 +69,11 @@ class KnapsackSolution(Solution):
             list_taken=self.list_taken,
         )
 
-    def change_problem(self, new_problem):
-        self.__init__(
-            problem=new_problem,
-            value=self.value,
-            weight=self.weight,
-            list_taken=list(self.list_taken),
-        )
+    def change_problem(self, new_problem: Problem):
+        if not isinstance(new_problem, KnapsackModel):
+            raise ValueError("new_problem must a KnapsackModel for a KnapsackSolution.")
+        self.problem = new_problem
+        self.list_taken = list(self.list_taken)
 
     def __str__(self):
         s = "Value=" + str(self.value) + "\n"
@@ -130,16 +130,17 @@ class KnapsackModel(Problem):
             dict_objective_to_doc=dict_objective,
         )
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
+    def evaluate_from_encoding(
+        self, int_vector: List[int], encoding_name: str
+    ) -> Dict[str, float]:
         if encoding_name == "list_taken":
             kp_sol = KnapsackSolution(problem=self, list_taken=int_vector)
-        elif encoding_name == "custom":
-            kwargs = {encoding_name: int_vector, "problem": self}
-            kp_sol = KnapsackSolution(**kwargs)
+        else:
+            raise NotImplementedError("encoding_name must be 'list_taken'")
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate(self, knapsack_solution: KnapsackSolution):
+    def evaluate(self, knapsack_solution: KnapsackSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         if knapsack_solution.value is None or self.force_recompute_values:
             val = self.evaluate_value(knapsack_solution)
         else:
@@ -147,7 +148,7 @@ class KnapsackModel(Problem):
         w_violation = self.evaluate_weight_violation(knapsack_solution)
         return {"value": val, "weight_violation": w_violation}
 
-    def evaluate_value(self, knapsack_solution: KnapsackSolution):
+    def evaluate_value(self, knapsack_solution: KnapsackSolution) -> float:
         s = sum(
             [
                 knapsack_solution.list_taken[i] * self.list_items[i].value
@@ -169,13 +170,13 @@ class KnapsackModel(Problem):
             ]
         )
 
-    def evaluate_weight_violation(self, knapsack_solution: KnapsackSolution):
-        return max(0, knapsack_solution.weight - self.max_capacity)
+    def evaluate_weight_violation(self, knapsack_solution: KnapsackSolution) -> float:
+        return max(0.0, knapsack_solution.weight - self.max_capacity)  # type: ignore  # avoid is None check for efficiency
 
-    def satisfy(self, knapsack_solution: KnapsackSolution):
+    def satisfy(self, knapsack_solution: KnapsackSolution) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
         if knapsack_solution.value is None:
             self.evaluate(knapsack_solution)
-        return knapsack_solution.weight <= self.max_capacity
+        return knapsack_solution.weight <= self.max_capacity  # type: ignore  # avoid is None check for efficiency
 
     def __str__(self):
         s = (
@@ -188,7 +189,7 @@ class KnapsackModel(Problem):
         s += "\n".join([str(item) for item in self.list_items])
         return s
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> KnapsackSolution:
         kp_sol = KnapsackSolution(problem=self, list_taken=[0] * self.nb_items)
         self.evaluate(kp_sol)
         return kp_sol
@@ -222,10 +223,10 @@ class KnapsackModel_Mobj(KnapsackModel):
             dict_objective_to_doc=dict_objective,
         )
 
-    def evaluate(self, knapsack_solution: KnapsackSolution):
+    def evaluate(self, knapsack_solution: KnapsackSolution) -> Dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
         res = super().evaluate(knapsack_solution)
-        heaviest = 0
-        weight = 0
+        heaviest = 0.0
+        weight = 0.0
         for i in range(self.nb_items):
             if knapsack_solution.list_taken[i] == 1:
                 heaviest = max(heaviest, self.list_items[i].weight)
@@ -239,7 +240,7 @@ class KnapsackModel_Mobj(KnapsackModel):
             np.array([dict_values["value"], -dict_values["heaviest_item"]]), 2
         )
 
-    def evaluate_mobj(self, solution: KnapsackSolution):
+    def evaluate_mobj(self, solution: KnapsackSolution) -> TupleFitness:  # type: ignore  # avoid isinstance checks for efficiency
         return self.evaluate_mobj_from_dict(self.evaluate(solution))
 
 
@@ -350,7 +351,7 @@ class MultidimensionalKnapsack(Problem):
             dict_objective_to_doc=dict_objective,
         )
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
+    def evaluate_from_encoding(self, int_vector, encoding_name) -> Dict[str, float]:
         if encoding_name == "list_taken":
             kp_sol = KnapsackSolutionMultidimensional(
                 problem=self, list_taken=int_vector
@@ -358,10 +359,12 @@ class MultidimensionalKnapsack(Problem):
         elif encoding_name == "custom":
             kwargs = {encoding_name: int_vector, "problem": self}
             kp_sol = KnapsackSolutionMultidimensional(**kwargs)
+        else:
+            raise NotImplementedError("encoding_name must be 'list_taken' or 'custom'")
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate(self, knapsack_solution: KnapsackSolutionMultidimensional):
+    def evaluate(self, knapsack_solution: KnapsackSolutionMultidimensional) -> Dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
         if knapsack_solution.value is None or self.force_recompute_values:
             val = self.evaluate_value(knapsack_solution)
         else:
@@ -369,7 +372,9 @@ class MultidimensionalKnapsack(Problem):
         w_violation = self.evaluate_weight_violation(knapsack_solution)
         return {"value": val, "weight_violation": w_violation}
 
-    def evaluate_value(self, knapsack_solution: KnapsackSolutionMultidimensional):
+    def evaluate_value(
+        self, knapsack_solution: KnapsackSolutionMultidimensional
+    ) -> float:
         s = sum(
             [
                 knapsack_solution.list_taken[i] * self.list_items[i].value
@@ -391,7 +396,7 @@ class MultidimensionalKnapsack(Problem):
 
     def evaluate_weight_violation(
         self, knapsack_solution: KnapsackSolutionMultidimensional
-    ):
+    ) -> float:
         return sum(
             [
                 max(0.0, knapsack_solution.weights[j] - self.max_capacities[j])
@@ -399,7 +404,7 @@ class MultidimensionalKnapsack(Problem):
             ]
         )
 
-    def satisfy(self, knapsack_solution: KnapsackSolutionMultidimensional):
+    def satisfy(self, knapsack_solution: KnapsackSolutionMultidimensional) -> bool:  # type: ignore  # avoid isinstance checks for efficiency
         if knapsack_solution.value is None:
             self.evaluate(knapsack_solution)
         return all(
@@ -418,7 +423,7 @@ class MultidimensionalKnapsack(Problem):
         s += "\n".join([str(item) for item in self.list_items])
         return s
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> KnapsackSolutionMultidimensional:
         kp_sol = KnapsackSolutionMultidimensional(
             problem=self, list_taken=[0] * self.nb_items
         )
@@ -437,6 +442,8 @@ class MultidimensionalKnapsack(Problem):
 
 
 class MultiScenarioMultidimensionalKnapsack(RobustProblem):
+    list_problem: Sequence[MultidimensionalKnapsack]
+
     def __init__(
         self,
         list_problem: Sequence[MultidimensionalKnapsack],
@@ -444,11 +451,11 @@ class MultiScenarioMultidimensionalKnapsack(RobustProblem):
     ):
         super().__init__(list_problem, method_aggregating)
 
-    def get_dummy_solution(self):
-        return self.list_problem[0].get_dummy_solution()
+    def get_dummy_solution(self) -> KnapsackSolutionMultidimensional:
+        return cast(MultidimensionalKnapsack, self.list_problem[0]).get_dummy_solution()
 
 
-def from_kp_to_multi(knapsack_model: KnapsackModel):
+def from_kp_to_multi(knapsack_model: KnapsackModel) -> MultidimensionalKnapsack:
     return MultidimensionalKnapsack(
         list_items=[
             ItemMultidimensional(index=x.index, value=x.value, weights=[x.weight])
@@ -458,7 +465,9 @@ def from_kp_to_multi(knapsack_model: KnapsackModel):
     )
 
 
-def create_noised_scenario(problem: MultidimensionalKnapsack, nb_scenarios: int = 20):
+def create_noised_scenario(
+    problem: MultidimensionalKnapsack, nb_scenarios: int = 20
+) -> List[MultidimensionalKnapsack]:
     scenarios = [problem.copy() for i in range(nb_scenarios)]
     for p in scenarios:
         litem = []

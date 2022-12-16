@@ -6,11 +6,12 @@ import logging
 import os
 import random
 from datetime import timedelta
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
     CPSolverName,
     MinizincCPSolver,
     ParametersCP,
@@ -18,6 +19,8 @@ from discrete_optimization.generic_tools.cp_tools import (
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
+    TupleFitness,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
@@ -83,7 +86,7 @@ class CPKnapsackMZN(MinizincCPSolver):
         else:
             l_items.append(result["list_items"])
             objectives.append(result["objective"])
-        list_solutions_fit = []
+        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for items, objective in zip(l_items, objectives):
             taken = [0] * self.knapsack_model.nb_items
             weight = 0
@@ -175,11 +178,11 @@ class CPKnapsackMZN2(MinizincCPSolver):
                 l_items_taken.append(result[i, "taken"])
         else:
             l_items_taken.append(result["taken"])
-        list_solution_fits = []
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for items_taken in l_items_taken:
             taken = [0] * self.knapsack_model.nb_items
-            weight = 0
-            value = 0
+            weight = 0.0
+            value = 0.0
             for i in range(len(items_taken)):
                 if items_taken[i] != 0:
                     taken[self.knapsack_model.list_items[i].index] = 1
@@ -286,7 +289,7 @@ class CPMultidimensionalSolver(MinizincCPSolver):
             else:
                 l_taken.append(result["taken"])
                 objectives.append(result["objective"])
-        list_solutions_fit = []
+        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for taken, objective in zip(l_taken, objectives):
             sol = KnapsackSolutionMultidimensional(
                 problem=self.knapsack_model, list_taken=taken
@@ -379,7 +382,7 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
             else:
                 l_taken += [result["taken"]]
                 objectives += [result["objective"]]
-        list_solutions_fit = []
+        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for taken, objective in zip(l_taken, objectives):
             sol = KnapsackSolutionMultidimensional(
                 problem=self.knapsack_model, list_taken=taken
@@ -399,11 +402,15 @@ class KnapConstraintHandler(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: CPMultidimensionalMultiScenarioSolver,
+        cp_solver: CPSolver,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
+        if not isinstance(cp_solver, CPMultidimensionalMultiScenarioSolver):
+            raise ValueError(
+                "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
+            )
         if last_result_store is None:
             raise ValueError("This constraint need last_result_store to be not None.")
         strings = []
@@ -425,8 +432,12 @@ class KnapConstraintHandler(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: MultiScenarioMultidimensionalKnapsack,
+        cp_solver: CPSolver,
         child_instance,
         previous_constraints: Iterable[Any],
     ):
+        if not isinstance(cp_solver, CPMultidimensionalMultiScenarioSolver):
+            raise ValueError(
+                "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
+            )
         pass

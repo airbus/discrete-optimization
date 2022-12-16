@@ -3,14 +3,17 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import mip
 from mip import BINARY, MAXIMIZE, xsum
 from ortools.algorithms import pywrapknapsack_solver
 from ortools.linear_solver import pywraplp
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
+    Solution,
+    TupleFitness,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
@@ -34,7 +37,7 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, Model, quicksum
+    from gurobipy import GRB, Constr, GenConstr, MConstr, Model, QConstr, Var, quicksum
 
 
 logger = logging.getLogger(__name__)
@@ -50,10 +53,12 @@ class _BaseLPKnapsack(MilpSolver):
         **args,
     ):
         self.knapsack_model = knapsack_model
-        self.variable_decision = {}
-        self.constraints_dict = {}
-        self.description_variable_description = {}
-        self.description_constraint = {}
+        self.variable_decision: Dict[str, Dict[int, Union["Var", mip.Var]]] = {}
+        self.constraints_dict: Dict[
+            str, Union["Constr", "QConstr", "MConstr", "GenConstr", "mip.Constr"]
+        ] = {}
+        self.description_variable_description: Dict[str, Dict[str, Any]] = {}
+        self.description_constraint: Dict[str, Dict[str, str]] = {}
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -68,7 +73,7 @@ class _BaseLPKnapsack(MilpSolver):
             n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
         else:
             n_solutions = 1
-        list_solution_fits = []
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for s in range(n_solutions):
             weight = 0.0
             xs = {}
@@ -153,11 +158,11 @@ class LPKnapsackCBC(SolverDO):
         **args,
     ):
         self.knapsack_model = knapsack_model
-        self.model = None
-        self.variable_decision = {}
-        self.constraints_dict = {}
-        self.description_variable_description = {}
-        self.description_constraint = {}
+        self.model: Optional[pywraplp.Solver] = None
+        self.variable_decision: Dict[str, Dict[int, Any]] = {}
+        self.constraints_dict: Dict[str, Any] = {}
+        self.description_variable_description: Dict[str, Dict[str, Any]] = {}
+        self.description_constraint: Dict[str, Dict[str, str]] = {}
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -170,7 +175,6 @@ class LPKnapsackCBC(SolverDO):
     def init_model(self, warm_start: Optional[Dict[int, int]] = None):
         if warm_start is None:
             warm_start = {}
-        self.variable_decision = {"x": {}}
         self.description_variable_description = {
             "x": {
                 "shape": self.knapsack_model.nb_items,
@@ -207,6 +211,10 @@ class LPKnapsackCBC(SolverDO):
     def solve(self, **kwargs):
         if self.model is None:
             self.init_model()
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         self.model.SetTimeLimit(60000)
         res = self.model.Solve()
         resdict = {

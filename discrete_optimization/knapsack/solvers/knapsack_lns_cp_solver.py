@@ -7,6 +7,7 @@ from typing import Any, Iterable, Optional
 
 from minizinc import Instance
 
+from discrete_optimization.generic_tools.cp_tools import CPSolver
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
@@ -24,11 +25,13 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: CPKnapsackMZN2,
+        cp_solver: CPSolver,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
     ) -> Iterable[Any]:
+        if not isinstance(cp_solver, CPKnapsackMZN2):
+            raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
         subpart_item = set(
             random.sample(
                 range(self.problem.nb_items),
@@ -50,8 +53,10 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: CPKnapsackMZN2,
+        cp_solver: CPSolver,
         child_instance,
         previous_constraints: Iterable[Any],
     ):
+        if not isinstance(cp_solver, CPKnapsackMZN2):
+            raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
         pass

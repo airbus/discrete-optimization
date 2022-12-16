@@ -4,6 +4,7 @@
 
 import logging
 import time
+from typing import Optional
 
 import numpy as np
 
@@ -27,7 +28,7 @@ class KnapsackDynProg(SolverDO):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.knapsack_model = knapsack_model
         self.nb_items = self.knapsack_model.nb_items
@@ -51,7 +52,7 @@ class KnapsackDynProg(SolverDO):
     def init_model(self, **args):
         pass
 
-    def solve(self, **args):
+    def solve(self, **args) -> ResultStorage:
         start_by_most_promising = args.get("greedy_start", False)
         max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
         max_items = min(self.knapsack_model.nb_items + 1, max_items)
@@ -129,7 +130,7 @@ class KnapsackDynProg(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve_np(self, **args):
+    def solve_np(self, **args) -> ResultStorage:
         start_by_most_promising = args.get("greedy_start", False)
         max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
         max_time_seconds = args.get("max_time_seconds", None)

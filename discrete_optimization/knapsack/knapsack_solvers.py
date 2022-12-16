@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from typing import Any, Dict, List, Tuple, Type
+
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.knapsack.knapsack_model import KnapsackModel
 from discrete_optimization.knapsack.solvers.cp_solvers import (
@@ -19,7 +21,7 @@ from discrete_optimization.knapsack.solvers.lp_solvers import (
     MilpSolverName,
 )
 
-solvers = {
+solvers: Dict[str, List[Tuple[Type, Dict[str, Any]]]] = {
     "lp": [
         (KnapsackORTools, {}),
         (LPKnapsackCBC, {}),
