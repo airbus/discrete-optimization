@@ -14,6 +14,7 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
+from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -77,7 +78,7 @@ class InitialColoring(InitialSolution):
             )
         else:
             solver = GreedyColoring(
-                color_problem=self.problem,
+                coloring_model=self.problem,
                 params_objective_function=self.params_objective_function,
             )
             return solver.solve(strategy=NXGreedyColoringMethod.largest_first)
@@ -98,8 +99,11 @@ class ConstraintHandlerFixColorsCP(ConstraintHandler):
         self.fraction_to_fix = fraction_to_fix
 
     def remove_constraints_from_previous_iteration(
-        self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
-    ):
+        self,
+        cp_solver: CPSolver,
+        child_instance: Instance,
+        previous_constraints: Iterable[Any],
+    ) -> None:
         pass
 
     def adding_constraint_from_results_store(
@@ -122,6 +126,18 @@ class ConstraintHandlerFixColorsCP(ConstraintHandler):
         """
         range_node = range(1, self.problem.number_of_nodes + 1)
         current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, ColoringSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a ColoringSolution."
+            )
+        if current_solution.colors is None:
+            raise ValueError(
+                "result_storage.get_best_solution().colors " "should not be None."
+            )
         subpart_color = set(
             random.sample(
                 range_node, int(self.fraction_to_fix * self.problem.number_of_nodes)
@@ -184,6 +200,18 @@ class PostProcessSolutionColoring(PostProcessSolution):
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
         bs = result_storage.get_best_solution()
+        if bs is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(bs, ColoringSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a ColoringSolution."
+            )
+        if bs.colors is None:
+            raise ValueError(
+                "result_storage.get_best_solution().colors " "should not be None."
+            )
         colors = bs.colors
         set_colors = sorted(set(colors))
         nb_colors = len(set(set_colors))

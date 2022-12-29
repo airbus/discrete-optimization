@@ -2,12 +2,14 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Hashable, List, Tuple
+from typing import Hashable, List, Optional, Tuple
 
 import networkx as nx
 
 
-def compute_cliques(g: nx.Graph, nb_max=None) -> Tuple[List[List[Hashable]], bool]:
+def compute_cliques(
+    g: nx.Graph, nb_max: Optional[int] = None
+) -> Tuple[List[List[Hashable]], bool]:
     """Compute nb_max cliques for a given graph (possibly a graph from a coloring model).
 
     A clique of a graph is a subset of nodes that are all adjacent to each other.

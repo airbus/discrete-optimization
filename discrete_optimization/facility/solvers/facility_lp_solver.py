@@ -184,7 +184,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
     """Milp solver using gurobi library
 
     Attributes:
-        coloring_problem (FacilityProblem): facility problem instance to solve
+        coloring_model (FacilityProblem): facility problem instance to solve
         params_objective_function (ParamsObjectiveFunction): objective function parameters
                         (however this is just used for the ResultStorage creation, not in the optimisation)
     """

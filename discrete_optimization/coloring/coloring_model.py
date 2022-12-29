@@ -125,7 +125,7 @@ class ColoringSolution(Solution):
         )
         return sol
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "nb_color = "
             + str(self.nb_color)
@@ -137,7 +137,7 @@ class ColoringSolution(Solution):
             + str(self.colors)
         )
 
-    def change_problem(self, new_problem: Problem):
+    def change_problem(self, new_problem: Problem) -> None:
         """Change the reference to the problem instance of the solution.
 
         If two coloring problems have the same number of nodes, we can build a solution of the problem
@@ -163,7 +163,7 @@ class ColoringSolution(Solution):
         self.problem = new_problem
 
 
-def transform_color_values_to_value_precede(color_vector: List[int]):
+def transform_color_values_to_value_precede(color_vector: List[int]) -> List[int]:
     """See method ColoringSolution.to_reformated_solution().
 
     Args:
@@ -283,7 +283,7 @@ class ColoringProblem(Problem):
             dict_objective_to_doc=dict_objective,
         )
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> ColoringSolution:
         """Returns a dummy solution.
 
         A dummy feasible solution consists in giving one different color per vertices.
@@ -316,7 +316,9 @@ class ColoringProblem(Problem):
                     val += 1
         return val
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
+    def evaluate_from_encoding(
+        self, int_vector: List[int], encoding_name: str
+    ) -> Dict[str, float]:
         """Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.
 
         Args:
@@ -326,12 +328,13 @@ class ColoringProblem(Problem):
         Returns: the evaluation of the (int_vector, encoding) object on the coloring problem.
 
         """
-        coloring_sol = None
+        coloring_sol: ColoringSolution
         if encoding_name == "colors":
             coloring_sol = ColoringSolution(problem=self, colors=int_vector)
         elif encoding_name == "custom":
-            kwargs = {encoding_name: int_vector, "problem": self}
-            coloring_sol = ColoringSolution(**kwargs)
-
+            kwargs = {encoding_name: int_vector}
+            coloring_sol = ColoringSolution(problem=self, **kwargs)  # type: ignore
+        else:
+            raise ValueError("encoding_name can only be 'colors' or 'custom'.")
         objectives = self.evaluate(coloring_sol)
         return objectives

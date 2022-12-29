@@ -2,12 +2,13 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Optional
+from typing import Any, Optional
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
+from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -29,32 +30,42 @@ else:
     toulbar_available = True
 
 
-class ToulbarColoringSolver(SolverDO):
+class ToulbarColoringSolver(SolverColoring):
     def __init__(
         self,
-        problem: ColoringProblem,
+        coloring_model: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
+        SolverColoring.__init__(self, coloring_model=coloring_model)
         (
             self.aggreg_sol,
             self.aggreg_from_dict_values,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            self.problem, params_objective_function=params_objective_function
+            self.coloring_model, params_objective_function=params_objective_function
         )
         self.model: Optional[pytoulbar2.CFN] = None
 
-    def init_model(self, **args):
-        number_nodes = self.problem.number_of_nodes
-        index_nodes_name = self.problem.index_nodes_name
+    def init_model(self, **kwargs: Any) -> None:
+        number_nodes = self.coloring_model.number_of_nodes
+        index_nodes_name = self.coloring_model.index_nodes_name
         greedy_solver = GreedyColoring(
-            color_problem=self.problem,
+            coloring_model=self.coloring_model,
             params_objective_function=self.params_objective_function,
         )
         res = greedy_solver.solve(strategy=NXGreedyColoringMethod.largest_first)
-        sol: ColoringSolution = res.get_best_solution()
-        nb_colors = self.problem.evaluate(sol)["nb_colors"]
+        sol = res.get_best_solution()
+        if sol is None:
+            raise RuntimeError(
+                "greedy_solver.solve(strategy=NXGreedyColoringMethod.largest_first).get_best_solution() "
+                "should not be None."
+            )
+        if not isinstance(sol, ColoringSolution):
+            raise RuntimeError(
+                "greedy_solver.solve(strategy=NXGreedyColoringMethod.largest_first).get_best_solution() "
+                "should be a ColoringSolution."
+            )
+        nb_colors = int(self.coloring_model.evaluate(sol)["nb_colors"])
         print(nb_colors, " colors found by the greedy method ")
         # we don't have to have a very tight bound.
         Problem = pytoulbar2.CFN(nb_colors)
@@ -71,10 +82,10 @@ class ToulbarColoringSolver(SolverDO):
                 ],
             )  # encode that x_{i}<=max_color.
             #  Problem.AddLinearConstraint([1, -1], [0, i+1], '>=', 0)  # max_color>x_{i} (alternative way ?)
-        value_sequence_chain = args.get("value_sequence_chain", False)
+        value_sequence_chain = kwargs.get("value_sequence_chain", False)
         if value_sequence_chain:
-            hard_value_sequence_chain = args.get("hard_value_sequence_chain", False)
-            tolerance_delta_max = args.get("tolerance_delta_max", 1)
+            hard_value_sequence_chain = kwargs.get("hard_value_sequence_chain", False)
+            tolerance_delta_max = kwargs.get("tolerance_delta_max", 1)
             # play with how "fidele" should be the "max_x" variable
             for j in range(number_nodes):
                 Problem.AddVariable(f"max_x_{j}", range(nb_colors))
@@ -131,14 +142,14 @@ class ToulbarColoringSolver(SolverDO):
                             for val2 in range(nb_colors)
                         ],
                     )
-        len_edges = len(self.problem.graph.edges)
+        len_edges = len(self.coloring_model.graph.edges)
         index = 0
         costs = [
             10000 if val1 == val2 else 0
             for val1 in range(nb_colors)
             for val2 in range(nb_colors)
         ]
-        for e in self.problem.graph.edges:
+        for e in self.coloring_model.graph.edges:
             if index % 100 == 0:
                 print(index, "/", len_edges)
             index1 = index_nodes_name[e[0]]
@@ -147,7 +158,7 @@ class ToulbarColoringSolver(SolverDO):
             index += 1
         self.model = Problem
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         if self.model is None:
             self.init_model()
             if self.model is None:
@@ -160,8 +171,8 @@ class ToulbarColoringSolver(SolverDO):
         solution = self.model.Solve(showSolutions=1)
         print(solution)
         rcpsp_sol = ColoringSolution(
-            problem=self.problem,
-            colors=solution[0][1 : 1 + self.problem.number_of_nodes],
+            problem=self.coloring_model,
+            colors=solution[0][1 : 1 + self.coloring_model.number_of_nodes],
         )
         fit = self.aggreg_sol(rcpsp_sol)
         return ResultStorage(
