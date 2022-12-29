@@ -17,18 +17,19 @@ from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     ColoringLP_MIP,
     MilpSolverName,
 )
+from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     ColoringProblem,
     GreedyColoring,
     NXGreedyColoringMethod,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-solvers: Dict[str, List[Tuple[Type, Dict[str, Any]]]] = {
+solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
     "lp": [
         (
             ColoringLP,
@@ -67,13 +68,13 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility = {}
+solvers_compatibility: Dict[Type[SolverColoring], List[Type[Problem]]] = {}
 for x in solvers:
     for y in solvers[x]:
         solvers_compatibility[y[0]] = [ColoringProblem]
 
 
-def look_for_solver(domain: "ColoringProblem"):
+def look_for_solver(domain: "ColoringProblem") -> List[Type[SolverColoring]]:
     """Given an instance of ColoringProblem, return a list of class of solvers.
 
 
@@ -86,7 +87,9 @@ def look_for_solver(domain: "ColoringProblem"):
     return look_for_solver_class(class_domain)
 
 
-def look_for_solver_class(class_domain):
+def look_for_solver_class(
+    class_domain: Type[ColoringProblem],
+) -> List[Type[SolverColoring]]:
     """Given a class domain, return a list of class of solvers.
 
 
@@ -102,7 +105,9 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method, coloring_model: ColoringProblem, **args) -> ResultStorage:
+def solve(
+    method: Type[SolverColoring], coloring_model: ColoringProblem, **kwargs: Any
+) -> ResultStorage:
     """Solve a coloring instance with a given class of solver.
 
     Args:
@@ -113,15 +118,17 @@ def solve(method, coloring_model: ColoringProblem, **args) -> ResultStorage:
     Returns: a ResultsStorage objecting obtained by the solver.
 
     """
-    solver_ = method(coloring_model, **args)
+    solver_ = method(coloring_model, **kwargs)
     try:
-        solver_.init_model(**args)
+        solver_.init_model(**kwargs)
     except AttributeError:
         pass
-    return solver_.solve(**args)
+    return solver_.solve(**kwargs)
 
 
-def return_solver(method, coloring_model: ColoringProblem, **args) -> SolverDO:
+def return_solver(
+    method: Type[SolverColoring], coloring_model: ColoringProblem, **kwargs: Any
+) -> SolverColoring:
     """Return the solver initialized with the coloring problem instance
 
     Args:
@@ -132,9 +139,9 @@ def return_solver(method, coloring_model: ColoringProblem, **args) -> SolverDO:
     Returns (SolverDO) : a solver object.
 
     """
-    solver_ = method(coloring_model, **args)
+    solver_ = method(coloring_model, **kwargs)
     try:
-        solver_.init_model(**args)
+        solver_.init_model(**kwargs)
     except AttributeError:
         pass
     return solver_

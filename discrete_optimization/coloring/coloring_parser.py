@@ -12,7 +12,7 @@ from discrete_optimization.generic_tools.graph_api import Graph
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-):
+) -> List[str]:
     """Get datasets available for coloring.
 
     Params:
@@ -36,7 +36,7 @@ def get_data_available(
     return datasets
 
 
-def parse(input_data) -> ColoringProblem:
+def parse(input_data: str) -> ColoringProblem:
     """From a text input, initialise a coloring problem instance.
 
     Args:
@@ -60,7 +60,7 @@ def parse(input_data) -> ColoringProblem:
     )
 
 
-def parse_file(file_path) -> ColoringProblem:
+def parse_file(file_path: str) -> ColoringProblem:
     """From an absolute path to a coloring text file, return the corresponding coloring instance
     Args:
         file_path (str): absolute path to the file

@@ -16,13 +16,14 @@ from typing import Any, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import pymzn
-from minizinc import Instance, Model, Solver
+from minizinc import Instance, Model, Result, Solver
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
 from discrete_optimization.coloring.coloring_toolbox import compute_cliques
+from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -54,7 +55,7 @@ class ColoringCPSolution:
     objective: int
     __output_item: Optional[str] = None
 
-    def __init__(self, objective, _output_item, **kwargs):
+    def __init__(self, objective: int, _output_item: Optional[str], **kwargs: Any):
         self.objective = objective
         self.dict = kwargs
         logger.debug(f"New solution {self.objective}")
@@ -77,32 +78,32 @@ file_dict = {
 }
 
 
-class ColoringCP(MinizincCPSolver):
+class ColoringCP(MinizincCPSolver, SolverColoring):
     def __init__(
         self,
-        coloring_problem: ColoringProblem,
+        coloring_model: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         silent_solve_error: bool = False,
-        **args,
+        **kwargs: Any,
     ):
         """CP solver linked with minizinc implementation of coloring problem.
 
         Args:
-            coloring_problem (ColoringProblem): coloring problem instance to solve
+            coloring_model (ColoringProblem): coloring problem instance to solve
             params_objective_function (ParamsObjectiveFunction): params of the objective function
             cp_solver_name (CPSolverName): backend solver to use with minizinc
             silent_solve_error: if True, raise a warning instead of an error if the underlying instance.solve() crashes
             **args:
         """
+        SolverColoring.__init__(self, coloring_model=coloring_model)
         self.silent_solve_error = silent_solve_error
-        self.coloring_problem = coloring_problem
-        self.number_of_nodes = self.coloring_problem.number_of_nodes
-        self.number_of_edges = len(self.coloring_problem.graph.edges_infos_dict)
-        self.nodes_name = self.coloring_problem.graph.nodes_name
-        self.index_nodes_name = self.coloring_problem.index_nodes_name
-        self.index_to_nodes_name = self.coloring_problem.index_to_nodes_name
-        self.graph = self.coloring_problem.graph
+        self.number_of_nodes = self.coloring_model.number_of_nodes
+        self.number_of_edges = len(self.coloring_model.graph.edges_infos_dict)
+        self.nodes_name = self.coloring_model.graph.nodes_name
+        self.index_nodes_name = self.coloring_model.index_nodes_name
+        self.index_to_nodes_name = self.coloring_model.index_to_nodes_name
+        self.graph = self.coloring_model.graph
         self.custom_output_type = False
         self.g = None
         (
@@ -110,12 +111,12 @@ class ColoringCP(MinizincCPSolver):
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            problem=self.coloring_problem,
+            problem=self.coloring_model,
             params_objective_function=params_objective_function,
         )
         self.cp_solver_name = cp_solver_name
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         """Instantiate a minizinc model with the coloring problem data.
 
         Keyword Args:
@@ -155,7 +156,7 @@ class ColoringCP(MinizincCPSolver):
         keys += ["n_nodes", "n_edges", "nb_colors"]
         edges = [
             [self.index_nodes_name[e[0]] + 1, self.index_nodes_name[e[1]] + 1, e[2]]
-            for e in self.coloring_problem.graph.edges
+            for e in self.coloring_model.graph.edges
         ]
         g = nx.Graph()
         g.add_nodes_from([i for i in range(1, self.number_of_nodes + 1)])
@@ -174,7 +175,7 @@ class ColoringCP(MinizincCPSolver):
 
     def export_dzn(
         self, file_name: Optional[str] = None, keys: Optional[Iterable[Any]] = None
-    ):
+    ) -> None:
         """[DEBUG utility] Export the instantiated data into a dzn for potential debugs without python.
 
         Args:
@@ -194,7 +195,9 @@ class ColoringCP(MinizincCPSolver):
         )
         logger.info(f"Successfully dumped data file {file_name}")
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
+    def retrieve_solutions(
+        self, result: Result, parameters_cp: ParametersCP
+    ) -> ResultStorage:
         """Retrieve the solution found by solving the minizinc instance
 
         Args:
@@ -228,7 +231,7 @@ class ColoringCP(MinizincCPSolver):
                 colors[k][self.index_nodes_name[self.nodes_name[i]]] - 1
                 for i in range(self.number_of_nodes)
             ]
-            color_sol = ColoringSolution(self.coloring_problem, sol)
+            color_sol = ColoringSolution(self.coloring_model, sol)
             fit = self.aggreg_sol(color_sol)
             solutions_fit.append((color_sol, fit))
 
@@ -238,7 +241,7 @@ class ColoringCP(MinizincCPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def get_solution(self, **kwargs):
+    def get_solution(self, **kwargs: Any) -> ColoringSolution:
         """Used by the init_model method to provide a greedy first solution
 
         Keyword Args:
@@ -253,14 +256,23 @@ class ColoringCP(MinizincCPSolver):
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
-                self.coloring_problem,
+                self.coloring_model,
                 params_objective_function=self.params_objective_function,
             )
             result_store = greedy_solver.solve(
                 strategy=kwargs.get("greedy_method", NXGreedyColoringMethod.best),
             )
-            solution = result_store.get_best_solution_fit()[0]
+            solution = result_store.get_best_solution()
+            if solution is None:
+                raise RuntimeError(
+                    "greedy_solver.solve().get_best_solution() " "should not be None."
+                )
+            if not isinstance(solution, ColoringSolution):
+                raise RuntimeError(
+                    "greedy_solver.solve().get_best_solution() "
+                    "should be a ColoringSolution."
+                )
         else:
             logger.info("Get dummy solution")
-            solution = self.coloring_problem.get_dummy_solution()
+            solution = self.coloring_model.get_dummy_solution()
         return solution

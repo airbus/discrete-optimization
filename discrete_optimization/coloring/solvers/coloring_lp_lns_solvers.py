@@ -8,7 +8,10 @@ import random
 from enum import Enum
 from typing import Any, Dict, Hashable, Mapping
 
-from discrete_optimization.coloring.coloring_model import ColoringProblem
+from discrete_optimization.coloring.coloring_model import (
+    ColoringProblem,
+    ColoringSolution,
+)
 from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     ColoringLP,
     ColoringLP_MIP,
@@ -68,7 +71,7 @@ class InitialColoring(InitialSolution):
             )
         else:
             solver = GreedyColoring(
-                color_problem=self.problem,
+                coloring_model=self.problem,
                 params_objective_function=self.params_objective_function,
             )
             return solver.solve()
@@ -107,7 +110,19 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
         )
         dict_color_fixed = {}
         dict_color_start = {}
-        current_solution = result_storage.get_best_solution_fit()[0]
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, ColoringSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a ColoringSolution."
+            )
+        if current_solution.colors is None:
+            raise ValueError(
+                "result_storage.get_best_solution().colors " "should not be None."
+            )
         max_color = max(current_solution.colors)
         for n in milp_solver.nodes_name:
             dict_color_start[n] = current_solution.colors[
@@ -138,7 +153,7 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
-    ):
+    ) -> None:
         if not isinstance(milp_solver, ColoringLP):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
         if milp_solver.model is None:
@@ -185,7 +200,19 @@ class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
 
         dict_color_fixed = {}
         dict_color_start = {}
-        current_solution = result_storage.get_best_solution_fit()[0]
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, ColoringSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a ColoringSolution."
+            )
+        if current_solution.colors is None:
+            raise ValueError(
+                "result_storage.get_best_solution().colors " "should not be None."
+            )
         max_color = max(current_solution.colors)
         for n in milp_solver.nodes_name:
             dict_color_start[n] = current_solution.colors[
@@ -218,7 +245,7 @@ class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
-    ):
+    ) -> None:
         if not isinstance(milp_solver, ColoringLP_MIP):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
         if milp_solver.model is None:

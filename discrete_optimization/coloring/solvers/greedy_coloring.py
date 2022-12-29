@@ -6,7 +6,7 @@
 
 import logging
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 import networkx as nx
 
@@ -14,6 +14,7 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
+from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -52,27 +53,27 @@ class NXGreedyColoringMethod(Enum):
     best = "best"
 
 
-class GreedyColoring(SolverDO):
+class GreedyColoring(SolverColoring):
     """Binded solver of networkx heuristics for coloring problem."""
 
     def __init__(
         self,
-        color_problem: ColoringProblem,
+        coloring_model: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
-        self.color_problem = color_problem
-        self.nx_graph = self.color_problem.graph.to_networkx()
+        SolverColoring.__init__(self, coloring_model=coloring_model)
+        self.nx_graph = self.coloring_model.graph.to_networkx()
         (
             self.aggreg_sol,
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            problem=self.color_problem,
+            problem=self.coloring_model,
             params_objective_function=params_objective_function,
         )
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         """Run the greedy solver for the given problem.
 
         Keyword Args:
@@ -112,7 +113,7 @@ class GreedyColoring(SolverDO):
                 logger.info(f"Failed strategy : {strategy} {e}")
         logger.debug(f"best : {best_nb_color}")
         solution = ColoringSolution(
-            self.color_problem, colors=best_solution, nb_color=None
+            self.coloring_model, colors=best_solution, nb_color=None
         )
         solution = solution.to_reformated_solution()
         fit = self.aggreg_sol(solution)
