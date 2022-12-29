@@ -31,7 +31,13 @@ class KnapsackDynProg(SolverDO):
     ):
         self.knapsack_model = knapsack_model
         self.nb_items = self.knapsack_model.nb_items
-        self.capacity = self.knapsack_model.max_capacity
+        capacity = int(self.knapsack_model.max_capacity)
+        if capacity != self.knapsack_model.max_capacity:
+            logger.warning(
+                "knapsack_model.max_capacity should be an integer for dynamic programming. "
+                "Coercing it to an integer for the solver."
+            )
+        self.capacity: int = capacity
         self.table = np.zeros((self.nb_items + 1, self.capacity + 1))
         (
             self.aggreg_sol,
@@ -78,7 +84,9 @@ class KnapsackDynProg(SolverDO):
                 index_promising[nb_item - 1]
             ]
             for capacity in range(self.capacity + 1):
-                weight = self.knapsack_model.list_items[index_item].weight
+                weight = int(
+                    self.knapsack_model.list_items[index_item].weight
+                )  # weight should be an integer for this algo
                 value = self.knapsack_model.list_items[index_item].value
                 if weight > capacity:
                     self.table[nb_item, capacity] = self.table[nb_item - 1, capacity]
@@ -102,10 +110,11 @@ class KnapsackDynProg(SolverDO):
                 ]
                 taken[self.knapsack_model.list_items[index_item].index] = 1
                 value += self.knapsack_model.list_items[index_item].value
-                weight += self.knapsack_model.list_items[index_item].weight
+                weight += int(self.knapsack_model.list_items[index_item].weight)
                 cur_indexes = (
                     cur_indexes[0] - 1,
-                    cur_indexes[1] - self.knapsack_model.list_items[index_item].weight,
+                    cur_indexes[1]
+                    - int(self.knapsack_model.list_items[index_item].weight),
                 )
             else:
                 cur_indexes = (cur_indexes[0] - 1, cur_indexes[1])
@@ -151,7 +160,7 @@ class KnapsackDynProg(SolverDO):
             index_item = self.knapsack_model.index_to_index_list[
                 index_promising[nb_item - 1]
             ]
-            weight = self.knapsack_model.list_items[index_item].weight
+            weight = int(self.knapsack_model.list_items[index_item].weight)
             value = self.knapsack_model.list_items[index_item].value
             vec_1 = self.table[nb_item - 1, :]
             ind = [max(capacity - weight, 0) for capacity in range(self.capacity + 1)]
@@ -171,10 +180,11 @@ class KnapsackDynProg(SolverDO):
                 ]
                 taken[self.knapsack_model.list_items[index_item].index] = 1
                 value += self.knapsack_model.list_items[index_item].value
-                weight += self.knapsack_model.list_items[index_item].weight
+                weight += int(self.knapsack_model.list_items[index_item].weight)
                 cur_indexes = (
                     cur_indexes[0] - 1,
-                    cur_indexes[1] - self.knapsack_model.list_items[index_item].weight,
+                    cur_indexes[1]
+                    - int(self.knapsack_model.list_items[index_item].weight),
                 )
             else:
                 cur_indexes = (cur_indexes[0] - 1, cur_indexes[1])
