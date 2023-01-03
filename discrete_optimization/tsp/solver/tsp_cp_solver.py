@@ -4,9 +4,9 @@
 
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
-from minizinc import Instance, Model, Solver
+from minizinc import Instance, Model, Result, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
@@ -24,6 +24,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     fitness_class,
 )
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
+from discrete_optimization.tsp.solver.tsp_solver import SolverTSP
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class TSP_CPModel:
     INT_VERSION = 1
 
 
-class TSP_CP_Solver(MinizincCPSolver):
+class TSP_CP_Solver(MinizincCPSolver, SolverTSP):
     def __init__(
         self,
         tsp_model: TSPModel,
@@ -44,8 +45,8 @@ class TSP_CP_Solver(MinizincCPSolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
     ):
+        SolverTSP.__init__(self, tsp_model=tsp_model)
         self.silent_solve_error = silent_solve_error
-        self.tsp_model = tsp_model
         self.model_type = model_type
         self.start_index = self.tsp_model.start_index
         self.end_index = self.tsp_model.end_index
@@ -54,7 +55,6 @@ class TSP_CP_Solver(MinizincCPSolver):
 
         self.distance_matrix = build_matrice_distance(
             self.tsp_model.node_count,
-            self.tsp_model.list_points,
             method=self.tsp_model.evaluate_function_indexes,
         )
         self.distance_matrix[self.end_index, self.start_index] = 0
@@ -73,7 +73,7 @@ class TSP_CP_Solver(MinizincCPSolver):
             problem=self.tsp_model, params_objective_function=params_objective_function
         )
 
-    def init_model(self, **args):
+    def init_model(self, **args: Any) -> None:
         if self.model_type == TSP_CPModel.FLOAT_VERSION:
             model = Model(os.path.join(this_path, "../minizinc/tsp_float.mzn"))
         if self.model_type == TSP_CPModel.INT_VERSION:
@@ -88,7 +88,9 @@ class TSP_CP_Solver(MinizincCPSolver):
         instance["end"] = self.end_index + 1
         self.instance = instance
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
+    def retrieve_solutions(
+        self, result: Result, parameters_cp: ParametersCP
+    ) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
         solutions_fit: List[Tuple[Solution, fitness_class]] = []
         if intermediate_solutions:
@@ -107,7 +109,7 @@ class TSP_CP_Solver(MinizincCPSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def _retrieve_solution_from_circuit(self, circuit) -> SolutionTSP:
+    def _retrieve_solution_from_circuit(self, circuit: List[int]) -> SolutionTSP:
         path = []
         cur_pos = self.start_index
         init = False
