@@ -3,15 +3,15 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import List, Optional
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem, VrpProblem2D
+from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem2D
 
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-):
+) -> List[str]:
     """Get datasets available for vrp.
 
     Params:
@@ -35,7 +35,12 @@ def get_data_available(
     return datasets
 
 
-def parse_input(input_data, start_index=0, end_index=0, vehicle_count=None):
+def parse_input(
+    input_data: str,
+    start_index: int = 0,
+    end_index: int = 0,
+    vehicle_count: Optional[int] = None,
+) -> VrpProblem2D:
     # parse the input
     lines = input_data.split("\n")
 
@@ -50,7 +55,7 @@ def parse_input(input_data, start_index=0, end_index=0, vehicle_count=None):
         customers.append(
             Customer2D(i - 1, int(parts[0]), float(parts[1]), float(parts[2]))
         )
-    vehicle_capacities = [vehicle_capacity] * vehicle_count
+    vehicle_capacities: List[float] = [vehicle_capacity] * vehicle_count
     start_indexes = [start_index] * vehicle_count
     end_indexes = [end_index] * vehicle_count
     return VrpProblem2D(
@@ -63,7 +68,12 @@ def parse_input(input_data, start_index=0, end_index=0, vehicle_count=None):
     )
 
 
-def parse_file(file_path, start_index=0, end_index=0, vehicle_count=None) -> VrpProblem:
+def parse_file(
+    file_path: str,
+    start_index: int = 0,
+    end_index: int = 0,
+    vehicle_count: Optional[int] = None,
+) -> VrpProblem2D:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         vrp_model = parse_input(

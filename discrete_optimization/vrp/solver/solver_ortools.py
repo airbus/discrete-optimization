@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import logging
 from enum import Enum
+from typing import Any, List, Optional
 
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -14,7 +15,8 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.do_solver import ResultStorage
+from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution
 from discrete_optimization.vrp.vrp_toolbox import build_graph
 
@@ -41,24 +43,24 @@ metaheuristic_map = {
 }
 
 
-class VrpORToolsSolver(SolverDO):
+class VrpORToolsSolver(SolverVrp):
     def __init__(
         self,
-        problem: VrpProblem,
-        params_objective_function: ParamsObjectiveFunction = None,
-        **args,
+        vrp_model: VrpProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
-        self.problem = problem
-        self.manager = None
+        SolverVrp.__init__(self, vrp_model=vrp_model)
+        self.manager: Optional[pywrapcp.RoutingIndexManager] = None
         (
             self.aggreg_sol,
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            problem=self.problem, params_objective_function=params_objective_function
+            problem=self.vrp_model, params_objective_function=params_objective_function
         )
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         first_solution_strategy = kwargs.get(
             "first_solution_strategy", FirstSolutionStrategy.SAVINGS
         )
@@ -67,21 +69,22 @@ class VrpORToolsSolver(SolverDO):
         )
         first_solution_strategy = first_solution_map[first_solution_strategy]
         local_search_metaheuristic = metaheuristic_map[local_search_metaheuristic]
-        G, matrix_distance = build_graph(self.problem)
-        matrix_distance_int = np.array(10**5 * matrix_distance, dtype=np.int)
+        G, matrix_distance = build_graph(self.vrp_model)
+        matrix_distance_int = np.array(10**5 * matrix_distance, dtype=np.int_)
         demands = [
-            self.problem.customers[i].demand for i in range(self.problem.customer_count)
+            self.vrp_model.customers[i].demand
+            for i in range(self.vrp_model.customer_count)
         ]
         # Create the routing index manager.
         manager = pywrapcp.RoutingIndexManager(
-            self.problem.customer_count,
-            self.problem.vehicle_count,
-            self.problem.start_indexes,
-            self.problem.end_indexes,
+            self.vrp_model.customer_count,
+            self.vrp_model.vehicle_count,
+            self.vrp_model.start_indexes,
+            self.vrp_model.end_indexes,
         )
         routing = pywrapcp.RoutingModel(manager)
         # Create and register a transit callback.
-        def distance_callback(from_index, to_index):
+        def distance_callback(from_index: int, to_index: int) -> int:
             """Returns the distance between the two nodes."""
             # Convert from routing variable Index to distance matrix NodeIndex.
             from_node = manager.IndexToNode(from_index)
@@ -93,7 +96,7 @@ class VrpORToolsSolver(SolverDO):
         routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
         # Add Capacity constraint.
-        def demand_callback(from_index):
+        def demand_callback(from_index: int) -> float:
             """Returns the demand of the node."""
             # Convert from routing variable Index to demands NodeIndex.
             from_node = manager.IndexToNode(from_index)
@@ -103,7 +106,7 @@ class VrpORToolsSolver(SolverDO):
         routing.AddDimensionWithVehicleCapacity(
             demand_callback_index,
             0,  # null capacity slack
-            self.problem.vehicle_capacities,  # vehicle maximum capacities
+            self.vrp_model.vehicle_capacities,  # vehicle maximum capacities
             True,  # start cumul to zero
             "Capacity",
         )
@@ -118,18 +121,22 @@ class VrpORToolsSolver(SolverDO):
         self.search_parameters = search_parameters
         logger.info("Initialized ...")
 
-    def retrieve(self, solution):
-        vehicle_tours = []
-        vehicle_tours_all = []
-        vehicle_count = self.problem.vehicle_count
-        objective = 0
-        route_distance = 0
+    def retrieve(self, solution: pywrapcp.Assignment) -> VrpSolution:
+        if self.manager is None:
+            raise RuntimeError(
+                "self.manager should be not None when calling self.retrieve()."
+            )
+        vehicle_tours: List[List[int]] = []
+        vehicle_tours_all: List[List[int]] = []
+        vehicle_count: int = self.vrp_model.vehicle_count
+        objective = 0.0
+        route_distance = 0.0
         for vehicle_id in range(vehicle_count):
             vehicle_tours.append([])
             vehicle_tours_all.append([])
             index = self.routing.Start(vehicle_id)
             plan_output = f"Route for vehicle {vehicle_id}:\n"
-            route_load = 0
+            route_load = 0.0
             cnt = 0
             while not self.routing.IsEnd(index):
                 node_index = self.manager.IndexToNode(index)
@@ -137,14 +144,14 @@ class VrpORToolsSolver(SolverDO):
                     vehicle_tours[-1] += [node_index]
                 vehicle_tours_all[-1] += [node_index]
                 cnt += 1
-                route_load += self.problem.customers[node_index].demand
+                route_load += self.vrp_model.customers[node_index].demand
                 plan_output += f" {node_index} Load({route_load}) -> "
                 previous_index = index
                 index = solution.Value(self.routing.NextVar(index))
                 route_distance += self.routing.GetArcCostForVehicle(
                     previous_index, index, vehicle_id
                 )
-                objective += self.problem.evaluate_function_indexes(
+                objective += self.vrp_model.evaluate_function_indexes(
                     node_index, self.manager.IndexToNode(index)
                 )
             vehicle_tours_all[-1] += [self.manager.IndexToNode(index)]
@@ -153,9 +160,9 @@ class VrpORToolsSolver(SolverDO):
         logger.debug(f"Objective : {objective}")
         logger.debug(f"Vehicle tours all : {vehicle_tours_all}")
         variable_vrp = VrpSolution(
-            problem=self.problem,
-            list_start_index=self.problem.start_indexes,
-            list_end_index=self.problem.end_indexes,
+            problem=self.vrp_model,
+            list_start_index=self.vrp_model.start_indexes,
+            list_end_index=self.vrp_model.end_indexes,
             list_paths=vehicle_tours,
             length=None,
             lengths=None,
@@ -163,12 +170,18 @@ class VrpORToolsSolver(SolverDO):
         )
         return variable_vrp
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         if self.manager is None:
             self.init_model(**kwargs)
+            if self.manager is None:
+                raise RuntimeError(
+                    "self.manager should be not None after self.init_model() being called."
+                )
         limit_time_s = kwargs.get("limit_time_s", 100)
         self.search_parameters.time_limit.seconds = limit_time_s
-        solution = self.routing.SolveWithParameters(self.search_parameters)
+        solution: pywrapcp.Assignment = self.routing.SolveWithParameters(
+            self.search_parameters
+        )
         variable_vrp = self.retrieve(solution)
         fit = self.aggreg_sol(variable_vrp)
         return ResultStorage(
