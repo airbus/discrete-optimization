@@ -8,6 +8,7 @@
 from __future__ import print_function
 
 import logging
+from typing import Any, Optional
 
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -16,21 +17,23 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
+from discrete_optimization.tsp.solver.tsp_solver import SolverTSP
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
 
 logger = logging.getLogger(__name__)
 
 
-class TSP_ORtools(SolverDO):
+class TSP_ORtools(SolverTSP):
     def __init__(
         self,
         tsp_model: TSPModel,
-        params_objective_function: ParamsObjectiveFunction,
-        *args,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
-        self.tsp_model = tsp_model
+
+        SolverTSP.__init__(self, tsp_model=tsp_model)
         self.node_count = self.tsp_model.node_count
         self.list_points = self.tsp_model.list_points
         self.start_index = self.tsp_model.start_index
@@ -43,25 +46,24 @@ class TSP_ORtools(SolverDO):
             problem=self.tsp_model, params_objective_function=params_objective_function
         )
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         # Create the routing index manager.
 
         if self.node_count < 1000:
             matrix = build_matrice_distance(
                 self.node_count,
-                self.list_points,
                 method=self.tsp_model.evaluate_function_indexes,
             )
-            distance_matrix = 10**6 * matrix.astype(np.int)
+            distance_matrix = 10**6 * matrix.astype(np.int_)
 
-            def distance_callback(from_index, to_index):
+            def distance_callback(from_index: int, to_index: int) -> int:
                 from_node = manager.IndexToNode(from_index)
                 to_node = manager.IndexToNode(to_index)
                 return distance_matrix[from_node, to_node]
 
         else:
 
-            def distance_callback(from_index, to_index):
+            def distance_callback(from_index: int, to_index: int) -> int:
                 from_node = manager.IndexToNode(from_index)
                 to_node = manager.IndexToNode(to_index)
                 return int(
@@ -95,7 +97,7 @@ class TSP_ORtools(SolverDO):
         self.routing = routing
         self.search_parameters = search_parameters
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         """Prints solution on console."""
         solution = self.routing.SolveWithParameters(self.search_parameters)
         logger.debug(f"Objective: {solution.ObjectiveValue()} miles")

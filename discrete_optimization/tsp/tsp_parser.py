@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import List, Optional
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
@@ -11,7 +11,7 @@ from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-):
+) -> List[str]:
     """Get datasets available for tsp.
 
     Params:
@@ -36,7 +36,9 @@ def get_data_available(
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
-def parse_input_data(input_data, start_index=None, end_index=None):
+def parse_input_data(
+    input_data: str, start_index: int = 0, end_index: int = 0
+) -> TSPModel2D:
     lines = input_data.split("\n")
     node_count = int(lines[0])
     points = []
@@ -53,7 +55,7 @@ def parse_input_data(input_data, start_index=None, end_index=None):
     )
 
 
-def parse_file(file_path, start_index=None, end_index=None):
+def parse_file(file_path: str, start_index: int = 0, end_index: int = 0) -> TSPModel2D:
     # parse the input
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()

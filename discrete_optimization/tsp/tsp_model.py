@@ -8,9 +8,20 @@ from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
-from typing import Dict, List, Tuple, Type, Union
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
+import numpy.typing as npt
 from numba import njit
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -26,59 +37,81 @@ from discrete_optimization.generic_tools.do_problem import (
 
 
 class SolutionTSP(Solution):
-    permutation_from0: Union[List[int], np.array]
+    permutation_from0: List[int]
     start_index: int
     end_index: int
-    permutation: Union[List[int], np.array]
-    lengths: List[float]  # to store the details of length of the tsp if you want.
-    length: float  # to store the length of the tsp, in case your mutation computes it :)
+    permutation: List[int]
+    lengths: Optional[
+        List[float]
+    ]  # to store the details of length of the tsp if you want.
+    length: Optional[
+        float
+    ]  # to store the length of the tsp, in case your mutation computes it :)
 
     def __init__(
         self,
-        problem=None,
-        start_index=None,
-        end_index=None,
-        permutation=None,
-        lengths=None,
-        length=None,
-        permutation_from0=None,
+        problem: "TSPModel",
+        start_index: Optional[int] = None,
+        end_index: Optional[int] = None,
+        permutation: Optional[List[int]] = None,
+        lengths: Optional[
+            List[float]
+        ] = None,  # to store the details of length of the tsp if you want.
+        length: Optional[
+            float
+        ] = None,  # to store the length of the tsp, in case your mutation computes it :)
+        permutation_from0: Optional[List[int]] = None,
     ):
-        assert permutation is not None or permutation_from0 is not None
-        self.start_index = start_index
-        self.end_index = end_index
-        self.permutation = permutation
+        if permutation is None and permutation_from0 is None:
+            raise ValueError("permutation and permutation_from0 cannot be both None.")
         self.lengths = lengths
         self.length = length
-        self.permutation_from0 = permutation_from0
         self.problem = problem
-        if self.start_index is None:
+        if start_index is None:
             self.start_index = problem.start_index
-        if self.end_index is None:
+        else:
+            self.start_index = start_index
+        if end_index is None:
             self.end_index = problem.end_index
+        else:
+            self.end_index = end_index
         # convert perm
-        if self.permutation is None:
+        if permutation is None:
             self.permutation = self.problem.convert_perm_from0_to_original_perm(
                 self.permutation_from0
             )
-        if self.permutation_from0 is None:
+            if permutation_from0 is None:
+                raise ValueError(
+                    "permutation and permutation_from0 cannot be both None."
+                )
+            self.permutation_from0 = permutation_from0
+        elif permutation_from0 is None:
             self.permutation_from0 = self.problem.convert_original_perm_to_perm_from0(
                 self.permutation
             )
+            self.permutation = permutation
+        else:
+            self.permutation = permutation
+            self.permutation_from0 = permutation_from0
         if self.length is None:
             self.problem.evaluate(self)
 
-    def copy(self):
+    def copy(self) -> "SolutionTSP":
+        if self.lengths is None:
+            lengths = None
+        else:
+            lengths = list(self.lengths)
         return SolutionTSP(
             problem=self.problem,
             start_index=self.start_index,
             end_index=self.end_index,
             permutation=list(self.permutation),
-            lengths=list(self.lengths),
+            lengths=lengths,
             length=self.length,
-            permutation_from0=deepcopy(self.permutation_from0),
+            permutation_from0=list(self.permutation_from0),
         )
 
-    def lazy_copy(self):
+    def lazy_copy(self) -> "SolutionTSP":
         return SolutionTSP(
             problem=self.problem,
             start_index=self.start_index,
@@ -89,19 +122,17 @@ class SolutionTSP(Solution):
             permutation_from0=self.permutation_from0,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "perm :" + str(self.permutation) + "\nobj=" + str(self.length)
 
-    def change_problem(self, new_problem):
-        self.__init__(
-            problem=new_problem,
-            start_index=self.start_index,
-            end_index=self.end_index,
-            permutation=list(self.permutation),
-            lengths=list(self.lengths),
-            length=self.length,
-            permutation_from0=deepcopy(self.permutation_from0),
-        )
+    def change_problem(self, new_problem: Problem) -> None:
+        if not isinstance(new_problem, TSPModel):
+            raise ValueError("new_problem must a TSPModel for a TSPSolution.")
+        self.problem = new_problem
+        self.permutation = list(self.permutation)
+        if self.lengths is not None:
+            self.lengths = list(self.lengths)
+        self.permutation_from0 = list(self.permutation_from0)
 
 
 class Point:
@@ -109,13 +140,13 @@ class Point:
 
 
 class TSPModel(Problem):
-    list_points: List[Point]
-    np_points: np.array
+    list_points: Sequence[Point]
+    np_points: np.ndarray
     node_count: int
 
     def __init__(
         self,
-        list_points: List[Point],
+        list_points: Sequence[Point],
         node_count: int,
         start_index: int = 0,
         end_index: int = 0,
@@ -124,10 +155,6 @@ class TSPModel(Problem):
         self.node_count = node_count
         self.start_index = start_index
         self.end_index = end_index
-        if self.start_index is None:
-            self.start_index = 0
-        if self.end_index is None:
-            self.end_index = 0
         self.ind_in_permutation = [
             i
             for i in range(self.node_count)
@@ -148,14 +175,16 @@ class TSPModel(Problem):
 
     # for a given tsp kind of problem, you should provide a custom evaluate function, for now still abstract.
     @abstractmethod
-    def evaluate_function(self, var_tsp: SolutionTSP):
+    def evaluate_function(self, var_tsp: SolutionTSP) -> Tuple[Iterable[float], float]:
         ...
 
     @abstractmethod
-    def evaluate_function_indexes(self, index_1, index_2):
+    def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
         ...
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
+    def evaluate_from_encoding(
+        self, int_vector: Iterable[int], encoding_name: str
+    ) -> Dict[str, float]:
         if encoding_name == "permutation_from0":
             tsp_sol = SolutionTSP(
                 problem=self,
@@ -168,26 +197,25 @@ class TSPModel(Problem):
                 problem=self,
                 start_index=self.start_index,
                 end_index=self.end_index,
-                permutation=int_vector,
+                permutation=list(int_vector),
             )
-        elif encoding_name == "custom":
+        else:
             kwargs = {
                 encoding_name: int_vector,
-                "problem": self,
                 "start_index": self.start_index,
                 "end_index": self.end_index,
             }
-            tsp_sol = SolutionTSP(**kwargs)
+            tsp_sol = SolutionTSP(problem=self, **kwargs)  # type: ignore
         objectives = self.evaluate(tsp_sol)
         return objectives
 
-    def evaluate(self, var_tsp: SolutionTSP) -> Dict[str, float]:
+    def evaluate(self, var_tsp: SolutionTSP) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         lengths, obj = self.evaluate_function(var_tsp)
         var_tsp.length = obj
-        var_tsp.lengths = lengths
+        var_tsp.lengths = list(lengths)
         return {"length": obj}
 
-    def satisfy(self, var_tsp: SolutionTSP) -> bool:
+    def satisfy(self, var_tsp: SolutionTSP) -> bool:  # type: ignore # avoid isinstance checks for efficiency
         b = (
             var_tsp.start_index == self.start_index
             and var_tsp.end_index == self.end_index
@@ -200,7 +228,7 @@ class TSPModel(Problem):
             return False
         return True
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> SolutionTSP:
         var = SolutionTSP(
             problem=self,
             start_index=self.start_index,
@@ -213,7 +241,7 @@ class TSPModel(Problem):
         self.evaluate(var)
         return var
 
-    def get_random_dummy_solution(self):
+    def get_random_dummy_solution(self) -> SolutionTSP:
         a = list(self.ind_in_permutation)
         random.shuffle(a)
         var = SolutionTSP(
@@ -228,14 +256,16 @@ class TSPModel(Problem):
         self.evaluate(var)
         return var
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "TSP problem with number of nodes :  : " + str(self.node_count)
 
-    def convert_perm_from0_to_original_perm(self, perm_from0):
+    def convert_perm_from0_to_original_perm(
+        self, perm_from0: Iterable[int]
+    ) -> List[int]:
         perm = [self.original_indices_to_permutation_indices[x] for x in perm_from0]
         return perm
 
-    def convert_original_perm_to_perm_from0(self, perm):
+    def convert_original_perm_to_perm_from0(self, perm: Iterable[int]) -> List[int]:
         perm_from0 = [
             self.original_indices_to_permutation_indices_dict[i] for i in perm
         ]
@@ -279,13 +309,15 @@ class Point2D(Point):
 
 
 class TSPModel2D(TSPModel):
+    list_points: Sequence[Point2D]
+
     def __init__(
         self,
-        list_points: List[Point2D],
+        list_points: Sequence[Point2D],
         node_count: int,
         start_index: int = 0,
         end_index: int = 0,
-        use_numba=True,
+        use_numba: bool = True,
     ):
         TSPModel.__init__(
             self, list_points, node_count, start_index=start_index, end_index=end_index
@@ -294,27 +326,28 @@ class TSPModel2D(TSPModel):
         for i in range(self.node_count):
             self.np_points[i, 0] = self.list_points[i].x
             self.np_points[i, 1] = self.list_points[i].y
+        self.evaluate_function_2d: Callable[[List[int]], Tuple[Iterable[float], float]]
         if use_numba:
             self.evaluate_function_2d = build_evaluate_function_np(self)
         else:
             self.evaluate_function_2d = build_evaluate_function(self)
 
-    def evaluate_function(self, var_tsp: SolutionTSP):
-        return self.evaluate_function_2d(solution=var_tsp.permutation)
+    def evaluate_function(self, var_tsp: SolutionTSP) -> Tuple[Iterable[float], float]:
+        return self.evaluate_function_2d(var_tsp.permutation)
 
-    def evaluate_function_indexes(self, index_1, index_2) -> float:
+    def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
         return length(self.list_points[index_1], self.list_points[index_2])
 
 
 class TSPModelDistanceMatrix(TSPModel):
     def __init__(
         self,
-        list_points: List[Point],
-        distance_matrix: np.array,
+        list_points: Sequence[Point],
+        distance_matrix: np.ndarray,
         node_count: int,
         start_index: int = 0,
         end_index: int = 0,
-        use_numba=True,
+        use_numba: bool = True,
     ):
         TSPModel.__init__(
             self,
@@ -324,30 +357,27 @@ class TSPModelDistanceMatrix(TSPModel):
             end_index=end_index,
         )
         self.distance_matrix = distance_matrix
-        self.node_count = node_count
-        self.start_index = start_index
-        self.end_index = end_index
         self.evaluate_function_2d = build_evaluate_function_matrix(self)
 
-    def evaluate_function(self, var_tsp: SolutionTSP):
-        return self.evaluate_function_2d(solution=var_tsp.permutation)
+    def evaluate_function(self, var_tsp: SolutionTSP) -> Tuple[List[int], int]:
+        return self.evaluate_function_2d(var_tsp.permutation)
 
-    def evaluate_function_indexes(self, index_1, index_2):
+    def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
         return int(self.distance_matrix[index_1, index_2])
 
 
-def length(point1, point2):
+def length(point1: Point2D, point2: Point2D) -> float:
     return math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
 
 def compute_length(
-    start_index,
-    end_index,
+    start_index: int,
+    end_index: int,
     solution: List[int],
-    list_points: List[Point2D],
+    list_points: Sequence[Point2D],
     node_count: int,
     length_permutation: int,
-):
+) -> Tuple[List[float], float]:
     obj = length(list_points[start_index], list_points[solution[0]])
     lengths = [obj]
     for index in range(0, length_permutation - 1):
@@ -362,13 +392,13 @@ def compute_length(
 # More efficient implementation
 @njit
 def compute_length_np(
-    start_index,
-    end_index,
-    solution: Union[List[int], np.array],
-    np_points,
-    node_count,
-    length_permutation,
-) -> Tuple[Union[List[float], np.array], float]:
+    start_index: int,
+    end_index: int,
+    solution: List[int],
+    np_points: np.ndarray,
+    node_count: int,
+    length_permutation: int,
+) -> Tuple[npt.NDArray[np.float_], float]:
     obj = np.sqrt(
         (np_points[start_index, 0] - np_points[solution[0], 0]) ** 2
         + (np_points[start_index, 1] - np_points[solution[0], 1]) ** 2
@@ -392,15 +422,15 @@ def compute_length_np(
 
 @njit
 def compute_length_matrix(
-    start_index,
-    end_index,
-    solution: Union[List[int], np.array],
-    distance_matrix: np.array,
-    node_count,
-    length_permutation,
-):
+    start_index: int,
+    end_index: int,
+    solution: Union[List[int], np.ndarray],
+    distance_matrix: np.ndarray,
+    node_count: int,
+    length_permutation: int,
+) -> Tuple[List[int], int]:
     obj = int(distance_matrix[start_index, solution[0]])
-    lengths = np.zeros(node_count)
+    lengths = np.zeros(node_count, dtype=int)
     lengths[0] = obj
     for index in range(0, length_permutation - 1):
         ll = int(distance_matrix[solution[index], solution[index + 1]])
@@ -411,7 +441,9 @@ def compute_length_matrix(
     return list(lengths), obj
 
 
-def build_evaluate_function(tsp_model: TSPModel):
+def build_evaluate_function(
+    tsp_model: TSPModel,
+) -> Callable[[List[int]], Tuple[List[float], float]]:
     return partial(
         compute_length,
         start_index=tsp_model.start_index,
@@ -422,7 +454,9 @@ def build_evaluate_function(tsp_model: TSPModel):
     )
 
 
-def build_evaluate_function_np(tsp_model: TSPModel):
+def build_evaluate_function_np(
+    tsp_model: TSPModel,
+) -> Callable[[List[int]], Tuple[npt.NDArray[np.float_], float]]:
     return partial(
         compute_length_np,
         start_index=tsp_model.start_index,
@@ -433,7 +467,9 @@ def build_evaluate_function_np(tsp_model: TSPModel):
     )
 
 
-def build_evaluate_function_matrix(tsp_model: TSPModelDistanceMatrix):
+def build_evaluate_function_matrix(
+    tsp_model: TSPModelDistanceMatrix,
+) -> Callable[[List[int]], Tuple[List[int], int]]:
     return partial(
         compute_length_matrix,
         start_index=tsp_model.start_index,
