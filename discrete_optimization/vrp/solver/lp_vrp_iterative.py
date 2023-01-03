@@ -5,7 +5,18 @@
 import logging
 import random
 from copy import deepcopy
-from typing import List
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -15,9 +26,17 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
-from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution, compute_length
-from discrete_optimization.vrp.vrp_toolbox import Customer, length
+from discrete_optimization.generic_tools.do_solver import ResultStorage
+from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
+from discrete_optimization.vrp.vrp_model import (
+    BasicCustomer,
+    Customer2D,
+    VrpProblem,
+    VrpProblem2D,
+    VrpSolution,
+    compute_length,
+    length,
+)
 
 try:
     import gurobipy
@@ -25,13 +44,18 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, Model, quicksum
+    from gurobipy import GRB, Model, Var, quicksum
 
 
 logger = logging.getLogger(__name__)
 
+Node = Tuple[int, int]
+Edge = Tuple[Node, Node]
 
-def build_matrice_distance_np(customer_count: int, customers: List[Customer]):
+
+def build_matrice_distance_np(
+    customer_count: int, customers: Sequence[Customer2D]
+) -> Tuple[np.ndarray, np.ndarray]:
     matrix_x = np.ones((customer_count, customer_count), dtype=np.int32)
     matrix_y = np.ones((customer_count, customer_count), dtype=np.int32)
     for i in range(customer_count):
@@ -44,7 +68,16 @@ def build_matrice_distance_np(customer_count: int, customers: List[Customer]):
     return sorted_distance, distances
 
 
-def build_graph_pruned_vrp(vrp_problem: VrpProblem):
+def build_graph_pruned_vrp(
+    vrp_problem: VrpProblem2D,
+) -> Tuple[
+    nx.DiGraph,
+    nx.DiGraph,
+    Dict[int, Set[Edge]],
+    Dict[int, Set[Edge]],
+    Dict[Node, Set[Edge]],
+    Dict[Node, Set[Edge]],
+]:
     customer_count = vrp_problem.customer_count
     customers = vrp_problem.customers
     vehicle_count = vrp_problem.vehicle_count
@@ -54,12 +87,14 @@ def build_graph_pruned_vrp(vrp_problem: VrpProblem):
         [(v, i) for i in range(customer_count) for v in range(vehicle_count)]
     )
     shape = sd.shape[0]
-    edges_in_customers = {i: set() for i in range(customer_count)}
-    edges_out_customers = {i: set() for i in range(customer_count)}
-    edges_in_merged_graph = {n: set() for n in g.nodes()}
-    edges_out_merged_graph = {n: set() for n in g.nodes()}
+    edges_in_customers: Dict[int, Set[Edge]] = {i: set() for i in range(customer_count)}
+    edges_out_customers: Dict[int, Set[Edge]] = {
+        i: set() for i in range(customer_count)
+    }
+    edges_in_merged_graph: Dict[Node, Set[Edge]] = {node: set() for node in g.nodes()}
+    edges_out_merged_graph: Dict[Node, Set[Edge]] = {node: set() for node in g.nodes()}
     for i in range(shape):
-        nodes_to_add = sd[i, 1:10]
+        nodes_to_add: Iterable[int] = sd[i, 1:10]
         for n in nodes_to_add:
             for v in range(vehicle_count):
                 if n == i:
@@ -154,9 +189,11 @@ def build_graph_pruned_vrp(vrp_problem: VrpProblem):
     )
 
 
-def compute_start_end_flows_info(start_indexes: List[int], end_indexes: List[int]):
-    start_to_i = {}
-    end_to_i = {}
+def compute_start_end_flows_info(
+    start_indexes: List[int], end_indexes: List[int]
+) -> Tuple[Dict[int, Dict[str, Any]], Dict[int, Dict[str, Any]]]:
+    start_to_i: Dict[int, Dict[str, Any]] = {}
+    end_to_i: Dict[int, Dict[str, Any]] = {}
     for i in range(len(start_indexes)):
         s = start_indexes[i]
         e = end_indexes[i]
@@ -172,26 +209,28 @@ def compute_start_end_flows_info(start_indexes: List[int], end_indexes: List[int
 
 
 def init_model_lp(
-    g,
-    edges,
-    edges_in_customers,
-    edges_out_customers,
-    edges_in_merged_graph,
-    edges_out_merged_graph,
-    edges_warm_set,
-    do_lns: False,
+    g: nx.DiGraph,
+    edges: Set[Edge],
+    edges_in_customers: Dict[int, Set[Edge]],
+    edges_out_customers: Dict[int, Set[Edge]],
+    edges_in_merged_graph: Dict[Node, Set[Edge]],
+    edges_out_merged_graph: Dict[Node, Set[Edge]],
+    edges_warm_set: Set[Edge],
     fraction: float,
     start_indexes: List[int],
     end_indexes: List[int],
     vehicle_count: int,
     vehicle_capacity: List[float],
-    include_backward=True,
-    include_triangle=False,
-):
+    do_lns: bool = False,
+    include_backward: bool = True,
+    include_triangle: bool = False,
+) -> Tuple[
+    Model, Dict[Edge, Var], Dict[Union[str, int], Any], Dict[str, Any], Dict[int, Any]
+]:
     tsp_model = Model("VRP-master")
-    x_var = {}  # decision variables on edges
-    constraint_on_edge = {}
-    edges_to_constraint = set()
+    x_var: Dict[Edge, Var] = {}  # decision variables on edges
+    constraint_on_edge: Dict[int, Any] = {}
+    edges_to_constraint: Set[Edge] = set()
     if do_lns:
         edges_to_constraint = set(
             random.sample(list(edges), int(fraction * len(edges)))
@@ -216,7 +255,7 @@ def init_model_lp(
                 x_var[e] == val, name=str((e, iedge))
             )
             iedge += 1
-    constraint_tour_2length = {}
+    constraint_tour_2length: Dict[int, Any] = {}
     cnt_tour = 0
     if include_backward:
         for edge in edges:
@@ -239,7 +278,7 @@ def init_model_lp(
                 )
                 cnt_tour += 1
     if include_triangle:
-        constraint_triangle = {}
+        constraint_triangle: Dict[int, Any] = {}
         for node in g.nodes():
             neigh = set([n for n in nx.neighbors(g, node)])
             neigh_2 = {
@@ -255,8 +294,8 @@ def init_model_lp(
                             <= 2
                         )
     tsp_model.update()
-    constraint_flow_in = {}
-    constraint_flow_out = {}
+    constraint_flow_in: Dict[Union[str, int], Any] = {}
+    constraint_flow_out: Dict[str, Any] = {}
     start_to_i, end_to_i = compute_start_end_flows_info(start_indexes, end_indexes)
     for s in start_to_i:
         for vehicle in start_to_i[s]["vehicle"]:
@@ -319,16 +358,23 @@ def init_model_lp(
 
 
 def update_graph(
-    g,
-    edges,
-    edges_in_customers,
-    edges_out_customers,
-    edges_in_merged_graph,
-    edges_out_merged_graph,
-    missing_edge,
-    customers,
-):
-    for edge in missing_edge:
+    g: nx.DiGraph,
+    edges: Set[Edge],
+    edges_in_customers: Dict[int, Set[Edge]],
+    edges_out_customers: Dict[int, Set[Edge]],
+    edges_in_merged_graph: Dict[Node, Set[Edge]],
+    edges_out_merged_graph: Dict[Node, Set[Edge]],
+    edges_missing: Set[Edge],
+    customers: Sequence[Customer2D],
+) -> Tuple[
+    nx.DiGraph,
+    Set[Edge],
+    Dict[int, Set[Edge]],
+    Dict[int, Set[Edge]],
+    Dict[Node, Set[Edge]],
+    Dict[Node, Set[Edge]],
+]:
+    for edge in edges_missing:
         g.add_edge(
             edge[0],
             edge[1],
@@ -365,29 +411,29 @@ def build_warm_edges_and_update_graph(
     vrp_problem: VrpProblem,
     vrp_solution: VrpSolution,
     graph: nx.DiGraph,
-    edges: set,
-    edges_in_merged_graph,
-    edges_out_merged_graph,
-    edges_in_customers,
-    edges_out_customers,
-):
+    edges: Set[Edge],
+    edges_in_merged_graph: Dict[Node, Set[Edge]],
+    edges_out_merged_graph: Dict[Node, Set[Edge]],
+    edges_in_customers: Dict[int, Set[Edge]],
+    edges_out_customers: Dict[int, Set[Edge]],
+) -> Tuple[List[List[Edge]], Set[Edge]]:
     vehicle_paths = deepcopy(vrp_solution.list_paths)
-    edges_warm = []
-    edges_warm_set = set()
+    edges_warm: List[List[Edge]] = []
+    edges_warm_set: Set[Edge] = set()
     for i in range(len(vehicle_paths)):
         vehicle_paths[i] = (
             [vrp_problem.start_indexes[i]]
             + vehicle_paths[i]
             + [vrp_problem.end_indexes[i]]
         )
-        edges_warm += [
-            [
-                ((i, v1), (i, v2))
-                for v1, v2 in zip(vehicle_paths[i][:-1], vehicle_paths[i][1:])
-            ]
+        edges_warm_sublist = [
+            ((i, v1), (i, v2))
+            for v1, v2 in zip(vehicle_paths[i][:-1], vehicle_paths[i][1:])
         ]
-        edges_warm_set.update(set(edges_warm[i]))
-        missing_edge = [e for e in set(edges_warm[i]) if e not in edges]
+        edges_warm_subset = set(edges_warm_sublist)
+        edges_warm.append(edges_warm_sublist)
+        edges_warm_set.update(edges_warm_subset)
+        missing_edge = [e for e in edges_warm_subset if e not in edges]
         for edge in missing_edge:
             graph.add_edge(
                 edge[0],
@@ -414,23 +460,33 @@ def build_warm_edges_and_update_graph(
     return edges_warm, edges_warm_set
 
 
-class VRPIterativeLP(SolverDO):
+class VRPIterativeLP(SolverVrp):
+    edges: Set[Edge]
+    edges_in_customers: Dict[int, Set[Edge]]
+    edges_out_customers: Dict[int, Set[Edge]]
+    edges_in_merged_graph: Dict[Node, Set[Edge]]
+    edges_out_merged_graph: Dict[Node, Set[Edge]]
+    edges_warm_set: Set[Edge]
+    vrp_model: VrpProblem2D
+
     def __init__(
-        self, problem: VrpProblem, params_objective_function: ParamsObjectiveFunction
+        self,
+        vrp_model: VrpProblem2D,
+        params_objective_function: ParamsObjectiveFunction,
     ):
-        self.problem = problem
-        self.model = None
-        self.x_var = None
-        self.constraint_on_edge = None
+        SolverVrp.__init__(self, vrp_model=vrp_model)
+        self.model: Optional[Model] = None
+        self.x_var: Optional[Dict[Edge, Var]] = None
+        self.constraint_on_edge: Optional[Dict[int, Any]] = None
         (
             self.aggreg_sol,
             self.aggreg_fit,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            problem=self.problem, params_objective_function=params_objective_function
+            problem=self.vrp_model, params_objective_function=params_objective_function
         )
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         (
             g,
             g_empty,
@@ -438,17 +494,17 @@ class VRPIterativeLP(SolverDO):
             edges_out_customers,
             edges_in_merged_graph,
             edges_out_merged_graph,
-        ) = build_graph_pruned_vrp(self.problem)
+        ) = build_graph_pruned_vrp(self.vrp_model)
 
         initial_solution = kwargs.get("initial_solution", None)
         if initial_solution is None:
-            solution = self.problem.get_dummy_solution()
+            solution = self.vrp_model.get_dummy_solution()
         else:
             vehicle_tours_b = initial_solution
             solution = VrpSolution(
-                problem=self.problem,
-                list_start_index=self.problem.start_indexes,
-                list_end_index=self.problem.end_indexes,
+                problem=self.vrp_model,
+                list_start_index=self.vrp_model.start_indexes,
+                list_end_index=self.vrp_model.end_indexes,
                 list_paths=vehicle_tours_b,
                 length=None,
                 lengths=None,
@@ -456,7 +512,7 @@ class VRPIterativeLP(SolverDO):
             )
         edges = set(g.edges())
         edges_warm, edges_warm_set = build_warm_edges_and_update_graph(
-            vrp_problem=self.problem,
+            vrp_problem=self.vrp_model,
             vrp_solution=solution,
             graph=g,
             edges=edges,
@@ -482,59 +538,66 @@ class VRPIterativeLP(SolverDO):
             edges_in_merged_graph=edges_in_merged_graph,
             edges_out_merged_graph=edges_out_merged_graph,
             edges_warm_set=edges_warm_set,
-            start_indexes=self.problem.start_indexes,
-            end_indexes=self.problem.end_indexes,
+            start_indexes=self.vrp_model.start_indexes,
+            end_indexes=self.vrp_model.end_indexes,
             do_lns=do_lns,
             fraction=fraction,
-            vehicle_count=self.problem.vehicle_count,
-            vehicle_capacity=self.problem.vehicle_capacities,
+            vehicle_count=self.vrp_model.vehicle_count,
+            vehicle_capacity=self.vrp_model.vehicle_capacities,
         )
         self.model = tsp_model
         self.x_var = x_var
         self.constraint_on_edge = constraint_on_edge
         self.graph = g
-        self.graph_infos = {
-            "edges": edges,
-            "edges_in_customers": edges_in_customers,
-            "edges_out_customers": edges_out_customers,
-            "edges_in_merged_graph": edges_in_merged_graph,
-            "edges_out_merged_graph": edges_out_merged_graph,
-            "edges_warm_set": edges_warm_set,
-        }
+        self.edges = edges
+        self.edges_in_customers = edges_in_customers
+        self.edges_out_customers = edges_out_customers
+        self.edges_in_merged_graph = edges_in_merged_graph
+        self.edges_out_merged_graph = edges_out_merged_graph
+        self.edges_warm_set = edges_warm_set
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         do_lns = kwargs.get("do_lns", False)
+        plot = kwargs.get("plot", True)
         fraction = kwargs.get("fraction_lns", 0.9)
         nb_iteration_max = kwargs.get("nb_iteration_max", 20)
-        if self.model is None:
+        if self.model is None or self.x_var is None or self.constraint_on_edge is None:
             self.init_model(**kwargs)
+            if (
+                self.model is None
+                or self.x_var is None
+                or self.constraint_on_edge is None
+            ):
+                raise RuntimeError(
+                    "model, x_var and constraint_on_edge attributes "
+                    "should not be None after init_model()"
+                )
         limit_time_s = kwargs.get("limit_time_s", 10)
         self.model.setParam("TimeLimit", limit_time_s)
         self.model.optimize()
         objective = self.model.getObjective().getValue()
         # Query number of multiple objectives, and number of solutions
         finished = False
-        solutions = []
-        cost = []
-        nb_components = []
+        solutions: List[Dict[int, Set[Edge]]] = []
+        cost: List[float] = []
+        nb_components: List[int] = []
         iteration = 0
-        rebuilt_solution = []
-        rebuilt_obj = []
+        rebuilt_solution: List[Dict[int, List[Node]]] = []
+        rebuilt_obj: List[float] = []
         best_solution_rebuilt_index = 0
         best_solution_objective_rebuilt = float("inf")
-        vehicle_count = self.problem.vehicle_count
-        customers = self.problem.customers
-        customer_count = self.problem.customer_count
-        edges_in_customers = self.graph_infos["edges_in_customers"]
-        edges_out_customers = self.graph_infos["edges_out_customers"]
-        edges_in_merged_graph = self.graph_infos["edges_in_merged_graph"]
-        edges_out_merged_graph = self.graph_infos["edges_out_merged_graph"]
-        edges = self.graph_infos["edges"]
-        edges_warm_set = self.graph_infos["edges_warm_set"]
+        vehicle_count = self.vrp_model.vehicle_count
+        customers = self.vrp_model.customers
+        edges_in_customers = self.edges_in_customers
+        edges_out_customers = self.edges_out_customers
+        edges_in_merged_graph = self.edges_in_merged_graph
+        edges_out_merged_graph = self.edges_out_merged_graph
+        edges = self.edges
+        edges_warm_set = self.edges_warm_set
         g = self.graph
         while not finished:
-            solutions_ll = retreve_solutions(self.model, self.x_var, vehicle_count, g)
-            solutions += [solutions_ll[0]["x_solution"]]
+            solutions_ll = retrieve_solutions(self.model, self.x_var, vehicle_count, g)
+            solutions += [solutions_ll[0][-1]]
             cost += [objective]
             (
                 x_solution,
@@ -545,16 +608,18 @@ class VRPIterativeLP(SolverDO):
                 component_all,
                 component_global_all,
             ) = reevaluate_solutions(
-                solutions_ll, vehicle_count, g, vrp_problem=self.problem
+                solutions=solutions_ll,
+                vehicle_count=vehicle_count,
+                g=g,
+                vrp_problem=self.vrp_model,
             )
             for comp in component_global_all:
                 update_model_2(
-                    self.problem,
-                    self.model,
-                    self.x_var,
-                    comp,
-                    edges_in_customers,
-                    edges_out_customers,
+                    model=self.model,
+                    x_var=self.x_var,
+                    components_global=comp,
+                    edges_in_customers=edges_in_customers,
+                    edges_out_customers=edges_out_customers,
                 )
 
             nb_components += [len(components_global)]
@@ -565,7 +630,7 @@ class VRPIterativeLP(SolverDO):
                 best_solution_objective_rebuilt = obj
                 best_solution_rebuilt_index = iteration
             iteration += 1
-            edges_to_add = set()
+            edges_to_add: Set[Edge] = set()
             for v in rebuilt_dict:
                 edges_to_add.update(
                     {
@@ -584,14 +649,14 @@ class VRPIterativeLP(SolverDO):
                     edges_in_merged_graph,
                     edges_out_merged_graph,
                 ) = update_graph(
-                    g,
-                    edges,
-                    edges_in_customers,
-                    edges_out_customers,
-                    edges_in_merged_graph,
-                    edges_out_merged_graph,
-                    edges_missing,
-                    customers,
+                    g=g,
+                    edges=edges,
+                    edges_in_customers=edges_in_customers,
+                    edges_out_customers=edges_out_customers,
+                    edges_in_merged_graph=edges_in_merged_graph,
+                    edges_out_merged_graph=edges_out_merged_graph,
+                    edges_missing=edges_missing,
+                    customers=customers,
                 )
                 self.model.reset()
                 self.model = None
@@ -609,42 +674,28 @@ class VRPIterativeLP(SolverDO):
                     edges_in_merged_graph=edges_in_merged_graph,
                     edges_out_merged_graph=edges_out_merged_graph,
                     edges_warm_set=edges_warm_set,
-                    start_indexes=self.problem.start_indexes,
-                    end_indexes=self.problem.end_indexes,
+                    start_indexes=self.vrp_model.start_indexes,
+                    end_indexes=self.vrp_model.end_indexes,
                     do_lns=do_lns,
                     fraction=fraction,
-                    vehicle_count=self.problem.vehicle_count,
-                    vehicle_capacity=self.problem.vehicle_capacities,
+                    vehicle_count=self.vrp_model.vehicle_count,
+                    vehicle_capacity=self.vrp_model.vehicle_capacities,
                 )
                 self.model = tsp_model
                 self.model.setParam("TimeLimit", limit_time_s)
                 self.x_var = x_var
                 self.constraint_on_edge = constraint_on_edge
                 self.graph = g
-                self.graph_infos = {
-                    "edges": edges,
-                    "edges_in_customers": edges_in_customers,
-                    "edges_out_customers": edges_out_customers,
-                    "edges_in_merged_graph": edges_in_merged_graph,
-                    "edges_out_merged_graph": edges_out_merged_graph,
-                    "edges_warm_set": edges_warm_set,
-                }
-                edges_in_customers = self.graph_infos["edges_in_customers"]
-                edges_out_customers = self.graph_infos["edges_out_customers"]
-                edges_in_merged_graph = self.graph_infos["edges_in_merged_graph"]
-                edges_out_merged_graph = self.graph_infos["edges_out_merged_graph"]
-                edges = self.graph_infos["edges"]
-                edges_warm_set = self.graph_infos["edges_warm_set"]
+                self.edges = edges
+                self.edges_in_customers = edges_in_customers
+                self.edges_out_customers = edges_out_customers
+                self.edges_in_merged_graph = edges_in_merged_graph
+                self.edges_out_merged_graph = edges_out_merged_graph
+                self.edges_warm_set = edges_warm_set
                 for iedge in self.constraint_on_edge:
                     self.model.remove(self.constraint_on_edge[iedge])
-                constraint_on_edge = {}
                 edges_to_constraint = set(self.x_var.keys())
                 if do_lns:
-                    edges_to_constraint = set(
-                        random.sample(
-                            list(self.x_var.keys()), int(fraction * len(self.x_var))
-                        )
-                    )
                     for iedge in self.constraint_on_edge:
                         self.model.remove(self.constraint_on_edge[iedge])
                     self.model.update()
@@ -688,37 +739,19 @@ class VRPIterativeLP(SolverDO):
                 finished = True
             finished = finished or iteration >= nb_iteration_max
 
-        plot = kwargs.get("plot", True)
         if plot:
-            fig, ax = plt.subplots(2)
-            for i in range(len(solutions)):
-                ll = []
-                for v in solutions[i]:
-                    for e in solutions[i][v]:
-                        ll.append(
-                            ax[0].plot(
-                                [customers[e[0][1]].x, customers[e[1][1]].x],
-                                [customers[e[0][1]].y, customers[e[1][1]].y],
-                                color="b",
-                            )
-                        )
-                    ax[1].plot(
-                        [customers[n[1]].x for n in rebuilt_solution[i][v]],
-                        [customers[n[1]].y for n in rebuilt_solution[i][v]],
-                        color="orange",
-                    )
-                ax[0].set_title("iter " + str(i) + " obj=" + str(int(cost[i])))
-                ax[1].set_title("iter " + str(i) + " obj=" + str(int(rebuilt_obj[i])))
-                plt.draw()
-                plt.pause(0.01)
-                ax[0].lines = []
-                ax[1].lines = []
-            plt.show()
+            plot_solve(
+                solutions=solutions,
+                customers=customers,
+                rebuilt_solution=rebuilt_solution,
+                cost=cost,
+                rebuilt_obj=rebuilt_obj,
+            )
         logger.debug(f"Best obj : {best_solution_objective_rebuilt}")
         solution = VrpSolution(
-            problem=self.problem,
-            list_start_index=self.problem.start_indexes,
-            list_end_index=self.problem.end_indexes,
+            problem=self.vrp_model,
+            list_start_index=self.vrp_model.start_indexes,
+            list_end_index=self.vrp_model.end_indexes,
             list_paths=[
                 [x[1] for x in rebuilt_solution[best_solution_rebuilt_index][l][1:-1]]
                 for l in sorted(rebuilt_solution[best_solution_rebuilt_index])
@@ -727,7 +760,7 @@ class VRPIterativeLP(SolverDO):
             lengths=None,
             capacities=None,
         )
-        fit = self.problem.evaluate(solution)
+        _ = self.vrp_model.evaluate(solution)
         fit = self.aggreg_sol(solution)
         return ResultStorage(
             list_solution_fits=[(solution, fit)],
@@ -735,7 +768,42 @@ class VRPIterativeLP(SolverDO):
         )
 
 
-def build_the_cycles(x_solution, component, start_index, end_index):
+def plot_solve(
+    solutions: List[Dict[int, Set[Edge]]],
+    customers: Sequence[Customer2D],
+    rebuilt_solution: List[Dict[int, List[Node]]],
+    cost: List[float],
+    rebuilt_obj: List[float],
+) -> None:
+    fig, ax = plt.subplots(2)
+    for i in range(len(solutions)):
+        ll = []
+        for v in solutions[i]:
+            for e in solutions[i][v]:
+                ll.append(
+                    ax[0].plot(
+                        [customers[e[0][1]].x, customers[e[1][1]].x],
+                        [customers[e[0][1]].y, customers[e[1][1]].y],
+                        color="b",
+                    )
+                )
+            ax[1].plot(
+                [customers[n[1]].x for n in rebuilt_solution[i][v]],
+                [customers[n[1]].y for n in rebuilt_solution[i][v]],
+                color="orange",
+            )
+        ax[0].set_title("iter " + str(i) + " obj=" + str(int(cost[i])))
+        ax[1].set_title("iter " + str(i) + " obj=" + str(int(rebuilt_obj[i])))
+        plt.draw()
+        plt.pause(0.01)
+        ax[0].lines = []
+        ax[1].lines = []
+    plt.show()
+
+
+def build_the_cycles(
+    x_solution: Set[Edge], component: Set[Node], start_index: Node, end_index: Node
+) -> Tuple[List[Node], Dict[Node, int]]:
     edge_of_interest = {
         e for e in x_solution if e[1] in component and e[0] in component
     }
@@ -762,23 +830,22 @@ def build_the_cycles(x_solution, component, start_index, end_index):
 
 
 def rebuild_tsp_routine(
-    sorted_connected_component,
-    paths_component,
-    node_to_component,
-    indexes,
-    graph,
-    edges,
-    evaluate_function_indexes,
+    sorted_connected_component: List[Tuple[Set[Node], int]],
+    paths_component: Dict[int, List[Node]],
+    node_to_component: Dict[Node, int],
+    indexes: Dict[int, Dict[Node, int]],
+    graph: nx.DiGraph,
+    edges: Set[Edge],
+    evaluate_function_indexes: Callable[[int, int], float],
     vrp_model: VrpProblem,
-    start_index,
-    end_index,
-):
-    rebuilded_path = list(paths_component[node_to_component[start_index]])
-    component_end = node_to_component[end_index]
-    component_reconnected = {node_to_component[start_index]}
-    current_component = sorted_connected_component[node_to_component[start_index]]
-    path_set = set(rebuilded_path)
-    total_length_path = len(rebuilded_path)
+    start_index: Node,
+    end_index: Node,
+) -> Tuple[List[Node], float]:
+    rebuilded_path: List[Node] = list(paths_component[node_to_component[start_index]])
+    component_end: int = node_to_component[end_index]
+    component_reconnected: Set[int] = {node_to_component[start_index]}
+    path_set: Set[Node] = set(rebuilded_path)
+    total_length_path: int = len(rebuilded_path)
     while len(component_reconnected) < len(sorted_connected_component):
         if (
             len(component_reconnected) == len(sorted_connected_component) - 1
@@ -788,20 +855,18 @@ def rebuild_tsp_routine(
             rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
-            index_path = {rebuilded_path[i]: i for i in range(len(rebuilded_path))}
-            index_path = {}
+            index_path: Dict[Node, List[int]] = {}
             for i in range(len(rebuilded_path)):
                 if rebuilded_path[i] not in index_path:
                     index_path[rebuilded_path[i]] = []
                 index_path[rebuilded_path[i]] += [i]
-            edge_out_of_interest = {
+            edge_out_of_interest: Set[Edge] = {
                 e for e in edges if e[0] in path_set and e[1] not in path_set
             }
-            edge_in_of_interest = {
+            edge_in_of_interest: Set[Edge] = {
                 e for e in edges if e[0] not in path_set and e[1] in path_set
             }
             min_out_edge = None
-            min_in_edge = None
             min_index_in_path = None
             min_component = None
             min_dist = float("inf")
@@ -836,7 +901,6 @@ def rebuild_tsp_routine(
                     if cost < min_dist:
                         min_component = node_to_component[e[1]]
                         min_out_edge = e
-                        min_in_edge = (next_node_component_e1, next_node_1)
                         min_index_in_path = index_in
                         min_dist = cost
                 else:
@@ -847,7 +911,19 @@ def rebuild_tsp_routine(
                         backup_min_in_edge = (next_node_component_e1, next_node_1)
                         backup_min_index_in_path = index_in
                         backup_min_dist = cost
-            if min_out_edge is None:
+            if (
+                min_out_edge is None
+                or min_component is None
+                or min_index_in_path is None
+            ):
+                if (
+                    backup_min_component is None
+                    or backup_min_out_edge is None
+                    or backup_min_in_edge is None
+                    or backup_min_index_in_path is None
+                ):
+                    # for mypy to realize that we must have define backup values at this point
+                    raise RuntimeError("backup values cannot be None now.")
                 logger.debug("Backup")
                 e = backup_min_in_edge
                 graph.add_edge(
@@ -857,13 +933,12 @@ def rebuild_tsp_routine(
                     e[1], e[0], weight=evaluate_function_indexes(e[1][0], e[0][0])
                 )
                 min_out_edge = backup_min_out_edge
-                min_in_edge = backup_min_in_edge
                 min_index_in_path = backup_min_index_in_path
                 min_component = backup_min_component
             len_this_component = len(paths_component[min_component])
             logger.debug(f"len this component : {len_this_component}")
             index_of_in_component = indexes[min_component][min_out_edge[1]]
-            new_component = [
+            new_component: List[Node] = [
                 paths_component[min_component][
                     (index_of_in_component + i) % len_this_component
                 ]
@@ -897,14 +972,16 @@ def rebuild_tsp_routine(
     return rebuilded_path, obj
 
 
-def retreve_solutions(model, x_var, vehicle_count, g):
+def retrieve_solutions(
+    model: "Model", x_var: Dict[Edge, Var], vehicle_count: int, g: nx.DiGraph
+) -> List[Tuple[nx.DiGraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]]:
     nSolutions = model.SolCount
-    solutions = []
+    solutions: List[Tuple[nx.Digraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]] = []
     for s in range(nSolutions):
         # Set which solution we will query from now on
         g_empty = {v: nx.DiGraph() for v in range(vehicle_count)}
         g_merge = nx.DiGraph()
-        x_solution = {v: set() for v in range(vehicle_count)}
+        x_solution: Dict[int, Set[Edge]] = {v: set() for v in range(vehicle_count)}
         model.params.SolutionNumber = s
         for e in x_var:
             value = x_var[e].getAttr("Xn")
@@ -927,28 +1004,38 @@ def retreve_solutions(model, x_var, vehicle_count, g):
                     clients[0][1], clients[1][1], weight=g[e[0]][e[1]]["weight"]
                 )
         solutions += [
-            {
-                "g_merge": g_merge.copy(),
-                "g_empty": g_empty,
-                "x_solution": x_solution.copy(),
-            }
+            (
+                g_merge.copy(),
+                g_empty,
+                x_solution.copy(),
+            )
         ]
     return solutions
 
 
-def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
-    rebuilt_solution = []
-    rebuilt_obj = []
-    nb_components = []
-    components = []
-    components_global = []
-    solutions_list = []
+def reevaluate_solutions(
+    solutions: List[Tuple[nx.DiGraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]],
+    vehicle_count: int,
+    g: nx.DiGraph,
+    vrp_problem: VrpProblem,
+) -> Tuple[
+    Dict[int, Set[Edge]],
+    Dict[int, List[Node]],
+    float,
+    Dict[int, List[Tuple[Set[Node], int]]],
+    List[Tuple[Set[Node], int]],
+    List[Dict[int, List[Tuple[Set[Node], int]]]],
+    List[List[Tuple[Set[Node], int]]],
+]:
+    rebuilt_solution: List[Dict[int, List[Node]]] = []
+    rebuilt_obj: List[float] = []
+    nb_components: List[List[int]] = []
+    components: List[Dict[int, List[Tuple[Set[Node], int]]]] = []
+    components_global: List[List[Tuple[Set[Node], int]]] = []
+    solutions_list: List[Dict[int, Set[Edge]]] = []
     logger.debug(f"Vehicle count : {vehicle_count}")
-    for solution in solutions:
-        g_empty = solution["g_empty"]
-        g_merge = solution["g_merge"]
-        x_solution = solution["x_solution"]
-        connected_components = {
+    for g_merge, g_empty, x_solution in solutions:
+        connected_components: Dict[int, List[Tuple[Set[Node], int]]] = {
             v: [(set(e), len(e)) for e in nx.weakly_connected_components(g_empty[v])]
             for v in g_empty
         }
@@ -958,7 +1045,7 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
                 [len(connected_components[v]) for v in connected_components],
             )
         )
-        sorted_connected_component = {
+        sorted_connected_component: Dict[int, List[Tuple[Set[Node], int]]] = {
             v: sorted(connected_components[v], key=lambda x: x[1], reverse=True)
             for v in connected_components
         }
@@ -967,13 +1054,18 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
             [len(sorted_connected_component[v]) for v in sorted_connected_component]
         ]
         solutions_list += [x_solution.copy()]
-        paths_component = {v: {} for v in range(vehicle_count)}
-        indexes_component = {v: {} for v in range(vehicle_count)}
-        node_to_component = {v: {} for v in range(vehicle_count)}
-        nb_component = len(sorted_connected_component)
-        rebuilt_dict = {}
-        objective_dict = {}
-        component_global = [
+        paths_component: Dict[int, Dict[int, List[Node]]] = {
+            v: {} for v in range(vehicle_count)
+        }
+        indexes_component: Dict[int, Dict[int, Dict[Node, int]]] = {
+            v: {} for v in range(vehicle_count)
+        }
+        node_to_component: Dict[int, Dict[Node, int]] = {
+            v: {} for v in range(vehicle_count)
+        }
+        rebuilt_dict: Dict[int, List[Node]] = {}
+        objective_dict: Dict[int, float] = {}
+        component_global: List[Tuple[Set[Node], int]] = [
             (set(e), len(e)) for e in nx.weakly_connected_components(g_merge)
         ]
         components_global += [component_global]
@@ -1022,46 +1114,13 @@ def reevaluate_solutions(solutions, vehicle_count, g, vrp_problem: VrpProblem):
     )
 
 
-def update_model(
-    vrp_model: VrpProblem,
-    model,
-    x_var,
-    components_per_vehicle,
-    edges_in_customers,
-    edges_out_customers,
-):
-    for vehicle in components_per_vehicle:
-        comps = components_per_vehicle[vehicle]
-        logger.debug(f"Updating model : Nb component : {len(comps)}")
-        if len(comps) > 1:
-            for si in comps:
-                s = (set([x[1] for x in si[0]]), si[1])
-                logger.debug(f"{vehicle} : {s}")
-                edge_in_of_interest = [
-                    e
-                    for n in s[0]
-                    for e in edges_in_customers[n]
-                    if e[0][1] not in s[0]
-                ]
-                edge_out_of_interest = [
-                    e
-                    for n in s[0]
-                    for e in edges_out_customers[n]
-                    if e[1][1] not in s[0]
-                ]
-                model.addConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
-                model.addConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
-    model.update()
-
-
 def update_model_2(
-    vrp_model: VrpProblem,
-    model,
-    x_var,
-    components_global,
-    edges_in_customers,
-    edges_out_customers,
-):
+    model: "Model",
+    x_var: Dict[Edge, Var],
+    components_global: List[Tuple[Set[Node], int]],
+    edges_in_customers: Dict[int, Set[Edge]],
+    edges_out_customers: Dict[int, Set[Edge]],
+) -> None:
     len_component_global = len(components_global)
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
