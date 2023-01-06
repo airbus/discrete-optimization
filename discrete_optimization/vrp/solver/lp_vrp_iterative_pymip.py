@@ -917,17 +917,18 @@ def update_model_2(
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
+            customers_component: Set[int] = {customer for vehicle, customer in s[0]}
             edge_in_of_interest = [
                 e
-                for n in s[0]
-                for e in edges_in_customers[n]
-                if e[0][1] not in s[0] and e[1][1] in s[0]
+                for customer in customers_component
+                for e in edges_in_customers[customer]
+                if e[0][1] not in s[0] and e[1][1] in customers_component
             ]
             edge_out_of_interest = [
                 e
-                for n in s[0]
-                for e in edges_out_customers[n]
-                if e[1][1] not in s[0] and e[0][1] in s[0]
+                for customer in customers_component
+                for e in edges_out_customers[customer]
+                if e[1][1] not in s[0] and e[0][1] in customers_component
             ]
             model.add_constr(xsum([x_var[e] for e in edge_in_of_interest]) >= 1)
             model.add_constr(xsum([x_var[e] for e in edge_out_of_interest]) >= 1)
