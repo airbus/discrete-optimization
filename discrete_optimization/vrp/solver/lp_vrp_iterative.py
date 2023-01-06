@@ -876,9 +876,13 @@ def rebuild_tsp_routine(
                 + new_component
                 + rebuilded_path[(min_index_in_path + 1) :]
             )
-            for e1, e2 in zip(new_component[:-1], new_component[1:]):
-                if (e1, e2) not in graph.edges():
-                    graph.add_edge(e1, e2, weight=evaluate_function_indexes(e1, e2))
+            for node1, node2 in zip(new_component[:-1], new_component[1:]):
+                if (node1, node2) not in graph.edges():
+                    graph.add_edge(
+                        node1,
+                        node2,
+                        weight=evaluate_function_indexes(node1[0], node2[0]),
+                    )
             path_set = set(rebuilded_path)
             total_length_path = len(rebuilded_path)
             component_reconnected.add(min_component)
