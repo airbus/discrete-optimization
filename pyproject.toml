@@ -48,6 +48,8 @@ dependencies = [
     "typing-extensions>=4.0",
     "cpmpy>=0.9.9",
     "scipy",
+    "numpy>=1.21",
+    "typing_extensions>=4.4"
 ]
 dynamic = ["version"]
 
