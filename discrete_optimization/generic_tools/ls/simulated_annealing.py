@@ -7,13 +7,14 @@ import pickle
 import random
 import time
 from abc import abstractmethod
-from typing import Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import numpy as np
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
+    ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
     Solution,
@@ -49,21 +50,30 @@ class SimulatedAnnealing:
         temperature_handler: TemperatureScheduling,
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        store_solution=False,
-        nb_solutions=1000,
+        store_solution: bool = False,
+        nb_solutions: int = 1000,
     ):
         self.evaluator = evaluator
         self.mutator = mutator
         self.restart_handler = restart_handler
         self.temperature_handler = temperature_handler
         self.mode_mutation = mode_mutation
+        self.aggreg_from_solution: Callable[[Solution], float]
+        self.aggreg_from_dict_values: Callable[[Dict[str, float]], float]
         (
             self.aggreg_from_solution,
             self.aggreg_from_dict_values,
             self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
+        ) = build_aggreg_function_and_params_objective(  # type: ignore
             evaluator, params_objective_function=params_objective_function
         )
+        if (
+            self.params_objective_function.objective_handling
+            == ObjectiveHandling.MULTI_OBJ
+        ):
+            raise NotImplementedError(
+                "SimulatedAnnealing is not implemented for multi objective optimization."
+            )
         self.mode_optim = self.params_objective_function.sense_function
         self.store_solution = store_solution
         self.nb_solutions = nb_solutions
@@ -73,9 +83,9 @@ class SimulatedAnnealing:
         initial_variable: Solution,
         nb_iteration_max: int,
         max_time_seconds: Optional[int] = None,
-        pickle_result=False,
-        pickle_name="debug",
-        **kwargs,
+        pickle_result: bool = False,
+        pickle_name: str = "debug",
+        **kwargs: Any,
     ) -> ResultStorage:
         init_time = time.time()
         objective = self.aggreg_from_dict_values(
@@ -109,7 +119,7 @@ class SimulatedAnnealing:
             if self.mode_mutation == ModeMutation.MUTATE:
                 nv, move = self.mutator.mutate(cur_variable)
                 objective = self.aggreg_from_dict_values(self.evaluator.evaluate(nv))
-            elif self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
+            else:  # self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
                 nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
                     cur_variable
                 )
@@ -158,7 +168,7 @@ class SimulatedAnnealing:
                 nv, objective, global_improvement, local_improvement
             )
             # Update info in restart handler
-            cur_variable, cur_objective = self.restart_handler.restart(
+            cur_variable, cur_objective = self.restart_handler.restart(  # type: ignore
                 cur_variable, cur_objective
             )
             # possibly restart somewhere
@@ -173,10 +183,12 @@ class SimulatedAnnealing:
 
 
 class TemperatureSchedulingFactor(TemperatureScheduling):
-    restart_handler: RestartHandler
-    temperature: float
-
-    def __init__(self, temperature, restart_handler, coefficient=0.99):
+    def __init__(
+        self,
+        temperature: float,
+        restart_handler: RestartHandler,
+        coefficient: float = 0.99,
+    ):
         self.temperature = temperature
         self.restart_handler = restart_handler
         self.coefficient = coefficient

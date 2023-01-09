@@ -5,10 +5,11 @@
 import logging
 import random
 from multiprocessing import Pool
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import seaborn as sns
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -17,6 +18,8 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
+    Problem,
+    Solution,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimberPareto
@@ -33,6 +36,10 @@ from discrete_optimization.generic_tools.mutations.mixed_mutation import (
 )
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     get_available_mutations,
+)
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+    TupleFitness,
 )
 from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
     PermutationMutationRCPSP,
@@ -57,13 +64,14 @@ class RobustnessTool:
     ):
         self.base_instance = base_instance
         self.all_instances = all_instances
-        self.train_instance = train_instance
-        self.test_instance = test_instance
-        if self.train_instance is None:
+        if train_instance is None or test_instance is None:
             random.shuffle(self.all_instances)
             len_train = int(proportion_train * len(self.all_instances))
             self.train_instance = self.all_instances[:len_train]
             self.test_instance = self.all_instances[len_train:]
+        else:
+            self.train_instance = train_instance
+            self.test_instance = test_instance
         self.model_aggreg_mean = Aggreg_RCPSPModel(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
@@ -81,9 +89,11 @@ class RobustnessTool:
             method_aggregating=MethodAggregating(BaseMethodAggregating.MEDIAN),
         )
 
-    def get_models(self, apriori=True, aposteriori=True):
-        models = []
-        tags = []
+    def get_models(
+        self, apriori: bool = True, aposteriori: bool = True
+    ) -> List[RCPSPModel]:
+        models: List[RCPSPModel] = []
+        tags: List[str] = []
         if aposteriori:
             models += [
                 self.model_aggreg_mean,
@@ -110,11 +120,16 @@ class RobustnessTool:
         self.tags = tags
         return models
 
-    def solve_and_retrieve(self, solve_models_function, apriori=True, aposteriori=True):
+    def solve_and_retrieve(
+        self,
+        solve_models_function: Callable[[RCPSPModel], ResultStorage],
+        apriori: bool = True,
+        aposteriori: bool = True,
+    ) -> npt.NDArray[np.float_]:
         models = self.get_models(apriori, aposteriori)
         p = Pool(min(8, len(models)))
         l = p.map(solve_models_function, models)
-        solutions = [li.best_solution for li in l]
+        solutions: List[RCPSPSolution] = [li.best_solution for li in l]  # type: ignore
         results = np.zeros((len(solutions), len(self.test_instance), 3))
         for index_instance in range(len(self.test_instance)):
             logger.debug(f"Evaluating in instance #{index_instance}")
@@ -133,7 +148,7 @@ class RobustnessTool:
                 results[index_pareto, index_instance, 2] = fit["mean_resource_reserve"]
         return results
 
-    def plot(self, results, image_tag=""):
+    def plot(self, results: npt.NDArray[np.float_], image_tag: str = "") -> None:
         mean_makespan = np.mean(results[:, :, 1], axis=1)
         max_makespan = np.max(results[:, :, 1], axis=1)
         logger.debug(f"Mean makespan over test instances : {mean_makespan}")
@@ -154,8 +169,10 @@ class RobustnessTool:
         fig.savefig(str(image_tag) + "_comparaison_methods_robust.png")
 
 
-def solve_model(model, postpro=True, nb_iteration=500):
-    dummy = model.get_dummy_solution()
+def solve_model(
+    model: Problem, postpro: bool = True, nb_iteration: int = 500
+) -> ResultStorage:
+    dummy: Solution = model.get_dummy_solution()  # type: ignore
     _, mutations = get_available_mutations(model, dummy)
     list_mutation = [
         mutate[0].build(model, dummy, **mutate[1])
@@ -167,7 +184,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
     )
 
     objectives = ["makespan"]
-    objective_weights = [-1]
+    objective_weights = [-1.0]
     if postpro:
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.AGGREGATE,
@@ -175,7 +192,8 @@ def solve_model(model, postpro=True, nb_iteration=500):
             weights=objective_weights,
             sense_function=ModeOptim.MAXIMIZATION,
         )
-        aggreg_sol, _, _ = build_aggreg_function_and_params_objective(
+        aggreg_sol: Callable[[Solution], float]
+        aggreg_sol, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
             model, params_objective_function
         )
         res = RestartHandlerLimit(
@@ -201,13 +219,14 @@ def solve_model(model, postpro=True, nb_iteration=500):
             weights=objective_weights,
             sense_function=ModeOptim.MAXIMIZATION,
         )
-        aggreg_sol, _, _ = build_aggreg_function_and_params_objective(
+        aggreg_sol2: Callable[[Solution], TupleFitness]
+        aggreg_sol2, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
             model, params_objective_function
         )
         res = RestartHandlerLimit(
-            200, cur_solution=dummy, cur_objective=aggreg_sol(dummy)
+            200, cur_solution=dummy, cur_objective=aggreg_sol2(dummy)
         )
-        sa = HillClimberPareto(
+        sa_mo = HillClimberPareto(
             evaluator=model,
             mutator=mixed_mutation,
             restart_handler=res,
@@ -216,7 +235,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
             store_solution=True,
             nb_solutions=10000,
         )
-        result_ls = sa.solve(
+        result_ls = sa_mo.solve(
             dummy,
             nb_iteration_max=nb_iteration,
             pickle_result=False,

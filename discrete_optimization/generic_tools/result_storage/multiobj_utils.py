@@ -13,31 +13,37 @@ class TupleFitness:
         self.vector_fitness = vector_fitness
         self.size = size
 
-    def distance(self, other):
+    def distance(self, other: "TupleFitness") -> np.floating:
         return np.linalg.norm(self.vector_fitness - other.vector_fitness, ord=2)
 
     # if none of the two solution dominates the other one.
-    def __eq__(self, other):
-        return not (self < other) and not (self > other)
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, TupleFitness)
+            and not (self < other)
+            and not (self > other)
+        )
 
-    def __le__(self, other):
+    def __le__(self, other: "TupleFitness") -> bool:
         return self < other or self == other
 
-    def __ge__(self, other):
+    def __ge__(self, other: "TupleFitness") -> bool:
         return self > other or self == other
 
-    def __lt__(self, other):
-        return (self.vector_fitness <= other.vector_fitness).all() and (
-            self.vector_fitness < other.vector_fitness
-        ).any()
+    def __lt__(self, other: "TupleFitness") -> bool:
+        return bool(
+            (self.vector_fitness <= other.vector_fitness).all()
+            and (self.vector_fitness < other.vector_fitness).any()
+        )
 
-    def __gt__(self, other):
-        return (self.vector_fitness >= other.vector_fitness).all() and (
-            self.vector_fitness > other.vector_fitness
-        ).any()
+    def __gt__(self, other: "TupleFitness") -> bool:
+        return bool(
+            (self.vector_fitness >= other.vector_fitness).all()
+            and (self.vector_fitness > other.vector_fitness).any()
+        )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.vector_fitness)
 
-    def __mul__(self, other):
+    def __mul__(self, other: float) -> "TupleFitness":
         return TupleFitness(other * self.vector_fitness, self.size)

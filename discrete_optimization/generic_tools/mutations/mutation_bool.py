@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Iterable, Optional
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 import numpy as np
 
@@ -18,7 +18,7 @@ from discrete_optimization.generic_tools.mutations.mutation_util import (
 
 
 class BitFlipMove(LocalMove):
-    def __init__(self, attribute, list_index_flip: Iterable[int]):
+    def __init__(self, attribute: str, list_index_flip: Iterable[int]):
         self.attribute = attribute
         self.list_index_flip = list_index_flip
 
@@ -34,7 +34,7 @@ class BitFlipMove(LocalMove):
 
 class MutationBitFlip(Mutation):
     @staticmethod
-    def build(problem: Problem, solution: Solution, **kwargs) -> "MutationBitFlip":
+    def build(problem: Problem, solution: Solution, **kwargs: Any) -> "MutationBitFlip":
         return MutationBitFlip(problem, **kwargs)
 
     def __init__(
@@ -54,12 +54,14 @@ class MutationBitFlip(Mutation):
             self.attribute = attribute
         self.length = register.dict_attribute_to_type[self.attribute]["n"]
 
-    def mutate(self, solution: Solution):
+    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
         indexes = np.where(np.random.random(self.length) <= self.probability_flip)
         move = BitFlipMove(self.attribute, indexes[0])
         return move.apply_local_move(solution), move
 
-    def mutate_and_compute_obj(self, solution: Solution):
+    def mutate_and_compute_obj(
+        self, solution: Solution
+    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
         s, move = self.mutate(solution)
         f = self.problem.evaluate(s)
         return s, move, f

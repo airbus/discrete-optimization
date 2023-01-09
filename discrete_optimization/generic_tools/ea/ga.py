@@ -5,7 +5,7 @@
 import logging
 import random
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from deap import algorithms, base, creator, tools
@@ -100,6 +100,10 @@ class Ga:
         initial_population: Optional[List[List[Any]]] = None,
     ):
         self.problem = problem
+        if not hasattr(self.problem, "evaluate_from_encoding"):
+            raise ValueError("self.problem shoud define an evaluate_from_encoding()")
+            # self.problem.evaluate_from_encoding: Callable[[List[int], str], Dict[str, float]]
+
         self._pop_size = pop_size
         if max_evals is not None:
             self._max_evals = max_evals
@@ -117,40 +121,37 @@ class Ga:
 
         # set encoding
         register_solution: EncodingRegister = problem.get_attribute_register()
-        self._encoding_name = None
-        self._encoding_variable_name = None
+        encoding_name: Optional[str] = None
         if encoding is not None and isinstance(encoding, str):
             # check name specified is in problem register
             if encoding in register_solution.dict_attribute_to_type.keys():
-                self._encoding_name = encoding
+                encoding_name = encoding
                 self._encoding_variable_name = register_solution.dict_attribute_to_type[
-                    self._encoding_name
+                    encoding_name
                 ]["name"]
                 self._encoding_type = register_solution.dict_attribute_to_type[
-                    self._encoding_name
+                    encoding_name
                 ]["type"][0]
-                self.n = register_solution.dict_attribute_to_type[self._encoding_name][
-                    "n"
-                ]
+                self.n = register_solution.dict_attribute_to_type[encoding_name]["n"]
                 if self._encoding_type in {
                     TypeAttribute.LIST_INTEGER,
                     TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
                 }:
                     self.lows = lower_bound_vector_encoding_from_dict(
-                        register_solution.dict_attribute_to_type[self._encoding_name]
+                        register_solution.dict_attribute_to_type[encoding_name]
                     )
                     self.ups = upper_bound_vector_encoding_from_dict(
-                        register_solution.dict_attribute_to_type[self._encoding_name]
+                        register_solution.dict_attribute_to_type[encoding_name]
                     )
 
-        if encoding is not None and isinstance(encoding, Dict):
+        elif encoding is not None and isinstance(encoding, Dict):
             # check there is a type key and a n key
             if (
                 "name" in encoding.keys()
                 and "type" in encoding.keys()
                 and "n" in encoding.keys()
             ):
-                self._encoding_name = "custom"
+                encoding_name = "custom"
                 self._encoding_variable_name = encoding["name"]
                 self._encoding_type = encoding["type"][0]
                 self.n = encoding["n"]
@@ -166,22 +167,20 @@ class Ga:
                     "definition not respecting encoding dict entry format, trying to use default one instead"
                 )
 
-        if self._encoding_name is None:
+        if encoding_name is None:
             if len(register_solution.dict_attribute_to_type.keys()) == 0:
                 raise Exception(
                     "An encoding of type TypeAttribute should be specified or at least 1 TypeAttribute "
                     "should be defined in the RegisterSolution of your Problem"
                 )
-            self._encoding_name = list(register_solution.dict_attribute_to_type.keys())[
-                0
-            ]
+            encoding_name = list(register_solution.dict_attribute_to_type.keys())[0]
             self._encoding_variable_name = register_solution.dict_attribute_to_type[
-                self._encoding_name
+                encoding_name
             ]["name"]
             self._encoding_type = register_solution.dict_attribute_to_type[
-                self._encoding_name
+                encoding_name
             ]["type"][0]
-            self.n = register_solution.dict_attribute_to_type[self._encoding_name]["n"]
+            self.n = register_solution.dict_attribute_to_type[encoding_name]["n"]
 
             dict_register = register_solution.dict_attribute_to_type
             if self._encoding_type in {
@@ -189,15 +188,17 @@ class Ga:
                 TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY,
             }:
                 self.lows = lower_bound_vector_encoding_from_dict(
-                    dict_register[self._encoding_name]
+                    dict_register[encoding_name]
                 )
                 self.ups = upper_bound_vector_encoding_from_dict(
-                    dict_register[self._encoding_name]
+                    dict_register[encoding_name]
                 )
 
         if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
             self.lows = [0 for i in range(self.n)]
             self.ups = [1 for i in range(self.n)]
+
+        self._encoding_name: str = encoding_name
 
         logger.debug(
             f"Encoding used by the GA: {self._encoding_name}: {self._encoding_type} of length {self.n}"
@@ -400,19 +401,12 @@ class Ga:
             problem=self.problem, params_objective_function=None
         )
 
-    def evaluate_problem(self, int_vector):
-        objective_values = self.problem.evaluate_from_encoding(
+    def evaluate_problem(self, int_vector: List[int]) -> Tuple[float]:
+        objective_values: Dict[str, float] = self.problem.evaluate_from_encoding(  # type: ignore
             int_vector, self._encoding_variable_name
         )
         if self._objective_handling == ObjectiveHandling.SINGLE:
             val = objective_values[self._objectives[0]]
-        elif self._objective_handling == "aggregate":
-            val = sum(
-                [
-                    objective_values[self._objectives[i]] * self._objective_weights[i]
-                    for i in range(len(self._objectives))
-                ]
-            )
         elif self._objective_handling == ObjectiveHandling.AGGREGATE:
             val = sum(
                 [
@@ -420,9 +414,17 @@ class Ga:
                     for i in range(len(self._objectives))
                 ]
             )
+        else:  # ObjectiveHandling.MULTI_OBJ
+            raise NotImplementedError(
+                "objective_handling can only be SINGLE or AGGREGATE"
+            )
         return (val,)
 
-    def generate_custom_population(self):
+    def generate_custom_population(self) -> List[Any]:
+        if self.initial_population is None:
+            raise RuntimeError(
+                "self.initial_population cannot be None when calling generate_custom_population()."
+            )
         pop = []
         for ind in self.initial_population:
             newind = self._toolbox.individual()
@@ -431,7 +433,7 @@ class Ga:
             pop.append(newind)
         return pop
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         if self.initial_population is None:
             # Initialise the population (here at random)
             population = self._toolbox.population()

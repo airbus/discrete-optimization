@@ -9,7 +9,7 @@ import mip
 from mip import IncumbentUpdater, Model, Var
 
 
-def release_token():
+def release_token() -> None:
     # Usefull if you are using a token licence of gurobi.. pymip is not well adapted to using those in loop (
     # (each new model instanciation will block a token as long your program runs..)
     # Running it will normally unblock the token before initalizing a new grb model.
@@ -22,10 +22,10 @@ class IncumbentStoreSolution(IncumbentUpdater):
         super().__init__(model=model)
         self._solution_store: List[Dict[str, Any]] = []
 
-    def nb_solutions(self):
+    def nb_solutions(self) -> int:
         return len(self._solution_store)
 
-    def get_solutions(self):
+    def get_solutions(self) -> List[Dict[str, Any]]:
         return self._solution_store
 
     def update_incumbent(
@@ -58,7 +58,7 @@ class MyModelMilp(Model):
     def remove(
         self: "MyModelMilp",
         objects: Union[mip.Var, mip.Constr, List[Union["mip.Var", "mip.Constr"]]],
-    ):
+    ) -> None:
         super().remove(objects)
         self.update()
 
@@ -69,7 +69,7 @@ class MyModelMilp(Model):
         self.update()
         return l
 
-    def update(self):
+    def update(self) -> None:
         try:
             self.solver.update()
         except:

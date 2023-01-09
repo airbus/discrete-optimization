@@ -35,8 +35,8 @@ class HillClimber:
         restart_handler: RestartHandler,
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        store_solution=False,
-        nb_solutions=1000,
+        store_solution: bool = False,
+        nb_solutions: int = 1000,
     ):
         self.evaluator = evaluator
         self.mutator = mutator
@@ -61,8 +61,8 @@ class HillClimber:
         initial_variable: Solution,
         nb_iteration_max: int,
         max_time_seconds: Optional[int] = None,
-        pickle_result=False,
-        pickle_name="debug",
+        pickle_result: bool = False,
+        pickle_name: str = "debug",
     ) -> ResultStorage:
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
@@ -151,8 +151,8 @@ class HillClimberPareto(HillClimber):
         restart_handler: RestartHandler,
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        store_solution=False,
-        nb_solutions=1000,
+        store_solution: bool = False,
+        nb_solutions: int = 1000,
     ):
         super().__init__(
             evaluator=evaluator,
@@ -169,9 +169,9 @@ class HillClimberPareto(HillClimber):
         initial_variable: Solution,
         nb_iteration_max: int,
         max_time_seconds: Optional[int] = None,
-        pickle_result=False,
-        pickle_name="tsp",
-        update_iteration_pareto=1000,
+        pickle_result: bool = False,
+        pickle_name: str = "tsp",
+        update_iteration_pareto: int = 1000,
     ) -> ParetoFront:
         init_time = time.time()
         objective = self.aggreg_from_dict_values(

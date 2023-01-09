@@ -32,7 +32,7 @@ class ConstraintHandler:
     @abstractmethod
     def remove_constraints_from_previous_iteration(
         self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
-    ):
+    ) -> None:
         ...
 
 
@@ -43,7 +43,7 @@ class InitialSolution:
 
 
 class InitialSolutionFromSolver(InitialSolution):
-    def __init__(self, solver: SolverDO, **kwargs):
+    def __init__(self, solver: SolverDO, **kwargs: Any):
         self.solver = solver
         self.dict = kwargs
 
@@ -53,7 +53,7 @@ class InitialSolutionFromSolver(InitialSolution):
 
 
 class TrivialInitialSolution(InitialSolution):
-    def __init__(self, solution: ResultStorage, **kwargs):
+    def __init__(self, solution: ResultStorage, **kwargs: Any):
         self.solution = solution
         self.dict = kwargs
 
@@ -114,7 +114,7 @@ class LNS_MILP(SolverDO):
         nb_iteration_no_improvement: Optional[int] = None,
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: Optional[bool] = False,
-        **args,
+        **args: Any,
     ) -> ResultStorage:
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:

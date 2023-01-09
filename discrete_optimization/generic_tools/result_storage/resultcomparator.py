@@ -4,16 +4,24 @@
 
 import logging
 import math
-from typing import Dict, List, cast
+from typing import Dict, List, Optional, Tuple, cast
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
-from discrete_optimization.generic_tools.do_problem import Problem, TupleFitness
+from discrete_optimization.generic_tools.do_problem import (
+    Problem,
+    Solution,
+    TupleFitness,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ParetoFront,
     ResultStorage,
+    fitness_class,
     plot_pareto_2d,
     result_storage_to_pareto_front,
 )
@@ -22,13 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class ResultComparator:
-    list_result_storage: List[ResultStorage]
-    result_storage_names: List[str]
-    objectives_str: List[str]
-    objective_weights: List[int]
-    test_problems: List[Problem]
-    super_pareto: ResultStorage
-
     # If test problem is None, then we use the fitnesses from the ResultStorage
     def __init__(
         self,
@@ -36,7 +37,7 @@ class ResultComparator:
         result_storage_names: List[str],
         objectives_str: List[str],
         objective_weights: List[int],
-        test_problems=None,
+        test_problems: Optional[List[Problem]] = None,
     ):
         self.list_result_storage = list_result_storage
         self.result_storage_names = result_storage_names
@@ -48,20 +49,31 @@ class ResultComparator:
         if self.test_problems is not None:
             self.reevaluate_result_storages()
 
-    def reevaluate_result_storages(self):
+    def reevaluate_result_storages(self) -> None:
+        if self.test_problems is None:
+            raise RuntimeError(
+                "self.test_problems cannot be None when calling reevaluate_result_storages()."
+            )
         for res in self.list_result_storage:
             self.reevaluated_results[self.list_result_storage.index(res)] = {}
             for obj in self.objectives_str:
                 self.reevaluated_results[self.list_result_storage.index(res)][obj] = []
                 for scenario in self.test_problems:
-                    res.get_best_solution().change_problem(scenario)
-                    val = scenario.evaluate(res.get_best_solution())[obj]
+                    best_sol = res.get_best_solution()
+                    if best_sol is None:
+                        raise RuntimeError(
+                            "res.get_best_solution() cannot be None "
+                            "for any res in self.list_result_storage"
+                            "when calling reevaluate_result_storages()."
+                        )
+                    best_sol.change_problem(scenario)
+                    val = scenario.evaluate(best_sol)[obj]
                     self.reevaluated_results[self.list_result_storage.index(res)][
                         obj
                     ].append(val)
         logger.debug(f"reevaluated_results: {self.reevaluated_results}")
 
-    def plot_distribution_for_objective(self, objective_str: str):
+    def plot_distribution_for_objective(self, objective_str: str) -> Figure:
         fig, ax = plt.subplots(1, figsize=(10, 10))
         for i in range(len(self.result_storage_names)):
             sns.distplot(
@@ -78,12 +90,14 @@ class ResultComparator:
         )
         return fig
 
-    def print_test_distribution(self):
+    def print_test_distribution(self) -> None:
         ...
 
-    def get_best_by_objective_by_result_storage(self, objectif_str: str):
+    def get_best_by_objective_by_result_storage(
+        self, objectif_str: str
+    ) -> Dict[str, Tuple[Solution, fitness_class]]:
         obj_index = self.objectives_str.index(objectif_str)
-        val = {}
+        val: Dict[str, Tuple[Solution, fitness_class]] = {}
         for i in range(len(self.list_result_storage)):
             fit_array = [
                 cast(
@@ -103,7 +117,7 @@ class ResultComparator:
             val[self.result_storage_names[i]] = best_sol
         return val
 
-    def generate_super_pareto(self):
+    def generate_super_pareto(self) -> ParetoFront:
         sols = []
         for rs in self.list_result_storage:
             for s in rs.list_solution_fits:
@@ -112,7 +126,9 @@ class ResultComparator:
         pareto_store = result_storage_to_pareto_front(result_storage=rs, problem=None)
         return pareto_store
 
-    def plot_all_2d_paretos_single_plot(self, objectives_str=None):
+    def plot_all_2d_paretos_single_plot(
+        self, objectives_str: Optional[List[str]] = None
+    ) -> Axes:
 
         if objectives_str is None:
             objecives_names = self.objectives_str[:2]
@@ -132,11 +148,11 @@ class ResultComparator:
         for i in range(len(self.list_result_storage)):
             ax.scatter(
                 x=[
-                    p[1].vector_fitness[objectives_index[0]]
+                    p[1].vector_fitness[objectives_index[0]]  # type: ignore
                     for p in self.list_result_storage[i].list_solution_fits
                 ],
                 y=[
-                    p[1].vector_fitness[objectives_index[1]]
+                    p[1].vector_fitness[objectives_index[1]]  # type: ignore
                     for p in self.list_result_storage[i].list_solution_fits
                 ],
                 color=colors[i],
@@ -144,7 +160,9 @@ class ResultComparator:
         ax.legend(self.result_storage_names)
         return ax
 
-    def plot_all_2d_paretos_subplots(self, objectives_str=None):
+    def plot_all_2d_paretos_subplots(
+        self, objectives_str: Optional[List[str]] = None
+    ) -> Figure:
 
         if objectives_str is None:
             objecives_names = self.objectives_str[:2]
@@ -167,11 +185,11 @@ class ResultComparator:
             range(len(self.list_result_storage)), axis[: len(self.list_result_storage)]
         ):
             x = [
-                p[1].vector_fitness[objectives_index[0]]
+                p[1].vector_fitness[objectives_index[0]]  # type: ignore
                 for p in self.list_result_storage[i].list_solution_fits
             ]
             y = [
-                p[1].vector_fitness[objectives_index[1]]
+                p[1].vector_fitness[objectives_index[1]]  # type: ignore
                 for p in self.list_result_storage[i].list_solution_fits
             ]
             ax.scatter(x=x, y=y, color=colors[i])
@@ -180,16 +198,16 @@ class ResultComparator:
 
         return fig
 
-    def plot_super_pareto(self):
+    def plot_super_pareto(self) -> None:
         super_pareto = self.generate_super_pareto()
         plot_pareto_2d(pareto_front=super_pareto, name_axis=self.objectives_str)
         plt.title("Pareto front obtained by merging solutions from all result stores")
 
-    def plot_all_best_by_objective(self, objectif_str):
+    def plot_all_best_by_objective(self, objectif_str: str) -> None:
         obj_index = self.objectives_str.index(objectif_str)
         data = self.get_best_by_objective_by_result_storage(objectif_str)
         x = list(data.keys())
-        y = [data[key][1].vector_fitness[obj_index] for key in x]
+        y = [data[key][1].vector_fitness[obj_index] for key in x]  # type: ignore
         y_pos = np.arange(len(x))
 
         plt.bar(y_pos, y)

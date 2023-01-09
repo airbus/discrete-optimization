@@ -4,7 +4,7 @@
 
 import logging
 import random
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from deap import algorithms, base, creator, tools
@@ -16,6 +16,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
+    Solution,
     TypeAttribute,
     build_evaluate_function_aggregated,
 )
@@ -27,6 +28,7 @@ from discrete_optimization.generic_tools.ea.ga import (
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+    TupleFitness,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,6 +77,9 @@ class Nsga:
         deap_verbose: bool = True,
     ):
         self.problem = problem
+        if not hasattr(self.problem, "evaluate_from_encoding"):
+            raise ValueError("self.problem shoud define an evaluate_from_encoding()")
+            # self.problem.evaluate_from_encoding: Callable[[List[int], str], Dict[str, float]]
         self._pop_size = pop_size
         if max_evals is not None:
             self._max_evals = max_evals
@@ -89,32 +94,29 @@ class Nsga:
 
         # set encoding
         register_solution: EncodingRegister = problem.get_attribute_register()
-        self._encoding_name = None
-        self._encoding_variable_name = None
+        encoding_name = None
         if encoding is not None and isinstance(encoding, str):
             # check name specified is in problem register
             if encoding in register_solution.dict_attribute_to_type.keys():
-                self._encoding_name = encoding
+                encoding_name = encoding
                 self._encoding_variable_name = register_solution.dict_attribute_to_type[
-                    self._encoding_name
+                    encoding_name
                 ]["name"]
                 self._encoding_type = register_solution.dict_attribute_to_type[
-                    self._encoding_name
+                    encoding_name
                 ]["type"][0]
-                self.n = register_solution.dict_attribute_to_type[self._encoding_name][
-                    "n"
-                ]
+                self.n = register_solution.dict_attribute_to_type[encoding_name]["n"]
 
                 if self._encoding_type == TypeAttribute.LIST_INTEGER:
                     self.arity = register_solution.dict_attribute_to_type[
-                        self._encoding_name
+                        encoding_name
                     ]["arity"]
                     self.arities = [self.arity for i in range(self.n)]
                 else:
                     self.arity = None
                 if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
                     self.arities = register_solution.dict_attribute_to_type[
-                        self._encoding_name
+                        encoding_name
                     ]["arities"]
 
         if encoding is not None and isinstance(encoding, Dict):
@@ -124,7 +126,7 @@ class Nsga:
                 and "type" in encoding.keys()
                 and "n" in encoding.keys()
             ):
-                self._encoding_name = "custom"
+                encoding_name = "custom"
                 self._encoding_variable_name = encoding["name"]
                 self._encoding_type = encoding["type"][0]
                 self.n = encoding["n"]
@@ -133,7 +135,7 @@ class Nsga:
                     self.arities = [self.arity for i in range(self.n)]
                 if "arities" in encoding.keys():
                     self.arities = register_solution.dict_attribute_to_type[
-                        self._encoding_name
+                        encoding_name
                     ]["arities"]
             else:
                 logger.warning(
@@ -141,34 +143,34 @@ class Nsga:
                     "definition not respecting encoding dict entry format, trying to use default one instead"
                 )
 
-        if self._encoding_name is None:
+        if encoding_name is None:
             if len(register_solution.dict_attribute_to_type.keys()) == 0:
                 raise Exception(
                     "An encoding of type TypeAttribute should be specified or at least 1 TypeAttribute "
                     "should be defined in the RegisterSolution of your Problem"
                 )
-            self._encoding_name = list(register_solution.dict_attribute_to_type.keys())[
-                0
-            ]
+            encoding_name = list(register_solution.dict_attribute_to_type.keys())[0]
             self._encoding_variable_name = register_solution.dict_attribute_to_type[
-                self._encoding_name
+                encoding_name
             ]["name"]
             self._encoding_type = register_solution.dict_attribute_to_type[
-                self._encoding_name
+                encoding_name
             ]["type"][0]
-            self.n = register_solution.dict_attribute_to_type[self._encoding_name]["n"]
+            self.n = register_solution.dict_attribute_to_type[encoding_name]["n"]
 
             if self._encoding_type == TypeAttribute.LIST_INTEGER:
-                self.arity = register_solution.dict_attribute_to_type[
-                    self._encoding_name
-                ]["arity"]
+                self.arity = register_solution.dict_attribute_to_type[encoding_name][
+                    "arity"
+                ]
                 self.arities = [self.arity for i in range(self.n)]
             else:
                 self.arity = None
             if self._encoding_type == TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY:
-                self.arities = register_solution.dict_attribute_to_type[
-                    self._encoding_name
-                ]["arities"]
+                self.arities = register_solution.dict_attribute_to_type[encoding_name][
+                    "arities"
+                ]
+
+        self._encoding_name = encoding_name
 
         if self._encoding_type == TypeAttribute.LIST_BOOLEAN:
             self.arity = 2
@@ -200,6 +202,9 @@ class Nsga:
             weights=self._objective_weights,
             sense_function=ModeOptim.MAXIMIZATION,
         )
+        self.evaluate_sol: Union[
+            Callable[[Solution], float], Callable[[Solution], TupleFitness]
+        ]
         self.evaluate_sol, _ = build_evaluate_function_aggregated(
             problem=problem, params_objective_function=self.params_objective_function
         )
@@ -327,15 +332,15 @@ class Nsga:
         # No choice of selection: In NSGA, only 1 selection: Non Dominated Sorted Selection
         self._toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
-    def evaluate_problem(self, int_vector):
-        objective_values = self.problem.evaluate_from_encoding(
+    def evaluate_problem(self, int_vector: List[int]) -> Tuple[float, ...]:
+        objective_values = self.problem.evaluate_from_encoding(  # type: ignore
             int_vector, self._encoding_variable_name
         )
         val = tuple([objective_values[obj_name] for obj_name in self._objectives])
 
         return val
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
 
         #  Define the statistics to collect at each generation
         stats = tools.Statistics(lambda ind: ind.fitness.values)

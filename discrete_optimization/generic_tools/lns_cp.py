@@ -28,6 +28,7 @@ from discrete_optimization.generic_tools.lns_mip import (
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+    fitness_class,
 )
 
 if sys.version_info >= (3, 8):
@@ -52,8 +53,11 @@ class ConstraintHandler:
 
     @abstractmethod
     def remove_constraints_from_previous_iteration(
-        self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
-    ):
+        self,
+        cp_solver: CPSolver,
+        child_instance: Instance,
+        previous_constraints: Iterable[Any],
+    ) -> None:
         ...
 
 
@@ -93,7 +97,7 @@ class LNS_CP(SolverDO):
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        **args,
+        **args: Any,
     ) -> ResultStorage:
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:
@@ -112,13 +116,16 @@ class LNS_CP(SolverDO):
             store_lns = self.initial_solution_provider.get_starting_solution()
             store_lns = self.post_process_solution.build_other_solution(store_lns)
             init_solution, objective = store_lns.get_best_solution_fit()
-            satisfy = self.problem.satisfy(init_solution)
+            if init_solution is None:
+                satisfy = False
+            else:
+                satisfy = self.problem.satisfy(init_solution)
             logger.debug(f"Satisfy Initial solution {satisfy}")
             try:
                 logger.debug(
-                    f"Nb task preempted = {init_solution.get_nb_task_preemption()}"
+                    f"Nb task preempted = {init_solution.get_nb_task_preemption()}"  # type: ignore
                 )
-                logger.debug(f"Nb max preemption = {init_solution.get_max_preempted()}")
+                logger.debug(f"Nb max preemption = {init_solution.get_max_preempted()}")  # type: ignore
             except:
                 pass
             best_objective = objective
@@ -172,15 +179,23 @@ class LNS_CP(SolverDO):
                         logger.debug("Solved !!!")
                         bsol, fit = result_store.get_best_solution_fit()
                         logger.debug(f"Fitness Before = {fit}")
-                        logger.debug(
-                            f"Satisfaction Before = {self.problem.satisfy(bsol)}"
-                        )
+                        if bsol is not None:
+                            logger.debug(
+                                f"Satisfaction Before = {self.problem.satisfy(bsol)}"
+                            )
+                        else:
+                            logger.debug(f"Satisfaction Before = {False}")
                         logger.debug("Post Process..")
                         result_store = self.post_process_solution.build_other_solution(
                             result_store
                         )
                         bsol, fit = result_store.get_best_solution_fit()
-                        logger.debug(f"Satisfy after : {self.problem.satisfy(bsol)}")
+                        if bsol is not None:
+                            logger.debug(
+                                f"Satisfaction After = {self.problem.satisfy(bsol)}"
+                            )
+                        else:
+                            logger.debug(f"Satisfaction After = {False}")
                         if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
                             if fit > best_objective:
                                 current_nb_iteration_no_improvement = 0
@@ -227,7 +242,7 @@ class LNS_CP(SolverDO):
                     break
         return store_lns
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         return self.solve_lns(**kwargs)
 
 
@@ -267,7 +282,7 @@ class LNS_CPlex(SolverDO):
         max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        **args,
+        **args: Any,
     ) -> ResultStorage:
         sense = self.params_objective_function.sense_function
         if max_time_seconds is None:
@@ -366,7 +381,7 @@ class LNS_CPlex(SolverDO):
                 break
         return store_lns
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         return self.solve_lns(**kwargs)
 
 
@@ -408,7 +423,7 @@ class ConstraintHandlerMix(ConstraintHandler):
             for i in range(len(self.list_constraints_handler))
         }
         self.last_index_param: Optional[int] = None
-        self.last_fitness = None
+        self.last_fitness: Optional[fitness_class] = None
         self.update_proba = update_proba
 
     def adding_constraint_from_results_store(
@@ -469,6 +484,9 @@ class ConstraintHandlerMix(ConstraintHandler):
         )
 
     def remove_constraints_from_previous_iteration(
-        self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
-    ):
+        self,
+        cp_solver: CPSolver,
+        child_instance: Instance,
+        previous_constraints: Iterable[Any],
+    ) -> None:
         pass

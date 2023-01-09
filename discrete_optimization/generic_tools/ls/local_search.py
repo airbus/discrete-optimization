@@ -8,6 +8,7 @@ from typing import Tuple
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+    fitness_class,
 )
 
 
@@ -17,21 +18,22 @@ class ModeMutation(Enum):
 
 
 class RestartHandler:
-    nb_iteration: int
-    nb_iteration_no_local_improve: int
-    nb_iteration_no_global_improve: int
     solution_restart: Solution
     solution_best: Solution
-    best_fitness: float
+    best_fitness: fitness_class
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.nb_iteration = 0
         self.nb_iteration_no_local_improve = 0
         self.nb_iteration_no_global_improve = 0
 
     def update(
-        self, nv: Solution, fitness: float, improved_global: bool, improved_local: bool
-    ):
+        self,
+        nv: Solution,
+        fitness: fitness_class,
+        improved_global: bool,
+        improved_local: bool,
+    ) -> None:
         self.nb_iteration += 1
         if improved_global:
             self.nb_iteration_no_global_improve = 0
@@ -45,14 +47,17 @@ class RestartHandler:
             self.nb_iteration_no_local_improve += 1
 
     def restart(
-        self, cur_solution: Solution, cur_objective: float
-    ) -> Tuple[Solution, float]:
+        self, cur_solution: Solution, cur_objective: fitness_class
+    ) -> Tuple[Solution, fitness_class]:
         return cur_solution, cur_objective
 
 
 class RestartHandlerLimit(RestartHandler):
     def __init__(
-        self, nb_iteration_no_improvement, cur_solution: Solution, cur_objective
+        self,
+        nb_iteration_no_improvement: int,
+        cur_solution: Solution,
+        cur_objective: fitness_class,
     ):
         RestartHandler.__init__(self)
         self.nb_iteration_no_improvement = nb_iteration_no_improvement
@@ -60,8 +65,8 @@ class RestartHandlerLimit(RestartHandler):
         self.best_fitness = cur_objective
 
     def restart(
-        self, cur_solution: Solution, cur_objective: float
-    ) -> Tuple[Solution, float]:
+        self, cur_solution: Solution, cur_objective: fitness_class
+    ) -> Tuple[Solution, fitness_class]:
         if (
             self.nb_iteration_no_global_improve > self.nb_iteration_no_improvement
             or self.nb_iteration_no_local_improve > self.nb_iteration_no_improvement
@@ -75,7 +80,10 @@ class RestartHandlerLimit(RestartHandler):
 
 class ResultLS(ResultStorage):
     def __init__(
-        self, result_storage: ResultStorage, best_solution: Solution, best_objective
+        self,
+        result_storage: ResultStorage,
+        best_solution: Solution,
+        best_objective: fitness_class,
     ):
         self.result_storage = result_storage
         self.list_solution_fits = result_storage.list_solution_fits
