@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
@@ -93,11 +93,18 @@ dictionnary_mutation: Dict[
 }
 
 
-def get_available_mutations(problem: Problem, solution: Optional[Solution] = None):
+def get_available_mutations(
+    problem: Problem, solution: Optional[Solution] = None
+) -> Tuple[
+    Dict[TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]],
+    List[Tuple[Type[Mutation], Dict[str, Any]]],
+]:
     register = problem.get_attribute_register()
     present_types = set(register.get_types())
-    mutations = {}
-    mutations_list = []
+    mutations: Dict[
+        TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]
+    ] = {}
+    mutations_list: List[Tuple[Type[Mutation], Dict[str, Any]]] = []
     nb_mutations = 0
     for pr_type in present_types:
         if pr_type in dictionnary_mutation:

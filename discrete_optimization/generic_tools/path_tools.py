@@ -5,9 +5,9 @@
 import os
 
 
-def get_directory(file):
+def get_directory(file: str) -> str:
     return os.path.dirname(file)
 
 
-def abspath_from_file(file, relative_path):
+def abspath_from_file(file: str, relative_path: str) -> str:
     return os.path.join(os.path.dirname(os.path.abspath(file)), relative_path)

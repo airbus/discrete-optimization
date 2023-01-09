@@ -4,12 +4,26 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import collections
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import numpy as np
+import numpy.typing as npt
 
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
     TupleFitness,
@@ -77,17 +91,17 @@ class EncodingRegister:
             for t in self.dict_attribute_to_type[k]["type"]
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Encoding : " + str(self.dict_attribute_to_type)
 
-    def lower_bound_vector_encoding(self, encoding_name):
+    def lower_bound_vector_encoding(self, encoding_name: str) -> List[int]:
         """Return for an encoding that is of type LIST_INTEGER or associated, the lower bound vector.
         Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
         """
         dict_encoding = self.dict_attribute_to_type[encoding_name]
         return lower_bound_vector_encoding_from_dict(dict_encoding)
 
-    def upper_bound_vector_encoding(self, encoding_name):
+    def upper_bound_vector_encoding(self, encoding_name: str) -> List[int]:
         """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
         Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
         """
@@ -95,44 +109,43 @@ class EncodingRegister:
         return upper_bound_vector_encoding_from_dict(dict_encoding)
 
 
-def lower_bound_vector_encoding_from_dict(dict_encoding):
+def lower_bound_vector_encoding_from_dict(dict_encoding: Dict[str, Any]) -> List[int]:
     length_encoding = dict_encoding["n"]
     if "low" in dict_encoding:
-        low_value = dict_encoding["low"]
-        low_value_vector = None
+        low_value: Union[int, Iterable[int]] = dict_encoding["low"]
         if isinstance(low_value, int):
-            low_value_vector = [low_value for i in range(length_encoding)]
-        if isinstance(low_value, (List, Iterable)):
-            low_value_vector = list(low_value)
-        return low_value_vector
+            return [low_value for i in range(length_encoding)]
+        else:
+            return list(low_value)
     else:
         return [0 for i in range(length_encoding)]  # By default we start at zero.
 
 
-def upper_bound_vector_encoding_from_dict(dict_encoding):
+def upper_bound_vector_encoding_from_dict(dict_encoding: Dict[str, Any]) -> List[int]:
     """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
 
     Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
     """
     length_encoding = dict_encoding["n"]
     if "up" in dict_encoding:
-        up_value = dict_encoding["up"]
-        up_value_vector = None
+        up_value: Union[int, Iterable[int]] = dict_encoding["up"]
         if isinstance(up_value, int):
-            up_value_vector = [up_value for i in range(length_encoding)]
-        if isinstance(up_value, (List, Iterable)):
-            up_value_vector = list(up_value)
-        return up_value_vector
+            return [up_value for i in range(length_encoding)]
+        else:
+            return list(up_value)
     else:
         low = lower_bound_vector_encoding_from_dict(dict_encoding)
         up_value_vector = None
         if "arity" in dict_encoding:
             arity = dict_encoding["arity"]  # number of possible value.
-            up_value_vector = [l + arity - 1 for l in low]
-        if "arities" in dict_encoding:
+            return [l + arity - 1 for l in low]
+        elif "arities" in dict_encoding:
             arities = dict_encoding["arities"]
-            up_value_vector = [l + arr - 1 for l, arr in zip(low, arities)]
-        return up_value_vector
+            return [l + arr - 1 for l, arr in zip(low, arities)]
+        else:
+            raise ValueError(
+                "dict_encoding must either have 'up', 'arity' or 'arities' as a key."
+            )
 
 
 class ObjectiveHandling(Enum):
@@ -195,7 +208,7 @@ class ObjectiveRegister:
         self.objective_handling = objective_handling
         self.dict_objective_to_doc = dict_objective_to_doc
 
-    def get_list_objective_and_default_weight(self):
+    def get_list_objective_and_default_weight(self) -> Tuple[List[str], List[float]]:
         """Flatten the list of kpi names and default weight.
 
         Returns: list of kpi names, list of default weight for the aggregated objective function.
@@ -206,7 +219,7 @@ class ObjectiveRegister:
         ]
         return [s[0] for s in d], [s[1] for s in d]
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = "Objective Register :\n"
         s += "Obj sense : " + str(self.objective_sense) + "\n"
         s += "Obj handling : " + str(self.objective_handling) + "\n"
@@ -252,7 +265,7 @@ class Solution:
         return problem.get_attribute_register()
 
     @abstractmethod
-    def change_problem(self, new_problem: "Problem"):
+    def change_problem(self, new_problem: "Problem") -> None:
         """If relevant to the optimisation problem, change the underlying problem instance for the solution.
 
         This method can be used to evaluate a solution for different instance of problems.
@@ -411,42 +424,52 @@ class RobustProblem(Problem):
         self.nb_problem = len(self.list_problem)
         self.agg_vec = self.aggregate_vector()
 
-    def aggregate_vector(self):
+    def aggregate_vector(self) -> Callable[[npt.ArrayLike], float]:
         """Returns the aggregation function coherent with the method_aggregating attribute.
 
         Returns: aggregation function
 
         """
+        func: Callable[[npt.ArrayLike], float]
         if (
             self.method_aggregating.base_method_aggregating
             == BaseMethodAggregating.MEAN
         ):
             func = np.mean
-        if (
+        elif (
             self.method_aggregating.base_method_aggregating
             == BaseMethodAggregating.MEDIAN
         ):
-            func = np.median
-        if (
+            func = np.median  # type: ignore
+        elif (
             self.method_aggregating.base_method_aggregating
             == BaseMethodAggregating.PERCENTILE
         ):
 
-            def func(x):
-                return np.percentile(x, q=[self.method_aggregating.percentile])[0]
+            def func(x: npt.ArrayLike) -> float:
+                return np.percentile(x, q=[self.method_aggregating.percentile])[0]  # type: ignore
 
-        if (
+        elif (
             self.method_aggregating.base_method_aggregating
             == BaseMethodAggregating.PONDERATION
         ):
 
-            def func(x):
-                return np.dot(x, self.method_aggregating.ponderation)
+            def func(x: npt.ArrayLike) -> float:
+                return np.dot(x, self.method_aggregating.ponderation)  # type: ignore
 
-        if self.method_aggregating.base_method_aggregating == BaseMethodAggregating.MIN:
+        elif (
+            self.method_aggregating.base_method_aggregating == BaseMethodAggregating.MIN
+        ):
             func = np.min
-        if self.method_aggregating.base_method_aggregating == BaseMethodAggregating.MAX:
+        elif (
+            self.method_aggregating.base_method_aggregating == BaseMethodAggregating.MAX
+        ):
             func = np.max
+        else:
+            raise ValueError(
+                f"Unknown aggregating method {self.method_aggregating.base_method_aggregating}"
+            )
+
         return func
 
     def evaluate(self, variable: Solution) -> Dict[str, float]:
@@ -517,7 +540,7 @@ class ParamsObjectiveFunction:
         self.weights = weights
         self.sense_function = sense_function
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = "Params objective function :  \n"
         s += "Sense : " + str(self.sense_function) + "\n"
         s += "Objective handling " + str(self.objective_handling) + "\n"
@@ -551,8 +574,14 @@ def build_aggreg_function_and_params_objective(
     problem: Problem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
 ) -> Tuple[
-    Callable[[Solution], float],
-    Callable[[Dict[str, float]], float],
+    Union[
+        Callable[[Solution], float],
+        Callable[[Solution], TupleFitness],
+    ],
+    Union[
+        Callable[[Dict[str, float]], float],
+        Callable[[Dict[str, float]], TupleFitness],
+    ],
     ParamsObjectiveFunction,
 ]:
     """Build evaluation function from the problem and the params of objective function.
@@ -581,7 +610,12 @@ def build_aggreg_function_and_params_objective(
 def build_evaluate_function_aggregated(
     problem: Problem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
-) -> Tuple[Callable[[Solution], float], Callable[[Dict[str, float]], float]]:
+) -> Union[
+    Tuple[Callable[[Solution], float], Callable[[Dict[str, float]], float]],
+    Tuple[
+        Callable[[Solution], TupleFitness], Callable[[Dict[str, float]], TupleFitness]
+    ],
+]:
     """Build 2 eval functions based from the problem and params of objective function.
 
     The 2 eval function are callable with a Solution for the first one, and a Dict[str, float]
@@ -603,8 +637,6 @@ def build_evaluate_function_aggregated(
     objectives = params_objective_function.objectives
     weights = params_objective_function.weights
     objective_handling = params_objective_function.objective_handling
-    eval_sol = None
-    eval_from_dict_values = None
     if objective_handling == ObjectiveHandling.AGGREGATE:
         length = len(objectives)
 
@@ -617,7 +649,9 @@ def build_evaluate_function_aggregated(
             val = sum([dict_values[objectives[i]] * weights[i] for i in range(length)])
             return sign * val
 
-    if objective_handling == ObjectiveHandling.SINGLE:
+        return eval_sol, eval_from_dict_values
+
+    elif objective_handling == ObjectiveHandling.SINGLE:
         length = len(objectives)
 
         def eval_sol(solution: Solution) -> float:
@@ -627,10 +661,12 @@ def build_evaluate_function_aggregated(
         def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
             return sign * dict_values[objectives[0]] * weights[0]
 
-    if objective_handling == ObjectiveHandling.MULTI_OBJ:
+        return eval_sol, eval_from_dict_values
+
+    else:  # objective_handling == ObjectiveHandling.MULTI_OBJ:
         length = len(objectives)
 
-        def eval_sol(solution: Solution) -> float:
+        def eval_sol2(solution: Solution) -> TupleFitness:
             d = problem.evaluate(solution)
             return (
                 TupleFitness(
@@ -640,7 +676,7 @@ def build_evaluate_function_aggregated(
                 * sign
             )
 
-        def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
+        def eval_from_dict_values2(dict_values: Dict[str, float]) -> TupleFitness:
             return (
                 TupleFitness(
                     np.array(
@@ -651,4 +687,4 @@ def build_evaluate_function_aggregated(
                 * sign
             )
 
-    return eval_sol, eval_from_dict_values
+        return eval_sol2, eval_from_dict_values2

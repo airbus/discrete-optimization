@@ -5,6 +5,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 from abc import abstractmethod
+from typing import Any
 
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -15,7 +16,7 @@ class SolverDO:
     """Base class for a discrete-optimization solver."""
 
     @abstractmethod
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         """Generic solving function.
 
         Args:

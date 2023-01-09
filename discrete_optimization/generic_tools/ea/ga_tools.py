@@ -45,7 +45,7 @@ class ParametersGa:
         self.deap_verbose = deap_verbose
 
     @staticmethod
-    def default_rcpsp():
+    def default_rcpsp() -> "ParametersGa":
         return ParametersGa(
             mutation=DeapMutation.MUT_SHUFFLE_INDEXES,
             crossover=DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
@@ -97,7 +97,7 @@ class ParametersAltGa:
         self.sub_evals = sub_evals
 
     @staticmethod
-    def default_mrcpsp():
+    def default_mrcpsp() -> "ParametersAltGa":
         return ParametersAltGa(
             mutations=[DeapMutation.MUT_UNIFORM_INT, DeapMutation.MUT_SHUFFLE_INDEXES],
             crossovers=[
@@ -119,7 +119,7 @@ class ParametersAltGa:
         )
 
     @staticmethod
-    def default_msrcpsp():
+    def default_msrcpsp() -> "ParametersAltGa":
         return ParametersAltGa(
             mutations=[
                 DeapMutation.MUT_UNIFORM_INT,

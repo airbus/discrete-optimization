@@ -53,7 +53,7 @@ class ParametersMilp:
         self.pool_search_mode = pool_search_mode
 
     @staticmethod
-    def default():
+    def default() -> "ParametersMilp":
         return ParametersMilp(
             time_limit=30,
             pool_solutions=10000,
@@ -68,7 +68,7 @@ class MilpSolver(SolverDO):
     model: Optional[Any]
 
     @abstractmethod
-    def init_model(self, **args):
+    def init_model(self, **kwargs: Any) -> None:
         ...
 
     @abstractmethod
@@ -77,17 +77,17 @@ class MilpSolver(SolverDO):
 
     @abstractmethod
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **args
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> ResultStorage:
         ...
 
     @abstractmethod
-    def get_var_value_for_ith_solution(self, var: Any, i: int):
+    def get_var_value_for_ith_solution(self, var: Any, i: int) -> float:
         """Get value for i-th solution of a given variable."""
         pass
 
     @abstractmethod
-    def get_obj_value_for_ith_solution(self, i: int):
+    def get_obj_value_for_ith_solution(self, i: int) -> float:
         """Get objective value for i-th solution."""
         pass
 
@@ -104,7 +104,7 @@ class PymipMilpSolver(MilpSolver):
     model: Optional[mip.Model] = None
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> ResultStorage:
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
@@ -128,11 +128,11 @@ class PymipMilpSolver(MilpSolver):
 
         return self.retrieve_solutions(parameters_milp=parameters_milp)
 
-    def get_var_value_for_ith_solution(self, var: mip.Var, i: int):  # type: ignore # avoid isinstance checks for efficiency
+    def get_var_value_for_ith_solution(self, var: mip.Var, i: int) -> float:  # type: ignore # avoid isinstance checks for efficiency
         """Get value for i-th solution of a given variable."""
         return var.xi(i)
 
-    def get_obj_value_for_ith_solution(self, i: int):
+    def get_obj_value_for_ith_solution(self, i: int) -> float:
         """Get objective value for i-th solution."""
         if self.model is None:  # for mypy
             raise RuntimeError(
@@ -155,7 +155,7 @@ class GurobiMilpSolver(MilpSolver):
     model: Optional["gurobipy.Model"] = None
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(**kwargs)
@@ -190,7 +190,7 @@ class GurobiMilpSolver(MilpSolver):
         self.model.params.SolutionNumber = i
         return var.getAttr("Xn")
 
-    def get_obj_value_for_ith_solution(self, i: int):
+    def get_obj_value_for_ith_solution(self, i: int) -> float:
         """Get objective value for i-th solution."""
         if self.model is None:  # for mypy
             raise RuntimeError(
@@ -199,7 +199,7 @@ class GurobiMilpSolver(MilpSolver):
         self.model.params.SolutionNumber = i
         return self.model.getAttr("ObjVal")
 
-    def get_pool_obj_value_for_ith_solution(self, i: int):
+    def get_pool_obj_value_for_ith_solution(self, i: int) -> float:
         """Get pool objective value for i-th solution."""
         if self.model is None:  # for mypy
             raise RuntimeError(

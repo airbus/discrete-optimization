@@ -11,9 +11,9 @@ import logging
 from abc import abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
-from minizinc import Instance, Status
+from minizinc import Instance, Result, Status
 
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -64,11 +64,11 @@ class ParametersCP:
 
     def __init__(
         self,
-        time_limit,
+        time_limit: int,
         intermediate_solution: bool,
         all_solutions: bool,
         nr_solutions: int,
-        time_limit_iter0=None,
+        time_limit_iter0: Optional[int] = None,
         free_search: bool = False,
         multiprocess: bool = False,
         nb_process: int = 1,
@@ -95,7 +95,7 @@ class ParametersCP:
         self.optimisation_level = optimisation_level
 
     @staticmethod
-    def default():
+    def default() -> "ParametersCP":
         return ParametersCP(
             time_limit=100,
             intermediate_solution=True,
@@ -106,7 +106,7 @@ class ParametersCP:
         )
 
     @staticmethod
-    def default_fast_lns():
+    def default_fast_lns() -> "ParametersCP":
         return ParametersCP(
             time_limit=10,
             intermediate_solution=True,
@@ -116,7 +116,7 @@ class ParametersCP:
         )
 
     @staticmethod
-    def default_free():
+    def default_free() -> "ParametersCP":
         return ParametersCP(
             time_limit=100,
             intermediate_solution=True,
@@ -125,7 +125,7 @@ class ParametersCP:
             free_search=True,
         )
 
-    def copy(self):
+    def copy(self) -> "ParametersCP":
         return ParametersCP(
             time_limit=self.time_limit,
             time_limit_iter0=self.time_limit_iter0,
@@ -154,7 +154,7 @@ class StatusSolver(Enum):
     UNKNOWN = "UNKNOWN"
 
 
-map_mzn_status_to_do_status = {
+map_mzn_status_to_do_status: Dict[Status, StatusSolver] = {
     Status.SATISFIED: StatusSolver.SATISFIED,
     Status.UNSATISFIABLE: StatusSolver.UNSATISFIABLE,
     Status.OPTIMAL_SOLUTION: StatusSolver.OPTIMAL,
@@ -171,7 +171,7 @@ class CPSolver(SolverDO):
     status_solver: Optional[StatusSolver] = None
 
     @abstractmethod
-    def init_model(self, **args):
+    def init_model(self, **args: Any) -> None:
         """
         Instantiate a CP model instance
 
@@ -181,7 +181,9 @@ class CPSolver(SolverDO):
         ...
 
     @abstractmethod
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
+    def retrieve_solutions(
+        self, result: Result, parameters_cp: ParametersCP
+    ) -> ResultStorage:
         """
         Returns a storage solution coherent with the given parameters.
         :param result: Result storage returned by the cp solver
@@ -192,7 +194,7 @@ class CPSolver(SolverDO):
 
     @abstractmethod
     def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **args
+        self, parameters_cp: Optional[ParametersCP] = None, **args: Any
     ) -> ResultStorage:
         ...
 
@@ -208,7 +210,7 @@ class MinizincCPSolver(CPSolver):
     """If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned."""
 
     def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs
+        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
     ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()

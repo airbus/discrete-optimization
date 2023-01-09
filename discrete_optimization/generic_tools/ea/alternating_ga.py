@@ -77,14 +77,15 @@ class AlternatingGa:
             problem=self.problem, params_objective_function=None
         )
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         # Initialise the population (here at random)
         count_evals = 0
         current_encoding_index = 0
-        for i in range(len(self.encodings)):
-            self.problem.set_fixed_attributes(
-                self.encodings[i], self.problem.get_dummy_solution()
-            )
+        if self.encodings is not None:
+            for i in range(len(self.encodings)):
+                self.problem.set_fixed_attributes(  # type: ignore
+                    self.encodings[i], self.problem.get_dummy_solution()  # type: ignore
+                )
         while count_evals < self.max_evals:
             kwargs_ga: Dict[str, Any] = {}
             if self.mutations is not None:
@@ -116,9 +117,14 @@ class AlternatingGa:
                 **kwargs_ga
             )
             tmp_sol = ga_solver.solve().get_best_solution()
-            count_evals += self.sub_evals[current_encoding_index]
-            self.problem.set_fixed_attributes(
-                self.encodings[current_encoding_index], tmp_sol
+            count_evals += self.sub_evals[current_encoding_index]  # type: ignore
+            if self.encodings is not None:
+                self.problem.set_fixed_attributes(  # type: ignore
+                    self.encodings[current_encoding_index], tmp_sol
+                )
+        if tmp_sol is None:
+            raise RuntimeError(
+                "ga_solver.solve().get_best_solution() should not be None!"
             )
         problem_sol = tmp_sol
         result_storage = ResultStorage(
