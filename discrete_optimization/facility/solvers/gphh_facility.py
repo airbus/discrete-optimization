@@ -7,11 +7,12 @@
 
 import operator
 from enum import Enum
-from typing import List, Optional, Set
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import numpy.typing as npt
 from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
 from deap.gp import (
@@ -24,6 +25,7 @@ from deap.gp import (
 )
 
 from discrete_optimization.facility.facility_model import FacilityProblem
+from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
 )
@@ -32,13 +34,15 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.ghh_tools import argsort, protected_div
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
 
-def distance(problem: FacilityProblem, customer_index, **kwargs):
+def distance(
+    problem: FacilityProblem, customer_index: int, **kwargs: Any
+) -> List[float]:
     """Compute distance to facilitied for a given customer index
 
     Args:
@@ -53,7 +57,9 @@ def distance(problem: FacilityProblem, customer_index, **kwargs):
     ]
 
 
-def demand_minus_capacity(problem: FacilityProblem, customer_index, **kwargs):
+def demand_minus_capacity(
+    problem: FacilityProblem, customer_index: int, **kwargs: Any
+) -> List[float]:
     """Compute demand-capacity feature for a given customer_index
 
     Args:
@@ -66,7 +72,9 @@ def demand_minus_capacity(problem: FacilityProblem, customer_index, **kwargs):
     ]
 
 
-def capacity(problem: FacilityProblem, customer_index, **kwargs):
+def capacity(
+    problem: FacilityProblem, customer_index: int, **kwargs: Any
+) -> List[float]:
     """Capacity feature.
     Args:
         problem (FacilityProblem): problem instance
@@ -75,7 +83,9 @@ def capacity(problem: FacilityProblem, customer_index, **kwargs):
     return [f.capacity for f in problem.facilities]
 
 
-def closest_facility(problem: FacilityProblem, customer_index, **kwargs):
+def closest_facility(
+    problem: FacilityProblem, customer_index: int, **kwargs: Any
+) -> int:
     """Closest facility feature for a given customer index.
 
     Args:
@@ -93,69 +103,13 @@ def closest_facility(problem: FacilityProblem, customer_index, **kwargs):
     )
 
 
-def index_min(list_or_array):
-    """Argmin operator that can be used in gp.
-
-    Args:
-        list_or_array: any list or array
-
-    Returns: index of minimum element of the array
-    """
-    return np.argmin(list_or_array)
-
-
-def index_max(list_or_array):
-    """Argmax operator that can be used in gp.
-
-    Args:
-        list_or_array: any list or array
-
-    Returns: index of maximum element of the array
-    """
-    return np.argmax(list_or_array)
-
-
-def argsort(list_or_array):
-    """Return the sorted array with indexes
-
-    Args:
-        list_or_array: any list or array
-
-    Returns: indexes of array by increasing order.
-    """
-    return np.argsort(list_or_array)
-
-
-def protected_div(left, right):
-    if right != 0.0:
-        return left / right
-    else:
-        return 1.0
-
-
-def max_operator(left, right):
-    return max(left, right)
-
-
-def min_operator(left, right):
-    return min(left, right)
-
-
-def max_operator_list(list_):
-    return max(list_)
-
-
-def min_operator_list(list_):
-    return min(list_)
-
-
 class FeatureEnum(Enum):
     DISTANCE = "distance"
     CAPACITIES = "capacities"
     DEMAND_MINUS_CAPACITY = "demand_minus_capacity"
 
 
-feature_function_map = {
+feature_function_map: Dict[FeatureEnum, Callable[..., Iterable[float]]] = {
     FeatureEnum.DISTANCE: distance,
     FeatureEnum.CAPACITIES: capacity,
     FeatureEnum.DEMAND_MINUS_CAPACITY: demand_minus_capacity,
@@ -167,13 +121,13 @@ class ParametersGPHH:
 
     Attributes:
         set_feature: the set of feature to consider
-        set_primitves: set of operator/primitive to consider.
+        set_primitives: set of operator/primitive to consider.
     """
 
     def __init__(
         self,
         set_feature: Set[FeatureEnum],
-        set_primitves: PrimitiveSetTyped,
+        set_primitives: PrimitiveSetTyped,
         tournament_ratio: float,
         pop_size: int,
         n_gen: int,
@@ -184,7 +138,7 @@ class ParametersGPHH:
         deap_verbose: bool,
     ):
         self.set_feature = set_feature
-        self.set_primitves = set_primitves
+        self.set_primitives = set_primitives
         self.tournament_ratio = tournament_ratio
         self.pop_size = pop_size
         self.n_gen = n_gen
@@ -195,11 +149,11 @@ class ParametersGPHH:
         self.deap_verbose = deap_verbose
 
     @staticmethod
-    def default():
-        set_feature = [
+    def default() -> "ParametersGPHH":
+        set_feature = {
             FeatureEnum.DISTANCE,
             FeatureEnum.DEMAND_MINUS_CAPACITY,
-        ]
+        }
         pset = PrimitiveSetTyped("main", [list, list], list)
         # take profit, list of ressource consumption, avearage delta consumption
         pset.addPrimitive(
@@ -235,7 +189,7 @@ class ParametersGPHH:
         pset.addTerminal(1, int, name="dummy")
         return ParametersGPHH(
             set_feature=set_feature,
-            set_primitves=pset,
+            set_primitives=pset,
             tournament_ratio=0.1,
             pop_size=10,
             n_gen=2,
@@ -247,17 +201,17 @@ class ParametersGPHH:
         )
 
 
-class GPHH(SolverDO):
+class GPHH(SolverFacility):
     def __init__(
         self,
         training_domains: List[FacilityProblem],
-        domain_model: FacilityProblem,
+        facility_problem: FacilityProblem,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
+        SolverFacility.__init__(self, facility_problem=facility_problem)
         self.training_domains = training_domains
-        self.domain_model = domain_model
         if params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
         else:
@@ -265,21 +219,21 @@ class GPHH(SolverDO):
         self.set_feature = self.params_gphh.set_feature
         self.list_feature = list(self.set_feature)
         self.list_feature_names = [value.value for value in list(self.list_feature)]
-        self.pset: PrimitiveSet = self.init_primitives(self.params_gphh.set_primitves)
+        self.pset: PrimitiveSet = self.init_primitives(self.params_gphh.set_primitives)
         self.weight = weight
         (
             self.aggreg_from_sol,
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            problem=self.domain_model,
+            problem=self.facility_problem,
             params_objective_function=params_objective_function,
         )
         self.greedy_solver = GreedySolverDistanceBased(
-            facility_problem=self.domain_model
+            facility_problem=self.facility_problem
         )
 
-    def init_model(self):
+    def init_model(self, **kwargs: Any) -> None:
         tournament_ratio = self.params_gphh.tournament_ratio
         pop_size = self.params_gphh.pop_size
         min_tree_depth = self.params_gphh.min_tree_depth
@@ -329,7 +283,7 @@ class GPHH(SolverDO):
         mstats.register("min", np.min)
         mstats.register("max", np.max)
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values)
         stats_size = tools.Statistics(len)
         mstats = tools.MultiStatistics(fitness=stats_fit, size=stats_size)
@@ -354,34 +308,27 @@ class GPHH(SolverDO):
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         result = self.build_solution(
-            domain=self.domain_model, func_heuristic=self.func_heuristic
+            domain=self.facility_problem, func_heuristic=self.func_heuristic
         )
         return result
 
-    def build_result_storage_for_domain(self, domain):
-        solution = self.build_solution(
-            domain=domain, func_heuristic=self.func_heuristic
-        )
-        return ResultStorage(
-            list_solution_fits=[
-                (solution, self.aggreg_dict(domain.evaluate(solution)))
-            ],
-            mode_optim=self.params_objective_function.sense_function,
-        )
-
-    def init_primitives(self, pset) -> PrimitiveSet:
+    def init_primitives(self, pset: PrimitiveSetTyped) -> PrimitiveSet:
         for i in range(len(self.list_feature)):
             pset.renameArguments(**{"ARG" + str(i): self.list_feature[i].value})
         return pset
 
-    def build_solution(self, domain, individual=None, func_heuristic=None):
+    def build_solution(
+        self,
+        domain: FacilityProblem,
+        individual: Optional[Any] = None,
+        func_heuristic: Optional[Callable[..., npt.ArrayLike]] = None,
+    ) -> ResultStorage:
         if func_heuristic is None:
             func_heuristic = self.toolbox.compile(expr=individual)
-        d: FacilityProblem = domain
-        raw_values = []
+        raw_values: List[Iterable[int]] = []
 
-        for j in range(d.customer_count):
-            input_features = [
+        for j in range(domain.customer_count):
+            input_features: List[Iterable[float]] = [
                 feature_function_map[lf](problem=domain, customer_index=j)
                 for lf in self.list_feature
             ]
@@ -392,19 +339,21 @@ class GPHH(SolverDO):
         )
         return result
 
-    def evaluate_heuristic(self, individual, domains: List[FacilityProblem]) -> list:
-        vals = []
+    def evaluate_heuristic(
+        self, individual: Any, domains: List[FacilityProblem]
+    ) -> List[float]:
+        vals: List[float] = []
         func_heuristic = self.toolbox.compile(expr=individual)
         for domain in domains:
             result = self.build_solution(
                 individual=individual, domain=domain, func_heuristic=func_heuristic
             )
-            value = result.get_best_solution_fit()[1]
+            value: float = result.get_best_solution_fit()[1]  # type: ignore # could also be None or TupleFitness
             vals.append(value)
         fitness = [np.mean(vals)]
         return [fitness[0] - 10 * self.evaluate_complexity(individual)]
 
-    def evaluate_complexity(self, individual):
+    def evaluate_complexity(self, individual: Any) -> float:
         all_primitives_list = []
         all_features_list = []
         for i in range(len(individual)):
@@ -417,7 +366,7 @@ class GPHH(SolverDO):
         val = 1.0 * n_operators + 1.0 * n_features
         return val
 
-    def plot_solution(self):
+    def plot_solution(self) -> None:
         nodes, edges, labels = gp.graph(self.best_heuristic)
         g = nx.Graph()
         g.add_nodes_from(nodes)

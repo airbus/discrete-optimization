@@ -2,22 +2,24 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Optional
+from typing import Any, Optional, Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
 )
+from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.do_solver import ResultStorage
 
 
-class GreedySolverFacility(SolverDO):
+class GreedySolverFacility(SolverFacility):
     """
     build a trivial solution
     pack the facilities one by one until all the customers are served
@@ -28,7 +30,7 @@ class GreedySolverFacility(SolverDO):
         facility_problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.facility_problem = facility_problem
+        SolverFacility.__init__(self, facility_problem=facility_problem)
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -38,7 +40,7 @@ class GreedySolverFacility(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         solution = [-1] * self.facility_problem.customer_count
         capacity_remaining = [f.capacity for f in self.facility_problem.facilities]
         facility_index = 0
@@ -63,13 +65,13 @@ class GreedySolverFacility(SolverDO):
         )
 
 
-class GreedySolverDistanceBased(SolverDO):
+class GreedySolverDistanceBased(SolverFacility):
     def __init__(
         self,
         facility_problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.facility_problem = facility_problem
+        SolverFacility.__init__(self, facility_problem=facility_problem)
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -89,9 +91,11 @@ class GreedySolverDistanceBased(SolverDO):
                     facility=self.facility_problem.facilities[j],
                     customer=self.facility_problem.customers[k],
                 )
-        self.min_distance = np.min(self.matrix_cost, axis=1)
-        self.sorted_distance = np.argsort(self.matrix_cost, axis=1)
-        self.sorted_customers = np.argsort(-self.min_distance)
+        self.min_distance: npt.NDArray[np.float_] = np.min(self.matrix_cost, axis=1)
+        self.sorted_distance: npt.NDArray[np.int_] = np.argsort(
+            self.matrix_cost, axis=1
+        )
+        self.sorted_customers: npt.NDArray[np.int_] = np.argsort(-self.min_distance)
         # sort the customers based on the minimum distance of facility (so the first element is the one which is the furthest to a facility
         self.available_demands = np.array(
             [
@@ -100,7 +104,7 @@ class GreedySolverDistanceBased(SolverDO):
             ]
         )
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         solution = [-1] * self.facility_problem.customer_count
         capacity_remaining = np.copy(self.available_demands)
         for customer in self.sorted_customers:

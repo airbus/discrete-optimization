@@ -4,7 +4,10 @@
 
 from typing import Any, Dict, List, Tuple, Type
 
-from discrete_optimization.facility.facility_model import FacilityProblem
+from discrete_optimization.facility.facility_model import (
+    FacilityProblem,
+    FacilityProblem2DPoints,
+)
 from discrete_optimization.facility.solvers.facility_cp_solvers import (
     CPSolverName,
     FacilityCP,
@@ -18,15 +21,17 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
     MilpSolverName,
     ParametersMilp,
 )
+from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
     GreedySolverFacility,
 )
+from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-solvers: Dict[str, List[Tuple[Type, Dict[str, Any]]]] = {
+solvers: Dict[str, List[Tuple[Type[SolverFacility], Dict[str, Any]]]] = {
     "lp": [
         (
             LP_Facility_Solver,
@@ -76,18 +81,20 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility = {}
+solvers_compatibility: Dict[Type[SolverFacility], List[Type[Problem]]] = {}
 for x in solvers:
     for y in solvers[x]:
-        solvers_compatibility[y[0]] = [FacilityProblem]
+        solvers_compatibility[y[0]] = [FacilityProblem2DPoints]
 
 
-def look_for_solver(domain):
+def look_for_solver(domain: FacilityProblem) -> List[Type[SolverFacility]]:
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
 
-def look_for_solver_class(class_domain):
+def look_for_solver_class(
+    class_domain: Type[FacilityProblem],
+) -> List[Type[SolverFacility]]:
     available = []
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
@@ -95,19 +102,23 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method, facility_problem: FacilityProblem, **args) -> ResultStorage:
-    solver = method(facility_problem, **args)
+def solve(
+    method: Type[SolverFacility], facility_problem: FacilityProblem, **kwargs: Any
+) -> ResultStorage:
+    solver = method(facility_problem, **kwargs)
     try:
-        solver.init_model(**args)
+        solver.init_model(**kwargs)
     except:
         pass
-    return solver.solve(**args)
+    return solver.solve(**kwargs)
 
 
-def return_solver(method, coloring_model: FacilityProblem, **args) -> ResultStorage:
-    solver = method(coloring_model, **args)
+def return_solver(
+    method: Type[SolverFacility], coloring_model: FacilityProblem, **kwargs: Any
+) -> SolverFacility:
+    solver = method(coloring_model, **kwargs)
     try:
-        solver.init_model(**args)
+        solver.init_model(**kwargs)
     except:
         pass
     return solver
