@@ -48,7 +48,7 @@ class InitialKnapsackSolution(InitialSolution):
             problem=self.problem, params_objective_function=params_objective_function
         )
 
-    def get_starting_solution(self):
+    def get_starting_solution(self) -> ResultStorage:
         if self.initial_method == InitialKnapsackMethod.GREEDY:
             greedy_solver = GreedyBest(
                 self.problem, params_objective_function=self.params_objective_function
@@ -87,7 +87,15 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
                 int(self.fraction_to_fix * self.problem.nb_items),
             )
         )
-        current_solution: KnapsackSolution = result_storage.get_best_solution_fit()[0]
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, KnapsackSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a KnapsackSolution."
+            )
         dict_f_fixed = {}
         dict_f_start = {}
         start = []
@@ -110,7 +118,7 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
-    ):
+    ) -> None:
         if not isinstance(milp_solver, LPKnapsack):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
         if milp_solver.model is None:

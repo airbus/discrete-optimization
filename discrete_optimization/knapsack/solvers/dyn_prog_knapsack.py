@@ -4,7 +4,7 @@
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -20,17 +20,18 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
+from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 
 logger = logging.getLogger(__name__)
 
 
-class KnapsackDynProg(SolverDO):
+class KnapsackDynProg(SolverKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.knapsack_model = knapsack_model
+        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
         self.nb_items = self.knapsack_model.nb_items
         capacity = int(self.knapsack_model.max_capacity)
         if capacity != self.knapsack_model.max_capacity:
@@ -49,14 +50,11 @@ class KnapsackDynProg(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, **args):
-        pass
-
-    def solve(self, **args) -> ResultStorage:
-        start_by_most_promising = args.get("greedy_start", False)
-        max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
+    def solve(self, **kwargs: Any) -> ResultStorage:
+        start_by_most_promising = kwargs.get("greedy_start", False)
+        max_items = kwargs.get("max_items", self.knapsack_model.nb_items + 1)
         max_items = min(self.knapsack_model.nb_items + 1, max_items)
-        max_time_seconds = args.get("max_time_seconds", None)
+        max_time_seconds = kwargs.get("max_time_seconds", None)
         if max_time_seconds is None:
             do_time = False
         else:
@@ -130,10 +128,10 @@ class KnapsackDynProg(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve_np(self, **args) -> ResultStorage:
-        start_by_most_promising = args.get("greedy_start", False)
-        max_items = args.get("max_items", self.knapsack_model.nb_items + 1)
-        max_time_seconds = args.get("max_time_seconds", None)
+    def solve_np(self, **kwargs: Any) -> ResultStorage:
+        start_by_most_promising = kwargs.get("greedy_start", False)
+        max_items = kwargs.get("max_items", self.knapsack_model.nb_items + 1)
+        max_time_seconds = kwargs.get("max_time_seconds", None)
         if max_time_seconds is None:
             do_time = False
         else:

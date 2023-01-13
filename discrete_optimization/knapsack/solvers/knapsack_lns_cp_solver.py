@@ -38,7 +38,15 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
                 int(self.fraction_to_fix * self.problem.nb_items),
             )
         )
-        current_solution: KnapsackSolution = result_storage.get_best_solution_fit()[0]
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, KnapsackSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a KnapsackSolution."
+            )
         list_strings = []
         for item in subpart_item:
             list_strings += [
@@ -54,9 +62,9 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
     def remove_constraints_from_previous_iteration(
         self,
         cp_solver: CPSolver,
-        child_instance,
+        child_instance: Instance,
         previous_constraints: Iterable[Any],
-    ):
+    ) -> None:
         if not isinstance(cp_solver, CPKnapsackMZN2):
             raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
         pass

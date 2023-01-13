@@ -30,7 +30,7 @@ def run():
     # sol_lp = res.get_best_solution()
     a = SolverLookup.base_solvers()
     print(SolverLookup.base_solvers())
-    solver = CPMPYKnapsackSolver(problem=knapsack_model)
+    solver = CPMPYKnapsackSolver(knapsack_model=knapsack_model)
     solver.init_model()
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 20

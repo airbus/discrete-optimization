@@ -2,18 +2,22 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from typing import Any, Callable, List, Optional
+
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.knapsack.knapsack_model import (
+    Item,
     KnapsackModel,
     KnapsackSolution,
 )
+from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 
 
-def compute_density(knapsack_model: KnapsackModel):
+def compute_density(knapsack_model: KnapsackModel) -> List[Item]:
     dd = sorted(
         [
             l
@@ -26,7 +30,7 @@ def compute_density(knapsack_model: KnapsackModel):
     return dd
 
 
-def compute_density_and_penalty(knapsack_model: KnapsackModel):
+def compute_density_and_penalty(knapsack_model: KnapsackModel) -> List[Item]:
     dd = sorted(
         [
             l
@@ -40,12 +44,13 @@ def compute_density_and_penalty(knapsack_model: KnapsackModel):
 
 
 def greedy_using_queue(
-    knapsack_model: KnapsackModel, method_queue=None
+    knapsack_model: KnapsackModel,
+    method_queue: Optional[Callable[[KnapsackModel], List[Item]]] = None,
 ) -> KnapsackSolution:
     if method_queue is None:
         method_queue = compute_density
-    value = 0
-    weight = 0
+    value = 0.0
+    weight = 0.0
     taken = [0] * knapsack_model.nb_items
     sorted_per_density = method_queue(knapsack_model)
     for i in range(len(sorted_per_density)):
@@ -70,13 +75,13 @@ def best_of_greedy(knapsack_model: KnapsackModel) -> KnapsackSolution:
     return result1 if result1.value > result2.value else result2
 
 
-class GreedyBest(SolverDO):
+class GreedyBest(SolverKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.knapsack_model = knapsack_model
+        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -86,10 +91,7 @@ class GreedyBest(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, *args):
-        pass
-
-    def solve(self):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         res = best_of_greedy(self.knapsack_model)
         fit = self.aggreg_sol(res)
         return ResultStorage(
@@ -99,13 +101,13 @@ class GreedyBest(SolverDO):
         )
 
 
-class GreedyDummy(SolverDO):
+class GreedyDummy(SolverKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.knapsack_model = knapsack_model
+        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -115,10 +117,7 @@ class GreedyDummy(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, *args):
-        pass
-
-    def solve(self):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         sol = KnapsackSolution(
             problem=self.knapsack_model,
             value=0,
