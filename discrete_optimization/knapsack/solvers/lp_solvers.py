@@ -30,6 +30,7 @@ from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
+from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 
 try:
     import gurobipy
@@ -43,16 +44,16 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class _BaseLPKnapsack(MilpSolver):
+class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
     """Base class for Knapsack LP solvers."""
 
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
-        self.knapsack_model = knapsack_model
+        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
         self.variable_decision: Dict[str, Dict[int, Union["Var", mip.Var]]] = {}
         self.constraints_dict: Dict[
             str, Union["Constr", "QConstr", "MConstr", "GenConstr", "mip.Constr"]
@@ -68,7 +69,7 @@ class _BaseLPKnapsack(MilpSolver):
             params_objective_function=params_objective_function,
         )
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp):
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         if parameters_milp.retrieve_all_solution:
             n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
         else:
@@ -104,8 +105,8 @@ class _BaseLPKnapsack(MilpSolver):
 
 
 class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
-    def init_model(self, **args):
-        warm_start = args.get("warm_start", {})
+    def init_model(self, **kwargs: Any) -> None:
+        warm_start = kwargs.get("warm_start", {})
         self.model = Model("Knapsack")
         self.variable_decision = {"x": {}}
         self.description_variable_description = {
@@ -150,14 +151,14 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
         return _BaseLPKnapsack.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
-class LPKnapsackCBC(SolverDO):
+class LPKnapsackCBC(SolverKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
-        self.knapsack_model = knapsack_model
+        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
         self.model: Optional[pywraplp.Solver] = None
         self.variable_decision: Dict[str, Dict[int, Any]] = {}
         self.constraints_dict: Dict[str, Any] = {}
@@ -172,7 +173,9 @@ class LPKnapsackCBC(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, warm_start: Optional[Dict[int, int]] = None):
+    def init_model(
+        self, warm_start: Optional[Dict[int, int]] = None, **kwargs: Any
+    ) -> None:
         if warm_start is None:
             warm_start = {}
         self.description_variable_description = {
@@ -208,7 +211,7 @@ class LPKnapsackCBC(SolverDO):
         self.model = S
         self.variable_decision["x"] = x
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         if self.model is None:
             self.init_model()
             if self.model is None:  # for mypy
@@ -230,7 +233,7 @@ class LPKnapsackCBC(SolverDO):
         objective = self.model.Objective().Value()
         xs = {}
         x = self.variable_decision["x"]
-        weight = 0
+        weight = 0.0
         for i in x:
             sv = x[i].solution_value()
             if sv >= 0.5:
@@ -258,19 +261,19 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
         knapsack_model: KnapsackModel,
         milp_solver_name: MilpSolverName,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
         super().__init__(
             knapsack_model=knapsack_model,
             params_objective_function=params_objective_function,
-            **args,
+            **kwargs,
         )
         self.milp_solver_name = milp_solver_name
         self.solver_name = map_solver[milp_solver_name]
 
-    def init_model(self, **args):
-        warm_start = args.get("warm_start", {})
-        solver_name = args.get("solver_name", self.solver_name)
+    def init_model(self, **kwargs: Any) -> None:
+        warm_start = kwargs.get("warm_start", {})
+        solver_name = kwargs.get("solver_name", self.solver_name)
         self.model = MyModelMilp("Knapsack", solver_name=solver_name, sense=MAXIMIZE)
         self.variable_decision = {"x": {}}
         self.description_variable_description = {
@@ -311,14 +314,14 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
         return _BaseLPKnapsack.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
-class KnapsackORTools(SolverDO):
+class KnapsackORTools(SolverKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
-        self.knapsack_model = knapsack_model
+        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
         self.model = None
         (
             self.aggreg_sol,
@@ -329,7 +332,7 @@ class KnapsackORTools(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         solver = pywrapknapsack_solver.KnapsackSolver(
             pywrapknapsack_solver.KnapsackSolver.KNAPSACK_MULTIDIMENSION_BRANCH_AND_BOUND_SOLVER,
             "KnapsackExample",
@@ -342,9 +345,13 @@ class KnapsackORTools(SolverDO):
         solver.Init(values, weights, capacities)
         self.model = solver
 
-    def solve(self, **kwargs):
+    def solve(self, **kwargs: Any) -> ResultStorage:
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         computed_value = self.model.Solve()
         logger.debug(f"Total value = {computed_value}")
         xs = {}

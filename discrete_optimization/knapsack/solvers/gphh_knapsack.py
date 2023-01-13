@@ -4,11 +4,12 @@
 
 import operator
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import numpy.typing as npt
 from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
 from deap.gp import (
@@ -26,6 +27,13 @@ from discrete_optimization.generic_tools.do_problem import (
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.ghh_tools import (
+    max_operator,
+    max_operator_list,
+    min_operator,
+    min_operator_list,
+    protected_div,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -35,29 +43,6 @@ from discrete_optimization.knapsack.knapsack_model import (
 )
 
 
-def protected_div(left, right):
-    if right != 0.0:
-        return left / right
-    else:
-        return 1.0
-
-
-def max_operator(left, right):
-    return max(left, right)
-
-
-def min_operator(left, right):
-    return min(left, right)
-
-
-def max_operator_list(list_):
-    return max(list_)
-
-
-def min_operator_list(list_):
-    return min(list_)
-
-
 class FeatureEnum(Enum):
     PROFIT = "profit"
     CAPACITIES = "capacities"
@@ -65,22 +50,24 @@ class FeatureEnum(Enum):
     AVG_RES_CONSUMPTION_DELTA_CAPACITY = "avg_res_consumption_delta_capacity"
 
 
-def get_profit(problem: MultidimensionalKnapsack, item_index: int, **kwargs) -> float:
+def get_profit(
+    problem: MultidimensionalKnapsack, item_index: int, **kwargs: Any
+) -> float:
     return problem.list_items[item_index].value
 
 
-def get_capacities(problem: MultidimensionalKnapsack, **kwargs) -> List[float]:
+def get_capacities(problem: MultidimensionalKnapsack, **kwargs: Any) -> List[float]:
     return problem.max_capacities
 
 
 def get_res_consumption(
-    problem: MultidimensionalKnapsack, item_index, **kwargs
+    problem: MultidimensionalKnapsack, item_index: int, **kwargs: Any
 ) -> List[float]:
     return problem.list_items[item_index].weights
 
 
 def get_avg_res_consumption_delta_capacity(
-    problem: MultidimensionalKnapsack, item_index: int, **kwargs
+    problem: MultidimensionalKnapsack, item_index: int, **kwargs: Any
 ) -> float:
     return sum(
         [
@@ -91,7 +78,7 @@ def get_avg_res_consumption_delta_capacity(
     ) / len(problem.max_capacities)
 
 
-feature_function_map: Dict[FeatureEnum, Callable[..., Any]] = {
+feature_function_map: Dict[FeatureEnum, Callable[..., Union[float, List[float]]]] = {
     FeatureEnum.PROFIT: get_profit,
     FeatureEnum.CAPACITIES: get_capacities,
     FeatureEnum.RES_CONSUMPTION_ARRAY: get_res_consumption,
@@ -125,7 +112,7 @@ class ParametersGPHH:
         self.deap_verbose = deap_verbose
 
     @staticmethod
-    def default():
+    def default() -> "ParametersGPHH":
         list_feature = [
             FeatureEnum.PROFIT,
             FeatureEnum.CAPACITIES,
@@ -178,7 +165,7 @@ class GPHH(SolverDO):
         domain_model: MultidimensionalKnapsack,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
-        params_objective_function: ParamsObjectiveFunction = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.training_domains = training_domains
         self.domain_model = domain_model
@@ -188,7 +175,9 @@ class GPHH(SolverDO):
             self.params_gphh = params_gphh
         self.list_feature = self.params_gphh.list_feature
         self.list_feature_names = [feature.value for feature in self.list_feature]
-        self.pset: PrimitiveSet = self.init_primitives(self.params_gphh.set_primitves)
+        self.pset: PrimitiveSetTyped = self.init_primitives(
+            self.params_gphh.set_primitves
+        )
         self.weight = weight
         (
             self.aggreg_from_sol,
@@ -199,7 +188,7 @@ class GPHH(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self):
+    def init_model(self) -> None:
         tournament_ratio = self.params_gphh.tournament_ratio
         pop_size = self.params_gphh.pop_size
         min_tree_depth = self.params_gphh.min_tree_depth
@@ -249,7 +238,7 @@ class GPHH(SolverDO):
         mstats.register("min", np.min)
         mstats.register("max", np.max)
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, **kwargs: Any) -> ResultStorage:
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values)
         stats_size = tools.Statistics(len)
         mstats = tools.MultiStatistics(fitness=stats_fit, size=stats_size)
@@ -281,7 +270,9 @@ class GPHH(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def build_result_storage_for_domain(self, domain) -> ResultStorage:
+    def build_result_storage_for_domain(
+        self, domain: MultidimensionalKnapsack
+    ) -> ResultStorage:
         solution = self.build_solution(
             domain=domain, func_heuristic=self.func_heuristic
         )
@@ -292,18 +283,21 @@ class GPHH(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def init_primitives(self, pset) -> PrimitiveSet:
+    def init_primitives(self, pset: PrimitiveSetTyped) -> PrimitiveSetTyped:
         for i in range(len(self.list_feature)):
             pset.renameArguments(**{"ARG" + str(i): self.list_feature[i].value})
         return pset
 
     def build_solution(
-        self, domain: MultidimensionalKnapsack, individual=None, func_heuristic=None
-    ):
+        self,
+        domain: MultidimensionalKnapsack,
+        individual: Optional[Any] = None,
+        func_heuristic: Optional[Callable[..., float]] = None,
+    ) -> KnapsackSolutionMultidimensional:
         if func_heuristic is None:
             func_heuristic = self.toolbox.compile(expr=individual)
         d: MultidimensionalKnapsack = domain
-        raw_values = []
+        raw_values: List[float] = []
         for j in range(len(d.list_items)):
             input_features = [
                 feature_function_map[lf](problem=domain, item_index=j)
@@ -343,7 +337,7 @@ class GPHH(SolverDO):
         return solution
 
     def evaluate_heuristic(
-        self, individual, domains: List[MultidimensionalKnapsack]
+        self, individual: Any, domains: List[MultidimensionalKnapsack]
     ) -> List[float]:
         vals = []
         func_heuristic = self.toolbox.compile(expr=individual)
@@ -351,12 +345,12 @@ class GPHH(SolverDO):
             solution = self.build_solution(
                 individual=individual, domain=domain, func_heuristic=func_heuristic
             )
-            value = self.aggreg_dict(domain.evaluate(solution))
+            value: float = self.aggreg_dict(domain.evaluate(solution))  # type: ignore # could also be TupleFitness
             vals.append(value)
         fitness = [np.mean(vals)]
         return [fitness[0] - 10 * self.evaluate_complexity(individual)]
 
-    def evaluate_complexity(self, individual):
+    def evaluate_complexity(self, individual: Any) -> float:
         all_primitives_list = []
         all_features_list = []
         for i in range(len(individual)):
@@ -369,7 +363,7 @@ class GPHH(SolverDO):
         val = 1.0 * n_operators + 1.0 * n_features
         return val
 
-    def plot_solution(self, show=True):
+    def plot_solution(self, show: bool = True) -> None:
         nodes, edges, labels = gp.graph(self.best_heuristic)
         g = nx.Graph()
         g.add_nodes_from(nodes)

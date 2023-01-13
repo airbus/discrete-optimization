@@ -131,7 +131,7 @@ class MutationKnapsack(Mutation):
             self.attribute = attribute
 
     def switch_on(
-        self, variable: KnapsackSolution, come_from_outside=False
+        self, variable: KnapsackSolution, come_from_outside: bool = False
     ) -> Tuple[KnapsackSolution, LocalMove, Dict[str, float]]:
         if variable.weight is None or variable.value is None:
             raise RuntimeError(
@@ -182,7 +182,7 @@ class MutationKnapsack(Mutation):
             return self.switch_off(variable, True)
 
     def switch_off(
-        self, variable: KnapsackSolution, come_from_outside=False
+        self, variable: KnapsackSolution, come_from_outside: bool = False
     ) -> Tuple[KnapsackSolution, LocalMove, Dict[str, float]]:
         if variable.weight is None or variable.value is None:
             raise RuntimeError(

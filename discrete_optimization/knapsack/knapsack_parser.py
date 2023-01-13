@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import List, Optional
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
@@ -11,7 +11,7 @@ from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-):
+) -> List[str]:
     """Get datasets available for knapsack.
 
     Params:
@@ -35,7 +35,9 @@ def get_data_available(
     return datasets
 
 
-def parse_input_data(input_data, force_recompute_values: bool = False) -> KnapsackModel:
+def parse_input_data(
+    input_data: str, force_recompute_values: bool = False
+) -> KnapsackModel:
     """
     Parse a string of the following form :
     item_count max_capacity
@@ -59,7 +61,7 @@ def parse_input_data(input_data, force_recompute_values: bool = False) -> Knapsa
     )
 
 
-def parse_file(file_path, force_recompute_values=False) -> KnapsackModel:
+def parse_file(file_path: str, force_recompute_values: bool = False) -> KnapsackModel:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         knapsack_model = parse_input_data(
