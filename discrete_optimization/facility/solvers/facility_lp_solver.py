@@ -9,6 +9,7 @@ from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
 
 import mip
 import numpy as np
+import numpy.typing as npt
 from deprecation import deprecated
 from ortools.linear_solver import pywraplp
 
@@ -16,6 +17,7 @@ from discrete_optimization.facility.facility_model import (
     FacilityProblem,
     FacilitySolution,
 )
+from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -58,7 +60,7 @@ else:
 
 def compute_length_matrix(
     facility_problem: FacilityProblem,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.int_], npt.NDArray[np.float_]]:
     """Precompute all the cost of allocation in a matrix form.
 
     A matrix "closest" is also computed, sorting for each customers the facility by distance.
@@ -85,7 +87,7 @@ def compute_length_matrix(
 
 
 def prune_search_space(
-    facility_problem: FacilityProblem, n_cheapest: int = 10, n_shortest=10
+    facility_problem: FacilityProblem, n_cheapest: int = 10, n_shortest: int = 10
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Utility function that can prune the search space.
 
@@ -115,21 +117,19 @@ def prune_search_space(
     return matrix_fc_indicator, matrix_distance
 
 
-class _LPFacilitySolverBase(MilpSolver):
+class _LPFacilitySolverBase(MilpSolver, SolverFacility):
     """Base class for Facility LP solvers."""
 
     def __init__(
         self,
         facility_problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
-        self.facility_problem = facility_problem
+        SolverFacility.__init__(self, facility_problem=facility_problem)
         self.model = None
         self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
-        self.constraints_dict: Dict[
-            str, Dict[Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
-        ] = {}
+        self.constraints_dict: Dict[str, Dict[int, Any]] = {}
         self.description_variable_description = {
             "x": {
                 "shape": (0, 0),
@@ -189,7 +189,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
                         (however this is just used for the ResultStorage creation, not in the optimisation)
     """
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         """
 
         Keyword Args:
@@ -292,21 +292,19 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         )
 
 
-class LP_Facility_Solver_CBC(SolverDO):
+class LP_Facility_Solver_CBC(SolverFacility):
     """Milp formulation using cbc solver."""
 
     def __init__(
         self,
         facility_problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
-        self.facility_problem = facility_problem
+        SolverFacility.__init__(self, facility_problem=facility_problem)
         self.model = None
         self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
-        self.constraints_dict: Dict[
-            str, Dict[Hashable, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
-        ] = {}
+        self.constraints_dict: Dict[str, Dict[int, Any]] = {}
         self.description_variable_description = {
             "x": {
                 "shape": (0, 0),
@@ -326,7 +324,7 @@ class LP_Facility_Solver_CBC(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         nb_facilities = self.facility_problem.facility_count
         nb_customers = self.facility_problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
@@ -360,17 +358,13 @@ class LP_Facility_Solver_CBC(SolverDO):
             s.BoolVar(name="y_" + str(j))
             for j in range(self.facility_problem.facility_count)
         ]
-        constraints_customer: Dict[
-            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
-        ] = {}
+        constraints_customer: Dict[int, Any] = {}
         for c in range(nb_customers):
             constraints_customer[c] = s.Add(
                 s.Sum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity: Dict[
-            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
-        ] = {}
+        constraint_capacity: Dict[int, Any] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 s.Add(used[f] >= x[f, c])
@@ -424,7 +418,9 @@ class LP_Facility_Solver_CBC(SolverDO):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(self, parameters_milp: Optional[ParametersMilp] = None, **kwargs):
+    def solve(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> ResultStorage:
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         if self.model is None:
@@ -464,17 +460,17 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         facility_problem: FacilityProblem,
         milp_solver_name: MilpSolverName,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **args,
+        **kwargs: Any,
     ):
         super().__init__(
             facility_problem=facility_problem,
             params_objective_function=params_objective_function,
-            **args,
+            **kwargs,
         )
         self.milp_solver_name = milp_solver_name
         self.solver_name = map_solver[milp_solver_name]
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         nb_facilities = self.facility_problem.facility_count
         nb_customers = self.facility_problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
@@ -509,13 +505,13 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         facilities = self.facility_problem.facilities
         customers = self.facility_problem.customers
         used = s.add_var_tensor((nb_facilities, 1), var_type=GRB.BINARY, name="y")
-        constraints_customer = {}
+        constraints_customer: Dict[int, Any] = {}
         for c in range(nb_customers):
             constraints_customer[c] = s.add_constr(
                 mip.xsum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity = {}
+        constraint_capacity: Dict[int, Any] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 s.add_constr(used[f, 0] >= x[f, c])
@@ -554,7 +550,6 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint = {"Im lazy."}
         logger.info("Initialized")
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:

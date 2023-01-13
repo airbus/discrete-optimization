@@ -14,6 +14,7 @@ import math
 from abc import abstractmethod
 from collections import namedtuple
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -27,9 +28,26 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeObjective,
 )
 
-Point = namedtuple("Point", ["x", "y"])
-Facility = namedtuple("Facility", ["index", "setup_cost", "capacity", "location"])
-Customer = namedtuple("Customer", ["index", "demand", "location"])
+
+@dataclass(frozen=True)
+class Point:
+    x: float
+    y: float
+
+
+@dataclass(frozen=True)
+class Facility:
+    index: int
+    setup_cost: float
+    capacity: float
+    location: Point
+
+
+@dataclass(frozen=True)
+class Customer:
+    index: int
+    demand: float
+    location: Point
 
 
 class FacilitySolution(Solution):
@@ -53,26 +71,28 @@ class FacilitySolution(Solution):
         self.facility_for_customers = facility_for_customers
         self.dict_details = dict_details
 
-    def copy(self):
+    def copy(self) -> "FacilitySolution":
         return FacilitySolution(
             self.problem,
             facility_for_customers=list(self.facility_for_customers),
             dict_details=deepcopy(self.dict_details),
         )
 
-    def lazy_copy(self):
+    def lazy_copy(self) -> "FacilitySolution":
         return FacilitySolution(
             self.problem,
             facility_for_customers=self.facility_for_customers,
             dict_details=self.dict_details,
         )
 
-    def change_problem(self, new_problem):
-        self.__init__(
-            problem=new_problem,
-            facility_for_customers=list(self.facility_for_customers),
-            dict_details=deepcopy(self.dict_details),
-        )
+    def change_problem(self, new_problem: Problem) -> None:
+        if not isinstance(new_problem, FacilityProblem):
+            raise ValueError(
+                "new_problem must a FacilityProblem for a FacilitySolution."
+            )
+        self.problem = new_problem
+        self.facility_for_customers = list(self.facility_for_customers)
+        self.dict_details = deepcopy(self.dict_details)
 
 
 class FacilityProblem(Problem):
@@ -134,7 +154,9 @@ class FacilityProblem(Problem):
         d["capacity_constraint_violation"] = capacity_constraint_violation
         return d
 
-    def evaluate_from_encoding(self, int_vector, encoding_name) -> Dict[str, float]:
+    def evaluate_from_encoding(
+        self, int_vector: List[int], encoding_name: str
+    ) -> Dict[str, float]:
         """Evaluate function based on direct integer vector (used in GA algorithms only)
 
         Args:
@@ -148,8 +170,8 @@ class FacilityProblem(Problem):
         if encoding_name == "facility_for_customers":
             kp_sol = FacilitySolution(problem=self, facility_for_customers=int_vector)
         elif encoding_name == "custom":
-            kwargs = {encoding_name: int_vector, "problem": self}
-            kp_sol = FacilitySolution(**kwargs)
+            kwargs: Dict[str, Any] = {encoding_name: int_vector}
+            kp_sol = FacilitySolution(problem=self, **kwargs)
         else:
             raise ValueError(
                 f"encoding_name must be 'facility_for_customers' or 'custom'"
@@ -179,13 +201,13 @@ class FacilityProblem(Problem):
                     "cost": 0.0,
                     "setup_cost": self.facilities[f].setup_cost,
                 }
-                setup_cost += facility_details[f]["setup_cost"]
-            facility_details[f]["capacity_used"] += self.customers[i].demand
-            facility_details[f]["customers"].add(i)
+                setup_cost += self.facilities[f].setup_cost
+            facility_details[f]["capacity_used"] += self.customers[i].demand  # type: ignore
+            facility_details[f]["customers"].add(i)  # type: ignore
             c = self.evaluate_customer_facility(
                 facility=self.facilities[f], customer=self.customers[i]
             )
-            facility_details[f]["cost"] += c
+            facility_details[f]["cost"] += c  # type: ignore
             cost += c
         return {"cost": cost, "setup_cost": setup_cost, "details": facility_details}
 
@@ -242,7 +264,7 @@ class FacilityProblem(Problem):
         )
 
 
-def length(point1: Point, point2: Point):
+def length(point1: Point, point2: Point) -> float:
     """Classic euclidian distance between two points.
 
     Args:

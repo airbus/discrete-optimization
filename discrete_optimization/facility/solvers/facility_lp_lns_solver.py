@@ -9,7 +9,10 @@ from typing import Any, Dict, Hashable, Mapping
 
 import mip
 
-from discrete_optimization.facility.facility_model import FacilityProblem
+from discrete_optimization.facility.facility_model import (
+    FacilityProblem,
+    FacilitySolution,
+)
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver_PyMip,
     MilpSolver,
@@ -60,7 +63,7 @@ class InitialFacilitySolution(InitialSolution):
             problem=self.problem, params_objective_function=params_objective_function
         )
 
-    def get_starting_solution(self):
+    def get_starting_solution(self) -> ResultStorage:
         if self.initial_method == InitialFacilityMethod.GREEDY:
             greedy_solver = GreedySolverFacility(
                 self.problem, params_objective_function=self.params_objective_function
@@ -91,7 +94,7 @@ class ConstraintHandlerFacility(ConstraintHandler):
         self,
         problem: FacilityProblem,
         fraction_to_fix: float = 0.9,
-        skip_first_iter=True,
+        skip_first_iter: bool = True,
     ):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix
@@ -113,7 +116,7 @@ class ConstraintHandlerFacility(ConstraintHandler):
                 )
         if self.iter == 0 and self.skip_first_iter:
             logger.debug(
-                f"Dummy : {self.problem.evaluate(result_storage.get_best_solution_fit()[0])}"
+                f"Dummy : {self.problem.evaluate(result_storage.get_best_solution_fit()[0])}"  # type: ignore
             )
             self.iter += 1
             return {}
@@ -123,7 +126,15 @@ class ConstraintHandlerFacility(ConstraintHandler):
                 int(self.fraction_to_fix * self.problem.customer_count),
             )
         )
-        current_solution = result_storage.get_best_solution_fit()[0]
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, FacilitySolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a FacilitySolution."
+            )
         dict_f_fixed = {}
         dict_f_start = {}
         start = []
@@ -159,7 +170,7 @@ class ConstraintHandlerFacility(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
-    ):
+    ) -> None:
         if not isinstance(milp_solver, LP_Facility_Solver_PyMip):
             raise ValueError(
                 "milp_solver must a LP_Facility_Solver_PyMip for this constraint."

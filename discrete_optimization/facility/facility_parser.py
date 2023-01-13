@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import List, Optional
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.facility.facility_model import (
@@ -17,7 +17,7 @@ from discrete_optimization.facility.facility_model import (
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-):
+) -> List[str]:
     """Get datasets available for facility.
 
     Params:
@@ -41,7 +41,7 @@ def get_data_available(
     return datasets
 
 
-def parse(input_data):
+def parse(input_data: str) -> FacilityProblem2DPoints:
     # parse the input
     lines = input_data.split("\n")
     parts = lines[0].split()
@@ -53,10 +53,10 @@ def parse(input_data):
         parts = lines[i].split()
         facilities.append(
             Facility(
-                i - 1,
-                float(parts[0]),
-                int(parts[1]),
-                Point(float(parts[2]), float(parts[3])),
+                index=i - 1,
+                setup_cost=float(parts[0]),
+                capacity=int(parts[1]),
+                location=Point(x=float(parts[2]), y=float(parts[3])),
             )
         )
     customers = []
@@ -64,9 +64,9 @@ def parse(input_data):
         parts = lines[i].split()
         customers.append(
             Customer(
-                i - 1 - facility_count,
-                int(parts[0]),
-                Point(float(parts[1]), float(parts[2])),
+                index=i - 1 - facility_count,
+                demand=int(parts[0]),
+                location=Point(x=float(parts[1]), y=float(parts[2])),
             )
         )
     problem = FacilityProblem2DPoints(
@@ -75,7 +75,7 @@ def parse(input_data):
     return problem
 
 
-def parse_file(file_path) -> FacilityProblem:
+def parse_file(file_path: str) -> FacilityProblem2DPoints:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         facility_model = parse(input_data)

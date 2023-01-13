@@ -7,10 +7,10 @@ import os
 import random
 from datetime import timedelta
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from deprecation import deprecated
-from minizinc import Instance, Model, Solver
+from minizinc import Instance, Model, Result, Solver
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
@@ -19,6 +19,7 @@ from discrete_optimization.facility.facility_model import (
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     compute_length_matrix,
 )
+from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
 )
@@ -63,7 +64,7 @@ class FacilitySolCP:
     objective: int
     __output_item: Optional[str] = None
 
-    def __init__(self, objective, _output_item, **kwargs):
+    def __init__(self, objective: int, _output_item: Optional[str], **kwargs: Any):
         self.objective = objective
         self.dict = kwargs
         logger.debug(f"One solution {self.objective}")
@@ -73,7 +74,7 @@ class FacilitySolCP:
         return True
 
 
-class FacilityCP(MinizincCPSolver):
+class FacilityCP(MinizincCPSolver, SolverFacility):
     """CP solver linked with minizinc implementation of coloring problem.
 
     Attributes:
@@ -90,10 +91,10 @@ class FacilityCP(MinizincCPSolver):
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
-        **args,
+        **kwargs: Any,
     ):
+        SolverFacility.__init__(self, facility_problem=facility_problem)
         self.silent_solve_error = silent_solve_error
-        self.facility_problem = facility_problem
         self.cp_solver_name = cp_solver_name
         if params_objective_function is None:
             self.params_objective_function = get_default_objective_setup(
@@ -111,7 +112,7 @@ class FacilityCP(MinizincCPSolver):
         )
         self.custom_output_type = False
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         """Initialise the minizinc instance to solve for a given instance.
 
         Keyword Args:
@@ -135,11 +136,11 @@ class FacilityCP(MinizincCPSolver):
         instance["nb_customers"] = self.facility_problem.customer_count
         setup_costs, closests, distances = compute_length_matrix(self.facility_problem)
         if model_type in [FacilityCPModel.DEFAULT_INT, FacilityCPModel.DEFAULT_INT_LNS]:
-            distances = [
+            distances_list = [
                 [int(distances[f, c]) for c in range(distances.shape[1])]
                 for f in range(distances.shape[0])
             ]
-            instance["distance"] = distances
+            instance["distance"] = distances_list
             instance["setup_cost_vector"] = [int(s) for s in setup_costs]
             instance["demand"] = [
                 int(self.facility_problem.customers[c].demand)
@@ -150,11 +151,11 @@ class FacilityCP(MinizincCPSolver):
                 for f in range(self.facility_problem.facility_count)
             ]
         else:
-            distances = [
+            distances_list = [
                 [distances[f, c] for c in range(distances.shape[1])]
                 for f in range(distances.shape[0])
             ]
-            instance["distance"] = distances
+            instance["distance"] = distances_list
             instance["setup_cost_vector"] = [s for s in setup_costs]
             instance["demand"] = [
                 self.facility_problem.customers[c].demand
@@ -166,7 +167,9 @@ class FacilityCP(MinizincCPSolver):
             ]
         self.instance = instance
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
+    def retrieve_solutions(
+        self, result: Result, parameters_cp: ParametersCP
+    ) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
         list_facility = []
         objectives = []
@@ -201,13 +204,22 @@ class FacilityCP(MinizincCPSolver):
     @deprecated(
         deprecated_in="0.1", details="Use rather initial solution provider utilities"
     )
-    def get_solution(self, **kwargs):
+    def get_solution(self, **kwargs: Any) -> FacilitySolution:
         greedy_start = kwargs.get("greedy_start", True)
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedySolverDistanceBased(self.facility_problem)
             result = greedy_solver.solve()
             solution = result.get_best_solution()
+            if solution is None:
+                raise RuntimeError(
+                    "greedy_solver.solve().get_best_solution() " "should not be None."
+                )
+            if not isinstance(solution, FacilitySolution):
+                raise RuntimeError(
+                    "greedy_solver.solve().get_best_solution() "
+                    "should be a FacilitySolution."
+                )
         else:
             logger.info("Get dummy solution")
             solution = self.facility_problem.get_dummy_solution()
