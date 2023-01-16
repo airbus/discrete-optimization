@@ -16,6 +16,7 @@ import scipy.stats as ss
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -2615,14 +2616,13 @@ class MS_RCPSPModel(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "makespan": {"type": TypeObjective.OBJECTIVE, "default_weight": -1}
+            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0)
         }
         handling = ObjectiveHandling.SINGLE
         if self.includes_special_constraint():
-            dict_objective["constraint_penalty"] = {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100,
-            }
+            dict_objective["constraint_penalty"] = ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100.0
+            )
             handling = ObjectiveHandling.AGGREGATE
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,

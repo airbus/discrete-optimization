@@ -12,6 +12,7 @@ from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     MethodAggregating,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -120,11 +121,10 @@ class KnapsackModel(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "weight_violation": {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100000,
-            },
-            "value": {"type": TypeObjective.OBJECTIVE, "default_weight": 1},
+            "weight_violation": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100000.0
+            ),
+            "value": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=1.0),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
@@ -211,13 +211,14 @@ class KnapsackModel_Mobj(KnapsackModel):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "weight_violation": {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100000,
-            },
-            "heaviest_item": {"type": TypeObjective.OBJECTIVE, "default_weight": 1},
-            "weight": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "value": {"type": TypeObjective.OBJECTIVE, "default_weight": 1},
+            "weight_violation": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100000.0
+            ),
+            "heaviest_item": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=1.0
+            ),
+            "weight": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
+            "value": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=1.0),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
@@ -348,11 +349,10 @@ class MultidimensionalKnapsack(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "weight_violation": {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100000,
-            },
-            "value": {"type": TypeObjective.OBJECTIVE, "default_weight": 1},
+            "weight_violation": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100000.0
+            ),
+            "value": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=1.0),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,

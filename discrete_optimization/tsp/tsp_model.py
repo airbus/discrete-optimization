@@ -27,6 +27,7 @@ from numba import njit
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -293,7 +294,7 @@ class TSPModel(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "length": {"type": TypeObjective.OBJECTIVE, "default_weight": 1}
+            "length": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=1.0)
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MINIMIZATION,

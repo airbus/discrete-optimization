@@ -13,6 +13,7 @@ import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -329,11 +330,10 @@ class RCPSPModelSpecialConstraints(RCPSPModel):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "makespan": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "constraint_penalty": {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100,
-            },
+            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
+            "constraint_penalty": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100.0
+            ),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
@@ -583,11 +583,10 @@ class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "makespan": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "constraint_penalty": {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100,
-            },
+            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
+            "constraint_penalty": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100.0
+            ),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,

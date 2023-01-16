@@ -7,16 +7,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import (
-    Dict,
-    Hashable,
-    Iterable,
-    List,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Dict, Hashable, Iterable, List, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +18,7 @@ from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     MethodAggregating,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -676,7 +668,7 @@ class RCPSPModel(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "makespan": {"type": TypeObjective.OBJECTIVE, "default_weight": -1}
+            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0)
         }
         # "mean_resource_reserve": {"type": TypeObjective.OBJECTIVE, "default_weight": 1}}
         return ObjectiveRegister(

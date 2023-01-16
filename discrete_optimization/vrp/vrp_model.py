@@ -14,6 +14,7 @@ from numba import njit
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -144,11 +145,10 @@ class VrpProblem(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "length": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "capacity_violation": {
-                "type": TypeObjective.PENALTY,
-                "default_weight": -100,
-            },
+            "length": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
+            "capacity_violation": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100.0
+            ),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,

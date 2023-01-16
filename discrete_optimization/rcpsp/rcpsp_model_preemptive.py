@@ -16,6 +16,7 @@ import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -681,11 +682,10 @@ class RCPSPModelPreemptive(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "makespan": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "mean_resource_reserve": {
-                "type": TypeObjective.OBJECTIVE,
-                "default_weight": 1,
-            },
+            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
+            "mean_resource_reserve": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=1.0
+            ),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,

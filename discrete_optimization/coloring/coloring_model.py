@@ -15,6 +15,7 @@ import numpy as np
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -274,8 +275,12 @@ class ColoringProblem(Problem):
     def get_objective_register(self) -> ObjectiveRegister:
         """Specifies the default objective settings to be used with the evaluate function output."""
         dict_objective = {
-            "nb_colors": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "nb_violations": {"type": TypeObjective.PENALTY, "default_weight": -100},
+            "nb_colors": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=-1.0
+            ),
+            "nb_violations": ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100.0
+            ),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
