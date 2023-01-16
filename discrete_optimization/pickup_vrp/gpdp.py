@@ -27,10 +27,12 @@ import numpy.typing as npt
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
     Solution,
+    TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.tsp.tsp_model import TSPModel2D
@@ -48,7 +50,7 @@ class GPDPSolution(Solution):
         self,
         problem: "GPDP",
         trajectories: Dict[int, List[Node]],
-        times: Dict[Node, int],
+        times: Dict[Node, float],
         resource_evolution: Dict[Node, Dict[Node, List[int]]],
     ):
         self.problem = problem
@@ -254,7 +256,26 @@ class GPDP(Problem):
             self.slack_time_bound_per_node = slack_time_bound_per_node
 
     def evaluate(self, variable: GPDPSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
-        return {"time": max(variable.times.values())}
+        res_distance: Dict[str, float] = {}
+        res_time: Dict[str, float] = {}
+        for v, path in variable.trajectories.items():
+            res_distance[f"distance_{v}"] = self.compute_distance(path)
+            if path[-1] in variable.times:
+                res_time[f"time_{v}"] = variable.times[path[-1]]
+            else:
+                res_time[f"time_{v}"] = 0.0
+        res_distance["distance_max"] = max(res_distance.values())
+        res_time["time_max"] = max(res_time.values())
+        res: Dict[str, float] = {}
+        res.update(res_distance)
+        res.update(res_time)
+        return res
+
+    def compute_distance(self, path: List[Node]) -> float:
+        distance = 0.0
+        for i in range(len(path) - 1):
+            distance += self.distance_delta[path[i]][path[i + 1]]
+        return distance
 
     def evaluate_function_node(self, node_1: Node, node_2: Node) -> float:
         if self.graph is None:
@@ -304,9 +325,13 @@ class GPDP(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         return ObjectiveRegister(
-            objective_sense=ModeOptim.MINIMIZATION,
+            objective_sense=ModeOptim.MAXIMIZATION,
             objective_handling=ObjectiveHandling.SINGLE,
-            dict_objective_to_doc={},
+            dict_objective_to_doc={
+                "distance_max": ObjectiveDoc(
+                    type=TypeObjective.OBJECTIVE, default_weight=-1.0
+                )
+            },
         )
 
     def __str__(self) -> str:
