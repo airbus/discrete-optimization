@@ -1765,8 +1765,8 @@ def update_model_cluster_tsp(
     problem: GPDP,
     lp_solver: LinearFlowSolver,
     components_global,
-    edges_in_all_vehicles,
-    edges_out_all_vehicles,
+    edges_in_all_vehicles_cluster,
+    edges_out_all_vehicles_cluster,
 ):
     len_component_global = len(components_global)
     list_constraints = []
@@ -1775,15 +1775,15 @@ def update_model_cluster_tsp(
         for s in components_global:
             edge_in_of_interest = [
                 e
-                for n in s[0]
-                for e in edges_in_all_vehicles[n]
+                for cluster in s[0]
+                for e in edges_in_all_vehicles_cluster[cluster]
                 if problem.clusters_dict[e[1][0]] not in s[0]
                 and problem.clusters_dict[e[1][1]] in s[0]
             ]
             edge_out_of_interest = [
                 e
-                for n in s[0]
-                for e in edges_out_all_vehicles[n]
+                for cluster in s[0]
+                for e in edges_out_all_vehicles_cluster[cluster]
                 if problem.clusters_dict[e[1][0]] in s[0]
                 and problem.clusters_dict[e[1][1]] not in s[0]
             ]
