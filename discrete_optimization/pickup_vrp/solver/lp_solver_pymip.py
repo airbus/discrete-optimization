@@ -86,46 +86,6 @@ def retrieve_solutions(model: mip.Model, variable_decisions: Dict[str, Any]):
     return list_results
 
 
-def retrieve_solutions_vehicle_types(
-    model: mip.Model, variable_decisions: Dict[str, Any]
-):
-    nSolutions = model.num_solutions
-    range_solutions = range(nSolutions)
-    list_results = []
-    for s in range_solutions:
-        results = {}
-        xsolution = {v: {} for v in variable_decisions["variables_edges"]}
-        obj = model.objective_values[s]
-        for vehicle in variable_decisions["variables_edges"]:
-            for edge in variable_decisions["variables_edges"][vehicle]:
-                value = variable_decisions["variables_edges"][vehicle][edge].xi(s)
-                if value <= 0.1:
-                    continue
-                xsolution[vehicle][edge] = 1
-        results["variables_edges"] = xsolution
-        for key in variable_decisions:
-            if key == "variables_edges":
-                continue
-            results[key] = {}
-            for key_2 in variable_decisions[key]:
-                if isinstance(variable_decisions[key][key_2], dict):
-                    results[key][key_2] = {}
-                    for key_3 in variable_decisions[key][key_2]:
-                        if isinstance(variable_decisions[key][key_2][key_3], dict):
-                            results[key][key_2][key_3] = {}
-                            for key_4 in variable_decisions[key][key_2][key_3]:
-                                value = variable_decisions[key][key_2][key_3].xi(s)
-                                results[key][key_2][key_3][key_4] = value
-                        else:
-                            value = variable_decisions[key][key_2][key_3].xi(s)
-                            results[key][key_2][key_3] = value
-                else:
-                    value = variable_decisions[key][key_2].xi(s)
-                    results[key][key_2] = value
-        list_results += [(results, obj)]
-    return list_results
-
-
 class LinearFlowSolver(SolverDO):
     def __init__(self, problem: GPDP):
         self.problem = problem
