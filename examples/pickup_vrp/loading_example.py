@@ -136,7 +136,7 @@ def run_ortools_solver():
         time_limit=10,
         n_solutions=100,
     )
-    results = solver.solve()
+    results = solver.solve_intern()
     plot_ortools_solution(results[0], gpdp)
     plt.show()
     print(results)
@@ -165,7 +165,7 @@ def run_ortools_solver_selective():
         time_limit=200,
         n_solutions=10000,
     )
-    results = solver.solve()
+    results = solver.solve_intern()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     plot_ortools_solution(res_to_plot, gpdp)
     plt.show()
@@ -230,7 +230,7 @@ def run_ortools_pickup_delivery():
         n_solutions=10000,
     )
     logging.basicConfig(level=logging.DEBUG)
-    results = solver.solve()
+    results = solver.solve_intern()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     check_solution(res_to_plot[0], model)
     plot_ortools_solution(res_to_plot, model)
@@ -256,7 +256,7 @@ def run_ortools_pickup_delivery_cluster():
         time_limit=30,
         n_solutions=10000,
     )
-    results = solver.solve()
+    results = solver.solve_intern()
 
     def check_solution(res, gpdp: GPDP):
         for p, d in gpdp.list_pickup_deliverable_per_cluster:
@@ -341,10 +341,10 @@ def create_examples_script(folder_to_save):
 
 
 if __name__ == "__main__":
-    debug_lp()
-    selective_tsp()
-    vrp_capacity()
+    # debug_lp()
+    # selective_tsp()
+    # vrp_capacity()
     run_ortools_solver()
-    run_ortools_pickup_delivery()
-    run_ortools_solver_selective()
-    run_ortools_pickup_delivery_cluster()
+    # run_ortools_pickup_delivery()
+    # run_ortools_solver_selective()
+    # run_ortools_pickup_delivery_cluster()

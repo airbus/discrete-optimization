@@ -7,21 +7,45 @@ from __future__ import print_function
 import logging
 from enum import Enum
 from functools import partial
-from typing import Any, Iterable, List, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 from ortools.util.optional_boolean_pb2 import BOOL_FALSE, BOOL_TRUE
 
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+    build_aggreg_function_and_params_objective,
+)
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+    fitness_class,
+)
 from discrete_optimization.pickup_vrp.gpdp import (
     GPDP,
+    GPDPSolution,
+    Node,
     build_matrix_distance,
     build_matrix_time,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class NodePosition(Enum):
+    """Node position inside a trajectory.
+
+    Useful e.g. to distinguish between the starting node and ending node
+    when the trajectory is a loop.
+
+    """
+
+    START = "start"
+    INTERMEDIATE = "intermediate"
+    END = "end"
 
 
 class ParametersCost:
@@ -141,11 +165,20 @@ class ORToolsGPDP(SolverDO):
         problem: GPDP,
         factor_multiplier_distance: float = 1,
         factor_multiplier_time: float = 1,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
         self.dimension_names = []
         self.factor_multiplier_distance = factor_multiplier_distance  # 10**3
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
+        (
+            self.aggreg_sol,
+            self.aggreg_dict,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=problem,
+            params_objective_function=params_objective_function,
+        )
 
     def init_model(self, **kwargs):
         include_time_windows = kwargs.get("include_time_windows", False)
@@ -750,7 +783,7 @@ class ORToolsGPDP(SolverDO):
         search_parameters.time_limit.seconds = kwargs.get("time_limit", 100)
         return search_parameters
 
-    def solve(self, search_parameters=None, **kwargs) -> Iterable[Any]:
+    def solve_intern(self, search_parameters=None, **kwargs) -> Iterable[Any]:
         if search_parameters is None:
             search_parameters = self.search_parameters
         sols = []
@@ -758,6 +791,19 @@ class ORToolsGPDP(SolverDO):
         self.routing.AddAtSolutionCallback(callback)
         sols = self.routing.SolveWithParameters(search_parameters)
         return callback.sols
+
+    def solve(self, **kwargs: Any) -> ResultStorage:
+        solutions_fit: List[Tuple[Solution, fitness_class]] = []
+        sols = self.solve_intern()
+        for sol in sols:
+            gpdp_sol = convert_to_gpdpsolution(problem=self.problem, sol=sol)
+            fit = self.aggreg_sol(gpdp_sol)
+            solutions_fit.append((gpdp_sol, fit))
+        return ResultStorage(
+            list_solution_fits=solutions_fit,
+            limit_store=False,
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
 
 def make_routing_monitor(solver: ORToolsGPDP) -> callable:
@@ -804,9 +850,13 @@ def make_routing_monitor(solver: ORToolsGPDP) -> callable:
                 cnt = 0
                 while not self.model.IsEnd(index) or cnt > 10000:
                     node_index = self.solver.manager.IndexToNode(index)
+                    if cnt == 0:
+                        node_position = NodePosition.START
+                    else:
+                        node_position = NodePosition.INTERMEDIATE
                     vehicle_tours[vehicle_id] += [node_index]
                     try:
-                        dimension_output[(vehicle_id, node_index)] = {
+                        dimension_output[(vehicle_id, node_index, node_position)] = {
                             r: (
                                 dimensions[r].CumulVar(index).Min(),
                                 dimensions[r].CumulVar(index).Max(),
@@ -838,7 +888,7 @@ def make_routing_monitor(solver: ORToolsGPDP) -> callable:
                                 (
                                     vehicle_id,
                                     self.solver.manager.IndexToNode(index),
-                                    "end",
+                                    NodePosition.END,
                                 )
                             ] = {
                                 r: (
@@ -863,6 +913,37 @@ def make_routing_monitor(solver: ORToolsGPDP) -> callable:
             self.sols += postpro_sol
 
     return RoutingMonitor(solver)
+
+
+def convert_to_gpdpsolution(
+    problem: GPDP,
+    sol: Tuple[
+        Dict[int, List[Node]],
+        Dict[Tuple[int, Node, NodePosition], Dict[str, Tuple[float, float, float]]],
+        float,
+        float,
+        float,
+    ],
+) -> GPDPSolution:
+    (
+        vehicle_tours,
+        dimension_output,
+        route_distance,
+        objective,
+        cost,
+    ) = sol
+    times: Dict[Node, float] = {}
+    for (v, node, node_position), output in dimension_output.items():
+        if (node not in times) or (node_position != NodePosition.START):
+            if "Time" in output:
+                times[node] = output["Time"][1]
+    resource_evolution: Dict[Node, Dict[Node, List[int]]] = {}
+    return GPDPSolution(
+        problem=problem,
+        trajectories=vehicle_tours,
+        times=times,
+        resource_evolution=resource_evolution,
+    )
 
 
 def plot_ortools_solution(result, problem: GPDP):

@@ -40,7 +40,7 @@ def run_time_windows():
         time_limit=45,
         n_solutions=200,
     )
-    results = solver.solve()
+    results = solver.solve_intern()
     t_deb = time.time()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     dimension_data = res_to_plot[1]
@@ -69,7 +69,7 @@ def run_pickup():
         time_limit=15,
         n_solutions=200,
     )
-    results = solver.solve()
+    results = solver.solve_intern()
     t_deb = time.time()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     plot_ortools_solution(res_to_plot, gpdp)
@@ -106,7 +106,7 @@ def run_demand():
         parameters_cost=list_parameters_cost,
         n_solutions=200,
     )
-    results = solver.solve()
+    results = solver.solve_intern()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     plot_ortools_solution(res_to_plot, gpdp)
     plt.show()
