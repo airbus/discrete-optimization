@@ -4,9 +4,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import collections
 import logging
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Any,
@@ -162,10 +162,16 @@ class ObjectiveHandling(Enum):
 
 
 class TypeObjective(Enum):
-    """Enum class to specify what should each KPI are."""
+    """Enum class to specify what should each KPI be."""
 
     OBJECTIVE = 0
     PENALTY = 1
+
+
+@dataclass(frozen=True)
+class ObjectiveDoc:
+    type: TypeObjective
+    default_weight: float
 
 
 class ObjectiveRegister:
@@ -182,8 +188,8 @@ class ObjectiveRegister:
     Examples:
         In ColoringProblem implementation.
         dict_objective = {
-            "nb_colors": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "nb_violations": {"type": TypeObjective.PENALTY, "default_weight": -100},
+            "nb_colors": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1),
+            "nb_violations": ObjectiveDoc(type=TypeObjective.PENALTY, default_weight=-100),
         }
 
     Attributes
@@ -196,7 +202,7 @@ class ObjectiveRegister:
 
     objective_sense: ModeOptim
     objective_handling: ObjectiveHandling
-    dict_objective_to_doc: Dict[str, Any]
+    dict_objective_to_doc: Dict[str, ObjectiveDoc]
 
     def __init__(
         self,
@@ -214,7 +220,7 @@ class ObjectiveRegister:
         Returns: list of kpi names, list of default weight for the aggregated objective function.
         """
         d = [
-            (k, self.dict_objective_to_doc[k]["default_weight"])
+            (k, self.dict_objective_to_doc[k].default_weight)
             for k in self.dict_objective_to_doc
         ]
         return [s[0] for s in d], [s[1] for s in d]

@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Type
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
+    ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
     Problem,
@@ -250,12 +251,13 @@ class FacilityProblem(Problem):
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "cost": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "setup_cost": {"type": TypeObjective.OBJECTIVE, "default_weight": -1},
-            "capacity_constraint_violation": {
-                "type": TypeObjective.OBJECTIVE,
-                "default_weight": -10000,
-            },
+            "cost": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0),
+            "setup_cost": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=-1.0
+            ),
+            "capacity_constraint_violation": ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=-10000.0
+            ),
         }
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
