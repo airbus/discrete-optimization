@@ -42,7 +42,6 @@ def test_ms_to_rcpsp_imopse(random_seed):
     assert rcpsp_model.n_jobs == 202
 
 
-@pytest.mark.slow
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
 def test_solve_rcpsp_imopse1(random_seed):
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
@@ -72,7 +71,6 @@ def test_solve_rcpsp_imopse1(random_seed):
     assert rcpsp_model.satisfy(best_solution)
 
 
-@pytest.mark.slow
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
 def test_solve_rcpsp_imopse2(random_seed):
     files = [f for f in get_data_available() if "200_40_133_15.def" in f]
