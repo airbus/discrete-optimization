@@ -108,6 +108,15 @@ class PymipMilpSolver(MilpSolver):
     ) -> ResultStorage:
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
+        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        return self.retrieve_solutions(parameters_milp=parameters_milp)
+
+    def prepare_model(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> None:
+        """Set Gurobi Model parameters according to parameters_milp"""
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:
@@ -117,16 +126,28 @@ class PymipMilpSolver(MilpSolver):
         self.model.max_mip_gap = parameters_milp.mip_gap
         self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
         self.model.sol_pool_size = parameters_milp.pool_solutions
+        self.model.max_seconds = parameters_milp.time_limit
+        self.model.max_solutions = parameters_milp.n_solutions_max
 
-        self.model.optimize(
-            max_seconds=parameters_milp.time_limit,
-            max_solutions=parameters_milp.n_solutions_max,
-        )
+    def optimize_model(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> None:
+        """Optimize the mip Model.
+
+        The solutions are yet to be retrieved via `self.retrieve_solutions()`.
+
+        """
+        if self.model is None:
+            self.init_model(**kwargs)
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
+        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+        self.model.optimize()
 
         logger.info(f"Solver found {self.model.num_solutions} solutions")
         logger.info(f"Objective : {self.model.objective_value}")
-
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
 
     def get_var_value_for_ith_solution(self, var: mip.Var, i: int) -> float:  # type: ignore # avoid isinstance checks for efficiency
         """Get value for i-th solution of a given variable."""
@@ -157,6 +178,15 @@ class GurobiMilpSolver(MilpSolver):
     def solve(
         self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> ResultStorage:
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
+        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        return self.retrieve_solutions(parameters_milp=parameters_milp)
+
+    def prepare_model(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> None:
+        """Set Gurobi Model parameters according to parameters_milp"""
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -173,13 +203,26 @@ class GurobiMilpSolver(MilpSolver):
         )
         self.model.setParam("PoolSearchMode", parameters_milp.pool_search_mode)
 
+    def optimize_model(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> None:
+        """Optimize the Gurobi Model.
+
+        The solutions are yet to be retrieved via `self.retrieve_solutions()`.
+
+        """
+        if self.model is None:
+            self.init_model(**kwargs)
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
+        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
         self.model.optimize()
 
         logger.info(f"Problem has {self.model.NumObj} objectives")
         logger.info(f"Solver found {self.model.SolCount} solutions")
         logger.info(f"Objective : {self.model.getObjective().getValue()}")
-
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
 
     def get_var_value_for_ith_solution(self, var: "gurobipy.Var", i: int):  # type: ignore # avoid isinstance checks for efficiency
         """Get value for i-th solution of a given variable."""
