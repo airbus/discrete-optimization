@@ -172,29 +172,11 @@ class GPDP(Problem):
                 self.all_nodes_dict[node][res] = self.resources_flow_node[node][res]
 
         self.edges_dict: Dict[Node, Dict[Node, Dict[str, float]]] = {}
-        for node in self.distance_delta:
-            self.edges_dict[node] = {}
-            for node1 in self.distance_delta[node]:
-                self.edges_dict[node][node1] = {
-                    "distance": self.distance_delta[node][node1],
-                    "time": self.time_delta[node][node1],
-                }
-                resources = self.resources_flow_edges.get((node, node1), {})
-                for r in resources:
-                    self.edges_dict[node][node1][r] = resources[r]
+        self.update_edges()
         self.graph: Optional[Graph] = None
         if compute_graph:
             logger.info("compute graph")
-            self.graph = Graph(
-                nodes=[(n, self.all_nodes_dict[n]) for n in self.all_nodes_dict],
-                edges=[
-                    (node1, node2, self.edges_dict[node1][node2])
-                    for node1 in self.edges_dict
-                    for node2 in self.edges_dict[node1]
-                ],
-                undirected=False,
-                compute_predecessors=False,
-            )
+            self.compute_graph()
             logger.info("done")
         self.clusters_dict: Dict[Node, Hashable]
         if clusters_dict is None:
