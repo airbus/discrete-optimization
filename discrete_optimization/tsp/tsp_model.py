@@ -371,9 +371,9 @@ def length(point1: Point2D, point2: Point2D) -> float:
 
 
 def compute_length(
+    solution: List[int],
     start_index: int,
     end_index: int,
-    solution: List[int],
     list_points: Sequence[Point2D],
     node_count: int,
     length_permutation: int,
@@ -392,9 +392,9 @@ def compute_length(
 # More efficient implementation
 @njit
 def compute_length_np(
+    solution: List[int],
     start_index: int,
     end_index: int,
-    solution: List[int],
     np_points: np.ndarray,
     node_count: int,
     length_permutation: int,
@@ -422,9 +422,9 @@ def compute_length_np(
 
 @njit
 def compute_length_matrix(
+    solution: Union[List[int], np.ndarray],
     start_index: int,
     end_index: int,
-    solution: Union[List[int], np.ndarray],
     distance_matrix: np.ndarray,
     node_count: int,
     length_permutation: int,

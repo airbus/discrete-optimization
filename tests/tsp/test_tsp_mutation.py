@@ -15,12 +15,12 @@ def test_mutation():
     solution = model.get_dummy_solution()
     sol = mutation.mutate_and_compute_obj(solution)
     lengths, obj = compute_length(
-        model.start_index,
-        model.end_index,
-        sol[0].permutation,
-        model.list_points,
-        model.node_count,
-        model.length_permutation,
+        start_index=model.start_index,
+        end_index=model.end_index,
+        solution=sol[0].permutation,
+        list_points=model.list_points,
+        node_count=model.node_count,
+        length_permutation=model.length_permutation,
     )
     assert len(sol[0].lengths) == 51
     assert len(lengths) == 51
