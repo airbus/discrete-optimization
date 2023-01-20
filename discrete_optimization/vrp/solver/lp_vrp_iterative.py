@@ -225,7 +225,11 @@ def init_model_lp(
     include_backward: bool = True,
     include_triangle: bool = False,
 ) -> Tuple[
-    Model, Dict[Edge, Var], Dict[Union[str, int], Any], Dict[str, Any], Dict[int, Any]
+    "Model",
+    Dict[Edge, "Var"],
+    Dict[Union[str, int], Any],
+    Dict[str, Any],
+    Dict[int, Any],
 ]:
     tsp_model = Model("VRP-master")
     x_var: Dict[Edge, Var] = {}  # decision variables on edges
@@ -973,7 +977,7 @@ def rebuild_tsp_routine(
 
 
 def retrieve_solutions(
-    model: "Model", x_var: Dict[Edge, Var], vehicle_count: int, g: nx.DiGraph
+    model: "Model", x_var: Dict[Edge, "Var"], vehicle_count: int, g: nx.DiGraph
 ) -> List[Tuple[nx.DiGraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]]:
     nSolutions = model.SolCount
     solutions: List[Tuple[nx.Digraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]] = []
@@ -1116,7 +1120,7 @@ def reevaluate_solutions(
 
 def update_model_2(
     model: "Model",
-    x_var: Dict[Edge, Var],
+    x_var: Dict[Edge, "Var"],
     components_global: List[Tuple[Set[Node], int]],
     edges_in_customers: Dict[int, Set[Edge]],
     edges_out_customers: Dict[int, Set[Edge]],
