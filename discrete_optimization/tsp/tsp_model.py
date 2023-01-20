@@ -77,17 +77,17 @@ class SolutionTSP(Solution):
             self.end_index = end_index
         # convert perm
         if permutation is None:
-            self.permutation = self.problem.convert_perm_from0_to_original_perm(
-                self.permutation_from0
-            )
             if permutation_from0 is None:
                 raise ValueError(
                     "permutation and permutation_from0 cannot be both None."
                 )
+            self.permutation = self.problem.convert_perm_from0_to_original_perm(
+                permutation_from0
+            )
             self.permutation_from0 = permutation_from0
         elif permutation_from0 is None:
             self.permutation_from0 = self.problem.convert_original_perm_to_perm_from0(
-                self.permutation
+                permutation
             )
             self.permutation = permutation
         else:
