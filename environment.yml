@@ -5,5 +5,5 @@ dependencies:
   - python=3.9
   - pip
   - pip:
-      - git+https://github.com/airbus/discrete-optimization@35b8b6853265c23bb44a9fcd38e515e2d280923d#egg=discrete-optimization
+      - git+https://github.com/airbus/discrete-optimization@33d77f056875b6f5c95ef02a3aa7d09b2f485e92#egg=discrete-optimization
       - nbgitpuller
