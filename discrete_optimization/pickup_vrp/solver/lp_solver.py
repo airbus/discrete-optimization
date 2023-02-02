@@ -7,14 +7,26 @@ import logging
 import os
 import random
 import time
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Hashable, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
-from discrete_optimization.pickup_vrp.gpdp import GPDP
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+    build_aggreg_function_and_params_objective,
+)
+from discrete_optimization.generic_tools.graph_api import Graph
+from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
+    ParametersMilp,
+)
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+    TupleFitness,
+)
+from discrete_optimization.pickup_vrp.gpdp import GPDP, GPDPSolution
 
 try:
     import gurobipy as grb
@@ -47,54 +59,103 @@ class TemporaryResult:
         self.rebuilt_dict = None
 
 
-def retrieve_solutions(model: "grb.Model", variable_decisions: Dict[str, Any]):
+def convert_temporaryresult_to_gpdpsolution(
+    temporaryresult: TemporaryResult, problem: GPDP
+) -> GPDPSolution:
+    times = {}
+    if "time_leaving" in temporaryresult.all_variables:
+        # We will only store the time values to visited nodes (which are not necessarly all the nodes
+        # when we run cluster version of the problem
+        nodes_visited_in_results = set()
+        for trajectory in temporaryresult.rebuilt_dict.values():
+            nodes_visited_in_results.update(trajectory)
+        times = {
+            n: temporaryresult.all_variables["time_leaving"][n]
+            for n in nodes_visited_in_results
+        }
+    resource_evolution = {}
+    return GPDPSolution(
+        problem=problem,
+        trajectories=temporaryresult.rebuilt_dict,
+        times=times,
+        resource_evolution=resource_evolution,
+    )
+
+
+def convert_flow_obj_to_gpdpsolution(
+    flow: Dict[str, Dict[Hashable, Any]],
+    obj: float,
+) -> GPDPSolution:
+    ...
+
+
+def retrieve_ith_solution(
+    i: int, model: "grb.Model", variable_decisions: Dict[str, Any]
+) -> Tuple[Dict[str, Dict[Hashable, Any]], float]:
+    results: Dict[str, Dict[Hashable, Any]] = {}
+    xsolution = {v: {} for v in variable_decisions["variables_edges"]}
+    model.params.SolutionNumber = i
+    obj = model.getAttr("PoolObjVal")
+    for vehicle in variable_decisions["variables_edges"]:
+        for edge in variable_decisions["variables_edges"][vehicle]:
+            value = variable_decisions["variables_edges"][vehicle][edge].getAttr("Xn")
+            if value <= 0.1:
+                continue
+            xsolution[vehicle][edge] = 1
+    results["variables_edges"] = xsolution
+    for key in variable_decisions:
+        if key == "variables_edges":
+            continue
+        results[key] = {}
+        for key_2 in variable_decisions[key]:
+            if isinstance(variable_decisions[key][key_2], dict):
+                results[key][key_2] = {}
+                for key_3 in variable_decisions[key][key_2]:
+                    if isinstance(variable_decisions[key][key_2][key_3], dict):
+                        results[key][key_2][key_3] = {}
+                        for key_4 in variable_decisions[key][key_2][key_3]:
+                            value = variable_decisions[key][key_2][key_3].getAttr("Xn")
+                            results[key][key_2][key_3][key_4] = value
+                    else:
+                        value = variable_decisions[key][key_2][key_3].getAttr("Xn")
+                        results[key][key_2][key_3] = value
+            else:
+                value = variable_decisions[key][key_2].getAttr("Xn")
+                results[key][key_2] = value
+    return results, obj
+
+
+def retrieve_solutions(
+    model: "grb.Model", variable_decisions: Dict[str, Any]
+) -> List[Tuple[Dict[str, Dict[Hashable, Any]], float]]:
     nSolutions = model.SolCount
     range_solutions = range(nSolutions)
     list_results = []
     for s in range_solutions:
-        results = {}
-        xsolution = {v: {} for v in variable_decisions["variables_edges"]}
-        model.params.SolutionNumber = s
-        obj = model.getAttr("PoolObjVal")
-        for vehicle in variable_decisions["variables_edges"]:
-            for edge in variable_decisions["variables_edges"][vehicle]:
-                value = variable_decisions["variables_edges"][vehicle][edge].getAttr(
-                    "Xn"
-                )
-                if value <= 0.1:
-                    continue
-                xsolution[vehicle][edge] = 1
-        results["variables_edges"] = xsolution
-        for key in variable_decisions:
-            if key == "variables_edges":
-                continue
-            results[key] = {}
-            for key_2 in variable_decisions[key]:
-                if isinstance(variable_decisions[key][key_2], dict):
-                    results[key][key_2] = {}
-                    for key_3 in variable_decisions[key][key_2]:
-                        if isinstance(variable_decisions[key][key_2][key_3], dict):
-                            results[key][key_2][key_3] = {}
-                            for key_4 in variable_decisions[key][key_2][key_3]:
-                                value = variable_decisions[key][key_2][key_3].getAttr(
-                                    "Xn"
-                                )
-                                results[key][key_2][key_3][key_4] = value
-                        else:
-                            value = variable_decisions[key][key_2][key_3].getAttr("Xn")
-                            results[key][key_2][key_3] = value
-                else:
-                    value = variable_decisions[key][key_2].getAttr("Xn")
-                    results[key][key_2] = value
+        results, obj = retrieve_ith_solution(
+            s, model=model, variable_decisions=variable_decisions
+        )
         list_results += [(results, obj)]
     return list_results
 
 
-class LinearFlowSolver(SolverDO):
-    def __init__(self, problem: GPDP):
+class LinearFlowSolver(GurobiMilpSolver):
+    def __init__(
+        self,
+        problem: GPDP,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         self.problem = problem
-        self.model: "grb.Model" = None
+        self.model: Optional["grb.Model"] = None
         self.constraint_on_edge = {}
+        (
+            self.aggreg_sol,
+            self.aggreg_dict,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=problem,
+            params_objective_function=params_objective_function,
+        )
 
     def one_visit_per_node(
         self,
@@ -816,6 +877,8 @@ class LinearFlowSolver(SolverDO):
 
         model.update()
         model.setParam("Heuristics", 0.5)
+        model.setParam(grb.GRB.Param.Method, 2)
+        model.modelSense = grb.GRB.MINIMIZE
         self.edges_info = {
             "edges_in_all_vehicles": edges_in_all_vehicles,
             "edges_out_all_vehicles": edges_out_all_vehicles,
@@ -831,42 +894,51 @@ class LinearFlowSolver(SolverDO):
         self.clusters_version = one_visit_per_cluster
         self.tsp_version = one_visit_per_node
 
-    def retrieve_solutions(self, range_solutions: Iterable[int]):
-        solutions = retrieve_solutions(
-            model=self.model, variable_decisions=self.variable_decisions
+    def retrieve_ith_temporaryresult(self, i: int) -> TemporaryResult:
+        res, obj = retrieve_ith_solution(
+            i=i, model=self.model, variable_decisions=self.variable_decisions
         )
-        list_temporary_results = build_graph_solutions(
-            solutions=solutions, lp_solver=self
+        temporaryresult = build_graph_solution(
+            results=res, obj=obj, graph=self.problem.graph
         )
-        for temp in list_temporary_results:
-            reevaluate_result(temp, problem=self.problem)
-        return list_temporary_results
+        reevaluate_result(temporaryresult, problem=self.problem)
+        return temporaryresult
 
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> List[TemporaryResult]:
-        if self.model is None:
-            self.init_model(**kwargs)
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.time_limit)
-        self.model.modelSense = grb.GRB.MINIMIZE
-        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.pool_solutions)
-        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
-        self.model.setParam("MIPGap", parameters_milp.mip_gap)
-        self.model.setParam(grb.GRB.Param.Method, 2)
-        self.model.setParam("Heuristics", 0.5)
-        logger.info("optimizing...")
-        self.model.optimize()
-        nSolutions = self.model.SolCount
-        nObjectives = self.model.NumObj
-        logger.info(f"Problem has {nObjectives} objectives")
-        logger.info(f"Gurobi found {nSolutions} solutions")
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        """
+
+        Not used here as GurobiMilpSolver.solve() is overriden
+
+
+        """
         if parameters_milp.retrieve_all_solution:
-            solutions = self.retrieve_solutions(list(range(nSolutions)))
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
         else:
-            solutions = self.retrieve_solutions([0])
-        return solutions
+            n_solutions = 1
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        for s in range(n_solutions):
+            temporaryresult = self.retrieve_ith_temporaryresult(i=s)
+            solution = convert_temporaryresult_to_gpdpsolution(
+                temporaryresult=temporaryresult, problem=self.problem
+            )
+            fit = self.aggreg_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            limit_store=False,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
+    def solve_one_iteration(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> List[TemporaryResult]:
+
+        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        list_temporary_results: List[TemporaryResult] = []
+        for i in range(self.nb_solutions):
+            list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
+
+        return list_temporary_results
 
     def solve_iterative(
         self,
@@ -875,8 +947,8 @@ class LinearFlowSolver(SolverDO):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> List[TemporaryResult]:
         """
 
         Args:
@@ -890,19 +962,23 @@ class LinearFlowSolver(SolverDO):
         Returns:
 
         """
+        if self.model is None:
+            self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         finished = False
         if json_dump_folder is not None:
             os.makedirs(json_dump_folder, exist_ok=True)
-        if self.model is None:
-            self.init_model(**kwargs)
         if warm_start is not None:
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=do_lns
             )
             c.adding_constraint(warm_start)
-        solutions: List[TemporaryResult] = self.solve(
+        solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, **kwargs
         )
         if self.clusters_version:
@@ -955,7 +1031,7 @@ class LinearFlowSolver(SolverDO):
             ):
                 c.adding_constraint(warm_start)
             self.model.update()
-            solutions: List[TemporaryResult] = self.solve(
+            solutions: List[TemporaryResult] = self.solve_one_iteration(
                 parameters_milp=parameters_milp, **kwargs
             )
             all_solutions += solutions
@@ -985,6 +1061,39 @@ class LinearFlowSolver(SolverDO):
             finished = nb_iteration > nb_iteration_max
         return all_solutions
 
+    def solve(
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        do_lns: bool = True,
+        nb_iteration_max: int = 10,
+        json_dump_folder: Optional[str] = None,
+        warm_start: Optional[Dict[Any, Any]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        temporaryresults = self.solve_iterative(
+            parameters_milp=parameters_milp,
+            do_lns=do_lns,
+            nb_iteration_max=nb_iteration_max,
+            json_dump_folder=json_dump_folder,
+            warm_start=warm_start,
+            **kwargs,
+        )
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        for s in range(n_solutions):
+            solution = convert_temporaryresult_to_gpdpsolution(
+                temporaryresult=temporaryresults[s], problem=self.problem
+            )
+            fit = self.aggreg_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
     def init_warm_start(self, routes: Dict[int, List]):
         if routes is None:
             return
@@ -999,12 +1108,24 @@ class LinearFlowSolver(SolverDO):
                     self.variable_decisions["variables_edges"][v][e].varhintval = 0
 
 
-class LinearFlowSolverVehicleType(SolverDO):
+class LinearFlowSolverVehicleType(GurobiMilpSolver):
     # adapted for vehicle type optim and directed acyclic graph. (so typically fleet rotation optim)
-    def __init__(self, problem: GPDP):
+    def __init__(
+        self,
+        problem: GPDP,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         self.problem = problem
-        self.model: grb.Model = None
+        self.model: Optional[grb.Model] = None
         self.constraint_on_edge = {}
+        (
+            self.aggreg_sol,
+            self.aggreg_dict,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=problem,
+            params_objective_function=params_objective_function,
+        )
 
     def one_visit_per_node(
         self,
@@ -1239,6 +1360,8 @@ class LinearFlowSolverVehicleType(SolverDO):
         one_visit_per_cluster = kwargs.get("one_visit_per_cluster", False)
         nb_vehicle = self.problem.number_vehicle
         name_vehicles = sorted(self.problem.origin_vehicle.keys())
+        if self.problem.graph is None:
+            self.problem.compute_graph()
         graph = self.problem.graph
         nodes_of_interest = [
             n
@@ -1513,13 +1636,9 @@ class LinearFlowSolverVehicleType(SolverDO):
             )
 
         model.update()
-        model.setParam("TimeLimit", 800)
         model.modelSense = grb.GRB.MINIMIZE
         model.setParam(grb.GRB.Param.Threads, 4)
-        model.setParam(grb.GRB.Param.PoolSolutions, 10000)
         model.setParam(grb.GRB.Param.Method, -1)
-        model.setParam("MIPGapAbs", 0.01)
-        model.setParam("MIPGap", 0.003)
         model.setParam("Heuristics", 0.2)
         self.edges_info = {
             "edges_in_all_vehicles": edges_in_all_vehicles,
@@ -1536,52 +1655,63 @@ class LinearFlowSolverVehicleType(SolverDO):
         self.clusters_version = one_visit_per_cluster
         self.tsp_version = one_visit_per_node
 
-    def retrieve_solutions(self, range_solutions: Iterable[int]):
-        solutions = retrieve_solutions(
-            model=self.model, variable_decisions=self.variable_decisions
+    def retrieve_ith_temporaryresult(self, i: int) -> TemporaryResult:
+        res, obj = retrieve_ith_solution(
+            i=i, model=self.model, variable_decisions=self.variable_decisions
         )
-        for sol in solutions:
-            path_dict = build_path_from_vehicle_type_flow(
-                result_from_retrieve=sol[0], problem=self.problem, solver=self
-            )
-            sol[0]["path_dict"] = path_dict
-        return solutions
+        path_dict = build_path_from_vehicle_type_flow(
+            result_from_retrieve=res, problem=self.problem, solver=self
+        )
+        res["path_dict"] = path_dict
 
-    def solve(
+        return TemporaryResult()  # TO BE COMPLETED
+
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        for s in range(n_solutions):
+            temporaryresult = self.retrieve_ith_temporaryresult(i=s)
+            solution = convert_temporaryresult_to_gpdpsolution(
+                temporaryresult=temporaryresult, problem=self.problem
+            )
+            fit = self.aggreg_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            limit_store=False,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
+    def solve_one_iteration(
         self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+    ) -> List[TemporaryResult]:
+        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        list_temporary_results: List[TemporaryResult] = []
+        for i in range(self.nb_solutions):
+            list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
+
+        return list_temporary_results
+
+    def solve_iterative(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> List[TemporaryResult]:
         if self.model is None:
             self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.setParam("TimeLimit", parameters_milp.time_limit)
-        self.model.modelSense = grb.GRB.MINIMIZE
-        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.pool_solutions)
-        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
-        self.model.setParam("MIPGap", parameters_milp.mip_gap)
-        logger.info("optimizing...")
-        self.model.optimize()
-        nSolutions = self.model.SolCount
-        nObjectives = self.model.NumObj
-        logger.info(f"Problem has {nObjectives} objectives")
-        logger.info(f"Gurobi found {nSolutions} solutions")
-        if parameters_milp.retrieve_all_solution:
-            solutions = self.retrieve_solutions(list(range(nSolutions)))
-        else:
-            solutions = self.retrieve_solutions([0])
-        return solutions
-
-    def solve_iterative(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ):
         finished = False
         do_lns = kwargs.get("do_lns", True)
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
-        solutions: List[TemporaryResult] = self.solve(
+        solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, **kwargs
         )
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
         if self.clusters_version:
             subtour = SubtourAddingConstraintCluster(
                 problem=self.problem, linear_solver=self
@@ -1610,7 +1740,7 @@ class LinearFlowSolverVehicleType(SolverDO):
             )
             c.adding_constraint(rebuilt_dict)
             self.model.update()
-            solutions: List[TemporaryResult] = self.solve(
+            solutions: List[TemporaryResult] = self.solve_one_iteration(
                 parameters_milp=parameters_milp, **kwargs
             )
             all_solutions += solutions
@@ -1640,6 +1770,30 @@ class LinearFlowSolverVehicleType(SolverDO):
             finished = nb_iteration > nb_iteration_max
         return all_solutions
 
+    def solve(
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        temporaryresults = self.solve_iterative(
+            parameters_milp=parameters_milp, **kwargs
+        )
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        for s in range(n_solutions):
+            solution = convert_temporaryresult_to_gpdpsolution(
+                temporaryresult=temporaryresults[s], problem=self.problem
+            )
+            fit = self.aggreg_sol(solution)
+            list_solution_fits.append((solution, fit))
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
 
 def build_path_from_vehicle_type_flow(
     result_from_retrieve, problem: GPDP, solver: LinearFlowSolverVehicleType
@@ -1668,20 +1822,14 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
     def __init__(self, problem: GPDP):
         super().__init__(problem)
 
-    def solve(
+    def solve_one_iteration(
         self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
     ) -> List[TemporaryResult]:
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        if self.model is None:
-            self.init_model(**kwargs)
-        self.model.setParam("TimeLimit", parameters_milp.time_limit)
-        self.model.modelSense = grb.GRB.MINIMIZE
-        self.model.setParam(grb.GRB.Param.PoolSolutions, parameters_milp.pool_solutions)
-        self.model.setParam("MIPGapAbs", parameters_milp.mip_gap_abs)
-        self.model.setParam("MIPGap", parameters_milp.mip_gap)
-
-        self.model.setParam(grb.GRB.Param.Method, 2)
+        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+        if self.model is None:  # for mypy
+            raise RuntimeError(
+                "self.model must not be None after self.prepare_model()."
+            )
         if "warm_start" in kwargs and not kwargs.get("no_warm_start", False):
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=False
@@ -1801,15 +1949,15 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
 
         self.model.Params.lazyConstraints = 1
         self.model.optimize(callback)
-        nSolutions = self.model.SolCount
-        nObjectives = self.model.NumObj
-        logger.info(f"Problem has {nObjectives} objectives")
-        logger.info(f"Gurobi found {nSolutions} solutions")
-        if parameters_milp.retrieve_all_solution:
-            solutions = self.retrieve_solutions(list(range(nSolutions)))
-        else:
-            solutions = self.retrieve_solutions([0])
-        return solutions
+        logger.info(f"Problem has {self.model.NumObj} objectives")
+        logger.info(f"Solver found {self.model.SolCount} solutions")
+        logger.info(f"Objective : {self.model.getObjective().getValue()}")
+
+        list_temporary_results: List[TemporaryResult] = []
+        for i in range(self.nb_solutions):
+            list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
+
+        return list_temporary_results
 
     def solve_iterative(
         self,
@@ -1818,8 +1966,8 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> List[TemporaryResult]:
         """
 
         Args:
@@ -1833,19 +1981,23 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         Returns:
 
         """
+        if self.model is None:
+            self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
         finished = False
         if json_dump_folder is not None:
             os.makedirs(json_dump_folder, exist_ok=True)
-        if self.model is None:
-            self.init_model(**kwargs)
         c = ConstraintHandlerOrWarmStart(
             linear_solver=self, problem=self.problem, do_lns=do_lns
         )
         if warm_start is not None:
             c.adding_constraint(warm_start)
-        solutions: List[TemporaryResult] = self.solve(
+        solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, no_warm_start=True, **kwargs
         )
         self.model.update()
@@ -1879,7 +2031,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             ):
                 c.adding_constraint(warm_start)
             self.model.update()
-            solutions: List[TemporaryResult] = self.solve(
+            solutions: List[TemporaryResult] = self.solve_one_iteration(
                 parameters_milp=parameters_milp, no_warm_start=True, **kwargs
             )
             all_solutions += solutions
@@ -2480,51 +2632,54 @@ def reevaluate_result(
     return temporary_result
 
 
+def build_graph_solution(
+    results: Dict[str, Dict[Hashable, Any]], obj: float, graph: Graph
+) -> TemporaryResult:
+    current_solution = results["variables_edges"]
+    vehicles_keys = current_solution.keys()
+    g_vehicle = {v: nx.DiGraph() for v in vehicles_keys}
+    g_merge = nx.DiGraph()
+    for vehicle in current_solution:
+        for e in current_solution[vehicle]:
+            clients = e[0], e[1]
+            if clients[0] not in g_vehicle[vehicle]:
+                g_vehicle[vehicle].add_node(clients[0])
+            if clients[1] not in g_vehicle[vehicle]:
+                g_vehicle[vehicle].add_node(clients[1])
+            if clients[0] not in g_merge:
+                g_merge.add_node(clients[0])
+            if clients[1] not in g_merge:
+                g_merge.add_node(clients[1])
+            g_vehicle[vehicle].add_edge(
+                clients[0],
+                clients[1],
+                weight=graph.edges_infos_dict[clients]["distance"],
+            )
+            g_merge.add_edge(
+                clients[0],
+                clients[1],
+                weight=graph.edges_infos_dict[clients]["distance"],
+            )
+    return TemporaryResult(
+        **{
+            "graph_merge": g_merge.copy(),
+            "graph_vehicle": g_vehicle,
+            "flow_solution": current_solution,
+            "obj": obj,
+            "all_variables": results,
+        }
+    )
+
+
 def build_graph_solutions(
-    solutions: List[Tuple[Dict, float]], lp_solver: LinearFlowSolver
+    solutions: List[Tuple[Dict, float]], graph: Graph
 ) -> List[TemporaryResult]:
     n_solutions = len(solutions)
     transformed_solutions = []
     for s in range(n_solutions):
-        current_solution = solutions[s][0]["variables_edges"]
-        vehicles_keys = current_solution.keys()
-        g_vehicle = {v: nx.DiGraph() for v in vehicles_keys}
-        g_merge = nx.DiGraph()
-        for vehicle in current_solution:
-            for e in current_solution[vehicle]:
-                clients = e[0], e[1]
-                if clients[0] not in g_vehicle[vehicle]:
-                    g_vehicle[vehicle].add_node(clients[0])
-                if clients[1] not in g_vehicle[vehicle]:
-                    g_vehicle[vehicle].add_node(clients[1])
-                if clients[0] not in g_merge:
-                    g_merge.add_node(clients[0])
-                if clients[1] not in g_merge:
-                    g_merge.add_node(clients[1])
-                g_vehicle[vehicle].add_edge(
-                    clients[0],
-                    clients[1],
-                    weight=lp_solver.problem.graph.edges_infos_dict[clients][
-                        "distance"
-                    ],
-                )
-                g_merge.add_edge(
-                    clients[0],
-                    clients[1],
-                    weight=lp_solver.problem.graph.edges_infos_dict[clients][
-                        "distance"
-                    ],
-                )
+        results, obj = solutions[s]
         transformed_solutions += [
-            TemporaryResult(
-                **{
-                    "graph_merge": g_merge.copy(),
-                    "graph_vehicle": g_vehicle,
-                    "flow_solution": current_solution,
-                    "obj": solutions[s][1],
-                    "all_variables": solutions[s][0],
-                }
-            )
+            build_graph_solution(results=results, obj=obj, graph=graph)
         ]
     return transformed_solutions
 
