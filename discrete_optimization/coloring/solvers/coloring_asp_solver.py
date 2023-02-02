@@ -16,10 +16,6 @@ from discrete_optimization.coloring.coloring_model import (
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
     SolverColoringWithStartingSolution,
 )
-from discrete_optimization.coloring.solvers.greedy_coloring import (
-    GreedyColoring,
-    NXGreedyColoringMethod,
-)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -39,7 +35,7 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        """CP solver linked with minizinc implementation of coloring problem.
+        """Solver based on Answer Set Programming formulation and clingo solver.
 
         Args:
             coloring_model (ColoringProblem): coloring problem instance to solve
@@ -138,9 +134,9 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
                 self.symbols_results += [m.symbols(atoms=True)]
                 self.nb_found_models += 1
                 logger.info(
-                    f"=== New Model [{self.nb_found_models}] "
-                    f"found after {time.perf_counter()-self.current_time}"
-                    f"sec of solving === "
+                    f"=== New Model [{self.nb_found_models}]"
+                    f" found after {time.perf_counter()-self.current_time}"
+                    f" sec of solving === "
                 )
                 logger.info(f"=== cost = {m.cost} ===")
                 logger.info(f"=== Optimality proven ? {m.optimality_proven} === ")
