@@ -4,7 +4,7 @@
 
 import logging
 import random
-from typing import Any, Dict, Hashable, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mip
@@ -17,6 +17,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp, PymipMilpSolver
+from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
@@ -327,8 +328,9 @@ class LinearFlowSolver(PymipMilpSolver):
         return {"time_coming": time_coming, "time_leaving": time_leaving}
 
     def init_model(self, **kwargs):
+        solver_name = kwargs.get("solver_name", mip.CBC)
         model: mip.Model = mip.Model(
-            "GPDP-flow", sense=mip.MINIMIZE, solver_name=mip.CBC
+            "GPDP-flow", sense=mip.MINIMIZE, solver_name=solver_name
         )
         include_backward = kwargs.get("include_backward", True)
         include_triangle = kwargs.get("include_triangle", False)
@@ -724,6 +726,7 @@ class LinearFlowSolver(PymipMilpSolver):
                     edges_out_all_vehicles=edges_out_all_vehicles,
                 )
             )
+
         self.edges_info = {
             "edges_in_all_vehicles": edges_in_all_vehicles,
             "edges_out_all_vehicles": edges_out_all_vehicles,
@@ -737,6 +740,7 @@ class LinearFlowSolver(PymipMilpSolver):
         self.variable_decisions = all_variables
         self.model = model
         self.model.sense = mip.MINIMIZE
+        self.solver_name = solver_name
         self.clusters_version = one_visit_per_cluster
         self.tsp_version = one_visit_per_node
 
@@ -792,10 +796,16 @@ class LinearFlowSolver(PymipMilpSolver):
             parameters_milp = ParametersMilp.default()
         finished = False
         do_lns = kwargs.get("do_lns", True)
+        reinit_model_at_each_iteration = kwargs.get(
+            "reinit", self.solver_name == mip.CBC
+        )
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
         solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, **kwargs
         )
+        if reinit_model_at_each_iteration:
+            self.model.reset()
+            self.init_model(**kwargs)
         if self.clusters_version:
             subtour = SubtourAddingConstraintCluster(
                 problem=self.problem, linear_solver=self
@@ -811,9 +821,9 @@ class LinearFlowSolver(PymipMilpSolver):
             )
             == 1
         ):
-            finished = True
             return solutions
-        subtour.adding_component_constraints([solutions[0]])
+        list_constraints_tuples = []
+        list_constraints_tuples += subtour.adding_component_constraints([solutions[0]])
         all_solutions = solutions
         nb_iteration = 0
         while not finished:
@@ -834,8 +844,14 @@ class LinearFlowSolver(PymipMilpSolver):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            logger.debug(len(solutions[0].component_global))
-            subtour.adding_component_constraints([solutions[0]])
+            if reinit_model_at_each_iteration:
+                self.model.reset()
+                self.init_model(**kwargs)
+                self.reapply_constraint(list_constraints_tuples)
+                self.constraint_on_edge = {}
+            list_constraints_tuples += subtour.adding_component_constraints(
+                [solutions[0]]
+            )
             if (
                 max(
                     [
@@ -846,7 +862,6 @@ class LinearFlowSolver(PymipMilpSolver):
                 == 1
                 and not do_lns
             ):
-                finished = True
                 return all_solutions
             nb_iteration += 1
             finished = nb_iteration > nb_iteration_max
@@ -862,7 +877,7 @@ class LinearFlowSolver(PymipMilpSolver):
             **kwargs,
         )
         if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+            n_solutions = min(parameters_milp.n_solutions_max, len(temporaryresults))
         else:
             n_solutions = 1
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
@@ -876,6 +891,20 @@ class LinearFlowSolver(PymipMilpSolver):
             list_solution_fits=list_solution_fits,
             mode_optim=self.params_objective_function.sense_function,
         )
+
+    def reapply_constraint(
+        self, list_constraint_tuple: List[Tuple[Set[Tuple[int, int]], int]]
+    ):
+        for edge, val in list_constraint_tuple:
+            self.model.add_constr(
+                mip.quicksum(
+                    [
+                        self.variable_decisions["variables_edges"][e[0]][e[1]]
+                        for e in edge
+                    ]
+                )
+                >= val
+            )
 
 
 # adapted for vehicle type optim and directed acyclic graph. (so typically fleet rotation optim)
@@ -1404,6 +1433,7 @@ class SubtourAddingConstraint:
         c = []
         for l in list_solution:
             for v in l.connected_components_per_vehicle:
+
                 if self.lazy:
                     c += update_model_lazy(
                         self.problem,
@@ -1411,7 +1441,7 @@ class SubtourAddingConstraint:
                         l.connected_components_per_vehicle[v],
                         self.linear_solver.edges_info["edges_in_all_vehicles"],
                         self.linear_solver.edges_info["edges_out_all_vehicles"],
-                    )
+                    )[1]
                 else:
                     c += update_model(
                         self.problem,
@@ -1419,7 +1449,8 @@ class SubtourAddingConstraint:
                         l.connected_components_per_vehicle[v],
                         self.linear_solver.edges_info["edges_in_all_vehicles"],
                         self.linear_solver.edges_info["edges_out_all_vehicles"],
-                    )
+                    )[1]
+        return c
 
 
 class SubtourAddingConstraintCluster:
@@ -1448,11 +1479,16 @@ class SubtourAddingConstraintCluster:
 
 class ConstraintHandlerOrWarmStart:
     def __init__(
-        self, linear_solver: LinearFlowSolver, problem: GPDP, do_lns: bool = True
+        self,
+        linear_solver: LinearFlowSolver,
+        problem: GPDP,
+        do_lns: bool = True,
+        remove_constr: bool = True,
     ):
         self.linear_solver = linear_solver
         self.problem = problem
         self.do_lns = do_lns
+        self.remove_constr = remove_constr
 
     def adding_constraint(self, rebuilt_dict):
         vehicle_keys = self.linear_solver.variable_decisions["variables_edges"].keys()
@@ -1463,20 +1499,23 @@ class ConstraintHandlerOrWarmStart:
             edges_to_add[v].update(
                 {(e0, e1) for e0, e1 in zip(rebuilt_dict[v][:-1], rebuilt_dict[v][1:])}
             )
-            logger.debug(f"edges to add {edges_to_add}")
+            logger.info(f"edges to add {edges_to_add}")
             edges_missing = {
                 (v, e)
                 for e in edges_to_add[v]
                 if e not in self.linear_solver.variable_decisions["variables_edges"][v]
             }
-            logger.debug(f"missing : {edges_missing}")
+            logger.info(f"missing : {edges_missing}")
             if len(edges_missing) > 0:
                 logger.warning("Some edges are missing.")
         if self.do_lns:
             for iedge in self.linear_solver.constraint_on_edge:
-                self.linear_solver.model.remove(
-                    self.linear_solver.constraint_on_edge[iedge]
-                )
+                try:
+                    self.linear_solver.model.remove(
+                        self.linear_solver.constraint_on_edge[iedge]
+                    )
+                except IndexError as e:
+                    pass
         self.linear_solver.constraint_on_edge = {}
         edges_to_constraint = {v: set() for v in range(self.problem.number_vehicle)}
         vehicle_to_not_constraints = set(
@@ -1525,7 +1564,7 @@ class ConstraintHandlerOrWarmStart:
                         )
                     )
                 )
-        logger.debug(
+        logger.info(
             (
                 sum([len(edges_to_constraint[v]) for v in edges_to_constraint]),
                 " edges constraint over ",
@@ -1542,6 +1581,7 @@ class ConstraintHandlerOrWarmStart:
         iedge = 0
         start_list = []
         for v in vehicle_keys:
+            logger.debug(f"Rebuild dict = , {rebuilt_dict[v]}")
             for e in self.linear_solver.variable_decisions["variables_edges"][v]:
                 val = 0
                 if v in edges_to_add and e in edges_to_add[v]:
@@ -1564,6 +1604,7 @@ class ConstraintHandlerOrWarmStart:
                         )
                     )
                 if self.do_lns:
+
                     if (
                         rebuilt_dict[v] is not None
                         and v in edges_to_constraint
@@ -1656,6 +1697,7 @@ def update_model(
 ):
     len_component_global = len(components_global)
     list_constraints = []
+    list_constraints_tuple = []
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
@@ -1674,6 +1716,7 @@ def update_model(
             if not any(
                 problem.target_vehicle[v] in s[0] for v in problem.origin_vehicle
             ):
+                list_constraints_tuple += [(edge_out_of_interest, 1)]
                 list_constraints += [
                     lp_solver.model.add_constr(
                         mip.quicksum(
@@ -1691,6 +1734,7 @@ def update_model(
             if not any(
                 problem.origin_vehicle[v] in s[0] for v in problem.origin_vehicle
             ):
+                list_constraints_tuple += [(edge_in_of_interest, 1)]
                 list_constraints += [
                     lp_solver.model.add_constr(
                         mip.quicksum(
@@ -1745,7 +1789,7 @@ def update_model(
                                 ),
                                 name="order_" + str(node),
                             )
-    return list_constraints
+    return list_constraints, list_constraints_tuple
 
 
 def update_model_lazy(
