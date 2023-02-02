@@ -8,16 +8,13 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
-from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
-from discrete_optimization.coloring.solvers.greedy_coloring import (
-    GreedyColoring,
-    NXGreedyColoringMethod,
+from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
+    SolverColoringWithStartingSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -29,14 +26,18 @@ except ImportError:
 else:
     toulbar_available = True
 
+import logging
 
-class ToulbarColoringSolver(SolverColoring):
+logger = logging.getLogger(__name__)
+
+
+class ToulbarColoringSolver(SolverColoringWithStartingSolution):
     def __init__(
         self,
         coloring_model: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        SolverColoring.__init__(self, coloring_model=coloring_model)
+        SolverColoringWithStartingSolution.__init__(self, coloring_model=coloring_model)
         (
             self.aggreg_sol,
             self.aggreg_from_dict_values,
@@ -49,23 +50,11 @@ class ToulbarColoringSolver(SolverColoring):
     def init_model(self, **kwargs: Any) -> None:
         number_nodes = self.coloring_model.number_of_nodes
         index_nodes_name = self.coloring_model.index_nodes_name
-        greedy_solver = GreedyColoring(
-            coloring_model=self.coloring_model,
-            params_objective_function=self.params_objective_function,
-        )
-        res = greedy_solver.solve(strategy=NXGreedyColoringMethod.largest_first)
-        sol = res.get_best_solution()
-        if sol is None:
-            raise RuntimeError(
-                "greedy_solver.solve(strategy=NXGreedyColoringMethod.largest_first).get_best_solution() "
-                "should not be None."
-            )
-        if not isinstance(sol, ColoringSolution):
-            raise RuntimeError(
-                "greedy_solver.solve(strategy=NXGreedyColoringMethod.largest_first).get_best_solution() "
-                "should be a ColoringSolution."
-            )
-        nb_colors = int(self.coloring_model.evaluate(sol)["nb_colors"])
+        nb_colors = kwargs.get("nb_colors", None)
+        if nb_colors is None:
+            # Run greedy solver to get an upper bound of the bound.
+            sol = self.get_starting_solution(**kwargs)
+            nb_colors = int(self.coloring_model.evaluate(sol)["nb_colors"])
         print(nb_colors, " colors found by the greedy method ")
         # we don't have to have a very tight bound.
         Problem = pytoulbar2.CFN(nb_colors)
@@ -151,7 +140,7 @@ class ToulbarColoringSolver(SolverColoring):
         ]
         for e in self.coloring_model.graph.edges:
             if index % 100 == 0:
-                print(index, "/", len_edges)
+                logger.info(f"Nb edges introduced {index} / {len_edges}")
             index1 = index_nodes_name[e[0]]
             index2 = index_nodes_name[e[1]]
             Problem.AddFunction([f"x_{index1}", f"x_{index2}"], costs)
@@ -165,11 +154,11 @@ class ToulbarColoringSolver(SolverColoring):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        print("model init.")
+        logger.info("CFN Model init.")
         time_limit = kwargs.get("time_limit", 20)
         self.model.CFN.timer(time_limit)
         solution = self.model.Solve(showSolutions=1)
-        print(solution)
+        logger.info(f"=== Solution === \n {solution}")
         rcpsp_sol = ColoringSolution(
             problem=self.coloring_model,
             colors=solution[0][1 : 1 + self.coloring_model.number_of_nodes],
