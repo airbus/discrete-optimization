@@ -7,7 +7,19 @@ import logging
 import os
 import random
 import time
-from typing import Any, Dict, Hashable, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -26,7 +38,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
 )
-from discrete_optimization.pickup_vrp.gpdp import GPDP, GPDPSolution
+from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, GPDPSolution, Node
 
 try:
     import gurobipy as grb
@@ -42,28 +54,39 @@ logger = logging.getLogger(__name__)
 class TemporaryResult:
     def __init__(
         self,
-        flow_solution: Dict[int, Dict],
+        flow_solution: Dict[int, Dict[Edge, int]],
         graph_merge: nx.DiGraph,
         graph_vehicle: Dict[int, nx.DiGraph],
         obj: float,
-        all_variables: Dict[str, Any] = None,
+        all_variables: Optional[Dict[str, Dict[Any, Any]]] = None,
     ):
         self.flow_solution = flow_solution
         self.graph_merge = graph_merge
         self.graph_vehicle = graph_vehicle
         self.obj = obj
-        self.components = None
-        self.component_global = None
-        self.connected_components_per_vehicle = None
+        self.component_global: Optional[List[Tuple[Set[Node], int]]] = None
+        self.connected_components_per_vehicle: Optional[
+            Dict[int, List[Tuple[Set[Node], int]]]
+        ] = None
         self.all_variables = all_variables
-        self.rebuilt_dict = None
+        self.rebuilt_dict: Optional[Dict[int, List[Node]]] = None
+        self.paths_component: Optional[Dict[int, Dict[int, List[Node]]]] = None
+        self.indexes_component: Optional[Dict[int, Dict[int, Dict[Node, int]]]] = None
 
 
 def convert_temporaryresult_to_gpdpsolution(
     temporaryresult: TemporaryResult, problem: GPDP
 ) -> GPDPSolution:
-    times = {}
-    if "time_leaving" in temporaryresult.all_variables:
+    if temporaryresult.rebuilt_dict is None:
+        raise ValueError(
+            "temporaryresult.rebuilt_dict should not be None "
+            "when calling convert_temporaryresult_to_gpdpsolution()"
+        )
+    times: Dict[Node, float] = {}
+    if (
+        temporaryresult.all_variables is not None
+        and "time_leaving" in temporaryresult.all_variables
+    ):
         # We will only store the time values to visited nodes (which are not necessarly all the nodes
         # when we run cluster version of the problem
         nodes_visited_in_results = set()
@@ -73,7 +96,7 @@ def convert_temporaryresult_to_gpdpsolution(
             n: temporaryresult.all_variables["time_leaving"][n]
             for n in nodes_visited_in_results
         }
-    resource_evolution = {}
+    resource_evolution: Dict[Node, Dict[Node, List[int]]] = {}
     return GPDPSolution(
         problem=problem,
         trajectories=temporaryresult.rebuilt_dict,
@@ -82,18 +105,13 @@ def convert_temporaryresult_to_gpdpsolution(
     )
 
 
-def convert_flow_obj_to_gpdpsolution(
-    flow: Dict[str, Dict[Hashable, Any]],
-    obj: float,
-) -> GPDPSolution:
-    ...
-
-
 def retrieve_ith_solution(
     i: int, model: "grb.Model", variable_decisions: Dict[str, Any]
 ) -> Tuple[Dict[str, Dict[Hashable, Any]], float]:
     results: Dict[str, Dict[Hashable, Any]] = {}
-    xsolution = {v: {} for v in variable_decisions["variables_edges"]}
+    xsolution: Dict[int, Dict[Edge, int]] = {
+        v: {} for v in variable_decisions["variables_edges"]
+    }
     model.params.SolutionNumber = i
     obj = model.getAttr("PoolObjVal")
     for vehicle in variable_decisions["variables_edges"]:
@@ -102,7 +120,7 @@ def retrieve_ith_solution(
             if value <= 0.1:
                 continue
             xsolution[vehicle][edge] = 1
-    results["variables_edges"] = xsolution
+    results["variables_edges"] = cast(Dict[Hashable, Any], xsolution)
     for key in variable_decisions:
         if key == "variables_edges":
             continue
@@ -147,7 +165,8 @@ class LinearFlowSolver(GurobiMilpSolver):
     ):
         self.problem = problem
         self.model: Optional["grb.Model"] = None
-        self.constraint_on_edge = {}
+        self.constraint_on_edge: Dict[int, Any] = {}
+        self.variable_order: Dict[Node, Any] = {}
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -159,12 +178,12 @@ class LinearFlowSolver(GurobiMilpSolver):
 
     def one_visit_per_node(
         self,
-        model,
-        nodes_of_interest,
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        model: "grb.Model",
+        nodes_of_interest: Iterable[Node],
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> None:
         constraint_one_visit = {}
         for node in nodes_of_interest:
             constraint_one_visit[node] = model.addConstr(
@@ -187,17 +206,17 @@ class LinearFlowSolver(GurobiMilpSolver):
 
     def custom_constraint(
         self,
-        model,
-        nodes_to_visit,
-        nodes_to_validate,
-        edges_validating,
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-        edges_in_per_vehicle,
-        edges_out_per_vehicle,
-    ):
-        constraint_one_visit = {}
+        model: "grb.Model",
+        nodes_to_visit: Iterable[Node],
+        nodes_to_validate: Iterable[Node],
+        edges_validating: Dict[Union[Node, Tuple[Node, str]], Dict[str, Any]],
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_in_per_vehicle: Dict[int, Dict[Node, Set[Edge]]],
+        edges_out_per_vehicle: Dict[int, Dict[Node, Set[Edge]]],
+    ) -> None:
+        constraint_one_visit: Dict[Union[Node, Tuple[Node, str]], Any] = {}
         for node in nodes_to_visit:
             constraint_one_visit[node] = model.addConstr(
                 lhs=grb.quicksum(
@@ -237,13 +256,13 @@ class LinearFlowSolver(GurobiMilpSolver):
 
     def one_visit_per_clusters(
         self,
-        model,
-        nodes_of_interest,
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
-        constraint_cluster = {}
+        model: "grb.Model",
+        nodes_of_interest: Iterable[Node],
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> None:
+        constraint_cluster: Dict[Hashable, Any] = {}
         for cluster in self.problem.clusters_to_node:
             if all(
                 node in nodes_of_interest
@@ -282,12 +301,12 @@ class LinearFlowSolver(GurobiMilpSolver):
     def resources_constraint(
         self,
         model: "grb.Model",
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> Dict[str, Dict[str, Dict[Node, Any]]]:
         resources = self.problem.resources_set
-        resources_variable_coming = {
+        resources_variable_coming: Dict[str, Dict[Node, Any]] = {
             r: {
                 node: model.addVar(
                     vtype=grb.GRB.CONTINUOUS,
@@ -351,15 +370,15 @@ class LinearFlowSolver(GurobiMilpSolver):
     def simple_capacity_constraint(
         self,
         model: "grb.Model",
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> Dict[str, Dict[int, Dict[str, Any]]]:
         # Case where we don't have to track the resource flow etc...
         # we just want to check that we respect the capacity constraint (like in VRP with capacity)
         # we admit that the resource demand/consumption are positive.
         # corresponding to negative flow values in the problem definition.
-        consumption_per_vehicle = {
+        consumption_per_vehicle: Dict[int, Dict[str, Any]] = {
             v: {
                 r: model.addVar(
                     vtype=grb.GRB.CONTINUOUS,
@@ -397,17 +416,17 @@ class LinearFlowSolver(GurobiMilpSolver):
     def time_evolution(
         self,
         model: "grb.Model",
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
-        time_coming = {
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> Dict[str, Dict[Node, Any]]:
+        time_coming: Dict[Node, Any] = {
             node: model.addVar(
                 vtype=grb.GRB.CONTINUOUS, name="time_coming_" + str(node)
             )
             for node in edges_in_all_vehicles
         }
-        time_leaving = {
+        time_leaving: Dict[Node, Any] = {
             node: model.addVar(
                 vtype=grb.GRB.CONTINUOUS, name="time_leaving_" + str(node)
             )
@@ -437,7 +456,7 @@ class LinearFlowSolver(GurobiMilpSolver):
                 )
         return {"time_coming": time_coming, "time_leaving": time_leaving}
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         model: grb.Model = grb.Model("GPDP-flow")
         include_backward = kwargs.get("include_backward", True)
         include_triangle = kwargs.get("include_triangle", False)
@@ -453,12 +472,18 @@ class LinearFlowSolver(GurobiMilpSolver):
         name_vehicles = sorted(self.problem.origin_vehicle.keys())
         if self.problem.graph is None:
             self.problem.compute_graph()
+            if self.problem.graph is None:
+                raise RuntimeError(
+                    "self.problem.graph cannot be None "
+                    "after calling self.problem.compute_graph()."
+                )
         graph = self.problem.graph
         nodes_of_interest = [
             n
             for n in graph.get_nodes()
             if n not in self.problem.nodes_origin and n not in self.problem.nodes_target
         ]
+        variables_edges: Dict[int, Dict[Edge, Any]]
         if self.problem.any_grouping:
             variables_edges = {j: {} for j in range(nb_vehicle)}
             for k in self.problem.group_identical_vehicles:
@@ -507,8 +532,8 @@ class LinearFlowSolver(GurobiMilpSolver):
             model.update()
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables = {"variables_edges": variables_edges}
-        constraint_loop = {}
+        all_variables: Dict[str, Dict[Any, Any]] = {"variables_edges": variables_edges}
+        constraint_loop: Dict[Tuple[int, Edge], Any] = {}
         for vehicle in variables_edges:
             for e in variables_edges[vehicle]:
                 if e[0] == e[1]:
@@ -516,88 +541,28 @@ class LinearFlowSolver(GurobiMilpSolver):
                         variables_edges[vehicle][e] == 0,
                         name="loop_" + str((vehicle, e)),
                     )
-        edges_in_all_vehicles = {}
-        edges_out_all_vehicles = {}
-        edges_in_per_vehicles = {}
-        edges_out_per_vehicles = {}
-        edges_in_all_vehicles_cluster = {}
-        edges_out_all_vehicles_cluster = {}
-        edges_in_per_vehicles_cluster = {}
-        edges_out_per_vehicles_cluster = {}
 
-        for vehicle in variables_edges:
-            edges_in_per_vehicles[vehicle] = {}
-            edges_out_per_vehicles[vehicle] = {}
-            edges_in_per_vehicles_cluster[vehicle] = {}
-            edges_out_per_vehicles_cluster[vehicle] = {}
-            for edge in variables_edges[vehicle]:
-                out_ = edge[0]
-                in_ = edge[1]
-                if out_ not in edges_out_per_vehicles[vehicle]:
-                    edges_out_per_vehicles[vehicle][out_] = set()
-                if in_ not in edges_in_per_vehicles[vehicle]:
-                    edges_in_per_vehicles[vehicle][in_] = set()
-                if out_ not in edges_out_all_vehicles:
-                    edges_out_all_vehicles[out_] = set()
-                if in_ not in edges_in_all_vehicles:
-                    edges_in_all_vehicles[in_] = set()
-                if (
-                    out_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[out_]
-                    not in edges_out_per_vehicles_cluster[vehicle]
-                ):
-                    edges_out_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[out_]
-                    ] = set()
-                if (
-                    in_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[in_]
-                    not in edges_in_per_vehicles_cluster[vehicle]
-                ):
-                    edges_in_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[in_]
-                    ] = set()
-                if (
-                    out_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[out_]
-                    not in edges_out_all_vehicles_cluster
-                ):
-                    edges_out_all_vehicles_cluster[
-                        self.problem.clusters_dict[out_]
-                    ] = set()
-                if (
-                    in_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[in_]
-                    not in edges_in_all_vehicles_cluster
-                ):
-                    edges_in_all_vehicles_cluster[
-                        self.problem.clusters_dict[in_]
-                    ] = set()
-                edges_out_all_vehicles[out_].add((vehicle, edge))
-                edges_in_all_vehicles[in_].add((vehicle, edge))
-                edges_in_per_vehicles[vehicle][in_].add(edge)
-                edges_out_per_vehicles[vehicle][out_].add(edge)
-                if out_ in self.problem.clusters_dict:
-                    edges_out_all_vehicles_cluster[
-                        self.problem.clusters_dict[out_]
-                    ].add((vehicle, edge))
-                    edges_out_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[out_]
-                    ].add(edge)
-                if in_ in self.problem.clusters_dict:
-                    edges_in_all_vehicles_cluster[self.problem.clusters_dict[in_]].add(
-                        (vehicle, edge)
-                    )
-                    edges_in_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[in_]
-                    ].add(edge)
+        (
+            edges_in_all_vehicles,
+            edges_out_all_vehicles,
+            edges_in_per_vehicles,
+            edges_out_per_vehicles,
+            edges_in_all_vehicles_cluster,
+            edges_out_all_vehicles_cluster,
+            edges_in_per_vehicles_cluster,
+            edges_out_per_vehicles_cluster,
+        ) = construct_edges_in_out_dict(
+            variables_edges=variables_edges, clusters_dict=self.problem.clusters_dict
+        )
 
-        constraints_out_flow = {}
-        constraints_in_flow = {}
-        constraints_flow_conservation = {}
+        constraints_out_flow: Dict[Tuple[int, Node], Any] = {}
+        constraints_in_flow: Dict[Union[Tuple[int, Node], Node], Any] = {}
+        constraints_flow_conservation: Dict[
+            Union[Tuple[int, Node], Tuple[int, Node, str]], Any
+        ] = {}
 
-        count_origin = {}
-        count_target = {}
+        count_origin: Dict[Node, int] = {}
+        count_target: Dict[Node, int] = {}
         for vehicle in range(nb_vehicle):
             node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             node_target = self.problem.target_vehicle[name_vehicles[vehicle]]
@@ -830,12 +795,12 @@ class LinearFlowSolver(GurobiMilpSolver):
         if edges_validating_constraint:
             self.custom_constraint(
                 model=model,
-                nodes_to_visit=set([n for n in nodes_of_interest if n >= 366]),
+                nodes_to_visit=set([n for n in nodes_of_interest if n >= 366]),  # type: ignore
                 nodes_to_validate=set(range(6, 366)),
                 variables_edges=variables_edges,
                 edges_in_all_vehicles=edges_in_all_vehicles,
                 edges_out_all_vehicles=edges_out_all_vehicles,
-                edges_validating=kwargs.get("edges_validating", None),
+                edges_validating=kwargs.get("edges_validating", {}),
                 edges_in_per_vehicle=edges_in_per_vehicles,
                 edges_out_per_vehicle=edges_out_per_vehicles,
             )
@@ -879,16 +844,31 @@ class LinearFlowSolver(GurobiMilpSolver):
         model.setParam("Heuristics", 0.5)
         model.setParam(grb.GRB.Param.Method, 2)
         model.modelSense = grb.GRB.MINIMIZE
-        self.edges_info = {
-            "edges_in_all_vehicles": edges_in_all_vehicles,
-            "edges_out_all_vehicles": edges_out_all_vehicles,
-            "edges_in_per_vehicles": edges_in_per_vehicles,
-            "edges_out_per_vehicles": edges_out_per_vehicles,
-            "edges_in_all_vehicles_cluster": edges_in_all_vehicles_cluster,
-            "edges_out_all_vehicles_cluster": edges_out_all_vehicles_cluster,
-            "edges_in_per_vehicles_cluster": edges_in_per_vehicles_cluster,
-            "edges_out_per_vehicles_cluster": edges_out_per_vehicles_cluster,
-        }
+        self.edges_in_all_vehicles: Dict[
+            Node, Set[Tuple[int, Edge]]
+        ] = edges_in_all_vehicles
+        self.edges_out_all_vehicles: Dict[
+            Node, Set[Tuple[int, Edge]]
+        ] = edges_out_all_vehicles
+        self.edges_in_per_vehicles: Dict[
+            int, Dict[Node, Set[Edge]]
+        ] = edges_in_per_vehicles
+        self.edges_out_per_vehicles: Dict[
+            int, Dict[Node, Set[Edge]]
+        ] = edges_out_per_vehicles
+        self.edges_in_all_vehicles_cluster: Dict[
+            Hashable, Set[Tuple[int, Edge]]
+        ] = edges_in_all_vehicles_cluster
+        self.edges_out_all_vehicles_cluster: Dict[
+            Hashable, Set[Tuple[int, Edge]]
+        ] = edges_out_all_vehicles_cluster
+        self.edges_in_per_vehicles_cluster: Dict[
+            int, Dict[Hashable, Set[Edge]]
+        ] = edges_in_per_vehicles_cluster
+        self.edges_out_per_vehicles_cluster: Dict[
+            int, Dict[Hashable, Set[Edge]]
+        ] = edges_out_per_vehicles_cluster
+
         self.variable_decisions = all_variables
         self.model = model
         self.clusters_version = one_visit_per_cluster
@@ -898,6 +878,11 @@ class LinearFlowSolver(GurobiMilpSolver):
         res, obj = retrieve_ith_solution(
             i=i, model=self.model, variable_decisions=self.variable_decisions
         )
+        if self.problem.graph is None:
+            raise RuntimeError(
+                "self.problem.graph cannot be None "
+                "when calling retrieve_ith_temporaryresult()."
+            )
         temporaryresult = build_graph_solution(
             results=res, obj=obj, graph=self.problem.graph
         )
@@ -981,6 +966,17 @@ class LinearFlowSolver(GurobiMilpSolver):
         solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, **kwargs
         )
+        first_solution: TemporaryResult = solutions[0]
+        if (
+            (first_solution.rebuilt_dict is None)
+            or (first_solution.connected_components_per_vehicle is None)
+            or (first_solution.component_global is None)
+        ):
+            raise RuntimeError(
+                "Temporary result attributes rebuilt_dict, component_global"
+                "and connected_components_per_vehicle cannot be None after solving."
+            )
+        subtour: Union[SubtourAddingConstraint, SubtourAddingConstraintCluster]
         if self.clusters_version:
             subtour = SubtourAddingConstraintCluster(
                 problem=self.problem, linear_solver=self
@@ -990,20 +986,20 @@ class LinearFlowSolver(GurobiMilpSolver):
         if (
             max(
                 [
-                    len(solutions[0].connected_components_per_vehicle[v])
-                    for v in solutions[0].connected_components_per_vehicle
+                    len(first_solution.connected_components_per_vehicle[v])
+                    for v in first_solution.connected_components_per_vehicle
                 ]
             )
             == 1
         ):
             finished = True
             return solutions
-        subtour.adding_component_constraints([solutions[0]])
+        subtour.adding_component_constraints([first_solution])
         self.model.update()
         all_solutions = solutions
         nb_iteration = 0
         while not finished:
-            rebuilt_dict = solutions[0].rebuilt_dict
+            rebuilt_dict = first_solution.rebuilt_dict
             if (json_dump_folder is not None) and all(
                 rebuilt_dict[v] is not None for v in rebuilt_dict
             ):
@@ -1031,9 +1027,19 @@ class LinearFlowSolver(GurobiMilpSolver):
             ):
                 c.adding_constraint(warm_start)
             self.model.update()
-            solutions: List[TemporaryResult] = self.solve_one_iteration(
+            solutions = self.solve_one_iteration(
                 parameters_milp=parameters_milp, **kwargs
             )
+            first_solution = solutions[0]
+            if (
+                (first_solution.rebuilt_dict is None)
+                or (first_solution.connected_components_per_vehicle is None)
+                or (first_solution.component_global is None)
+            ):
+                raise RuntimeError(
+                    "Temporary result attributes rebuilt_dict, component_global"
+                    "and connected_components_per_vehicle cannot be None after solving."
+                )
             all_solutions += solutions
             if self.clusters_version:
                 subtour = SubtourAddingConstraintCluster(
@@ -1043,13 +1049,13 @@ class LinearFlowSolver(GurobiMilpSolver):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            logger.debug(len(solutions[0].component_global))
-            subtour.adding_component_constraints([solutions[0]])
+            logger.debug(len(first_solution.component_global))
+            subtour.adding_component_constraints([first_solution])
             if (
                 max(
                     [
-                        len(solutions[0].connected_components_per_vehicle[v])
-                        for v in solutions[0].connected_components_per_vehicle
+                        len(first_solution.connected_components_per_vehicle[v])
+                        for v in first_solution.connected_components_per_vehicle
                     ]
                 )
                 == 1
@@ -1070,6 +1076,8 @@ class LinearFlowSolver(GurobiMilpSolver):
         warm_start: Optional[Dict[Any, Any]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         temporaryresults = self.solve_iterative(
             parameters_milp=parameters_milp,
             do_lns=do_lns,
@@ -1094,7 +1102,7 @@ class LinearFlowSolver(GurobiMilpSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def init_warm_start(self, routes: Dict[int, List]):
+    def init_warm_start(self, routes: Dict[int, List]) -> None:
         if routes is None:
             return
         for v in routes:
@@ -1117,7 +1125,8 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
     ):
         self.problem = problem
         self.model: Optional[grb.Model] = None
-        self.constraint_on_edge = {}
+        self.constraint_on_edge: Dict[int, Any] = {}
+        self.variable_order: Dict[Node, Any] = {}
         (
             self.aggreg_sol,
             self.aggreg_dict,
@@ -1129,12 +1138,12 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
 
     def one_visit_per_node(
         self,
-        model,
-        nodes_of_interest,
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        model: "grb.Model",
+        nodes_of_interest: Iterable[Node],
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> None:
         constraint_one_visit = {}
         for node in nodes_of_interest:
             constraint_one_visit[node] = model.addConstr(
@@ -1157,12 +1166,12 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
 
     def one_visit_per_clusters(
         self,
-        model,
-        nodes_of_interest,
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        model: "grb.Model",
+        nodes_of_interest: Iterable[Node],
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> None:
         constraint_cluster = {}
         for cluster in self.problem.clusters_to_node:
             constraint_cluster[cluster] = model.addConstr(
@@ -1196,10 +1205,10 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
     def resources_constraint(
         self,
         model: "grb.Model",
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> Dict[str, Dict[str, Dict[Node, Any]]]:
         resources = self.problem.resources_set
         resources_variable_coming = {
             r: {
@@ -1265,10 +1274,10 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
     def simple_capacity_constraint(
         self,
         model: "grb.Model",
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> Dict[str, Dict[int, Dict[str, Any]]]:
         # Case where we don't have to track the resource flow etc...
         # we just want to check that we respect the capacity constraint (like in VRP with capacity)
         # we admit that the resource demand/consumption are positive.
@@ -1311,10 +1320,10 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
     def time_evolution(
         self,
         model: "grb.Model",
-        variables_edges,
-        edges_in_all_vehicles,
-        edges_out_all_vehicles,
-    ):
+        variables_edges: Dict[int, Dict[Edge, Any]],
+        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    ) -> Dict[str, Dict[Node, Any]]:
         time_coming = {
             node: model.addVar(
                 vtype=grb.GRB.CONTINUOUS, name="time_coming_" + str(node)
@@ -1351,7 +1360,7 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
                 )
         return {"time_coming": time_coming, "time_leaving": time_leaving}
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         model: grb.Model = grb.Model("GPDP-flow")
         include_resources = kwargs.get("include_resources", False)
         include_capacity = kwargs.get("include_capacity", False)
@@ -1362,13 +1371,18 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         name_vehicles = sorted(self.problem.origin_vehicle.keys())
         if self.problem.graph is None:
             self.problem.compute_graph()
+            if self.problem.graph is None:
+                raise RuntimeError(
+                    "self.problem.graph cannot be None "
+                    "after calling self.problem.compute_graph()."
+                )
         graph = self.problem.graph
         nodes_of_interest = [
             n
             for n in graph.get_nodes()
             if n not in self.problem.nodes_origin and n not in self.problem.nodes_target
         ]
-        variables_edges = {j: {} for j in range(nb_vehicle)}
+        variables_edges: Dict[int, Dict[Edge, Any]] = {j: {} for j in range(nb_vehicle)}
         for k in self.problem.group_identical_vehicles:
             j = self.problem.group_identical_vehicles[k][0]
             variables_edges[k] = {
@@ -1381,8 +1395,8 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
             }
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables = {"variables_edges": variables_edges}
-        constraint_loop = {}
+        all_variables: Dict[str, Dict[Any, Any]] = {"variables_edges": variables_edges}
+        constraint_loop: Dict[Tuple[int, Edge], Any] = {}
         for group_vehicle in variables_edges:
             for e in variables_edges[group_vehicle]:
                 if e[0] == e[1]:
@@ -1390,88 +1404,25 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
                         variables_edges[group_vehicle][e] == 0,
                         name="loop_" + str((group_vehicle, e)),
                     )
-        edges_in_all_vehicles = {}
-        edges_out_all_vehicles = {}
-        edges_in_per_vehicles = {}
-        edges_out_per_vehicles = {}
-        edges_in_all_vehicles_cluster = {}
-        edges_out_all_vehicles_cluster = {}
-        edges_in_per_vehicles_cluster = {}
-        edges_out_per_vehicles_cluster = {}
+        (
+            edges_in_all_vehicles,
+            edges_out_all_vehicles,
+            edges_in_per_vehicles,
+            edges_out_per_vehicles,
+            edges_in_all_vehicles_cluster,
+            edges_out_all_vehicles_cluster,
+            edges_in_per_vehicles_cluster,
+            edges_out_per_vehicles_cluster,
+        ) = construct_edges_in_out_dict(
+            variables_edges=variables_edges, clusters_dict=self.problem.clusters_dict
+        )
 
-        for vehicle in variables_edges:
-            edges_in_per_vehicles[vehicle] = {}
-            edges_out_per_vehicles[vehicle] = {}
-            edges_in_per_vehicles_cluster[vehicle] = {}
-            edges_out_per_vehicles_cluster[vehicle] = {}
-            for edge in variables_edges[vehicle]:
-                out_ = edge[0]
-                in_ = edge[1]
-                if out_ not in edges_out_per_vehicles[vehicle]:
-                    edges_out_per_vehicles[vehicle][out_] = set()
-                if in_ not in edges_in_per_vehicles[vehicle]:
-                    edges_in_per_vehicles[vehicle][in_] = set()
-                if out_ not in edges_out_all_vehicles:
-                    edges_out_all_vehicles[out_] = set()
-                if in_ not in edges_in_all_vehicles:
-                    edges_in_all_vehicles[in_] = set()
-                if (
-                    out_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[out_]
-                    not in edges_out_per_vehicles_cluster[vehicle]
-                ):
-                    edges_out_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[out_]
-                    ] = set()
-                if (
-                    in_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[in_]
-                    not in edges_in_per_vehicles_cluster[vehicle]
-                ):
-                    edges_in_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[in_]
-                    ] = set()
-                if (
-                    out_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[out_]
-                    not in edges_out_all_vehicles_cluster
-                ):
-                    edges_out_all_vehicles_cluster[
-                        self.problem.clusters_dict[out_]
-                    ] = set()
-                if (
-                    in_ in self.problem.clusters_dict
-                    and self.problem.clusters_dict[in_]
-                    not in edges_in_all_vehicles_cluster
-                ):
-                    edges_in_all_vehicles_cluster[
-                        self.problem.clusters_dict[in_]
-                    ] = set()
-                edges_out_all_vehicles[out_].add((vehicle, edge))
-                edges_in_all_vehicles[in_].add((vehicle, edge))
-                edges_in_per_vehicles[vehicle][in_].add(edge)
-                edges_out_per_vehicles[vehicle][out_].add(edge)
-                if out_ in self.problem.clusters_dict:
-                    edges_out_all_vehicles_cluster[
-                        self.problem.clusters_dict[out_]
-                    ].add((vehicle, edge))
-                    edges_out_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[out_]
-                    ].add(edge)
-                if in_ in self.problem.clusters_dict:
-                    edges_in_all_vehicles_cluster[self.problem.clusters_dict[in_]].add(
-                        (vehicle, edge)
-                    )
-                    edges_in_per_vehicles_cluster[vehicle][
-                        self.problem.clusters_dict[in_]
-                    ].add(edge)
+        constraints_out_flow: Dict[Tuple[int, Node], Any] = {}
+        constraints_in_flow: Dict[Tuple[int, Node], Any] = {}
+        constraints_flow_conservation: Dict[Union[Tuple[int, Node], Node], Any] = {}
 
-        constraints_out_flow = {}
-        constraints_in_flow = {}
-        constraints_flow_conservation = {}
-
-        count_origin = {}
-        count_target = {}
+        count_origin: Dict[Node, int] = {}
+        count_target: Dict[Node, int] = {}
         for vehicle in range(nb_vehicle):
             node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             node_target = self.problem.target_vehicle[name_vehicles[vehicle]]
@@ -1640,16 +1591,31 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         model.setParam(grb.GRB.Param.Threads, 4)
         model.setParam(grb.GRB.Param.Method, -1)
         model.setParam("Heuristics", 0.2)
-        self.edges_info = {
-            "edges_in_all_vehicles": edges_in_all_vehicles,
-            "edges_out_all_vehicles": edges_out_all_vehicles,
-            "edges_in_per_vehicles": edges_in_per_vehicles,
-            "edges_out_per_vehicles": edges_out_per_vehicles,
-            "edges_in_all_vehicles_cluster": edges_in_all_vehicles_cluster,
-            "edges_out_all_vehicles_cluster": edges_out_all_vehicles_cluster,
-            "edges_in_per_vehicles_cluster": edges_in_per_vehicles_cluster,
-            "edges_out_per_vehicles_cluster": edges_out_per_vehicles_cluster,
-        }
+        self.edges_in_all_vehicles: Dict[
+            Node, Set[Tuple[int, Edge]]
+        ] = edges_in_all_vehicles
+        self.edges_out_all_vehicles: Dict[
+            Node, Set[Tuple[int, Edge]]
+        ] = edges_out_all_vehicles
+        self.edges_in_per_vehicles: Dict[
+            int, Dict[Node, Set[Edge]]
+        ] = edges_in_per_vehicles
+        self.edges_out_per_vehicles: Dict[
+            int, Dict[Node, Set[Edge]]
+        ] = edges_out_per_vehicles
+        self.edges_in_all_vehicles_cluster: Dict[
+            Hashable, Set[Tuple[int, Edge]]
+        ] = edges_in_all_vehicles_cluster
+        self.edges_out_all_vehicles_cluster: Dict[
+            Hashable, Set[Tuple[int, Edge]]
+        ] = edges_out_all_vehicles_cluster
+        self.edges_in_per_vehicles_cluster: Dict[
+            int, Dict[Hashable, Set[Edge]]
+        ] = edges_in_per_vehicles_cluster
+        self.edges_out_per_vehicles_cluster: Dict[
+            int, Dict[Hashable, Set[Edge]]
+        ] = edges_out_per_vehicles_cluster
+
         self.variable_decisions = all_variables
         self.model = model
         self.clusters_version = one_visit_per_cluster
@@ -1660,11 +1626,11 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
             i=i, model=self.model, variable_decisions=self.variable_decisions
         )
         path_dict = build_path_from_vehicle_type_flow(
-            result_from_retrieve=res, problem=self.problem, solver=self
+            result_from_retrieve=res, problem=self.problem
         )
-        res["path_dict"] = path_dict
+        res["path_dict"] = cast(Dict[Hashable, Any], path_dict)
 
-        return TemporaryResult()  # TO BE COMPLETED
+        return TemporaryResult()  # type: ignore # TO BE COMPLETED
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         if parameters_milp.retrieve_all_solution:
@@ -1686,7 +1652,7 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         )
 
     def solve_one_iteration(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> List[TemporaryResult]:
         self.optimize_model(parameters_milp=parameters_milp, **kwargs)
         list_temporary_results: List[TemporaryResult] = []
@@ -1712,6 +1678,17 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, **kwargs
         )
+        first_solution: TemporaryResult = solutions[0]
+        if (
+            (first_solution.rebuilt_dict is None)
+            or (first_solution.connected_components_per_vehicle is None)
+            or (first_solution.component_global is None)
+        ):
+            raise RuntimeError(
+                "Temporary result attributes rebuilt_dict, component_global"
+                "and connected_components_per_vehicle cannot be None after solving."
+            )
+        subtour: Union[SubtourAddingConstraint, SubtourAddingConstraintCluster]
         if self.clusters_version:
             subtour = SubtourAddingConstraintCluster(
                 problem=self.problem, linear_solver=self
@@ -1721,28 +1698,38 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         if (
             max(
                 [
-                    len(solutions[0].connected_components_per_vehicle[v])
-                    for v in solutions[0].connected_components_per_vehicle
+                    len(first_solution.connected_components_per_vehicle[v])
+                    for v in first_solution.connected_components_per_vehicle
                 ]
             )
             == 1
         ):
             finished = True
             return solutions
-        subtour.adding_component_constraints([solutions[0]])
+        subtour.adding_component_constraints([first_solution])
         self.model.update()
         all_solutions = solutions
         nb_iteration = 0
         while not finished:
-            rebuilt_dict = solutions[0].rebuilt_dict
+            rebuilt_dict = first_solution.rebuilt_dict
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=do_lns
             )
             c.adding_constraint(rebuilt_dict)
             self.model.update()
-            solutions: List[TemporaryResult] = self.solve_one_iteration(
+            solutions = self.solve_one_iteration(
                 parameters_milp=parameters_milp, **kwargs
             )
+            first_solution = solutions[0]
+            if (
+                (first_solution.rebuilt_dict is None)
+                or (first_solution.connected_components_per_vehicle is None)
+                or (first_solution.component_global is None)
+            ):
+                raise RuntimeError(
+                    "Temporary result attributes rebuilt_dict, component_global"
+                    "and connected_components_per_vehicle cannot be None after solving."
+                )
             all_solutions += solutions
             if self.clusters_version:
                 subtour = SubtourAddingConstraintCluster(
@@ -1752,13 +1739,13 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
                 subtour = SubtourAddingConstraint(
                     problem=self.problem, linear_solver=self
                 )
-            logger.debug(len(solutions[0].component_global))
-            subtour.adding_component_constraints([solutions[0]])
+            logger.debug(len(first_solution.component_global))
+            subtour.adding_component_constraints([first_solution])
             if (
                 max(
                     [
-                        len(solutions[0].connected_components_per_vehicle[v])
-                        for v in solutions[0].connected_components_per_vehicle
+                        len(first_solution.connected_components_per_vehicle[v])
+                        for v in first_solution.connected_components_per_vehicle
                     ]
                 )
                 == 1
@@ -1775,6 +1762,8 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         parameters_milp: Optional[ParametersMilp] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
         temporaryresults = self.solve_iterative(
             parameters_milp=parameters_milp, **kwargs
         )
@@ -1795,11 +1784,91 @@ class LinearFlowSolverVehicleType(GurobiMilpSolver):
         )
 
 
+def construct_edges_in_out_dict(
+    variables_edges: Dict[int, Dict[Edge, Any]], clusters_dict: Dict[Node, Hashable]
+) -> Tuple[
+    Dict[Node, Set[Tuple[int, Edge]]],
+    Dict[Node, Set[Tuple[int, Edge]]],
+    Dict[int, Dict[Node, Set[Edge]]],
+    Dict[int, Dict[Node, Set[Edge]]],
+    Dict[Hashable, Set[Tuple[int, Edge]]],
+    Dict[Hashable, Set[Tuple[int, Edge]]],
+    Dict[int, Dict[Hashable, Set[Edge]]],
+    Dict[int, Dict[Hashable, Set[Edge]]],
+]:
+    edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]] = {}
+    edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]] = {}
+    edges_in_per_vehicles: Dict[int, Dict[Node, Set[Edge]]] = {}
+    edges_out_per_vehicles: Dict[int, Dict[Node, Set[Edge]]] = {}
+    edges_in_all_vehicles_cluster: Dict[Hashable, Set[Tuple[int, Edge]]] = {}
+    edges_out_all_vehicles_cluster: Dict[Hashable, Set[Tuple[int, Edge]]] = {}
+    edges_in_per_vehicles_cluster: Dict[int, Dict[Hashable, Set[Edge]]] = {}
+    edges_out_per_vehicles_cluster: Dict[int, Dict[Hashable, Set[Edge]]] = {}
+
+    for vehicle in variables_edges:
+        edges_in_per_vehicles[vehicle] = {}
+        edges_out_per_vehicles[vehicle] = {}
+        edges_in_per_vehicles_cluster[vehicle] = {}
+        edges_out_per_vehicles_cluster[vehicle] = {}
+        for edge in variables_edges[vehicle]:
+            out_ = edge[0]
+            in_ = edge[1]
+            if out_ not in edges_out_per_vehicles[vehicle]:
+                edges_out_per_vehicles[vehicle][out_] = set()
+            if in_ not in edges_in_per_vehicles[vehicle]:
+                edges_in_per_vehicles[vehicle][in_] = set()
+            if out_ not in edges_out_all_vehicles:
+                edges_out_all_vehicles[out_] = set()
+            if in_ not in edges_in_all_vehicles:
+                edges_in_all_vehicles[in_] = set()
+            if (
+                out_ in clusters_dict
+                and clusters_dict[out_] not in edges_out_per_vehicles_cluster[vehicle]
+            ):
+                edges_out_per_vehicles_cluster[vehicle][clusters_dict[out_]] = set()
+            if (
+                in_ in clusters_dict
+                and clusters_dict[in_] not in edges_in_per_vehicles_cluster[vehicle]
+            ):
+                edges_in_per_vehicles_cluster[vehicle][clusters_dict[in_]] = set()
+            if (
+                out_ in clusters_dict
+                and clusters_dict[out_] not in edges_out_all_vehicles_cluster
+            ):
+                edges_out_all_vehicles_cluster[clusters_dict[out_]] = set()
+            if (
+                in_ in clusters_dict
+                and clusters_dict[in_] not in edges_in_all_vehicles_cluster
+            ):
+                edges_in_all_vehicles_cluster[clusters_dict[in_]] = set()
+            edges_out_all_vehicles[out_].add((vehicle, edge))
+            edges_in_all_vehicles[in_].add((vehicle, edge))
+            edges_in_per_vehicles[vehicle][in_].add(edge)
+            edges_out_per_vehicles[vehicle][out_].add(edge)
+            if out_ in clusters_dict:
+                edges_out_all_vehicles_cluster[clusters_dict[out_]].add((vehicle, edge))
+                edges_out_per_vehicles_cluster[vehicle][clusters_dict[out_]].add(edge)
+            if in_ in clusters_dict:
+                edges_in_all_vehicles_cluster[clusters_dict[in_]].add((vehicle, edge))
+                edges_in_per_vehicles_cluster[vehicle][clusters_dict[in_]].add(edge)
+    return (
+        edges_in_all_vehicles,
+        edges_out_all_vehicles,
+        edges_in_per_vehicles,
+        edges_out_per_vehicles,
+        edges_in_all_vehicles_cluster,
+        edges_out_all_vehicles_cluster,
+        edges_in_per_vehicles_cluster,
+        edges_out_per_vehicles_cluster,
+    )
+
+
 def build_path_from_vehicle_type_flow(
-    result_from_retrieve, problem: GPDP, solver: LinearFlowSolverVehicleType
-):
+    result_from_retrieve: Dict[str, Dict[Hashable, Any]],
+    problem: GPDP,
+) -> Dict[int, List[Node]]:
     vehicle_per_type = problem.group_identical_vehicles
-    solution = {}
+    solution: Dict[int, List[Node]] = {}
     flow_solution = result_from_retrieve["variables_edges"]
     for group_vehicle in vehicle_per_type:
         edges_active = flow_solution[group_vehicle]
@@ -1823,18 +1892,26 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         super().__init__(problem)
 
     def solve_one_iteration(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> List[TemporaryResult]:
         self.prepare_model(parameters_milp=parameters_milp, **kwargs)
         if self.model is None:  # for mypy
             raise RuntimeError(
                 "self.model must not be None after self.prepare_model()."
             )
+        if self.problem.graph is None:
+            self.problem.compute_graph()
+            if self.problem.graph is None:
+                raise RuntimeError(
+                    "self.problem.graph cannot be None "
+                    "after calling self.problem.compute_graph()."
+                )
         if "warm_start" in kwargs and not kwargs.get("no_warm_start", False):
+            warm_start: Dict[int, List[Node]] = kwargs.get("warm_start", {})
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=False
             )
-            c.adding_constraint(kwargs.get("warm_start"))
+            c.adding_constraint(warm_start)
         logger.info("optimizing...")
         indexes_edges = [
             (v, e)
@@ -1842,15 +1919,21 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             for e in self.variable_decisions["variables_edges"][v]
         ]
 
-        def callback(model, where):
+        def callback(model: grb.Model, where: int) -> None:
             if where == grb.GRB.Callback.MIPSOL:
+                if self.problem.graph is None:
+                    raise RuntimeError(
+                        "self.problem.graph cannot be None at this point"
+                    )
                 solution = model.cbGetSolution(
                     [
                         self.variable_decisions["variables_edges"][x[0]][x[1]]
                         for x in indexes_edges
                     ]
                 )
-                flow_solution = {v: {} for v in range(self.problem.number_vehicle)}
+                flow_solution: Dict[int, Dict[int, int]] = {
+                    v: {} for v in range(self.problem.number_vehicle)
+                }
                 cost = {v: 0 for v in range(self.problem.number_vehicle)}
                 for k in range(len(solution)):
                     if solution[k] > 0.5:
@@ -1861,7 +1944,8 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                             "distance"
                         ]
                 list_temporary_results = build_graph_solutions(
-                    solutions=[({"variables_edges": flow_solution}, 0)], lp_solver=self
+                    solutions=[({"variables_edges": flow_solution}, 0)],
+                    graph=self.problem.graph,
                 )
                 temporary_result = list_temporary_results[0]
                 reevaluate_result(temporary_result, problem=self.problem)
@@ -1936,6 +2020,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                                 <= len(keys) - 1
                             )
 
+                subtour: Union[SubtourAddingConstraint, SubtourAddingConstraintCluster]
                 if not self.clusters_version:
                     subtour = SubtourAddingConstraint(
                         problem=self.problem, linear_solver=self, lazy=True
@@ -2000,12 +2085,22 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, no_warm_start=True, **kwargs
         )
+        first_solution: TemporaryResult = solutions[0]
+        if (
+            (first_solution.rebuilt_dict is None)
+            or (first_solution.connected_components_per_vehicle is None)
+            or (first_solution.component_global is None)
+        ):
+            raise RuntimeError(
+                "Temporary result attributes rebuilt_dict, component_global"
+                "and connected_components_per_vehicle cannot be None after solving."
+            )
         self.model.update()
         all_solutions = solutions
         nb_iteration = 0
 
         while not finished:
-            rebuilt_dict = solutions[0].rebuilt_dict
+            rebuilt_dict = first_solution.rebuilt_dict
             if (json_dump_folder is not None) and all(
                 rebuilt_dict[v] is not None for v in rebuilt_dict
             ):
@@ -2031,7 +2126,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             ):
                 c.adding_constraint(warm_start)
             self.model.update()
-            solutions: List[TemporaryResult] = self.solve_one_iteration(
+            solutions = self.solve_one_iteration(
                 parameters_milp=parameters_milp, no_warm_start=True, **kwargs
             )
             all_solutions += solutions
@@ -2041,23 +2136,38 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
 
 
 class SubtourAddingConstraint:
-    def __init__(self, problem: GPDP, linear_solver: LinearFlowSolver, lazy=False):
+    def __init__(
+        self,
+        problem: GPDP,
+        linear_solver: Union[LinearFlowSolver, LinearFlowSolverVehicleType],
+        lazy: bool = False,
+    ):
         self.problem = problem
         self.linear_solver = linear_solver
-        self.constraints_storage = {}
         self.lazy = lazy
 
-    def adding_component_constraints(self, list_solution: List[TemporaryResult]):
+    def adding_component_constraints(
+        self, list_solution: List[TemporaryResult]
+    ) -> None:
+        if self.linear_solver.model is None:
+            raise RuntimeError("self.linear_solver.model cannot be None at this point.")
         c = []
         for l in list_solution:
+            if (l.paths_component is None) or (
+                l.connected_components_per_vehicle is None
+            ):
+                raise RuntimeError(
+                    "Temporary result attributes paths_component"
+                    "and connected_components_per_vehicle cannot be None after solving."
+                )
             for v in l.connected_components_per_vehicle:
                 if self.lazy:
                     c += update_model_lazy(
                         self.problem,
                         self.linear_solver,
                         l.connected_components_per_vehicle[v],
-                        self.linear_solver.edges_info["edges_in_all_vehicles"],
-                        self.linear_solver.edges_info["edges_out_all_vehicles"],
+                        self.linear_solver.edges_in_all_vehicles,
+                        self.linear_solver.edges_out_all_vehicles,
                     )
                 else:
                     if len(l.connected_components_per_vehicle[v]) > 1:
@@ -2100,23 +2210,34 @@ class SubtourAddingConstraint:
                         self.problem,
                         self.linear_solver,
                         l.connected_components_per_vehicle[v],
-                        self.linear_solver.edges_info["edges_in_all_vehicles"],
-                        self.linear_solver.edges_info["edges_out_all_vehicles"],
+                        self.linear_solver.edges_in_all_vehicles,
+                        self.linear_solver.edges_out_all_vehicles,
                         do_order=False,
                     )
         self.linear_solver.model.update()
 
 
 class SubtourAddingConstraintCluster:
-    def __init__(self, problem: GPDP, linear_solver: LinearFlowSolver, lazy=False):
+    def __init__(
+        self,
+        problem: GPDP,
+        linear_solver: Union[LinearFlowSolver, LinearFlowSolverVehicleType],
+        lazy: bool = False,
+    ):
         self.problem = problem
         self.linear_solver = linear_solver
-        self.constraints_storage = {}
         self.lazy = lazy
 
-    def adding_component_constraints(self, list_solution: List[TemporaryResult]):
+    def adding_component_constraints(
+        self, list_solution: List[TemporaryResult]
+    ) -> None:
         c = []
         for l in list_solution:
+            if l.connected_components_per_vehicle is None:
+                raise RuntimeError(
+                    "Temporary result attributes "
+                    "connected_components_per_vehicle cannot be None after solving."
+                )
             for v in l.connected_components_per_vehicle:
                 connected_components = l.connected_components_per_vehicle[v]
                 conn = []
@@ -2127,24 +2248,31 @@ class SubtourAddingConstraintCluster:
                     self.problem,
                     self.linear_solver,
                     conn,
-                    self.linear_solver.edges_info["edges_in_all_vehicles_cluster"],
-                    self.linear_solver.edges_info["edges_out_all_vehicles_cluster"],
+                    self.linear_solver.edges_in_all_vehicles_cluster,
+                    self.linear_solver.edges_out_all_vehicles_cluster,
                     lazy=self.lazy,
                 )
 
 
 class ConstraintHandlerOrWarmStart:
     def __init__(
-        self, linear_solver: LinearFlowSolver, problem: GPDP, do_lns: bool = True
+        self,
+        linear_solver: Union[LinearFlowSolver, LinearFlowSolverVehicleType],
+        problem: GPDP,
+        do_lns: bool = True,
     ):
         self.linear_solver = linear_solver
         self.problem = problem
         self.do_lns = do_lns
         self.index_tuple = [(0, 20) for v in range(self.problem.number_vehicle)]
 
-    def adding_constraint(self, rebuilt_dict):
+    def adding_constraint(self, rebuilt_dict: Dict[int, List[Node]]) -> None:
+        if self.linear_solver.model is None:
+            raise RuntimeError("self.linear_solver.model cannot be None at this point")
         vehicle_keys = self.linear_solver.variable_decisions["variables_edges"].keys()
-        edges_to_add = {v: set() for v in vehicle_keys if rebuilt_dict[v] is not None}
+        edges_to_add: Dict[int, Set[Edge]] = {
+            v: set() for v in vehicle_keys if rebuilt_dict[v] is not None
+        }
         for v in rebuilt_dict:
             if rebuilt_dict[v] is None:
                 continue
@@ -2171,7 +2299,7 @@ class ConstraintHandlerOrWarmStart:
             except:
                 pass
         self.linear_solver.constraint_on_edge = {}
-        edges_to_constraint: Dict[int, set] = {
+        edges_to_constraint: Dict[int, Set[Edge]] = {
             v: set() for v in range(self.problem.number_vehicle)
         }
         vehicle_to_not_constraints = set(
@@ -2232,18 +2360,10 @@ class ConstraintHandlerOrWarmStart:
                         edges_to_constraint[v].remove(p)
                 for p in path[j : min(len(path), j + 350)]:
                     for sets in [
-                        self.linear_solver.edges_info["edges_in_per_vehicles"][v].get(
-                            p[0], set()
-                        ),
-                        self.linear_solver.edges_info["edges_in_per_vehicles"][v].get(
-                            p[1], set()
-                        ),
-                        self.linear_solver.edges_info["edges_out_per_vehicles"][v].get(
-                            p[0], set()
-                        ),
-                        self.linear_solver.edges_info["edges_out_per_vehicles"][v].get(
-                            p[1], set()
-                        ),
+                        self.linear_solver.edges_in_per_vehicles[v].get(p[0], set()),
+                        self.linear_solver.edges_in_per_vehicles[v].get(p[1], set()),
+                        self.linear_solver.edges_out_per_vehicles[v].get(p[0], set()),
+                        self.linear_solver.edges_out_per_vehicles[v].get(p[1], set()),
                     ]:
                         for set_ in sets:
                             if set_ in edges_to_constraint[v]:
@@ -2298,21 +2418,27 @@ class ConstraintHandlerOrWarmStart:
         self.linear_solver.model.update()
 
 
-def build_the_cycles(flow_solution, component, start_index, end_index):
-    edge_of_interest = {
+def build_the_cycles(
+    flow_solution: Dict[Edge, int],
+    component: Set[Node],
+    start_index: Node,
+    end_index: Node,
+) -> Tuple[List[Node], Dict[Node, int]]:
+    edge_of_interest: Set[Edge] = {
         e for e in flow_solution if e[1] in component and e[0] in component
     }
-    innn = {e[1]: e for e in edge_of_interest}
-    outt = {e[0]: e for e in edge_of_interest}
+    innn: Dict[Node, Edge] = {e[1]: e for e in edge_of_interest}
+    outt: Dict[Node, Edge] = {e[0]: e for e in edge_of_interest}
 
+    some_node: Node
     if start_index in outt:
         some_node = start_index
     else:
         some_node = next(e[0] for e in edge_of_interest)
     end_node = some_node if end_index not in innn else end_index
-    path = [some_node]
+    path: List[Node] = [some_node]
     cur_edge = outt[some_node]
-    indexes = {some_node: 0}
+    indexes: Dict[Node, int] = {some_node: 0}
     cur_index = 1
     while cur_edge[1] != end_node:
         path += [cur_edge[1]]
@@ -2326,16 +2452,16 @@ def build_the_cycles(flow_solution, component, start_index, end_index):
 
 
 def rebuild_routine(
-    sorted_connected_component,
-    paths_component,
-    node_to_component,
-    indexes,
-    graph,
-    edges,
-    evaluate_function_indexes,
-    start_index,
-    end_index,
-):
+    sorted_connected_component: List[Tuple[Set[Node], int]],
+    paths_component: Dict[int, List[Node]],
+    node_to_component: Dict[Node, int],
+    indexes: Dict[int, Dict[Node, int]],
+    graph: nx.DiGraph,
+    edges: Set[Edge],
+    evaluate_function_indexes: Callable[[Node, Node], float],
+    start_index: Node,
+    end_index: Node,
+) -> List[Node]:
     rebuilded_path = list(
         paths_component[node_to_component[start_index]]
     )  # Initial path
@@ -2352,7 +2478,7 @@ def rebuild_routine(
             rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
-            index_path = {}
+            index_path: Dict[Node, List[int]] = {}
             for i in range(len(rebuilded_path)):
                 if rebuilded_path[i] not in index_path:
                     index_path[rebuilded_path[i]] = []
@@ -2406,9 +2532,14 @@ def rebuild_routine(
                     if cost < backup_min_dist:
                         backup_min_dist = cost
             if len(edge_out_of_interest) == 0:
-                return None
-            if min_component is None:
-                return None
+                return []
+            if (
+                (min_component is None)
+                or (min_out_edge is None)
+                or (min_in_edge is None)
+                or (min_index_in_path is None)
+            ):
+                return []
             len_this_component = len(paths_component[min_component])
             logger.debug(list(range(0, -len_this_component, -1)))
             logger.debug(f"len this component : {len_this_component}")
@@ -2442,16 +2573,16 @@ def rebuild_routine(
 
 
 def rebuild_routine_variant(
-    sorted_connected_component,
-    paths_component,
-    node_to_component,
-    indexes,
-    graph,
-    edges,
-    evaluate_function_indexes,
-    start_index,
-    end_index,
-):
+    sorted_connected_component: List[Tuple[Set[Node], int]],
+    paths_component: Dict[int, List[Node]],
+    node_to_component: Dict[Node, int],
+    indexes: Dict[int, Dict[Node, int]],
+    graph: nx.DiGraph,
+    edges: Set[Edge],
+    evaluate_function_indexes: Callable[[Node, Node], float],
+    start_index: Node,
+    end_index: Node,
+) -> List[Node]:
     rebuilded_path = list(
         paths_component[node_to_component[start_index]]
     )  # Initial path
@@ -2467,7 +2598,7 @@ def rebuild_routine_variant(
             rebuilded_path = rebuilded_path + paths_component[component_end]
             component_reconnected.add(component_end)
         else:
-            index_path = {}
+            index_path: Dict[Node, List[int]] = {}
             for i in range(len(rebuilded_path)):
                 if rebuilded_path[i] not in index_path:
                     index_path[rebuilded_path[i]] = []
@@ -2491,9 +2622,9 @@ def rebuild_routine_variant(
                     min_out_edge = e
                     min_dist = cost
             if len(edge_out_of_interest) == 0:
-                return None
-            if min_component is None:
-                return None
+                return []
+            if (min_component is None) or (min_out_edge is None):
+                return []
             len_this_component = len(paths_component[min_component])
             logger.debug(list(range(0, -len_this_component, -1)))
             logger.debug(f"len this component : {len_this_component}")
@@ -2519,15 +2650,19 @@ def rebuild_routine_variant(
 def reevaluate_result(
     temporary_result: TemporaryResult,
     problem: GPDP,
-    variant_rebuilt=True,
-    possible_subcycle_in_component=True,
-):
+    variant_rebuilt: bool = True,
+    possible_subcycle_in_component: bool = True,
+) -> TemporaryResult:
+    if problem.graph is None:
+        raise RuntimeError(
+            "problem.graph cannot be None " "when calling reeavaluate_result()."
+        )
     if variant_rebuilt:
         rout = rebuild_routine_variant
     else:
         rout = rebuild_routine
     vehicle_keys = temporary_result.graph_vehicle.keys()
-    connected_components = {
+    connected_components: Dict[int, List[Tuple[Set[Node], int]]] = {
         v: [
             (set(e), len(e))
             for e in nx.weakly_connected_components(temporary_result.graph_vehicle[v])
@@ -2537,15 +2672,19 @@ def reevaluate_result(
     logger.debug(
         f"Connected component : {[len(connected_components[v]) for v in connected_components]}"
     )
-    sorted_connected_component = {
+    sorted_connected_component: Dict[int, List[Tuple[Set[Node], int]]] = {
         v: sorted(connected_components[v], key=lambda x: x[1], reverse=True)
         for v in connected_components
     }
-    paths_component = {v: {} for v in vehicle_keys}
-    indexes_component = {v: {} for v in temporary_result.graph_vehicle}
-    node_to_component = {v: {} for v in temporary_result.graph_vehicle}
-    rebuilt_dict = {}
-    component_global = [
+    paths_component: Dict[int, Dict[int, List[Node]]] = {v: {} for v in vehicle_keys}
+    indexes_component: Dict[int, Dict[int, Dict[Node, int]]] = {
+        v: {} for v in temporary_result.graph_vehicle
+    }
+    node_to_component: Dict[int, Dict[Node, int]] = {
+        v: {} for v in temporary_result.graph_vehicle
+    }
+    rebuilt_dict: Dict[int, List[Node]] = {}
+    component_global: List[Tuple[Set[Node], int]] = [
         (set(e), len(e))
         for e in nx.weakly_connected_components(temporary_result.graph_merge)
     ]
@@ -2565,7 +2704,7 @@ def reevaluate_result(
                         new_connected_components_v += cycles
                         logger.debug(cycles)
                         temporary_result.rebuilt_dict = {
-                            v: None for v in connected_components
+                            v: [] for v in connected_components
                         }
                         temporary_result.paths_component = None
                         temporary_result.connected_components_per_vehicle = (
@@ -2597,7 +2736,7 @@ def reevaluate_result(
             )
             node_to_component[v].update({p: i for p in paths_component[v][i]})
 
-        def f(n1, n2):
+        def f(n1: Node, n2: Node) -> float:
             return problem.evaluate_function_node(n1, n2)
 
         rebuilt_dict[v] = rout(
@@ -2686,12 +2825,14 @@ def build_graph_solutions(
 
 def update_model_cluster_tsp(
     problem: GPDP,
-    lp_solver: LinearFlowSolver,
-    components_global,
-    edges_in_all_vehicles,
-    edges_out_all_vehicles,
-    lazy=False,
-):
+    lp_solver: Union[LinearFlowSolver, LinearFlowSolverVehicleType],
+    components_global: List[Tuple[Set[Hashable], int]],
+    edges_in_all_vehicles: Dict[Hashable, Set[Tuple[int, Edge]]],
+    edges_out_all_vehicles: Dict[Hashable, Set[Tuple[int, Edge]]],
+    lazy: bool = False,
+) -> List[Any]:
+    if lp_solver.model is None:
+        raise RuntimeError("self.lp_solver.model cannot be None at this point.")
     len_component_global = len(components_global)
     list_constraints = []
     if len_component_global > 1:
@@ -2783,14 +2924,16 @@ def update_model_cluster_tsp(
 
 def update_model(
     problem: GPDP,
-    lp_solver: LinearFlowSolver,
-    components_global,
-    edges_in_all_vehicles,
-    edges_out_all_vehicles,
-    do_order=True,
-):
+    lp_solver: Union[LinearFlowSolver, LinearFlowSolverVehicleType],
+    components_global: List[Tuple[Set[Node], int]],
+    edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    do_order: bool = True,
+) -> List[Any]:
+    if lp_solver.model is None:
+        raise RuntimeError("self.lp_solver.model cannot be None at this point.")
     len_component_global = len(components_global)
-    list_constraints = []
+    list_constraints: List[Any] = []
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
         for s in components_global[:1]:
@@ -2904,14 +3047,17 @@ def update_model(
 
 def update_model_lazy(
     problem: GPDP,
-    lp_solver: LinearFlowSolver,
-    components_global,
-    edges_in_all_vehicles,
-    edges_out_all_vehicles,
-    do_order=False,
-):
+    lp_solver: Union[LinearFlowSolver, LinearFlowSolverVehicleType],
+    components_global: List[Tuple[Set[Node], int]],
+    edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    do_order: bool = False,
+) -> List[Any]:
+    if lp_solver.model is None:
+        raise RuntimeError("self.lp_solver.model cannot be None at this point.")
+
     len_component_global = len(components_global)
-    list_constraints = []
+    list_constraints: List[Any] = []
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
         for s in components_global[:1]:
@@ -3014,7 +3160,16 @@ def update_model_lazy(
     return list_constraints
 
 
-def plot_solution(temporary_result: TemporaryResult, problem: GPDP):
+def plot_solution(temporary_result: TemporaryResult, problem: GPDP) -> None:
+    if problem.coordinates_2d is None:
+        raise ValueError(
+            "problem.coordinates_2d cannot be None when calling plot_solution."
+        )
+    if temporary_result.rebuilt_dict is None:
+        raise ValueError(
+            "temporary_result.rebuilt_dict cannot be None when calling plot_solution."
+        )
+
     fig, ax = plt.subplots(2)
     flow = temporary_result.flow_solution
     nb_colors = problem.number_vehicle

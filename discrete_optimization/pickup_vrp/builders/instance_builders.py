@@ -2,17 +2,32 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import logging
 import random
+from typing import Any, Dict, Hashable, List, Optional, Set, Tuple, cast
 
 import numpy as np
 import scipy.spatial.distance as dist
 
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
-from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass
+from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, Node, ProxyClass
+
+logger = logging.getLogger(__name__)
 
 
-def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
+try:
+    from sklearn.cluster import KMeans
+except ImportError:
+    logger.warning(
+        "You need to install scikit-learn "
+        "to call create_selective_tsp() and create_pickup_and_delivery()"
+    )
+
+
+def create_selective_tsp(
+    nb_nodes: int = 300, nb_vehicles: int = 1, nb_clusters: int = 30
+) -> GPDP:
     """
     Create a random orienteering/selective TSP problem
     :param nb_nodes: number of nodes to consider in the network (excluding the origin/target of vehicles)
@@ -23,25 +38,35 @@ def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
     number_vehicle = nb_vehicles
     nb_nodes_transportation = nb_nodes
     # non dummy nodes
-    nodes_transportation = set(range(nb_nodes_transportation))
+    nodes_transportation: Set[Node] = set(range(nb_nodes_transportation))
     # we stack the origin nodes after
-    nodes_origin = {nb_nodes_transportation + i for i in range(number_vehicle)}
+    nodes_origin: Set[Node] = {
+        nb_nodes_transportation + i for i in range(number_vehicle)
+    }
     # and destination nodes too
-    nodes_target = {
+    nodes_target: Set[Node] = {
         nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
     }
-    list_pickup_deliverable = []
-    origin_vehicle = {i: nb_nodes_transportation + i for i in range(number_vehicle)}
-    target_vehicle = {
+    list_pickup_deliverable: List[Tuple[List[Node], List[Node]]] = []
+    origin_vehicle: Dict[int, Node] = {
+        i: nb_nodes_transportation + i for i in range(number_vehicle)
+    }
+    target_vehicle: Dict[int, Node] = {
         i: nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
     }
     # we don't include resources neither capacities
-    resources_set = set()
-    capacities = {i: {} for i in range(number_vehicle)}
-    resources_flow_node = {i: {} for i in range(nb_nodes_transportation)}
-    resources_flow_edges = {
-        i: {j: {} for j in range(nb_nodes_transportation) if j != i}
+    resources_set: Set[str] = set()
+    capacities: Dict[int, Dict[str, Tuple[float, float]]] = {
+        i: {} for i in range(number_vehicle)
+    }
+    resources_flow_node: Dict[Node, Dict[str, float]] = {
+        i: {} for i in range(nb_nodes_transportation)
+    }
+    resources_flow_edges: Dict[Edge, Dict[str, float]] = {
+        (i, j): {}
         for i in range(nb_nodes_transportation)
+        for j in range(nb_nodes_transportation)
+        if j != i
     }
 
     # real number of nodes in the problem definition
@@ -51,22 +76,24 @@ def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
     coordinates[:, 0] += 40
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
-    distance_delta_dict = {
+    distance_delta_dict: Dict[Node, Dict[Node, float]] = {
         i: {j: int(distance_delta[i, j]) for j in range(nb_nodes_real) if j != i}
         for i in range(nb_nodes_real)
     }
-    time_delta_dict = {
+    time_delta_dict: Dict[Node, Dict[Node, float]] = {
         i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
         for i in distance_delta_dict
     }
-    from sklearn.cluster import KMeans
 
     nb_clusters = nb_clusters
     # compute clusters based on geographical positions.
     kmeans = KMeans(n_clusters=nb_clusters, random_state=0).fit(coordinates)
     labels = kmeans.labels_
-    coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
-    clusters_dict = {i: i + 1 for i in range(nb_nodes_real)}
+    coordinates_2d: Dict[Node, Tuple[float, float]] = {
+        i: cast(Tuple[float, float], tuple(coordinates[i, :]))
+        for i in range(coordinates.shape[0])
+    }
+    clusters_dict: Dict[Node, Hashable] = {i: i + 1 for i in range(nb_nodes_real)}
     for i in clusters_dict:
         clusters_dict[i] = labels[i]
     for j in range(number_vehicle):
@@ -86,67 +113,74 @@ def create_selective_tsp(nb_nodes=300, nb_vehicles=1, nb_clusters=30):
         resources_flow_node=resources_flow_node,
         distance_delta=distance_delta_dict,
         time_delta=time_delta_dict,
-        coordinates_2d=coordinates,
+        coordinates_2d=coordinates_2d,
         clusters_dict=clusters_dict,
     )
 
 
 def create_pickup_and_delivery(
-    number_of_vehicles=1,
-    number_of_node=100,
-    include_cluster=False,
-    nb_clusters=10,
-    include_pickup=True,
-    fraction_of_pickup_deliver=0.125,
-    pickup_per_cluster=False,
-):
+    number_of_vehicles: int = 1,
+    number_of_node: int = 100,
+    include_cluster: bool = False,
+    nb_clusters: int = 10,
+    include_pickup: bool = True,
+    fraction_of_pickup_deliver: float = 0.125,
+    pickup_per_cluster: bool = False,
+) -> GPDP:
     number_vehicle = number_of_vehicles
     nb_nodes_transportation = number_of_node
-    nodes_transportation = set(range(nb_nodes_transportation))
-    nodes_origin = {nb_nodes_transportation + i for i in range(number_vehicle)}
+    nodes_transportation: Set[Node] = set(range(nb_nodes_transportation))
+    nodes_origin: Set[Node] = {
+        nb_nodes_transportation + i for i in range(number_vehicle)
+    }
     # and destination nodes too
-    nodes_target = {
+    nodes_target: Set[Node] = {
         nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
     }
-    list_pickup_deliverable = []
-    origin_vehicle = {i: nb_nodes_transportation + i for i in range(number_vehicle)}
-    target_vehicle = {
+    list_pickup_deliverable: List[Tuple[List[Node], List[Node]]] = []
+    origin_vehicle: Dict[int, Node] = {
+        i: nb_nodes_transportation + i for i in range(number_vehicle)
+    }
+    target_vehicle: Dict[int, Node] = {
         i: nb_nodes_transportation + number_vehicle + i for i in range(number_vehicle)
     }
 
     all_nodes = set(range(nb_nodes_transportation + 2 * number_vehicle))
-    resources_set = set()
-    capacities = {0: {}}
-    resources_flow_node = {i: {} for i in all_nodes}
-    resources_flow_edges = {i: {j: {} for j in all_nodes if j != i} for i in all_nodes}
+    resources_set: Set[str] = set()
+    capacities: Dict[int, Dict[str, Tuple[float, float]]] = {0: {}}
+    resources_flow_node: Dict[Node, Dict[str, float]] = {i: {} for i in all_nodes}
+    resources_flow_edges: Dict[Edge, Dict[str, float]] = {
+        (i, j): {} for i in all_nodes for j in all_nodes if j != i
+    }
 
     coordinates = np.random.randint(-20, 20, size=(len(all_nodes), 2))
+    coordinates_2d: Optional[Dict[Node, Tuple[float, float]]] = {
+        i: cast(Tuple[float, float], tuple(coordinates[i, :]))
+        for i in range(coordinates.shape[0])
+    }
 
     distance_delta = dist.cdist(coordinates, coordinates)
     distance_delta = np.array(distance_delta, dtype=np.int32)
-    distance_delta_dict = {
+    distance_delta_dict: Dict[Node, Dict[Node, float]] = {
         i: {j: int(distance_delta[i, j]) for j in all_nodes if j != i}
         for i in all_nodes
     }
-    time_delta_dict = {
+    time_delta_dict: Dict[Node, Dict[Node, float]] = {
         i: {j: int(distance_delta_dict[i][j] / 2) for j in distance_delta_dict[i]}
         for i in distance_delta_dict
     }
-    from sklearn.cluster import KMeans
 
-    clusters_dict = {i: i + 1 for i in all_nodes}
+    clusters_dict: Dict[Node, Hashable] = {i: i + 1 for i in all_nodes}
     if include_cluster:
         nb_clusters = nb_clusters
         kmeans = KMeans(n_clusters=nb_clusters, random_state=0).fit(coordinates)
         labels = kmeans.labels_
-        coordinates = {i: tuple(coordinates[i, :]) for i in range(coordinates.shape[0])}
         for i in clusters_dict:
             clusters_dict[i] = labels[i]
         for j in range(number_vehicle):
             clusters_dict[target_vehicle[j]] = max(labels)
             clusters_dict[origin_vehicle[j]] = min(labels)
-    list_pickup_deliverable = []
-    list_pickup_deliverable_per_cluster = []
+    list_pickup_deliverable_per_cluster: List[Tuple[List[Node], List[Node]]] = []
     if include_pickup:
         if not pickup_per_cluster:
             nodes_possible = set(clusters_dict.keys())
@@ -160,7 +194,7 @@ def create_pickup_and_delivery(
                 nodes_possible.remove(k1)
                 k2 = random.choice(list(nodes_possible))
                 nodes_possible.remove(k2)
-                list_pickup_deliverable += [({k1}, {k2})]
+                list_pickup_deliverable += [([k1], [k2])]
         else:
             cluster_possible = set(clusters_dict.values())
             cluster_possible.remove(clusters_dict[target_vehicle[0]])
@@ -175,7 +209,7 @@ def create_pickup_and_delivery(
                 cluster_possible.remove(cluster_1)
                 cluster_2 = random.choice(list(cluster_possible))
                 cluster_possible.remove(cluster_2)
-                list_pickup_deliverable_per_cluster += [({cluster_1}, {cluster_2})]
+                list_pickup_deliverable_per_cluster += [([cluster_1], [cluster_2])]
     return GPDP(
         number_vehicle=number_vehicle,
         nodes_transportation=nodes_transportation,
@@ -190,20 +224,20 @@ def create_pickup_and_delivery(
         resources_flow_node=resources_flow_node,
         distance_delta=distance_delta_dict,
         time_delta=time_delta_dict,
-        coordinates_2d=coordinates,
+        coordinates_2d=coordinates_2d,
         clusters_dict=clusters_dict,
         list_pickup_deliverable_per_cluster=list_pickup_deliverable_per_cluster,
     )
 
 
-def load_vrp_and_transform(index_in_files_available: int = 1):
+def load_vrp_and_transform(index_in_files_available: int = 1) -> GPDP:
     file_path = vrp_parser.get_data_available()[index_in_files_available]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model)
     return gpdp
 
 
-def load_tsp_and_transform(index_in_files_available: int = 1):
+def load_tsp_and_transform(index_in_files_available: int = 1) -> GPDP:
     files_available = tsp_parser.get_data_available()
     file_path = files_available[index_in_files_available]
     tsp_model = tsp_parser.parse_file(file_path)
@@ -211,9 +245,9 @@ def load_tsp_and_transform(index_in_files_available: int = 1):
     return gpdp
 
 
-def create_ortools_example():
+def create_ortools_example() -> GPDP:
     """Build instances from ortools reference guide."""
-    data = {}
+    data: Dict[str, Any] = {}
     coordinates = [
         (456, 320),  # location 0 - the depot
         (228, 0),  # location 1
@@ -630,7 +664,6 @@ def create_ortools_example():
     ]
     data["demands"] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
     data["vehicle_capacities"] = [15, 15, 15, 15]
-    data_reindex = {}
     coordinates_reindex = coordinates[1:] + [
         coordinates[data["depot"]] for i in range(2 * data["num_vehicles"])
     ]
@@ -641,19 +674,23 @@ def create_ortools_example():
     for j in range(len(original_index)):
         original_index_to_new[original_index[j]] = j
     number_nodes_non_depot = len(coordinates) - 1
-    nodes_origin = list(
+    nodes_origin: List[Node] = list(
         range(number_nodes_non_depot, number_nodes_non_depot + data["num_vehicles"])
     )
-    nodes_target = list(
+    nodes_target: List[Node] = list(
         range(
             number_nodes_non_depot + data["num_vehicles"],
             number_nodes_non_depot + 2 * data["num_vehicles"],
         )
     )
-    nodes_origin_dict = {i: nodes_origin[i] for i in range(data["num_vehicles"])}
-    nodes_target_dict = {i: nodes_target[i] for i in range(data["num_vehicles"])}
-    distance_delta_dict = {}
-    time_delta_dict = {}
+    nodes_origin_dict: Dict[int, Node] = {
+        i: nodes_origin[i] for i in range(data["num_vehicles"])
+    }
+    nodes_target_dict: Dict[int, Node] = {
+        i: nodes_target[i] for i in range(data["num_vehicles"])
+    }
+    distance_delta_dict: Dict[Node, Dict[Node, float]] = {}
+    time_delta_dict: Dict[Node, Dict[Node, float]] = {}
     for index in range(len(original_index)):
         distance_delta_dict[index] = {}
         time_delta_dict[index] = {}
@@ -664,21 +701,21 @@ def create_ortools_example():
             time_delta_dict[index][index_2] = data["time_matrix"][
                 original_index[index]
             ][original_index[index_2]]
-    pickup_and_deliveries = []
+    pickup_and_deliveries: List[Tuple[List[Node], List[Node]]] = []
     for p_d in data["pickups_deliveries"]:
         pickup_and_deliveries += [
             ([original_index_to_new[p_d[0]]], [original_index_to_new[p_d[1]]])
         ]
-    capacities = {}
-    resources_set = {"demand"}
+    capacities: Dict[int, Dict[str, Tuple[float, float]]] = {}
+    resources_set: Set[str] = {"demand"}
     for i in range(data["num_vehicles"]):
         capacities[i] = {"demand": (0, data["vehicle_capacities"][i])}
-    resources_flow_edges = {
+    resources_flow_edges: Dict[Edge, Dict[str, float]] = {
         (x, y): {"demand": 0}
         for x in distance_delta_dict
         for y in distance_delta_dict[x]
     }
-    resources_flow_nodes = {}
+    resources_flow_nodes: Dict[Node, Dict[str, float]] = {}
     for index in range(len(original_index)):
         resources_flow_nodes[index] = {
             "demand": -data["demands"][original_index[index]]
@@ -689,10 +726,10 @@ def create_ortools_example():
         }
     for k in nodes_target_dict:
         resources_flow_nodes[nodes_target_dict[k]] = {"demand": 0}
-    coordinates_dict = {}
+    coordinates_dict: Dict[Node, Tuple[float, float]] = {}
     for i in range(len(coordinates_reindex)):
         coordinates_dict[i] = coordinates_reindex[i]
-    time_windows_nodes = {}
+    time_windows_nodes: Dict[Node, Tuple[Optional[int], Optional[int]]] = {}
     for i in range(len(original_index)):
         if i in nodes_target:
             continue
