@@ -7,11 +7,17 @@ from __future__ import print_function
 import logging
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from ortools.constraint_solver import (
+    pywrapcp,
+    routing_enums_pb2,
+    routing_parameters_pb2,
+)
 from ortools.util.optional_boolean_pb2 import BOOL_FALSE, BOOL_TRUE
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -52,8 +58,8 @@ class ParametersCost:
     def __init__(
         self,
         dimension_name: str,
-        global_span=True,
-        sum_over_vehicles=False,
+        global_span: bool = True,
+        sum_over_vehicles: bool = False,
         coefficient_vehicles: Union[float, List[float]] = 100,
     ):
         self.dimension_name = dimension_name
@@ -66,7 +72,7 @@ class ParametersCost:
         )
 
     @staticmethod
-    def default():
+    def default() -> "ParametersCost":
         return ParametersCost(
             dimension_name="Distance",
             global_span=True,
@@ -77,7 +83,7 @@ class ParametersCost:
 
 def apply_cost(
     list_parameters_cost: List[ParametersCost], routing: pywrapcp.RoutingModel
-):
+) -> None:
     dimension_names = set([p.dimension_name for p in list_parameters_cost])
     dimension_dict = {d: routing.GetDimensionOrDie(d) for d in dimension_names}
     for p in list_parameters_cost:
@@ -87,13 +93,13 @@ def apply_cost(
             )
         else:
             if p.different_coefficient:
-                for i in range(len(p.coefficient_vehicles)):
+                for i in range(len(p.coefficient_vehicles)):  # type: ignore
                     dimension_dict[p.dimension_name].SetSpanCostCoefficientForVehicle(
-                        p.coefficient_vehicles[i], i
+                        p.coefficient_vehicles[i], i  # type: ignore
                     )
             else:
                 dimension_dict[p.dimension_name].SetSpanCostCoefficientForAllVehicles(
-                    p.coefficient_vehicles[0]
+                    p.coefficient_vehicles[0]  # type: ignore
                 )
 
 
@@ -168,7 +174,7 @@ class ORToolsGPDP(SolverDO):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
-        self.dimension_names = []
+        self.dimension_names: List[str] = []
         self.factor_multiplier_distance = factor_multiplier_distance  # 10**3
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
         (
@@ -180,7 +186,7 @@ class ORToolsGPDP(SolverDO):
             params_objective_function=params_objective_function,
         )
 
-    def init_model(self, **kwargs):
+    def init_model(self, **kwargs: Any) -> None:
         include_time_windows = kwargs.get("include_time_windows", False)
         include_time_windows_cluster = kwargs.get("include_time_windows_cluster", False)
         include_cumulative = kwargs.get("include_cumulative", False)
@@ -215,12 +221,12 @@ class ORToolsGPDP(SolverDO):
             if matrix_distance_int is None:
                 matrix_distance = build_matrix_distance(self.problem)
                 matrix_distance_int = np.array(
-                    matrix_distance * self.factor_multiplier_distance, dtype=np.int
+                    matrix_distance * self.factor_multiplier_distance, dtype=np.int_
                 )
             if include_time_dimension:
                 matrix_time = build_matrix_time(self.problem)
                 matrix_time_int = np.array(
-                    matrix_time * self.factor_multiplier_time, dtype=np.int
+                    matrix_time * self.factor_multiplier_time, dtype=np.int_
                 )
         capacities_dict = {
             r: [
@@ -231,10 +237,11 @@ class ORToolsGPDP(SolverDO):
         }
         # Neg Capacity version :
         neg_capacity_version = kwargs.get("neg_capacity_version", True)
+        demands: Dict[str, List[float]]
         if neg_capacity_version:
             demands = {
                 r: [
-                    max(0, -self.problem.resources_flow_node[node].get(r, 0))
+                    max(0.0, -self.problem.resources_flow_node[node].get(r, 0.0))
                     for node in self.problem.list_nodes
                 ]
                 for r in self.problem.resources_set
@@ -242,7 +249,7 @@ class ORToolsGPDP(SolverDO):
         else:
             demands = {
                 r: [
-                    self.problem.resources_flow_node[node].get(r, 0)
+                    self.problem.resources_flow_node[node].get(r, 0.0)
                     for node in self.problem.list_nodes
                 ]
                 for r in self.problem.resources_set
@@ -274,7 +281,7 @@ class ORToolsGPDP(SolverDO):
         logger.info("routing init")
         if use_matrix:
             # Create and register a transit callback.
-            def distance_callback(from_index, to_index):
+            def distance_callback(from_index: int, to_index: int) -> int:
                 """Returns the distance between the two nodes."""
                 # Convert from routing variable Index to distance matrix NodeIndex.
                 from_node = manager.IndexToNode(from_index)
@@ -283,14 +290,16 @@ class ORToolsGPDP(SolverDO):
 
         else:
             # Create and register a transit callback.
-            def distance_callback(from_index, to_index):
+            def distance_callback(from_index: int, to_index: int) -> int:
                 """Returns the distance between the two nodes."""
                 # Convert from routing variable Index to distance matrix NodeIndex.
                 from_node = manager.IndexToNode(from_index)
                 to_node = manager.IndexToNode(to_index)
-                return self.problem.distance_delta[
-                    self.problem.nodes_to_index[from_node]
-                ].get(self.problem.nodes_to_index[to_node], 1000000000)
+                return int(
+                    self.problem.distance_delta[
+                        self.problem.nodes_to_index[from_node]
+                    ].get(self.problem.nodes_to_index[to_node], 1000000000)
+                )
 
         if include_equilibrate_charge:
             charge = routing.RegisterTransitCallback(lambda i, j: 1)
@@ -334,19 +343,29 @@ class ORToolsGPDP(SolverDO):
         logger.info("Distance callback done")
         if include_resource_dimension:
 
-            def ressource_transition(from_index, to_index, ressource, problem, vehicle):
+            def ressource_transition(
+                from_index: int,
+                to_index: int,
+                ressource: str,
+                problem: GPDP,
+                vehicle: int,
+            ) -> int:
                 """Return the ressource consumption from one node to another."""
                 # Convert from routing variable Index to demands NodeIndex.
                 from_node = manager.IndexToNode(from_index)
                 to_node = manager.IndexToNode(to_index)
                 l = problem.resources_flow_edges.get(
-                    (from_node, to_node), {ressource: 0}
+                    (
+                        self.problem.nodes_to_index[from_node],
+                        self.problem.nodes_to_index[to_node],
+                    ),
+                    {ressource: 0},
                 )[ressource] + problem.resources_flow_node.get(
                     to_node, {ressource: 0}
                 ).get(
                     ressource, 0
                 )
-                return l
+                return int(l)
 
             demand_callback_index_dict = {
                 r: [
@@ -374,11 +393,11 @@ class ORToolsGPDP(SolverDO):
                 self.dimension_names += ["Ressource_" + str(r)]
         if include_demand:
             # Add Capacity constraint.
-            def demand_callback(from_index, ressource):
+            def demand_callback(from_index: int, ressource: str) -> int:
                 """Returns the demand of the node."""
                 # Convert from routing variable Index to demands NodeIndex.
                 from_node = manager.IndexToNode(from_index)
-                return demands[ressource][from_node]
+                return int(demands[ressource][from_node])
 
             demand_callback_index_dict = {
                 r: routing.RegisterUnaryTransitCallback(
@@ -429,7 +448,7 @@ class ORToolsGPDP(SolverDO):
             )
         if include_time_dimension:
 
-            def time_callback(from_index, to_index):
+            def time_callback(from_index: int, to_index: int) -> int:
                 """Returns the travel time between the two nodes."""
                 # Convert from routing variable Index to time matrix NodeIndex.
                 from_node = manager.IndexToNode(from_index)
@@ -498,6 +517,11 @@ class ORToolsGPDP(SolverDO):
             )
             self.dimension_names += [distance]
             distance_dimension = routing.GetDimensionOrDie(distance)
+            if self.problem.list_pickup_deliverable_per_cluster is None:
+                raise ValueError(
+                    "When include_pickup_and_delivery_per_cluster is True, "
+                    "self.problem.list_pickup_deliverable_per_cluster cannot be None."
+                )
             for pickup_deliver in self.problem.list_pickup_deliverable_per_cluster:
                 pickup = pickup_deliver[0]
                 deliver = pickup_deliver[1]
@@ -535,10 +559,14 @@ class ORToolsGPDP(SolverDO):
             time_dimension = routing.GetDimensionOrDie("Time")
             i = 0
             for (set_of_task, limit) in self.problem.cumulative_constraints:
-                index_tasks = [manager.NodeToIndex(t) for t in sorted(set_of_task)]
+                list_of_tasks = list(set_of_task)
+                index_tasks = [
+                    manager.NodeToIndex(self.problem.index_nodes[t])
+                    for t in list_of_tasks
+                ]
                 time_delta = [
                     self.problem.time_delta_node[t] * self.factor_multiplier_time
-                    for t in sorted(set_of_task)
+                    for t in list_of_tasks
                 ]
                 for task, tdelta in zip(index_tasks, time_delta):
                     if task not in starts:
@@ -641,7 +669,7 @@ class ORToolsGPDP(SolverDO):
                     continue
                 if node in targets:
                     continue
-                index = manager.NodeToIndex(node)
+                index = manager.NodeToIndex(self.problem.index_nodes[node])
                 if node in self.problem.time_windows_nodes:
                     mini, maxi = self.problem.time_windows_nodes[node]
                     if mini is not None and maxi is not None:
@@ -702,7 +730,7 @@ class ORToolsGPDP(SolverDO):
                 mini, maxi = self.problem.time_windows_cluster[cluster]
                 if mini is not None or maxi is not None:
                     nodes = [
-                        manager.NodeToIndex(n)
+                        manager.NodeToIndex(self.problem.index_nodes[n])
                         for n in self.problem.clusters_to_node[cluster]
                         if n
                         not in {
@@ -751,7 +779,9 @@ class ORToolsGPDP(SolverDO):
         self.search_parameters = self.build_search_parameters(**kwargs)
         logger.info("Routing problem initialized ")
 
-    def build_search_parameters(self, **kwargs):
+    def build_search_parameters(
+        self, **kwargs: Any
+    ) -> routing_parameters_pb2.RoutingSearchParameters:
         first_solution_strategy = kwargs.get(
             "first_solution_strategy", first_solution_strategy_enum.SAVINGS
         )
@@ -783,13 +813,29 @@ class ORToolsGPDP(SolverDO):
         search_parameters.time_limit.seconds = kwargs.get("time_limit", 100)
         return search_parameters
 
-    def solve_intern(self, search_parameters=None, **kwargs) -> Iterable[Any]:
+    def solve_intern(
+        self,
+        search_parameters: Optional[
+            routing_parameters_pb2.RoutingSearchParameters
+        ] = None,
+        **kwargs: Any,
+    ) -> Iterable[
+        Tuple[
+            Dict[int, List[int]],
+            Dict[Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]],
+            float,
+            float,
+            float,
+        ]
+    ]:
         if search_parameters is None:
             search_parameters = self.search_parameters
-        sols = []
+        sols = []  # useful for callback
         callback = make_routing_monitor(self)
         self.routing.AddAtSolutionCallback(callback)
-        sols = self.routing.SolveWithParameters(search_parameters)
+        sols = self.routing.SolveWithParameters(
+            search_parameters
+        )  # useful for callback
         return callback.sols
 
     def solve(self, **kwargs: Any) -> ResultStorage:
@@ -806,111 +852,139 @@ class ORToolsGPDP(SolverDO):
         )
 
 
-def make_routing_monitor(solver: ORToolsGPDP) -> callable:
-    class RoutingMonitor:
-        def __init__(self, solver: ORToolsGPDP):
-            self.model = solver.routing
-            self.problem = solver.problem
-            self.solver = solver
+class RoutingMonitor:
+    def __init__(self, solver: ORToolsGPDP):
+        self.model = solver.routing
+        self.problem = solver.problem
+        self.solver = solver
+        self._counter = 0
+        self._best_objective = np.inf
+        self._counter_limit = 10000000
+        self.nb_solutions = 0
+        self.sols: List[
+            Tuple[
+                Dict[int, List[int]],
+                Dict[
+                    Tuple[int, int, NodePosition],
+                    Dict[str, Tuple[float, float, float]],
+                ],
+                float,
+                float,
+                float,
+            ]
+        ] = []
+
+    def __call__(self) -> None:
+        logger.debug(
+            f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
+        )
+        logger.debug(status_description[self.model.status()])
+        if self.nb_solutions % 100 == 0:
+            self.retrieve_current_solution()
+        if self.model.CostVar().Max() < self._best_objective:
+            self._best_objective = self.model.CostVar().Max()
+            self.retrieve_current_solution()
             self._counter = 0
-            self._best_objective = np.inf
-            self._counter_limit = 10000000
-            self.nb_solutions = 0
-            self.sols = []
+        else:
+            self._counter += 1
+            if self._counter > self._counter_limit:
+                self.model.solver().FinishCurrentSearch()
+        self.nb_solutions += 1
 
-        def __call__(self):
-            logger.debug(
-                f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
-            )
-            logger.debug(status_description[self.model.status()])
-            if self.nb_solutions % 100 == 0:
-                self.retrieve_current_solution()
-            if self.model.CostVar().Max() < self._best_objective:
-                self._best_objective = self.model.CostVar().Max()
-                self.retrieve_current_solution()
-                self._counter = 0
-            else:
-                self._counter += 1
-                if self._counter > self._counter_limit:
-                    self.model.solver().FinishCurrentSearch()
-            self.nb_solutions += 1
-
-        def retrieve_current_solution(self):
-            postpro_sol = []
-            vehicle_count = self.problem.number_vehicle
-            vehicle_tours = {i: [] for i in range(vehicle_count)}
-            dimension_output = {}
-            dimensions_names = self.solver.dimension_names
-            dimensions = {r: self.model.GetDimensionOrDie(r) for r in dimensions_names}
-            objective = 0
-            route_distance = 0
-            for vehicle_id in range(vehicle_count):
-                index = self.model.Start(vehicle_id)
-                route_load = {r: 0.0 for r in self.problem.resources_set}
-                cnt = 0
-                while not self.model.IsEnd(index) or cnt > 10000:
-                    node_index = self.solver.manager.IndexToNode(index)
-                    if cnt == 0:
-                        node_position = NodePosition.START
-                    else:
-                        node_position = NodePosition.INTERMEDIATE
-                    vehicle_tours[vehicle_id] += [node_index]
+    def retrieve_current_solution(self) -> None:
+        postpro_sol: List[
+            Tuple[
+                Dict[int, List[int]],
+                Dict[
+                    Tuple[int, int, NodePosition],
+                    Dict[str, Tuple[float, float, float]],
+                ],
+                float,
+                float,
+                float,
+            ]
+        ] = []
+        vehicle_count = self.problem.number_vehicle
+        vehicle_tours: Dict[int, List[int]] = {i: [] for i in range(vehicle_count)}
+        dimension_output: Dict[
+            Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]
+        ] = {}
+        dimensions_names = self.solver.dimension_names
+        dimensions: Dict[str, pywrapcp.RoutingDimension] = {
+            r: self.model.GetDimensionOrDie(r) for r in dimensions_names
+        }
+        objective = 0.0
+        route_distance = 0.0
+        for vehicle_id in range(vehicle_count):
+            index = self.model.Start(vehicle_id)
+            route_load: Dict[str, float] = {r: 0.0 for r in self.problem.resources_set}
+            cnt = 0
+            while not self.model.IsEnd(index) or cnt > 10000:
+                node_index = self.solver.manager.IndexToNode(index)
+                if cnt == 0:
+                    node_position = NodePosition.START
+                else:
+                    node_position = NodePosition.INTERMEDIATE
+                vehicle_tours[vehicle_id] += [node_index]
+                try:
+                    dimension_output[(vehicle_id, node_index, node_position)] = {
+                        r: (
+                            dimensions[r].CumulVar(index).Min(),
+                            dimensions[r].CumulVar(index).Max(),
+                            dimensions[r].SlackVar(index).Value(),
+                        )
+                        for r in dimensions
+                    }
+                except Exception as e:
+                    logger.warning(("1,", e))
+                    break
+                cnt += 1
+                for r in route_load:
+                    route_load[r] += self.solver.demands[r][node_index]
+                previous_index = index
+                try:
+                    index = self.model.NextVar(index).Value()
+                except Exception as e:
+                    logger.warning(("3", e))
+                    break
+                route_distance += self.model.GetArcCostForVehicle(
+                    previous_index, index, vehicle_id
+                )
+                if self.model.IsEnd(index):
+                    vehicle_tours[vehicle_id] += [
+                        self.solver.manager.IndexToNode(index)
+                    ]
                     try:
-                        dimension_output[(vehicle_id, node_index, node_position)] = {
+                        dimension_output[
+                            (
+                                vehicle_id,
+                                self.solver.manager.IndexToNode(index),
+                                NodePosition.END,
+                            )
+                        ] = {
                             r: (
                                 dimensions[r].CumulVar(index).Min(),
                                 dimensions[r].CumulVar(index).Max(),
-                                dimensions[r].SlackVar(index).Value(),
+                                0,
                             )
                             for r in dimensions
                         }
                     except Exception as e:
-                        logger.warning(("1,", e))
+                        logger.warning(("2,", e))
                         break
-                    cnt += 1
-                    for r in route_load:
-                        route_load[r] += self.solver.demands[r][node_index]
-                    previous_index = index
-                    try:
-                        index = self.model.NextVar(index).Value()
-                    except Exception as e:
-                        logger.warning(("3", e))
-                        break
-                    route_distance += self.model.GetArcCostForVehicle(
-                        previous_index, index, vehicle_id
-                    )
-                    if self.model.IsEnd(index):
-                        vehicle_tours[vehicle_id] += [
-                            self.solver.manager.IndexToNode(index)
-                        ]
-                        try:
-                            dimension_output[
-                                (
-                                    vehicle_id,
-                                    self.solver.manager.IndexToNode(index),
-                                    NodePosition.END,
-                                )
-                            ] = {
-                                r: (
-                                    dimensions[r].CumulVar(index).Min(),
-                                    dimensions[r].CumulVar(index).Max(),
-                                    0,
-                                )
-                                for r in dimensions
-                            }
-                        except Exception as e:
-                            logger.warning(("2,", e))
-                            break
-            postpro_sol += [
-                (
-                    vehicle_tours,
-                    dimension_output,
-                    route_distance,
-                    objective,
-                    self.model.CostVar().Max(),
-                )
-            ]
-            self.sols += postpro_sol
+        postpro_sol += [
+            (
+                vehicle_tours,
+                dimension_output,
+                route_distance,
+                objective,
+                self.model.CostVar().Max(),
+            )
+        ]
+        self.sols += postpro_sol
+
+
+def make_routing_monitor(solver: ORToolsGPDP) -> RoutingMonitor:
 
     return RoutingMonitor(solver)
 
@@ -918,8 +992,8 @@ def make_routing_monitor(solver: ORToolsGPDP) -> callable:
 def convert_to_gpdpsolution(
     problem: GPDP,
     sol: Tuple[
-        Dict[int, List[Node]],
-        Dict[Tuple[int, Node, NodePosition], Dict[str, Tuple[float, float, float]]],
+        Dict[int, List[int]],
+        Dict[Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]],
         float,
         float,
         float,
@@ -933,20 +1007,45 @@ def convert_to_gpdpsolution(
         cost,
     ) = sol
     times: Dict[Node, float] = {}
-    for (v, node, node_position), output in dimension_output.items():
+    trajectories = {
+        v: [problem.list_nodes[nodeindex] for nodeindex in traj]
+        for v, traj in vehicle_tours.items()
+    }
+    for (v, nodeindex, node_position), output in dimension_output.items():
+        node = problem.list_nodes[nodeindex]
         if (node not in times) or (node_position != NodePosition.START):
             if "Time" in output:
                 times[node] = output["Time"][1]
     resource_evolution: Dict[Node, Dict[Node, List[int]]] = {}
     return GPDPSolution(
         problem=problem,
-        trajectories=vehicle_tours,
+        trajectories=trajectories,
         times=times,
         resource_evolution=resource_evolution,
     )
 
 
-def plot_ortools_solution(result, problem: GPDP):
+def plot_ortools_solution(
+    result: Tuple[
+        Dict[int, List[int]],
+        Dict[Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]],
+        float,
+        float,
+        float,
+    ],
+    problem: GPDP,
+) -> Tuple[Figure, Axes]:
+    if problem.coordinates_2d is None:
+        raise ValueError(
+            "problem.coordinates_2d cannot be None when calling plot_ortools_solution."
+        )
+    (
+        vehicle_tours,
+        dimension_output,
+        route_distance,
+        objective,
+        cost,
+    ) = result
     fig, ax = plt.subplots(1)
     nb_colors = problem.number_vehicle
     nb_colors_clusters = len(problem.clusters_set)
@@ -959,19 +1058,31 @@ def plot_ortools_solution(result, problem: GPDP):
             colors_nodes(problem.clusters_dict[node]) for node in problem.clusters_dict
         ],
     )
-    for v in range(len(result[0])):
+    for v in range(len(vehicle_tours)):
         ax.plot(
-            [problem.coordinates_2d[problem.list_nodes[n]][0] for n in result[0][v]],
-            [problem.coordinates_2d[problem.list_nodes[n]][1] for n in result[0][v]],
+            [
+                problem.coordinates_2d[problem.list_nodes[n]][0]
+                for n in vehicle_tours[v]
+            ],
+            [
+                problem.coordinates_2d[problem.list_nodes[n]][1]
+                for n in vehicle_tours[v]
+            ],
             label="vehicle n°" + str(v),
         )
         ax.scatter(
-            [problem.coordinates_2d[problem.list_nodes[n]][0] for n in result[0][v]],
-            [problem.coordinates_2d[problem.list_nodes[n]][1] for n in result[0][v]],
+            [
+                problem.coordinates_2d[problem.list_nodes[n]][0]
+                for n in vehicle_tours[v]
+            ],
+            [
+                problem.coordinates_2d[problem.list_nodes[n]][1]
+                for n in vehicle_tours[v]
+            ],
             s=10,
             color=[
                 colors_nodes(problem.clusters_dict[problem.list_nodes[n]])
-                for n in result[0][v]
+                for n in vehicle_tours[v]
             ],
         )
     ax.legend()

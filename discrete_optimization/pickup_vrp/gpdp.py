@@ -82,8 +82,8 @@ class GPDP(Problem):
         list_pickup_deliverable: List[Tuple[List[Node], List[Node]]],
         origin_vehicle: Dict[int, Node],
         target_vehicle: Dict[int, Node],
-        resources_set: Set[Hashable],
-        capacities: Dict[int, Dict[Hashable, Tuple[float, float]]],
+        resources_set: Set[str],
+        capacities: Dict[int, Dict[str, Tuple[float, float]]],
         resources_flow_node: Dict[Node, Dict[str, float]],
         resources_flow_edges: Dict[Edge, Dict[str, float]],
         distance_delta: Dict[Node, Dict[Node, float]],
@@ -140,7 +140,7 @@ class GPDP(Problem):
         self.distance_delta = distance_delta
         self.time_delta = time_delta
 
-        self.all_nodes = set()
+        self.all_nodes: Set[Node] = set()
         self.all_nodes.update(self.nodes_origin)
         self.all_nodes.update(self.nodes_target)
         self.all_nodes.update(self.nodes_transportation)
@@ -218,12 +218,14 @@ class GPDP(Problem):
         else:
             self.time_windows_cluster = time_windows_cluster
         self.list_nodes = list(self.all_nodes)
-        self.index_nodes = {self.list_nodes[i]: i for i in range(len(self.list_nodes))}
+        self.index_nodes: Dict[Node, int] = {
+            self.list_nodes[i]: i for i in range(len(self.list_nodes))
+        }
         self.nodes_to_index = {
             i: self.list_nodes[i] for i in range(len(self.list_nodes))
         }
 
-        def get_edges_for_vehicle(vehicle: int) -> KeysView[Tuple[Hashable, Hashable]]:
+        def get_edges_for_vehicle(vehicle: int) -> KeysView[Edge]:
             if self.graph is None:
                 self.compute_graph()
                 if self.graph is None:
@@ -580,12 +582,12 @@ class ProxyClass:
             resources_flow_node[origin_vehicle[v]]["demand"] = int(
                 vrp_model.vehicle_capacities[v]
             )
-        resources_set: Set[Hashable] = {"demand"}
+        resources_set: Set[str] = {"demand"}
         nodes_transportation: Set[Node] = set(real_client_to_initial.keys())
         nodes_origin: Set[Node] = set(virtual_to_initial.keys())
         nodes_target: Set[Node] = set(virtual_to_end.keys())
         list_pickup_deliverable: List[Tuple[List[Node], List[Node]]] = []
-        capacities: Dict[int, Dict[Hashable, Tuple[float, float]]] = {
+        capacities: Dict[int, Dict[str, Tuple[float, float]]] = {
             i: {"demand": (0.0, vrp_model.vehicle_capacities[i])}
             for i in range(nb_vehicle)
         }
@@ -699,8 +701,8 @@ class ProxyClass:
         nodes_origin: Set[Node] = set(virtual_to_initial.keys())
         nodes_target: Set[Node] = set(virtual_to_end.keys())
         list_pickup_deliverable: List[Tuple[List[Node], List[Node]]] = []
-        resources_set: Set[Hashable] = set()
-        capacities: Dict[int, Dict[Hashable, Tuple[float, float]]] = {
+        resources_set: Set[str] = set()
+        capacities: Dict[int, Dict[str, Tuple[float, float]]] = {
             i: {} for i in range(nb_vehicle)
         }
         # {Vehicle:{resource: (min_capacity, max_capacity)}}
