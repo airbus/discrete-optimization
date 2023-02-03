@@ -16,12 +16,12 @@ from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringA
 
 
 def run_asp_coloring():
-    logging.basicConfig(level=logging.DEBUG)
-    file = [f for f in get_data_available() if "gc_20_9" in f][0]
+    logging.basicConfig(level=logging.INFO)
+    file = [f for f in get_data_available() if "gc_250_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringASPSolver(color_problem, params_objective_function=None)
-    solver.init_model(max_models=1, nb_colors=None)
-    result_store = solver.solve(timeout_seconds=100, use_external_timeout=True)
+    solver.init_model(max_models=50, nb_colors=20)
+    result_store = solver.solve(timeout_seconds=5)
     solution, fit = result_store.get_best_solution_fit()
     plot_solution(solution)
     plt.show()

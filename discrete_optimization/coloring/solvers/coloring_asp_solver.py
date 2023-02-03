@@ -113,21 +113,21 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
     def solve(self, **kwargs: Any) -> ResultStorage:
         start_time_grounding = time.perf_counter()
         self.ctl.ground([("base", [])])
-        print(
+        logger.info(
             f"Grounding programs: ...\n=== Grounding done"
             f" {time.perf_counter() - start_time_grounding} sec ==="
         )
 
         class CallbackASP:
             def __init__(
-                self, dump_model_in_folders: bool = False, timeout: float = 100
+                self,
+                dump_model_in_folders: bool = False,
             ):
                 self.nb_found_models = 0
                 self.current_time = time.perf_counter()
                 self.model_results = []
                 self.symbols_results = []
                 self.dump_model_in_folders = dump_model_in_folders
-                self.timeout = timeout
 
             def on_model(self, m: clingo.Model):
                 self.model_results += [m]
@@ -150,36 +150,15 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
                         os.path.join(folder_model, "model.txt"), "w"
                     ) as model_file:
                         model_file.write(str(m))
-                if time.perf_counter() - self.current_time >= self.timeout:
-                    return False
 
         timeout_seconds = kwargs.get("timeout_seconds", 100)
         callback = CallbackASP(
             dump_model_in_folders=kwargs.get("dump_model_in_folders", False),
-            timeout=timeout_seconds,
         )
-        use_external_timeout = kwargs.get("use_external_timeout", True)
-        # timeout not existing easily in clingo (?) except by using SolveHandler it seems.
 
-        def do_solve():
-            return self.ctl.solve(on_model=callback.on_model)
-
-        if use_external_timeout:
-            from discrete_optimization.generic_tools.pytools.timeout_decorator import (
-                exit_after,
-            )
-
-            @exit_after(timeout_seconds)
-            def do_solve():
-                return self.ctl.solve(on_model=callback.on_model)
-
-        try:
-            res = do_solve()
-        except KeyboardInterrupt as e:
-            logger.info("=== Solve stopped due to timeout ===")
-        # logger.info("=== Cleaning up === ")
-        # self.ctl.cleanup()
-        # logger.info("=== Cleaning finished === ") # useless for this problem
+        with self.ctl.solve(on_model=callback.on_model, async_=True) as handle:
+            handle.wait(timeout_seconds)
+            handle.cancel()
         return self.retrieve_solutions(callback.symbols_results)
 
 
