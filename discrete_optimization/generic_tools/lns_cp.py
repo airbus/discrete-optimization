@@ -136,7 +136,7 @@ class LNS_CP(SolverDO):
             store_lns = None
         result_store: ResultStorage
         for iteration in range(nb_iteration_lns):
-            logger.debug(
+            logger.info(
                 f"Starting iteration n° {iteration} current objective {best_objective}"
             )
             with self.cp_solver.instance.branch() as child:
@@ -173,8 +173,8 @@ class LNS_CP(SolverDO):
                     result_store = self.cp_solver.retrieve_solutions(
                         result, parameters_cp=parameters_cp
                     )
-                    logger.debug(f"iteration n° {iteration} Solved !!!")
-                    logger.debug(result.status)
+                    logger.info(f"iteration n° {iteration} Solved !!!")
+                    logger.info(result.status)
                     if len(result_store.list_solution_fits) > 0:
                         logger.debug("Solved !!!")
                         bsol, fit = result_store.get_best_solution_fit()
