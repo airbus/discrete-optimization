@@ -204,56 +204,6 @@ class LinearFlowSolver(GurobiMilpSolver):
             )
         model.update()
 
-    def custom_constraint(
-        self,
-        model: "grb.Model",
-        nodes_to_visit: Iterable[Node],
-        nodes_to_validate: Iterable[Node],
-        edges_validating: Dict[Union[Node, Tuple[Node, str]], Dict[str, Any]],
-        variables_edges: Dict[int, Dict[Edge, Any]],
-        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_in_per_vehicle: Dict[int, Dict[Node, Set[Edge]]],
-        edges_out_per_vehicle: Dict[int, Dict[Node, Set[Edge]]],
-    ) -> None:
-        constraint_one_visit: Dict[Union[Node, Tuple[Node, str]], Any] = {}
-        for node in nodes_to_visit:
-            constraint_one_visit[node] = model.addConstr(
-                lhs=grb.quicksum(
-                    [variables_edges[x[0]][x[1]] for x in edges_in_all_vehicles[node]]
-                ),
-                sense=grb.GRB.GREATER_EQUAL,
-                rhs=1,
-                name="visit_" + str(node),
-            )
-            constraint_one_visit[(node, "out")] = model.addConstr(
-                lhs=grb.quicksum(
-                    [variables_edges[x[0]][x[1]] for x in edges_out_all_vehicles[node]]
-                ),
-                sense=grb.GRB.GREATER_EQUAL,
-                rhs=1,
-                name="visitout_" + str(node),
-            )
-        for validate in edges_validating:
-            if len(edges_validating[validate]["index_validate"]) > 0:
-                for vehicle in range(len(edges_validating[validate]["index_validate"])):
-                    node = edges_validating[validate]["index_validate"][vehicle]
-                    constraint_one_visit[validate] = model.addConstr(
-                        grb.quicksum(
-                            [
-                                variables_edges[vehicle][e]
-                                for e in edges_validating[validate]["edges"]
-                            ]
-                            + [
-                                variables_edges[vehicle][e]
-                                for e in edges_in_per_vehicle[vehicle][node]
-                            ]
-                        )
-                        >= 1,
-                        name="visit_alternative_" + str(node),
-                    )
-        model.update()
-
     def one_visit_per_clusters(
         self,
         model: "grb.Model",
@@ -789,20 +739,6 @@ class LinearFlowSolver(GurobiMilpSolver):
                 variables_edges=variables_edges,
                 edges_in_all_vehicles=edges_in_all_vehicles,
                 edges_out_all_vehicles=edges_out_all_vehicles,
-            )
-
-        edges_validating_constraint = kwargs.get("edges_validating_constraint", False)
-        if edges_validating_constraint:
-            self.custom_constraint(
-                model=model,
-                nodes_to_visit=set([n for n in nodes_of_interest if n >= 366]),  # type: ignore
-                nodes_to_validate=set(range(6, 366)),
-                variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
-                edges_validating=kwargs.get("edges_validating", {}),
-                edges_in_per_vehicle=edges_in_per_vehicles,
-                edges_out_per_vehicle=edges_out_per_vehicles,
             )
         if one_visit_per_cluster:
             self.one_visit_per_clusters(
