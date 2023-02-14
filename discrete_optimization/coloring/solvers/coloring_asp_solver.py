@@ -72,11 +72,11 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
             )
             nb_colors = solution.nb_color
         self.ctl = clingo.Control(
-            ["--warn=no-atom-undefined", f"--models={max_models}"]
+            ["--warn=no-atom-undefined", f"--models={max_models}", "--opt-mode=optN"]
         )
-        self.ctl.add(basic_model)
+        self.ctl.add("base", [], basic_model)
         string_data_input = self.build_string_data_input(nb_colors=nb_colors)
-        self.ctl.add(string_data_input)
+        self.ctl.add("base", [], string_data_input)
 
     def build_string_data_input(self, nb_colors):
         number_of_nodes = self.coloring_model.number_of_nodes
@@ -140,6 +140,8 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
                 )
                 logger.info(f"=== cost = {m.cost} ===")
                 logger.info(f"=== Optimality proven ? {m.optimality_proven} === ")
+                if m.optimality_proven:
+                    return 0
                 if self.dump_model_in_folders:
                     folder_model = os.path.join(
                         cur_folder, f"output-folder/model_{self.nb_found_models}"

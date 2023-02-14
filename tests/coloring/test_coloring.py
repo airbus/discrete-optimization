@@ -1,7 +1,6 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
 import random
 
 import numpy as np
@@ -65,7 +64,7 @@ def test_solvers():
     assert coloring_model.graph.nodes_name is not None
     solvers = solvers_map.keys()
     for s in solvers:
-        if s == ColoringLP and not gurobi_available:
+        if s == ColoringLP:
             # you need a gurobi licence to test this solver.
             continue
         results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])

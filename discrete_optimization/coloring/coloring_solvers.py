@@ -6,6 +6,7 @@
 
 from typing import Any, Dict, List, Tuple, Type
 
+from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
 from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     ColoringCP,
     ColoringCPModel,
@@ -61,6 +62,7 @@ solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
         )
     ],
     "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
+    "asp": [(ColoringASPSolver, {"timeout_seconds": 5})],
 }
 
 solvers_map = {}
