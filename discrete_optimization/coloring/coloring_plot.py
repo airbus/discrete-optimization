@@ -11,11 +11,11 @@ from discrete_optimization.coloring.coloring_model import (
 )
 
 
-def plot_solution(solution: ColoringSolution):
+def plot_coloring_solution(solution: ColoringSolution, name_figure: str = ""):
     problem: ColoringProblem = solution.problem
     graph_nx = problem.graph.graph_nx
     pos = nx.kamada_kawai_layout(graph_nx)
-    fig, ax = plt.subplots(1, figsize=(15, 15))
+    fig, ax = plt.subplots(1)
     nx.draw_networkx_nodes(
         graph_nx,
         pos=pos,
@@ -24,3 +24,4 @@ def plot_solution(solution: ColoringSolution):
         ax=ax,
     )
     nx.draw_networkx_edges(graph_nx, pos=pos, ax=ax)
+    ax.set_title(name_figure)

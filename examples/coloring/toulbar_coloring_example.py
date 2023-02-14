@@ -10,7 +10,7 @@ from discrete_optimization.coloring.coloring_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.coloring.coloring_plot import plot_solution, plt
+from discrete_optimization.coloring.coloring_plot import plot_coloring_solution, plt
 from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
     ToulbarColoringSolver,
 )
@@ -29,7 +29,7 @@ def run_toulbar_coloring():
     )
     result_store = solver.solve(time_limit=10)
     solution = result_store.get_best_solution_fit()[0]
-    plot_solution(solution)
+    plot_coloring_solution(solution)
     plt.show()
     assert color_problem.satisfy(solution)
 
