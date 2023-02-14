@@ -5,7 +5,7 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import mip
 
@@ -20,6 +20,18 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
+
+try:
+    import docplex
+    from docplex.mp.constr import LinearConstraint
+    from docplex.mp.dvar import Var
+    from docplex.mp.model import Model
+    from docplex.mp.progress import SolutionListener
+    from docplex.mp.solution import SolveSolution
+except ImportError:
+    cplex_available = False
+else:
+    cplex_available = True
 
 
 logger = logging.getLogger(__name__)
@@ -258,3 +270,63 @@ class GurobiMilpSolver(MilpSolver):
             return 0
         else:
             return self.model.SolCount
+
+
+class CplexMilpSolver(MilpSolver):
+    model: Optional["docplex.mp.model.Model"]
+    results_solve: Optional[List["SolveSolution"]]
+
+    def solve(
+        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+    ) -> ResultStorage:
+        if not cplex_available:
+            logger.debug(
+                "One or several docplex didn't work, therefore your script might crash."
+            )
+        if self.model is None:
+            self.init_model(**kwargs)
+            if self.model is None:  # for mypy
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
+        if parameters_milp is None:
+            parameters_milp = ParametersMilp.default()
+        self.model.time_limit = parameters_milp.time_limit
+        self.model.parameters.mip.tolerances.mipgap = parameters_milp.mip_gap
+        listener = None
+        if parameters_milp.retrieve_all_solution or parameters_milp.n_solutions_max > 1:
+
+            class SolutionStorage(SolutionListener):
+                def __init__(self):
+                    super().__init__()
+                    self.intermediate_solutions = []
+
+                def notify_solution(self, sol):
+                    self.intermediate_solutions += [sol]
+
+            listener = SolutionStorage()
+            self.model.add_progress_listener(listener)
+        results: "SolveSolution" = self.model.solve(log_output=True)
+        if listener is None:
+            self.results_solve = [results]
+        else:
+            self.results_solve = listener.intermediate_solutions + [results]
+        # logger.info(f"Solver found {results.get()} solutions")
+        logger.info(f"Objective : {self.results_solve[-1].get_objective_value()}")
+        return self.retrieve_solutions(parameters_milp=parameters_milp)
+
+    def get_var_value_for_ith_solution(
+        self, var: "docplex.mp.dvar.Var", i: int
+    ) -> float:
+        return self.results_solve[i].get_var_value(var)
+
+    def get_obj_value_for_ith_solution(self, i: int) -> float:
+        return self.results_solve[i]
+
+    @property
+    def nb_solutions(self) -> int:
+        """Number of solutions found by the solver."""
+        if self.results_solve is None:
+            return 0
+        else:
+            return len(self.results_solve)
