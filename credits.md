@@ -3,9 +3,11 @@
 
 We would like to extend our sincere thanks to the following people who have contributed to this repository:
 
-- [Contributor 1](https://github.com/Contributor1) 
-- [Contributor 2](https://github.com/Contributor2)
-- [Contributor 3](https://github.com/Contributor3)
+- [nhuet](https://github.com/nhuet) 
+- [g-poveda](https://github.com/g-poveda)
+- [GPoveda](https://github.com/POPOGO)
+- [Florent Teichteil-Koenigsbuch](https://github.com/fteicht)
+- [Guillaume Alleon](https://github.com/galleon)
 
 We appreciate your hard work and dedication to this project. Your contributions have helped make this repository a success.
 
