@@ -136,7 +136,7 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
             weight[i] = item.weight
         self.variable_decision["x"] = x
         self.model.update()
-        self.constraints_dict["weight"] = self.model.addConstr(
+        self.constraints_dict["weight"] = self.model.addLConstr(
             quicksum([weight[i] * x[i] for i in x]) <= max_capacity
         )
         self.model.update()

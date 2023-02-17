@@ -142,11 +142,11 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
                 colors_var[n, c].varhintval = 0
             if n in dict_color_fixed:
                 if c == dict_color_fixed[n]:
-                    lns_constraint[(n, c)] = milp_solver.model.addConstr(
+                    lns_constraint[(n, c)] = milp_solver.model.addLConstr(
                         colors_var[key] == 1, name=str((n, c))
                     )
                 else:
-                    lns_constraint[(n, c)] = milp_solver.model.addConstr(
+                    lns_constraint[(n, c)] = milp_solver.model.addLConstr(
                         colors_var[key] == 0, name=str((n, c))
                     )
         return lns_constraint

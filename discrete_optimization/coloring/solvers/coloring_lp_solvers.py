@@ -198,7 +198,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
                 )
         one_color_constraints: OneColorConstraints = {}
         for n in range_node:
-            one_color_constraints[n] = color_model.addConstr(
+            one_color_constraints[n] = color_model.addLConstr(
                 quicksum([colors_var[n, c] for c in range_color]) == 1
             )
         color_model.update()
@@ -215,7 +215,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
         opt = color_model.addVar(vtype=GRB.INTEGER, lb=0, ub=nb_colors, obj=1)
         if use_cliques:
             for c in cliques[:100]:
-                cliques_constraint[index_c] = color_model.addConstr(
+                cliques_constraint[index_c] = color_model.addLConstr(
                     quicksum(
                         [
                             (color_i + 1) * colors_var[node, color_i]
@@ -225,7 +225,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
                     )
                     >= sum([i + 1 for i in range(len(c))])
                 )
-                cliques_constraint[(index_c, 1)] = color_model.addConstr(
+                cliques_constraint[(index_c, 1)] = color_model.addLConstr(
                     quicksum(
                         [
                             colors_var[node, color_i]
@@ -240,11 +240,11 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
         constraints_neighbors: NeighborsConstraints = {}
         for e in edges:
             for c in range_color:
-                constraints_neighbors[(e[0], e[1], c)] = color_model.addConstr(
+                constraints_neighbors[(e[0], e[1], c)] = color_model.addLConstr(
                     colors_var[e[0], c] + colors_var[e[1], c] <= 1
                 )
         for n in range_node:
-            color_model.addConstr(
+            color_model.addLConstr(
                 quicksum(
                     [(color_i + 1) * colors_var[n, color_i] for color_i in range_color]
                 )

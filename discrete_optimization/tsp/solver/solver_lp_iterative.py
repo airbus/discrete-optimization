@@ -253,7 +253,7 @@ class LP_TSP_Iterative(SolverTSP):
         cnt_tour = 0
         for edge in edges:
             if (edge[1], edge[0]) in edges:
-                constraint_tour_2length[cnt_tour] = tsp_model.addConstr(
+                constraint_tour_2length[cnt_tour] = tsp_model.addLConstr(
                     x_var[edge] + x_var[(edge[1], edge[0])] <= 1,
                     name="Tour_" + str(cnt_tour),
                 )
@@ -262,7 +262,7 @@ class LP_TSP_Iterative(SolverTSP):
         constraint_flow: Dict[Union[Node, Tuple[Node, str], Tuple[Node, int]], Any] = {}
         for n in flow_in:
             if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
-                constraint_flow[n] = tsp_model.addConstr(
+                constraint_flow[n] = tsp_model.addLConstr(
                     quicksum(
                         [x_var[i] for i in flow_in[n]]
                         + [-x_var[i] for i in flow_out[n]]
@@ -271,27 +271,27 @@ class LP_TSP_Iterative(SolverTSP):
                     name="flow_" + str(n),
                 )
             if n != self.tsp_model.start_index:
-                constraint_flow[(n, "sub")] = tsp_model.addConstr(
+                constraint_flow[(n, "sub")] = tsp_model.addLConstr(
                     quicksum([x_var[i] for i in flow_in[n]]) == 1,
                     name="flowin_" + str(n),
                 )
             if n == self.tsp_model.start_index:
-                constraint_flow[(n, 0)] = tsp_model.addConstr(
+                constraint_flow[(n, 0)] = tsp_model.addLConstr(
                     quicksum([x_var[i] for i in flow_out[n]]) == 1,
                     name="flowoutsource_" + str(n),
                 )
                 if n != self.tsp_model.end_index:
-                    constraint_flow[(n, 1)] = tsp_model.addConstr(
+                    constraint_flow[(n, 1)] = tsp_model.addLConstr(
                         quicksum([x_var[i] for i in flow_in[n]]) == 0,
                         name="flowinsource_" + str(n),
                     )
             if n == self.tsp_model.end_index:
-                constraint_flow[(n, 0)] = tsp_model.addConstr(
+                constraint_flow[(n, 0)] = tsp_model.addLConstr(
                     quicksum([x_var[i] for i in flow_in[n]]) == 1,
                     name="flowinsink_" + str(n),
                 )
                 if n != self.tsp_model.start_index:
-                    constraint_flow[(n, 1)] = tsp_model.addConstr(
+                    constraint_flow[(n, 1)] = tsp_model.addLConstr(
                         quicksum([x_var[i] for i in flow_out[n]]) == 0,
                         name="flowoutsink_" + str(n),
                     )
@@ -484,10 +484,10 @@ class LP_TSP_Iterative(SolverTSP):
                     e for e in self.edges if e[0] in s[0] and e[1] not in s[0]
                 ]
                 if self.method == MILPSolver.GUROBI:
-                    tsp_model.addConstr(
+                    tsp_model.addLConstr(
                         quicksum([x_var[e] for e in edge_in_of_interest]) >= 1
                     )
-                    tsp_model.addConstr(
+                    tsp_model.addLConstr(
                         quicksum([x_var[e] for e in edge_out_of_interest]) >= 1
                     )
                 if self.method == MILPSolver.CBC:

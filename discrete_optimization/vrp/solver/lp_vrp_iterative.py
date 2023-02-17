@@ -255,7 +255,7 @@ def init_model_lp(
             x_var[e].start = 0
             x_var[e].varhintval = 0
         if e in edges_to_constraint:
-            constraint_on_edge[iedge] = tsp_model.addConstr(
+            constraint_on_edge[iedge] = tsp_model.addLConstr(
                 x_var[e] == val, name=str((e, iedge))
             )
             iedge += 1
@@ -276,7 +276,7 @@ def init_model_lp(
                     or edge[1][1] == end_indexes[edge[0][0]]
                 ):
                     continue
-                constraint_tour_2length[cnt_tour] = tsp_model.addConstr(
+                constraint_tour_2length[cnt_tour] = tsp_model.addLConstr(
                     x_var[edge] + x_var[(edge[1], edge[0])] <= 1,
                     name="tour_" + str(edge),
                 )
@@ -291,7 +291,7 @@ def init_model_lp(
             for node_neigh in neigh_2:
                 if len(neigh_2[node_neigh]) >= 1:
                     for node_neigh_neigh in neigh_2[node_neigh]:
-                        constraint_triangle[cnt_tour] = tsp_model.addConstr(
+                        constraint_triangle[cnt_tour] = tsp_model.addLConstr(
                             x_var[(node, node_neigh)]
                             + x_var[(node_neigh, node_neigh_neigh)]
                             + x_var[(node_neigh_neigh, node)]
@@ -303,7 +303,7 @@ def init_model_lp(
     start_to_i, end_to_i = compute_start_end_flows_info(start_indexes, end_indexes)
     for s in start_to_i:
         for vehicle in start_to_i[s]["vehicle"]:
-            constraint_flow_out["start_v_" + str(vehicle)] = tsp_model.addConstr(
+            constraint_flow_out["start_v_" + str(vehicle)] = tsp_model.addLConstr(
                 quicksum(
                     [x_var[e] for e in edges_out_customers[s] if e[0][0] == vehicle]
                 )
@@ -312,7 +312,7 @@ def init_model_lp(
             )
     for s in end_to_i:
         for vehicle in end_to_i[s]["vehicle"]:
-            constraint_flow_in["end_v_" + str(vehicle)] = tsp_model.addConstr(
+            constraint_flow_in["end_v_" + str(vehicle)] = tsp_model.addLConstr(
                 quicksum(
                     [x_var[e] for e in edges_in_customers[s] if e[0][0] == vehicle]
                 )
@@ -324,7 +324,7 @@ def init_model_lp(
             # Already dealt by previous constraints
             continue
         else:
-            constraint_flow_in[customer] = tsp_model.addConstr(
+            constraint_flow_in[customer] = tsp_model.addLConstr(
                 quicksum([x_var[e] for e in edges_in_customers[customer]]) == 1,
                 name="in_" + str(customer),
             )
@@ -334,7 +334,7 @@ def init_model_lp(
             start_indexes[n[0]],
             end_indexes[n[0]],
         ]:
-            c_flow[n] = tsp_model.addConstr(
+            c_flow[n] = tsp_model.addLConstr(
                 quicksum(
                     [x_var[e] for e in edges_in_merged_graph[n]]
                     + [-x_var[e] for e in edges_out_merged_graph[n]]
@@ -343,7 +343,7 @@ def init_model_lp(
                 name="flow_" + str(n),
             )
     for v in range(vehicle_count):
-        tsp_model.addConstr(
+        tsp_model.addLConstr(
             quicksum(
                 [g[e[0]][e[1]]["demand"] * x_var[e] for e in edges if e[0][0] == v]
             )
@@ -730,7 +730,7 @@ class VRPIterativeLP(SolverVrp):
                             x_var[e].varhintval = 0
                         if e in edges_to_constraint:
                             if do_lns:
-                                self.constraint_on_edge[iedge] = self.model.addConstr(
+                                self.constraint_on_edge[iedge] = self.model.addLConstr(
                                     x_var[e] == val, name=str((e, iedge))
                                 )
                                 iedge += 1
@@ -1142,6 +1142,6 @@ def update_model_2(
                 for e in edges_out_customers[customer]
                 if e[1][1] not in customers_component and e[0][1] in customers_component
             ]
-            model.addConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
-            model.addConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
+            model.addLConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
+            model.addLConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
     model.update()

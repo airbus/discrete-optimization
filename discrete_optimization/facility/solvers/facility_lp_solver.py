@@ -234,7 +234,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
             int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
         ] = {}
         for c in range(nb_customers):
-            constraints_customer[c] = s.addConstr(
+            constraints_customer[c] = s.addLConstr(
                 quicksum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
@@ -243,7 +243,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         ] = {}
         for f in range(nb_facilities):
             s.addConstrs(used[f] >= x[f, c] for c in range(nb_customers))
-            constraint_capacity[f] = s.addConstr(
+            constraint_capacity[f] = s.addLConstr(
                 quicksum([x[f, c] * customers[c].demand for c in range(nb_customers)])
                 <= facilities[f].capacity
             )

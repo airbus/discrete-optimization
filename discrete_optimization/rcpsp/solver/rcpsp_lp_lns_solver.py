@@ -439,7 +439,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
                 t = key[2]
                 if t < min_st or t > max_st:
                     constraints_dict["range_start_time"].append(
-                        milp_solver.model.addConstr(milp_solver.x[key] == 0)
+                        milp_solver.model.addLConstr(milp_solver.x[key] == 0)
                     )
         milp_solver.model.update()
         return constraints_dict
