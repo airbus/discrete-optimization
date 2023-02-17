@@ -108,7 +108,7 @@ do-venv\Scripts\activate
 
 
 Optionally, install [gurobi](https://www.gurobi.com/) with its python binding (gurobipy)
-and an appropriate license, if you want to try solvers that make use of gurobi.
+and an appropriate license, if you want to try solvers that make use of gurobi. The version of gurobi must be at least 9.0.
 
 > **NB**: If you just do `pip install gurobipy`, you get a minimal license which does not allow to use it on "real" models.
 
