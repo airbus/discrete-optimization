@@ -284,7 +284,7 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
                     ][k]
                     if k not in constraints_ressource_need:
                         constraints_ressource_need[k] = {}
-                    constraints_ressource_need[k][task] = self.model.addConstr(
+                    constraints_ressource_need[k][task] = self.model.addLConstr(
                         gurobi.quicksum(
                             [
                                 self.ressource_id_usage[k][key[1]][key[2]]
@@ -307,7 +307,9 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
                         if variable[2] in tasks
                     ]
                     if len(keys_variable) > 0:
-                        overlaps_constraints[(i, k, individual)] = self.model.addConstr(
+                        overlaps_constraints[
+                            (i, k, individual)
+                        ] = self.model.addLConstr(
                             gurobi.quicksum(
                                 [
                                     self.ressource_id_usage[key[0]][key[1]][key[2]]
@@ -337,7 +339,7 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
                             if constraint_name not in self.constraint_additionnal:
                                 self.constraint_additionnal[constraint_name] = []
                             self.constraint_additionnal[constraint_name] += [
-                                self.model.addConstr(
+                                self.model.addLConstr(
                                     self.ressource_id_usage[ressource][
                                         ressource_individual
                                     ][task]
@@ -367,7 +369,7 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
             ]
             logger.debug(tasks_of_interest)
             self.constraint_additionnal[constraint_name] += [
-                self.model.addConstr(
+                self.model.addLConstr(
                     gurobi.quicksum(
                         [
                             self.ressource_id_usage[constraint_description.ressource][

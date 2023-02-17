@@ -738,7 +738,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
             self.starts[task].start = self.start_solution.rcpsp_schedule[task][
                 "start_time"
             ]
-            self.model.addConstr(
+            self.model.addLConstr(
                 gurobi.quicksum(
                     [self.x[key] * key[2] for key in variable_per_task[task]]
                 )
@@ -784,7 +784,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
                     p_s.partial_permutation[:-1], p_s.partial_permutation[1:]
                 ):
                     constraints += [
-                        self.model.addConstr(
+                        self.model.addLConstr(
                             gurobi.quicksum(
                                 [key[2] * self.x[key] for key in variable_per_task[t1]]
                                 + [
@@ -799,7 +799,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
                 for l in p_s.list_partial_order:
                     for t1, t2 in zip(l[:-1], l[1:]):
                         constraints += [
-                            self.model.addConstr(
+                            self.model.addLConstr(
                                 gurobi.quicksum(
                                     [
                                         key[2] * self.x[key]
@@ -816,24 +816,26 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
             if p_s.start_at_end is not None:
                 for i, j in p_s.start_at_end:
                     constraints += [
-                        self.model.addConstr(
+                        self.model.addLConstr(
                             self.starts[j] == self.starts[i] + durations[i]
                         )
                     ]
             if p_s.start_together is not None:
                 for i, j in p_s.start_together:
                     constraints += [
-                        self.model.addConstr(self.starts[j] == self.starts[i])
+                        self.model.addLConstr(self.starts[j] == self.starts[i])
                     ]
             if p_s.start_after_nunit is not None:
                 for t1, t2, delta in p_s.start_after_nunit:
                     constraints += [
-                        self.model.addConstr(self.starts[t2] >= self.starts[t1] + delta)
+                        self.model.addLConstr(
+                            self.starts[t2] >= self.starts[t1] + delta
+                        )
                     ]
             if p_s.start_at_end_plus_offset is not None:
                 for t1, t2, delta in p_s.start_at_end_plus_offset:
                     constraints += [
-                        self.model.addConstr(
+                        self.model.addLConstr(
                             self.starts[t2] >= self.starts[t1] + delta + durations[t1]
                         )
                     ]
