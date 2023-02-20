@@ -328,6 +328,7 @@ jobs:
           echo "binder_env_ref=$BINDER_ENV_REF" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v3  # checkout triggering branch to get scripts/trigger_binder.sh
       - name: Trigger a build for default binder env ref on each BinderHub deployments in the mybinder.org federation
+        continue-on-error: true
         if: |
           (needs.trigger.outputs.is_push_on_default_branch == 'true')
           || (needs.trigger.outputs.is_release == 'true')
