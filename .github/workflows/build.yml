@@ -335,7 +335,7 @@ jobs:
         run: |
           binder_env_full_ref=${GITHUB_REPOSITORY}/${BINDER_ENV_DEFAULT_REF}
           echo Triggering binder environment build for ${binder_env_full_ref}
-          binderhubs="gke ovh turing gesis"
+          binderhubs="gke gke2 ovh ovh2 turing gesis"
           return_code=0
           for binderhub in $binderhubs; do
             echo "** on ${binderhub}"
