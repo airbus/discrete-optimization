@@ -49,7 +49,7 @@ def get_github_link(
     notebooks_branch: str,
     notebook_relative_path: str,
 ) -> str:
-    return f"{notebooks_repo_url}/blob/{notebooks_branch}/{notebook_relative_path}"
+    return f"{notebooks_repo_url}/blob/{notebooks_branch}/{urllib.parse.quote(notebook_relative_path)}"
 
 
 def get_binder_link(
