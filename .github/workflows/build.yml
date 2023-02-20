@@ -336,10 +336,16 @@ jobs:
           binder_env_full_ref=${GITHUB_REPOSITORY}/${BINDER_ENV_DEFAULT_REF}
           echo Triggering binder environment build for ${binder_env_full_ref}
           binderhubs="gke ovh turing gesis"
+          return_code=0
           for binderhub in $binderhubs; do
             echo "** on ${binderhub}"
-            bash scripts/trigger_binder.sh https://${binderhub}.mybinder.org/build/gh/${binder_env_full_ref}
+            # go on even though the script crashes
+            bash scripts/trigger_binder.sh https://${binderhub}.mybinder.org/build/gh/${binder_env_full_ref} || ret_code=$?
+            # remember the potential crash
+            if [ $ret_code != 0 ]; then return_code=$ret_code; fi
           done
+          # exit with last non-zero return code if any
+          exit $return_code
 
   build-doc:
     runs-on: ubuntu-latest
