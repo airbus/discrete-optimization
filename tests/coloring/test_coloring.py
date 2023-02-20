@@ -19,6 +19,7 @@ from discrete_optimization.coloring.coloring_solvers import (
     solve,
     solvers_map,
 )
+from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -64,11 +65,21 @@ def test_solvers():
     assert coloring_model.graph.nodes_name is not None
     solvers = solvers_map.keys()
     for s in solvers:
-        if s == ColoringLP:
+        if s == ColoringLP and not gurobi_available:
             # you need a gurobi licence to test this solver.
             continue
         results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])
         s, f = results.get_best_solution_fit()
+
+
+def test_asp_solver():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = ColoringASPSolver(color_problem, params_objective_function=None)
+    solver.init_model(max_models=50, nb_colors=20)
+    result_store = solver.solve(timeout_seconds=5)
+    solution, fit = result_store.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
 
 
 def test_model_satisfy():
