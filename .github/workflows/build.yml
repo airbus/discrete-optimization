@@ -227,7 +227,7 @@ jobs:
           # show library path used
           pytest -s tests/show_do_path.py
           # run test suite
-          NUMBA_BOUNDSCHECK=1 pytest \
+          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
             -v --durations=0 --durations-min=10 \
             tests
       - name: Test with pytest (with coverage)
@@ -242,7 +242,7 @@ jobs:
           # show library path used
           pytest -s ../tests/show_do_path.py
           # run test suite
-          NUMBA_BOUNDSCHECK=1 pytest \
+          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
             --cov discrete_optimization  \
             --cov-report xml:coverage.xml \
             --cov-report html:coverage_html \
