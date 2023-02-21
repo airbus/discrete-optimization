@@ -5,7 +5,7 @@ available in the `notebooks/` folder of the repository.
 
 ```{contents}
 ---
-depth: 1
+depth: 3
 local: true
 ---
 ```
