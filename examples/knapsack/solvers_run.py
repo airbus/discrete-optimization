@@ -2,10 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import time
-
-import matplotlib.pyplot as plt
-from mip import GRB
+import logging
 
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.knapsack.knapsack_parser import (
@@ -19,6 +16,7 @@ from discrete_optimization.knapsack.knapsack_solvers import (
     ParametersMilp,
     solve,
     solvers,
+    solvers_map,
 )
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyDummy
 
@@ -31,20 +29,19 @@ else:
 
 
 def main_run():
-    file = [f for f in get_data_available() if "ks_60_0" in f][0]
+    logging.basicConfig(level=logging.INFO)
+    file = [f for f in get_data_available() if "ks_40_0" in f][0]
     knapsack_model = parse_file(file)
-    methods = solvers.keys()
-    methods = ["cp"]
-    for method in methods:
-        print("method : ", method)
-        for submethod in solvers[method]:
-            if submethod[0] == LPKnapsackGurobi and not gurobi_available:
-                continue
-            print(submethod[0])
-            t = time.time()
-            solution = solve(submethod[0], knapsack_model, **submethod[1])
-            print(time.time() - t, " seconds to solve")
-            print("Solution : ", solution[0])
+    solvers = solvers_map.keys()
+    for s in solvers:
+        logging.info(f"Solver {s}")
+        if s == LPKnapsackGurobi:
+            # skip Except if you have a licence
+            continue
+        results = solve(method=s, knapsack_model=knapsack_model, **solvers_map[s][1])
+        s, f = results.get_best_solution_fit()
+        logging.info(f"sol={s}")
+        logging.info(f"fitness={f}")
 
 
 def run_lp():
@@ -59,4 +56,4 @@ def run_lp():
 
 
 if __name__ == "__main__":
-    run_lp()
+    main_run()
