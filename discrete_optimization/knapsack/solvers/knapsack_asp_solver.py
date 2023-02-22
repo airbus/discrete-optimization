@@ -58,12 +58,13 @@ class KnapsackASPSolver():
         % optimization: maximize the values for in/1.
         #maximize {V,I : in(I), value(I,V)}.
         
-        total_value(X) :- X = #sum{V,I: in(I), value(I,V)}.
-        total_weight(X) :- X = #sum{W,I: in(I), weight(I,W)}.
+        
+        %total_value(X) :- X = #sum{V,I: in(I), value(I,V)}.
+        %total_weight(X) :- X = #sum{W,I: in(I), weight(I,W)}.
         
         #show in/1.
-        #show total_value/1.
-        #show total_weight/1.
+        %#show total_value/1.
+        %#show total_weight/1.
         """
 
         max_models = kwargs.get("max_models", 1)
@@ -90,6 +91,7 @@ class KnapsackASPSolver():
 
         items = [f"weight({i},{weights[i]}). value({i},{values[i]})." for i in range(1,len(weights))]
 
+        print(f"#const max_weight={max_capacity}." + " ".join(items))
         return f"#const max_weight={max_capacity}." + " ".join(items)
 
     def retrieve_solutions(self, list_symbols: List[List[Symbol]]) -> ResultStorage:

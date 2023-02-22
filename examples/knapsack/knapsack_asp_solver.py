@@ -20,7 +20,7 @@ from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackA
 
 def run_asp_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_4_0" in f][0]
+    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
     knapsack_model = parse_file(file)
     solver = KnapsackASPSolver(knapsack_model, params_objective_function=None)
     solver.init_model(max_models=50, nb_colors=20)
