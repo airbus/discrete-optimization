@@ -259,7 +259,7 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
     def __init__(
         self,
         knapsack_model: KnapsackModel,
-        milp_solver_name: MilpSolverName,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):

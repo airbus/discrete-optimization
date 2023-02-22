@@ -111,6 +111,7 @@ class KnapsackASPSolver(SolverKnapsack):
 
     def solve(self, **kwargs: Any) -> ResultStorage:
         start_time_grounding = time.perf_counter()
+        logger.info(f"Start grounding...")
         self.ctl.ground([("base", [])])
         logger.info(
             f"Grounding programs: ...\n=== Grounding done"

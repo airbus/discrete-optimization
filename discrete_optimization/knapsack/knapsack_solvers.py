@@ -17,6 +17,7 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
 )
 from discrete_optimization.knapsack.solvers.dyn_prog_knapsack import KnapsackDynProg
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
+from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 from discrete_optimization.knapsack.solvers.lp_solvers import (
     KnapsackORTools,
@@ -44,6 +45,7 @@ solvers: Dict[str, List[Tuple[Type[SolverKnapsack], Dict[str, Any]]]] = {
         (CPKnapsackMZN, {"cp_solver_name": CPSolverName.CHUFFED}),
         (CPKnapsackMZN2, {"cp_solver_name": CPSolverName.CHUFFED}),
     ],
+    "asp": [(KnapsackASPSolver, {"timeout_seconds": 100})],
     "dyn_prog": [
         (
             KnapsackDynProg,
