@@ -55,7 +55,7 @@ def greedy_using_queue(
     sorted_per_density = method_queue(knapsack_model)
     for i in range(len(sorted_per_density)):
         if sorted_per_density[i].weight + weight <= knapsack_model.max_capacity:
-            taken[sorted_per_density[i].index] = 1
+            taken[knapsack_model.index_to_index_list[sorted_per_density[i].index]] = 1
             value += sorted_per_density[i].value
             weight += sorted_per_density[i].weight
         else:
