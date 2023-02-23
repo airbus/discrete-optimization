@@ -6,11 +6,6 @@ import logging
 import os
 
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
-
-from discrete_optimization.knapsack.knapsack_model import (
-    KnapsackModel,
-    KnapsackSolution,
-)
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -24,7 +19,7 @@ def run_asp_coloring():
     knapsack_model = parse_file(file)
     solver = KnapsackASPSolver(knapsack_model, params_objective_function=None)
     solver.init_model(max_models=50)
-    result_store = solver.solve(timeout_seconds=50000)
+    result_store = solver.solve(timeout_seconds=20)
     solution, fit = result_store.get_best_solution_fit()
     print(solution, fit)
 
