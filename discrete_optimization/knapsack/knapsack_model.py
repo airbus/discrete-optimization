@@ -4,7 +4,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Set, Type, Union, cast
 
 import numpy as np
 
@@ -198,6 +198,26 @@ class KnapsackModel(Problem):
 
     def get_solution_type(self) -> Type[Solution]:
         return KnapsackSolution
+
+
+def create_subknapsack_model(
+    knapsack_model: KnapsackModel,
+    solution: KnapsackSolution,
+    indexes_to_remove: Set[int],
+    indexes_to_keep: Set[int] = None,
+):
+    if indexes_to_keep is None:
+        indexes_to_keep = set(range(knapsack_model.nb_items)).difference(
+            indexes_to_remove
+        )
+    weight = sum(
+        solution.list_taken[ind] * knapsack_model.list_items[ind].weight
+        for ind in indexes_to_remove
+    )
+    return KnapsackModel(
+        list_items=[knapsack_model.list_items[ind] for ind in sorted(indexes_to_keep)],
+        max_capacity=knapsack_model.max_capacity - weight,
+    )
 
 
 class KnapsackModel_Mobj(KnapsackModel):
