@@ -1,6 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
-#  LICENSE file in the root directory of this source tree.
+#  LICENSE file in the root directory of this source tree.$
+import logging
 
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -75,6 +76,7 @@ def test_pickup_and_delivery():
 
 
 def test_pickup_and_delivery_equilibrate():
+    logging.basicConfig(level=logging.INFO)
     model = create_pickup_and_delivery(
         number_of_vehicles=4,
         number_of_node=75,
@@ -109,13 +111,12 @@ def test_pickup_and_delivery_equilibrate():
         },
         local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=first_solution_strategy_enum.AUTOMATIC,
-        time_limit=20,
+        time_limit=1,
         n_solutions=10000,
     )
     results = solver.solve_intern()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
     check_solution(res_to_plot[0], model)
-    plot_ortools_solution(res_to_plot, model)
 
 
 def test_pickup_and_delivery_equilibrate_new_api():
@@ -200,8 +201,6 @@ def test_selective_tsp():
     )
     results = solver.solve_intern()
     res_to_plot = min([r for r in results], key=lambda x: x[-1])
-
-    plot_ortools_solution(res_to_plot, gpdp)
 
 
 def test_selective_tsp_new_api():
