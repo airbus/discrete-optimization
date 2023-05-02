@@ -715,6 +715,8 @@ class RCPSPModel(Problem):
             successors=deepcopy(self.successors),
             horizon=self.horizon,
             horizon_multiplier=self.horizon_multiplier,
+            name_task=self.name_task,
+            mean_resource_reserve=self.costs.get("mean_resource_reserve", False),
         )
 
     def get_dummy_solution(self):
