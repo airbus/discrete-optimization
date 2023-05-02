@@ -122,6 +122,8 @@ class AlternatingGa:
                 self.problem.set_fixed_attributes(  # type: ignore
                     self.encodings[current_encoding_index], tmp_sol
                 )
+            current_encoding_index += 1
+            current_encoding_index = current_encoding_index % len(self.encodings)
         if tmp_sol is None:
             raise RuntimeError(
                 "ga_solver.solve().get_best_solution() should not be None!"
