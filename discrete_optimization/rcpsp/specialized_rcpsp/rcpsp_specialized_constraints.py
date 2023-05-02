@@ -144,37 +144,7 @@ class SpecialConstraintsDescription(PartialSolution):
 
 
 class RCPSPSolutionSpecial(RCPSPSolution):
-    def __init__(
-        self,
-        problem,
-        rcpsp_permutation=None,
-        rcpsp_schedule=None,
-        rcpsp_modes=None,
-        rcpsp_schedule_feasible=None,
-        standardised_permutation=None,
-    ):
-        super().__init__(
-            problem,
-            rcpsp_permutation,
-            rcpsp_schedule,
-            rcpsp_modes,
-            rcpsp_schedule_feasible,
-            standardised_permutation,
-        )
-
-    def change_problem(self, new_problem: Problem):
-        self.__init__(
-            problem=new_problem,
-            rcpsp_permutation=self.rcpsp_permutation,
-            rcpsp_modes=self.rcpsp_modes,
-        )
-
-    def __setattr__(self, key, value):
-        super.__setattr__(self, key, value)
-        if key == "rcpsp_permutation":
-            self._schedule_to_recompute = True
-
-    def copy(self):
+    def copy(self) -> "RCPSPSolutionSpecial":
         return RCPSPSolutionSpecial(
             problem=self.problem,
             rcpsp_permutation=deepcopy(self.rcpsp_permutation),
@@ -182,9 +152,10 @@ class RCPSPSolutionSpecial(RCPSPSolution):
             rcpsp_schedule=deepcopy(self.rcpsp_schedule),
             rcpsp_schedule_feasible=self.rcpsp_schedule_feasible,
             standardised_permutation=self.standardised_permutation,
+            fast=self.fast,
         )
 
-    def lazy_copy(self):
+    def lazy_copy(self) -> "RCPSPSolutionSpecial":
         return RCPSPSolutionSpecial(
             problem=self.problem,
             rcpsp_permutation=self.rcpsp_permutation,
@@ -192,15 +163,8 @@ class RCPSPSolutionSpecial(RCPSPSolution):
             rcpsp_schedule=self.rcpsp_schedule,
             rcpsp_schedule_feasible=self.rcpsp_schedule_feasible,
             standardised_permutation=self.standardised_permutation,
+            fast=self.fast,
         )
-
-    def __str__(self):
-        if self.rcpsp_schedule is None:
-            sched_str = "None"
-        else:
-            sched_str = str(self.rcpsp_schedule)
-        val = "RCPSP solution (rcpsp_schedule): " + sched_str
-        return val
 
     def generate_permutation_from_schedule(self):
         sorted_task = [
@@ -212,9 +176,6 @@ class RCPSPSolutionSpecial(RCPSPSolution):
         sorted_task.remove(-1)
         sorted_task.remove(max(sorted_task))
         return sorted_task
-
-    def generate_schedule_from_permutation_serial_sgs(self, do_fast=True):
-        super().generate_schedule_from_permutation_serial_sgs()
 
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
