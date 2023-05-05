@@ -8,10 +8,11 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Tuple, Type, Union
+from typing import Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -271,10 +272,14 @@ class RCPSPSolutionPreemptive(Solution):
             self._schedule_to_recompute = False
 
     def generate_schedule_from_permutation_serial_sgs_2(
-        self, current_t=0, completed_tasks=None, partial_schedule=None, do_fast=True
+        self,
+        current_t=0,
+        completed_tasks: Optional[Set[Hashable]] = None,
+        partial_schedule: Optional[Dict[Hashable, Dict[str, List[int]]]] = None,
+        do_fast=True,
     ):
         if completed_tasks is None:
-            completed_tasks = {}
+            completed_tasks = set()
         if partial_schedule is None:
             partial_schedule = {}
         if do_fast:
@@ -944,9 +949,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     solution: RCPSPSolutionPreemptive,
     rcpsp_problem: RCPSPModelPreemptive,
     partial_schedule: Dict[Hashable, Dict[str, List[int]]],
-    current_t,
-    completed_tasks,
-):
+    current_t: int,
+    completed_tasks: Set[Hashable],
+) -> Tuple[Dict[int, Dict[str, List[int]]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
@@ -1212,8 +1217,8 @@ def compute_resource(
 
 
 def permutation_do_to_permutation_sgs_fast(
-    rcpsp_problem: RCPSPModelPreemptive, permutation_do
-):
+    rcpsp_problem: RCPSPModelPreemptive, permutation_do: Iterable[int]
+) -> npt.NDArray[np.int_]:
     perm_extended = [
         rcpsp_problem.index_task[rcpsp_problem.tasks_list_non_dummy[x]]
         for x in permutation_do

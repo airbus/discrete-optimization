@@ -3,10 +3,12 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+from typing import Dict, Tuple
 
 import numba.typed
 import numba.types
 import numpy as np
+import numpy.typing as npt
 from numba import njit
 
 logger = logging.getLogger(__name__)
@@ -16,17 +18,19 @@ int_array = numba.types.Array(numba.types.int_, 1, "C")
 
 @njit
 def sgs_fast(
-    permutation_task,
-    modes_array,  # permutation_task=array(task)->task index
-    consumption_array,  # modes=array(task)->0, 1... # consumption_array=array3D(task, mode, res),
-    duration_array,
-    predecessors,  # array(task, task) -> bool
-    successors,  # array(task, task)->bool
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    minimum_starting_time_array,
-):
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    minimum_starting_time_array: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, Tuple[int, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -102,7 +106,7 @@ def sgs_fast(
                         int(activity_end_times[act_id]),
                     )
                     pred_links[j] -= 1
-    rcpsp_schedule = {}
+    rcpsp_schedule: Dict[int, Tuple[int, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = (
             activity_end_times[act_id] - duration_array[act_id, modes_array[act_id]],
@@ -113,18 +117,20 @@ def sgs_fast(
 
 @njit
 def sgs_fast_preemptive(
-    permutation_task,
-    modes_array,  # permutation_task=array(task)->task index
-    consumption_array,  # modes=array(task)->0, 1... # consumption_array=array3D(task, mode, res),
-    duration_array,
-    preemptive_tag,  # array(task)->bool
-    predecessors,  # array(task, task) -> bool
-    successors,  # array(task, task)->bool
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    minimum_starting_time_array,
-):  # array(res)->bool
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    preemptive_tag: npt.NDArray[np.bool_],  # array(task)->bool
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    minimum_starting_time_array: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -257,20 +263,24 @@ def sgs_fast_preemptive(
 
 @njit
 def sgs_fast_preemptive_some_special_constraints(
-    permutation_task,
-    modes_array,  # permutation_task=array(task)->task index
-    consumption_array,  # modes=array(task)->0, 1... # consumption_array=array3D(task, mode, res),
-    duration_array,
-    preemptive_tag,  # array(task)->bool
-    predecessors,  # array(task, task) -> bool
-    successors,  # array(task, task)->bool
-    start_at_end_plus_offset,  # array(N, 3) -> (task1, task2, offset)
-    start_after_nunit,  # array(N, 3) -> (task1, task2, offset)
-    minimum_starting_time_array,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-):  # array(res)->bool
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    preemptive_tag: npt.NDArray[np.bool_],  # array(task)->bool
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    start_at_end_plus_offset: npt.NDArray[
+        np.int_
+    ],  # array(N, 3) -> (task1, task2, offset)
+    start_after_nunit: npt.NDArray[np.int_],  # array(N, 3) -> (task1, task2, offset)
+    minimum_starting_time_array: npt.NDArray[np.int_],
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -441,19 +451,21 @@ def sgs_fast_preemptive_some_special_constraints(
 
 @njit
 def sgs_fast_preemptive_minduration(
-    permutation_task,
-    modes_array,  # permutation_task=array(task)->task index
-    consumption_array,  # modes=array(task)->0, 1... # consumption_array=array3D(task, mode, res),
-    duration_array,
-    preemptive_tag,  # array(task)->bool
-    predecessors,  # array(task, task) -> bool
-    successors,  # array(task, task)->bool
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    min_duration_preemptive_bool,
-    min_duration_preemptive,
-):  # array(res)->bool
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    preemptive_tag: npt.NDArray[np.bool_],  # array(task)->bool
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    min_duration_preemptive_bool: npt.NDArray[np.bool_],
+    min_duration_preemptive: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -593,22 +605,24 @@ def sgs_fast_preemptive_minduration(
 
 @njit
 def sgs_fast_partial_schedule(
-    current_time,
-    permutation_task,
-    modes_array,
-    completed_task_indicator,
-    completed_task_times,
-    scheduled_task,
-    consumption_array,
-    duration_array,
-    predecessors,
-    successors,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    minimum_starting_time_array,
-):
-    activity_end_times = {}
+    current_time: int,
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    completed_task_indicator: npt.NDArray[np.int_],
+    completed_task_times: npt.NDArray[np.int_],
+    scheduled_task: npt.NDArray[np.int_],
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    minimum_starting_time_array: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, Tuple[int, int]], bool]:
+    activity_end_times: Dict[int, int] = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
     resource_avail_in_time = {}
@@ -715,7 +729,7 @@ def sgs_fast_partial_schedule(
                         int(minimum_starting_time[s]), int(activity_end_times[act_id])
                     )
                     pred_links[s] -= 1
-    rcpsp_schedule = {}
+    rcpsp_schedule: Dict[int, Tuple[int, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = (
             activity_end_times[act_id] - duration_array[act_id, modes_array[act_id]],
@@ -727,21 +741,23 @@ def sgs_fast_partial_schedule(
 
 @njit
 def sgs_fast_partial_schedule_incomplete_permutation_tasks(
-    current_time,
-    permutation_task,
-    modes_array,
-    completed_task_indicator,
-    completed_task_times,
-    scheduled_task,
-    consumption_array,
-    duration_array,
-    predecessors,
-    successors,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    minimum_starting_time_array,
-):
+    current_time: int,
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    completed_task_indicator: npt.NDArray[np.int_],
+    completed_task_times: npt.NDArray[np.int_],
+    scheduled_task: npt.NDArray[np.int_],
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    minimum_starting_time_array: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, Tuple[int, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -870,22 +886,24 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
 
 @njit
 def sgs_fast_partial_schedule_preemptive(
-    current_time,
-    permutation_task,
-    modes_array,
-    completed_task_indicator,
-    partial_schedule_starts,  # array(task, 5)
-    partial_schedule_ends,  # array(task, 5)
-    preemptive_tag,
-    consumption_array,
-    duration_array,
-    predecessors,
-    successors,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    minimum_starting_time_array,
-):
+    current_time: int,
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    completed_task_indicator: npt.NDArray[np.int_],
+    partial_schedule_starts: npt.NDArray[np.int_],  # array(task, 5)
+    partial_schedule_ends: npt.NDArray[np.int_],  # array(task, 5)
+    preemptive_tag: npt.NDArray[np.bool_],  # array(task)->bool
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    minimum_starting_time_array: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -1060,23 +1078,25 @@ def sgs_fast_partial_schedule_preemptive(
 
 @njit
 def sgs_fast_partial_schedule_preemptive_minduration(
-    current_time,
-    permutation_task,
-    modes_array,
-    completed_task_indicator,
-    partial_schedule_starts,  # array(task, 5)
-    partial_schedule_ends,  # array(task, 5)
-    preemptive_tag,
-    consumption_array,
-    duration_array,
-    predecessors,
-    successors,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-    min_duration_preemptive_bool,
-    min_duration_preemptive,
-):
+    current_time: int,
+    permutation_task: npt.NDArray[np.int_],  # permutation_task=array(task)->task index
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    completed_task_indicator: npt.NDArray[np.int_],
+    partial_schedule_starts: npt.NDArray[np.int_],  # array(task, 5)
+    partial_schedule_ends: npt.NDArray[np.int_],  # array(task, 5)
+    preemptive_tag: npt.NDArray[np.bool_],  # array(task)->bool
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    duration_array: npt.NDArray[np.int_],
+    predecessors: npt.NDArray[np.int_],  # array(task, task) -> bool
+    successors: npt.NDArray[np.int_],  # array(task, task)->bool
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+    min_duration_preemptive_bool: npt.NDArray[np.bool_],
+    min_duration_preemptive: npt.NDArray[np.int_],
+) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -1269,14 +1289,16 @@ def sgs_fast_partial_schedule_preemptive_minduration(
 
 @njit
 def compute_mean_ressource(
-    modes_array,
-    consumption_array,
-    start_array,
-    end_array,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-):
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    start_array: npt.NDArray[np.int_],
+    end_array: npt.NDArray[np.int_],
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+) -> float:
     new_horizon = horizon
     resource_avail_in_time = {}
     for index in range(ressource_available.shape[0]):
@@ -1307,21 +1329,23 @@ def compute_mean_ressource(
             ]
         )
     )
-    return mean_resource_reserve
+    return float(mean_resource_reserve)
 
 
 @njit
 def compute_ressource_consumption(
-    modes_array,
-    consumption_array,
-    start_array,
-    end_array,
-    horizon,
-    ressource_available,
-    ressource_renewable,
-):
+    modes_array: npt.NDArray[np.int_],  # modes=array(task)->0, 1...
+    consumption_array: npt.NDArray[
+        np.int_
+    ],  # consumption_array=array3D(task, mode, res),
+    start_array: npt.NDArray[np.int_],
+    end_array: npt.NDArray[np.int_],
+    horizon: int,
+    ressource_available: npt.NDArray[np.int_],
+    ressource_renewable: npt.NDArray[np.bool_],
+) -> Dict[int, npt.NDArray[np.int_]]:
     new_horizon = horizon
-    resource_avail_in_time = {}
+    resource_avail_in_time: Dict[int, npt.NDArray[np.int_]] = {}
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.zeros(new_horizon + 1)
     nb_task = start_array.shape[0]
