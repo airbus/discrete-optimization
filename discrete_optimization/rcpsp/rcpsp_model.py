@@ -775,8 +775,7 @@ class RCPSPModel(Problem):
         self, rcpsp_sol: RCPSPSolution
     ) -> npt.NDArray[np.int_]:
         modes_dict = self.build_mode_dict(rcpsp_sol.rcpsp_modes)
-        last_activity = max(rcpsp_sol.rcpsp_schedule)
-        makespan = rcpsp_sol.rcpsp_schedule[last_activity]["end_time"]
+        makespan = rcpsp_sol.rcpsp_schedule[self.sink_task]["end_time"]
         consumptions = np.zeros((len(self.resources), makespan + 1), dtype=np.int_)
         for act_id in rcpsp_sol.rcpsp_schedule:
             for ir in range(len(self.resources)):
