@@ -376,10 +376,10 @@ class RCPSPSolution(Solution):
         return max([self.get_end_time(x) for x in self.rcpsp_schedule])
 
     def get_start_time(self, task: Hashable) -> int:
-        return self.rcpsp_schedule.get(task, {"start_time": None})["start_time"]
+        return self.rcpsp_schedule[task]["start_time"]
 
     def get_end_time(self, task: Hashable) -> int:
-        return self.rcpsp_schedule.get(task, {"end_time": None})["end_time"]
+        return self.rcpsp_schedule[task]["end_time"]
 
     def get_start_times_list(self, task: Hashable) -> List[int]:
         return [self.get_start_time(task)]
