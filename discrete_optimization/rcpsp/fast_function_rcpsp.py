@@ -11,7 +11,7 @@ from numba import njit
 
 logger = logging.getLogger(__name__)
 
-int32_array = numba.types.Array(numba.types.int32, 1, "C")
+int_array = numba.types.Array(numba.types.int_, 1, "C")
 
 
 @njit
@@ -41,7 +41,7 @@ def sgs_fast(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors[permutation_task, :], axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int32)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         index_id = 0
@@ -130,12 +130,12 @@ def sgs_fast_preemptive(
     new_horizon = horizon
     resource_avail_in_time = {}
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
@@ -147,8 +147,8 @@ def sgs_fast_preemptive(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
-    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
+    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         for i in range(nb_task):
@@ -242,8 +242,8 @@ def sgs_fast_preemptive(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts, dtype=np.int32)
-            ends_dict[act_id] = np.array(ends, dtype=np.int32)
+            starts_dict[act_id] = np.array(starts, dtype=np.int_)
+            ends_dict[act_id] = np.array(ends, dtype=np.int_)
             done_np[act_id] = 1
             done += 1
             for s in range(successors.shape[1]):
@@ -276,12 +276,12 @@ def sgs_fast_preemptive_some_special_constraints(
     new_horizon = horizon
     resource_avail_in_time = {}
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
@@ -303,8 +303,8 @@ def sgs_fast_preemptive_some_special_constraints(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
-    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
+    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         found = False
@@ -408,8 +408,8 @@ def sgs_fast_preemptive_some_special_constraints(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts, dtype=np.int32)
-            ends_dict[act_id] = np.array(ends, dtype=np.int32)
+            starts_dict[act_id] = np.array(starts, dtype=np.int_)
+            ends_dict[act_id] = np.array(ends, dtype=np.int_)
             done_np[act_id] = 1
             done += 1
             for s in range(successors.shape[1]):
@@ -459,12 +459,12 @@ def sgs_fast_preemptive_minduration(
     new_horizon = horizon
     resource_avail_in_time = {}
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
@@ -476,8 +476,8 @@ def sgs_fast_preemptive_minduration(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
-    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
+    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         for i in range(nb_task):
@@ -578,8 +578,8 @@ def sgs_fast_preemptive_minduration(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts, dtype=np.int32)
-            ends_dict[act_id] = np.array(ends, dtype=np.int32)
+            starts_dict[act_id] = np.array(starts, dtype=np.int_)
+            ends_dict[act_id] = np.array(ends, dtype=np.int_)
             done_np[act_id] = 1
             done += 1
             for s in range(successors.shape[1]):
@@ -622,7 +622,7 @@ def sgs_fast_partial_schedule(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros(nb_task, dtype=np.int64)
+    done_np = np.zeros(nb_task, dtype=np.int_)
     for t in range(nb_task):
         if scheduled_task[t] != -1:
             activity_end_times[t] = (
@@ -758,7 +758,7 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors[permutation_task, :], axis=1)
-    done_np = np.zeros((predecessors.shape[0]), dtype=np.int32)
+    done_np = np.zeros((predecessors.shape[0]), dtype=np.int_)
     for t in range(nb_task):
         activity_end_times[t] = 0
     for t in range(nb_task):
@@ -898,18 +898,18 @@ def sgs_fast_partial_schedule_preemptive(
     for act in range(permutation_task.shape[0]):
         minimum_starting_time[act] = max(minimum_starting_time_array[act], current_time)
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros(nb_task, dtype=np.int64)
-    done_duration = np.zeros(nb_task, dtype=np.int64)
+    done_np = np.zeros(nb_task, dtype=np.int_)
+    done_duration = np.zeros(nb_task, dtype=np.int_)
     for t in range(nb_task):
         end = None
         for i in range(partial_schedule_starts.shape[1]):
@@ -947,10 +947,10 @@ def sgs_fast_partial_schedule_preemptive(
             done_np[t] = 1
             activity_end_times[t] = end
             starts_dict[t] = np.array(
-                [k for k in partial_schedule_starts[t, :] if k != -1], dtype=np.int32
+                [k for k in partial_schedule_starts[t, :] if k != -1], dtype=np.int_
             )
             ends_dict[t] = np.array(
-                [k for k in partial_schedule_ends[t, :] if k != -1], dtype=np.int32
+                [k for k in partial_schedule_ends[t, :] if k != -1], dtype=np.int_
             )
             for s in range(successors.shape[1]):
                 if successors[t, s] == 1:
@@ -1041,11 +1041,11 @@ def sgs_fast_partial_schedule_preemptive(
             activity_end_times[act_id] = end_t
             starts_dict[act_id] = np.array(
                 [k for k in partial_schedule_starts[act_id, :] if k != -1] + starts,
-                dtype=np.int32,
+                dtype=np.int_,
             )
             ends_dict[act_id] = np.array(
                 [k for k in partial_schedule_ends[act_id, :] if k != -1] + ends,
-                dtype=np.int32,
+                dtype=np.int_,
             )
             done_np[act_id] = 1
             done += 1
@@ -1089,18 +1089,18 @@ def sgs_fast_partial_schedule_preemptive_minduration(
     for act in range(permutation_task.shape[0]):
         minimum_starting_time[act] = current_time
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros(nb_task, dtype=np.int64)
-    done_duration = np.zeros(nb_task, dtype=np.int64)
+    done_np = np.zeros(nb_task, dtype=np.int_)
+    done_duration = np.zeros(nb_task, dtype=np.int_)
     for t in range(nb_task):
         end = None
         for i in range(partial_schedule_starts.shape[1]):
@@ -1138,10 +1138,10 @@ def sgs_fast_partial_schedule_preemptive_minduration(
             done_np[t] = 1
             activity_end_times[t] = end
             starts_dict[t] = np.array(
-                [k for k in partial_schedule_starts[t, :] if k != -1], dtype=np.int32
+                [k for k in partial_schedule_starts[t, :] if k != -1], dtype=np.int_
             )
             ends_dict[t] = np.array(
-                [k for k in partial_schedule_ends[t, :] if k != -1], dtype=np.int32
+                [k for k in partial_schedule_ends[t, :] if k != -1], dtype=np.int_
             )
             for s in range(successors.shape[1]):
                 if successors[t, s] == 1:
@@ -1250,11 +1250,11 @@ def sgs_fast_partial_schedule_preemptive_minduration(
 
             starts_dict[act_id] = np.array(
                 [k for k in partial_schedule_starts[act_id, :] if k != -1] + starts,
-                dtype=np.int32,
+                dtype=np.int_,
             )
             ends_dict[act_id] = np.array(
                 [k for k in partial_schedule_ends[act_id, :] if k != -1] + ends,
-                dtype=np.int32,
+                dtype=np.int_,
             )
             done_np[act_id] = 1
             done += 1

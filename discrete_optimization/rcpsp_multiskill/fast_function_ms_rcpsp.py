@@ -7,7 +7,7 @@ import numba.types
 import numpy as np
 from numba import njit
 
-int32_array = numba.types.Array(numba.types.int32, 1, "C")
+int_array = numba.types.Array(numba.types.int_, 1, "C")
 
 
 @njit
@@ -44,7 +44,7 @@ def sgs_fast_ms(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         for i in range(nb_task):
@@ -219,7 +219,7 @@ def sgs_fast_ms_partial_schedule(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     rcpsp_schedule = {}
     for t in range(nb_task):
         if scheduled_task_indicator[t] != 0:
@@ -423,12 +423,12 @@ def sgs_fast_ms_preemptive(
     new_horizon = horizon
     resource_avail_in_time = {}
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
@@ -441,10 +441,10 @@ def sgs_fast_ms_preemptive(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
-    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
+    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     skills_usage = {}
-    worker_usage = np.zeros((worker_skills.shape[0]), dtype=np.int32)
+    worker_usage = np.zeros((worker_skills.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_sched:
         act_id = 0
         for i in range(nb_task):
@@ -724,8 +724,8 @@ def sgs_fast_ms_preemptive(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts, dtype=np.int32)
-            ends_dict[act_id] = np.array(ends, dtype=np.int32)
+            starts_dict[act_id] = np.array(starts, dtype=np.int_)
+            ends_dict[act_id] = np.array(ends, dtype=np.int_)
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
@@ -767,12 +767,12 @@ def sgs_fast_ms_preemptive_some_special_constraints(
     new_horizon = horizon
     resource_avail_in_time = {}
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
@@ -785,8 +785,8 @@ def sgs_fast_ms_preemptive_some_special_constraints(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
-    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
+    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int_)
 
     start_after_nunit_links = np.zeros(nb_task)
     for task in range(nb_task):
@@ -799,7 +799,7 @@ def sgs_fast_ms_preemptive_some_special_constraints(
         )
 
     skills_usage = {}
-    worker_usage = np.zeros((worker_skills.shape[0]), dtype=np.int32)
+    worker_usage = np.zeros((worker_skills.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         for i in range(nb_task):
@@ -1031,8 +1031,8 @@ def sgs_fast_ms_preemptive_some_special_constraints(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts, dtype=np.int32)
-            ends_dict[act_id] = np.array(ends, dtype=np.int32)
+            starts_dict[act_id] = np.array(starts, dtype=np.int_)
+            ends_dict[act_id] = np.array(ends, dtype=np.int_)
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1
@@ -1095,12 +1095,12 @@ def sgs_fast_ms_preemptive_partial_schedule(
     new_horizon = horizon
     resource_avail_in_time = {}
     starts_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     ends_dict = numba.typed.Dict.empty(
-        key_type=numba.types.int32,
-        value_type=int32_array,
+        key_type=numba.types.intp,
+        value_type=int_array,
     )
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.copy(
@@ -1114,7 +1114,7 @@ def sgs_fast_ms_preemptive_partial_schedule(
     done = 0
     nb_task = permutation_task.shape[0]
     pred_links = np.sum(predecessors, axis=1)
-    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_np = np.zeros((permutation_task.shape[0]), dtype=np.int_)
 
     for t in range(nb_task):
         if scheduled_task_indicator[t] != 0:
@@ -1178,7 +1178,7 @@ def sgs_fast_ms_preemptive_partial_schedule(
                     if np.all(skills_done > skills):
                         break
 
-    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int64)
+    done_duration = np.zeros((permutation_task.shape[0]), dtype=np.int_)
     while done < nb_task and not unfeasible_non_renewable_resources:
         act_id = 0
         for i in range(nb_task):
@@ -1386,8 +1386,8 @@ def sgs_fast_ms_preemptive_partial_schedule(
             if unfeasible_non_renewable_resources:
                 break
             activity_end_times[act_id] = end_t
-            starts_dict[act_id] = np.array(starts, dtype=np.int32)
-            ends_dict[act_id] = np.array(ends, dtype=np.int32)
+            starts_dict[act_id] = np.array(starts, dtype=np.int_)
+            ends_dict[act_id] = np.array(ends, dtype=np.int_)
             skills_usage[act_id] = skills_act_id
             done_np[act_id] = 1
             done += 1

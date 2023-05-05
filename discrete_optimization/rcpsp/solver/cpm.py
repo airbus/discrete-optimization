@@ -196,7 +196,9 @@ class CPM(SolverDO):
                 ]
             else:
                 resource_avail_in_time[res] = np.full(
-                    self.rcpsp_model.horizon, self.rcpsp_model.resources[res], dtype=int
+                    self.rcpsp_model.horizon,
+                    self.rcpsp_model.resources[res],
+                    dtype=np.int_,
                 ).tolist()
         done = set()
         ressource_usage = {
@@ -398,7 +400,9 @@ class CPM(SolverDO):
                 ]
             else:
                 resource_avail_in_time[res] = np.full(
-                    self.rcpsp_model.horizon, self.rcpsp_model.resources[res], dtype=int
+                    self.rcpsp_model.horizon,
+                    self.rcpsp_model.resources[res],
+                    dtype=np.int_,
                 ).tolist()
         done = set()
         ressource_usage = {

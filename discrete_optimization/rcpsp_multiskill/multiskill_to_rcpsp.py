@@ -72,12 +72,12 @@ class MultiSkillToRCPSP:
             employees = list(worker_type_container[worker_type])
             calend = np.array(
                 self.multiskill_model.employees[employees[0]].calendar_employee,
-                dtype=int,
+                dtype=np.int_,
             )
             for j in range(1, len(employees)):
                 calend += np.array(
                     self.multiskill_model.employees[employees[j]].calendar_employee,
-                    dtype=int,
+                    dtype=np.int_,
                 )
             calendar_worker_type[map_names_to_understandable[worker_type]] = calend
         resources_dict = self.multiskill_model.resources_availability

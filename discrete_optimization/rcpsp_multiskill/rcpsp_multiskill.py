@@ -2935,13 +2935,13 @@ def permutation_do_to_permutation_sgs_fast(
     ]
     perm_extended.insert(0, rcpsp_problem.index_task[rcpsp_problem.source_task])
     perm_extended.append(rcpsp_problem.index_task[rcpsp_problem.sink_task])
-    return np.array(perm_extended, dtype=np.int32)
+    return np.array(perm_extended, dtype=np.int_)
 
 
 def priority_worker_per_task_do_to_permutation_sgs_fast(
     rcpsp_problem: MS_RCPSPModel, priority_worker_per_task
 ):
-    p = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.nb_employees), dtype=int)
+    p = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.nb_employees), dtype=np.int_)
     p[0, :] = np.arange(0, rcpsp_problem.nb_employees, 1)
     p[-1, :] = p[0, :]
     for i in range(len(priority_worker_per_task)):
@@ -2957,9 +2957,9 @@ def build_partial_vectors(
     scheduled_tasks_start_times: Dict[Hashable, TaskDetails],
 ):
     scheduled_task_indicator = np.zeros(problem.n_jobs)
-    scheduled_tasks_start_times_vector = np.zeros(problem.n_jobs, dtype=np.int32)
-    scheduled_tasks_end_times_vector = np.zeros(problem.n_jobs, dtype=np.int32)
-    worker_used = np.zeros((problem.n_jobs, problem.nb_employees), dtype=int)
+    scheduled_tasks_start_times_vector = np.zeros(problem.n_jobs, dtype=np.int_)
+    scheduled_tasks_end_times_vector = np.zeros(problem.n_jobs, dtype=np.int_)
+    worker_used = np.zeros((problem.n_jobs, problem.nb_employees), dtype=np.int_)
     for dict_data in [completed_tasks, scheduled_tasks_start_times]:
         for t in dict_data:
             scheduled_task_indicator[problem.index_task[t]] = 1
@@ -2984,10 +2984,10 @@ def build_partial_vectors_preemptive(
     scheduled_tasks_start_times: Dict[Hashable, TaskDetailsPreemptive],
 ):
     scheduled_task_indicator = np.zeros(problem.n_jobs)
-    scheduled_tasks_start_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int32)
-    scheduled_tasks_end_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int32)
-    nb_subparts = np.zeros(problem.n_jobs, dtype=int)
-    worker_used = np.zeros((problem.n_jobs, 10, problem.nb_employees), dtype=int)
+    scheduled_tasks_start_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int_)
+    scheduled_tasks_end_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int_)
+    nb_subparts = np.zeros(problem.n_jobs, dtype=np.int_)
+    worker_used = np.zeros((problem.n_jobs, 10, problem.nb_employees), dtype=np.int_)
     for dict_data in [completed_tasks, scheduled_tasks_start_times]:
         for t in dict_data:
             scheduled_task_indicator[problem.index_task[t]] = 1
@@ -3040,7 +3040,7 @@ def create_fake_tasks_multiskills(
                 }
                 fake_tasks += [consume]
     unit_arrays = {
-        j: np.array(rcpsp_problem.employees[j].calendar_employee, dtype=np.int32)
+        j: np.array(rcpsp_problem.employees[j].calendar_employee, dtype=np.int_)
         for j in rcpsp_problem.employees_list
     }
     max_capacity = {r: np.max(unit_arrays[r]) for r in unit_arrays}
@@ -3101,7 +3101,7 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.max_number_of_mode,
             len(rcpsp_problem.resources_list),
         ),
-        dtype=np.int32,
+        dtype=np.int_,
     )
     is_releasable_array = np.zeros(
         (
@@ -3109,7 +3109,7 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.max_number_of_mode,
             len(rcpsp_problem.resources_list),
         ),
-        dtype=np.int32,
+        dtype=np.int_,
     )
     skills_need = np.zeros(
         (
@@ -3117,29 +3117,27 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.max_number_of_mode,
             len(rcpsp_problem.skills_list),
         ),
-        dtype=np.int32,
+        dtype=np.int_,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int32
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int_
     )
 
-    predecessors = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
-    )
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
+    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
-        (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
+        (len(rcpsp_problem.resources_list), horizon), dtype=np.int_
     )
     worker_available = np.zeros(
-        (len(rcpsp_problem.employees_list), horizon), dtype=np.int32
+        (len(rcpsp_problem.employees_list), horizon), dtype=np.int_
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
     worker_skills = np.zeros(
         (len(rcpsp_problem.employees_list), len(rcpsp_problem.skills_list)),
-        dtype=np.int32,
+        dtype=np.int_,
     )
-    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=int)
+    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
     consider_partial_preemptive = False
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
@@ -3186,7 +3184,7 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.employees[
                 rcpsp_problem.employees_list[emp]
             ].calendar_employee,
-            dtype=np.int32,
+            dtype=np.int_,
         )[:horizon]
         for s in range(len(rcpsp_problem.skills_list)):
             worker_skills[emp, s] = (
@@ -3207,10 +3205,10 @@ def create_np_data_and_jit_functions(
     if rcpsp_problem.includes_special_constraint():
         start_at_end_plus_offset = np.zeros(
             (len(rcpsp_problem.special_constraints.start_at_end_plus_offset), 3),
-            dtype=int,
+            dtype=np.int_,
         )
         start_after_nunit = np.zeros(
-            (len(rcpsp_problem.special_constraints.start_after_nunit), 3), dtype=int
+            (len(rcpsp_problem.special_constraints.start_after_nunit), 3), dtype=np.int_
         )
         j = 0
         for t1, t2, off in rcpsp_problem.special_constraints.start_at_end_plus_offset:
@@ -3225,7 +3223,7 @@ def create_np_data_and_jit_functions(
             start_after_nunit[j, 2] = off
             j += 1
     if rcpsp_problem.preemptive:
-        preemptive_tag = np.ones(rcpsp_problem.n_jobs, dtype=np.int32)
+        preemptive_tag = np.ones(rcpsp_problem.n_jobs, dtype=np.int_)
         for t in rcpsp_problem.preemptive_indicator:
             preemptive_tag[rcpsp_problem.index_task[t]] = (
                 1 if rcpsp_problem.preemptive_indicator[t] else 0

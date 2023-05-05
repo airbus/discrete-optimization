@@ -110,7 +110,7 @@ def prune_search_space(
     customers = facility_problem.customers
     nb_facilities = len(facilities)
     nb_customers = len(customers)
-    matrix_fc_indicator = np.zeros((nb_facilities, nb_customers), dtype=int)
+    matrix_fc_indicator = np.zeros((nb_facilities, nb_customers), dtype=np.int_)
     matrix_fc_indicator[sorted_costs[:n_cheapest], :] = 2
     for c in range(nb_customers):
         matrix_fc_indicator[closest[:n_shortest, c], c] = 2

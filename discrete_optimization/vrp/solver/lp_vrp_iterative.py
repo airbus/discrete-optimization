@@ -56,8 +56,8 @@ Edge = Tuple[Node, Node]
 def build_matrice_distance_np(
     customer_count: int, customers: Sequence[Customer2D]
 ) -> Tuple[np.ndarray, np.ndarray]:
-    matrix_x = np.ones((customer_count, customer_count), dtype=np.int32)
-    matrix_y = np.ones((customer_count, customer_count), dtype=np.int32)
+    matrix_x = np.ones((customer_count, customer_count), dtype=np.int_)
+    matrix_y = np.ones((customer_count, customer_count), dtype=np.int_)
     for i in range(customer_count):
         matrix_x[i, :] *= int(customers[i].x)
         matrix_y[i, :] *= int(customers[i].y)

@@ -1252,7 +1252,7 @@ class NeighborBuilderMix(NeighborBuilder):
         if isinstance(self.weight_neighbor, list):
             self.weight_neighbor = np.array(self.weight_neighbor)
         self.weight_neighbor = self.weight_neighbor / np.sum(self.weight_neighbor)
-        self.index_np = np.array(range(len(self.list_neighbor)), dtype=np.int32)
+        self.index_np = np.array(range(len(self.list_neighbor)), dtype=np.int_)
         self.verbose = verbose
 
     def find_subtasks(

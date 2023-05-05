@@ -908,7 +908,7 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
             )
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -1269,7 +1269,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
             )
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -1631,7 +1631,7 @@ def generate_schedule_from_permutation_serial_sgs(
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -1858,7 +1858,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
 
     def ressource_consumption(res, task, duration, mode):
@@ -2102,21 +2102,21 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.max_number_of_mode,
             len(rcpsp_problem.resources_list),
         ),
-        dtype=np.int32,
+        dtype=np.int_,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int_
     )
-    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int)
-    preemptive_tag = np.zeros(rcpsp_problem.n_jobs, dtype=np.bool)
+    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
+    preemptive_tag = np.zeros(rcpsp_problem.n_jobs, dtype=np.bool_)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
-        (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
+        (len(rcpsp_problem.resources_list), horizon), dtype=np.int_
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
     min_duration_preemptive_bool = np.zeros(rcpsp_problem.n_jobs, dtype=bool)
-    min_duration_preemptive = np.zeros(rcpsp_problem.n_jobs, dtype=np.int32)
+    min_duration_preemptive = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
         min_duration_preemptive_bool[i] = rcpsp_problem.duration_subtask[task][0]
@@ -2148,7 +2148,7 @@ def create_np_data_and_jit_functions(
             ressource_available[k, :] = np.full(
                 ressource_available.shape[1],
                 rcpsp_problem.resources[rcpsp_problem.resources_list[k]],
-                dtype=int,
+                dtype=np.int_,
             )
         if rcpsp_problem.resources_list[k] in rcpsp_problem.non_renewable_resources:
             ressource_renewable[k] = False
@@ -2159,7 +2159,7 @@ def create_np_data_and_jit_functions(
             index_s = task_index[s]
             predecessors[index_s, i] = 1
             successors[i, index_s] = 1
-    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=int)
+    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
     for t in rcpsp_problem.special_constraints.start_times_window:
         if rcpsp_problem.special_constraints.start_times_window[t][0] is not None:
             minimum_starting_time_array[
@@ -2167,10 +2167,11 @@ def create_np_data_and_jit_functions(
             ] = rcpsp_problem.special_constraints.start_times_window[t][0]
 
     start_at_end_plus_offset = np.zeros(
-        (len(rcpsp_problem.special_constraints.start_at_end_plus_offset), 3), dtype=int
+        (len(rcpsp_problem.special_constraints.start_at_end_plus_offset), 3),
+        dtype=np.int_,
     )
     start_after_nunit = np.zeros(
-        (len(rcpsp_problem.special_constraints.start_after_nunit), 3), dtype=int
+        (len(rcpsp_problem.special_constraints.start_after_nunit), 3), dtype=np.int_
     )
     j = 0
     for t1, t2, off in rcpsp_problem.special_constraints.start_at_end_plus_offset:

@@ -412,7 +412,7 @@ class ConstraintHandlerMix(ConstraintHandler):
             self.tag_constraint_handler = tag_constraint_handler
         self.list_proba = np.array(list_proba)
         self.list_proba = self.list_proba / np.sum(self.list_proba)
-        self.index_np = np.array(range(len(self.list_proba)), dtype=np.int32)
+        self.index_np = np.array(range(len(self.list_proba)), dtype=np.int_)
         self.current_iteration = 0
         self.status: Dict[int, ConstraintStatus] = {
             i: {

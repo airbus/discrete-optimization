@@ -1156,7 +1156,7 @@ class ConstraintHandlerMix(ConstraintHandler):
         if isinstance(self.list_proba, list):
             self.list_proba = np.array(self.list_proba)
         self.list_proba = self.list_proba / np.sum(self.list_proba)
-        self.index_np = np.array(range(len(self.list_proba)), dtype=np.int)
+        self.index_np = np.array(range(len(self.list_proba)), dtype=np.int_)
         self.current_iteration = 0
         self.status = {
             i: {"nb_usage": 0, "nb_improvement": 0}
