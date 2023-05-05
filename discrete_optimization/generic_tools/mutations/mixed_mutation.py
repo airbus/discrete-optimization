@@ -21,7 +21,7 @@ class BasicPortfolioMutation(Mutation):
         if isinstance(self.weight_mutation, list):
             self.weight_mutation = np.array(self.weight_mutation)
         self.weight_mutation = self.weight_mutation / np.sum(self.weight_mutation)
-        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int32)
+        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int_)
 
     def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
         choice = np.random.choice(self.index_np, size=1, p=self.weight_mutation)[0]
@@ -45,7 +45,7 @@ class BasicPortfolioMutationTrack(Mutation):
         if isinstance(self.weight_mutation, list):
             self.weight_mutation = np.array(self.weight_mutation)
         self.weight_mutation = self.weight_mutation / np.sum(self.weight_mutation)
-        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int32)
+        self.index_np = np.array(range(len(self.list_mutation)), dtype=np.int_)
 
     def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
         choice = np.random.choice(self.index_np, size=1, p=self.weight_mutation)[0]

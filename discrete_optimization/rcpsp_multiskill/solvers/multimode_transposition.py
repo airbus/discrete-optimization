@@ -99,13 +99,13 @@ def rebuild_multiskill_solution(
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, multimode_rcpsp_model.resources[res], dtype=int
+                new_horizon, multimode_rcpsp_model.resources[res], dtype=np.int_
             ).tolist()
     worker_avail_in_time = {}
     for i in multiskill_rcpsp_model.employees:
         worker_avail_in_time[i] = np.array(
             multiskill_rcpsp_model.employees[i].calendar_employee[: new_horizon + 1],
-            dtype=np.bool,
+            dtype=np.bool_,
         )
     rcpsp_schedule = solution_rcpsp.rcpsp_schedule
     employee_usage = {}

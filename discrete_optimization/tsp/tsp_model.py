@@ -431,7 +431,7 @@ def compute_length_matrix(
     length_permutation: int,
 ) -> Tuple[List[int], int]:
     obj = int(distance_matrix[start_index, solution[0]])
-    lengths = np.zeros(node_count, dtype=int)
+    lengths = np.zeros(node_count, dtype=np.int_)
     lengths[0] = obj
     for index in range(0, length_permutation - 1):
         ll = int(distance_matrix[solution[index], solution[index + 1]])

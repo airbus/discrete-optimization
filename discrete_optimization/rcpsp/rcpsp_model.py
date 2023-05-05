@@ -798,18 +798,16 @@ def create_np_data_and_jit_functions(
             rcpsp_problem.max_number_of_mode,
             len(rcpsp_problem.resources_list),
         ),
-        dtype=np.int32,
+        dtype=np.int_,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int32
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int_
     )
-    predecessors = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
-    )
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
+    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
-        (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
+        (len(rcpsp_problem.resources_list), horizon), dtype=np.int_
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
 
@@ -838,7 +836,7 @@ def create_np_data_and_jit_functions(
             ressource_available[k, :] = np.full(
                 ressource_available.shape[1],
                 rcpsp_problem.resources[rcpsp_problem.resources_list[k]],
-                dtype=int,
+                dtype=np.int_,
             )
         if rcpsp_problem.resources_list[k] in rcpsp_problem.non_renewable_resources:
             ressource_renewable[k] = False
@@ -849,7 +847,7 @@ def create_np_data_and_jit_functions(
             index_s = task_index[s]
             predecessors[index_s, i] = 1
             successors[i, index_s] = 1
-    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=int)
+    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
     if "special_constraints" in rcpsp_problem.__dict__.keys():
         for t in rcpsp_problem.special_constraints.start_times_window:
             if rcpsp_problem.special_constraints.start_times_window[t][0] is not None:
@@ -894,7 +892,7 @@ def permutation_do_to_permutation_sgs_fast(rcpsp_problem: RCPSPModel, permutatio
     ]
     perm_extended.insert(0, rcpsp_problem.index_task[rcpsp_problem.source_task])
     perm_extended.append(rcpsp_problem.index_task[rcpsp_problem.sink_task])
-    return np.array(perm_extended, dtype=np.int32)
+    return np.array(perm_extended, dtype=np.int_)
 
 
 class SingleModeRCPSPModel(RCPSPModel):
@@ -1263,7 +1261,7 @@ def generate_schedule_from_permutation_serial_sgs(
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -1390,7 +1388,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -1532,7 +1530,7 @@ def compute_mean_resource_reserve(solution: RCPSPSolution, rcpsp_problem: RCPSPM
             resource_avail_in_time[res] = rcpsp_problem.resources[res][: makespan + 1]
         else:
             resource_avail_in_time[res] = np.full(
-                makespan, rcpsp_problem.resources[res], dtype=int
+                makespan, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     for act_id in rcpsp_problem.tasks_list:
         start_time = solution.rcpsp_schedule[act_id]["start_time"]
@@ -1575,7 +1573,9 @@ class SGSWithoutArray:
                 )
             else:
                 self.resource_avail_in_time[res] = np.full(
-                    self.rcpsp_model.horizon, self.rcpsp_model.resources[res], dtype=int
+                    self.rcpsp_model.horizon,
+                    self.rcpsp_model.resources[res],
+                    dtype=np.int_,
                 )
         self.dict_step_ressource = {}
         for res in self.resource_avail_in_time:

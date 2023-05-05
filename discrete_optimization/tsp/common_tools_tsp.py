@@ -59,8 +59,8 @@ def build_matrice_distance(
 def build_matrice_distance_np(
     nodeCount: int, points: Sequence[Point2D]
 ) -> Tuple[np.ndarray, np.ndarray]:
-    matrix_x = np.ones((nodeCount, nodeCount), dtype=np.int32)
-    matrix_y = np.ones((nodeCount, nodeCount), dtype=np.int32)
+    matrix_x = np.ones((nodeCount, nodeCount), dtype=np.int_)
+    matrix_y = np.ones((nodeCount, nodeCount), dtype=np.int_)
     for i in range(nodeCount):
         matrix_x[i, :] *= int(points[i].x)
         matrix_y[i, :] *= int(points[i].y)

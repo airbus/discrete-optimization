@@ -75,7 +75,7 @@ def create_selective_tsp(
     coordinates = np.random.randint(-20, 20, size=(nb_nodes_real, 2))
     coordinates[:, 0] += 40
     distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
+    distance_delta = np.array(distance_delta, dtype=np.int_)
     distance_delta_dict: Dict[Node, Dict[Node, float]] = {
         i: {j: int(distance_delta[i, j]) for j in range(nb_nodes_real) if j != i}
         for i in range(nb_nodes_real)
@@ -160,7 +160,7 @@ def create_pickup_and_delivery(
     }
 
     distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
+    distance_delta = np.array(distance_delta, dtype=np.int_)
     distance_delta_dict: Dict[Node, Dict[Node, float]] = {
         i: {j: int(distance_delta[i, j]) for j in all_nodes if j != i}
         for i in all_nodes

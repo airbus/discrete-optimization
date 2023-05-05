@@ -119,7 +119,7 @@ def script_example():
     )
 
     distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
+    distance_delta = np.array(distance_delta, dtype=np.int_)
     for i in range(distance_delta.shape[0]):
         distance_delta[i, i] = 0
     time_delta = distance_delta / 2
@@ -179,7 +179,7 @@ def script_example_lns():
         -20, 20, size=(number_of_nodes_transportation + 2 * n_vehicles, 2)
     )
     distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
+    distance_delta = np.array(distance_delta, dtype=np.int_)
     for i in range(distance_delta.shape[0]):
         distance_delta[i, i] = 0
     time_delta = distance_delta / 2
@@ -355,7 +355,7 @@ def script_example_flow():
         -20, 20, size=(number_of_nodes_transportation + 2 * n_vehicles, 2)
     )
     distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
+    distance_delta = np.array(distance_delta, dtype=np.int_)
     for i in range(distance_delta.shape[0]):
         distance_delta[i, i] = 0
     time_delta = distance_delta / 2
@@ -426,7 +426,7 @@ def init_model_resources():
     coordinates = np.random.randint(-20, 20, size=(total_node, 2))
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
     distance_delta = dist.cdist(coordinates, coordinates)
-    distance_delta = np.array(distance_delta, dtype=np.int32)
+    distance_delta = np.array(distance_delta, dtype=np.int_)
     for i in range(distance_delta.shape[0]):
         distance_delta[i, i] = 0
     time_delta = distance_delta / 2
@@ -448,10 +448,10 @@ def init_model_resources():
         (total_node, total_node, instance["number_resource"])
     )
     instance["max_capacity_resource"] = 200 * np.ones(
-        (n_vehicles, instance["number_resource"]), dtype=int
+        (n_vehicles, instance["number_resource"]), dtype=np.int_
     )
     instance["min_capacity_resource"] = 10 * np.zeros(
-        (n_vehicles, instance["number_resource"]), dtype=int
+        (n_vehicles, instance["number_resource"]), dtype=np.int_
     )
     instance["max_capacity_resource"] = [
         [
@@ -894,10 +894,10 @@ def init_model_ortools():
         (total_node, total_node, instance["number_resource"])
     )
     instance["max_capacity_resource"] = 200 * np.ones(
-        (n_vehicles, instance["number_resource"]), dtype=int
+        (n_vehicles, instance["number_resource"]), dtype=np.int_
     )
     instance["min_capacity_resource"] = 10 * np.zeros(
-        (n_vehicles, instance["number_resource"]), dtype=int
+        (n_vehicles, instance["number_resource"]), dtype=np.int_
     )
     instance["max_capacity_resource"] = [
         [
@@ -1334,10 +1334,10 @@ def init_model_ortools_tsp():
         (total_node, total_node, instance["number_resource"])
     )
     instance["max_capacity_resource"] = 200 * np.ones(
-        (n_vehicles, instance["number_resource"]), dtype=int
+        (n_vehicles, instance["number_resource"]), dtype=np.int_
     )
     instance["min_capacity_resource"] = 10 * np.zeros(
-        (n_vehicles, instance["number_resource"]), dtype=int
+        (n_vehicles, instance["number_resource"]), dtype=np.int_
     )
     instance["max_capacity_resource"] = [
         [

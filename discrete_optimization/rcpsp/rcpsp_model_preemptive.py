@@ -307,7 +307,7 @@ class RCPSPSolutionPreemptive(Solution):
                             ]
                             for i in range(self.problem.n_jobs)
                         ],
-                        np.int32,
+                        np.int_,
                     ),
                     partial_schedule_ends=np.array(
                         [
@@ -788,7 +788,7 @@ def generate_schedule_from_permutation_serial_sgs(
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -958,7 +958,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
             )
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, rcpsp_problem.resources[res], dtype=int
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     minimum_starting_time = {}
     for act in rcpsp_problem.tasks_list:
@@ -1150,7 +1150,7 @@ def compute_mean_resource_reserve(
             resource_avail_in_time[res] = rcpsp_problem.resources[res][: makespan + 1]
         else:
             resource_avail_in_time[res] = np.full(
-                makespan, rcpsp_problem.resources[res], dtype=int
+                makespan, rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     for act_id in rcpsp_problem.tasks_list:
         starts = solution.rcpsp_schedule[act_id]["starts"]
@@ -1220,7 +1220,7 @@ def permutation_do_to_permutation_sgs_fast(
     ]
     perm_extended.insert(0, rcpsp_problem.index_task[rcpsp_problem.source_task])
     perm_extended.append(rcpsp_problem.index_task[rcpsp_problem.sink_task])
-    return np.array(perm_extended, dtype=np.int32)
+    return np.array(perm_extended, dtype=np.int_)
 
 
 def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive]):
@@ -1230,23 +1230,21 @@ def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive])
             rcpsp_problem.max_number_of_mode,
             len(rcpsp_problem.resources_list),
         ),
-        dtype=np.int32,
+        dtype=np.int_,
     )
     duration_array = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int32
+        (rcpsp_problem.n_jobs, rcpsp_problem.max_number_of_mode), dtype=np.int_
     )
-    predecessors = np.zeros(
-        (rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32
-    )
-    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int32)
+    predecessors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
+    successors = np.zeros((rcpsp_problem.n_jobs, rcpsp_problem.n_jobs), dtype=np.int_)
     preemptive_tag = np.zeros(rcpsp_problem.n_jobs, dtype=bool)
     horizon = rcpsp_problem.horizon
     ressource_available = np.zeros(
-        (len(rcpsp_problem.resources_list), horizon), dtype=np.int32
+        (len(rcpsp_problem.resources_list), horizon), dtype=np.int_
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
     min_duration_preemptive_bool = np.zeros(rcpsp_problem.n_jobs, dtype=bool)
-    min_duration_preemptive = np.zeros(rcpsp_problem.n_jobs, dtype=np.int32)
+    min_duration_preemptive = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
         min_duration_preemptive_bool[i] = rcpsp_problem.duration_subtask[task][0]
@@ -1278,7 +1276,7 @@ def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive])
             ressource_available[k, :] = np.full(
                 ressource_available.shape[1],
                 rcpsp_problem.resources[rcpsp_problem.resources_list[k]],
-                dtype=int,
+                dtype=np.int_,
             )
         if rcpsp_problem.resources_list[k] in rcpsp_problem.non_renewable_resources:
             ressource_renewable[k] = False
@@ -1289,7 +1287,7 @@ def create_np_data_and_jit_functions(rcpsp_problem: Union[RCPSPModelPreemptive])
             index_s = task_index[s]
             predecessors[index_s, i] = 1
             successors[i, index_s] = 1
-    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=int)
+    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
     if not rcpsp_problem.is_duration_minimum_preemption():
         func_sgs = partial(
             sgs_fast_preemptive,
