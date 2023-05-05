@@ -7,7 +7,17 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Sequence, Tuple, Type, Union
+from typing import (
+    Dict,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,59 +64,112 @@ class TaskDetails:
 
 
 class RCPSPSolution(Solution):
-    rcpsp_permutation: Union[List[int], np.array]
-    rcpsp_schedule: Dict[Hashable, Dict]
-    rcpsp_modes: List[int]
-    standardised_permutation: Union[List[int], np.array]
+    """Solution to RCPSPModel problems.
+
+    Attributes:
+        problem: RCPSP problem for which this is a solution
+        rcpsp_permutation: Tasks permutation.
+        rcpsp_schedule: Tasks schedule. ( task -> "start_time" or "end_time" -> time)
+            Potentially only partial if not feasible with given permutation, or for aggregated models.
+        rcpsp_modes: Mode used for each task. Same order as `problem.tasks_list_non_dummy`.
+        rcpsp_schedule_feasible: False if schedule generation from permutation failed, True else.
+        standardised_permutation: Permutation deduced uniquely from schedule.
+            Can be different from `rcpsp_permutation` as different permutations can lead to same schedule.
+        fast: boolean indicating if we us the fast functions to generate schedule from permutation.
+
+    Args:
+        problem: RCPSP problem for which this is a solution
+        rcpsp_permutation: Tasks permutation.
+            If given and schedule not given, used to reconstruct the schedule.
+            if not given, deduced from schedule.
+            If not given and schedule not given, it is set to `problem.fixed_permutation`
+        rcpsp_schedule: Tasks schedule. ( task -> "start_time" or "end_time" -> time)
+            If given used to construct `standardised_permutation`.
+            If given and `rcpsp_permutation` not given, used to construct `rcpsp_permutation`.
+            If given and `rcpsp_permutation` given, no consistency check.
+            If not given, deduced from `rcpsp_permutation` if possible.
+            If not possible, `rcpsp_schedule_feasible` set to False and
+            `rcpsp_schedule` set to a partially filled schedule.
+            In case of `Aggreg_RCPSPModel`, kept empty.
+        rcpsp_modes: Mode used for each task. Same order as `problem.tasks_list_non_dummy`.
+            If not given we use `problem.fixed_modes` if existing, else 1 for each task.
+        rcpsp_schedule_feasible: True if a schedule can be deduced from permutation.
+            False if it leads to incoherency preventing a schedule generation.
+            Recomputed when schedule is (re)computed from permutation.
+        standardised_permutation: Permutation deduced uniquely from schedule. If given, not recomputed.
+            Can be different from `rcpsp_permutation` as different permutations can lead to same schedule.
+        fast: boolean indicating if we us the fast functions to generate schedule from permutation.
+
+    """
 
     def __init__(
         self,
-        problem,
-        rcpsp_permutation=None,
-        rcpsp_schedule=None,
-        rcpsp_modes=None,
-        rcpsp_schedule_feasible=None,
-        standardised_permutation=None,
-        fast=True,
+        problem: "RCPSPModel",
+        rcpsp_permutation: Optional[List[int]] = None,
+        rcpsp_schedule: Optional[Dict[Hashable, Dict[str, int]]] = None,
+        rcpsp_modes: Optional[List[int]] = None,
+        rcpsp_schedule_feasible: bool = True,
+        standardised_permutation: Optional[List[int]] = None,
+        fast: bool = True,
     ):
         self.problem = problem
-        self.rcpsp_permutation = rcpsp_permutation
-        self.rcpsp_schedule = rcpsp_schedule
-        self._schedule_to_recompute = rcpsp_schedule is None
-        self.rcpsp_modes = rcpsp_modes
         self.rcpsp_schedule_feasible = rcpsp_schedule_feasible
-        self.standardised_permutation = standardised_permutation
-
-        if self.rcpsp_modes is None:
-            if not self.problem.is_rcpsp_multimode():
-                self.rcpsp_modes = [1 for i in range(self.problem.n_jobs_non_dummy)]
-            else:
-                self.rcpsp_modes = self.problem.fixed_modes
-        if self.rcpsp_permutation is None:
-            if isinstance(self.problem, MultiModeRCPSPModel):
-                self.rcpsp_permutation = self.problem.fixed_permutation
-            if self.rcpsp_schedule is not None:
-                self.standardised_permutation = (
-                    self.generate_permutation_from_schedule()
-                )
-                self.rcpsp_permutation = deepcopy(self.standardised_permutation)
-                self._schedule_to_recompute = False
-        if rcpsp_schedule is None:
-            if not isinstance(problem, Aggreg_RCPSPModel):
-                self.generate_schedule_from_permutation_serial_sgs(do_fast=fast)
-        if self.standardised_permutation is None:
-            if not isinstance(problem, Aggreg_RCPSPModel):
-                self.standardised_permutation = (
-                    self.generate_permutation_from_schedule()
-                )
         self.fast = fast
 
-    def change_problem(self, new_problem: Problem):
-        self.__init__(
-            problem=new_problem,
-            rcpsp_permutation=self.rcpsp_permutation,
-            rcpsp_modes=self.rcpsp_modes,
-        )
+        self.rcpsp_modes: List[int]
+        self.rcpsp_schedule: Dict[Hashable, Dict[str, int]]
+        self.rcpsp_permutation: List[int]
+        self.standardised_permutation: List[int]
+
+        # init rcpsp_modes
+        if rcpsp_modes is None:
+            if hasattr(self.problem, "fixed_modes"):
+                self.rcpsp_modes = self.problem.fixed_modes
+            else:
+                self.rcpsp_modes = [1 for i in range(self.problem.n_jobs_non_dummy)]
+        else:
+            self.rcpsp_modes = rcpsp_modes
+
+        # init rcpsp_permutation
+        if rcpsp_permutation is None:
+            if rcpsp_schedule is None:
+                if hasattr(self.problem, "fixed_permutation"):
+                    self.rcpsp_permutation = self.problem.fixed_permutation
+                else:
+                    raise ValueError(
+                        "rcpsp_permutation and rcpsp_schedule can be None together "
+                        "only if problem.fixed_permutation is defined"
+                    )
+            else:
+                self.rcpsp_schedule = rcpsp_schedule
+                standardised_permutation = self.generate_permutation_from_schedule()
+                self.rcpsp_permutation = deepcopy(standardised_permutation)
+        else:
+            self.rcpsp_permutation = rcpsp_permutation
+
+        # init rcpsp_schedule
+        if rcpsp_schedule is None:
+            self.generate_schedule_from_permutation_serial_sgs(do_fast=self.fast)
+        else:
+            self.rcpsp_schedule = rcpsp_schedule
+
+        # init standardised_permutation
+        if standardised_permutation is None:
+            self.standardised_permutation = self.generate_permutation_from_schedule()
+        else:
+            self.standardised_permutation = standardised_permutation
+
+        # schedule already computed (prevent issues with __setattr__ hack)
+        self._schedule_to_recompute = False
+
+    def change_problem(self, new_problem: Problem) -> None:
+        if not isinstance(new_problem, RCPSPModel):
+            raise ValueError("new_problem must be a RCPSPModel")
+        # set problem
+        self.problem = new_problem
+        # recompute schedule and standardised permutation with respect to the new problem
+        self.generate_schedule_from_permutation_serial_sgs(do_fast=self.fast)
+        self.standardised_permutation = self.generate_permutation_from_schedule()
 
     def __setattr__(self, key, value):
         super.__setattr__(self, key, value)
@@ -187,41 +250,48 @@ class RCPSPSolution(Solution):
                     ),
                 )
 
-    def generate_schedule_from_permutation_serial_sgs(self, do_fast=True):
-        if do_fast:
-            if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
-                # non existing modes
-                schedule, unfeasible = {}, True
-            else:
-                schedule, unfeasible = self.problem.func_sgs(
-                    permutation_task=permutation_do_to_permutation_sgs_fast(
-                        self.problem, self.rcpsp_permutation
-                    ),
-                    modes_array=np.array(
-                        self.problem.build_mode_array(self.rcpsp_modes)
-                    )
-                    - 1,
-                )
-            self.rcpsp_schedule_feasible = not unfeasible
+    def generate_schedule_from_permutation_serial_sgs(
+        self, do_fast: bool = True
+    ) -> None:
+        self._schedule_to_recompute = False
+        if isinstance(self.problem, Aggreg_RCPSPModel):
             self.rcpsp_schedule = {}
-            for k in schedule:
-                self.rcpsp_schedule[self.problem.tasks_list[k]] = {
-                    "start_time": schedule[k][0],
-                    "end_time": schedule[k][1],
-                }
-            if self.problem.sink_task not in self.rcpsp_schedule:
-                self.rcpsp_schedule[self.problem.sink_task] = {
-                    "start_time": 99999999,
-                    "end_time": 99999999,
-                }
-            self._schedule_to_recompute = False
+            self.rcpsp_schedule_feasible = True
         else:
-            schedule, feasible = generate_schedule_from_permutation_serial_sgs(
-                solution=self, rcpsp_problem=self.problem
-            )
-            self.rcpsp_schedule = schedule
-            self.rcpsp_schedule_feasible = feasible
-            self._schedule_to_recompute = False
+            if do_fast:
+                schedule: Dict[int, Tuple[int, int]]
+                if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
+                    # non existing modes
+                    schedule, unfeasible = {}, True
+                else:
+                    schedule, unfeasible = self.problem.func_sgs(
+                        permutation_task=permutation_do_to_permutation_sgs_fast(
+                            self.problem, self.rcpsp_permutation
+                        ),
+                        modes_array=np.array(
+                            self.problem.build_mode_array(self.rcpsp_modes)
+                        )
+                        - 1,
+                    )
+                self.rcpsp_schedule_feasible = not unfeasible
+                self.rcpsp_schedule = {}
+                for k in schedule:
+                    self.rcpsp_schedule[self.problem.tasks_list[k]] = {
+                        "start_time": schedule[k][0],
+                        "end_time": schedule[k][1],
+                    }
+                if self.problem.sink_task not in self.rcpsp_schedule:
+                    self.rcpsp_schedule[self.problem.sink_task] = {
+                        "start_time": 99999999,
+                        "end_time": 99999999,
+                    }
+            else:
+                (
+                    self.rcpsp_schedule,
+                    self.rcpsp_schedule_feasible,
+                ) = generate_schedule_from_permutation_serial_sgs(
+                    solution=self, rcpsp_problem=self.problem
+                )
 
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
