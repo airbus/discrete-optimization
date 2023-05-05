@@ -6,7 +6,7 @@ import logging
 import random
 from copy import deepcopy
 from functools import partial
-from typing import Dict, Hashable, List, Tuple, Type, Union
+from typing import Dict, Hashable, List, Optional, Set, Tuple, Type, Union
 
 import networkx as nx
 import numpy as np
@@ -377,7 +377,11 @@ class RCPSPSolutionSpecialPreemptive(RCPSPSolutionPreemptive):
             self._schedule_to_recompute = False
 
     def generate_schedule_from_permutation_serial_sgs_2(
-        self, current_t=0, completed_tasks=None, partial_schedule=None, do_fast=True
+        self,
+        current_t: int = 0,
+        completed_tasks: Optional[Set[Hashable]] = None,
+        partial_schedule: Optional[Dict[Hashable, Dict[str, List[int]]]] = None,
+        do_fast: bool = True,
     ):
         if do_fast:
             super().generate_schedule_from_permutation_serial_sgs_2(

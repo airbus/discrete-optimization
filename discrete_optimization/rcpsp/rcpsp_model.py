@@ -8,6 +8,8 @@ from copy import deepcopy
 from enum import Enum
 from functools import partial
 from typing import (
+    Any,
+    Callable,
     Dict,
     Hashable,
     Iterable,
@@ -21,6 +23,7 @@ from typing import (
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from scipy.stats import poisson, randint, rv_discrete
 from sortedcontainers import SortedDict
 
@@ -48,7 +51,7 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
 logger = logging.getLogger(__name__)
 
 
-def tree():
+def tree() -> Dict[Any, Any]:
     return defaultdict(tree)
 
 
@@ -58,7 +61,7 @@ class ScheduleGenerationScheme(Enum):
 
 
 class TaskDetails:
-    def __init__(self, start, end):
+    def __init__(self, start: int, end: int):
         self.start = start
         self.end = end
 
@@ -171,12 +174,12 @@ class RCPSPSolution(Solution):
         self.generate_schedule_from_permutation_serial_sgs(do_fast=self.fast)
         self.standardised_permutation = self.generate_permutation_from_schedule()
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
         super.__setattr__(self, key, value)
         if key == "rcpsp_permutation":
             self._schedule_to_recompute = True
 
-    def copy(self):
+    def copy(self) -> "RCPSPSolution":
         return RCPSPSolution(
             problem=self.problem,
             rcpsp_permutation=deepcopy(self.rcpsp_permutation),
@@ -187,7 +190,7 @@ class RCPSPSolution(Solution):
             fast=self.fast,
         )
 
-    def lazy_copy(self):
+    def lazy_copy(self) -> "RCPSPSolution":
         return RCPSPSolution(
             problem=self.problem,
             rcpsp_permutation=self.rcpsp_permutation,
@@ -198,7 +201,7 @@ class RCPSPSolution(Solution):
             fast=self.fast,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.rcpsp_schedule is None:
             sched_str = "None"
         else:
@@ -206,7 +209,7 @@ class RCPSPSolution(Solution):
         val = "RCPSP solution (rcpsp_schedule): " + sched_str
         return val
 
-    def generate_permutation_from_schedule(self):
+    def generate_permutation_from_schedule(self) -> List[int]:
         sorted_task = [
             self.problem.index_task_non_dummy[i]
             for i in sorted(
@@ -216,7 +219,7 @@ class RCPSPSolution(Solution):
         ]
         return sorted_task
 
-    def compute_mean_resource_reserve(self, fast=True):
+    def compute_mean_resource_reserve(self, fast: bool = True) -> float:
         if not fast:
             return compute_mean_resource_reserve(
                 solution=self, rcpsp_problem=self.problem
@@ -295,16 +298,17 @@ class RCPSPSolution(Solution):
 
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
-        current_t=0,
-        completed_tasks: Dict[Hashable, TaskDetails] = None,
-        scheduled_tasks_start_times: Dict[Hashable, int] = None,
-        do_fast=True,
-    ):
+        current_t: int = 0,
+        completed_tasks: Optional[Dict[Hashable, TaskDetails]] = None,
+        scheduled_tasks_start_times: Optional[Dict[Hashable, int]] = None,
+        do_fast: bool = True,
+    ) -> None:
         if completed_tasks is None:
             completed_tasks = {}
         if scheduled_tasks_start_times is None:
-            scheduled_tasks_start_times = None
+            scheduled_tasks_start_times = {}
         if do_fast:
+            schedule: Dict[int, Tuple[int, int]]
             if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
                 # non existing modes
                 schedule, unfeasible = {}, True
@@ -356,8 +360,8 @@ class RCPSPSolution(Solution):
             self._schedule_to_recompute = False
         else:
             (
-                schedule,
-                feasible,
+                self.rcpsp_schedule,
+                self.rcpsp_schedule_feasible,
             ) = generate_schedule_from_permutation_serial_sgs_partial_schedule(
                 solution=self,
                 current_t=current_t,
@@ -365,34 +369,34 @@ class RCPSPSolution(Solution):
                 scheduled_tasks_start_times=scheduled_tasks_start_times,
                 rcpsp_problem=self.problem,
             )
-            self.rcpsp_schedule = schedule
-            self.rcpsp_schedule_feasible = not feasible
+            self.rcpsp_schedule_feasible = not self.rcpsp_schedule_feasible
             self._schedule_to_recompute = False
 
-    def get_max_end_time(self):
+    def get_max_end_time(self) -> int:
         return max([self.get_end_time(x) for x in self.rcpsp_schedule])
 
-    def get_start_time(self, task):
+    def get_start_time(self, task: Hashable) -> int:
         return self.rcpsp_schedule.get(task, {"start_time": None})["start_time"]
 
-    def get_end_time(self, task):
+    def get_end_time(self, task: Hashable) -> int:
         return self.rcpsp_schedule.get(task, {"end_time": None})["end_time"]
 
-    def get_start_times_list(self, task):
+    def get_start_times_list(self, task: Hashable) -> List[int]:
         return [self.get_start_time(task)]
 
-    def get_end_times_list(self, task):
+    def get_end_times_list(self, task: Hashable) -> List[int]:
         return [self.get_end_time(task)]
 
-    def get_active_time(self, task):
+    def get_active_time(self, task: Hashable) -> List[int]:
         return list(range(self.get_start_time(task), self.get_end_time(task)))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((tuple(self.rcpsp_permutation), tuple(self.rcpsp_modes)))
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return (
-            self.rcpsp_permutation == other.rcpsp_permutation
+            isinstance(other, RCPSPSolution)
+            and self.rcpsp_permutation == other.rcpsp_permutation
             and self.rcpsp_modes == other.rcpsp_modes
         )
 
@@ -400,18 +404,18 @@ class RCPSPSolution(Solution):
 class PartialSolution:
     def __init__(
         self,
-        task_mode: Dict[int, int] = None,
-        start_times: Dict[int, int] = None,
-        end_times: Dict[int, int] = None,
-        partial_permutation: List[int] = None,
-        list_partial_order: List[List[int]] = None,
-        start_together: List[Tuple[int, int]] = None,
-        start_at_end: List[Tuple[int, int]] = None,
-        start_at_end_plus_offset: List[Tuple[int, int, int]] = None,
-        start_after_nunit: List[Tuple[int, int, int]] = None,
-        disjunctive_tasks: List[Tuple[int, int]] = None,
-        start_times_window: Dict[Hashable, Tuple[int, int]] = None,
-        end_times_window: Dict[Hashable, Tuple[int, int]] = None,
+        task_mode: Optional[Dict[int, int]] = None,
+        start_times: Optional[Dict[int, int]] = None,
+        end_times: Optional[Dict[int, int]] = None,
+        partial_permutation: Optional[List[int]] = None,
+        list_partial_order: Optional[List[List[int]]] = None,
+        start_together: Optional[List[Tuple[int, int]]] = None,
+        start_at_end: Optional[List[Tuple[int, int]]] = None,
+        start_at_end_plus_offset: Optional[List[Tuple[int, int, int]]] = None,
+        start_after_nunit: Optional[List[Tuple[int, int, int]]] = None,
+        disjunctive_tasks: Optional[List[Tuple[int, int]]] = None,
+        start_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
+        end_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
     ):
         self.task_mode = task_mode
         self.start_times = start_times
@@ -431,30 +435,28 @@ class PartialSolution:
 
 class RCPSPModel(Problem):
     sgs: ScheduleGenerationScheme
-    resources: Union[
-        Dict[str, int], Dict[str, List[int]]
-    ]  # {resource_name: number_of_resource}
+    resources: Dict[str, Union[int, List[int]]]  # {resource_name: number_of_resource}
     non_renewable_resources: List[str]  # e.g. [resource_name3, resource_name4]
     n_jobs: int
     n_jobs_non_dummy: int  # excluding dummy activities Start (0) and End (n)
     mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
     # e.g. {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}
     # one key being "duration"
-    successors: Dict[int, List[int]]  # {task_id: list of successor task ids}
+    successors: Dict[Hashable, List[Hashable]]  # {task_id: list of successor task ids}
 
     def __init__(
         self,
-        resources: Union[Dict[str, int], Dict[str, List[int]]],
+        resources: Dict[str, Union[int, List[int]]],
         non_renewable_resources: List[str],
-        mode_details: Dict[Hashable, Dict[Union[str, int], Dict[str, int]]],
-        successors: Dict[Union[int, str], List[Union[str, int]]],
-        horizon,
-        horizon_multiplier=1,
-        tasks_list: List[Union[int, str]] = None,
-        source_task=None,
-        sink_task=None,
-        name_task: Dict[int, str] = None,
-        **args,
+        mode_details: Dict[Hashable, Dict[int, Dict[str, int]]],
+        successors: Dict[Hashable, List[Hashable]],
+        horizon: int,
+        horizon_multiplier: int = 1,
+        tasks_list: Optional[List[Hashable]] = None,
+        source_task: Optional[Hashable] = None,
+        sink_task: Optional[Hashable] = None,
+        name_task: Optional[Dict[Hashable, str]] = None,
+        **kwargs: Any,
     ):
         self.resources = resources
         self.resources_list = list(self.resources.keys())
@@ -463,21 +465,36 @@ class RCPSPModel(Problem):
         self.successors = successors
         self.horizon = horizon
         self.horizon_multiplier = horizon_multiplier
-        self.name_task = name_task
         if name_task is None:
             self.name_task = {x: str(x) for x in self.mode_details}
-        self.tasks_list = tasks_list
+        else:
+            self.name_task = name_task
         if tasks_list is None:
-            self.tasks_list = sorted(self.mode_details.keys())
+            self.tasks_list = list(self.mode_details.keys())
+        else:
+            self.tasks_list = tasks_list
         self.n_jobs = len(self.mode_details.keys())
         self.n_jobs_non_dummy = self.n_jobs - 2
         self.index_task = {self.tasks_list[i]: i for i in range(self.n_jobs)}
-        self.source_task = source_task
         if source_task is None:
-            self.source_task = min(self.tasks_list)
-        self.sink_task = sink_task
+            if all((isinstance(t, int) for t in self.tasks_list)):
+                self.source_task = min(self.tasks_list)  # type: ignore
+            else:
+                raise ValueError(
+                    "source_task cannot be None if tasks id given in tasks_list are not all integers."
+                )
+        else:
+            self.source_task = source_task
         if sink_task is None:
-            self.sink_task = max(self.tasks_list)
+            if all((isinstance(t, int) for t in self.tasks_list)):
+                self.sink_task = max(self.tasks_list)  # type: ignore
+            else:
+                raise ValueError(
+                    "sink_task cannot be None if tasks id given in tasks_list are not all integers."
+                )
+        else:
+            self.sink_task = sink_task
+
         self.tasks_list_non_dummy = [
             t for t in self.tasks_list if t not in {self.source_task, self.sink_task}
         ]
@@ -492,73 +509,78 @@ class RCPSPModel(Problem):
         if any(isinstance(self.resources[res], Iterable) for res in self.resources):
             self.is_calendar = (
                 max(
-                    [
+                    (
                         len(
-                            set(self.resources[res])
-                            if isinstance(self.resources[res], Iterable)
-                            else {self.resources[res]}
+                            {self.resources[res]}
+                            if isinstance(self.resources[res], int)
+                            else set(self.resources[res])  # type: ignore
                         )
                         for res in self.resources
-                    ]
+                    )
                 )
                 > 1
             )
             if not self.is_calendar:
-                self.resources = {r: int(self.resources[r][0]) for r in self.resources}
+                self.resources = {
+                    r: self.resources[r]
+                    if isinstance(self.resources[r], int)
+                    else self.resources[r][0]  # type: ignore
+                    for r in self.resources
+                }
         (
             self.func_sgs,
             self.func_sgs_2,
             self.compute_mean_resource,
         ) = create_np_data_and_jit_functions(self)
-        self.costs = {
+        self.costs: Dict[str, bool] = {
             "makespan": True,
-            "mean_resource_reserve": args.get("mean_resource_reserve", False),
+            "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
         self.graph = self.compute_graph()
 
-    def update_functions(self):
+    def update_functions(self) -> None:
         (
             self.func_sgs,
             self.func_sgs_2,
             self.compute_mean_resource,
         ) = create_np_data_and_jit_functions(rcpsp_problem=self)
 
-    def is_rcpsp_multimode(self):
+    def is_rcpsp_multimode(self) -> bool:
         return self.is_multimode
 
-    def is_varying_resource(self):
+    def is_varying_resource(self) -> bool:
         return self.is_calendar
 
-    def is_preemptive(self):
+    def is_preemptive(self) -> bool:
         return False
 
-    def is_multiskill(self):
+    def is_multiskill(self) -> bool:
         return False
 
-    def get_resource_names(self):
+    def get_resource_names(self) -> List[str]:
         return self.resources_list
 
-    def get_tasks_list(self):
+    def get_tasks_list(self) -> List[Hashable]:
         return self.tasks_list
 
-    def get_resource_availability_array(self, res):
-        if self.is_varying_resource():
-            return self.resources[res]
+    def get_resource_availability_array(self, res: str) -> List[int]:
+        if self.is_varying_resource() and not isinstance(self.resources[res], int):
+            return self.resources[res]  # type: ignore
         else:
-            return np.full(self.horizon, self.resources[res])
+            return self.horizon * [self.resources[res]]  # type: ignore
 
     def compute_graph(self, compute_predecessors: bool = False) -> Graph:
-        nodes = [
+        nodes: List[Tuple[Hashable, Dict[str, Any]]] = [
             (
                 n,
                 {
-                    mode: self.mode_details[n][mode]["duration"]
+                    str(mode): self.mode_details[n][mode]["duration"]
                     for mode in self.mode_details[n]
                 },
             )
             for n in self.tasks_list
         ]
-        edges = []
+        edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]] = []
         for n in self.successors:
             for succ in self.successors[n]:
                 edges += [(n, succ, {})]
@@ -566,16 +588,19 @@ class RCPSPModel(Problem):
             nodes, edges, compute_predecessors=compute_predecessors, undirected=False
         )
 
-    def evaluate_function(self, rcpsp_sol: RCPSPSolution):
+    def evaluate_function(self, rcpsp_sol: RCPSPSolution) -> Tuple[int, float]:
         if rcpsp_sol._schedule_to_recompute:
             rcpsp_sol.generate_schedule_from_permutation_serial_sgs()
         makespan = rcpsp_sol.rcpsp_schedule[self.sink_task]["end_time"]
         if self.costs["mean_resource_reserve"]:
             obj_mean_resource_reserve = rcpsp_sol.compute_mean_resource_reserve()
             return makespan, obj_mean_resource_reserve
-        return makespan, 0
+        else:
+            return makespan, 0.0
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
+    def evaluate_from_encoding(
+        self, int_vector: List[int], encoding_name: str
+    ) -> Dict[str, float]:
         if encoding_name == "rcpsp_permutation":
             single_mode_list = [1 for i in range(self.n_jobs_non_dummy)]
             rcpsp_sol = RCPSPSolution(
@@ -583,16 +608,16 @@ class RCPSPModel(Problem):
             )
             objectives = self.evaluate(rcpsp_sol)
             return objectives
-        return None
+        raise NotImplementedError(f"Encoding {encoding_name} not implemented")
 
-    def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:
+    def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:  # type: ignore
         obj_makespan, obj_mean_resource_reserve = self.evaluate_function(rcpsp_sol)
         return {
-            "makespan": obj_makespan,
+            "makespan": float(obj_makespan),
             "mean_resource_reserve": obj_mean_resource_reserve,
         }
 
-    def evaluate_mobj(self, rcpsp_sol: RCPSPSolution):
+    def evaluate_mobj(self, rcpsp_sol: RCPSPSolution) -> TupleFitness:  # type: ignore
         return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
 
     def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
@@ -601,7 +626,9 @@ class RCPSPModel(Problem):
             2,
         )
 
-    def build_mode_dict(self, rcpsp_modes_from_solution):
+    def build_mode_dict(
+        self, rcpsp_modes_from_solution: List[int]
+    ) -> Dict[Hashable, int]:
         modes_dict = {
             self.tasks_list_non_dummy[i]: rcpsp_modes_from_solution[i]
             for i in range(self.n_jobs_non_dummy)
@@ -610,19 +637,16 @@ class RCPSPModel(Problem):
         modes_dict[self.sink_task] = 1
         return modes_dict
 
-    def build_mode_array(self, rcpsp_modes_from_solution):
-        modes_dict = {
-            self.tasks_list_non_dummy[i]: rcpsp_modes_from_solution[i]
-            for i in range(self.n_jobs_non_dummy)
-        }
-        modes_dict[self.source_task] = 1
-        modes_dict[self.sink_task] = 1
+    def build_mode_array(self, rcpsp_modes_from_solution: List[int]) -> List[int]:
+        modes_dict = self.build_mode_dict(
+            rcpsp_modes_from_solution=rcpsp_modes_from_solution
+        )
         return [modes_dict[t] for t in self.tasks_list]
 
-    def return_index_task(self, task, offset=0):
+    def return_index_task(self, task: Hashable, offset: int = 0) -> int:
         return self.index_task[task] + offset
 
-    def satisfy(self, rcpsp_sol: RCPSPSolution) -> bool:
+    def satisfy(self, rcpsp_sol: RCPSPSolution) -> bool:  # type: ignore
         if rcpsp_sol.rcpsp_schedule_feasible is False:
             logger.debug("Schedule flagged as infeasible when generated")
             return False
@@ -691,7 +715,7 @@ class RCPSPModel(Problem):
 
             return True
 
-    def __str__(self):
+    def __str__(self) -> str:
         val = (
             "I'm a RCPSP model with "
             + str(self.n_jobs)
@@ -747,11 +771,13 @@ class RCPSPModel(Problem):
             dict_objective_to_doc=dict_objective,
         )
 
-    def compute_resource_consumption(self, rcpsp_sol: RCPSPSolution):
+    def compute_resource_consumption(
+        self, rcpsp_sol: RCPSPSolution
+    ) -> npt.NDArray[np.int_]:
         modes_dict = self.build_mode_dict(rcpsp_sol.rcpsp_modes)
         last_activity = max(rcpsp_sol.rcpsp_schedule)
         makespan = rcpsp_sol.rcpsp_schedule[last_activity]["end_time"]
-        consumptions = np.zeros((len(self.resources), makespan + 1))
+        consumptions = np.zeros((len(self.resources), makespan + 1), dtype=np.int_)
         for act_id in rcpsp_sol.rcpsp_schedule:
             for ir in range(len(self.resources)):
                 consumptions[
@@ -764,7 +790,7 @@ class RCPSPModel(Problem):
                 ]
         return consumptions
 
-    def plot_ressource_view(self, rcpsp_sol: RCPSPSolution):
+    def plot_ressource_view(self, rcpsp_sol: RCPSPSolution) -> None:
         consumption = self.compute_resource_consumption(rcpsp_sol=rcpsp_sol)
         fig, ax = plt.subplots(nrows=len(self.resources_list), sharex=True)
         for i in range(len(self.resources_list)):
@@ -774,7 +800,7 @@ class RCPSPModel(Problem):
             ax[i].plot(consumption[i, :])
             ax[i].legend()
 
-    def copy(self):
+    def copy(self) -> "RCPSPModel":
         return RCPSPModel(
             resources=self.resources,
             tasks_list=self.tasks_list,
@@ -789,7 +815,7 @@ class RCPSPModel(Problem):
             mean_resource_reserve=self.costs.get("mean_resource_reserve", False),
         )
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> RCPSPSolution:
         sol = RCPSPSolution(
             problem=self,
             rcpsp_permutation=list(range(self.n_jobs_non_dummy)),
@@ -797,12 +823,12 @@ class RCPSPModel(Problem):
         )
         return sol
 
-    def get_resource_available(self, res, time):
+    def get_resource_available(self, res: str, time: int) -> int:
         if self.is_calendar:
             return self.resources.get(res, [0])[time]
         return self.resources.get(res, 0)
 
-    def get_max_resource_capacity(self, res):
+    def get_max_resource_capacity(self, res: str) -> int:
         if self.is_calendar:
             return max(self.resources.get(res, [0]))
         return self.resources.get(res, 0)
@@ -863,7 +889,20 @@ class RCPSPModelCalendar(RCPSPModel):
 
 def create_np_data_and_jit_functions(
     rcpsp_problem: Union[RCPSPModel, RCPSPModelCalendar]
-):
+) -> Tuple[
+    Callable[
+        ...,
+        Tuple[Dict[int, Tuple[int, int]], bool],
+    ],
+    Callable[
+        ...,
+        Tuple[Dict[int, Tuple[int, int]], bool],
+    ],
+    Callable[
+        ...,
+        float,
+    ],
+]:
     consumption_array = np.zeros(
         (
             rcpsp_problem.n_jobs,
@@ -882,6 +921,7 @@ def create_np_data_and_jit_functions(
         (len(rcpsp_problem.resources_list), horizon), dtype=np.int_
     )
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
+    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
 
     for i in range(len(rcpsp_problem.tasks_list)):
         task = rcpsp_problem.tasks_list[i]
@@ -919,7 +959,7 @@ def create_np_data_and_jit_functions(
             index_s = task_index[s]
             predecessors[index_s, i] = 1
             successors[i, index_s] = 1
-    minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
+
     if "special_constraints" in rcpsp_problem.__dict__.keys():
         for t in rcpsp_problem.special_constraints.start_times_window:
             if rcpsp_problem.special_constraints.start_times_window[t][0] is not None:
@@ -957,7 +997,9 @@ def create_np_data_and_jit_functions(
     return func_sgs, func_sgs_2, func_compute_mean_resource
 
 
-def permutation_do_to_permutation_sgs_fast(rcpsp_problem: RCPSPModel, permutation_do):
+def permutation_do_to_permutation_sgs_fast(
+    rcpsp_problem: RCPSPModel, permutation_do: Iterable[int]
+) -> npt.NDArray[np.int_]:
     perm_extended = [
         rcpsp_problem.index_task[rcpsp_problem.tasks_list_non_dummy[x]]
         for x in permutation_do
@@ -1320,7 +1362,7 @@ class UncertainRCPSPModel:
 
 def generate_schedule_from_permutation_serial_sgs(
     solution: RCPSPSolution, rcpsp_problem: RCPSPModel
-):
+) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
@@ -1422,7 +1464,7 @@ def generate_schedule_from_permutation_serial_sgs(
                 minimum_starting_time[s] = max(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
-    rcpsp_schedule = {}
+    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
         rcpsp_schedule[act_id]["start_time"] = (
@@ -1590,7 +1632,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     return rcpsp_schedule, rcpsp_schedule_feasible
 
 
-def compute_mean_resource_reserve(solution: RCPSPSolution, rcpsp_problem: RCPSPModel):
+def compute_mean_resource_reserve(
+    solution: RCPSPSolution, rcpsp_problem: RCPSPModel
+) -> float:
     if not solution.rcpsp_schedule_feasible:
         return 0.0
     last_activity = rcpsp_problem.sink_task
@@ -1631,7 +1675,7 @@ def compute_mean_resource_reserve(solution: RCPSPSolution, rcpsp_problem: RCPSPM
             for res in rcpsp_problem.resources_list
         ]
     )
-    return mean_resource_reserve
+    return float(mean_resource_reserve)
 
 
 class SGSWithoutArray:
