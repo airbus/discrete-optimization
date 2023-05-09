@@ -953,7 +953,7 @@ def create_np_data_and_jit_functions(
     task_index = {rcpsp_problem.tasks_list[i]: i for i in range(rcpsp_problem.n_jobs)}
     for k in range(len(rcpsp_problem.resources_list)):
         if rcpsp_problem.is_varying_resource():
-            ressource_available[k, :] = rcpsp_problem.resources[
+            ressource_available[k, :] = rcpsp_problem.resources[  # type: ignore
                 rcpsp_problem.resources_list[k]
             ][: ressource_available.shape[1]]
         else:
@@ -1022,6 +1022,8 @@ def permutation_do_to_permutation_sgs_fast(
 
 
 class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):
+    list_problem: Sequence[RCPSPModel]
+
     def __init__(
         self, list_problem: Sequence[RCPSPModel], method_aggregating: MethodAggregating
     ):
@@ -1036,7 +1038,7 @@ class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):
         self.mode_details = list_problem[0].mode_details
         self.resources_list = list_problem[0].resources_list
 
-    def get_dummy_solution(self):
+    def get_dummy_solution(self) -> RCPSPSolution:
         a: RCPSPSolution = self.list_problem[0].get_dummy_solution()
         a._schedule_to_recompute = True
         return a
@@ -1057,7 +1059,9 @@ class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):
                     model.mode_details[job][mode][res] = agg
         return model
 
-    def evaluate_from_encoding(self, int_vector, encoding_name):
+    def evaluate_from_encoding(
+        self, int_vector: List[int], encoding_name: str
+    ) -> Dict[str, float]:
         fits = [
             self.list_problem[i].evaluate_from_encoding(int_vector, encoding_name)
             for i in range(self.nb_problem)
@@ -1069,11 +1073,11 @@ class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):
             aggreg[k] = self.agg_vec(vals)
         return aggreg
 
-    def evaluate(self, variable: Solution):
+    def evaluate(self, variable: RCPSPSolution) -> Dict[str, float]:  # type: ignore
         fits = []
         for i in range(self.nb_problem):
             var: RCPSPSolution = variable.lazy_copy()
-            var.rcpsp_schedule = None
+            var.rcpsp_schedule = {}
             var._schedule_to_recompute = True
             var.problem = self.list_problem[i]
             fit = self.list_problem[i].evaluate(var)
@@ -1103,8 +1107,10 @@ class MethodRobustification:
         self.percentile = percentile
 
 
-def create_poisson_laws_duration(rcpsp_model: RCPSPModel, range_around_mean=3):
-    poisson_dict = {}
+def create_poisson_laws_duration(
+    rcpsp_model: RCPSPModel, range_around_mean: int = 3
+) -> Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]]:
+    poisson_dict: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]] = {}
     source = rcpsp_model.source_task
     sink = rcpsp_model.sink_task
     for job in rcpsp_model.mode_details:
@@ -1125,12 +1131,13 @@ def create_poisson_laws_duration(rcpsp_model: RCPSPModel, range_around_mean=3):
     return poisson_dict
 
 
-def create_poisson_laws_resource(rcpsp_model: RCPSPModel, range_around_mean=1):
-    poisson_dict = {}
+def create_poisson_laws_resource(
+    rcpsp_model: RCPSPModel, range_around_mean: int = 1
+) -> Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]]:
+    poisson_dict: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]] = {}
     source = rcpsp_model.source_task
     sink = rcpsp_model.sink_task
     limit_resource = rcpsp_model.resources
-    resources = rcpsp_model.resources_list
     resources_non_renewable = rcpsp_model.non_renewable_resources
     for job in rcpsp_model.mode_details:
         poisson_dict[job] = {}
@@ -1152,7 +1159,7 @@ def create_poisson_laws_resource(rcpsp_model: RCPSPModel, range_around_mean=1):
                     min_rc = max(0, resource_consumption - range_around_mean)
                     max_rc = min(
                         resource_consumption + range_around_mean,
-                        limit_resource[resource],
+                        rcpsp_model.get_max_resource_capacity(resource),
                     )
                     poisson_dict[job][mode][resource] = (
                         min_rc,
@@ -1168,8 +1175,8 @@ def create_poisson_laws(
     range_around_mean_duration: int = 3,
     do_uncertain_resource: bool = True,
     do_uncertain_duration: bool = True,
-):
-    poisson_laws = tree()
+) -> Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]]:
+    poisson_laws: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]] = tree()
     if do_uncertain_duration:
         poisson_laws_duration = create_poisson_laws_duration(
             base_rcpsp_model, range_around_mean=range_around_mean_duration
@@ -1193,12 +1200,12 @@ class UncertainRCPSPModel:
     def __init__(
         self,
         base_rcpsp_model: RCPSPModel,
-        poisson_laws: Dict[int, Dict[int, Dict[str, Tuple[int, int, int]]]],
-        uniform_law=True,
+        poisson_laws: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]],
+        uniform_law: bool = True,
     ):
         self.base_rcpsp_model = base_rcpsp_model
         self.poisson_laws = poisson_laws
-        self.probas = {}
+        self.probas: Dict[Hashable, Dict[int, Dict[str, Dict[str, Any]]]] = {}
         for activity in poisson_laws:
             self.probas[activity] = {}
             for mode in poisson_laws[activity]:
@@ -1230,7 +1237,9 @@ class UncertainRCPSPModel:
                         ),
                     )
 
-    def create_rcpsp_model(self, method_robustification: MethodRobustification):
+    def create_rcpsp_model(
+        self, method_robustification: MethodRobustification
+    ) -> RCPSPModel:
         model = self.base_rcpsp_model.copy()
         for activity in self.probas:
             if activity in {
@@ -1295,7 +1304,7 @@ def generate_schedule_from_permutation_serial_sgs(
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
-            resource_avail_in_time[res] = rcpsp_problem.resources[res][
+            resource_avail_in_time[res] = rcpsp_problem.resources[res][  # type: ignore
                 : new_horizon + 1
             ]
         else:
@@ -1412,17 +1421,17 @@ def generate_schedule_from_permutation_serial_sgs(
 def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     solution: RCPSPSolution,
     rcpsp_problem: RCPSPModel,
-    current_t,
-    completed_tasks,
-    scheduled_tasks_start_times,
-):
+    current_t: int,
+    completed_tasks: Dict[Hashable, TaskDetails],
+    scheduled_tasks_start_times: Dict[Hashable, int],
+) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
     resource_avail_in_time = {}
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
-            resource_avail_in_time[res] = rcpsp_problem.resources[res][
+            resource_avail_in_time[res] = rcpsp_problem.resources[res][  # type: ignore
                 : new_horizon + 1
             ]
         else:
@@ -1533,7 +1542,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                 minimum_starting_time[s] = max(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
-    rcpsp_schedule = {}
+    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
         rcpsp_schedule[act_id]["start_time"] = (
@@ -1568,7 +1577,7 @@ def compute_mean_resource_reserve(
     modes = rcpsp_problem.build_mode_dict(solution.rcpsp_modes)
     for res in rcpsp_problem.resources_list:
         if rcpsp_problem.is_varying_resource():
-            resource_avail_in_time[res] = rcpsp_problem.resources[res][: makespan + 1]
+            resource_avail_in_time[res] = rcpsp_problem.resources[res][: makespan + 1]  # type: ignore
         else:
             resource_avail_in_time[res] = np.full(
                 makespan, rcpsp_problem.resources[res], dtype=np.int_
@@ -1594,9 +1603,7 @@ def compute_mean_resource_reserve(
         mean_avail[res] = np.mean(resource_avail_in_time[res])
     mean_resource_reserve = np.mean(
         [
-            mean_avail[res] / max(rcpsp_problem.resources[res])
-            if rcpsp_problem.is_varying_resource()
-            else mean_avail[res] / rcpsp_problem.resources[res]
+            mean_avail[res] / rcpsp_problem.get_max_resource_capacity(res)
             for res in rcpsp_problem.resources_list
         ]
     )
@@ -1606,11 +1613,11 @@ def compute_mean_resource_reserve(
 class SGSWithoutArray:
     def __init__(self, rcpsp_model: RCPSPModel):
         self.rcpsp_model = rcpsp_model
-        self.resource_avail_in_time = {}
+        self.resource_avail_in_time: Dict[str, npt.NDArray[np.int_]] = {}
         for res in self.rcpsp_model.resources_list:
             if self.rcpsp_model.is_varying_resource():
                 self.resource_avail_in_time[res] = np.array(
-                    self.rcpsp_model.resources[res][: self.rcpsp_model.horizon + 1]
+                    self.rcpsp_model.resources[res][: self.rcpsp_model.horizon + 1]  # type: ignore
                 )
             else:
                 self.resource_avail_in_time[res] = np.full(
@@ -1618,14 +1625,14 @@ class SGSWithoutArray:
                     self.rcpsp_model.resources[res],
                     dtype=np.int_,
                 )
-        self.dict_step_ressource = {}
+        self.dict_step_ressource: Dict[str, SortedDict] = {}
         for res in self.resource_avail_in_time:
             self.dict_step_ressource[res] = SGSWithoutArray.create_absolute_dict(
                 self.resource_avail_in_time[res]
             )
 
     @staticmethod
-    def get_available_from_delta(sdict: SortedDict, time):
+    def get_available_from_delta(sdict: SortedDict, time: int) -> int:
         index = sdict.bisect_left(time)
         if time in sdict:
             r = range(index + 1)
@@ -1635,13 +1642,15 @@ class SGSWithoutArray:
         return s
 
     @staticmethod
-    def get_available_from_absolute(sdict: SortedDict, time):
+    def get_available_from_absolute(sdict: SortedDict, time: int) -> int:
         index = sdict.bisect_right(time)
         s = sdict.peekitem(index - 1)[1]
         return s
 
     @staticmethod
-    def add_event_delta(sdict: SortedDict, time_start, delta, time_end):
+    def add_event_delta(
+        sdict: SortedDict, time_start: int, delta: int, time_end: int
+    ) -> None:
         if time_start in sdict:
             sdict[time_start] += delta
         else:
@@ -1654,11 +1663,11 @@ class SGSWithoutArray:
     @staticmethod
     def add_event_delta_in_absolute(
         sdict: SortedDict,
-        time_start,
-        delta,  # Negative usually
-        time_end,
-        liberate=True,
-    ):
+        time_start: int,
+        delta: int,  # Negative usually
+        time_end: int,
+        liberate: bool = True,
+    ) -> None:
 
         for t in [k for k in sdict if time_start <= k < time_end]:
             sdict[t] += delta
@@ -1670,7 +1679,7 @@ class SGSWithoutArray:
             sdict[time_end] = sdict.peekitem(i - 1)[1] - delta
 
     @staticmethod
-    def create_delta_dict(vector):
+    def create_delta_dict(vector: npt.ArrayLike) -> SortedDict:
         v = np.array(vector)
         delta = v[:-1] - v[1:]
         index_non_zero = np.nonzero(delta)[0]
@@ -1682,7 +1691,7 @@ class SGSWithoutArray:
         return l
 
     @staticmethod
-    def create_absolute_dict(vector):
+    def create_absolute_dict(vector: npt.ArrayLike) -> SortedDict:
         v = np.array(vector)
         delta = v[:-1] - v[1:]
         index_non_zero = np.nonzero(delta)[0]
@@ -1695,7 +1704,7 @@ class SGSWithoutArray:
 
     def generate_schedule_from_permutation_serial_sgs(
         self, solution: RCPSPSolution, rcpsp_problem: RCPSPModel
-    ):
+    ) -> Tuple[Dict[Hashable, Dict[str, int]], bool, Dict[str, SortedDict]]:
         activity_end_times = {}
         unfeasible_non_renewable_resources = False
         new_horizon = rcpsp_problem.horizon
@@ -1725,7 +1734,9 @@ class SGSWithoutArray:
                 if respected:
                     act_id = id_successor
                     break
-            current_min_time = minimum_starting_time[act_id]
+            current_min_time: Optional[int] = minimum_starting_time[act_id]
+            start_time: int
+            end_time: int
             valid = False
             while not valid:
                 valid = True
@@ -1746,7 +1757,7 @@ class SGSWithoutArray:
                     else:
                         if (
                             self.get_available_from_absolute(
-                                sdict=resource_avail_in_time[res], time=current_min_time
+                                sdict=resource_avail_in_time[res], time=current_min_time  # type: ignore
                             )
                             < need
                         ):
@@ -1779,7 +1790,7 @@ class SGSWithoutArray:
                                 )
                                 valid = False
                                 break
-            if not unfeasible_non_renewable_resources:
+            if not unfeasible_non_renewable_resources and current_min_time is not None:
                 end_t = (
                     current_min_time
                     + rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
@@ -1814,7 +1825,7 @@ class SGSWithoutArray:
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[act_id]
                     )
-        rcpsp_schedule = {}
+        rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
         for act_id in activity_end_times:
             rcpsp_schedule[act_id] = {}
             rcpsp_schedule[act_id]["start_time"] = (
