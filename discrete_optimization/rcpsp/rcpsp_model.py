@@ -369,7 +369,6 @@ class RCPSPSolution(Solution):
                 scheduled_tasks_start_times=scheduled_tasks_start_times,
                 rcpsp_problem=self.problem,
             )
-            self.rcpsp_schedule_feasible = not self.rcpsp_schedule_feasible
             self._schedule_to_recompute = False
 
     def get_max_end_time(self) -> int:

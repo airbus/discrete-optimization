@@ -199,7 +199,6 @@ class RCPSPSolutionSpecial(RCPSPSolution):
             rcpsp_problem=self.problem,
         )
         self.rcpsp_schedule = schedule
-        self.rcpsp_schedule_feasible = not feasible
         self._schedule_to_recompute = False
 
 
