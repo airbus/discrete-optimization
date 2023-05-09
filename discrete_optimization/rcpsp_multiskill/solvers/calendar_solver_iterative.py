@@ -23,15 +23,13 @@ from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.rcpsp.core import PartialSolution
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
     schedule_solution_to_variant,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
-    CP_MS_MRCPSP_MZN,
-    PartialSolution,
-)
+from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import CP_MS_MRCPSP_MZN
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
     OptionNeighbor,
     build_neighbor_operator,

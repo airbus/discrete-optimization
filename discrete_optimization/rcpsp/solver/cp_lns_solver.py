@@ -28,7 +28,6 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import PartialSolutionPr
 from discrete_optimization.rcpsp.solver.cp_lns_methods_clean import (
     RCPSPModel,
     RCPSPModelPreemptive,
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
 )
 from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
@@ -48,7 +47,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
 GENERIC_CLASS = Union[
     RCPSPModel,
     RCPSPModelPreemptive,
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
 ]
 

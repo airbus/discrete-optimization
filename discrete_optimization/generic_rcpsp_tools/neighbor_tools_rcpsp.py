@@ -34,7 +34,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
     compute_constraints_details,
 )
@@ -64,7 +63,6 @@ logger = logging.getLogger(__name__)
 ANY_RCPSP = Union[
     RCPSPModel,
     RCPSPModelPreemptive,
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
@@ -1136,17 +1134,22 @@ class NeighborRandomAndNeighborGraph(NeighborBuilder):
 class NeighborConstraintBreaks(NeighborBuilder):
     def __init__(
         self,
-        problem: Union[
-            RCPSPModelSpecialConstraintsPreemptive, RCPSPModelSpecialConstraints
-        ],
+        problem: Union[RCPSPModelSpecialConstraintsPreemptive, RCPSPModel],
         graph: GraphRCPSP = None,
         fraction_subproblem: float = 0.1,
         other_constraint_handler: NeighborBuilder = None,
     ):
+        if (
+            not hasattr(problem, "do_special_constraints")
+            or not problem.do_special_constraints
+        ):
+            raise ValueError(
+                "NeighborConstraintBreaks is meant for problems with special constraints"
+            )
         self.problem = problem
         self.graph = graph
         if self.graph is None:
-            self.graph = build_graph_rcpsp_object(rcpsp_problem=self.graph)
+            self.graph = build_graph_rcpsp_object(rcpsp_problem=problem)
         self.fraction_subproblem = fraction_subproblem
         self.nb_jobs_subproblem = math.ceil(
             self.problem.n_jobs * self.fraction_subproblem
@@ -1358,9 +1361,8 @@ class ConstraintHandlerScheduling(ConstraintHandler):
         self.problem = problem
         self.basic_constraint_builder = basic_constraint_builder
 
-        if isinstance(
-            self.problem,
-            (RCPSPModelSpecialConstraintsPreemptive, RCPSPModelSpecialConstraints),
+        if isinstance(self.problem, RCPSPModelSpecialConstraintsPreemptive,) or (
+            isinstance(self.problem, RCPSPModel) and self.problem.do_special_constraints
         ):
             self.graph_rcpsp = GraphRCPSPSpecialConstraints(problem=self.problem)
             self.special_constraints = True

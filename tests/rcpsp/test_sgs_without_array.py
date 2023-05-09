@@ -21,6 +21,7 @@ def test_sgs_wo_array():
     assert rcpsp_model.evaluate(solution) == {
         "makespan": 49,
         "mean_resource_reserve": 0,
+        "constraint_penalty": 0.0,
     }
     sgs = SGSWithoutArray(rcpsp_model=rcpsp_model)
     (
@@ -77,7 +78,11 @@ def test_sgs_wo_array():
         rcpsp_schedule=rcpsp_schedule,
         rcpsp_schedule_feasible=rcpsp_schedule_feasible,
     )
-    assert rcpsp_model.evaluate(sol) == {"makespan": 49, "mean_resource_reserve": 0}
+    assert rcpsp_model.evaluate(sol) == {
+        "makespan": 49,
+        "mean_resource_reserve": 0,
+        "constraint_penalty": 0.0,
+    }
     assert rcpsp_model.satisfy(sol)
     assert rcpsp_schedule[rcpsp_model.sink_task] == {"start_time": 49, "end_time": 49}
 

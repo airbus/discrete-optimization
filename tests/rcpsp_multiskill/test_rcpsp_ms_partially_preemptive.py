@@ -6,6 +6,7 @@ from typing import Dict, List
 
 import pytest
 
+from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import plot_ressource_view
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
@@ -16,7 +17,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
     SkillDetail,
-    SpecialConstraintsDescription,
     compute_constraints_details,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (

@@ -34,7 +34,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
     RCPSPSolutionSpecialPreemptive,
 )
@@ -56,7 +55,6 @@ logger = logging.getLogger(__name__)
 ANY_RCPSP = Union[
     RCPSPModel,
     RCPSPModelPreemptive,
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
@@ -408,16 +406,14 @@ class NeighborRepairProblems(ConstraintHandler):
             RCPSPModel,
             RCPSPModelPreemptive,
             RCPSPSolutionPreemptive,
-            RCPSPModelSpecialConstraints,
             RCPSPModelSpecialConstraintsPreemptive,
             MS_RCPSPModel,
         ],
         params_list: List[ParamsConstraintBuilder] = None,
     ):
         self.problem = problem
-        if isinstance(
-            self.problem,
-            (RCPSPModelSpecialConstraintsPreemptive, RCPSPModelSpecialConstraints),
+        if isinstance(self.problem, RCPSPModelSpecialConstraintsPreemptive,) or (
+            isinstance(self.problem, RCPSPModel) and self.problem.do_special_constraints
         ):
             self.graph_rcpsp = GraphRCPSPSpecialConstraints(problem=self.problem)
             self.special_constraints = True

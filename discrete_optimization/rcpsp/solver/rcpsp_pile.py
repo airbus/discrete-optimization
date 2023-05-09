@@ -20,11 +20,8 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    PartialSolution,
-    RCPSPModel,
-    RCPSPSolution,
-)
+from discrete_optimization.rcpsp.core import PartialSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_MODES
 
 logger = logging.getLogger(__name__)

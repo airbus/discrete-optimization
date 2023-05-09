@@ -42,11 +42,13 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
+from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.fast_function_rcpsp import (
     compute_mean_ressource,
     sgs_fast,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
+from discrete_optimization.rcpsp.rcpsp_utils import intersect
 
 logger = logging.getLogger(__name__)
 
@@ -307,7 +309,7 @@ class RCPSPSolution(Solution):
             completed_tasks = {}
         if scheduled_tasks_start_times is None:
             scheduled_tasks_start_times = {}
-        if do_fast:
+        if do_fast and not self.problem.do_special_constraints:
             schedule: Dict[int, Tuple[int, int]]
             if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
                 # non existing modes
@@ -359,16 +361,28 @@ class RCPSPSolution(Solution):
             self.rcpsp_schedule_feasible = not unfeasible
             self._schedule_to_recompute = False
         else:
-            (
-                self.rcpsp_schedule,
-                self.rcpsp_schedule_feasible,
-            ) = generate_schedule_from_permutation_serial_sgs_partial_schedule(
-                solution=self,
-                current_t=current_t,
-                completed_tasks=completed_tasks,
-                scheduled_tasks_start_times=scheduled_tasks_start_times,
-                rcpsp_problem=self.problem,
-            )
+            if self.problem.do_special_constraints:
+                (
+                    self.rcpsp_schedule,
+                    self.rcpsp_schedule_feasible,
+                ) = generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_constraints(
+                    solution=self,
+                    current_t=current_t,
+                    completed_tasks=completed_tasks,
+                    scheduled_tasks_start_times=scheduled_tasks_start_times,
+                    rcpsp_problem=self.problem,
+                )
+            else:
+                (
+                    self.rcpsp_schedule,
+                    self.rcpsp_schedule_feasible,
+                ) = generate_schedule_from_permutation_serial_sgs_partial_schedule(
+                    solution=self,
+                    current_t=current_t,
+                    completed_tasks=completed_tasks,
+                    scheduled_tasks_start_times=scheduled_tasks_start_times,
+                    rcpsp_problem=self.problem,
+                )
             self._schedule_to_recompute = False
 
     def get_max_end_time(self) -> int:
@@ -400,38 +414,6 @@ class RCPSPSolution(Solution):
         )
 
 
-class PartialSolution:
-    def __init__(
-        self,
-        task_mode: Optional[Dict[int, int]] = None,
-        start_times: Optional[Dict[int, int]] = None,
-        end_times: Optional[Dict[int, int]] = None,
-        partial_permutation: Optional[List[int]] = None,
-        list_partial_order: Optional[List[List[int]]] = None,
-        start_together: Optional[List[Tuple[int, int]]] = None,
-        start_at_end: Optional[List[Tuple[int, int]]] = None,
-        start_at_end_plus_offset: Optional[List[Tuple[int, int, int]]] = None,
-        start_after_nunit: Optional[List[Tuple[int, int, int]]] = None,
-        disjunctive_tasks: Optional[List[Tuple[int, int]]] = None,
-        start_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
-        end_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
-    ):
-        self.task_mode = task_mode
-        self.start_times = start_times
-        self.end_times = end_times
-        self.partial_permutation = partial_permutation
-        self.list_partial_order = list_partial_order
-        self.start_together = start_together
-        self.start_at_end = start_at_end
-        self.start_after_nunit = start_after_nunit
-        self.start_at_end_plus_offset = start_at_end_plus_offset
-        self.disjunctive_tasks = disjunctive_tasks
-        self.start_times_window = start_times_window
-        self.end_times_window = end_times_window
-        # one element in self.list_partial_order is a list [l1, l2, l3]
-        # indicating that l1 should be started before l1, and  l2 before l3 for example
-
-
 class RCPSPModel(Problem):
     """
 
@@ -448,6 +430,9 @@ class RCPSPModel(Problem):
         name_task:
         n_jobs (int):
         n_jobs_non_dummy (int):   excluding dummy activities Start (0) and End (n)
+        special_constraints:
+        do_special_constraints (bool):
+        relax_the_start_at_end (bool): relax some conditions only if do_special_constraints
         fixed_permutation (Optional[List[int]]):
         fixed_modes (Optional[List[int]]):
 
@@ -462,6 +447,8 @@ class RCPSPModel(Problem):
         source_task:
         sink_task:
         name_task:
+        special_constraints:
+        relax_the_start_at_end:
         fixed_permutation:
         fixed_modes:
         **kwargs:
@@ -483,6 +470,8 @@ class RCPSPModel(Problem):
         sink_task: Optional[Hashable] = None,
         name_task: Optional[Dict[Hashable, str]] = None,
         calendar_details: Optional[Dict[str, List[List[int]]]] = None,
+        special_constraints: Optional[SpecialConstraintsDescription] = None,
+        relax_the_start_at_end: bool = True,
         fixed_permutation: Optional[List[int]] = None,
         fixed_modes: Optional[List[int]] = None,
         **kwargs: Any,
@@ -566,7 +555,38 @@ class RCPSPModel(Problem):
             "makespan": True,
             "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
-        self.graph = self.compute_graph()
+
+        if special_constraints is None:
+            self.do_special_constraints = False
+            self.special_constraints = SpecialConstraintsDescription()
+        else:
+            self.do_special_constraints = True
+            self.special_constraints = special_constraints
+            predecessors_dict: Dict[Hashable, List[Hashable]] = {
+                task: [] for task in self.successors
+            }
+            for task in self.successors:
+                for stask in self.successors[task]:
+                    predecessors_dict[stask] += [task]
+            for t1, t2 in self.special_constraints.start_at_end:
+                if t2 not in self.successors[t1]:
+                    self.successors[t1].append(t2)
+            for t1, t2, off in self.special_constraints.start_at_end_plus_offset:
+                if t2 not in self.successors[t1]:
+                    self.successors[t1].append(t2)
+            for t1, t2 in self.special_constraints.start_together:
+                for predt1 in predecessors_dict[t1]:
+                    if t2 not in self.successors[predt1]:
+                        self.successors[predt1] += [t2]
+                for predt2 in predecessors_dict[t2]:
+                    if t1 not in self.successors[predt2]:
+                        self.successors[predt2] += [t1]
+        self.graph = self.compute_graph(
+            compute_predecessors=self.do_special_constraints
+        )
+        if self.do_special_constraints:
+            self.predecessors = self.graph.predecessors_dict
+        self.relax_the_start_at_end = relax_the_start_at_end
         self.fixed_permutation = fixed_permutation
         self.fixed_modes = fixed_modes
 
@@ -588,6 +608,9 @@ class RCPSPModel(Problem):
 
     def is_multiskill(self) -> bool:
         return False
+
+    def includes_special_constraint(self) -> bool:
+        return self.do_special_constraints
 
     def get_resource_names(self) -> List[str]:
         return self.resources_list
@@ -620,15 +643,22 @@ class RCPSPModel(Problem):
             nodes, edges, compute_predecessors=compute_predecessors, undirected=False
         )
 
-    def evaluate_function(self, rcpsp_sol: RCPSPSolution) -> Tuple[int, float]:
+    def evaluate_function(self, rcpsp_sol: RCPSPSolution) -> Tuple[int, float, int]:
         if rcpsp_sol._schedule_to_recompute:
             rcpsp_sol.generate_schedule_from_permutation_serial_sgs()
         makespan = rcpsp_sol.rcpsp_schedule[self.sink_task]["end_time"]
         if self.costs["mean_resource_reserve"]:
             obj_mean_resource_reserve = rcpsp_sol.compute_mean_resource_reserve()
-            return makespan, obj_mean_resource_reserve
         else:
-            return makespan, 0.0
+            obj_mean_resource_reserve = 0.0
+        if self.do_special_constraints:
+            penalty = evaluate_constraints(
+                solution=rcpsp_sol, constraints=self.special_constraints
+            )
+        else:
+            penalty = 0
+
+        return makespan, obj_mean_resource_reserve, penalty
 
     def evaluate_from_encoding(
         self, int_vector: List[int], encoding_name: str
@@ -659,10 +689,13 @@ class RCPSPModel(Problem):
         return objectives
 
     def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:  # type: ignore
-        obj_makespan, obj_mean_resource_reserve = self.evaluate_function(rcpsp_sol)
+        obj_makespan, obj_mean_resource_reserve, penalty = self.evaluate_function(
+            rcpsp_sol
+        )
         return {
             "makespan": float(obj_makespan),
             "mean_resource_reserve": obj_mean_resource_reserve,
+            "constraint_penalty": float(penalty),
         }
 
     def evaluate_mobj(self, rcpsp_sol: RCPSPSolution) -> TupleFitness:  # type: ignore
@@ -698,70 +731,77 @@ class RCPSPModel(Problem):
         if rcpsp_sol.rcpsp_schedule_feasible is False:
             logger.debug("Schedule flagged as infeasible when generated")
             return False
-        else:
-            modes_dict = self.build_mode_dict(
-                rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
-            )
-            start_times = [
-                rcpsp_sol.rcpsp_schedule[t]["start_time"]
-                for t in rcpsp_sol.rcpsp_schedule
-            ]
-            for t in start_times:
-                resource_usage = {}
+
+        if self.do_special_constraints:
+            if not check_solution_with_special_constraints(
+                problem=self,
+                solution=rcpsp_sol,
+                relax_the_start_at_end=self.relax_the_start_at_end,
+            ):
+                return False
+
+        modes_dict = self.build_mode_dict(
+            rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
+        )
+        start_times = [
+            rcpsp_sol.rcpsp_schedule[t]["start_time"] for t in rcpsp_sol.rcpsp_schedule
+        ]
+        for t in start_times:
+            resource_usage = {}
+            for res in self.resources_list:
+                resource_usage[res] = 0
+            for act_id in rcpsp_sol.rcpsp_schedule:
+                start = rcpsp_sol.rcpsp_schedule[act_id]["start_time"]
+                end = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
+                mode = modes_dict[act_id]
                 for res in self.resources_list:
-                    resource_usage[res] = 0
-                for act_id in rcpsp_sol.rcpsp_schedule:
-                    start = rcpsp_sol.rcpsp_schedule[act_id]["start_time"]
-                    end = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
-                    mode = modes_dict[act_id]
-                    for res in self.resources_list:
-                        if start <= t < end:
-                            resource_usage[res] += self.mode_details[act_id][mode].get(
-                                res, 0
-                            )
-                for res in self.resources.keys():
-                    if resource_usage[res] > self.get_resource_available(res, t):
-                        logger.debug(
-                            [
-                                act
-                                for act in rcpsp_sol.rcpsp_schedule
-                                if rcpsp_sol.rcpsp_schedule[act]["start_time"]
-                                <= t
-                                < rcpsp_sol.rcpsp_schedule[act]["end_time"]
-                            ]
+                    if start <= t < end:
+                        resource_usage[res] += self.mode_details[act_id][mode].get(
+                            res, 0
                         )
-                        logger.debug(
-                            f"Time step resource violation: time: {t} "
-                            f"res {res} res_usage: {resource_usage[res]}"
-                            f"res_avail: {self.resources[res]}"
-                        )
-                        return False
+            for res in self.resources.keys():
+                if resource_usage[res] > self.get_resource_available(res, t):
+                    logger.debug(
+                        [
+                            act
+                            for act in rcpsp_sol.rcpsp_schedule
+                            if rcpsp_sol.rcpsp_schedule[act]["start_time"]
+                            <= t
+                            < rcpsp_sol.rcpsp_schedule[act]["end_time"]
+                        ]
+                    )
+                    logger.debug(
+                        f"Time step resource violation: time: {t} "
+                        f"res {res} res_usage: {resource_usage[res]}"
+                        f"res_avail: {self.resources[res]}"
+                    )
+                    return False
 
-            # Check for non-renewable resource violation
-            for res in self.non_renewable_resources:
-                usage = 0
-                for act_id in rcpsp_sol.rcpsp_schedule:
-                    mode = modes_dict[act_id]
-                    usage += self.mode_details[act_id][mode][res]
-                    if usage > self.get_max_resource_capacity(res):
-                        logger.debug(
-                            f"Non-renewable resource violation: act_id: {act_id}"
-                            f"res {res} res_usage: {usage} res_avail: {self.resources[res]}"
-                        )
-                        return False
-            # Check precedences / successors
-            for act_id in list(self.successors.keys()):
-                for succ_id in self.successors[act_id]:
-                    start_succ = rcpsp_sol.rcpsp_schedule[succ_id]["start_time"]
-                    end_pred = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
-                    if start_succ < end_pred:
-                        logger.debug(
-                            f"Precedence relationship broken: {act_id} end at {end_pred} "
-                            f"while {succ_id} start at {start_succ}"
-                        )
-                        return False
+        # Check for non-renewable resource violation
+        for res in self.non_renewable_resources:
+            usage = 0
+            for act_id in rcpsp_sol.rcpsp_schedule:
+                mode = modes_dict[act_id]
+                usage += self.mode_details[act_id][mode][res]
+                if usage > self.get_max_resource_capacity(res):
+                    logger.debug(
+                        f"Non-renewable resource violation: act_id: {act_id}"
+                        f"res {res} res_usage: {usage} res_avail: {self.resources[res]}"
+                    )
+                    return False
+        # Check precedences / successors
+        for act_id in list(self.successors.keys()):
+            for succ_id in self.successors[act_id]:
+                start_succ = rcpsp_sol.rcpsp_schedule[succ_id]["start_time"]
+                end_pred = rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
+                if start_succ < end_pred:
+                    logger.debug(
+                        f"Precedence relationship broken: {act_id} end at {end_pred} "
+                        f"while {succ_id} start at {start_succ}"
+                    )
+                    return False
 
-            return True
+        return True
 
     def __str__(self) -> str:
         val = (
@@ -809,13 +849,19 @@ class RCPSPModel(Problem):
         return EncodingRegister(dict_register)
 
     def get_objective_register(self) -> ObjectiveRegister:
+        objective_handling = ObjectiveHandling.SINGLE
         dict_objective = {
             "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0)
         }
         # "mean_resource_reserve": {"type": TypeObjective.OBJECTIVE, "default_weight": 1}}
+        if self.do_special_constraints:
+            objective_handling = ObjectiveHandling.AGGREGATE
+            dict_objective["constraint_penalty"] = ObjectiveDoc(
+                type=TypeObjective.PENALTY, default_weight=-100.0
+            )
         return ObjectiveRegister(
             objective_sense=ModeOptim.MAXIMIZATION,
-            objective_handling=ObjectiveHandling.SINGLE,
+            objective_handling=objective_handling,
             dict_objective_to_doc=dict_objective,
         )
 
@@ -1018,6 +1064,238 @@ def permutation_do_to_permutation_sgs_fast(
     perm_extended.insert(0, rcpsp_problem.index_task[rcpsp_problem.source_task])
     perm_extended.append(rcpsp_problem.index_task[rcpsp_problem.sink_task])
     return np.array(perm_extended, dtype=np.int_)
+
+
+def evaluate_constraints(
+    solution: RCPSPSolution,
+    constraints: SpecialConstraintsDescription,
+) -> int:
+    list_constraints_not_respected = compute_constraints_details(solution, constraints)
+    return sum([x[-1] for x in list_constraints_not_respected])
+
+
+def compute_constraints_details(
+    solution: RCPSPSolution,
+    constraints: SpecialConstraintsDescription,
+) -> List[Tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]]:
+    if not solution.rcpsp_schedule_feasible:
+        return []
+    start_together = constraints.start_together
+    start_at_end = constraints.start_at_end
+    start_at_end_plus_offset = constraints.start_at_end_plus_offset
+    start_after_nunit = constraints.start_after_nunit
+    disjunctive = constraints.disjunctive_tasks
+    list_constraints_not_respected: List[
+        Tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
+    ] = []
+    for (t1, t2) in start_together:
+        time1 = solution.get_start_time(t1)
+        time2 = solution.get_start_time(t2)
+        b = time1 == time2
+        if not b:
+            list_constraints_not_respected += [
+                ("start_together", t1, t2, time1, time2, abs(time2 - time1))
+            ]
+    for (t1, t2) in start_at_end:
+        time1 = solution.get_end_time(t1)
+        time2 = solution.get_start_time(t2)
+        b = time1 == time2
+        if not b:
+            list_constraints_not_respected += [
+                ("start_at_end", t1, t2, time1, time2, abs(time2 - time1))
+            ]
+    for (t1, t2, off) in start_at_end_plus_offset:
+        time1 = solution.get_end_time(t1) + off
+        time2 = solution.get_start_time(t2)
+        b = time2 >= time1
+        if not b:
+            list_constraints_not_respected += [
+                ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
+            ]
+    for (t1, t2, off) in start_after_nunit:
+        time1 = solution.get_start_time(t1) + off
+        time2 = solution.get_start_time(t2)
+        b = time2 >= time1
+        if not b:
+            list_constraints_not_respected += [
+                ("start_after_nunit", t1, t2, time1, time2, abs(time2 - time1))
+            ]
+    for t1, t2 in disjunctive:
+        segt = intersect(
+            [solution.get_start_time(t1), solution.get_end_time(t1)],
+            [solution.get_start_time(t2), solution.get_end_time(t2)],
+        )
+        if segt is not None:
+            list_constraints_not_respected += [
+                ("disjunctive", t1, t2, None, None, segt[1] - segt[0])
+            ]
+    for t in constraints.start_times_window:
+        if constraints.start_times_window[t][0] is not None:
+            if solution.get_start_time(t) < constraints.start_times_window[t][0]:  # type: ignore
+                list_constraints_not_respected += [
+                    (
+                        "start_window_0",
+                        t,
+                        t,
+                        None,
+                        None,
+                        constraints.start_times_window[t][0]  # type: ignore
+                        - solution.get_start_time(t),
+                    )
+                ]
+
+        if constraints.start_times_window[t][1] is not None:
+            if solution.get_start_time(t) > constraints.start_times_window[t][1]:  # type: ignore
+                list_constraints_not_respected += [
+                    (
+                        "start_window_1",
+                        t,
+                        t,
+                        None,
+                        None,
+                        -constraints.start_times_window[t][1]  # type: ignore
+                        + solution.get_start_time(t),
+                    )
+                ]
+
+    for t in constraints.end_times_window:
+        if constraints.end_times_window[t][0] is not None:
+            if solution.get_end_time(t) < constraints.end_times_window[t][0]:  # type: ignore
+                list_constraints_not_respected += [
+                    (
+                        "end_window_0",
+                        t,
+                        t,
+                        None,
+                        None,
+                        constraints.end_times_window[t][0] - solution.get_end_time(t),  # type: ignore
+                    )
+                ]
+
+        if constraints.end_times_window[t][1] is not None:
+            if solution.get_end_time(t) > constraints.end_times_window[t][1]:  # type: ignore
+                list_constraints_not_respected += [
+                    (
+                        "end_window_1",
+                        t,
+                        t,
+                        None,
+                        None,
+                        -constraints.end_times_window[t][1] + solution.get_end_time(t),  # type: ignore
+                    )
+                ]
+    return list_constraints_not_respected
+
+
+def check_solution_with_special_constraints(
+    problem: RCPSPModel,
+    solution: RCPSPSolution,
+    relax_the_start_at_end: bool = True,
+) -> bool:
+    if not solution.rcpsp_schedule_feasible:
+        return False
+    start_together = problem.special_constraints.start_together
+    start_at_end = problem.special_constraints.start_at_end
+    start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
+    start_after_nunit = problem.special_constraints.start_after_nunit
+    disjunctive = problem.special_constraints.disjunctive_tasks
+    for (t1, t2) in start_together:
+        if not relax_the_start_at_end:
+            b = solution.get_start_time(t1) == solution.get_start_time(t2)
+            if not b:
+                return False
+    for (t1, t2) in start_at_end:
+        if relax_the_start_at_end:
+            b = solution.get_start_time(t2) >= solution.get_end_time(t1)
+        else:
+            b = solution.get_start_time(t2) == solution.get_end_time(t1)
+        if not b:
+            return False
+    for (t1, t2, off) in start_at_end_plus_offset:
+        b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
+        if not b:
+            logger.debug(("start_at_end_plus_offset NOT respected: ", t1, t2, off))
+            logger.debug(
+                (
+                    solution.get_start_time(t2),
+                    " >= ",
+                    solution.get_end_time(t1),
+                    "+",
+                    off,
+                )
+            )
+            return False
+    for (t1, t2, off) in start_after_nunit:
+        b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
+        if not b:
+            logger.debug(("start_after_nunit NOT respected: ", t1, t2, off))
+            return False
+    for t1, t2 in disjunctive:
+        b = intersect(
+            [solution.get_start_time(t1), solution.get_end_time(t1)],
+            [solution.get_start_time(t2), solution.get_end_time(t2)],
+        )
+        if b is not None:
+            return False
+    for t in problem.special_constraints.start_times_window:
+        if problem.special_constraints.start_times_window[t][0] is not None:
+            if (
+                solution.get_start_time(t)  # type: ignore
+                < problem.special_constraints.start_times_window[t][0]
+            ):
+                logger.debug(
+                    (
+                        "start time 0, ",
+                        t,
+                        solution.get_start_time(t),
+                        problem.special_constraints.start_times_window[t][0],
+                    )
+                )
+                return False
+        if problem.special_constraints.start_times_window[t][1] is not None:
+            if (
+                solution.get_start_time(t)  # type: ignore
+                > problem.special_constraints.start_times_window[t][1]
+            ):
+                logger.debug(
+                    (
+                        "start time 1, ",
+                        t,
+                        solution.get_start_time(t),
+                        problem.special_constraints.start_times_window[t][1],
+                    )
+                )
+                return False
+    for t in problem.special_constraints.end_times_window:
+        if problem.special_constraints.end_times_window[t][0] is not None:
+            if (
+                solution.get_end_time(t)  # type: ignore
+                < problem.special_constraints.end_times_window[t][0]
+            ):
+                logger.debug(
+                    (
+                        "end time 0, ",
+                        t,
+                        solution.get_end_time(t),
+                        problem.special_constraints.end_times_window[t][0],
+                    )
+                )
+                return False
+        if problem.special_constraints.end_times_window[t][1] is not None:
+            if (
+                solution.get_end_time(t)  # type: ignore
+                > problem.special_constraints.end_times_window[t][1]
+            ):
+                logger.debug(
+                    (
+                        "end time 1, ",
+                        t,
+                        solution.get_end_time(t),
+                        problem.special_constraints.end_times_window[t][1],
+                    )
+                )
+                return False
+    return True
 
 
 class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):
@@ -1417,6 +1695,232 @@ def generate_schedule_from_permutation_serial_sgs(
     return rcpsp_schedule, rcpsp_schedule_feasible
 
 
+def generate_schedule_from_permutation_serial_sgs_special_constraints(
+    solution: RCPSPSolution, rcpsp_problem: RCPSPModel
+) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
+    activity_end_times = {}
+
+    unfeasible_non_renewable_resources = False
+    new_horizon = rcpsp_problem.horizon
+    resource_avail_in_time = {}
+    for res in rcpsp_problem.resources_list:
+        if rcpsp_problem.is_varying_resource():
+            resource_avail_in_time[res] = rcpsp_problem.resources[res][  # type: ignore
+                : new_horizon + 1
+            ]
+        else:
+            resource_avail_in_time[res] = np.full(
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
+            ).tolist()
+    minimum_starting_time = {}
+    for act in rcpsp_problem.tasks_list:
+        minimum_starting_time[act] = 0
+        if rcpsp_problem.do_special_constraints:
+            if act in rcpsp_problem.special_constraints.start_times_window:
+                minimum_starting_time[act] = (
+                    rcpsp_problem.special_constraints.start_times_window[act][0]  # type: ignore
+                    if rcpsp_problem.special_constraints.start_times_window[act][0]
+                    is not None
+                    else 0
+                )
+    perm_extended = [
+        rcpsp_problem.tasks_list_non_dummy[x] for x in solution.rcpsp_permutation
+    ]
+    perm_extended.insert(0, rcpsp_problem.source_task)
+    perm_extended.append(rcpsp_problem.sink_task)
+    modes_dict = rcpsp_problem.build_mode_dict(solution.rcpsp_modes)
+
+    def ressource_consumption(
+        res: str, task: Hashable, duration: int, mode: int
+    ) -> int:
+        dur = rcpsp_problem.mode_details[task][mode]["duration"]
+        if duration > dur:
+            return 0
+        return rcpsp_problem.mode_details[task][mode].get(res, 0)
+
+    for k in modes_dict:
+        if modes_dict[k] not in rcpsp_problem.mode_details[k]:
+            modes_dict[k] = 1
+
+    def look_for_task(perm: List[Hashable], ignore_sc: bool = False) -> List[Hashable]:
+        act_ids = []
+        for task_id in perm:
+            respected = True
+            # Check all kind of precedence constraints....
+            for pred in rcpsp_problem.predecessors.get(task_id, {}):
+                if pred in perm_extended:
+                    respected = False
+                    break
+            if not ignore_sc:
+                for (
+                    pred
+                ) in rcpsp_problem.special_constraints.dict_start_at_end_reverse.get(
+                    task_id, {}
+                ):
+                    if pred in perm_extended:
+                        respected = False
+                        break
+                for (
+                    pred
+                ) in rcpsp_problem.special_constraints.dict_start_at_end_offset_reverse.get(
+                    task_id, {}
+                ):
+                    if pred in perm_extended:
+                        respected = False
+                        break
+                for (
+                    pred
+                ) in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                    task_id, {}
+                ):
+                    if pred in perm_extended:
+                        respected = False
+                        break
+            task_to_start_too = set()
+            if respected:
+                task_to_start_too = (
+                    rcpsp_problem.special_constraints.dict_start_together.get(
+                        task_id, set()
+                    )
+                )
+                if not ignore_sc:
+                    if len(task_to_start_too) > 0:
+                        if not all(
+                            s not in perm_extended
+                            for t in task_to_start_too
+                            for s in rcpsp_problem.predecessors[t]
+                        ):
+                            respected = False
+            if respected:
+                act_ids = [task_id] + list(task_to_start_too)
+                break
+        return act_ids
+
+    while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
+        act_ids = look_for_task(
+            [
+                k
+                for k in rcpsp_problem.special_constraints.dict_start_at_end_reverse
+                if k in perm_extended
+            ]
+        )
+        act_ids = []
+        if len(act_ids) == 0:
+            act_ids = look_for_task(perm_extended)
+        if len(act_ids) == 0:
+            act_ids = look_for_task(perm_extended, ignore_sc=True)
+        current_min_time = max([minimum_starting_time[act_id] for act_id in act_ids])
+        max_duration = max(
+            [
+                rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+                for act_id in act_ids
+            ]
+        )
+        valid = False
+        while not valid:
+            valid = True
+            for t in range(current_min_time, current_min_time + max_duration):
+                for res in rcpsp_problem.resources_list:
+                    r = sum(
+                        [
+                            ressource_consumption(
+                                res=res,
+                                task=task,
+                                duration=t - current_min_time,
+                                mode=modes_dict[task],
+                            )
+                            for task in act_ids
+                        ]
+                    )
+                    if r == 0:
+                        continue
+                    if t < new_horizon:
+                        if resource_avail_in_time[res][t] < r:
+                            valid = False
+                            break
+                    else:
+                        unfeasible_non_renewable_resources = True
+                if not valid:
+                    break
+            if not valid:
+                current_min_time += 1
+        if not unfeasible_non_renewable_resources:
+            end_t = current_min_time + max_duration
+            for t in range(current_min_time, current_min_time + max_duration):
+                for res in resource_avail_in_time:
+                    r = sum(
+                        [
+                            ressource_consumption(
+                                res=res,
+                                task=task,
+                                duration=t - current_min_time,
+                                mode=modes_dict[task],
+                            )
+                            for task in act_ids
+                        ]
+                    )
+                    resource_avail_in_time[res][t] -= r
+                    if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
+                        for tt in range(end_t, new_horizon):
+                            resource_avail_in_time[res][tt] -= r
+                            if resource_avail_in_time[res][tt] < 0:
+                                unfeasible_non_renewable_resources = True
+            for act_id in act_ids:
+                activity_end_times[act_id] = (
+                    current_min_time
+                    + rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+                )
+                perm_extended.remove(act_id)
+                for s in rcpsp_problem.successors[act_id]:
+                    minimum_starting_time[s] = max(
+                        minimum_starting_time[s], activity_end_times[act_id]
+                    )
+                for s in rcpsp_problem.special_constraints.dict_start_at_end.get(
+                    act_id, {}
+                ):
+                    minimum_starting_time[s] = max(
+                        minimum_starting_time[s], activity_end_times[act_id]
+                    )
+                for s in rcpsp_problem.special_constraints.dict_start_after_nunit.get(
+                    act_id, {}
+                ):
+                    minimum_starting_time[s] = max(
+                        minimum_starting_time[s],
+                        current_min_time
+                        + rcpsp_problem.special_constraints.dict_start_after_nunit[
+                            act_id
+                        ][s],
+                    )
+                for s in rcpsp_problem.special_constraints.dict_start_at_end_offset.get(
+                    act_id, {}
+                ):
+                    minimum_starting_time[s] = max(
+                        minimum_starting_time[s],
+                        activity_end_times[act_id]
+                        + rcpsp_problem.special_constraints.dict_start_at_end_offset[
+                            act_id
+                        ][s],
+                    )
+    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+    for act_id in activity_end_times:
+        rcpsp_schedule[act_id] = {}
+        rcpsp_schedule[act_id]["start_time"] = (
+            activity_end_times[act_id]
+            - rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+        )
+        rcpsp_schedule[act_id]["end_time"] = activity_end_times[act_id]
+    if unfeasible_non_renewable_resources:
+        rcpsp_schedule_feasible = False
+        last_act_id = rcpsp_problem.sink_task
+        if last_act_id not in rcpsp_schedule:
+            rcpsp_schedule[last_act_id] = {}
+            rcpsp_schedule[last_act_id]["start_time"] = 99999999
+            rcpsp_schedule[last_act_id]["end_time"] = 9999999
+    else:
+        rcpsp_schedule_feasible = True
+    return rcpsp_schedule, rcpsp_schedule_feasible
+
+
 def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     solution: RCPSPSolution,
     rcpsp_problem: RCPSPModel,
@@ -1541,6 +2045,261 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                 minimum_starting_time[s] = max(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
+    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+    for act_id in activity_end_times:
+        rcpsp_schedule[act_id] = {}
+        rcpsp_schedule[act_id]["start_time"] = (
+            activity_end_times[act_id]
+            - rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+        )
+        rcpsp_schedule[act_id]["end_time"] = activity_end_times[act_id]
+    for act_id in completed_tasks:
+        rcpsp_schedule[act_id] = {}
+        rcpsp_schedule[act_id]["start_time"] = completed_tasks[act_id].start
+        rcpsp_schedule[act_id]["end_time"] = completed_tasks[act_id].end
+    if unfeasible_non_renewable_resources:
+        rcpsp_schedule_feasible = False
+        last_act_id = rcpsp_problem.sink_task
+        if last_act_id not in rcpsp_schedule:
+            rcpsp_schedule[last_act_id] = {}
+            rcpsp_schedule[last_act_id]["start_time"] = 99999999
+            rcpsp_schedule[last_act_id]["end_time"] = 9999999
+    else:
+        rcpsp_schedule_feasible = True
+    return rcpsp_schedule, rcpsp_schedule_feasible
+
+
+def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_constraints(
+    solution: RCPSPSolution,
+    rcpsp_problem: RCPSPModel,
+    current_t: int,
+    completed_tasks: Dict[Hashable, TaskDetails],
+    scheduled_tasks_start_times: Dict[Hashable, int],
+) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
+    activity_end_times = {}
+    unfeasible_non_renewable_resources = False
+    new_horizon = rcpsp_problem.horizon
+    resource_avail_in_time = {}
+    for res in rcpsp_problem.resources_list:
+        if rcpsp_problem.is_varying_resource():
+            resource_avail_in_time[res] = rcpsp_problem.resources[res][  # type: ignore
+                : new_horizon + 1
+            ]
+        else:
+            resource_avail_in_time[res] = np.full(
+                new_horizon, rcpsp_problem.resources[res], dtype=np.int_
+            ).tolist()
+
+    def ressource_consumption(
+        res: str, task: Hashable, duration: int, mode: int
+    ) -> int:
+        dur = rcpsp_problem.mode_details[task][mode]["duration"]
+        if duration > dur:
+            return 0
+        return rcpsp_problem.mode_details[task][mode].get(res, 0)
+
+    minimum_starting_time = {}
+    for act in rcpsp_problem.tasks_list:
+        if act in list(scheduled_tasks_start_times.keys()):
+            minimum_starting_time[act] = scheduled_tasks_start_times[act]
+        else:
+            minimum_starting_time[act] = current_t
+        if rcpsp_problem.do_special_constraints:
+            if act in rcpsp_problem.special_constraints.start_times_window:
+                minimum_starting_time[act] = (
+                    max(  # type: ignore
+                        rcpsp_problem.special_constraints.start_times_window[act][0],
+                        minimum_starting_time[act],
+                    )
+                    if rcpsp_problem.special_constraints.start_times_window[act][0]
+                    is not None
+                    else minimum_starting_time[act]
+                )
+    perm_extended = [
+        rcpsp_problem.tasks_list_non_dummy[x] for x in solution.rcpsp_permutation
+    ]
+    perm_extended.insert(0, rcpsp_problem.source_task)
+    perm_extended.append(rcpsp_problem.sink_task)
+    modes_dict = rcpsp_problem.build_mode_dict(solution.rcpsp_modes)
+    # Update current resource usage by the scheduled task (ongoing task, in practice)
+    for act_id in scheduled_tasks_start_times:
+        current_min_time = scheduled_tasks_start_times[act_id]
+        end_t = (
+            current_min_time
+            + rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+        )
+        for t in range(current_min_time, end_t):
+            for res in resource_avail_in_time:
+                resource_avail_in_time[res][t] -= rcpsp_problem.mode_details[act_id][
+                    modes_dict[act_id]
+                ].get(res, 0)
+                if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
+                    for tt in range(end_t, new_horizon):
+                        resource_avail_in_time[res][tt] -= rcpsp_problem.mode_details[
+                            act_id
+                        ][modes_dict[act_id]].get(res, 0)
+                        if resource_avail_in_time[res][tt] < 0:
+                            unfeasible_non_renewable_resources = True
+        activity_end_times[act_id] = end_t
+        perm_extended.remove(act_id)
+        for s in rcpsp_problem.successors[act_id]:
+            minimum_starting_time[s] = max(
+                minimum_starting_time[s], activity_end_times[act_id]
+            )
+
+    perm_extended = [x for x in perm_extended if x not in list(completed_tasks)]
+    for ac in modes_dict:
+        if modes_dict[ac] not in rcpsp_problem.mode_details[ac]:
+            modes_dict[ac] = 1
+
+    while len(perm_extended) > 0 and not unfeasible_non_renewable_resources:
+        act_ids = []
+        for task_id in perm_extended:
+            respected = True
+            # Check all kind of precedence constraints....
+            for pred in rcpsp_problem.predecessors.get(task_id, {}):
+                if pred in perm_extended:
+                    respected = False
+                    break
+            for pred in rcpsp_problem.special_constraints.dict_start_at_end_reverse.get(
+                task_id, {}
+            ):
+                if pred in perm_extended:
+                    respected = False
+                    break
+            for (
+                pred
+            ) in rcpsp_problem.special_constraints.dict_start_at_end_offset_reverse.get(
+                task_id, {}
+            ):
+                if pred in perm_extended:
+                    respected = False
+                    break
+            for (
+                pred
+            ) in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                task_id, {}
+            ):
+                if pred in perm_extended:
+                    respected = False
+                    break
+            task_to_start_too: List[Hashable] = []
+            if respected:
+                task_to_start_too = [
+                    k
+                    for k in rcpsp_problem.special_constraints.dict_start_together.get(
+                        task_id, set()
+                    )
+                    if k in perm_extended
+                ]
+                if len(task_to_start_too) > 0:
+                    if not all(
+                        s not in perm_extended
+                        for t in task_to_start_too
+                        for s in rcpsp_problem.predecessors[t]
+                    ):
+                        respected = False
+            if respected:
+                act_ids = [task_id] + task_to_start_too
+                break
+        if len(act_ids) == 0:
+            for task_id in perm_extended:
+                respected = True
+                # Check all kind of precedence constraints....
+                for pred in rcpsp_problem.predecessors.get(task_id, {}):
+                    if pred in perm_extended:
+                        respected = False
+                        break
+                if respected:
+                    act_ids = [task_id]
+        current_min_time = max([minimum_starting_time[act_id] for act_id in act_ids])
+        max_duration = max(
+            [
+                rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+                for act_id in act_ids
+            ]
+        )
+        valid = False
+        while not valid:
+            valid = True
+            for t in range(current_min_time, current_min_time + max_duration):
+                for res in rcpsp_problem.resources_list:
+                    r = sum(
+                        [
+                            ressource_consumption(
+                                res=res,
+                                task=task,
+                                duration=t - current_min_time,
+                                mode=modes_dict[task],
+                            )
+                            for task in act_ids
+                        ]
+                    )
+                    if r == 0:
+                        continue
+                    if t < new_horizon:
+                        if resource_avail_in_time[res][t] < r:
+                            valid = False
+                            break
+                    else:
+                        unfeasible_non_renewable_resources = True
+                if not valid:
+                    break
+            if not valid:
+                current_min_time += 1
+        if not unfeasible_non_renewable_resources:
+            end_t = current_min_time + max_duration
+            for t in range(current_min_time, current_min_time + max_duration):
+                for res in resource_avail_in_time:
+                    r = sum(
+                        [
+                            ressource_consumption(
+                                res=res,
+                                task=task,
+                                duration=t - current_min_time,
+                                mode=modes_dict[task],
+                            )
+                            for task in act_ids
+                        ]
+                    )
+                    resource_avail_in_time[res][t] -= r
+                    if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
+                        for tt in range(end_t, new_horizon):
+                            resource_avail_in_time[res][tt] -= r
+                            if resource_avail_in_time[res][tt] < 0:
+                                unfeasible_non_renewable_resources = True
+            for act_id in act_ids:
+                activity_end_times[act_id] = (
+                    current_min_time
+                    + rcpsp_problem.mode_details[act_id][modes_dict[act_id]]["duration"]
+                )
+                perm_extended.remove(act_id)
+                for s in rcpsp_problem.successors[act_id]:
+                    minimum_starting_time[s] = max(
+                        minimum_starting_time[s], activity_end_times[act_id]
+                    )
+                for s in rcpsp_problem.special_constraints.dict_start_at_end.get(
+                    act_id, {}
+                ):
+                    minimum_starting_time[s] = activity_end_times[act_id]
+                for s in rcpsp_problem.special_constraints.dict_start_after_nunit.get(
+                    act_id, {}
+                ):
+                    minimum_starting_time[s] = (
+                        current_min_time
+                        + rcpsp_problem.special_constraints.dict_start_after_nunit[
+                            act_id
+                        ][s]
+                    )
+                for s in rcpsp_problem.special_constraints.dict_start_at_end_offset.get(
+                    act_id, {}
+                ):
+                    minimum_starting_time[s] = (
+                        activity_end_times[act_id]
+                        + rcpsp_problem.special_constraints.dict_start_at_end_offset[
+                            act_id
+                        ][s]
+                    )
     rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}

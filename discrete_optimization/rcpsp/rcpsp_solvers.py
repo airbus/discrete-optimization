@@ -48,7 +48,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     PileSolverRCPSP_Calendar,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
 )
 
@@ -182,35 +181,29 @@ solvers_compatibility = {
     PileSolverRCPSP_Calendar: [
         RCPSPModel,
     ],
-    CP_RCPSP_MZN: [RCPSPModelSpecialConstraints, RCPSPModel],
+    CP_RCPSP_MZN: [RCPSPModel],
     CP_MRCPSP_MZN: [
-        RCPSPModelSpecialConstraints,
         RCPSPModel,
     ],
     CP_RCPSP_MZN_PREEMMPTIVE: [RCPSPModelPreemptive],
     CP_MRCPSP_MZN_PREEMMPTIVE: [RCPSPModelPreemptive],
     LNS_LP_RCPSP_SOLVER: [
-        RCPSPModelSpecialConstraints,
         RCPSPModel,
     ],
     LNS_CP_RCPSP_SOLVER: [
-        RCPSPModelSpecialConstraints,
         RCPSPModel,
     ],
     LS_RCPSP_Solver: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     GA_RCPSP_Solver: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     GA_MRCPSP_Solver: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
@@ -219,25 +212,21 @@ solvers_compatibility = {
         RCPSPModel,
     ],
     LargeNeighborhoodSearchRCPSP: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     LargeNeighborhoodSearchScheduling: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     CPM: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     GPHH: [
-        RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,

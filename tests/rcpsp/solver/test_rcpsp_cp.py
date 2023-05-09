@@ -8,10 +8,10 @@ from discrete_optimization.generic_tools.cp_tools import CPSolverName, Parameter
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     result_storage_to_pareto_front,
 )
+from discrete_optimization.rcpsp.core import PartialSolution
 from discrete_optimization.rcpsp.rcpsp_model import (
     MethodBaseRobustification,
     MethodRobustification,
-    PartialSolution,
     RCPSPModel,
     RCPSPSolution,
     UncertainRCPSPModel,

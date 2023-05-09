@@ -42,7 +42,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
 )
 from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
     RCPSPSolutionSpecialPreemptive,
     compute_constraints_details,
@@ -85,10 +84,7 @@ class PostProLeftShift(PostProcessSolution):
             params_objective_function=self.params_objective_function,
         )
         self.graph = self.problem.compute_graph()
-        if isinstance(
-            problem,
-            (RCPSPModelSpecialConstraintsPreemptive, RCPSPModelSpecialConstraints),
-        ):
+        if isinstance(problem, RCPSPModelSpecialConstraintsPreemptive):
             self.graph_rcpsp = GraphRCPSPSpecialConstraints(problem=self.problem)
             self.special_constraints = True
         else:
@@ -523,7 +519,7 @@ class NeighborFixStartSubproblem(ConstraintHandler):
         self.graph_nx = self.graph.graph_nx
         if isinstance(
             problem,
-            (RCPSPModelSpecialConstraintsPreemptive, RCPSPModelSpecialConstraints),
+            RCPSPModelSpecialConstraintsPreemptive,
         ):
             self.graph_rcpsp = GraphRCPSPSpecialConstraints(problem=self.problem)
             self.special_constraints = True
