@@ -24,7 +24,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     PartialSolution,
     RCPSPModel,
-    RCPSPModelCalendar,
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_MODES
@@ -84,7 +83,10 @@ class PileSolverRCPSP(SolverDO):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-        if isinstance(self.rcpsp_model, (MultiModeRCPSPModel, RCPSPModelCalendar)):
+        if (
+            isinstance(self.rcpsp_model, MultiModeRCPSPModel)
+            or self.rcpsp_model.is_varying_resource()
+        ):
             solver = CP_MRCPSP_MZN_MODES(
                 self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
             )
@@ -256,10 +258,12 @@ class PileSolverRCPSP(SolverDO):
 class PileSolverRCPSP_Calendar(SolverDO):
     def __init__(
         self,
-        rcpsp_model: RCPSPModelCalendar,
+        rcpsp_model: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs,
     ):
+        if not rcpsp_model.is_varying_resource():
+            raise ValueError("this solver is meant for calendar models")
         self.rcpsp_model = rcpsp_model
         self.resources = rcpsp_model.resources
         self.non_renewable = rcpsp_model.non_renewable_resources
@@ -295,7 +299,10 @@ class PileSolverRCPSP_Calendar(SolverDO):
             problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
-        if isinstance(self.rcpsp_model, (MultiModeRCPSPModel, RCPSPModelCalendar)):
+        if (
+            isinstance(self.rcpsp_model, MultiModeRCPSPModel)
+            or self.rcpsp_model.is_varying_resource()
+        ):
             solver = CP_MRCPSP_MZN_MODES(
                 self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
             )
@@ -310,7 +317,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
                 self.modes_dict[i + 1] = one_mode_setting[i]
         else:
             self.modes_dict = {t: 1 for t in self.mode_details}
-        self.with_calendar = isinstance(self.rcpsp_model, RCPSPModelCalendar)
+        self.with_calendar = self.rcpsp_model.is_varying_resource()
 
     def solve(self, **kwargs) -> ResultStorage:
         greedy_choice = kwargs.get("greedy_choice", GreedyChoice.MOST_SUCCESSORS)

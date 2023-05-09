@@ -30,7 +30,7 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModelCalendar
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
@@ -128,9 +128,6 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         ) = build_aggreg_function_and_params_objective(
             self.rcpsp_model, params_objective_function=params_objective_function
         )
-        self.calendar = True
-        if isinstance(self.rcpsp_model, RCPSPModelCalendar):
-            self.calendar = True
         self.one_ressource_per_task = kwargs.get("one_ressource_per_task", False)
         self.resources_index = None
 

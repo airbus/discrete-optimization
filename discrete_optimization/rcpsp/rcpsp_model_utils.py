@@ -6,10 +6,10 @@ from typing import Union
 
 import numpy as np
 
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPModelCalendar
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 
 
-def create_fake_tasks(rcpsp_problem: Union[RCPSPModel, RCPSPModelCalendar]):
+def create_fake_tasks(rcpsp_problem: RCPSPModel):
     if not rcpsp_problem.is_varying_resource():
         return []
     else:

@@ -43,11 +43,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
     PermutationMutationRCPSP,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    RCPSPModel,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
     LP_MRCPSP,
@@ -75,7 +71,7 @@ class InitialMethodRCPSP(Enum):
 class InitialSolutionRCPSP(InitialSolution):
     def __init__(
         self,
-        problem: Union[RCPSPModel, RCPSPModelCalendar],
+        problem: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
         initial_method: InitialMethodRCPSP = InitialMethodRCPSP.PILE,
     ):

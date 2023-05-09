@@ -31,7 +31,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
     PartialSolution,
-    RCPSPModelCalendar,
+    RCPSPModel,
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
@@ -224,9 +224,6 @@ class CP_MS_MRCPSP_MZN(MinizincCPSolver):
         ) = build_aggreg_function_and_params_objective(
             self.rcpsp_model, params_objective_function=params_objective_function
         )
-        self.calendar = True
-        if isinstance(self.rcpsp_model, RCPSPModelCalendar):
-            self.calendar = True
         self.one_ressource_per_task = kwargs.get("one_ressource_per_task", False)
         self.resources_index = None
 
@@ -814,9 +811,6 @@ class CP_MS_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver):
         ) = build_aggreg_function_and_params_objective(
             self.rcpsp_model, params_objective_function=params_objective_function
         )
-        self.calendar = True
-        if isinstance(self.rcpsp_model, RCPSPModelCalendar):
-            self.calendar = True
         self.one_ressource_per_task = kwargs.get("one_ressource_per_task", False)
         self.resources_index = None
         self.unit_usage_preemptive = None

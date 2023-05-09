@@ -26,7 +26,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
-    RCPSPModelCalendar,
     SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
@@ -60,7 +59,6 @@ logger = logging.getLogger(__name__)
 
 ANY_RCPSP = Union[
     RCPSPModel,
-    RCPSPModelCalendar,
     MultiModeRCPSPModel,
     SingleModeRCPSPModel,
     RCPSPModelPreemptive,

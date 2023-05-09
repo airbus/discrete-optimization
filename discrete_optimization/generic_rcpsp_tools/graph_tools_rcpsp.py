@@ -10,7 +10,6 @@ from networkx import NetworkXNoCycle
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
-    RCPSPModelCalendar,
     SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
@@ -29,7 +28,6 @@ class GraphRCPSP:
         self,
         problem: Union[
             RCPSPModel,
-            RCPSPModelCalendar,
             MultiModeRCPSPModel,
             SingleModeRCPSPModel,
             MS_RCPSPModel,
