@@ -7,11 +7,7 @@ from typing import Union
 import networkx as nx
 from networkx import NetworkXNoCycle
 
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
@@ -28,8 +24,6 @@ class GraphRCPSP:
         self,
         problem: Union[
             RCPSPModel,
-            MultiModeRCPSPModel,
-            SingleModeRCPSPModel,
             MS_RCPSPModel,
             MS_RCPSPModel_Variant,
         ],

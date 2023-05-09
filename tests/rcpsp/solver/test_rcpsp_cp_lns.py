@@ -9,12 +9,7 @@ from discrete_optimization.generic_tools.lns_mip import TrivialInitialSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     from_solutions_to_result_storage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
@@ -82,7 +77,7 @@ def test_lns_mm():
     files_available = get_data_available()
     file = [f for f in files_available if "j1010_9.mm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)
-    if isinstance(rcpsp_problem, MultiModeRCPSPModel):
+    if rcpsp_problem.is_rcpsp_multimode():
         rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
     solver = CP_MRCPSP_MZN(
         rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
@@ -125,7 +120,7 @@ def test_lns_mm():
 def test_lns_solver():
     files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
-    rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
+    rcpsp_problem: RCPSPModel = parse_file(file)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 20
     lns_solver = LNS_CP_RCPSP_SOLVER(

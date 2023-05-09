@@ -6,11 +6,7 @@ import os
 from typing import Optional
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 
 
 def get_data_available(
@@ -104,25 +100,14 @@ def parse_psplib(input_data):
                 list(resources.keys())[i]
             ] = resources_usage[i]
 
-    if multi_mode:
-        problem = MultiModeRCPSPModel(
-            resources=resources,
-            non_renewable_resources=non_renewable_resources,
-            mode_details=mode_details,
-            successors=successors,
-            horizon=horizon,
-            horizon_multiplier=30,
-        )
-    else:
-        problem = SingleModeRCPSPModel(
-            resources=resources,
-            non_renewable_resources=non_renewable_resources,
-            mode_details=mode_details,
-            successors=successors,
-            horizon=horizon,
-            horizon_multiplier=30,
-        )
-    return problem
+    return RCPSPModel(
+        resources=resources,
+        non_renewable_resources=non_renewable_resources,
+        mode_details=mode_details,
+        successors=successors,
+        horizon=horizon,
+        horizon_multiplier=30,
+    )
 
 
 def parse_file(file_path) -> RCPSPModel:

@@ -43,7 +43,6 @@ from discrete_optimization.rcpsp.rcpsp_model import (
     MethodAggregating,
     MethodBaseRobustification,
     MethodRobustification,
-    MultiModeRCPSPModel,
     RCPSPModel,
     RCPSPSolution,
     UncertainRCPSPModel,
@@ -191,7 +190,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
-    rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
+    rcpsp_model = parse_file(file_path)
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
     print(mutations)
@@ -397,7 +396,7 @@ def local_search_aggregated(
     files = [f for f in files if "j601_9.sm" in f]  # Single mode RCPS
     file_path = files[0]
     rcpsp_model: RCPSPModel = parse_file(file_path)
-    if isinstance(rcpsp_model, MultiModeRCPSPModel):
+    if rcpsp_model.is_rcpsp_multimode():
         rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     worst, average, many_random_instance = create_models(
         base_rcpsp_model=rcpsp_model,
