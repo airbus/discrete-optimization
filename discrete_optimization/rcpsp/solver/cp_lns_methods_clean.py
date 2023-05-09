@@ -32,7 +32,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
 )
 
@@ -49,7 +48,6 @@ class NeighborSubproblem(ConstraintHandler):
             RCPSPModel,
             RCPSPModelPreemptive,
             RCPSPSolutionPreemptive,
-            RCPSPModelSpecialConstraints,
             RCPSPModelSpecialConstraintsPreemptive,
         ],
         basic_constraint_builder: BasicConstraintBuilder,
@@ -57,9 +55,8 @@ class NeighborSubproblem(ConstraintHandler):
     ):
         self.problem = problem
         self.basic_constraint_builder = basic_constraint_builder
-        if isinstance(
-            self.problem,
-            (RCPSPModelSpecialConstraintsPreemptive, RCPSPModelSpecialConstraints),
+        if isinstance(self.problem, RCPSPModelSpecialConstraintsPreemptive,) or (
+            isinstance(self.problem, RCPSPModel) and self.problem.do_special_constraints
         ):
             self.graph_rcpsp = GraphRCPSPSpecialConstraints(problem=self.problem)
             self.special_constraints = True

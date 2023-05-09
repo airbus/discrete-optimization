@@ -14,10 +14,10 @@ from discrete_optimization.generic_tools.lns_mip import InitialSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
     RCPSPSolutionPreemptive,
-    SpecialConstraintsDescription,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPModel
 from discrete_optimization.rcpsp_multiskill.solvers.cp_lns_solver import (

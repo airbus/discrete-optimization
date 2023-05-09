@@ -7,11 +7,11 @@ from typing import Union
 import networkx as nx
 from networkx import NetworkXNoCycle
 
+from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,
-    SpecialConstraintsDescription,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
@@ -24,6 +24,7 @@ class GraphRCPSP:
         self,
         problem: Union[
             RCPSPModel,
+            RCPSPModelPreemptive,
             MS_RCPSPModel,
             MS_RCPSPModel_Variant,
         ],
@@ -92,10 +93,10 @@ class GraphRCPSP:
 class GraphRCPSPSpecialConstraints(GraphRCPSP):
     def __init__(
         self,
-        problem: Union[
-            RCPSPModelSpecialConstraints, RCPSPModelSpecialConstraintsPreemptive
-        ],
+        problem: Union[RCPSPModel, RCPSPModelSpecialConstraintsPreemptive],
     ):
+        if isinstance(problem, RCPSPModel) and not problem.do_special_constraints:
+            raise ValueError("this graph is meant for models with special constraints")
         super().__init__(problem)
         self.special_constraints: SpecialConstraintsDescription = (
             problem.special_constraints
@@ -156,15 +157,11 @@ def build_unrelated_task(graph: GraphRCPSP):
     return unrel, set_pairs
 
 
-def build_graph_rcpsp_object(rcpsp_problem):
-    if isinstance(
-        rcpsp_problem,
-        (RCPSPModelSpecialConstraints, RCPSPModelSpecialConstraintsPreemptive),
+def build_graph_rcpsp_object(rcpsp_problem: Union[RCPSPModel, RCPSPModelPreemptive]):
+    if (
+        hasattr(rcpsp_problem, "do_special_constraints")
+        and rcpsp_problem.do_special_constraints
     ):
         return GraphRCPSPSpecialConstraints(problem=rcpsp_problem)
     else:
-        if "special_constraints" in rcpsp_problem.__dict__.keys() and isinstance(
-            getattr(rcpsp_problem, "special_constraints"), SpecialConstraintsDescription
-        ):
-            return GraphRCPSPSpecialConstraints(problem=rcpsp_problem)
         return GraphRCPSP(problem=rcpsp_problem)

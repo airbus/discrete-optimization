@@ -196,7 +196,11 @@ def test_single_mode_moga_aggregated(random_seed):
     rcpsp_model.plot_ressource_view(sol)
 
     fitnesses = rcpsp_model.evaluate(sol)
-    assert fitnesses == {"makespan": 43, "mean_resource_reserve": 0}
+    assert fitnesses == {
+        "makespan": 43,
+        "mean_resource_reserve": 0,
+        "constraint_penalty": 0.0,
+    }
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     objectives = ["makespan", "mean_resource_reserve"]
@@ -215,7 +219,11 @@ def test_single_mode_moga_aggregated(random_seed):
 
     rcpsp_model.plot_ressource_view(sol)
     fitnesses = rcpsp_model.evaluate(sol)
-    assert fitnesses == {"makespan": 43, "mean_resource_reserve": 0}
+    assert fitnesses == {
+        "makespan": 43,
+        "mean_resource_reserve": 0,
+        "constraint_penalty": 0.0,
+    }
 
 
 def test_own_pop_single_mode_ga(random_seed):
@@ -247,7 +255,11 @@ def test_own_pop_single_mode_ga(random_seed):
     rcpsp_model.plot_ressource_view(sol)
 
     fitnesses = rcpsp_model.evaluate(sol)
-    assert fitnesses == {"makespan": 49, "mean_resource_reserve": 0}
+    assert fitnesses == {
+        "makespan": 49,
+        "mean_resource_reserve": 0,
+        "constraint_penalty": 0.0,
+    }
 
 
 if __name__ == "__main__":

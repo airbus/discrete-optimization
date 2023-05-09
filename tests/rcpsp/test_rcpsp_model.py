@@ -68,7 +68,11 @@ def test_unfeasible_modes_solution():
     assert rcpsp_sol.rcpsp_modes == unfeasible_modes
     assert not rcpsp_model.satisfy(rcpsp_sol)
     evaluation = rcpsp_model.evaluate(rcpsp_sol)
-    assert evaluation == {"makespan": 99999999, "mean_resource_reserve": 0}
+    assert evaluation == {
+        "makespan": 99999999,
+        "mean_resource_reserve": 0,
+        "constraint_penalty": 0.0,
+    }
 
 
 def test_feasible_modes_solution():
