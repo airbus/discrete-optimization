@@ -26,7 +26,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
     PartialSolution,
-    RCPSPModelCalendar,
     RCPSPSolution,
     SingleModeRCPSPModel,
     Solution,
@@ -599,7 +598,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
-                if isinstance(self.rcpsp_model, RCPSPModelCalendar):
+                if self.rcpsp_model.is_varying_resource():
                     greedy_solver = PileSolverRCPSP_Calendar(self.rcpsp_model)
                 else:
                     greedy_solver = PileSolverRCPSP(self.rcpsp_model)
@@ -875,7 +874,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
-                if isinstance(self.rcpsp_model, RCPSPModelCalendar):
+                if self.rcpsp_model.is_varying_resource():
                     greedy_solver = PileSolverRCPSP_Calendar(self.rcpsp_model)
                 else:
                     greedy_solver = PileSolverRCPSP(self.rcpsp_model)

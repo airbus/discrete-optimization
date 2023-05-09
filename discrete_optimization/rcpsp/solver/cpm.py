@@ -17,11 +17,7 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    RCPSPModel,
-    RCPSPModelCalendar,
-    RCPSPSolution,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import compute_graph_rcpsp
 
 logger = logging.getLogger(__name__)
@@ -190,7 +186,7 @@ class CPM(SolverDO):
         index_in_order = {total_order[i]: i for i in range(len(total_order))}
         resource_avail_in_time = {}
         for res in list(self.rcpsp_model.resources.keys()):
-            if isinstance(self.rcpsp_model, RCPSPModelCalendar):
+            if self.rcpsp_model.is_varying_resource():
                 resource_avail_in_time[res] = self.rcpsp_model.resources[res][
                     : self.rcpsp_model.horizon + 1
                 ]
@@ -394,7 +390,7 @@ class CPM(SolverDO):
             total_order = self.return_order_cpm()
         resource_avail_in_time = {}
         for res in list(self.rcpsp_model.resources.keys()):
-            if isinstance(self.rcpsp_model, RCPSPModelCalendar):
+            if self.rcpsp_model.is_varying_resource():
                 resource_avail_in_time[res] = self.rcpsp_model.resources[res][
                     : self.rcpsp_model.horizon + 1
                 ]

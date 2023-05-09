@@ -479,6 +479,7 @@ class RCPSPModel(Problem):
         source_task: Optional[Hashable] = None,
         sink_task: Optional[Hashable] = None,
         name_task: Optional[Dict[Hashable, str]] = None,
+        calendar_details: Optional[Dict[str, List[List[int]]]] = None,
         **kwargs: Any,
     ):
         self.resources = resources
@@ -488,6 +489,7 @@ class RCPSPModel(Problem):
         self.successors = successors
         self.horizon = horizon
         self.horizon_multiplier = horizon_multiplier
+        self.calendar_details = calendar_details
         if name_task is None:
             self.name_task = {x: str(x) for x in self.mode_details}
         else:
@@ -856,61 +858,8 @@ class RCPSPModel(Problem):
         return self.resources.get(res, 0)  # type: ignore
 
 
-class RCPSPModelCalendar(RCPSPModel):
-    resources: Dict[str, List[int]]
-
-    def __init__(
-        self,
-        resources: Dict[str, List[int]],
-        non_renewable_resources: List[str],
-        mode_details: Dict[Hashable, Dict[int, Dict[str, int]]],
-        successors: Dict[int, List[int]],
-        horizon,
-        horizon_multiplier=1,
-        tasks_list: List[Hashable] = None,
-        source_task=None,
-        sink_task=None,
-        name_task: Dict[int, str] = None,
-        calendar_details: Dict[str, List[List[int]]] = None,
-        name_ressource_to_index: Dict[str, int] = None,
-    ):
-        super().__init__(
-            resources=resources,
-            non_renewable_resources=non_renewable_resources,
-            mode_details=mode_details,
-            successors=successors,
-            horizon=horizon,
-            horizon_multiplier=horizon_multiplier,
-            tasks_list=tasks_list,
-            source_task=source_task,
-            sink_task=sink_task,
-            name_task=name_task,
-        )
-        self.calendar_details = calendar_details
-        self.name_ressource_to_index = name_ressource_to_index
-
-    def get_resource_available(self, res, time):
-        return self.resources.get(res, [0])[time]
-
-    def copy(self):
-        return RCPSPModelCalendar(
-            resources={w: deepcopy(self.resources[w]) for w in self.resources},
-            non_renewable_resources=self.non_renewable_resources,
-            mode_details=deepcopy(self.mode_details),
-            successors=deepcopy(self.successors),
-            horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
-            calendar_details=deepcopy(self.calendar_details),
-            tasks_list=self.tasks_list,
-            source_task=self.source_task,
-            sink_task=self.sink_task,
-            name_task=self.name_task,
-            name_ressource_to_index=self.name_ressource_to_index,
-        )
-
-
 def create_np_data_and_jit_functions(
-    rcpsp_problem: Union[RCPSPModel, RCPSPModelCalendar]
+    rcpsp_problem: RCPSPModel,
 ) -> Tuple[
     Callable[
         ...,

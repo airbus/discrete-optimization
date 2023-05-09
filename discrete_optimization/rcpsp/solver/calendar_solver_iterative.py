@@ -23,7 +23,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.rcpsp_model import (
     PartialSolution,
     RCPSPModel,
-    RCPSPModelCalendar,
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN, CP_RCPSP_MZN
@@ -131,10 +130,12 @@ def get_ressource_breaks(
 class PostProcessSolutionNonFeasible(PostProcessSolution):
     def __init__(
         self,
-        problem_calendar: RCPSPModelCalendar,
+        problem_calendar: RCPSPModel,
         problem_no_calendar: RCPSPModel,
         partial_solution: PartialSolution = None,
     ):
+        if not problem_calendar.is_varying_resource():
+            raise ValueError("problem_calendar is supposed to be a calendar model")
         self.problem_calendar = problem_calendar
         self.problem_no_calendar = problem_no_calendar
         self.partial_solution = partial_solution
@@ -210,10 +211,12 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
 class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
     def __init__(
         self,
-        problem_calendar: RCPSPModelCalendar,
+        problem_calendar: RCPSPModel,
         problem_no_calendar: RCPSPModel,
         other_constraint: ConstraintHandler,
     ):
+        if not problem_calendar.is_varying_resource():
+            raise ValueError("problem_calendar is supposed to be a calendar model")
         self.problem_calendar = problem_calendar
         self.problem_no_calendar = problem_no_calendar
         self.other_constraint = other_constraint
@@ -316,11 +319,13 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
 class SolverWithCalendarIterative(SolverDO):
     def __init__(
         self,
-        problem_calendar: RCPSPModelCalendar,
+        problem_calendar: RCPSPModel,
         partial_solution: PartialSolution = None,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_ALL,
         **kwargs
     ):
+        if not problem_calendar.is_varying_resource():
+            raise ValueError("problem_calendar is supposed to be a calendar model")
         self.problem_calendar = problem_calendar
         self.problem_no_calendar = RCPSPModel(
             resources={

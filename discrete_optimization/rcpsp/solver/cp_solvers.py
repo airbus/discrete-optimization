@@ -28,7 +28,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.rcpsp_model import (
     PartialSolution,
     RCPSPModel,
-    RCPSPModelCalendar,
     RCPSPSolution,
 )
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
@@ -417,9 +416,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver):
         ) = build_aggreg_function_and_params_objective(
             self.rcpsp_model, params_objective_function=params_objective_function
         )
-        self.calendar = False
-        if self.rcpsp_model.is_varying_resource():
-            self.calendar = True
+        self.calendar = self.rcpsp_model.is_varying_resource()
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multi")
@@ -1712,7 +1709,7 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver):
             self.rcpsp_model, params_objective_function=params_objective_function
         )
         self.calendar = False
-        if isinstance(self.rcpsp_model, RCPSPModelCalendar):
+        if self.rcpsp_model.is_varying_resource():
             self.calendar = True
 
     def init_model(self, **args):

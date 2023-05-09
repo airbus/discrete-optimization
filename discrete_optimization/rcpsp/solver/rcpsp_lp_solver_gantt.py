@@ -21,7 +21,7 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModelCalendar, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 
 try:
     import gurobipy
@@ -68,10 +68,16 @@ class ConstraintWorkDuration:
 class _Base_LP_MRCPSP_GANTT(MilpSolver):
     def __init__(
         self,
-        rcpsp_model: RCPSPModelCalendar,
+        rcpsp_model: RCPSPModel,
         rcpsp_solution: RCPSPSolution,
         **kwargs,
     ):
+        if not rcpsp_model.is_varying_resource():
+            raise ValueError("this solver is meant for calendar models")
+        if rcpsp_model.calendar_details is None:
+            raise ValueError(
+                "rcpsp_model.calendar_details cannot be None for this solver"
+            )
         self.rcpsp_model = rcpsp_model
         self.rcpsp_solution = rcpsp_solution
         self.jobs = sorted(list(self.rcpsp_model.mode_details.keys()))
@@ -145,7 +151,7 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver):
 class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
     def __init__(
         self,
-        rcpsp_model: RCPSPModelCalendar,
+        rcpsp_model: RCPSPModel,
         rcpsp_solution: RCPSPSolution,
         lp_solver=MilpSolverName.CBC,
         **kwargs,

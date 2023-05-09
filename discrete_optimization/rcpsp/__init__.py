@@ -7,7 +7,6 @@ from typing import Union
 from discrete_optimization.rcpsp.rcpsp_model import (
     MultiModeRCPSPModel,
     RCPSPModel,
-    RCPSPModelCalendar,
     SingleModeRCPSPModel,
 )
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
