@@ -17,11 +17,7 @@ from discrete_optimization.generic_tools.lp_tools import MilpSolverName, Paramet
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.solver.calendar_solver_iterative import (
     SolverWithCalendarIterative,
@@ -178,93 +174,69 @@ for key in solvers:
         solvers_map[solver] = (key, param)
 
 solvers_compatibility = {
-    LP_RCPSP: [SingleModeRCPSPModel, RCPSPModel],
+    LP_RCPSP: [RCPSPModel],
     LP_MRCPSP: [
-        MultiModeRCPSPModel,
-        SingleModeRCPSPModel,
         RCPSPModel,
     ],
-    PileSolverRCPSP: [SingleModeRCPSPModel, MultiModeRCPSPModel, RCPSPModel],
+    PileSolverRCPSP: [RCPSPModel],
     PileSolverRCPSP_Calendar: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModel,
     ],
-    CP_RCPSP_MZN: [SingleModeRCPSPModel, RCPSPModelSpecialConstraints, RCPSPModel],
+    CP_RCPSP_MZN: [RCPSPModelSpecialConstraints, RCPSPModel],
     CP_MRCPSP_MZN: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModel,
     ],
     CP_RCPSP_MZN_PREEMMPTIVE: [RCPSPModelPreemptive],
     CP_MRCPSP_MZN_PREEMMPTIVE: [RCPSPModelPreemptive],
     LNS_LP_RCPSP_SOLVER: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModel,
     ],
     LNS_CP_RCPSP_SOLVER: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModel,
     ],
     LS_RCPSP_Solver: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     GA_RCPSP_Solver: [
-        SingleModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     GA_MRCPSP_Solver: [
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     SolverWithCalendarIterative: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModel,
     ],
     LargeNeighborhoodSearchRCPSP: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     LargeNeighborhoodSearchScheduling: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     CPM: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,
     ],
     GPHH: [
-        SingleModeRCPSPModel,
-        MultiModeRCPSPModel,
         RCPSPModelSpecialConstraints,
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,

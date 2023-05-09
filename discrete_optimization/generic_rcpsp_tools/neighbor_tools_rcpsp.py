@@ -22,12 +22,7 @@ from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
@@ -68,8 +63,6 @@ logger = logging.getLogger(__name__)
 
 ANY_RCPSP = Union[
     RCPSPModel,
-    MultiModeRCPSPModel,
-    SingleModeRCPSPModel,
     RCPSPModelPreemptive,
     RCPSPModelSpecialConstraints,
     RCPSPModelSpecialConstraintsPreemptive,

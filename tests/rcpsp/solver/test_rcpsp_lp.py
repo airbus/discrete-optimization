@@ -6,12 +6,7 @@ from discrete_optimization.generic_tools.lp_tools import MilpSolverName, Paramet
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
-    PartialSolution,
-    RCPSPSolution,
-    SingleModeRCPSPModel,
-)
+from discrete_optimization.rcpsp.rcpsp_model import PartialSolution, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
@@ -23,7 +18,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCP
 def test_rcpsp_sm_lp_cbc():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
-    rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
+    rcpsp_problem = parse_file(file)
     solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model()
     results_storage: ResultStorage = solver.solve(
@@ -43,7 +38,7 @@ def test_rcpsp_sm_lp_cbc():
 def test_rcpsp_mm_lp_cbc():
     files_available = get_data_available()
     file = [f for f in files_available if "j1010_1.mm" in f][0]
-    rcpsp_problem: MultiModeRCPSPModel = parse_file(file)
+    rcpsp_problem = parse_file(file)
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
     solver = LP_MRCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model(greedy_start=False)
@@ -66,7 +61,7 @@ def test_rcpsp_mm_lp_cbc():
 def test_rcpsp_sm_lp_cbc_partial():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
-    rcpsp_problem: SingleModeRCPSPModel = parse_file(file)
+    rcpsp_problem = parse_file(file)
     dummy_solution = rcpsp_problem.get_dummy_solution()
     some_constraints = {
         task: dummy_solution.rcpsp_schedule[task]["start_time"] for task in [1, 2, 3, 4]

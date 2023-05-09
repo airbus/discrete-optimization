@@ -13,7 +13,7 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
-from discrete_optimization.rcpsp.rcpsp_model import MultiModeRCPSPModel, RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 
 
 class GA_RCPSP_Solver(SolverDO):
@@ -55,10 +55,12 @@ class GA_RCPSP_Solver(SolverDO):
 class GA_MRCPSP_Solver(SolverDO):
     def __init__(
         self,
-        rcpsp_model: MultiModeRCPSPModel,
+        rcpsp_model: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs
     ):
+        if not rcpsp_model.is_rcpsp_multimode():
+            raise ValueError("this solver is meant for multimode rcpsp problems")
         self.rcpsp_model = rcpsp_model
         (
             self.aggreg_sol,

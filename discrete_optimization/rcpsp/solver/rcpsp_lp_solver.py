@@ -26,8 +26,8 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
     PartialSolution,
+    RCPSPModel,
     RCPSPSolution,
-    SingleModeRCPSPModel,
     Solution,
     TupleFitness,
 )
@@ -61,11 +61,13 @@ logger = logging.getLogger(__name__)
 class LP_RCPSP(PymipMilpSolver):
     def __init__(
         self,
-        rcpsp_model: SingleModeRCPSPModel,
+        rcpsp_model: RCPSPModel,
         lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
+        if rcpsp_model.is_rcpsp_multimode():
+            raise ValueError("this solver is meant for single mode problems")
         self.rcpsp_model = rcpsp_model
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
@@ -307,10 +309,12 @@ class _BaseLP_MRCPSP(MilpSolver):
 
     def __init__(
         self,
-        rcpsp_model: SingleModeRCPSPModel,
+        rcpsp_model: RCPSPModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
+        if rcpsp_model.is_rcpsp_multimode():
+            raise ValueError("this solver is meant for single mode problems")
         self.rcpsp_model = rcpsp_model
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
@@ -361,11 +365,14 @@ class _BaseLP_MRCPSP(MilpSolver):
 class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
     def __init__(
         self,
-        rcpsp_model: SingleModeRCPSPModel,
+        rcpsp_model: RCPSPModel,
         lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
+        if rcpsp_model.is_rcpsp_multimode():
+            raise ValueError("this solver is meant for single mode problems")
+
         super().__init__(
             rcpsp_model=rcpsp_model,
             params_objective_function=params_objective_function,

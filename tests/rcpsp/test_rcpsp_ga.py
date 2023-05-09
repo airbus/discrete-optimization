@@ -10,7 +10,6 @@ import pytest
 from discrete_optimization.generic_tools.do_problem import ObjectiveHandling
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation, Ga
-from discrete_optimization.rcpsp.rcpsp_model import MultiModeRCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
@@ -99,7 +98,7 @@ def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]
-    rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
+    rcpsp_model = parse_file(file_path)
 
     total_evals = 10000
     number_of_meta_iterations = 5

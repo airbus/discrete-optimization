@@ -126,7 +126,7 @@ class RCPSPSolution(Solution):
 
         # init rcpsp_modes
         if rcpsp_modes is None:
-            if hasattr(self.problem, "fixed_modes"):
+            if self.problem.fixed_modes is not None:
                 self.rcpsp_modes = self.problem.fixed_modes
             else:
                 self.rcpsp_modes = [1 for i in range(self.problem.n_jobs_non_dummy)]
@@ -136,12 +136,12 @@ class RCPSPSolution(Solution):
         # init rcpsp_permutation
         if rcpsp_permutation is None:
             if rcpsp_schedule is None:
-                if hasattr(self.problem, "fixed_permutation"):
+                if self.problem.fixed_permutation is not None:
                     self.rcpsp_permutation = self.problem.fixed_permutation
                 else:
                     raise ValueError(
                         "rcpsp_permutation and rcpsp_schedule can be None together "
-                        "only if problem.fixed_permutation is defined"
+                        "only if problem.fixed_permutation is not None"
                     )
             else:
                 self.rcpsp_schedule = rcpsp_schedule
@@ -436,7 +436,7 @@ class PartialSolution:
 class RCPSPModel(Problem):
     """
 
-    Args:
+    Attributes:
         resources:
         non_renewable_resources:
         mode_details:
@@ -449,6 +449,8 @@ class RCPSPModel(Problem):
         name_task:
         n_jobs (int):
         n_jobs_non_dummy (int):   excluding dummy activities Start (0) and End (n)
+        fixed_permutation (Optional[List[int]]):
+        fixed_modes (Optional[List[int]]):
 
     Args:
         resources: {resource_name: number_of_resource}
@@ -461,6 +463,8 @@ class RCPSPModel(Problem):
         source_task:
         sink_task:
         name_task:
+        fixed_permutation:
+        fixed_modes:
         **kwargs:
 
     """
@@ -480,6 +484,8 @@ class RCPSPModel(Problem):
         sink_task: Optional[Hashable] = None,
         name_task: Optional[Dict[Hashable, str]] = None,
         calendar_details: Optional[Dict[str, List[List[int]]]] = None,
+        fixed_permutation: Optional[List[int]] = None,
+        fixed_modes: Optional[List[int]] = None,
         **kwargs: Any,
     ):
         self.resources = resources
@@ -562,6 +568,8 @@ class RCPSPModel(Problem):
             "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
         self.graph = self.compute_graph()
+        self.fixed_permutation = fixed_permutation
+        self.fixed_modes = fixed_modes
 
     def update_functions(self) -> None:
         (
@@ -627,13 +635,29 @@ class RCPSPModel(Problem):
         self, int_vector: List[int], encoding_name: str
     ) -> Dict[str, float]:
         if encoding_name == "rcpsp_permutation":
-            single_mode_list = [1 for i in range(self.n_jobs_non_dummy)]
+            if self.fixed_modes is None:
+                rcpsp_modes = [1 for i in range(self.n_jobs_non_dummy)]
+            else:
+                rcpsp_modes = self.fixed_modes
             rcpsp_sol = RCPSPSolution(
-                problem=self, rcpsp_permutation=int_vector, rcpsp_modes=single_mode_list
+                problem=self, rcpsp_permutation=int_vector, rcpsp_modes=rcpsp_modes
             )
-            objectives = self.evaluate(rcpsp_sol)
-            return objectives
-        raise NotImplementedError(f"Encoding {encoding_name} not implemented")
+        elif encoding_name == "rcpsp_modes":
+            if self.fixed_permutation is not None:
+                rcpsp_sol = RCPSPSolution(
+                    problem=self,
+                    rcpsp_permutation=self.fixed_permutation,
+                    rcpsp_modes=int_vector,
+                )
+            else:
+                raise RuntimeError(
+                    "Encoding rcpsp_modes possible "
+                    "only if self.fixed_permutation is not None"
+                )
+        else:
+            raise NotImplementedError(f"Encoding {encoding_name} not implemented")
+        objectives = self.evaluate(rcpsp_sol)
+        return objectives
 
     def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:  # type: ignore
         obj_makespan, obj_mean_resource_reserve = self.evaluate_function(rcpsp_sol)
@@ -825,7 +849,7 @@ class RCPSPModel(Problem):
             ax[i].legend()
 
     def copy(self) -> "RCPSPModel":
-        return RCPSPModel(
+        model = RCPSPModel(
             resources=self.resources,
             tasks_list=self.tasks_list,
             source_task=self.source_task,
@@ -837,7 +861,11 @@ class RCPSPModel(Problem):
             horizon_multiplier=self.horizon_multiplier,
             name_task=self.name_task,
             mean_resource_reserve=self.costs.get("mean_resource_reserve", False),
+            fixed_modes=self.fixed_modes,
+            fixed_permutation=self.fixed_permutation,
         )
+
+        return model
 
     def get_dummy_solution(self) -> RCPSPSolution:
         sol = RCPSPSolution(
@@ -856,6 +884,19 @@ class RCPSPModel(Problem):
         if self.is_calendar:
             return max(self.resources.get(res, [0]))  # type: ignore
         return self.resources.get(res, 0)  # type: ignore
+
+    def set_fixed_attributes(self, encoding_str: str, sol: RCPSPSolution) -> None:
+        att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
+        if att == "rcpsp_modes":
+            self.set_fixed_modes(sol.rcpsp_modes)
+        elif att == "rcpsp_permutation":
+            self.set_fixed_permutation(sol.rcpsp_permutation)
+
+    def set_fixed_modes(self, fixed_modes: List[int]) -> None:
+        self.fixed_modes = fixed_modes
+
+    def set_fixed_permutation(self, fixed_permutation: List[int]) -> None:
+        self.fixed_permutation = fixed_permutation
 
 
 def create_np_data_and_jit_functions(
@@ -978,93 +1019,6 @@ def permutation_do_to_permutation_sgs_fast(
     perm_extended.insert(0, rcpsp_problem.index_task[rcpsp_problem.source_task])
     perm_extended.append(rcpsp_problem.index_task[rcpsp_problem.sink_task])
     return np.array(perm_extended, dtype=np.int_)
-
-
-class SingleModeRCPSPModel(RCPSPModel):
-    def copy(self):
-        return SingleModeRCPSPModel(
-            resources=self.resources,
-            non_renewable_resources=self.non_renewable_resources,
-            mode_details=deepcopy(self.mode_details),
-            successors=deepcopy(self.successors),
-            horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
-        )
-
-
-class MultiModeRCPSPModel(RCPSPModel):
-    fixed_modes: List[int]
-    fixed_permutation: Union[List[int], np.array]
-
-    def __init__(
-        self,
-        resources,
-        non_renewable_resources,
-        mode_details,
-        successors,
-        horizon,
-        horizon_multiplier=1,
-    ):
-        RCPSPModel.__init__(
-            self,
-            resources=resources,
-            non_renewable_resources=non_renewable_resources,
-            mode_details=mode_details,
-            successors=successors,
-            horizon=horizon,
-            horizon_multiplier=horizon_multiplier,
-        )
-        self.fixed_modes = None
-        self.fixed_permutation = None
-
-    def set_fixed_attributes(self, encoding_str: str, sol: RCPSPSolution):
-        att = self.get_attribute_register().dict_attribute_to_type[encoding_str]["name"]
-        if att == "rcpsp_modes":
-            self.set_fixed_modes(sol.rcpsp_modes)
-        elif att == "rcpsp_permutation":
-            self.set_fixed_permutation(sol.rcpsp_permutation)
-
-    def set_fixed_modes(self, fixed_modes):
-        self.fixed_modes = fixed_modes
-
-    def set_fixed_permutation(self, fixed_permutation):
-        self.fixed_permutation = fixed_permutation
-
-    def evaluate_from_encoding(self, int_vector, encoding_name):
-        if encoding_name == "rcpsp_permutation":
-            # change the permutation in the solution with int_vector and set the modes with self.fixed_modes
-            rcpsp_sol = RCPSPSolution(
-                problem=self, rcpsp_permutation=int_vector, rcpsp_modes=self.fixed_modes
-            )
-        elif encoding_name == "rcpsp_modes":
-            rcpsp_sol = RCPSPSolution(
-                problem=self,
-                rcpsp_permutation=self.fixed_permutation,
-                rcpsp_modes=int_vector,
-            )
-        objectives = self.evaluate(rcpsp_sol)
-        return objectives
-
-    def copy(self):
-        mm = MultiModeRCPSPModel(
-            resources=self.resources,
-            non_renewable_resources=self.non_renewable_resources,
-            mode_details=deepcopy(self.mode_details),
-            successors=deepcopy(self.successors),
-            horizon=self.horizon,
-            horizon_multiplier=self.horizon_multiplier,
-        )
-        mm.fixed_permutation = self.fixed_permutation
-        mm.fixed_modes = self.fixed_modes
-        return mm
-
-    def get_dummy_solution(self):
-        sol = RCPSPSolution(
-            problem=self,
-            rcpsp_permutation=list(range(self.n_jobs_non_dummy)),
-            rcpsp_modes=[1 for i in range(self.n_jobs_non_dummy)],
-        )
-        return sol
 
 
 class Aggreg_RCPSPModel(RobustProblem, RCPSPModel):

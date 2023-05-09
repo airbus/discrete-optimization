@@ -21,7 +21,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import (
-    MultiModeRCPSPModel,
     PartialSolution,
     RCPSPModel,
     RCPSPSolution,
@@ -84,7 +83,7 @@ class PileSolverRCPSP(SolverDO):
             params_objective_function=params_objective_function,
         )
         if (
-            isinstance(self.rcpsp_model, MultiModeRCPSPModel)
+            self.rcpsp_model.is_rcpsp_multimode()
             or self.rcpsp_model.is_varying_resource()
         ):
             solver = CP_MRCPSP_MZN_MODES(
@@ -300,7 +299,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
             params_objective_function=params_objective_function,
         )
         if (
-            isinstance(self.rcpsp_model, MultiModeRCPSPModel)
+            self.rcpsp_model.is_rcpsp_multimode()
             or self.rcpsp_model.is_varying_resource()
         ):
             solver = CP_MRCPSP_MZN_MODES(

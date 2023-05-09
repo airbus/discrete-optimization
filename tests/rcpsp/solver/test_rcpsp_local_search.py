@@ -32,7 +32,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
     result_storage_to_pareto_front,
 )
-from discrete_optimization.rcpsp.rcpsp_model import MultiModeRCPSPModel, RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
@@ -104,7 +104,7 @@ def test_local_search_mm(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Multi mode RCPSP
     file_path = files[0]
-    rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
+    rcpsp_model = parse_file(file_path)
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
@@ -261,7 +261,7 @@ def test_local_search_mm_multiobj(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
     file_path = files[0]
-    rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
+    rcpsp_model = parse_file(file_path)
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
@@ -333,7 +333,7 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Single mode RCPSP
     file_path = files[0]
-    rcpsp_model: MultiModeRCPSPModel = parse_file(file_path)
+    rcpsp_model = parse_file(file_path)
     rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
     dummy = rcpsp_model.get_dummy_solution()
     _, mutations = get_available_mutations(rcpsp_model, dummy)
