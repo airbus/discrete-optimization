@@ -434,15 +434,38 @@ class PartialSolution:
 
 
 class RCPSPModel(Problem):
+    """
+
+    Args:
+        resources:
+        non_renewable_resources:
+        mode_details:
+        successors:
+        horizon:
+        horizon_multiplier:
+        tasks_list:
+        source_task:
+        sink_task:
+        name_task:
+        n_jobs (int):
+        n_jobs_non_dummy (int):   excluding dummy activities Start (0) and End (n)
+
+    Args:
+        resources: {resource_name: number_of_resource}
+        non_renewable_resources: [resource_name3, resource_name4]
+        mode_details:  {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}   one key being "duration"
+        successors:
+        horizon:
+        horizon_multiplier:
+        tasks_list:  {task_id: list of successor task ids}
+        source_task:
+        sink_task:
+        name_task:
+        **kwargs:
+
+    """
+
     sgs: ScheduleGenerationScheme
-    resources: Dict[str, Union[int, List[int]]]  # {resource_name: number_of_resource}
-    non_renewable_resources: List[str]  # e.g. [resource_name3, resource_name4]
-    n_jobs: int
-    n_jobs_non_dummy: int  # excluding dummy activities Start (0) and End (n)
-    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
-    # e.g. {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}
-    # one key being "duration"
-    successors: Dict[Hashable, List[Hashable]]  # {task_id: list of successor task ids}
 
     def __init__(
         self,
@@ -695,7 +718,7 @@ class RCPSPModel(Problem):
                 for act_id in rcpsp_sol.rcpsp_schedule:
                     mode = modes_dict[act_id]
                     usage += self.mode_details[act_id][mode][res]
-                    if usage > self.resources[res]:
+                    if usage > self.get_max_resource_capacity(res):
                         logger.debug(
                             f"Non-renewable resource violation: act_id: {act_id}"
                             f"res {res} res_usage: {usage} res_avail: {self.resources[res]}"
@@ -824,13 +847,13 @@ class RCPSPModel(Problem):
 
     def get_resource_available(self, res: str, time: int) -> int:
         if self.is_calendar:
-            return self.resources.get(res, [0])[time]
-        return self.resources.get(res, 0)
+            return self.resources.get(res, [0])[time]  # type: ignore
+        return self.resources.get(res, 0)  # type: ignore
 
     def get_max_resource_capacity(self, res: str) -> int:
         if self.is_calendar:
-            return max(self.resources.get(res, [0]))
-        return self.resources.get(res, 0)
+            return max(self.resources.get(res, [0]))  # type: ignore
+        return self.resources.get(res, 0)  # type: ignore
 
 
 class RCPSPModelCalendar(RCPSPModel):
