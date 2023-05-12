@@ -3014,7 +3014,7 @@ def create_fake_tasks_multiskills(
     rcpsp_problem: Union[MS_RCPSPModel, MS_RCPSPSolution_Variant]
 ):
     ressources_arrays = {
-        r: np.array(rcpsp_problem.resources_availability[r])
+        r: rcpsp_problem.get_resource_availability_array(r)
         for r in rcpsp_problem.resources_list
     }
     max_capacity = {r: np.max(ressources_arrays[r]) for r in ressources_arrays}

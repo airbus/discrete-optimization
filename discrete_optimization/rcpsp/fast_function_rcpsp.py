@@ -199,11 +199,7 @@ def sgs_fast_preemptive(
                 if (
                     reached_t is not None
                     and preemptive_tag[act_id]
-                    and (
-                        reached_t + 1 - current_min_time
-                        >= duration_array[act_id, modes_array[act_id]] / 8
-                        or reached_end
-                    )
+                    and (reached_t + 1 - current_min_time >= 1 or reached_end)
                 ):
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
