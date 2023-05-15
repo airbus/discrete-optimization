@@ -4,6 +4,7 @@
 
 from typing import Union
 
+from discrete_optimization.generic_tools.do_problem import Problem, Solution
 from discrete_optimization.rcpsp import (
     RCPSPModel,
     RCPSPModelPreemptive,
@@ -71,3 +72,30 @@ ANY_CP_SOLVER = Union[
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
     CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE,
 ]
+
+
+def is_instance_any_rcpsp_problem(problem: Problem) -> bool:
+    return isinstance(
+        problem,
+        (
+            RCPSPModel,
+            RCPSPModelPreemptive,
+            RCPSPModelSpecialConstraintsPreemptive,
+            MS_RCPSPModel,
+            MS_RCPSPModel_Variant,
+        ),
+    )
+
+
+def is_instance_any_rcpsp_solution(solution: Solution) -> bool:
+    return isinstance(
+        solution,
+        (
+            RCPSPSolutionPreemptive,
+            RCPSPSolution,
+            MS_RCPSPSolution,
+            MS_RCPSPSolution_Variant,
+            MS_RCPSPSolution_Preemptive,
+            MS_RCPSPSolution_Preemptive_Variant,
+        ),
+    )

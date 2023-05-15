@@ -3,10 +3,16 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Type
 
 import numpy as np
 
+from discrete_optimization.generic_rcpsp_tools.typing import (
+    ANY_RCPSP,
+    ANY_SOLUTION,
+    is_instance_any_rcpsp_problem,
+    is_instance_any_rcpsp_solution,
+)
 from discrete_optimization.generic_tools.do_mutation import LocalMove
 from discrete_optimization.generic_tools.do_problem import TypeAttribute
 from discrete_optimization.generic_tools.mutations.mutation_util import (
@@ -26,12 +32,14 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 class PermutationMutationRCPSP(Mutation):
     @staticmethod
     def build(
-        problem: Problem, solution: Solution, **kwargs
+        problem: Problem,
+        solution: Solution,
+        other_mutation: Type[Mutation] = PermutationShuffleMutation,
+        **kwargs: Any
     ) -> "PermutationMutationRCPSP":
-        other_mutation = kwargs.get("other_mutation", PermutationShuffleMutation)
-        other_mutation = other_mutation.build(problem, solution, **kwargs)
+        built_other_mutation = other_mutation.build(problem, solution, **kwargs)
         return PermutationMutationRCPSP(
-            problem, solution, other_mutation=other_mutation
+            problem, solution, other_mutation=built_other_mutation
         )
 
     def __init__(self, problem: Problem, solution: Solution, other_mutation: Mutation):
@@ -39,22 +47,24 @@ class PermutationMutationRCPSP(Mutation):
         self.solution = solution
         self.other_mutation = other_mutation
 
-    def mutate(self, solution: RCPSPSolution) -> Tuple[Solution, LocalMove]:
-        s, lm = self.other_mutation.mutate(solution)
+    def mutate(self, solution: RCPSPSolution) -> Tuple[Solution, LocalMove]:  # type: ignore
+        s: RCPSPSolution
+        s, lm = self.other_mutation.mutate(solution)  # type: ignore
         try:
-            s.standardised_permutation = s.generate_permutation_from_schedule()
+            s.standardised_permutation = s.generate_permutation_from_schedule()  # type: ignore
             s._schedule_to_recompute = True
         except:
             s._schedule_to_recompute = True
         return s, lm
 
-    def mutate_and_compute_obj(
-        self, solution: Solution
+    def mutate_and_compute_obj(  # type: ignore
+        self, solution: RCPSPSolution
     ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
-        s, lm, fit = self.other_mutation.mutate_and_compute_obj(solution)
+        s: RCPSPSolution
+        s, lm, fit = self.other_mutation.mutate_and_compute_obj(solution)  # type: ignore
         try:
             s._schedule_to_recompute = True
-            s.standardised_permutation = s.generate_permutation_from_schedule()
+            s.standardised_permutation = s.generate_permutation_from_schedule()  # type: ignore
         except:
             s._schedule_to_recompute = True
         return s, lm, fit
@@ -63,8 +73,8 @@ class PermutationMutationRCPSP(Mutation):
 class DeadlineMutationRCPSP(Mutation):
     def __init__(
         self,
-        problem: Problem,
-        solution: Solution,
+        problem: ANY_RCPSP,
+        solution: ANY_SOLUTION,
         attribute: Optional[str] = None,
         nb_swap: int = 1,
     ):
@@ -76,9 +86,11 @@ class DeadlineMutationRCPSP(Mutation):
         else:
             self.attribute = attribute
         self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
-        self.full_predecessors = self.problem.graph.ancestors_map()
+        self.full_predecessors = self.problem.graph.ancestors_map()  # type: ignore
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: ANY_SOLUTION) -> Tuple[ANY_SOLUTION, LocalMove]:  # type: ignore
+        if not is_instance_any_rcpsp_solution(solution):
+            raise ValueError("solution must be an rcsp solution (of any kind)")
         if "special_constraints" in self.problem.__dict__.keys():
             ls = [
                 (
@@ -124,12 +136,19 @@ class DeadlineMutationRCPSP(Mutation):
     def mutate_and_compute_obj(
         self, solution: Solution
     ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
-        sol, move = self.mutate(solution)
+        if not is_instance_any_rcpsp_solution(solution):
+            raise ValueError("solution must be an rcsp solution (of any kind)")
+        sol: ANY_SOLUTION
+        sol, move = self.mutate(solution)  #  type: ignore
         obj = self.problem.evaluate(sol)
         return sol, move, obj
 
     @staticmethod
     def build(
-        problem: Problem, solution: Solution, **kwargs
+        problem: Problem, solution: Solution, **kwargs: Any
     ) -> "DeadlineMutationRCPSP":
-        return DeadlineMutationRCPSP(problem, solution)
+        if not is_instance_any_rcpsp_solution(solution):
+            raise ValueError("solution must be an rcsp solution (of any kind)")
+        if not is_instance_any_rcpsp_problem(problem):
+            raise ValueError("solution must be an rcsp problem (of any kind)")
+        return DeadlineMutationRCPSP(problem=problem, solution=solution)  # type: ignore
