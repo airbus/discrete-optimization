@@ -21,7 +21,8 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 try:

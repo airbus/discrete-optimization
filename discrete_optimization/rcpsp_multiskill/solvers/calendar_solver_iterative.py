@@ -23,7 +23,7 @@ from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.core import PartialSolution
+from discrete_optimization.rcpsp.rcpsp_solution import PartialSolution
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,

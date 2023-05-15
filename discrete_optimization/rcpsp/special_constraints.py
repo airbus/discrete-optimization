@@ -7,38 +7,6 @@ from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 import networkx as nx
 
 
-class PartialSolution:
-    def __init__(
-        self,
-        task_mode: Optional[Dict[int, int]] = None,
-        start_times: Optional[Dict[int, int]] = None,
-        end_times: Optional[Dict[int, int]] = None,
-        partial_permutation: Optional[List[int]] = None,
-        list_partial_order: Optional[List[List[int]]] = None,
-        start_together: Optional[List[Tuple[int, int]]] = None,
-        start_at_end: Optional[List[Tuple[int, int]]] = None,
-        start_at_end_plus_offset: Optional[List[Tuple[int, int, int]]] = None,
-        start_after_nunit: Optional[List[Tuple[int, int, int]]] = None,
-        disjunctive_tasks: Optional[List[Tuple[int, int]]] = None,
-        start_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
-        end_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
-    ):
-        self.task_mode = task_mode
-        self.start_times = start_times
-        self.end_times = end_times
-        self.partial_permutation = partial_permutation
-        self.list_partial_order = list_partial_order
-        self.start_together = start_together
-        self.start_at_end = start_at_end
-        self.start_after_nunit = start_after_nunit
-        self.start_at_end_plus_offset = start_at_end_plus_offset
-        self.disjunctive_tasks = disjunctive_tasks
-        self.start_times_window = start_times_window
-        self.end_times_window = end_times_window
-        # one element in self.list_partial_order is a list [l1, l2, l3]
-        # indicating that l1 should be started before l1, and  l2 before l3 for example
-
-
 class SpecialConstraintsDescription:
     def __init__(
         self,

@@ -33,7 +33,8 @@ from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
-    from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+    from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+    from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 
 logger = logging.getLogger(__name__)
 

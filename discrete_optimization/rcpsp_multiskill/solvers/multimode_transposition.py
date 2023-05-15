@@ -16,11 +16,12 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
 )
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import (
     MS_RCPSPModel,
     MultiSkillToRCPSP,

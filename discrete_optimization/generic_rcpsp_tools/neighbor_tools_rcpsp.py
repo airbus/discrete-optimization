@@ -29,8 +29,9 @@ from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_PREEMMPTIVE
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,

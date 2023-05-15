@@ -4,8 +4,9 @@
 
 from sortedcontainers import SortedDict
 
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution, SGSWithoutArray
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
+from discrete_optimization.rcpsp.sgs_without_array import SGSWithoutArray
 
 
 def test_sgs_wo_array():

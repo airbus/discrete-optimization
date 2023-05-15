@@ -6,9 +6,8 @@ from discrete_optimization.generic_tools.lp_tools import MilpSolverName, Paramet
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.core import PartialSolution
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import PartialSolution, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,

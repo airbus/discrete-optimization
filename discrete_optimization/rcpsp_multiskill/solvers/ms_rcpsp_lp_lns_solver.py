@@ -18,10 +18,10 @@ from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
-    RCPSPSolution,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,

@@ -42,7 +42,8 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
     PermutationMutationRCPSP,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
     LP_MRCPSP,

@@ -16,8 +16,8 @@ from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.core import PartialSolution
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_solution import PartialSolution, RCPSPSolution
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN, CP_RCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import (
     OptionNeighbor,

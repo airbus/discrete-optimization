@@ -7,9 +7,11 @@ from typing import Union
 import networkx as nx
 from networkx import NetworkXNoCycle
 
-from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
 )

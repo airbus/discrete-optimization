@@ -44,11 +44,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
     PermutationMutationRCPSP,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    Aggreg_RCPSPModel,
-    RCPSPModel,
-    RCPSPSolution,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
+from discrete_optimization.rcpsp.robust_rcpsp import AggregRCPSPModel
 
 logger = logging.getLogger(__name__)
 
@@ -72,19 +70,19 @@ class RobustnessTool:
         else:
             self.train_instance = train_instance
             self.test_instance = test_instance
-        self.model_aggreg_mean = Aggreg_RCPSPModel(
+        self.model_aggreg_mean = AggregRCPSPModel(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
         )
-        self.model_aggreg_max = Aggreg_RCPSPModel(
+        self.model_aggreg_max = AggregRCPSPModel(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MAX),
         )
-        self.model_aggreg_min = Aggreg_RCPSPModel(
+        self.model_aggreg_min = AggregRCPSPModel(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MIN),
         )
-        self.model_aggreg_median = Aggreg_RCPSPModel(
+        self.model_aggreg_median = AggregRCPSPModel(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MEDIAN),
         )

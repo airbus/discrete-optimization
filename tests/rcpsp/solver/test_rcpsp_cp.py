@@ -8,19 +8,18 @@ from discrete_optimization.generic_tools.cp_tools import CPSolverName, Parameter
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     result_storage_to_pareto_front,
 )
-from discrete_optimization.rcpsp.core import PartialSolution
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MethodBaseRobustification,
-    MethodRobustification,
-    RCPSPModel,
-    RCPSPSolution,
-    UncertainRCPSPModel,
-    create_poisson_laws_duration,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import PartialSolution, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import (
     kendall_tau_similarity,
     plot_task_gantt,
+)
+from discrete_optimization.rcpsp.robust_rcpsp import (
+    MethodBaseRobustification,
+    MethodRobustification,
+    UncertainRCPSPModel,
+    create_poisson_laws_duration,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,

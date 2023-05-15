@@ -24,13 +24,8 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.core import PartialSolution
-from discrete_optimization.rcpsp.rcpsp_model import (
-    RCPSPModel,
-    RCPSPSolution,
-    Solution,
-    TupleFitness,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, Solution, TupleFitness
+from discrete_optimization.rcpsp.rcpsp_solution import PartialSolution, RCPSPSolution
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     GreedyChoice,
     PileSolverRCPSP,

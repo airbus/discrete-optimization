@@ -10,8 +10,10 @@ from discrete_optimization.generic_rcpsp_tools.ls_solver import (
     LS_SOLVER,
     LS_RCPSP_Solver,
 )
-from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import plot_ressource_view
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
     plot_resource_individual_gantt_preemptive,
 )
