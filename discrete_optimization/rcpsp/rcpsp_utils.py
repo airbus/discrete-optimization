@@ -2,9 +2,13 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import (
+    annotations,  # make annotations be considered as string by default
+)
+
 import logging
 from copy import deepcopy
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
 import matplotlib.cm
 import matplotlib.pyplot as plt
@@ -15,7 +19,9 @@ from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
 
 from discrete_optimization.generic_tools.graph_api import Graph
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+
+if TYPE_CHECKING:  # avoid circular imports due to annotations
+    from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 
 logger = logging.getLogger(__name__)
 
