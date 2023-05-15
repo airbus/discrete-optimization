@@ -145,6 +145,9 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         silent_solve_error: bool = True,
         **kwargs,
     ):
+        if rcpsp_model.is_rcpsp_multimode():
+            raise ValueError("this solver is meant for single mode problems")
+
         SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
@@ -956,7 +959,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         return [s]
 
 
-class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
+class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModelPreemptive,
@@ -965,6 +968,7 @@ class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         silent_solve_error: bool = True,
         **kwargs,
     ):
+
         SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
@@ -983,416 +987,6 @@ class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         self.data_dict = None
         self.nb_preemptive = None
 
-    def init_model(self, **args):
-        model_type = args.get("model_type", None)
-        add_objective_makespan = args.get("add_objective_makespan", True)
-        ignore_sec_objective = args.get("ignore_sec_objective", True)
-        add_partial_solution_hard_constraint = args.get(
-            "add_partial_solution_hard_constraint", True
-        )
-        if model_type is None:
-            model_type = (
-                "single-preemptive"
-                if not self.calendar
-                else "single-preemptive-calendar"
-            )
-        keys = []
-        model = Model(files_mzn[model_type])
-        custom_output_type = args.get("output_type", False)
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
-        instance = Instance(solver, model)
-        instance["add_objective_makespan"] = add_objective_makespan
-        instance["ignore_sec_objective"] = ignore_sec_objective
-        keys += ["add_objective_makespan", "ignore_sec_objective"]
-        instance["nb_preemptive"] = args.get("nb_preemptive", 2)
-        self.nb_preemptive = instance["nb_preemptive"]
-        keys += ["nb_preemptive"]
-        instance["possibly_preemptive"] = args.get(
-            "possibly_preemptive",
-            [
-                self.rcpsp_model.can_be_preempted(task)
-                for task in self.rcpsp_model.tasks_list
-            ],
-        )
-        keys += ["possibly_preemptive"]
-        instance["max_preempted"] = args.get(
-            "max_preempted", min(self.rcpsp_model.n_jobs_non_dummy, 5)
-        )
-        keys += ["max_preempted"]
-
-        if model_type != "single-preemptive-calendar":
-            max_time = args.get("max_time", self.rcpsp_model.horizon)
-            fake_tasks = args.get(
-                "fake_tasks", True
-            )  # to modelize varying quantity of resource.
-            dict_to_add = add_fake_task_cp_data(
-                rcpsp_model=self.rcpsp_model,
-                ignore_fake_task=not fake_tasks,
-                max_time_to_consider=max_time,
-            )
-            instance["max_time"] = max_time
-            keys += ["max_time"]
-            for key in dict_to_add:
-                instance[key] = dict_to_add[key]
-                keys += [key]
-
-        n_res = len(list(self.rcpsp_model.resources.keys()))
-        instance["n_res"] = n_res
-        keys += ["n_res"]
-        sorted_resources = self.rcpsp_model.resources_list
-        self.resources_index = sorted_resources
-        if not self.calendar:
-            rc = [int(self.rcpsp_model.resources[x]) for x in sorted_resources]
-        else:
-            rc = [int(max(self.rcpsp_model.resources[x])) for x in sorted_resources]
-        if self.calendar and model_type == "single-preemptive-calendar":
-            one_ressource = list(self.rcpsp_model.resources.keys())[0]
-            instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
-            keys += ["max_time"]
-            ressource_capacity_time = [
-                [int(x) for x in self.rcpsp_model.resources[res]]
-                for res in sorted_resources
-            ]
-            instance["ressource_capacity_time"] = ressource_capacity_time
-            keys += ["ressource_capacity_time"]
-
-        instance["rc"] = rc
-        keys += ["rc"]
-
-        n_tasks = self.rcpsp_model.n_jobs
-        instance["n_tasks"] = n_tasks
-        keys += ["n_tasks"]
-
-        sorted_tasks = self.rcpsp_model.tasks_list
-        d = [
-            int(self.rcpsp_model.mode_details[key][1]["duration"])
-            for key in sorted_tasks
-        ]
-        instance["d"] = d
-        keys += ["d"]
-
-        rr = []
-        index = 0
-        for res in sorted_resources:
-            rr.append([])
-            for task in sorted_tasks:
-                rr[index].append(
-                    int(self.rcpsp_model.mode_details[task][1].get(res, 0))
-                )
-            index += 1
-        instance["rr"] = rr
-        keys += ["rr"]
-
-        suc = [
-            set(
-                [
-                    self.rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.rcpsp_model.successors[task]
-                ]
-            )
-            for task in sorted_tasks
-        ]
-        instance["suc"] = suc
-        keys += ["suc"]
-        self.instance = instance
-        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
-        self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
-        }
-        self.data_dict = {key: self.instance[key] for key in keys}
-        if add_partial_solution_hard_constraint:
-            strings = add_hard_special_constraints(p_s, self)
-            for s in strings:
-                self.instance.add_string(s)
-        else:
-            strings, name_penalty = add_soft_special_constraints(p_s, self)
-            for s in strings:
-                self.instance.add_string(s)
-            strings = define_second_part_objective(
-                [100] * len(name_penalty), name_penalty
-            )
-            for s in strings:
-                self.instance.add_string(s)
-
-    def add_hard_special_constraints(self, partial_solution):
-        return add_hard_special_constraints(partial_solution, self)
-
-    def constraint_duration_to_min_duration_preemptive(self, task, min_duration):
-        list_strings = []
-        for i in range(2, self.nb_preemptive + 1):
-            s = (
-                "constraint d_preemptive["
-                + str(self.index_in_minizinc[task])
-                + ","
-                + str(i)
-                + "]>"
-                + str(min_duration)
-                + "\/"
-                + "d_preemptive["
-                + str(self.index_in_minizinc[task])
-                + ","
-                + str(i)
-                + "]=0;\n"
-            )
-            list_strings += [s]
-        return list_strings
-
-    def constraint_minduration_all_tasks(self):
-        list_strings = []
-        for task in self.rcpsp_model.tasks_list:
-            if self.rcpsp_model.duration_subtask[task][0]:
-                list_strings += self.constraint_duration_to_min_duration_preemptive(
-                    task=task, min_duration=self.rcpsp_model.duration_subtask[task][1]
-                )
-        return list_strings
-
-    def constraint_start_time_string(
-        self, task, start_time, sign: SignEnum = SignEnum.EQUAL
-    ) -> str:
-        return (
-            "constraint s["
-            + str(self.index_in_minizinc[task])
-            + "]"
-            + str(sign.value)
-            + str(start_time)
-            + ";\n"
-        )
-
-    def constraint_end_time_string(
-        self, task, end_time, sign: SignEnum = SignEnum.EQUAL
-    ) -> str:
-        return (
-            "constraint s_preemptive["
-            + str(self.index_in_minizinc[task])
-            + ", nb_preemptive]"
-            + str(sign.value)
-            + str(end_time)
-            + ";\n"
-        )
-
-    def constraint_start_time_string_preemptive_i(
-        self, task, start_time, part_id=1, sign: SignEnum = SignEnum.EQUAL
-    ) -> str:
-        return (
-            "constraint s_preemptive["
-            + str(self.index_in_minizinc[task])
-            + ","
-            + str(part_id)
-            + "]"
-            + str(sign.value)
-            + str(start_time)
-            + ";\n"
-        )
-
-    def constraint_duration_string_preemptive_i(
-        self, task, duration, part_id=1, sign: SignEnum = SignEnum.EQUAL
-    ) -> str:
-        return (
-            "constraint d_preemptive["
-            + str(self.index_in_minizinc[task])
-            + ","
-            + str(part_id)
-            + "]"
-            + str(sign.value)
-            + str(duration)
-            + ";\n"
-        )
-
-    def constraint_ressource_requirement_at_time_t(
-        self, time, ressource, ressource_number, sign: SignEnum = SignEnum.LEQ
-    ):
-        index_ressource = self.resources_index.index(ressource) + 1
-        s = (
-            """constraint """
-            + str(ressource_number)
-            + str(sign.value)
-            + """sum( i in Tasks, j in PREEMPTIVE) (
-                                            bool2int(s_preemptive[i, j] <="""
-            + str(time)
-            + """ /\ """
-            + str(time)
-            + """< s_preemptive[i, j] + d_preemptive[i, j]) * rr["""
-            + str(index_ressource)
-            + """,i]);\n"""
-        )
-        return s
-
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        best_objectives_cp = float("inf")
-        list_solutions_fit = []
-        starts = []
-        starts_preemptive = []
-        duration_preemptive = []
-        objectives_cp = []
-        index_best = 0
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts.append(result[i].dict["s"])
-                    starts_preemptive.append(result[i].dict["s_preemptive"])
-                    duration_preemptive.append(result[i].dict["d_preemptive"])
-                    objectives_cp.append(result[i].objective)
-                else:
-                    starts.append(result[i, "s"])
-                    starts_preemptive.append(result[i, "s_preemptive"])
-                    duration_preemptive.append(result[i, "d_preemptive"])
-                    objectives_cp.append(result[i, "objective"])
-
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts.append(result.dict["s"])
-                starts_preemptive.append(result.dict["s_preemptive"])
-                duration_preemptive.append(result.dict["d_preemptive"])
-                objectives_cp.append(result.objective)
-            else:
-                starts = [result["s"]]
-                starts_preemptive = [result["s_preemptive"]]
-                duration_preemptive = [result["d_preemptive"]]
-                objectives_cp.append(result["objective"])
-
-        for i in range(len(starts)):
-            rcpsp_schedule = {}
-            for k in range(len(starts_preemptive[i])):
-                starts_k = []
-                ends_k = []
-                for j in range(len(starts_preemptive[i][k])):
-                    if j == 0 or duration_preemptive[i][k][j] != 0:
-                        starts_k.append(starts_preemptive[i][k][j])
-                        ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
-                rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
-                    "starts": starts_k,
-                    "ends": ends_k,
-                }
-            sol = RCPSPSolutionPreemptive(
-                problem=self.rcpsp_model,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            if objectives_cp[i] < best_objectives_cp:
-                index_best = i
-                best_objectives_cp = objectives_cp[i]
-            list_solutions_fit.append((sol, objective))
-        if len(list_solutions_fit) > 0:
-            list_solutions_fit[index_best][
-                0
-            ].opti_from_cp = True  # Flag the solution obtained for the optimum of cp
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
-        )
-        return result_storage
-
-    def constraint_start_time_precomputed(self):
-        intervals = precompute_posssible_starting_time_interval(self.rcpsp_model)
-        list_strings = []
-        for t in intervals:
-            if self.rcpsp_model.mode_details[t][1]["duration"] == 0:
-                continue
-            s = "constraint "
-            s_list = []
-            for interv in intervals[t]:
-                if interv[0] is not None and interv[1] is not None:
-                    s_list += [
-                        "(("
-                        + str(interv[0])
-                        + "<=s["
-                        + str(self.index_in_minizinc[t])
-                        + "])/\("
-                        + "s["
-                        + str(self.index_in_minizinc[t])
-                        + "]<="
-                        + str(interv[1] - 1)
-                        + "))"
-                    ]
-                if interv[0] is not None and interv[1] is None:
-                    s_list += [
-                        "("
-                        + str(interv[0])
-                        + " <=s["
-                        + str(self.index_in_minizinc[t])
-                        + "])"
-                    ]
-            if len(s_list) > 0:
-                s = s + "\/".join(s_list) + ";\n"
-                list_strings += [s]
-        return list_strings
-
-    def constraint_objective_makespan(self):
-        s = """constraint forall ( i in Tasks where suc[i] == {} )
-                (s_preemptive[i, nb_preemptive] + d_preemptive[i, nb_preemptive] <= objective);\n"""
-        return [s]
-
-    def constraint_objective_max_time_set_of_jobs(self, set_of_jobs):
-        s = []
-        for j in set_of_jobs:
-            s += [
-                "constraint s_preemptive["
-                + str(self.index_in_minizinc[j])
-                + ", nb_preemptive]<=objective;\n"
-            ]
-        return s
-
-    def constraint_objective_equal_makespan(self, task_sink):
-        ind = self.index_in_minizinc[task_sink]
-        s = (
-            "constraint (s_preemptive["
-            + str(ind)
-            + ", nb_preemptive]+d_preemptive["
-            + str(ind)
-            + ",nb_preemptive]==objective);\n"
-        )
-        return [s]
-
-    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
-        indexes = [self.index_in_minizinc[s] for s in set_subtasks]
-        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
-        s = (
-            """int: nb_indexes="""
-            + str(len(indexes))
-            + """;\n
-               array[1..nb_indexes] of int: weights="""
-            + str(weights)
-            + """;\n
-               array[1..nb_indexes] of Tasks: index_tasks="""
-            + str(indexes)
-            + """;\n
-               constraint objective>=sum(j in 1..nb_indexes)(weights[j]*(s_preemptive[index_tasks[j], nb_preemptive]+d_preemptive[index_tasks[j], nb_preemptive]));\n"""
-        )
-        return [s]
-
-    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
-        indexes = [self.index_in_minizinc[s] for s in set_subtasks]
-        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
-
-        s = (
-            """int: nb_indexes="""
-            + str(len(indexes))
-            + """;\n
-               array[1..nb_indexes] of int: weights="""
-            + str(weights)
-            + """;\n
-               array[1..nb_indexes] of Tasks: index_tasks="""
-            + str(indexes)
-            + """;\n
-               constraint objective>=sum(j in 1..nb_indexes)(weights[j]*s_preemptive[index_tasks[j], 1]);\n"""
-        )
-        return [s]
-
-
-class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-preemptive")
         add_objective_makespan = args.get("add_objective_makespan", True)
@@ -1546,24 +1140,6 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
             for s in strings:
                 self.instance.add_string(s)
 
-    def constraint_task_to_mode(self, task_id, mode):
-        modes = self.rcpsp_model.mode_details[task_id].keys()
-        list_strings = []
-        for m in modes:
-            if m == mode:
-                bool_str = "true"
-            else:
-                bool_str = "false"
-            s = (
-                "constraint mrun["
-                + str(self.mode_dict_task_mode_to_index_minizinc[(task_id, m)])
-                + "]="
-                + bool_str
-                + ";\n"
-            )
-            list_strings += [s]
-        return list_strings
-
     def constraint_ressource_requirement_at_time_t(
         self, time, ressource, ressource_number, sign: SignEnum = SignEnum.LEQ
     ):
@@ -1668,6 +1244,453 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(CP_RCPSP_MZN_PREEMMPTIVE):
             limit_store=False,
         )
         return result_storage
+
+    def constraint_task_to_mode(self, task_id, mode):
+        modes = self.rcpsp_model.mode_details[task_id].keys()
+        list_strings = []
+        for m in modes:
+            if m == mode:
+                bool_str = "true"
+            else:
+                bool_str = "false"
+            s = (
+                "constraint mrun["
+                + str(self.mode_dict_task_mode_to_index_minizinc[(task_id, m)])
+                + "]="
+                + bool_str
+                + ";\n"
+            )
+            list_strings += [s]
+        return list_strings
+
+    def add_hard_special_constraints(self, partial_solution):
+        return add_hard_special_constraints(partial_solution, self)
+
+    def constraint_duration_to_min_duration_preemptive(self, task, min_duration):
+        list_strings = []
+        for i in range(2, self.nb_preemptive + 1):
+            s = (
+                "constraint d_preemptive["
+                + str(self.index_in_minizinc[task])
+                + ","
+                + str(i)
+                + "]>"
+                + str(min_duration)
+                + "\/"
+                + "d_preemptive["
+                + str(self.index_in_minizinc[task])
+                + ","
+                + str(i)
+                + "]=0;\n"
+            )
+            list_strings += [s]
+        return list_strings
+
+    def constraint_minduration_all_tasks(self):
+        list_strings = []
+        for task in self.rcpsp_model.tasks_list:
+            if self.rcpsp_model.duration_subtask[task][0]:
+                list_strings += self.constraint_duration_to_min_duration_preemptive(
+                    task=task, min_duration=self.rcpsp_model.duration_subtask[task][1]
+                )
+        return list_strings
+
+    def constraint_start_time_string(
+        self, task, start_time, sign: SignEnum = SignEnum.EQUAL
+    ) -> str:
+        return (
+            "constraint s["
+            + str(self.index_in_minizinc[task])
+            + "]"
+            + str(sign.value)
+            + str(start_time)
+            + ";\n"
+        )
+
+    def constraint_end_time_string(
+        self, task, end_time, sign: SignEnum = SignEnum.EQUAL
+    ) -> str:
+        return (
+            "constraint s_preemptive["
+            + str(self.index_in_minizinc[task])
+            + ", nb_preemptive]"
+            + str(sign.value)
+            + str(end_time)
+            + ";\n"
+        )
+
+    def constraint_start_time_string_preemptive_i(
+        self, task, start_time, part_id=1, sign: SignEnum = SignEnum.EQUAL
+    ) -> str:
+        return (
+            "constraint s_preemptive["
+            + str(self.index_in_minizinc[task])
+            + ","
+            + str(part_id)
+            + "]"
+            + str(sign.value)
+            + str(start_time)
+            + ";\n"
+        )
+
+    def constraint_duration_string_preemptive_i(
+        self, task, duration, part_id=1, sign: SignEnum = SignEnum.EQUAL
+    ) -> str:
+        return (
+            "constraint d_preemptive["
+            + str(self.index_in_minizinc[task])
+            + ","
+            + str(part_id)
+            + "]"
+            + str(sign.value)
+            + str(duration)
+            + ";\n"
+        )
+
+    def constraint_start_time_precomputed(self):
+        intervals = precompute_posssible_starting_time_interval(self.rcpsp_model)
+        list_strings = []
+        for t in intervals:
+            if self.rcpsp_model.mode_details[t][1]["duration"] == 0:
+                continue
+            s = "constraint "
+            s_list = []
+            for interv in intervals[t]:
+                if interv[0] is not None and interv[1] is not None:
+                    s_list += [
+                        "(("
+                        + str(interv[0])
+                        + "<=s["
+                        + str(self.index_in_minizinc[t])
+                        + "])/\("
+                        + "s["
+                        + str(self.index_in_minizinc[t])
+                        + "]<="
+                        + str(interv[1] - 1)
+                        + "))"
+                    ]
+                if interv[0] is not None and interv[1] is None:
+                    s_list += [
+                        "("
+                        + str(interv[0])
+                        + " <=s["
+                        + str(self.index_in_minizinc[t])
+                        + "])"
+                    ]
+            if len(s_list) > 0:
+                s = s + "\/".join(s_list) + ";\n"
+                list_strings += [s]
+        return list_strings
+
+    def constraint_objective_makespan(self):
+        s = """constraint forall ( i in Tasks where suc[i] == {} )
+                (s_preemptive[i, nb_preemptive] + d_preemptive[i, nb_preemptive] <= objective);\n"""
+        return [s]
+
+    def constraint_objective_max_time_set_of_jobs(self, set_of_jobs):
+        s = []
+        for j in set_of_jobs:
+            s += [
+                "constraint s_preemptive["
+                + str(self.index_in_minizinc[j])
+                + ", nb_preemptive]<=objective;\n"
+            ]
+        return s
+
+    def constraint_objective_equal_makespan(self, task_sink):
+        ind = self.index_in_minizinc[task_sink]
+        s = (
+            "constraint (s_preemptive["
+            + str(ind)
+            + ", nb_preemptive]+d_preemptive["
+            + str(ind)
+            + ",nb_preemptive]==objective);\n"
+        )
+        return [s]
+
+    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
+        indexes = [self.index_in_minizinc[s] for s in set_subtasks]
+        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
+        s = (
+            """int: nb_indexes="""
+            + str(len(indexes))
+            + """;\n
+               array[1..nb_indexes] of int: weights="""
+            + str(weights)
+            + """;\n
+               array[1..nb_indexes] of Tasks: index_tasks="""
+            + str(indexes)
+            + """;\n
+               constraint objective>=sum(j in 1..nb_indexes)(weights[j]*(s_preemptive[index_tasks[j], nb_preemptive]+d_preemptive[index_tasks[j], nb_preemptive]));\n"""
+        )
+        return [s]
+
+    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
+        indexes = [self.index_in_minizinc[s] for s in set_subtasks]
+        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
+
+        s = (
+            """int: nb_indexes="""
+            + str(len(indexes))
+            + """;\n
+               array[1..nb_indexes] of int: weights="""
+            + str(weights)
+            + """;\n
+               array[1..nb_indexes] of Tasks: index_tasks="""
+            + str(indexes)
+            + """;\n
+               constraint objective>=sum(j in 1..nb_indexes)(weights[j]*s_preemptive[index_tasks[j], 1]);\n"""
+        )
+        return [s]
+
+
+class CP_RCPSP_MZN_PREEMMPTIVE(CP_MRCPSP_MZN_PREEMMPTIVE):
+    def __init__(
+        self,
+        rcpsp_model: RCPSPModelPreemptive,
+        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
+        params_objective_function: ParamsObjectiveFunction = None,
+        silent_solve_error: bool = True,
+        **kwargs,
+    ):
+        if rcpsp_model.is_rcpsp_multimode():
+            raise ValueError("this solver is meant for single mode problems")
+
+        super().__init__(
+            rcpsp_model=rcpsp_model,
+            cp_solver_name=cp_solver_name,
+            params_objective_function=params_objective_function,
+            silent_solve_error=silent_solve_error,
+            **kwargs,
+        )
+
+    def init_model(self, **args):
+        model_type = args.get("model_type", None)
+        add_objective_makespan = args.get("add_objective_makespan", True)
+        ignore_sec_objective = args.get("ignore_sec_objective", True)
+        add_partial_solution_hard_constraint = args.get(
+            "add_partial_solution_hard_constraint", True
+        )
+        if model_type is None:
+            model_type = (
+                "single-preemptive"
+                if not self.calendar
+                else "single-preemptive-calendar"
+            )
+        keys = []
+        model = Model(files_mzn[model_type])
+        custom_output_type = args.get("output_type", False)
+        if custom_output_type:
+            model.output_type = RCPSPSolCP
+            self.custom_output_type = True
+        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        instance = Instance(solver, model)
+        instance["add_objective_makespan"] = add_objective_makespan
+        instance["ignore_sec_objective"] = ignore_sec_objective
+        keys += ["add_objective_makespan", "ignore_sec_objective"]
+        instance["nb_preemptive"] = args.get("nb_preemptive", 2)
+        self.nb_preemptive = instance["nb_preemptive"]
+        keys += ["nb_preemptive"]
+        instance["possibly_preemptive"] = args.get(
+            "possibly_preemptive",
+            [
+                self.rcpsp_model.can_be_preempted(task)
+                for task in self.rcpsp_model.tasks_list
+            ],
+        )
+        keys += ["possibly_preemptive"]
+        instance["max_preempted"] = args.get(
+            "max_preempted", min(self.rcpsp_model.n_jobs_non_dummy, 5)
+        )
+        keys += ["max_preempted"]
+
+        if model_type != "single-preemptive-calendar":
+            max_time = args.get("max_time", self.rcpsp_model.horizon)
+            fake_tasks = args.get(
+                "fake_tasks", True
+            )  # to modelize varying quantity of resource.
+            dict_to_add = add_fake_task_cp_data(
+                rcpsp_model=self.rcpsp_model,
+                ignore_fake_task=not fake_tasks,
+                max_time_to_consider=max_time,
+            )
+            instance["max_time"] = max_time
+            keys += ["max_time"]
+            for key in dict_to_add:
+                instance[key] = dict_to_add[key]
+                keys += [key]
+
+        n_res = len(list(self.rcpsp_model.resources.keys()))
+        instance["n_res"] = n_res
+        keys += ["n_res"]
+        sorted_resources = self.rcpsp_model.resources_list
+        self.resources_index = sorted_resources
+        if not self.calendar:
+            rc = [int(self.rcpsp_model.resources[x]) for x in sorted_resources]
+        else:
+            rc = [int(max(self.rcpsp_model.resources[x])) for x in sorted_resources]
+        if self.calendar and model_type == "single-preemptive-calendar":
+            one_ressource = list(self.rcpsp_model.resources.keys())[0]
+            instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
+            keys += ["max_time"]
+            ressource_capacity_time = [
+                [int(x) for x in self.rcpsp_model.resources[res]]
+                for res in sorted_resources
+            ]
+            instance["ressource_capacity_time"] = ressource_capacity_time
+            keys += ["ressource_capacity_time"]
+
+        instance["rc"] = rc
+        keys += ["rc"]
+
+        n_tasks = self.rcpsp_model.n_jobs
+        instance["n_tasks"] = n_tasks
+        keys += ["n_tasks"]
+
+        sorted_tasks = self.rcpsp_model.tasks_list
+        d = [
+            int(self.rcpsp_model.mode_details[key][1]["duration"])
+            for key in sorted_tasks
+        ]
+        instance["d"] = d
+        keys += ["d"]
+
+        rr = []
+        index = 0
+        for res in sorted_resources:
+            rr.append([])
+            for task in sorted_tasks:
+                rr[index].append(
+                    int(self.rcpsp_model.mode_details[task][1].get(res, 0))
+                )
+            index += 1
+        instance["rr"] = rr
+        keys += ["rr"]
+
+        suc = [
+            set(
+                [
+                    self.rcpsp_model.return_index_task(x, offset=1)
+                    for x in self.rcpsp_model.successors[task]
+                ]
+            )
+            for task in sorted_tasks
+        ]
+        instance["suc"] = suc
+        keys += ["suc"]
+        self.instance = instance
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
+        self.index_in_minizinc = {
+            task: self.rcpsp_model.return_index_task(task, offset=1)
+            for task in self.rcpsp_model.tasks_list
+        }
+        self.data_dict = {key: self.instance[key] for key in keys}
+        if add_partial_solution_hard_constraint:
+            strings = add_hard_special_constraints(p_s, self)
+            for s in strings:
+                self.instance.add_string(s)
+        else:
+            strings, name_penalty = add_soft_special_constraints(p_s, self)
+            for s in strings:
+                self.instance.add_string(s)
+            strings = define_second_part_objective(
+                [100] * len(name_penalty), name_penalty
+            )
+            for s in strings:
+                self.instance.add_string(s)
+
+    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
+        intermediate_solutions = parameters_cp.intermediate_solution
+        best_solution = None
+        best_makespan = -float("inf")
+        best_objectives_cp = float("inf")
+        list_solutions_fit = []
+        starts = []
+        starts_preemptive = []
+        duration_preemptive = []
+        objectives_cp = []
+        index_best = 0
+        if intermediate_solutions:
+            for i in range(len(result)):
+                if isinstance(result[i], RCPSPSolCP):
+                    starts.append(result[i].dict["s"])
+                    starts_preemptive.append(result[i].dict["s_preemptive"])
+                    duration_preemptive.append(result[i].dict["d_preemptive"])
+                    objectives_cp.append(result[i].objective)
+                else:
+                    starts.append(result[i, "s"])
+                    starts_preemptive.append(result[i, "s_preemptive"])
+                    duration_preemptive.append(result[i, "d_preemptive"])
+                    objectives_cp.append(result[i, "objective"])
+
+        else:
+            if isinstance(result, RCPSPSolCP):
+                starts.append(result.dict["s"])
+                starts_preemptive.append(result.dict["s_preemptive"])
+                duration_preemptive.append(result.dict["d_preemptive"])
+                objectives_cp.append(result.objective)
+            else:
+                starts = [result["s"]]
+                starts_preemptive = [result["s_preemptive"]]
+                duration_preemptive = [result["d_preemptive"]]
+                objectives_cp.append(result["objective"])
+
+        for i in range(len(starts)):
+            rcpsp_schedule = {}
+            for k in range(len(starts_preemptive[i])):
+                starts_k = []
+                ends_k = []
+                for j in range(len(starts_preemptive[i][k])):
+                    if j == 0 or duration_preemptive[i][k][j] != 0:
+                        starts_k.append(starts_preemptive[i][k][j])
+                        ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
+                rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
+                    "starts": starts_k,
+                    "ends": ends_k,
+                }
+            sol = RCPSPSolutionPreemptive(
+                problem=self.rcpsp_model,
+                rcpsp_schedule=rcpsp_schedule,
+                rcpsp_schedule_feasible=True,
+            )
+            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            if objective > best_makespan:
+                best_makespan = objective
+                best_solution = sol.copy()
+            if objectives_cp[i] < best_objectives_cp:
+                index_best = i
+                best_objectives_cp = objectives_cp[i]
+            list_solutions_fit.append((sol, objective))
+        if len(list_solutions_fit) > 0:
+            list_solutions_fit[index_best][
+                0
+            ].opti_from_cp = True  # Flag the solution obtained for the optimum of cp
+        result_storage = ResultStorage(
+            list_solution_fits=list_solutions_fit,
+            best_solution=best_solution,
+            mode_optim=self.params_objective_function.sense_function,
+            limit_store=False,
+        )
+        return result_storage
+
+    def constraint_ressource_requirement_at_time_t(
+        self, time, ressource, ressource_number, sign: SignEnum = SignEnum.LEQ
+    ):
+        index_ressource = self.resources_index.index(ressource) + 1
+        s = (
+            """constraint """
+            + str(ressource_number)
+            + str(sign.value)
+            + """sum( i in Tasks, j in PREEMPTIVE) (
+                                            bool2int(s_preemptive[i, j] <="""
+            + str(time)
+            + """ /\ """
+            + str(time)
+            + """< s_preemptive[i, j] + d_preemptive[i, j]) * rr["""
+            + str(index_ressource)
+            + """,i]);\n"""
+        )
+        return s
 
 
 class MRCPSP_Result:

@@ -59,8 +59,6 @@ class GA_MRCPSP_Solver(SolverRCPSP):
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs
     ):
-        if not rcpsp_model.is_rcpsp_multimode():
-            raise ValueError("this solver is meant for multimode rcpsp problems")
         SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         (
             self.aggreg_sol,

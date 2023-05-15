@@ -73,8 +73,6 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
         rcpsp_solution: RCPSPSolution,
         **kwargs,
     ):
-        if not rcpsp_model.is_varying_resource():
-            raise ValueError("this solver is meant for calendar models")
         if rcpsp_model.calendar_details is None:
             raise ValueError(
                 "rcpsp_model.calendar_details cannot be None for this solver"
