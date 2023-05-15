@@ -36,6 +36,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     PileSolverRCPSP,
     PileSolverRCPSP_Calendar,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 try:
     import gurobipy
@@ -58,7 +59,7 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class LP_RCPSP(PymipMilpSolver):
+class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -68,7 +69,7 @@ class LP_RCPSP(PymipMilpSolver):
     ):
         if rcpsp_model.is_rcpsp_multimode():
             raise ValueError("this solver is meant for single mode problems")
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
         (
@@ -304,7 +305,7 @@ class LP_RCPSP(PymipMilpSolver):
         )
 
 
-class _BaseLP_MRCPSP(MilpSolver):
+class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
     x: Dict[Tuple[Hashable, int, int], Any]
 
     def __init__(
@@ -315,7 +316,7 @@ class _BaseLP_MRCPSP(MilpSolver):
     ):
         if rcpsp_model.is_rcpsp_multimode():
             raise ValueError("this solver is meant for single mode problems")
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
         (

@@ -13,12 +13,12 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import compute_graph_rcpsp
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +46,13 @@ class CPMObject:
         return str({k: getattr(self, k) for k in self.__dict__.keys()})
 
 
-class CPM(SolverDO):
+class CPM(SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
     ):
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.graph = compute_graph_rcpsp(self.rcpsp_model)
         self.graph_nx = self.graph.to_networkx()
         self.source = rcpsp_model.source_task

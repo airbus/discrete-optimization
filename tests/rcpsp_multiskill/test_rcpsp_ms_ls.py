@@ -4,7 +4,10 @@
 
 from typing import Dict, List, Set
 
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
+)
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
     plot_resource_individual_gantt,
 )
@@ -94,7 +97,7 @@ def create_toy_msrcpsp():
 def test_ls():
     model = create_toy_msrcpsp()
     model = model.to_variant_model()
-    solver = LS_RCPSP_Solver(model=model, ls_solver=LS_SOLVER.SA)
+    solver = LS_RCPSP_Solver(rcpsp_model=model, ls_solver=LS_SOLVER.SA)
     result = solver.solve(nb_iteration_max=1000)
     solution: MS_RCPSPSolution = result.get_best_solution()
     model.evaluate(solution)
@@ -105,7 +108,7 @@ def test_ls_imopse():
     file = [f for f in get_data_available() if "100_5_22_15.def" in f][0]
     model, name_task = parse_file(file, max_horizon=1000)
     model = model.to_variant_model()
-    solver = LS_RCPSP_Solver(model=model, ls_solver=LS_SOLVER.SA)
+    solver = LS_RCPSP_Solver(rcpsp_model=model, ls_solver=LS_SOLVER.SA)
     result = solver.solve(nb_iteration_max=1)
     solution: MS_RCPSPSolution = result.get_best_solution()
     model.evaluate(solution)

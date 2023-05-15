@@ -17,33 +17,28 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSPSpecialConstraints,
     build_graph_rcpsp_object,
 )
+from discrete_optimization.generic_rcpsp_tools.typing import (
+    ANY_CP_SOLVER,
+    ANY_MSRCPSP,
+    ANY_RCPSP,
+    ANY_SOLUTION,
+    ANY_SOLUTION_PREEMPTIVE,
+)
 from discrete_optimization.generic_tools.cp_tools import CPSolver, SignEnum
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
-    RCPSPModelPreemptive,
-    RCPSPSolutionPreemptive,
-)
-from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_PREEMMPTIVE,
-    CP_RCPSP_MZN,
-    CP_RCPSP_MZN_PREEMMPTIVE,
-)
+from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
+from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_PREEMMPTIVE
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
     compute_constraints_details,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-    MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
     MS_RCPSPSolution,
     MS_RCPSPSolution_Preemptive,
-    MS_RCPSPSolution_Preemptive_Variant,
-    MS_RCPSPSolution_Variant,
     compute_overskill,
     employee_usage,
     start_together_problem_description,
@@ -58,44 +53,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-ANY_RCPSP = Union[
-    RCPSPModel,
-    RCPSPModelPreemptive,
-    RCPSPModelSpecialConstraintsPreemptive,
-    MS_RCPSPModel,
-    MS_RCPSPModel_Variant,
-]
-ANY_MSRCPSP = Union[MS_RCPSPModel_Variant, MS_RCPSPModel]
-ANY_SOLUTION = Union[
-    RCPSPSolutionPreemptive,
-    RCPSPSolution,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
-    MS_RCPSPSolution_Preemptive,
-    MS_RCPSPSolution_Preemptive_Variant,
-]
-ANY_SOLUTION_UNPREEMPTIVE = Union[
-    RCPSPSolution, MS_RCPSPSolution, MS_RCPSPSolution_Variant
-]
-ANY_SOLUTION_PREEMPTIVE = Union[RCPSPSolutionPreemptive, MS_RCPSPSolution_Preemptive]
-ANY_SOLUTION_CLASSICAL_RCPSP = Union[RCPSPSolution, RCPSPSolutionPreemptive]
-ANY_SOLUTION_MSRCPSP = Union[
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Variant,
-    MS_RCPSPSolution_Preemptive,
-    MS_RCPSPSolution_Preemptive_Variant,
-]
-ANY_CP_SOLVER = Union[
-    CP_RCPSP_MZN_PREEMMPTIVE,
-    CP_RCPSP_MZN,
-    CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_PREEMMPTIVE,
-    CP_MS_MRCPSP_MZN,
-    CP_MS_MRCPSP_MZN_PREEMPTIVE,
-    CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE,
-]
 
 
 def get_max_time_solution(solution: ANY_SOLUTION):

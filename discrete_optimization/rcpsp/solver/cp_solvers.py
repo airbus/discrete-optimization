@@ -32,6 +32,7 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPSolutionPreemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_utils import create_fake_tasks
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
@@ -135,7 +136,7 @@ def add_fake_task_cp_data(
         return dict_to_add_in_instance
 
 
-class CP_RCPSP_MZN(MinizincCPSolver):
+class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -144,8 +145,8 @@ class CP_RCPSP_MZN(MinizincCPSolver):
         silent_solve_error: bool = True,
         **kwargs,
     ):
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.silent_solve_error = silent_solve_error
-        self.rcpsp_model = rcpsp_model
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
@@ -390,7 +391,7 @@ class CP_RCPSP_MZN(MinizincCPSolver):
         return self.stats
 
 
-class CP_MRCPSP_MZN(MinizincCPSolver):
+class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -399,8 +400,8 @@ class CP_MRCPSP_MZN(MinizincCPSolver):
         silent_solve_error: bool = False,
         **kwargs,
     ):
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.silent_solve_error = silent_solve_error
-        self.rcpsp_model = rcpsp_model
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
@@ -955,7 +956,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         return [s]
 
 
-class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver):
+class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModelPreemptive,
@@ -964,8 +965,8 @@ class CP_RCPSP_MZN_PREEMMPTIVE(MinizincCPSolver):
         silent_solve_error: bool = True,
         **kwargs,
     ):
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.silent_solve_error = silent_solve_error
-        self.rcpsp_model = rcpsp_model
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
@@ -1682,7 +1683,7 @@ class MRCPSP_Result:
         return True
 
 
-class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver):
+class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -1691,8 +1692,8 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver):
         silent_solve_error: bool = False,
         **kwargs,
     ):
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.silent_solve_error = silent_solve_error
-        self.rcpsp_model = rcpsp_model
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",

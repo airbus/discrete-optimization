@@ -1,4 +1,4 @@
-#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  Copyright (c) 2022-2023 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
@@ -13,22 +13,22 @@ from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
 from deap.gp import PrimitiveSet, PrimitiveTree, genHalfAndHalf
 
-from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
-    ANY_RCPSP,
-    MS_RCPSPModel,
+from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
+    SolverGenericRCPSP,
 )
+from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.solver.cpm import CPM
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
+    MS_RCPSPModel,
     MS_RCPSPSolution_Variant,
 )
 
@@ -476,7 +476,7 @@ class ParametersGPHH:
         )
 
 
-class GPHH(SolverDO):
+class GPHH(SolverGenericRCPSP):
     training_domains: List[Problem]
     weight: int
     pset: PrimitiveSet
@@ -489,13 +489,13 @@ class GPHH(SolverDO):
     def __init__(
         self,
         training_domains: List[Problem],
-        domain_model: Problem,
+        rcpsp_model: Problem,
         weight: int = 1,
         params_gphh: ParametersGPHH = None,
         params_objective_function: ParamsObjectiveFunction = None,
     ):
+        SolverGenericRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.training_domains = training_domains
-        self.domain_model = domain_model
         self.params_gphh = params_gphh
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
@@ -505,7 +505,7 @@ class GPHH(SolverDO):
         self.pset = self.init_primitives(self.params_gphh.set_primitves)
         self.weight = weight
         self.evaluation_method = self.params_gphh.evaluation
-        model = self.domain_model
+        model = self.rcpsp_model
         try:
             if model.graph.full_successors is None:
                 model.graph.full_predecessors = model.graph.ancestors_map()
@@ -519,7 +519,7 @@ class GPHH(SolverDO):
             self.aggreg_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            problem=self.domain_model,
+            problem=self.rcpsp_model,
             params_objective_function=params_objective_function,
         )
         self.toolbox = None
@@ -609,7 +609,7 @@ class GPHH(SolverDO):
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         solution = self.build_solution(
-            domain=self.domain_model, func_heuristic=self.func_heuristic
+            domain=self.rcpsp_model, func_heuristic=self.func_heuristic
         )
         return ResultStorage(
             list_solution_fits=[(solution, self.aggreg_from_sol(solution))],

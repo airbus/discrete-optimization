@@ -9,17 +9,17 @@ from typing import Any, Iterable, List, Optional, Union
 import numpy as np
 from minizinc import Instance
 
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
+)
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
     ParametersCP,
 )
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.generic_tools.lns_cp import (
-    LNS_CP,
-    ConstraintHandler,
-    SolverDO,
-)
+from discrete_optimization.generic_tools.lns_cp import LNS_CP, ConstraintHandler
 from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -31,11 +31,11 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_WITH_FAKE_TASK,
     CP_RCPSP_MZN,
 )
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 
 # Strategy n°1 : fixing subset of starting time
@@ -507,7 +507,9 @@ class PostProcessLeftShift(PostProcessSolution):
                     (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
                 ]
         if self.partial_solution is None:
-            solver = LS_RCPSP_Solver(model=self.rcpsp_problem, ls_solver=LS_SOLVER.SA)
+            solver = LS_RCPSP_Solver(
+                rcpsp_model=self.rcpsp_problem, ls_solver=LS_SOLVER.SA
+            )
             satisfiable = [
                 (s, f) for s, f in result_storage.list_solution_fits if s.satisfy
             ]
@@ -596,14 +598,14 @@ def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
     return constraint_handler
 
 
-class LNS_CP_RCPSP_SOLVER(SolverDO):
+class LNS_CP_RCPSP_SOLVER(SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_ALL,
         **kwargs
     ):
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.with_varying_resource = rcpsp_model.is_varying_resource()
         if self.with_varying_resource:
             self.solver = CP_MRCPSP_MZN_WITH_FAKE_TASK(
