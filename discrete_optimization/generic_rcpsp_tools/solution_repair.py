@@ -28,7 +28,7 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
 )
-from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
+from discrete_optimization.rcpsp.rcpsp_utils import create_fake_tasks
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_PREEMMPTIVE,
     CP_RCPSP_MZN_PREEMMPTIVE,

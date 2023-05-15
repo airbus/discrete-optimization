@@ -24,7 +24,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
-from discrete_optimization.rcpsp.rcpsp_model_utils import create_fake_tasks
+from discrete_optimization.rcpsp.rcpsp_utils import create_fake_tasks
 
 logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))

@@ -8,17 +8,29 @@ from __future__ import (
 
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING, List, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Hashable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import matplotlib.cm
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import scipy.stats
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
 
 from discrete_optimization.generic_tools.graph_api import Graph
+from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
     from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
@@ -29,9 +41,9 @@ logger = logging.getLogger(__name__)
 def compute_resource_consumption(
     rcpsp_model: RCPSPModel,
     rcpsp_sol: RCPSPSolution,
-    list_resources: List[Union[int, str]] = None,
-    future_view=True,
-):
+    list_resources: Optional[List[str]] = None,
+    future_view: bool = True,
+) -> Tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     modes_extended = deepcopy(rcpsp_sol.rcpsp_modes)
     modes_extended.insert(0, 1)
     modes_extended.append(1)
@@ -40,7 +52,7 @@ def compute_resource_consumption(
     makespan = rcpsp_sol.rcpsp_schedule[last_activity]["end_time"]
     if list_resources is None:
         list_resources = rcpsp_model.resources_list
-    consumptions = np.zeros((len(list_resources), makespan + 1))
+    consumptions = np.zeros((len(list_resources), makespan + 1), dtype=np.int_)
     for act_id in rcpsp_sol.rcpsp_schedule:
         for ir in range(len(list_resources)):
             use_ir = rcpsp_model.mode_details[act_id][modes_dict[act_id]].get(
@@ -61,14 +73,14 @@ def compute_resource_consumption(
                     ] : rcpsp_sol.rcpsp_schedule[act_id]["end_time"],
                 ] += use_ir
 
-    return consumptions, np.arange(0, makespan + 1, 1)
+    return consumptions, np.arange(0, makespan + 1, 1, dtype=np.int_)
 
 
 def compute_nice_resource_consumption(
     rcpsp_model: RCPSPModel,
     rcpsp_sol: RCPSPSolution,
-    list_resources: List[Union[int, str]] = None,
-):
+    list_resources: Optional[List[str]] = None,
+) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]]]:
     if list_resources is None:
         list_resources = rcpsp_model.resources_list
     c_future, times = compute_resource_consumption(
@@ -77,27 +89,27 @@ def compute_nice_resource_consumption(
     c_past, times = compute_resource_consumption(
         rcpsp_model, rcpsp_sol, list_resources=list_resources, future_view=False
     )
-    merged_times = {i: [] for i in range(len(list_resources))}
-    merged_cons = {i: [] for i in range(len(list_resources))}
+    merged_times: Dict[int, List[int]] = {i: [] for i in range(len(list_resources))}
+    merged_cons: Dict[int, List[int]] = {i: [] for i in range(len(list_resources))}
     for r in range(len(list_resources)):
         for index_t in range(len(times)):
             merged_times[r] += [times[index_t], times[index_t]]
             merged_cons[r] += [c_future[r, index_t], c_past[r, index_t]]
-    for r in merged_times:
-        merged_times[r] = np.array(merged_times[r])
-        merged_cons[r] = np.array(merged_cons[r])
-    return merged_times, merged_cons
+    return (
+        {k: np.array(v) for k, v in merged_times.items()},
+        {k: np.array(v) for k, v in merged_cons.items()},
+    )
 
 
 def plot_ressource_view(
     rcpsp_model: RCPSPModel,
     rcpsp_sol: RCPSPSolution,
-    list_resource: List[Union[int, str]] = None,
-    title_figure="",
-    x_lim=None,
-    fig=None,
-    ax=None,
-):
+    list_resource: Optional[List[str]] = None,
+    title_figure: str = "",
+    x_lim: Optional[List[int]] = None,
+    fig: Optional[plt.Figure] = None,
+    ax: Optional[npt.NDArray[np.object_]] = None,
+) -> plt.Figure:
     modes_extended = deepcopy(rcpsp_sol.rcpsp_modes)
     modes_extended.insert(0, 1)
     modes_extended.append(1)
@@ -108,8 +120,8 @@ def plot_ressource_view(
     if ax is None:
         fig, ax = plt.subplots(nrows=len(list_resource), figsize=(10, 5), sharex=True)
         fig.suptitle(title_figure)
-    polygons_ax = {i: [] for i in range(len(list_resource))}
-    labels_ax = {i: [] for i in range(len(list_resource))}
+    polygons_ax: Dict[int, List[Polygon]] = {i: [] for i in range(len(list_resource))}
+    labels_ax: Dict[int, List[Hashable]] = {i: [] for i in range(len(list_resource))}
     sorted_activities = sorted(
         rcpsp_sol.rcpsp_schedule,
         key=lambda x: rcpsp_sol.rcpsp_schedule[x]["start_time"],
@@ -121,10 +133,10 @@ def plot_ressource_view(
             cons = rcpsp_model.mode_details[j][modes_dict[j]].get(list_resource[i], 0)
             if cons == 0:
                 continue
-            bound = (
+            bound: int = (
                 rcpsp_model.resources[list_resource[i]]
                 if not with_calendar
-                else max(rcpsp_model.resources[list_resource[i]])
+                else max(rcpsp_model.resources[list_resource[i]])  # type: ignore
             )
             for k in range(0, bound):
                 polygon = Polygon(
@@ -171,7 +183,7 @@ def plot_ressource_view(
         else:
             ax[i].plot(
                 merged_times[i],
-                [rcpsp_model.resources[list_resource[i]][m] for m in merged_times[i]],
+                [rcpsp_model.resources[list_resource[i]][m] for m in merged_times[i]],  # type: ignore
                 linestyle="--",
                 label="Limit : " + str(list_resource[i]),
                 zorder=0,
@@ -189,12 +201,11 @@ def plot_ressource_view(
 def plot_task_gantt(
     rcpsp_model: RCPSPModel,
     rcpsp_sol: RCPSPSolution,
-    fig=None,
-    ax=None,
-    x_lim=None,
-    title=None,
-    current_t=None,
-):
+    fig: Optional[plt.Figure] = None,
+    ax: Optional[plt.Axes] = None,
+    x_lim: Optional[List[int]] = None,
+    title: Optional[str] = None,
+) -> plt.Figure:
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, figsize=(10, 10))
         ax.set_title("Gantt Task")
@@ -255,8 +266,8 @@ def plot_task_gantt(
 def compute_schedule_per_resource_individual(
     rcpsp_model: RCPSPModel,
     rcpsp_sol: RCPSPSolution,
-    resource_types_to_consider: List[str] = None,
-):
+    resource_types_to_consider: Optional[List[str]] = None,
+) -> Dict[str, Dict[str, Any]]:
     modes = rcpsp_model.build_mode_dict(rcpsp_sol.rcpsp_modes)
     if resource_types_to_consider is None:
         resources = rcpsp_model.resources_list
@@ -274,7 +285,7 @@ def compute_schedule_per_resource_individual(
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
     with_calendar = rcpsp_model.is_varying_resource()
 
-    array_ressource_usage = {
+    array_ressource_usage: Dict[str, Dict[str, Any]] = {
         resources[i]: {
             "activity": np.zeros(
                 (
@@ -323,7 +334,7 @@ def compute_schedule_per_resource_individual(
                 range_interest = range(array_ressource_usage[r]["activity"].shape[1])
             else:
                 range_interest = range(
-                    rcpsp_model.resources[r][time_to_index[start_time]]
+                    rcpsp_model.resources[r][time_to_index[start_time]]  # type: ignore
                 )
             while rneeded > 0:
                 availables_people_r = [
@@ -384,13 +395,13 @@ def compute_schedule_per_resource_individual(
 def plot_resource_individual_gantt(
     rcpsp_model: RCPSPModel,
     rcpsp_sol: RCPSPSolution,
-    resource_types_to_consider: List[str] = None,
-    title_figure="",
-    x_lim=None,
-    fig=None,
-    ax=None,
-    current_t=None,
-):
+    resource_types_to_consider: Optional[List[str]] = None,
+    title_figure: str = "",
+    x_lim: Optional[List[int]] = None,
+    fig: Optional[plt.Figure] = None,
+    ax: Optional[npt.NDArray[np.object_]] = None,
+    current_t: Optional[int] = None,
+) -> plt.Figure:
     array_ressource_usage = compute_schedule_per_resource_individual(
         rcpsp_model, rcpsp_sol, resource_types_to_consider=resource_types_to_consider
     )
@@ -406,10 +417,14 @@ def plot_resource_individual_gantt(
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
     resources_list = list(array_ressource_usage.keys())
     if fig is None or ax is None:
-        fig, ax = plt.subplots(len(array_ressource_usage), figsize=(10, 5))
+        fig, ax_ = plt.subplots(len(array_ressource_usage), figsize=(10, 5))
         fig.suptitle(title_figure)
         if len(array_ressource_usage) == 1:
-            ax = [ax]
+            ax = np.array([ax_])
+        else:
+            ax = ax_
+    if ax is None:  # for mypy
+        raise RuntimeError("ax cannot be None at this point")
 
     for i in range(len(resources_list)):
         patches = []
@@ -439,13 +454,13 @@ def plot_resource_individual_gantt(
             ax[i].set_xlim(x_lim)
         try:
             ax[i].set_ylim((-0.5, rcpsp_model.resources[resources_list[i]]))
-            ax[i].set_yticks(range(rcpsp_model.resources[resources_list[i]]))
+            ax[i].set_yticks(range(rcpsp_model.resources[resources_list[i]]))  # type: ignore
             ax[i].set_yticklabels(
-                tuple([j for j in range(rcpsp_model.resources[resources_list[i]])]),
+                tuple([j for j in range(rcpsp_model.resources[resources_list[i]])]),  # type: ignore
                 fontdict={"size": 7},
             )
         except:
-            m = max(rcpsp_model.resources[resources_list[i]])
+            m = rcpsp_model.get_max_resource_capacity(resources_list[i])
             ax[i].set_ylim((-0.5, m))
             ax[i].set_yticks(range(m))
             ax[i].set_yticklabels(tuple([j for j in range(m)]), fontdict={"size": 7})
@@ -457,7 +472,7 @@ def plot_resource_individual_gantt(
     return fig
 
 
-def kendall_tau_similarity(rcpsp_sols: (RCPSPSolution, RCPSPSolution)):
+def kendall_tau_similarity(rcpsp_sols: Tuple[RCPSPSolution, RCPSPSolution]) -> float:
     sol1 = rcpsp_sols[0]
     sol2 = rcpsp_sols[1]
 
@@ -468,7 +483,7 @@ def kendall_tau_similarity(rcpsp_sols: (RCPSPSolution, RCPSPSolution)):
     return ktd
 
 
-def intersect(i1, i2):
+def intersect(i1: Sequence[int], i2: Sequence[int]) -> Optional[List[int]]:
     if i2[0] >= i1[1] or i1[0] >= i2[1]:
         return None
     else:
@@ -477,25 +492,26 @@ def intersect(i1, i2):
         return [s, e]
 
 
-def all_diff_start_time(rcpsp_sols: (RCPSPSolution, RCPSPSolution)):
+def all_diff_start_time(
+    rcpsp_sols: Tuple[RCPSPSolution, RCPSPSolution]
+) -> Dict[Hashable, int]:
     sol1 = rcpsp_sols[0]
     sol2 = rcpsp_sols[1]
-    diffs = {}
-    for act_id in sol1.rcpsp_schedule.keys():
-        diff = (
+    return {
+        act_id: (
             sol1.rcpsp_schedule[act_id]["start_time"]
             - sol2.rcpsp_schedule[act_id]["start_time"]
         )
-        diffs[act_id] = diff
-    return diffs
+        for act_id in sol1.rcpsp_schedule
+    }
 
 
-def compute_graph_rcpsp(rcpsp_model: RCPSPModel):
+def compute_graph_rcpsp(rcpsp_model: RCPSPModel) -> Graph:
     nodes = [
         (
             n,
             {
-                mode: rcpsp_model.mode_details[n][mode]["duration"]
+                str(mode): rcpsp_model.mode_details[n][mode]["duration"]
                 for mode in rcpsp_model.mode_details[n]
             },
         )
@@ -504,8 +520,8 @@ def compute_graph_rcpsp(rcpsp_model: RCPSPModel):
     edges = []
     for n in rcpsp_model.successors:
         for succ in rcpsp_model.successors[n]:
-            dict_transition = {
-                mode: rcpsp_model.mode_details[n][mode]["duration"]
+            dict_transition: Dict[str, int] = {
+                str(mode): rcpsp_model.mode_details[n][mode]["duration"]
                 for mode in rcpsp_model.mode_details[n]
             }
             min_duration = min(dict_transition.values())
@@ -517,3 +533,68 @@ def compute_graph_rcpsp(rcpsp_model: RCPSPModel):
             dict_transition["link"] = 1
             edges += [(n, succ, dict_transition)]
     return Graph(nodes, edges, False)
+
+
+def create_fake_tasks(rcpsp_problem: RCPSPModel) -> List[Dict[str, int]]:
+    if not rcpsp_problem.is_varying_resource():
+        return []
+    else:
+        ressources_arrays = {
+            r: np.array(rcpsp_problem.resources[r])
+            for r in rcpsp_problem.resources_list
+        }
+        max_capacity = {r: np.max(ressources_arrays[r]) for r in ressources_arrays}
+        fake_tasks: List[Dict[str, int]] = []
+        for r in ressources_arrays:
+            delta = ressources_arrays[r][:-1] - ressources_arrays[r][1:]
+            index_non_zero = np.nonzero(delta)[0]
+            if ressources_arrays[r][0] < max_capacity[r]:
+                consume = {
+                    r: int(max_capacity[r] - ressources_arrays[r][0]),
+                    "duration": int(index_non_zero[0] + 1),
+                    "start": 0,
+                }
+                fake_tasks += [consume]
+            for j in range(len(index_non_zero) - 1):
+                ind = index_non_zero[j]
+                value = ressources_arrays[r][ind + 1]
+                if value != max_capacity[r]:
+                    consume = {
+                        r: int(max_capacity[r] - value),
+                        "duration": int(index_non_zero[j + 1] - ind),
+                        "start": int(ind + 1),
+                    }
+                    fake_tasks += [consume]
+        return fake_tasks
+
+
+def get_max_time_solution(
+    solution: Union[RCPSPSolutionPreemptive, RCPSPSolution]
+) -> int:
+    if isinstance(solution, RCPSPSolutionPreemptive):
+        max_time = max(
+            [solution.rcpsp_schedule[x]["ends"][-1] for x in solution.rcpsp_schedule]
+        )
+        return max_time
+    else:
+        max_time = max(
+            [solution.rcpsp_schedule[x]["end_time"] for x in solution.rcpsp_schedule]
+        )
+        return max_time
+
+
+def get_tasks_ending_between_two_times(
+    solution: Union[RCPSPSolutionPreemptive, RCPSPSolution], time_1: int, time_2: int
+) -> List[Hashable]:
+    if isinstance(solution, RCPSPSolutionPreemptive):
+        return [
+            x
+            for x in solution.rcpsp_schedule
+            if time_1 <= solution.rcpsp_schedule[x]["ends"][-1] <= time_2
+        ]
+    else:
+        return [
+            x
+            for x in solution.rcpsp_schedule
+            if time_1 <= solution.rcpsp_schedule[x]["end_time"] <= time_2
+        ]

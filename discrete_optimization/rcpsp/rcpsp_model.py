@@ -1231,11 +1231,13 @@ def check_solution_with_special_constraints(
             logger.debug(("start_after_nunit NOT respected: ", t1, t2, off))
             return False
     for t1, t2 in disjunctive:
-        b = intersect(
-            [solution.get_start_time(t1), solution.get_end_time(t1)],
-            [solution.get_start_time(t2), solution.get_end_time(t2)],
-        )
-        if b is not None:
+        if (
+            intersect(
+                [solution.get_start_time(t1), solution.get_end_time(t1)],
+                [solution.get_start_time(t2), solution.get_end_time(t2)],
+            )
+            is not None
+        ):
             return False
     for t in problem.special_constraints.start_times_window:
         if problem.special_constraints.start_times_window[t][0] is not None:

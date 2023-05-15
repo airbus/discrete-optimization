@@ -31,7 +31,7 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
 )
-from discrete_optimization.rcpsp.rcpsp_solution_utils import (
+from discrete_optimization.rcpsp.rcpsp_utils import (
     get_max_time_solution,
     get_tasks_ending_between_two_times,
 )
