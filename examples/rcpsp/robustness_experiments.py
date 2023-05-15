@@ -38,18 +38,17 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.generic_tools.robustness.robustness_tool import (
     RobustnessTool,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
-    Aggreg_RCPSPModel,
-    MethodAggregating,
+from discrete_optimization.rcpsp.rcpsp_model import MethodAggregating, RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
+from discrete_optimization.rcpsp.robust_rcpsp import (
+    AggregRCPSPModel,
     MethodBaseRobustification,
     MethodRobustification,
-    RCPSPModel,
-    RCPSPSolution,
     UncertainRCPSPModel,
     create_poisson_laws_duration,
     create_poisson_laws_resource,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import (
     CP_MULTISCENARIO,
     ParametersCP,
@@ -131,7 +130,7 @@ def run_cp_multiscenario():
     for model in list_rcpsp_model:
         model.costs["mean_resource_reserve"] = True
     dummy = list_rcpsp_model[0].get_dummy_solution()
-    model_aggreg_mean = Aggreg_RCPSPModel(
+    model_aggreg_mean = AggregRCPSPModel(
         list_problem=list_rcpsp_model,
         method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
     )

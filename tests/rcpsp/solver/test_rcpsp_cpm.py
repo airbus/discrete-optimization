@@ -13,8 +13,8 @@ from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import plot_ressource_view, plot_task_gantt
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_RCPSP_MZN
 from discrete_optimization.rcpsp.solver.cpm import CPM, run_partial_classic_cpm

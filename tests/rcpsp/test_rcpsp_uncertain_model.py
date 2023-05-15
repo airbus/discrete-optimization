@@ -2,15 +2,15 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from discrete_optimization.rcpsp.rcpsp_model import (
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.robust_rcpsp import (
     MethodBaseRobustification,
     MethodRobustification,
-    RCPSPModel,
     UncertainRCPSPModel,
     create_poisson_laws_duration,
     create_poisson_laws_resource,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
 def test_uncertain_durations_sm():

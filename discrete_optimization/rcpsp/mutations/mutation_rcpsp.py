@@ -26,7 +26,7 @@ from discrete_optimization.generic_tools.mutations.permutation_mutations import 
     Solution,
     SwapsLocalMove,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 
 
 class PermutationMutationRCPSP(Mutation):

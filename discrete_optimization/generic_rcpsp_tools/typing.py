@@ -10,8 +10,8 @@ from discrete_optimization.rcpsp import (
     RCPSPModelPreemptive,
     RCPSPModelSpecialConstraintsPreemptive,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN, CP_RCPSP_MZN
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_PREEMMPTIVE,

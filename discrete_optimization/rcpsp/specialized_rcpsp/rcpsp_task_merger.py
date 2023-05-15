@@ -14,7 +14,9 @@ from discrete_optimization.generic_tools.lns_mip import InitialSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
     RCPSPSolutionPreemptive,

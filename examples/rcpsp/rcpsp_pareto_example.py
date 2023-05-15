@@ -20,14 +20,14 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.generic_tools.result_storage.resultcomparator import (
     ResultComparator,
 )
-from discrete_optimization.rcpsp.rcpsp_model import (
+from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
+from discrete_optimization.rcpsp.robust_rcpsp import (
     MethodBaseRobustification,
     MethodRobustification,
-    RCPSPSolution,
     UncertainRCPSPModel,
     create_poisson_laws,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
 def run_single_mode_moo_benchmark():

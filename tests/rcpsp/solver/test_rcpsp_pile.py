@@ -2,18 +2,18 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from discrete_optimization.rcpsp.rcpsp_model import (
-    MethodBaseRobustification,
-    MethodRobustification,
-    RCPSPModel,
-    RCPSPSolution,
-    UncertainRCPSPModel,
-    create_poisson_laws_duration,
-)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_resource_individual_gantt,
     plot_ressource_view,
+)
+from discrete_optimization.rcpsp.robust_rcpsp import (
+    MethodBaseRobustification,
+    MethodRobustification,
+    UncertainRCPSPModel,
+    create_poisson_laws_duration,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import GreedyChoice, PileSolverRCPSP
 

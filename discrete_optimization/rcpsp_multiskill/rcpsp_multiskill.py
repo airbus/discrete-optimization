@@ -26,8 +26,10 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeObjective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
-from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 from discrete_optimization.rcpsp_multiskill.fast_function_ms_rcpsp import (
     sgs_fast_ms,
     sgs_fast_ms_partial_schedule,

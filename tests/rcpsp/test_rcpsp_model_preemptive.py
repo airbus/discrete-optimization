@@ -6,13 +6,14 @@ import random
 
 import pytest
 
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
     get_rcpsp_modelp_preemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 
 files_rcpsp = get_data_available()
 single_modes_files = [f for f in files_rcpsp if "sm" in f]

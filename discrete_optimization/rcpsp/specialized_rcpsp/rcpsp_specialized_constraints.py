@@ -19,7 +19,6 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     TypeObjective,
 )
-from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.fast_function_rcpsp import (
     compute_mean_ressource,
     sgs_fast_partial_schedule_preemptive,
@@ -27,12 +26,16 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
     sgs_fast_preemptive_minduration,
     sgs_fast_preemptive_some_special_constraints,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
 )
+from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import intersect
+from discrete_optimization.rcpsp.special_constraints import (
+    SpecialConstraintsDescription,
+)
 
 logger = logging.getLogger(__name__)
 
