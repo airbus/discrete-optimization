@@ -258,8 +258,6 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs,
     ):
-        if not rcpsp_model.is_varying_resource():
-            raise ValueError("this solver is meant for calendar models")
         SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.resources = rcpsp_model.resources
         self.non_renewable = rcpsp_model.non_renewable_resources

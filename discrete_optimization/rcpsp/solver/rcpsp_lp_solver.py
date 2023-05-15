@@ -314,8 +314,6 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        if rcpsp_model.is_rcpsp_multimode():
-            raise ValueError("this solver is meant for single mode problems")
         SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
@@ -371,9 +369,6 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        if rcpsp_model.is_rcpsp_multimode():
-            raise ValueError("this solver is meant for single mode problems")
-
         super().__init__(
             rcpsp_model=rcpsp_model,
             params_objective_function=params_objective_function,
