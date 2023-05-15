@@ -16,6 +16,10 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     GraphRCPSP,
     GraphRCPSPSpecialConstraints,
 )
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
+)
 from discrete_optimization.generic_tools.cp_tools import CPSolver, SignEnum
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -40,7 +44,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN,
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
     RCPSPSolutionSpecialPreemptive,
@@ -113,7 +116,7 @@ class PostProLeftShift(PostProcessSolution):
         fit = self.aggreg_from_sol(new_solution)
         result_storage.add_solution(new_solution, fit)
         if self.do_ls:
-            solver = LS_RCPSP_Solver(model=self.problem, ls_solver=LS_SOLVER.SA)
+            solver = LS_RCPSP_Solver(rcpsp_model=self.problem, ls_solver=LS_SOLVER.SA)
             s = result_storage.get_best_solution().copy()
             if self.problem != s.problem:
                 s.change_problem(self.problem)
@@ -1004,7 +1007,7 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                 ]
         if self.do_ls:
             solver = LS_RCPSP_Solver(
-                model=self.problem_calendar, ls_solver=LS_SOLVER.SA
+                rcpsp_model=self.problem_calendar, ls_solver=LS_SOLVER.SA
             )
             satisfiable = [
                 (s, f) for s, f in result_storage.list_solution_fits if s.satisfy

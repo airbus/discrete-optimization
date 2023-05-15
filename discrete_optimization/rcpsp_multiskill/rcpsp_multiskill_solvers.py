@@ -2,8 +2,13 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from discrete_optimization.generic_rcpsp_tools.gphh_solver import GPHH
 from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
     LargeNeighborhoodSearchScheduling,
+)
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.ea.ga_tools import ParametersAltGa
@@ -12,8 +17,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import CPSolverName
-from discrete_optimization.rcpsp.solver.gphh_solver import GPHH
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,

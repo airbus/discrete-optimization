@@ -2,13 +2,21 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple, Type, Union
 
+from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
+    SolverGenericRCPSP,
+)
+from discrete_optimization.generic_rcpsp_tools.gphh_solver import GPHH
 from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
     LargeNeighborhoodSearchScheduling,
 )
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
+)
+from discrete_optimization.generic_rcpsp_tools.typing import ANY_CLASSICAL_RCPSP
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
@@ -33,8 +41,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CPSolverName,
 )
 from discrete_optimization.rcpsp.solver.cpm import CPM
-from discrete_optimization.rcpsp.solver.gphh_solver import GPHH
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import LNS_CP_RCPSP_SOLVER
 from discrete_optimization.rcpsp.solver.rcpsp_ga_solver import (
     GA_MRCPSP_Solver,
@@ -47,11 +53,14 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     PileSolverRCPSP,
     PileSolverRCPSP_Calendar,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
 )
 
-solvers = {
+solvers: Dict[
+    str, List[Tuple[Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]], Dict[str, Any]]]
+] = {
     "lp": [
         (
             LP_RCPSP,
@@ -172,7 +181,9 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility = {
+solvers_compatibility: Dict[
+    Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]], List[Type[ANY_CLASSICAL_RCPSP]]
+] = {
     LP_RCPSP: [RCPSPModel],
     LP_MRCPSP: [
         RCPSPModel,
@@ -234,12 +245,16 @@ solvers_compatibility = {
 }
 
 
-def look_for_solver(domain):
+def look_for_solver(
+    domain: ANY_CLASSICAL_RCPSP,
+) -> List[Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]]]:
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
 
-def look_for_solver_class(class_domain):
+def look_for_solver_class(
+    class_domain: Type[ANY_CLASSICAL_RCPSP],
+) -> List[Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]]]:
     available = []
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
@@ -247,45 +262,44 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method, rcpsp_model: RCPSPModel, **args) -> ResultStorage:
-    if method == GPHH:
-        solver = GPHH([rcpsp_model], rcpsp_model, **args)
-    else:
-        solver = method(rcpsp_model, **args)
-    try:
-        solver.init_model(**args)
-    except:
-        pass
-    return solver.solve(**args)
+def solve(
+    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
+    rcpsp_model: ANY_CLASSICAL_RCPSP,
+    **kwargs: Any,
+) -> ResultStorage:
+    solver = return_solver(method=method, rcpsp_model=rcpsp_model, **kwargs)
+    return solver.solve(**kwargs)
 
 
 def solve_return_solver(
-    method, rcpsp_model: RCPSPModel, **args
-) -> Tuple[ResultStorage, SolverDO]:
-    if method == GPHH:
-        solver = GPHH([rcpsp_model], rcpsp_model, **args)
-    else:
-        solver = method(rcpsp_model, **args)
-    try:
-        solver.init_model(**args)
-    except:
-        pass
-    return solver.solve(**args), solver
+    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
+    rcpsp_model: ANY_CLASSICAL_RCPSP,
+    **kwargs: Any,
+) -> Tuple[ResultStorage, Union[SolverRCPSP, SolverGenericRCPSP]]:
+    solver = return_solver(method=method, rcpsp_model=rcpsp_model, **kwargs)
+    return solver.solve(**kwargs), solver
 
 
-def return_solver(method, rcpsp_model: RCPSPModel, **args) -> ResultStorage:
+def return_solver(
+    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
+    rcpsp_model: ANY_CLASSICAL_RCPSP,
+    **kwargs: Any,
+) -> Union[SolverRCPSP, SolverGenericRCPSP]:
+    solver: Union[SolverRCPSP, SolverGenericRCPSP]
     if method == GPHH:
-        solver = GPHH([rcpsp_model], rcpsp_model, **args)
+        solver = GPHH(training_domains=[rcpsp_model], rcpsp_model=rcpsp_model, **kwargs)
     else:
-        solver = method(rcpsp_model, **args)
+        solver = method(rcpsp_model=rcpsp_model, **kwargs)
     try:
-        solver.init_model(**args)
+        solver.init_model(**kwargs)
     except:
         pass
     return solver
 
 
-def get_solver_default_arguments(method) -> Dict[str, Any]:
+def get_solver_default_arguments(
+    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]]
+) -> Dict[str, Any]:
     try:
         return solvers_map[method][1]
     except KeyError:

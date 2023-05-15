@@ -16,13 +16,13 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.core import PartialSolution
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_MODES
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +38,14 @@ pop = heappop
 push = heappush
 
 
-class PileSolverRCPSP(SolverDO):
+class PileSolverRCPSP(SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs,
     ):
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.resources = rcpsp_model.resources
         self.non_renewable = rcpsp_model.non_renewable_resources
         self.n_jobs = rcpsp_model.n_jobs
@@ -251,7 +251,7 @@ class PileSolverRCPSP(SolverDO):
         return result_storage
 
 
-class PileSolverRCPSP_Calendar(SolverDO):
+class PileSolverRCPSP_Calendar(SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -260,7 +260,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
     ):
         if not rcpsp_model.is_varying_resource():
             raise ValueError("this solver is meant for calendar models")
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.resources = rcpsp_model.resources
         self.non_renewable = rcpsp_model.non_renewable_resources
         self.n_jobs = rcpsp_model.n_jobs
@@ -501,7 +501,7 @@ class PileSolverRCPSP_Calendar(SolverDO):
 
 class Executor(PileSolverRCPSP):
     def __init__(self, rcpsp_model: RCPSPModel):
-        super().__init__(rcpsp_model)
+        super().__init__(rcpsp_model=rcpsp_model)
         self.immediate_predecessors = {
             n: list(self.nx_graph.predecessors(n)) for n in self.nx_graph.nodes()
         }

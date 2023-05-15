@@ -20,7 +20,6 @@ from discrete_optimization.generic_tools.lns_mip import (
     LNS_MILP,
     ConstraintHandler,
     InitialSolution,
-    SolverDO,
 )
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.ls.local_search import (
@@ -55,6 +54,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     PileSolverRCPSP,
     PileSolverRCPSP_Calendar,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 logger = logging.getLogger(__name__)
 
@@ -449,9 +449,9 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
         milp_solver.model.update()
 
 
-class LNS_LP_RCPSP_SOLVER(SolverDO):
+class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
     def __init__(self, rcpsp_model: RCPSPModel, **kwargs):
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         solver = LP_MRCPSP(rcpsp_model=self.rcpsp_model, **kwargs)
         solver.init_model(greedy_start=False)
         self.parameters_milp = ParametersMilp(

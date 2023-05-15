@@ -6,8 +6,15 @@ from enum import Enum
 from typing import Optional
 
 import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
+from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
+    SolverGenericRCPSP,
+)
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_graph_rcpsp_object,
+)
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
     OptionNeighborRandom,
@@ -17,7 +24,6 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
     mix_both,
 )
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
-    ANY_RCPSP,
     BasicConstraintBuilder,
     ConstraintHandlerScheduling,
     NeighborBuilderMix,
@@ -29,9 +35,9 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
 from discrete_optimization.generic_rcpsp_tools.solution_repair import (
     NeighborRepairProblems,
 )
+from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
 from discrete_optimization.generic_tools.lns_mip import InitialSolutionFromSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -46,7 +52,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_RCPSP_MZN,
     CP_RCPSP_MZN_PREEMMPTIVE,
 )
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
@@ -254,13 +259,13 @@ def build_default_postpro(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwa
 def build_default_initial_solution(rcpsp_problem: ANY_RCPSP, **kwargs):
     if rcpsp_problem.is_multiskill():
         initial_solution_provider = InitialSolutionFromSolver(
-            LS_RCPSP_Solver(model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
+            LS_RCPSP_Solver(rcpsp_model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
             nb_iteration_max=500,
         )
         return initial_solution_provider
     if not rcpsp_problem.is_multiskill():
         initial_solution_provider = InitialSolutionFromSolver(
-            LS_RCPSP_Solver(model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
+            LS_RCPSP_Solver(rcpsp_model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
             nb_iteration_max=200,
         )
         return initial_solution_provider
@@ -440,43 +445,43 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
     return constraint_handler
 
 
-class LargeNeighborhoodSearchScheduling(SolverDO):
-    def __init__(self, rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwargs):
-        self.rcpsp_problem = rcpsp_problem
-        graph = build_graph_rcpsp_object(self.rcpsp_problem)
+class LargeNeighborhoodSearchScheduling(SolverGenericRCPSP):
+    def __init__(self, rcpsp_model: ANY_RCPSP, partial_solution=None, **kwargs):
+        SolverGenericRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        graph = build_graph_rcpsp_object(self.rcpsp_model)
         solver = kwargs.get("cp_solver", None)
         if solver is None:
             solver = build_default_cp_model(
-                rcpsp_problem=rcpsp_problem, partial_solution=partial_solution, **kwargs
+                rcpsp_problem=rcpsp_model, partial_solution=partial_solution, **kwargs
             )
         self.cp_solver = solver
         params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_problem
+            problem=self.rcpsp_model
         )
         self.parameters_cp = kwargs.get("parameters_cp", ParametersCP.default())
         self.constraint_handler = kwargs.get("constraint_handler", None)
         if self.constraint_handler is None:
             self.constraint_handler = build_constraint_handler(
-                rcpsp_problem=self.rcpsp_problem,
+                rcpsp_problem=self.rcpsp_model,
                 graph=graph,
-                multiskill=self.rcpsp_problem.is_multiskill(),
-                preemptive=self.rcpsp_problem.is_preemptive(),
+                multiskill=self.rcpsp_model.is_multiskill(),
+                preemptive=self.rcpsp_model.is_preemptive(),
                 **kwargs
             )
         self.post_pro = kwargs.get("post_process_solution", None)
         if self.post_pro is None:
             self.post_pro = build_default_postpro(
-                rcpsp_problem=self.rcpsp_problem,
+                rcpsp_problem=self.rcpsp_model,
                 partial_solution=partial_solution,
                 **kwargs
             )
         self.initial_solution_provider = kwargs.get("initial_solution_provider", None)
         if self.initial_solution_provider is None:
             self.initial_solution_provider = build_default_initial_solution(
-                rcpsp_problem=self.rcpsp_problem, **kwargs
+                rcpsp_problem=self.rcpsp_model, **kwargs
             )
         self.lns_solver = LNS_CP(
-            problem=self.rcpsp_problem,
+            problem=self.rcpsp_model,
             cp_solver=self.cp_solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,

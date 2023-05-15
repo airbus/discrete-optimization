@@ -184,14 +184,14 @@ if __name__ == "__main__":
     logger.info("file = ", file)
     model = parse_file_mslib(file).to_variant_model()
     solution = model.get_dummy_solution()
-    from discrete_optimization.rcpsp.solver.ls_solver import LS_RCPSP_Solver
+    from discrete_optimization.generic_rcpsp_tools.ls_solver import LS_RCPSP_Solver
     from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
         plot_resource_individual_gantt,
         plt,
     )
 
     logging.basicConfig(level=logging.DEBUG)
-    solver = LS_RCPSP_Solver(model=model)
+    solver = LS_RCPSP_Solver(rcpsp_model=model)
     result = solver.solve(nb_iteration_max=5000)
     sol, fit = result.get_best_solution_fit()
     plot_resource_individual_gantt(rcpsp_model=model, rcpsp_sol=sol)

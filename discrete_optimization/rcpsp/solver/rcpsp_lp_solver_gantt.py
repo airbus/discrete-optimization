@@ -22,6 +22,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 try:
     import gurobipy
@@ -65,7 +66,7 @@ class ConstraintWorkDuration:
         self.working_time_upper_bound = working_time_upper_bound
 
 
-class _Base_LP_MRCPSP_GANTT(MilpSolver):
+class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -78,7 +79,7 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver):
             raise ValueError(
                 "rcpsp_model.calendar_details cannot be None for this solver"
             )
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.rcpsp_solution = rcpsp_solution
         self.jobs = sorted(list(self.rcpsp_model.mode_details.keys()))
         self.modes_dict = {

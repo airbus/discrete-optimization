@@ -6,7 +6,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import Ga
 from discrete_optimization.generic_tools.ea.ga_tools import (
@@ -14,16 +13,17 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersGa,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 
-class GA_RCPSP_Solver(SolverDO):
+class GA_RCPSP_Solver(SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs
     ):
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         (
             self.aggreg_sol,
             self.aggreg_from_dict_values,
@@ -52,7 +52,7 @@ class GA_RCPSP_Solver(SolverDO):
         return ga_solver.solve()
 
 
-class GA_MRCPSP_Solver(SolverDO):
+class GA_MRCPSP_Solver(SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModel,
@@ -61,7 +61,7 @@ class GA_MRCPSP_Solver(SolverDO):
     ):
         if not rcpsp_model.is_rcpsp_multimode():
             raise ValueError("this solver is meant for multimode rcpsp problems")
-        self.rcpsp_model = rcpsp_model
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         (
             self.aggreg_sol,
             self.aggreg_from_dict_values,

@@ -20,7 +20,7 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
 )
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.generic_tools.lns_cp import LNS_CP, SolverDO
+from discrete_optimization.generic_tools.lns_cp import LNS_CP
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -43,6 +43,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 GENERIC_CLASS = Union[
     RCPSPModel,
@@ -105,20 +106,20 @@ def build_default_cp_model(
         return solver
 
 
-class LargeNeighborhoodSearchRCPSP(SolverDO):
+class LargeNeighborhoodSearchRCPSP(SolverRCPSP):
     def __init__(
         self,
-        rcpsp_problem: GENERIC_CLASS,
+        rcpsp_model: GENERIC_CLASS,
         partial_solution: PartialSolutionPreemptive = None,
         **kwargs
     ):
-        self.rcpsp_problem = rcpsp_problem
-        graph = build_graph_rcpsp_object(self.rcpsp_problem)
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        graph = build_graph_rcpsp_object(self.rcpsp_model)
         solver = build_default_cp_model(
-            rcpsp_problem=rcpsp_problem, partial_solution=partial_solution, **kwargs
+            rcpsp_problem=rcpsp_model, partial_solution=partial_solution, **kwargs
         )
         params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_problem
+            problem=self.rcpsp_model
         )
         constraint_handler = None
         option = kwargs.get("option_neighbor_operator", 2)
@@ -127,11 +128,11 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
                 option_neighbor=kwargs.get(
                     "option_neighbor_random", OptionNeighborRandom.MIX_ALL
                 ),
-                rcpsp_model=self.rcpsp_problem,
+                rcpsp_model=self.rcpsp_model,
             )
         if option == 1:
             constraint_handler = mix_both(
-                rcpsp_model=rcpsp_problem,
+                rcpsp_model=rcpsp_model,
                 option_neighbor_random=kwargs.get(
                     "option_neighbor_random", OptionNeighborRandom.MIX_ALL
                 ),
@@ -160,7 +161,7 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
             )
         if option == 2:
             constraint_handler = build_neighbor_mixing_methods(
-                rcpsp_model=self.rcpsp_problem,
+                rcpsp_model=self.rcpsp_model,
                 graph=graph,
                 fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),
                 cut_part=kwargs.get("cut_part", 10),
@@ -186,7 +187,7 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
             )
         if option == 3:
             constraint_handler = build_neighbor_mixing_cut_parts(
-                rcpsp_model=rcpsp_problem,
+                rcpsp_model=rcpsp_model,
                 graph=graph,
                 params_list=kwargs.get(
                     "params_list",
@@ -211,7 +212,7 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
         initial_solution_provider = kwargs.get("initial_solution_provider", None)
         if initial_solution_provider is None:
             initial_solution_provider = InitialSolutionRCPSP(
-                problem=self.rcpsp_problem,
+                problem=self.rcpsp_model,
                 initial_method=InitialMethodRCPSP.DUMMY,
                 params_objective_function=params_objective_function,
             )
@@ -220,20 +221,20 @@ class LargeNeighborhoodSearchRCPSP(SolverDO):
         self.params_objective_function = params_objective_function
         self.cp_solver = solver
         if isinstance(
-            self.rcpsp_problem,
+            self.rcpsp_model,
             (RCPSPModelPreemptive, RCPSPModelSpecialConstraintsPreemptive),
         ):
             self.post_process_solution = PostProLeftShift(
-                problem=self.rcpsp_problem,
+                problem=self.rcpsp_model,
                 params_objective_function=params_objective_function,
                 do_ls=kwargs.get("do_ls", False),
             )
         else:
             self.post_process_solution = rcpsp_lns.PostProcessLeftShift(
-                rcpsp_problem=self.rcpsp_problem, partial_solution=None
+                rcpsp_problem=self.rcpsp_model, partial_solution=None
             )
         self.lns_solver = LNS_CP(
-            problem=self.rcpsp_problem,
+            problem=self.rcpsp_model,
             cp_solver=self.cp_solver,
             post_process_solution=self.post_process_solution,
             initial_solution_provider=self.initial_solution_provider,

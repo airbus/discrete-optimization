@@ -11,11 +11,7 @@ from minizinc import Instance
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.generic_tools.lns_cp import (
-    LNS_CP,
-    ConstraintHandler,
-    SolverDO,
-)
+from discrete_optimization.generic_tools.lns_cp import LNS_CP, ConstraintHandler
 from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -31,6 +27,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 
 @deprecated(deprecated_in="0.1")
@@ -313,27 +310,27 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
 
 
 @deprecated(deprecated_in="0.1")
-class SolverWithCalendarIterative(SolverDO):
+class SolverWithCalendarIterative(SolverRCPSP):
     def __init__(
         self,
-        problem_calendar: RCPSPModel,
+        rcpsp_model: RCPSPModel,
         partial_solution: PartialSolution = None,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_ALL,
         **kwargs
     ):
-        if not problem_calendar.is_varying_resource():
+        if not rcpsp_model.is_varying_resource():
             raise ValueError("problem_calendar is supposed to be a calendar model")
-        self.problem_calendar = problem_calendar
+        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
         self.problem_no_calendar = RCPSPModel(
             resources={
-                r: int(self.problem_calendar.get_max_resource_capacity(r))
-                for r in self.problem_calendar.resources
+                r: int(self.rcpsp_model.get_max_resource_capacity(r))
+                for r in self.rcpsp_model.resources
             },
-            non_renewable_resources=self.problem_calendar.non_renewable_resources,
-            mode_details=self.problem_calendar.mode_details,
-            successors=self.problem_calendar.successors,
-            horizon=self.problem_calendar.horizon,
-            name_task=self.problem_calendar.name_task,
+            non_renewable_resources=self.rcpsp_model.non_renewable_resources,
+            mode_details=self.rcpsp_model.mode_details,
+            successors=self.rcpsp_model.successors,
+            horizon=self.rcpsp_model.horizon,
+            name_task=self.rcpsp_model.name_task,
         )
         solver = CP_MRCPSP_MZN(
             rcpsp_model=self.problem_no_calendar, cp_solver_name=CPSolverName.CHUFFED
@@ -348,10 +345,10 @@ class SolverWithCalendarIterative(SolverDO):
             option_neighbor=option_neighbor, rcpsp_model=self.problem_no_calendar
         )
         constraint_handler = ConstraintHandlerAddCalendarConstraint(
-            self.problem_calendar, self.problem_no_calendar, constraint_handler
+            self.rcpsp_model, self.problem_no_calendar, constraint_handler
         )
         initial_solution_provider = InitialSolutionRCPSP(
-            problem=self.problem_calendar,
+            problem=self.rcpsp_model,
             initial_method=InitialMethodRCPSP.DUMMY,
             params_objective_function=params_objective_function,
         )
@@ -360,12 +357,12 @@ class SolverWithCalendarIterative(SolverDO):
         self.params_objective_function = params_objective_function
         self.cp_solver = solver
         self.post_process_solution = PostProcessSolutionNonFeasible(
-            self.problem_calendar,
+            self.rcpsp_model,
             self.problem_no_calendar,
             partial_solution=partial_solution,
         )
         self.lns_solver = LNS_CP(
-            problem=self.problem_calendar,
+            problem=self.rcpsp_model,
             cp_solver=self.cp_solver,
             post_process_solution=self.post_process_solution,
             initial_solution_provider=self.initial_solution_provider,

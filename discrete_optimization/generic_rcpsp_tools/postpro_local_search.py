@@ -2,7 +2,11 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import ANY_RCPSP
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
+)
+from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -11,7 +15,6 @@ from discrete_optimization.generic_tools.lns_cp import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPSolution_Preemptive,
     schedule_solution_preemptive_to_variant,
@@ -38,7 +41,7 @@ class PostProLocalSearch(PostProcessSolution):
         self.dict_params = kwargs
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        solver = LS_RCPSP_Solver(model=self.problem, ls_solver=LS_SOLVER.SA)
+        solver = LS_RCPSP_Solver(rcpsp_model=self.problem, ls_solver=LS_SOLVER.SA)
         s = result_storage.get_best_solution().copy()
         if isinstance(s, MS_RCPSPSolution_Preemptive):
             s = schedule_solution_preemptive_to_variant(s)

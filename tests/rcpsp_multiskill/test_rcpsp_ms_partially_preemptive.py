@@ -6,9 +6,12 @@ from typing import Dict, List
 
 import pytest
 
+from discrete_optimization.generic_rcpsp_tools.ls_solver import (
+    LS_SOLVER,
+    LS_RCPSP_Solver,
+)
 from discrete_optimization.rcpsp.core import SpecialConstraintsDescription
 from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import plot_ressource_view
-from discrete_optimization.rcpsp.solver.ls_solver import LS_SOLVER, LS_RCPSP_Solver
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
     plot_resource_individual_gantt_preemptive,
 )
@@ -125,7 +128,7 @@ def test_partial_preemptive(model):
 
 def test_ls(model):
     model_variant: MS_RCPSPModel_Variant = model.to_variant_model()
-    solver = LS_RCPSP_Solver(model=model_variant, ls_solver=LS_SOLVER.SA)
+    solver = LS_RCPSP_Solver(rcpsp_model=model_variant, ls_solver=LS_SOLVER.SA)
     result_storage = solver.solve(nb_iteration_max=5000)
     rcpsp_sol = result_storage.get_last_best_solution()[0]
     assert model.satisfy(rcpsp_sol)
