@@ -9,7 +9,7 @@ import numba.typed
 import numba.types
 import numpy as np
 import numpy.typing as npt
-from numba import njit
+from numba import njit  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +214,7 @@ def sgs_fast_preemptive(
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
-                if reached_end and not preemptive_tag[act_id]:
+                if reached_end and not preemptive_tag[act_id] and reached_t is not None:
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
@@ -386,7 +386,7 @@ def sgs_fast_preemptive_some_special_constraints(
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
-                if reached_end and not preemptive_tag[act_id]:
+                if reached_end and not preemptive_tag[act_id] and reached_t is not None:
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
@@ -556,7 +556,7 @@ def sgs_fast_preemptive_minduration(
                         starts.append(current_min_time)
                         ends.append(reached_t + 1)
                         done_duration[act_id] += ends[-1] - starts[-1]
-                if reached_end and not preemptive_tag[act_id]:
+                if reached_end and not preemptive_tag[act_id] and reached_t is not None:
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
@@ -1027,7 +1027,7 @@ def sgs_fast_partial_schedule_preemptive(
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
-                if reached_end and not preemptive_tag[act_id]:
+                if reached_end and not preemptive_tag[act_id] and reached_t is not None:
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
@@ -1237,7 +1237,7 @@ def sgs_fast_partial_schedule_preemptive_minduration(
                         starts.append(current_min_time)
                         ends.append(reached_t + 1)
                         done_duration[act_id] += ends[-1] - starts[-1]
-                if reached_end and not preemptive_tag[act_id]:
+                if reached_end and not preemptive_tag[act_id] and reached_t is not None:
                     starts.append(current_min_time)
                     ends.append(reached_t + 1)
                     done_duration[act_id] += ends[-1] - starts[-1]
@@ -1347,7 +1347,7 @@ def compute_ressource_consumption(
     new_horizon = horizon
     resource_avail_in_time: Dict[int, npt.NDArray[np.int_]] = {}
     for index in range(ressource_available.shape[0]):
-        resource_avail_in_time[index] = np.zeros(new_horizon + 1)
+        resource_avail_in_time[index] = np.zeros(new_horizon + 1, dtype=np.int_)
     nb_task = start_array.shape[0]
     for t in range(nb_task):
         start_time = start_array[t]
