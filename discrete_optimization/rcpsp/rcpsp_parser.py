@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import Dict, Hashable, List, Optional, Union
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
@@ -11,7 +11,7 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-):
+) -> List[str]:
     """Get datasets available for rcpsp.
 
     Params:
@@ -34,7 +34,7 @@ def get_data_available(
     return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
-def parse_psplib(input_data):
+def parse_psplib(input_data: str) -> RCPSPModel:
     # parse the input
     lines = input_data.split("\n")
 
@@ -57,7 +57,7 @@ def parse_psplib(input_data):
     # Parsing resource information
     tmp1 = lines[res_start_line_index].split()
     tmp2 = lines[res_start_line_index + 1].split()
-    resources = {
+    resources: Dict[str, Union[int, List[int]]] = {
         str(tmp1[(i * 2)]) + str(tmp1[(i * 2) + 1]): int(tmp2[i])
         for i in range(len(tmp2))
     }
@@ -67,17 +67,15 @@ def parse_psplib(input_data):
     n_resources = len(resources.keys())
 
     # Parsing precedence relationship
-    multi_mode = False
-    successors = {}
+    successors: Dict[Hashable, List[Hashable]] = {}
     for i in range(prec_start_line_index, prec_end_line_index + 1):
         tmp = lines[i].split()
         task_id = int(tmp[0])
-        n_modes = int(tmp[1])
         n_successors = int(tmp[2])
         successors[task_id] = [int(x) for x in tmp[3 : (3 + n_successors)]]
 
     # Parsing mode and duration information
-    mode_details = {}
+    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]] = {}
     for i_line in range(duration_start_line_index, duration_end_line_index + 1):
         tmp = lines[i_line].split()
         if len(tmp) == 3 + n_resources:
@@ -86,7 +84,6 @@ def parse_psplib(input_data):
             duration = int(tmp[2])
             resources_usage = [int(x) for x in tmp[3 : (3 + n_resources)]]
         else:
-            multi_mode = True
             mode_id = int(tmp[0])
             duration = int(tmp[1])
             resources_usage = [int(x) for x in tmp[2 : (3 + n_resources)]]
@@ -110,7 +107,7 @@ def parse_psplib(input_data):
     )
 
 
-def parse_file(file_path) -> RCPSPModel:
+def parse_file(file_path: str) -> RCPSPModel:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         rcpsp_model = parse_psplib(input_data)
