@@ -27,9 +27,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
-from discrete_optimization.rcpsp.solver.calendar_solver_iterative import (
-    SolverWithCalendarIterative,
-)
 from discrete_optimization.rcpsp.solver.cp_lns_solver import (
     LargeNeighborhoodSearchRCPSP,
 )
@@ -163,16 +160,6 @@ solvers: Dict[
         (GA_RCPSP_Solver, {"parameters_ga": ParametersGa.default_rcpsp()}),
         (GA_MRCPSP_Solver, {"parameters_ga": ParametersAltGa.default_mrcpsp()}),
     ],
-    "lns-cp-calendar": [
-        (
-            SolverWithCalendarIterative,
-            {
-                "parameters_cp": ParametersCP.default(),
-                "nb_iteration_lns": 20,
-                "skip_first_iteration": False,
-            },
-        )
-    ],
     "gphh": [(GPHH, {})],
 }
 
@@ -217,9 +204,6 @@ solvers_compatibility: Dict[
     GA_MRCPSP_Solver: [
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
-        RCPSPModel,
-    ],
-    SolverWithCalendarIterative: [
         RCPSPModel,
     ],
     LargeNeighborhoodSearchRCPSP: [
