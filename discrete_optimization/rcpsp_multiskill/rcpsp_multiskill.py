@@ -2867,9 +2867,9 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         priority_worker_per_task_corrected = []
         for i in range(self.n_jobs_non_dummy):
             tmp = []
-            for j in range(len(self.employees.keys())):
-                tmp.append(permutation[i * len(self.employees.keys()) + j])
-            tmp_corrected = [int(x) for x in ss.rankdata(tmp)]
+            for j in range(len(self.employees)):
+                tmp.append(permutation[i * len(self.employees) + j])
+            tmp_corrected = [self.employees_list[int(x) - 1] for x in ss.rankdata(tmp)]
             priority_worker_per_task_corrected.append(tmp_corrected)
         return priority_worker_per_task_corrected
 
@@ -2903,13 +2903,9 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         elif encoding_name == "priority_worker_per_task":
             # change the resource permutation priority lists in the solution from int_vector and set the permutation
             # with self.fixed_permutation and the modes with self.fixed_modes
-            priority_worker_per_task_corrected = []
-            for i in range(self.n_jobs_non_dummy):
-                tmp = []
-                for j in range(len(self.employees.keys())):
-                    tmp.append(int_vector[i * len(self.employees.keys()) + j])
-                tmp_corrected = [int(x) for x in ss.rankdata(tmp)]
-                priority_worker_per_task_corrected.append(tmp_corrected)
+            priority_worker_per_task_corrected = (
+                self.convert_fixed_priority_worker_per_task_from_permutation(int_vector)
+            )
             rcpsp_sol = MS_RCPSPSolution_Variant(
                 problem=self,
                 priority_list_task=self.fixed_permutation,

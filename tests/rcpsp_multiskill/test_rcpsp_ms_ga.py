@@ -114,7 +114,7 @@ def create_toy_msrcpsp_variant():
             dict_skill={"S2": SkillDetail(1.0, 1.0, 1.0)},
             calendar_employee=[True] * 100,
         ),
-        3: Employee(
+        4: Employee(
             dict_skill={"S3": SkillDetail(1.0, 1.0, 1.0)},
             calendar_employee=[True] * 100,
         ),
