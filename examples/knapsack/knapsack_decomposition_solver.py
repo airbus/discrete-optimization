@@ -30,9 +30,10 @@ def run_decomposed_knapsack_asp():
         knapsack_model=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
+        initial_solver=GreedyBest,
         root_solver=KnapsackASPSolver,
         timeout_seconds=2,
-        nb_iteration=100,
+        nb_iteration=1000,
         proportion_to_remove=0.9,
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -41,12 +42,13 @@ def run_decomposed_knapsack_asp():
 
 def run_decomposed_knapsack_greedy():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_10000_0" in f][0]
     knapsack_model = parse_file(file)
     solver = KnapsackDecomposedSolver(
         knapsack_model=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
+        initial_solver=GreedyBest,
         root_solver=GreedyBest,
         timeout_seconds=2,
         nb_iteration=100,
@@ -77,4 +79,4 @@ def run_decomposed_knapsack_cp():
 
 
 if __name__ == "__main__":
-    run_decomposed_knapsack_cp()
+    run_decomposed_knapsack_asp()
