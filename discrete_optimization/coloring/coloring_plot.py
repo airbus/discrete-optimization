@@ -20,6 +20,7 @@ def plot_coloring_solution(solution: ColoringSolution, name_figure: str = ""):
         graph_nx,
         pos=pos,
         nodelist=problem.graph.nodes_name,
+        label=[str(solution.colors[i]) for i in range(len(problem.graph.nodes_name))],
         node_color=[solution.colors[i] for i in range(len(problem.graph.nodes_name))],
         ax=ax,
     )
