@@ -466,6 +466,7 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
                     <= t
                     < key[2]
                     + int(self.rcpsp_model.mode_details[key[0]][key[1]]["duration"])
+                    and self.rcpsp_model.mode_details[key[0]][key[1]].get(r, 0) > 0
                 )
                 <= renewable_quantity[r][t]
             )
@@ -474,6 +475,7 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
                 xsum(
                     int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
                     for key in self.x
+                    if self.rcpsp_model.mode_details[key[0]][key[1]].get(r, 0) > 0
                 )
                 <= non_renewable_quantity[r][0]
             )

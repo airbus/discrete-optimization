@@ -134,11 +134,7 @@ def plot_ressource_view(
             cons = rcpsp_model.mode_details[j][modes_dict[j]].get(list_resource[i], 0)
             if cons == 0:
                 continue
-            bound: int = (
-                rcpsp_model.resources[list_resource[i]]
-                if not with_calendar
-                else max(rcpsp_model.resources[list_resource[i]])  # type: ignore
-            )
+            bound: int = rcpsp_model.get_max_resource_capacity(list_resource[i])
             for k in range(0, bound):
                 polygon = Polygon(
                     [
