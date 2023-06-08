@@ -875,7 +875,7 @@ class RoutingMonitor:
         ] = []
 
     def __call__(self) -> None:
-        logger.debug(
+        logger.info(
             f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
         )
         logger.debug(status_description[self.model.status()])

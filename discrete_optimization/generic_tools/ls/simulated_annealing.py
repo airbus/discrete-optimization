@@ -156,8 +156,8 @@ class SimulatedAnnealing:
             if self.store_solution:
                 store.add_solution(nv.copy(), objective)
             if global_improvement:
-                logger.debug(f"iter {iteration}")
-                logger.debug(f"new obj {objective} better than {cur_best_objective}")
+                logger.info(f"iter {iteration}")
+                logger.info(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
                 cur_best_variable = cur_variable.copy()
                 if not self.store_solution:
