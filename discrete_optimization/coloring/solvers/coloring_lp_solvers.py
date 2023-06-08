@@ -189,7 +189,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
             raise RuntimeError("self.start_solution.nb_color should not be None.")
         color_model = Model("color")
         colors_var: Dict[Tuple[Hashable, int], "Var"] = {}
-        range_node = range(self.number_of_nodes)
+        range_node = self.nodes_name
         range_color = range(nb_colors)
         for node in self.nodes_name:
             for color in range_color:
@@ -346,7 +346,7 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
             "color", sense=mip.MINIMIZE, solver_name=self.solver_name
         )
         colors_var = {}
-        range_node = range(self.number_of_nodes)
+        range_node = self.nodes_name
         range_color = range(nb_colors)
         for node in self.nodes_name:
             for color in range_color:
