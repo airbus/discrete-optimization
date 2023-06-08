@@ -77,6 +77,7 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for s in range(n_solutions):
             weight = 0.0
+            value_kp = 0.0
             xs = {}
             for (
                 variable_decision_key,
@@ -90,9 +91,13 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
                 weight += self.knapsack_model.index_to_item[
                     variable_decision_key
                 ].weight
+                value_kp += self.knapsack_model.index_to_item[
+                    variable_decision_key
+                ].value
+
             solution = KnapsackSolution(
                 problem=self.knapsack_model,
-                value=self.get_obj_value_for_ith_solution(s),
+                value=value_kp,
                 weight=weight,
                 list_taken=[xs[e] for e in sorted(xs)],
             )

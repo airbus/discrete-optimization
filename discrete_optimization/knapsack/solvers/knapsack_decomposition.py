@@ -80,11 +80,12 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         return solution
 
     def solve(self, **kwargs: Any) -> ResultStorage:
+        initial_solver = kwargs.get("initial_solver", GreedyBest)
         sub_solver = kwargs.get("root_solver", GreedyBest)
         nb_iteration = kwargs.get("nb_iteration", 100)
         proportion_to_remove = kwargs.get("proportion_to_remove", 0.7)
         initial_results = solve(
-            method=sub_solver, knapsack_model=self.knapsack_model, **kwargs
+            method=initial_solver, knapsack_model=self.knapsack_model, **kwargs
         )
         results_storage = ResultStorage(
             list_solution_fits=initial_results.list_solution_fits,
