@@ -86,7 +86,10 @@ class DeadlineMutationRCPSP(Mutation):
         else:
             self.attribute = attribute
         self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
-        self.full_predecessors = self.problem.graph.ancestors_map()  # type: ignore
+        try:
+            self.full_predecessors = self.problem.graph.ancestors_map()  # type: ignore
+        except:
+            pass
 
     def mutate(self, solution: ANY_SOLUTION) -> Tuple[ANY_SOLUTION, LocalMove]:  # type: ignore
         if not is_instance_any_rcpsp_solution(solution):

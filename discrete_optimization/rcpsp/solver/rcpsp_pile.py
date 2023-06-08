@@ -142,7 +142,7 @@ class PileSolverRCPSP(SolverRCPSP):
                 n
                 for n in available_activities
                 if all(
-                    self.mode_details[n][self.modes_dict[n]][r]
+                    self.mode_details[n][self.modes_dict[n]].get(r, 0)
                     <= current_ressource_available[r]
                     for r in current_ressource_available
                 )
@@ -200,11 +200,11 @@ class PileSolverRCPSP(SolverRCPSP):
                 for r in self.resources:
                     current_ressource_available[r] -= self.mode_details[next_activity][
                         self.modes_dict[next_activity]
-                    ][r]
+                    ].get(r, 0)
                     if r in current_ressource_non_renewable:
                         current_ressource_non_renewable[r] -= self.mode_details[
                             next_activity
-                        ][self.modes_dict[next_activity]][r]
+                        ][self.modes_dict[next_activity]].get(r, 0)
                 logger.debug(
                     (
                         current_time,
@@ -216,7 +216,7 @@ class PileSolverRCPSP(SolverRCPSP):
                     n
                     for n in available_activities
                     if all(
-                        self.mode_details[n][self.modes_dict[n]][r]
+                        self.mode_details[n][self.modes_dict[n]].get(r, 0)
                         <= current_ressource_available[r]
                         for r in current_ressource_available
                     )
@@ -232,7 +232,7 @@ class PileSolverRCPSP(SolverRCPSP):
                 if r not in current_ressource_non_renewable:
                     current_ressource_available[r] += self.mode_details[activity][
                         self.modes_dict[activity]
-                    ][r]
+                    ].get(r, 0)
         logger.debug(f"Final Time {current_time}")
         sol = RCPSPSolution(
             problem=self.rcpsp_model,

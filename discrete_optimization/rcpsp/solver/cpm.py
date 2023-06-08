@@ -247,10 +247,9 @@ class CPM(SolverRCPSP):
                     valid = True
                     for res in resource_avail_in_time:
                         for t in range(time, time + duration):
-                            if (
-                                resource_avail_in_time[res][t]
-                                < ressource_consumption[res]
-                            ):
+                            if resource_avail_in_time[res][
+                                t
+                            ] < ressource_consumption.get(res, 0):
                                 valid = False
                                 delayed_du_to_ressource = True
                                 if j not in causes_of_delay:
@@ -278,7 +277,7 @@ class CPM(SolverRCPSP):
                                 res
                                 for res in resource_avail_in_time
                                 if resource_avail_in_time[res][time - 1]
-                                < ressource_consumption[res]
+                                < ressource_consumption.get(res, 0)
                             ]
                             task_blocking = [
                                 task
@@ -298,7 +297,7 @@ class CPM(SolverRCPSP):
                             "end_time": time + duration,
                         }
                         done.add(j)
-                        for res in resource_avail_in_time:
+                        for res in ressource_consumption:
                             for t in range(time, time + duration):
                                 resource_avail_in_time[res][t] -= ressource_consumption[
                                     res

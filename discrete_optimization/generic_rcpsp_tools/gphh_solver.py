@@ -643,16 +643,13 @@ class GPHH(SolverGenericRCPSP):
             output_value = func_heuristic(*input_features)
             raw_values.append(output_value)
 
-        normalized_values = [
-            x
-            for x in sorted(
-                range(len(raw_values)), key=lambda k: raw_values[k], reverse=False
-            )
-        ]
+        normalized_values = sorted(
+            range(len(raw_values)), key=lambda k: raw_values[k], reverse=False
+        )
         normalized_values_for_do = [
-            d.index_task_non_dummy[t]
+            d.index_task_non_dummy[d.tasks_list[t]]
             for t in normalized_values
-            if t in d.index_task_non_dummy
+            if d.tasks_list[t] in d.index_task_non_dummy
         ]
         if isinstance(domain, MS_RCPSPModel):
             solution = MS_RCPSPSolution_Variant(
