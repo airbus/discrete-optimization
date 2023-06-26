@@ -8,7 +8,7 @@ The only constraint is that adjacent vertices should be colored by different col
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, Hashable, List, Optional, Set, Type, Union
 
 import numpy as np
 
@@ -184,19 +184,41 @@ def transform_color_values_to_value_precede(color_vector: List[int]) -> List[int
     return new_colors_vector
 
 
+class ConstraintsColoring:
+    """Data structure to store additional constraints. Attributes will grow
+    Attributes:
+        color_constraint (Dict[Hashable, int]): dictionary filled with color constraint.
+    """
+
+    def __init__(self, color_constraint: Dict[Hashable, int]):
+        self.color_constraint = color_constraint
+
+    def nodes_fixed(self) -> Set[Hashable]:
+        if self.color_constraint is not None:
+            return set(self.color_constraint.keys())
+        else:
+            return set()
+
+
 class ColoringProblem(Problem):
     """Coloring problem class implementation.
 
     Attributes:
         graph (Graph): a graph object representing vertices and edges.
         number_of_nodes (int): number of nodes in the graph
+        subset_nodes (Set[Hashable]): subset of nodes id to take into account in the optimisation.
         nodes_name (List[Hashable]): list of id of the graph vertices.
-        index_nodes_name (Dict[Hashable, int]): dictionnary node_name->index
+        index_nodes_name (Dict[Hashable, int]): dictionary node_name->index
         index_to_nodes_name (Dict[int, Hashable]): index->node_name
 
     """
 
-    def __init__(self, graph: Graph):
+    def __init__(
+        self,
+        graph: Graph,
+        subset_nodes: Set[Hashable] = None,
+        constraints_coloring: Optional[ConstraintsColoring] = None,
+    ):
         self.graph = graph
         self.number_of_nodes = len(self.graph.nodes_infos_dict)
         self.nodes_name = self.graph.nodes_name
@@ -206,6 +228,35 @@ class ColoringProblem(Problem):
         self.index_to_nodes_name = {
             i: self.nodes_name[i] for i in range(self.number_of_nodes)
         }
+        self.subset_nodes = subset_nodes
+        if self.subset_nodes is None:
+            self.subset_nodes = set(self.nodes_name)
+        self.index_subset_nodes = {
+            self.index_nodes_name[node] for node in self.subset_nodes
+        }
+        self.use_subset = len(self.subset_nodes) < len(self.nodes_name)
+        self.constraints_coloring = constraints_coloring
+        self.has_constraints_coloring = constraints_coloring is not None
+
+    def is_in_subset_index(self, index: int) -> bool:
+        if not self.use_subset:
+            return True
+        return index in self.index_subset_nodes
+
+    def is_in_subset_nodes(self, node: Hashable) -> bool:
+        if not self.use_subset:
+            return True
+        return node in self.subset_nodes
+
+    def count_colors(self, colors_list: List[int]) -> int:
+        if self.use_subset:
+            nb_color = len(set([colors_list[j] for j in self.index_subset_nodes]))
+        else:
+            nb_color = len(set(colors_list))
+        return nb_color
+
+    def count_colors_all_index(self, colors_list: List[int]) -> int:
+        return len(set(colors_list))
 
     def evaluate(self, variable: ColoringSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         """Evaluation implementation for ColoringProblem.
@@ -218,7 +269,12 @@ class ColoringProblem(Problem):
                     "variable.colors must not be None if variable.nb_color is None."
                 )
             else:
-                variable.nb_color = len(set(variable.colors))
+                if self.use_subset:
+                    variable.nb_color = len(
+                        set([variable.colors[j] for j in self.index_subset_nodes])
+                    )
+                else:
+                    variable.nb_color = len(set(variable.colors))
         if variable.nb_violations is None:
             if variable.colors is None:
                 raise ValueError(
@@ -248,6 +304,14 @@ class ColoringProblem(Problem):
                     == variable.colors[self.index_nodes_name[e[1]]]
                 ):
                     return False
+        if self.has_constraints_coloring:
+            v = compute_constraints_penalty(
+                coloring_solution=variable,
+                coloring_problem=self,
+                constraints_coloring=self.constraints_coloring,
+            )
+            if v > 0:
+                return False
         return True
 
     def get_attribute_register(self) -> EncodingRegister:
@@ -319,6 +383,12 @@ class ColoringProblem(Problem):
                     == variable.colors[self.index_nodes_name[e[1]]]
                 ):
                     val += 1
+        if self.has_constraints_coloring:
+            val += compute_constraints_penalty(
+                coloring_solution=variable,
+                coloring_problem=self,
+                constraints_coloring=self.constraints_coloring,
+            )
         return val
 
     def evaluate_from_encoding(
@@ -343,3 +413,30 @@ class ColoringProblem(Problem):
             raise ValueError("encoding_name can only be 'colors' or 'custom'.")
         objectives = self.evaluate(coloring_sol)
         return objectives
+
+
+def compute_constraints_penalty(
+    coloring_solution: ColoringSolution,
+    coloring_problem: ColoringProblem,
+    constraints_coloring: ConstraintsColoring,
+):
+    violations = 0
+    for n in constraints_coloring.color_constraint:
+        if (
+            coloring_solution.colors[coloring_problem.index_nodes_name[n]]
+            != constraints_coloring.color_constraint[n]
+        ):
+            violations += 1
+    return violations
+
+
+def transform_coloring_problem(
+    coloring_problem: ColoringProblem,
+    subset_nodes: Optional[Set[Hashable]] = None,
+    constraints_coloring: Optional[ConstraintsColoring] = None,
+) -> ColoringProblem:
+    return ColoringProblem(
+        graph=coloring_problem.graph,
+        subset_nodes=subset_nodes,
+        constraints_coloring=constraints_coloring,
+    )
