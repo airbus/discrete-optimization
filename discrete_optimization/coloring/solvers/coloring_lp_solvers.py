@@ -139,6 +139,25 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
             mode_optim=self.sense_optim,
         )
 
+    def get_range_color(self, node_name, range_color_subset, range_color_all):
+        if self.coloring_model.has_constraints_coloring:
+            if node_name in self.coloring_model.constraints_coloring.nodes_fixed():
+                return range(
+                    self.coloring_model.constraints_coloring.color_constraint[
+                        node_name
+                    ],
+                    self.coloring_model.constraints_coloring.color_constraint[node_name]
+                    + 1,
+                )
+        if self.coloring_model.use_subset:
+            return (
+                range_color_subset
+                if node_name in self.coloring_model.subset_nodes
+                else range_color_all
+            )
+        else:
+            return range_color_all
+
 
 class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
     """Coloring LP solver based on gurobipy library.
@@ -185,21 +204,38 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
             logger.info("Get dummy solution")
             self.start_solution = self.coloring_model.get_dummy_solution()
         nb_colors = self.start_solution.nb_color
+        nb_colors_subset = nb_colors
+        if self.coloring_model.use_subset:
+            nb_colors_subset = self.coloring_model.count_colors(
+                self.start_solution.colors
+            )
+            nb_colors = self.coloring_model.count_colors_all_index(
+                self.start_solution.colors
+            )
+
         if nb_colors is None:
             raise RuntimeError("self.start_solution.nb_color should not be None.")
         color_model = Model("color")
         colors_var: Dict[Tuple[Hashable, int], "Var"] = {}
         range_node = self.nodes_name
         range_color = range(nb_colors)
+        range_color_subset = range(nb_colors_subset)
+        range_color_per_node = {}
         for node in self.nodes_name:
-            for color in range_color:
+            rng = self.get_range_color(
+                node_name=node,
+                range_color_subset=range_color_subset,
+                range_color_all=range_color,
+            )
+            for color in rng:
                 colors_var[node, color] = color_model.addVar(
                     vtype=GRB.BINARY, obj=0, name="x_" + str((node, color))
                 )
+            range_color_per_node[node] = set(rng)
         one_color_constraints: OneColorConstraints = {}
         for n in range_node:
             one_color_constraints[n] = color_model.addLConstr(
-                quicksum([colors_var[n, c] for c in range_color]) == 1
+                quicksum([colors_var[n, c] for c in range_color_per_node[n]]) == 1
             )
         color_model.update()
         cliques = []
@@ -220,7 +256,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
                         [
                             (color_i + 1) * colors_var[node, color_i]
                             for node in c
-                            for color_i in range_color
+                            for color_i in range_color_per_node[node]
                         ]
                     )
                     >= sum([i + 1 for i in range(len(c))])
@@ -239,14 +275,18 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
         edges = g.edges()
         constraints_neighbors: NeighborsConstraints = {}
         for e in edges:
-            for c in range_color:
-                constraints_neighbors[(e[0], e[1], c)] = color_model.addLConstr(
-                    colors_var[e[0], c] + colors_var[e[1], c] <= 1
-                )
+            for c in range_color_per_node[e[0]]:
+                if c in range_color_per_node[e[1]]:
+                    constraints_neighbors[(e[0], e[1], c)] = color_model.addLConstr(
+                        colors_var[e[0], c] + colors_var[e[1], c] <= 1
+                    )
         for n in range_node:
             color_model.addLConstr(
                 quicksum(
-                    [(color_i + 1) * colors_var[n, color_i] for color_i in range_color]
+                    [
+                        (color_i + 1) * colors_var[n, color_i]
+                        for color_i in range_color_per_node[n]
+                    ]
                 )
                 <= opt
             )
@@ -340,6 +380,15 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
             logger.info("Get dummy solution")
             self.start_solution = self.coloring_model.get_dummy_solution()
         nb_colors = self.start_solution.nb_color
+        nb_colors_subset = nb_colors
+        if self.coloring_model.use_subset:
+            nb_colors_subset = self.coloring_model.count_colors(
+                self.start_solution.colors
+            )
+            nb_colors = self.coloring_model.count_colors_all_index(
+                self.start_solution.colors
+            )
+
         if nb_colors is None:
             raise RuntimeError("self.start_solution.nb_color should not be None.")
         color_model = mip.Model(
@@ -348,15 +397,23 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
         colors_var = {}
         range_node = self.nodes_name
         range_color = range(nb_colors)
+        range_color_subset = range(nb_colors_subset)
+        range_color_per_node = {}
         for node in self.nodes_name:
-            for color in range_color:
+            rng = self.get_range_color(
+                node_name=node,
+                range_color_subset=range_color_subset,
+                range_color_all=range_color,
+            )
+            for color in rng:
                 colors_var[node, color] = color_model.add_var(
                     var_type=BINARY, obj=0, name="x_" + str((node, color))
                 )
+            range_color_per_node[node] = set(rng)
         one_color_constraints = {}
         for n in range_node:
             one_color_constraints[n] = color_model.add_constr(
-                xsum([colors_var[n, c] for c in range_color]) == 1
+                xsum([colors_var[n, c] for c in range_color_per_node[n]]) == 1
             )
         cliques = []
         g = self.graph.to_networkx()
@@ -376,7 +433,7 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
                         [
                             (color_i + 1) * colors_var[node, color_i]
                             for node in c
-                            for color_i in range_color
+                            for color_i in range_color_per_node[node]
                         ]
                     )
                     >= sum([i + 1 for i in range(len(c))])
@@ -386,7 +443,7 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
                         [
                             colors_var[node, color_i]
                             for node in c
-                            for color_i in range_color
+                            for color_i in range_color_per_node[node]
                         ]
                     )
                     <= opt
@@ -395,14 +452,18 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
         edges = g.edges()
         constraints_neighbors = {}
         for e in edges:
-            for c in range_color:
-                constraints_neighbors[(e[0], e[1], c)] = color_model.add_constr(
-                    colors_var[e[0], c] + colors_var[e[1], c] <= 1
-                )
+            for c in range_color_per_node[e[0]]:
+                if c in range_color_per_node[e[1]]:
+                    constraints_neighbors[(e[0], e[1], c)] = color_model.add_constr(
+                        colors_var[e[0], c] + colors_var[e[1], c] <= 1
+                    )
         for n in range_node:
             color_model.add_constr(
                 xsum(
-                    [(color_i + 1) * colors_var[n, color_i] for color_i in range_color]
+                    [
+                        (color_i + 1) * colors_var[n, color_i]
+                        for color_i in range_color_per_node[n]
+                    ]
                 )
                 <= opt
             )

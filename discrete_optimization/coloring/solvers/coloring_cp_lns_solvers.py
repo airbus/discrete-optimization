@@ -14,7 +14,6 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
-from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,

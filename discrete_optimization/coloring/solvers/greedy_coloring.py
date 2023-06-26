@@ -101,15 +101,16 @@ class GreedyColoring(SolverColoring):
                 colors = nx.algorithms.coloring.greedy_color(
                     self.nx_graph, strategy=strategy, interchange=False
                 )
-                number_colors = len(set(list(colors.values())))
+                # number_colors = len(set(list(colors.values())))
                 raw_solution = [colors[i] for i in self.coloring_model.nodes_name]
-                logger.debug(f"{strategy} : number colors : {number_colors}")
+                number_colors = self.coloring_model.count_colors(raw_solution)
+                logger.info(f"{strategy} : number colors : {number_colors}")
                 if number_colors < best_nb_color:
                     best_solution = raw_solution
                     best_nb_color = number_colors
             except Exception as e:
                 logger.info(f"Failed strategy : {strategy} {e}")
-        logger.debug(f"best : {best_nb_color}")
+        logger.info(f"best found : {best_nb_color}")
         solution = ColoringSolution(
             self.coloring_model, colors=best_solution, nb_color=None
         )
