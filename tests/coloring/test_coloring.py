@@ -1,6 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 import random
 
 import numpy as np
@@ -9,6 +10,8 @@ import pytest
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
+    ConstraintsColoring,
+    transform_coloring_problem,
 )
 from discrete_optimization.coloring.coloring_parser import (
     get_data_available,
@@ -43,6 +46,9 @@ except ImportError:
 else:
     gurobi_available = True
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 
 @pytest.fixture
 def random_seed():
@@ -65,11 +71,35 @@ def test_solvers():
     assert coloring_model.graph.nodes_name is not None
     solvers = solvers_map.keys()
     for s in solvers:
+        logging.info(f"Running {s}")
         if s == ColoringLP and not gurobi_available:
             # you need a gurobi licence to test this solver.
             continue
         results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])
-        s, f = results.get_best_solution_fit()
+        sol, fit = results.get_best_solution_fit()
+
+
+def test_solvers_subset():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    coloring_model: ColoringProblem = parse_file(small_example)
+    coloring_model = transform_coloring_problem(
+        coloring_model,
+        subset_nodes=set(range(10)),
+        constraints_coloring=ConstraintsColoring(color_constraint={0: 0, 1: 1, 2: 2}),
+    )
+    assert coloring_model.graph is not None
+    assert coloring_model.number_of_nodes is not None
+    assert coloring_model.graph.nodes_name is not None
+    solvers = solvers_map.keys()
+    for s in solvers:
+        logger.info(f"Running {s}")
+        if s == ColoringLP and not gurobi_available:
+            # you need a gurobi licence to test this solver.
+            continue
+        results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])
+        sol, fit = results.get_best_solution_fit()
+        print(f"Solver {s}, fitness = {fit}")
+        print(f"Evaluation : {coloring_model.evaluate(sol)}")
 
 
 def test_asp_solver():
