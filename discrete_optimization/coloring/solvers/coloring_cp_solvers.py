@@ -12,7 +12,7 @@ import os
 import random
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
 import pymzn
@@ -21,6 +21,7 @@ from minizinc import Instance, Model, Result, Solver
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
+    ConstraintsColoring,
 )
 from discrete_optimization.coloring.coloring_toolbox import compute_cliques
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
@@ -58,8 +59,8 @@ class ColoringCPSolution:
     def __init__(self, objective: int, _output_item: Optional[str], **kwargs: Any):
         self.objective = objective
         self.dict = kwargs
-        logger.debug(f"New solution {self.objective}")
-        logger.debug(f"Output {_output_item}")
+        logger.info(f"New solution {self.objective}")
+        logger.info(f"Output {_output_item}")
 
     def check(self) -> bool:
         return True
@@ -69,12 +70,14 @@ class ColoringCPModel(Enum):
     CLIQUES = 0
     DEFAULT = 1
     LNS = 2
+    DEFAULT_WITH_SUBSET = 3
 
 
 file_dict = {
     ColoringCPModel.CLIQUES: "coloring_clique.mzn",
     ColoringCPModel.DEFAULT: "coloring.mzn",
     ColoringCPModel.LNS: "coloring_for_lns.mzn",
+    ColoringCPModel.DEFAULT_WITH_SUBSET: "coloring_subset_nodes.mzn",
 }
 
 
@@ -115,6 +118,7 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
             params_objective_function=params_objective_function,
         )
         self.cp_solver_name = cp_solver_name
+        self.dict_datas: Optional[Dict[str, Any]] = None
 
     def init_model(self, **kwargs: Any) -> None:
         """Instantiate a minizinc model with the coloring problem data.
@@ -134,25 +138,47 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         """
         nb_colors = kwargs.get("nb_colors", None)
         object_output = kwargs.get("object_output", True)
+        with_subset_nodes = kwargs.get(
+            "with_subset_nodes", self.coloring_model.use_subset
+        )
         include_seq_chain_constraint = kwargs.get("include_seq_chain_constraint", False)
+
         if nb_colors is None:
-            solution = self.get_solution(**kwargs)
-            nb_colors = solution.nb_color
-        model_type = kwargs.get("cp_model", ColoringCPModel.DEFAULT)
+            solution: ColoringSolution = self.get_solution(**kwargs)
+            nb_colors = self.coloring_model.count_colors_all_index(solution.colors)
+        print(nb_colors)
+        model_type = kwargs.get(
+            "cp_model",
+            ColoringCPModel.DEFAULT
+            if not with_subset_nodes
+            else ColoringCPModel.DEFAULT_WITH_SUBSET,
+        )
+        if with_subset_nodes and model_type != ColoringCPModel.DEFAULT_WITH_SUBSET:
+            model_type = ColoringCPModel.DEFAULT_WITH_SUBSET
         path = os.path.join(path_minizinc, file_dict[model_type])
-        self.model = Model(path)
+        model = Model(path)
         if object_output:
-            self.model.output_type = ColoringCPSolution
+            model.output_type = ColoringCPSolution
             self.custom_output_type = True
         solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
-        instance = Instance(solver, self.model)
+        instance = Instance(solver, model)
         instance["n_nodes"] = self.number_of_nodes
         instance["n_edges"] = int(self.number_of_edges / 2)
         instance["nb_colors"] = nb_colors
         keys = []
-        if model_type in {ColoringCPModel.DEFAULT, ColoringCPModel.CLIQUES}:
+        if model_type in {
+            ColoringCPModel.DEFAULT,
+            ColoringCPModel.CLIQUES,
+            ColoringCPModel.DEFAULT_WITH_SUBSET,
+        }:
             instance["include_seq_chain_constraint"] = include_seq_chain_constraint
             keys += ["include_seq_chain_constraint"]
+        if model_type == ColoringCPModel.DEFAULT_WITH_SUBSET:
+            instance["subset_node"] = [
+                node in self.coloring_model.subset_nodes
+                for node in self.coloring_model.nodes_name
+            ]
+            keys += ["subset_node"]
         keys += ["n_nodes", "n_edges", "nb_colors"]
         edges = [
             [self.index_nodes_name[e[0]] + 1, self.index_nodes_name[e[1]] + 1, e[2]]
@@ -170,6 +196,12 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
             keys += ["cliques", "n_cliques", "all_cliques"]
         instance["list_edges"] = [[e[0], e[1]] for e in edges]
         keys += ["list_edges"]
+        if self.coloring_model.has_constraints_coloring:
+            constraints = self.add_coloring_constraint(
+                coloring_constraint=self.coloring_model.constraints_coloring
+            )
+            for c in constraints:
+                instance.add_string(c)
         self.instance = instance
         self.dict_datas = {k: instance[k] for k in keys}
 
@@ -240,6 +272,14 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
             limit_store=False,
             mode_optim=self.params_objective_function.sense_function,
         )
+
+    def add_coloring_constraint(self, coloring_constraint: ConstraintsColoring):
+        s = []
+        for n in coloring_constraint.color_constraint:
+            index = self.index_nodes_name[n]
+            value_color = coloring_constraint.color_constraint[n]
+            s.append(f"constraint color_graph[{index+1}]=={value_color+1};\n")
+        return s
 
     def get_solution(self, **kwargs: Any) -> ColoringSolution:
         """Used by the init_model method to provide a greedy first solution
