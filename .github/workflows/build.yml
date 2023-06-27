@@ -139,6 +139,7 @@ jobs:
     steps:
       - name: Checkout discrete-optimization source code
         uses: actions/checkout@v3
+      - run: rm -rf $RUNNER_TOOL_CACHE/Python/3.7.17
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
