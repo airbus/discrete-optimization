@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Hashable, KeysView, List, Optional, Set, Tuple
+from typing import Any, Dict, Hashable, KeysView, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 
@@ -107,3 +107,48 @@ class Graph:
 
     def predecessors_map(self) -> Dict[Hashable, List[Hashable]]:
         return {n: list(self.graph_nx.predecessors(n)) for n in self.graph_nx.nodes()}
+
+    def compute_length(
+        self, path: List[Hashable], attribute_name: Optional[str] = None
+    ):
+        if attribute_name is None:
+            length = len(path) - 1
+        else:
+            length = sum(
+                [
+                    self.graph_nx.edges[(i1, i2)][attribute_name]
+                    for i1, i2 in zip(path[:-1], path[1:])
+                ]
+            )
+        return length
+
+    def compute_shortest_path(
+        self, source: Hashable, target: Hashable, attribute_name: Optional[str] = None
+    ):
+        path = nx.dijkstra_path(
+            G=self.graph_nx, source=source, target=target, weight=attribute_name
+        )
+        length = self.compute_length(path=path, attribute_name=attribute_name)
+        return path, length
+
+    def compute_all_shortest_path(
+        self, attribute_name: Optional[str] = None
+    ) -> Dict[Hashable, Dict[Hashable, Tuple[List[Hashable], float]]]:
+        all_path = nx.all_pairs_dijkstra_path(G=self.graph_nx, weight=attribute_name)
+        dict_path_and_distance = {}
+        for source, dict_path in all_path:
+            dict_path_and_distance[source] = {}
+            for target in dict_path:
+                length = self.compute_length(
+                    path=dict_path[target], attribute_name=attribute_name
+                )
+                dict_path_and_distance[source][target] = (dict_path[target], length)
+        return dict_path_and_distance
+
+
+def from_networkx(graph_nx: Union[nx.DiGraph, nx.Graph]):
+    return Graph(
+        nodes=[(n, graph_nx.nodes[n]) for n in graph_nx.nodes()],
+        edges=[(e[0], e[1], graph_nx.edges[e]) for e in graph_nx.edges()],
+        undirected=isinstance(graph_nx, nx.Graph),
+    )
