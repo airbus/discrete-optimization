@@ -34,7 +34,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: pre-commit checks
-        run: pre-commit run --show-diff-on-failure --color=always
+        run: pre-commit run --show-diff-on-failure --color=always --all-files
 
   trigger:
     # store trigger reason
