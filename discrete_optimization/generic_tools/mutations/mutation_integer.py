@@ -53,32 +53,14 @@ class MutationIntegerSpecificArity(Mutation):
                 register, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY
             )
             self.attribute = register.dict_attribute_to_type[attribute_key]["name"]
-            arities = register.dict_attribute_to_type[attribute_key]["arities"]
-            lows = lower_bound_vector_encoding_from_dict(
-                register.dict_attribute_to_type[attribute_key]
-            )
-            ups = upper_bound_vector_encoding_from_dict(
-                register.dict_attribute_to_type[attribute_key]
-            )
         else:
             self.attribute = attribute
-        if arities is None:
-            attribute_key = get_attribute_for_type(
-                register, TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY
-            )
-            self.arities = register.dict_attribute_to_type[attribute_key]["arities"]
-        else:
-            self.arities = arities
-        if lows is None:
-            self.lows = [min_value for i in range(len(self.arities))]
-        else:
-            self.lows = lows
-        if ups is None:
-            self.ups = [
-                min_value + self.arities[i] - 1 for i in range(len(self.arities))
-            ]
-        else:
-            self.ups = ups
+        self.lows = lower_bound_vector_encoding_from_dict(
+            register.dict_attribute_to_type[self.attribute]
+        )
+        self.ups = upper_bound_vector_encoding_from_dict(
+            register.dict_attribute_to_type[self.attribute]
+        )
         self.range_arities = [
             list(range(l, up + 1)) for l, up in zip(self.lows, self.ups)
         ]
