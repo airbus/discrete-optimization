@@ -660,6 +660,11 @@ class ORToolsGPDP(SolverDO):
                 routing.AddVariableMinimizedByFinalizer(
                     time_dimension.CumulVar(routing.End(i))
                 )
+        if "Distance" in self.dimension_names:
+            dim = routing.GetDimensionOrDie("Distance")
+            for i in range(self.problem.number_vehicle):
+                routing.AddVariableMinimizedByFinalizer(dim.CumulVar(routing.Start(i)))
+                routing.AddVariableMinimizedByFinalizer(dim.CumulVar(routing.End(i)))
         origins = {self.problem.origin_vehicle[v] for v in self.problem.origin_vehicle}
         targets = {self.problem.target_vehicle[v] for v in self.problem.target_vehicle}
         if include_time_windows:
@@ -833,9 +838,18 @@ class ORToolsGPDP(SolverDO):
         sols = []  # useful for callback
         callback = make_routing_monitor(self)
         self.routing.AddAtSolutionCallback(callback)
-        sols = self.routing.SolveWithParameters(
-            search_parameters
-        )  # useful for callback
+        if "initial_solution" in kwargs and kwargs.get("initial_solution") is not None:
+            initial_sol = self.routing.ReadAssignmentFromRoutes(
+                kwargs["initial_solution"], True
+            )
+            print("laucnhing with assignment")
+            sols = self.routing.SolveFromAssignmentWithParameters(
+                initial_sol, search_parameters
+            )
+        else:
+            sols = self.routing.SolveWithParameters(
+                search_parameters
+            )  # useful for callback
         return callback.sols
 
     def solve(self, **kwargs: Any) -> ResultStorage:
