@@ -146,9 +146,13 @@ class Graph:
         return dict_path_and_distance
 
 
-def from_networkx(graph_nx: Union[nx.DiGraph, nx.Graph]):
+def from_networkx(
+    graph_nx: Union[nx.DiGraph, nx.Graph], undirected: Optional[bool] = None
+):
     return Graph(
         nodes=[(n, graph_nx.nodes[n]) for n in graph_nx.nodes()],
         edges=[(e[0], e[1], graph_nx.edges[e]) for e in graph_nx.edges()],
-        undirected=isinstance(graph_nx, nx.Graph),
+        undirected=undirected
+        if undirected is not None
+        else not isinstance(graph_nx, nx.DiGraph),
     )
