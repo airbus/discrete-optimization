@@ -336,12 +336,12 @@ jobs:
         run: |
           binder_env_full_ref=${GITHUB_REPOSITORY}/${BINDER_ENV_DEFAULT_REF}
           echo Triggering binder environment build for ${binder_env_full_ref}
-          binderhubs="gke gke2 ovh ovh2 turing gesis"
+          binderhubs_url="ovh.mybinder.org ovh2.mybinder.org notebooks.gesis.org/binder"
           return_code=0
           for binderhub in $binderhubs; do
             echo "** on ${binderhub}"
             # go on even though the script crashes
-            bash scripts/trigger_binder.sh https://${binderhub}.mybinder.org/build/gh/${binder_env_full_ref} || ret_code=$?
+            bash scripts/trigger_binder.sh https://${binderhub_url}/build/gh/${binder_env_full_ref} || ret_code=$?
             # remember the potential crash
             if [ $ret_code != 0 ]; then return_code=$ret_code; fi
           done
@@ -509,14 +509,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Trigger a prebuild of release environment on each BinderHub deployments in the mybinder.org federation (now that the release is available)
-        run: |
-          binder_env_full_ref=${GITHUB_REPOSITORY}/${{ needs.create-binder-env.outputs.binder_env_ref }}
-          echo Triggering binder environment build for ${binder_env_full_ref}
-          bash scripts/trigger_binder.sh https://gke.mybinder.org/build/gh/${binder_env_full_ref}
-          bash scripts/trigger_binder.sh https://ovh.mybinder.org/build/gh/${binder_env_full_ref}
-          bash scripts/trigger_binder.sh https://turing.mybinder.org/build/gh/${binder_env_full_ref}
-          bash scripts/trigger_binder.sh https://gesis.mybinder.org/build/gh/${binder_env_full_ref}
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
