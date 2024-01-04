@@ -466,7 +466,8 @@ jobs:
           branch: gh-pages # The branch the action should deploy to.
           folder: docs/build/html # The folder the action should deploy.
           target-folder: /${{ github.event.repository.default_branch }} # The folder the action should deploy to.
-          commit-message: publish documentation for ${{ github.event.repository.default_branch }}
+          commit-message: publish documentation
+          single-commit: true
 
   deploy:
     # for release tags
@@ -528,7 +529,8 @@ jobs:
           branch: gh-pages # The branch the action should deploy to.
           folder: docs/build/html # The folder the action should deploy.
           target-folder: /${{ needs.build.outputs.do_version }} # The folder the action should deploy to.
-          commit-message: publish documentation for ${{ needs.build.outputs.do_version }}
+          commit-message: publish documentation
+          single-commit: true
 
   update-doc-versions:
     # triggers even if only one needed job succeeded (typically at least one will be skipped)
@@ -566,5 +568,6 @@ jobs:
           branch: gh-pages # The branch the action should deploy to.
           folder: gh-pages # The folder the action should deploy.
           target-folder: / # The folder the action should deploy to.
-          commit-message: update versions.json
+          commit-message: publish documentation
           clean: false  # do not remove other files (including whole doc versions)
+          single-commit: true
