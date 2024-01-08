@@ -108,7 +108,6 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
                 mode_mutation=ModeMutation.MUTATE,
                 params_objective_function=self.params_objective_function,
                 store_solution=False,
-                nb_solutions=10000,
             )
         elif self.ls_solver == LS_SOLVER.HC:
             ls = HillClimber(
@@ -118,7 +117,6 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
                 mode_mutation=ModeMutation.MUTATE,
                 params_objective_function=self.params_objective_function,
                 store_solution=True,
-                nb_solutions=10000,
             )
         result_sa = ls.solve(
             dummy,

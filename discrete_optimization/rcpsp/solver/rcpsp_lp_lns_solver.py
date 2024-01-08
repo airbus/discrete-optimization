@@ -138,7 +138,6 @@ class InitialSolutionRCPSP(InitialSolution):
                 mode_mutation=ModeMutation.MUTATE,
                 params_objective_function=self.params_objective_function,
                 store_solution=True,
-                nb_solutions=10000,
             )
             store_solution = sa.solve(
                 dummy, nb_iteration_max=10000, pickle_result=False

@@ -207,7 +207,6 @@ def solve_model(
             mode_mutation=ModeMutation.MUTATE,
             params_objective_function=params_objective_function,
             store_solution=True,
-            nb_solutions=10000,
         )
         result_ls = sa.solve(dummy, nb_iteration_max=nb_iteration, pickle_result=False)
     else:
@@ -231,7 +230,6 @@ def solve_model(
             params_objective_function=params_objective_function,
             mode_mutation=ModeMutation.MUTATE,
             store_solution=True,
-            nb_solutions=10000,
         )
         result_ls = sa_mo.solve(
             dummy,

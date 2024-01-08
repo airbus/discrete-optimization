@@ -82,7 +82,6 @@ def test_local_search_sm(random_seed):
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=False,
-        nb_solutions=10,
     )
 
     sol = sa.solve(dummy, nb_iteration_max=500, pickle_result=False).get_best_solution()
@@ -135,7 +134,6 @@ def test_local_search_mm(random_seed):
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=False,
-        nb_solutions=10,
     )
 
     sol = sa.solve(dummy, nb_iteration_max=300, pickle_result=False).get_best_solution()
@@ -185,7 +183,6 @@ def test_local_search_sm_multiobj(random_seed):
         params_objective_function=params_objective_function,
         mode_mutation=ModeMutation.MUTATE,
         store_solution=True,
-        nb_solutions=100,
     )
     pareto_store = sa.solve(
         dummy, nb_iteration_max=100, pickle_result=False, update_iteration_pareto=100
@@ -227,7 +224,6 @@ def test_local_search_sm_postpro_multiobj(random_seed):
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=True,
-        nb_solutions=100,
     )
     store = sa.solve(dummy, nb_iteration_max=100, pickle_result=False)
     pareto_store = result_storage_to_pareto_front(
@@ -291,7 +287,6 @@ def test_local_search_mm_multiobj(random_seed):
         params_objective_function=params_objective_function,
         mode_mutation=ModeMutation.MUTATE,
         store_solution=True,
-        nb_solutions=100,
     )
     pareto_store = sa.solve(
         dummy,
@@ -364,7 +359,6 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=True,
-        nb_solutions=100,
     )
     result_sa = sa.solve(dummy, nb_iteration_max=100, pickle_result=False)
     result_sa.list_solution_fits = [

@@ -74,7 +74,6 @@ def test_hc_knapsack_multiobj():
         mode_mutation=ModeMutation.MUTATE,
         params_objective_function=params_objective_function,
         store_solution=True,
-        nb_solutions=50000,
     )
     result_sa = sa.solve(
         initial_variable=solution,
