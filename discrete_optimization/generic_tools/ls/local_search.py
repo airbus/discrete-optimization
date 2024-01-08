@@ -56,13 +56,9 @@ class RestartHandlerLimit(RestartHandler):
     def __init__(
         self,
         nb_iteration_no_improvement: int,
-        cur_solution: Solution,
-        cur_objective: fitness_class,
     ):
         RestartHandler.__init__(self)
         self.nb_iteration_no_improvement = nb_iteration_no_improvement
-        self.solution_best = cur_solution.copy()
-        self.best_fitness = cur_objective
 
     def restart(
         self, cur_solution: Solution, cur_objective: fitness_class

@@ -40,7 +40,7 @@ def test_sa_knapsack():
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
+    res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(
         evaluator=model,
         mutator=mixed_mutation,
@@ -65,7 +65,7 @@ def test_hc_knapsack_multiobj():
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
+    res = RestartHandlerLimit(3000)
     params_objective_function = get_default_objective_setup(model)
     sa = HillClimberPareto(
         evaluator=model,

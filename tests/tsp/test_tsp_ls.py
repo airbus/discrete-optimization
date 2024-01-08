@@ -35,7 +35,7 @@ def test_sa_2opt():
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
-    res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
+    res = RestartHandlerLimit(3000)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
@@ -66,7 +66,7 @@ def test_sa_partial_shuffle():
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
-    res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
+    res = RestartHandlerLimit(3000)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
@@ -96,7 +96,7 @@ def test_sa_swap():
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
-    res = RestartHandlerLimit(3000, solution, model.evaluate(solution)["length"])
+    res = RestartHandlerLimit(3000)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
@@ -127,7 +127,7 @@ def test_sa_twoopttbasic():
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
-    res = RestartHandlerLimit(3000, solution, model.evaluate(solution))
+    res = RestartHandlerLimit(3000)
     list_mutation = [
         mutate[0].build(model, solution, attribute="permutation", **mutate[1])
         for mutate in list_mutation
@@ -158,7 +158,7 @@ def test_hc():
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
     _, list_mutation = get_available_mutations(model, solution)
-    res = RestartHandlerLimit(100, solution, model.evaluate(solution))
+    res = RestartHandlerLimit(100)
     list_mutation = [
         mutate[0].build(model, solution, **mutate[1])
         for mutate in list_mutation

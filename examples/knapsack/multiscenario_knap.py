@@ -58,7 +58,7 @@ def initialize_multiscenario():
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(3000, solution, multiscenario_model.evaluate(solution))
+    res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(
         evaluator=multiscenario_model,
         mutator=mixed_mutation,

@@ -110,6 +110,7 @@ class SimulatedAnnealing:
                 nb_best_store=1,
             )
         self.restart_handler.best_fitness = objective
+        self.restart_handler.solution_best = initial_variable.copy()
         iteration = 0
         while iteration < nb_iteration_max:
             local_improvement = False

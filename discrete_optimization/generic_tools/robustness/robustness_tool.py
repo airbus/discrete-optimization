@@ -194,9 +194,7 @@ def solve_model(
         aggreg_sol, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
             model, params_objective_function
         )
-        res = RestartHandlerLimit(
-            200, cur_solution=dummy, cur_objective=aggreg_sol(dummy)
-        )
+        res = RestartHandlerLimit(200)
         sa = SimulatedAnnealing(
             evaluator=model,
             mutator=mixed_mutation,
@@ -220,9 +218,7 @@ def solve_model(
         aggreg_sol2, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
             model, params_objective_function
         )
-        res = RestartHandlerLimit(
-            200, cur_solution=dummy, cur_objective=aggreg_sol2(dummy)
-        )
+        res = RestartHandlerLimit(200)
         sa_mo = HillClimberPareto(
             evaluator=model,
             mutator=mixed_mutation,

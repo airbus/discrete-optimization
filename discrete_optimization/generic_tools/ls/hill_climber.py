@@ -85,6 +85,7 @@ class HillClimber:
         cur_best_objective = objective
         init_time = time.time()
         self.restart_handler.best_fitness = objective
+        self.restart_handler.solution_best = initial_variable.copy()
         iteration = 0
         while iteration < nb_iteration_max:
             accept = False
@@ -183,6 +184,7 @@ class HillClimberPareto(HillClimber):
         cur_objective = objective
         cur_best_objective = objective
         self.restart_handler.best_fitness = objective
+        self.restart_handler.solution_best = initial_variable.copy()
         iteration = 0
         while iteration < nb_iteration_max:
             accept = False

@@ -91,8 +91,6 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
         )
         res = RestartHandlerLimit(
             nb_iteration_no_improvement=kwargs.get("nb_iteration_no_improvement", 300),
-            cur_solution=dummy,
-            cur_objective=model.evaluate(dummy),
         )
         ls = None
         if self.ls_solver == LS_SOLVER.SA:
