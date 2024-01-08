@@ -156,7 +156,6 @@ def run_cp_multiscenario():
             temperature=1, restart_handler=res, coefficient=0.9999
         ),
         store_solution=True,
-        nb_solutions=10000000,
     )
     result_sa = simulated_annealing.solve(initial_variable=dummy, nb_iteration_max=300)
     best_solution: RCPSPSolution = result_sa.get_best_solution()
@@ -223,7 +222,6 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             mode_mutation=ModeMutation.MUTATE,
             params_objective_function=params_objective_function,
             store_solution=True,
-            nb_solutions=10000,
         )
         result_ls = sa.solve(dummy, nb_iteration_max=2000, pickle_result=False)
     else:
@@ -240,7 +238,6 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             params_objective_function=params_objective_function,
             mode_mutation=ModeMutation.MUTATE,
             store_solution=True,
-            nb_solutions=10000,
         )
         result_ls = sa.solve(
             dummy,
@@ -360,7 +357,6 @@ def solve_model(model, postpro=True, nb_iteration=500):
             mode_mutation=ModeMutation.MUTATE,
             params_objective_function=params_objective_function,
             store_solution=True,
-            nb_solutions=10000,
         )
         result_ls = sa.solve(dummy, nb_iteration_max=nb_iteration, pickle_result=False)
     else:
@@ -377,7 +373,6 @@ def solve_model(model, postpro=True, nb_iteration=500):
             params_objective_function=params_objective_function,
             mode_mutation=ModeMutation.MUTATE,
             store_solution=True,
-            nb_solutions=10000,
         )
         result_ls = sa.solve(
             dummy,

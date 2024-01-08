@@ -51,7 +51,6 @@ class SimulatedAnnealing:
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution: bool = False,
-        nb_solutions: int = 1000,
     ):
         self.evaluator = evaluator
         self.mutator = mutator
@@ -76,7 +75,6 @@ class SimulatedAnnealing:
             )
         self.mode_optim = self.params_objective_function.sense_function
         self.store_solution = store_solution
-        self.nb_solutions = nb_solutions
 
     def solve(
         self,

@@ -36,7 +36,6 @@ class HillClimber:
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution: bool = False,
-        nb_solutions: int = 1000,
     ):
         self.evaluator = evaluator
         self.mutator = mutator
@@ -54,7 +53,6 @@ class HillClimber:
             evaluator, params_objective_function=self.params_objective_function
         )
         self.store_solution = store_solution
-        self.nb_solutions = nb_solutions
 
     def solve(
         self,
@@ -152,7 +150,6 @@ class HillClimberPareto(HillClimber):
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution: bool = False,
-        nb_solutions: int = 1000,
     ):
         super().__init__(
             evaluator=evaluator,
@@ -161,7 +158,6 @@ class HillClimberPareto(HillClimber):
             mode_mutation=mode_mutation,
             params_objective_function=params_objective_function,
             store_solution=store_solution,
-            nb_solutions=nb_solutions,
         )
 
     def solve(
