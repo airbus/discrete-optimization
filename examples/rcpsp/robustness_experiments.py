@@ -144,9 +144,7 @@ def run_cp_multiscenario():
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        500, cur_solution=dummy, cur_objective=model_aggreg_mean.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(500)
     simulated_annealing = SimulatedAnnealing(
         evaluator=model_aggreg_mean,
         mutator=mixed_mutation,
@@ -200,9 +198,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        500, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(500)
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, 5]
     if postpro:
@@ -335,9 +331,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        500, cur_solution=dummy, cur_objective=model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(500)
     objectives = ["makespan"]
     objective_weights = [-1]
     if postpro:

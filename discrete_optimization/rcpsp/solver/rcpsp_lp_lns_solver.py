@@ -127,9 +127,7 @@ class InitialSolutionRCPSP(InitialSolution):
             mixed_mutation = BasicPortfolioMutation(
                 list_mutation, np.ones((len(list_mutation)))
             )
-            res = RestartHandlerLimit(
-                500, cur_solution=dummy, cur_objective=self.problem.evaluate(dummy)
-            )
+            res = RestartHandlerLimit(500)
             sa = SimulatedAnnealing(
                 evaluator=self.problem,
                 mutator=mixed_mutation,

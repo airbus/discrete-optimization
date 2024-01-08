@@ -65,9 +65,7 @@ def test_local_search_sm(random_seed):
     objectives = ["makespan"]
     objectives = ["mean_resource_reserve"]
     objective_weights = [-1]
-    res = RestartHandlerLimit(
-        200, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(200)
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
         objectives=objectives,
@@ -117,9 +115,7 @@ def test_local_search_mm(random_seed):
     )
     objectives = ["makespan"]
     objective_weights = [-1]
-    res = RestartHandlerLimit(
-        200, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(200)
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
         objectives=objectives,
@@ -165,9 +161,7 @@ def test_local_search_sm_multiobj(random_seed):
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        200, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(200)
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, 1]
     params_objective_function = ParamsObjectiveFunction(
@@ -205,9 +199,7 @@ def test_local_search_sm_postpro_multiobj(random_seed):
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        500, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(500)
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, 100]
     params_objective_function = ParamsObjectiveFunction(
@@ -269,9 +261,7 @@ def test_local_search_mm_multiobj(random_seed):
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        200, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(200)
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, 100]
     params_objective_function = ParamsObjectiveFunction(
@@ -340,9 +330,7 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
     )
-    res = RestartHandlerLimit(
-        500, cur_solution=dummy, cur_objective=rcpsp_model.evaluate(dummy)
-    )
+    res = RestartHandlerLimit(500)
     objectives = ["makespan", "mean_resource_reserve"]
     objective_weights = [-1, 100]
     params_objective_function = ParamsObjectiveFunction(

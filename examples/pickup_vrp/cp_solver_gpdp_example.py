@@ -1665,7 +1665,7 @@ def run_tsp():
     )
     solution = tsp_model.get_random_dummy_solution()
     _, list_mutation = get_available_mutations(tsp_model, solution)
-    res = RestartHandlerLimit(3000, solution, tsp_model.evaluate(solution)["length"])
+    res = RestartHandlerLimit(3000)
     print(list_mutation)
     list_mutation = [
         mutate[0].build(tsp_model, solution, attribute="permutation", **mutate[1])
