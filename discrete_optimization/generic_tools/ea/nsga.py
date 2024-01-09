@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeAttribute,
     build_evaluate_function_aggregated,
 )
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
@@ -48,7 +49,7 @@ _default_mutations = {
 }
 
 
-class Nsga:
+class Nsga(SolverDO):
     """NSGA
 
     Args:

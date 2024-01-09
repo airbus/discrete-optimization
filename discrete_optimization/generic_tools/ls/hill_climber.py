@@ -15,6 +15,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     build_evaluate_function_aggregated,
 )
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandler,
@@ -27,7 +28,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class HillClimber:
+class HillClimber(SolverDO):
     def __init__(
         self,
         evaluator: Problem,
