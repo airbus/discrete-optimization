@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.do_problem import (
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
 )
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -67,7 +68,7 @@ _default_mutations = {
 }
 
 
-class Ga:
+class Ga(SolverDO):
     """Single objective GA
 
     Args:

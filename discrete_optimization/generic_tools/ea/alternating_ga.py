@@ -10,6 +10,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
     DeapMutation,
@@ -21,7 +22,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 
-class AlternatingGa:
+class AlternatingGa(SolverDO):
     """Multi-encoding single objective GA
 
     Args:

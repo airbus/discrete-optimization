@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandler,
@@ -41,7 +42,7 @@ class TemperatureScheduling:
         ...
 
 
-class SimulatedAnnealing:
+class SimulatedAnnealing(SolverDO):
     def __init__(
         self,
         evaluator: Problem,
