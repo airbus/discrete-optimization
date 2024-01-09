@@ -7,10 +7,14 @@ import pickle
 import random
 import time
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -84,8 +88,11 @@ class SimulatedAnnealing(SolverDO):
         max_time_seconds: Optional[int] = None,
         pickle_result: bool = False,
         pickle_name: str = "debug",
+        callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        callbacks_list = CallbackList(callbacks=callbacks)
+
         init_time = time.time()
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
@@ -113,6 +120,9 @@ class SimulatedAnnealing(SolverDO):
         self.restart_handler.best_fitness = objective
         self.restart_handler.solution_best = initial_variable.copy()
         iteration = 0
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         while iteration < nb_iteration_max:
             local_improvement = False
             global_improvement = False
@@ -173,12 +183,23 @@ class SimulatedAnnealing(SolverDO):
             )
             # possibly restart somewhere
             iteration += 1
+
+            # end of step callback: stopping?
+            stopping = callbacks_list.on_step_end(
+                step=iteration, res=store, solver=self
+            )
+            if stopping:
+                break
+
             if pickle_result and iteration % 20000 == 0:
                 pickle.dump(cur_best_variable, open(pickle_name + ".pk", "wb"))
             if max_time_seconds is not None and iteration % 1000 == 0:
                 if time.time() - init_time > max_time_seconds:
                     break
+
         store.finalize()
+        # end of solve callback
+        callbacks_list.on_solve_end(res=store, solver=self)
         return store
 
 
