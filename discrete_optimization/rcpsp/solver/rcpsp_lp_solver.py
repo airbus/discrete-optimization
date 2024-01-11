@@ -77,6 +77,7 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
         )
         self.lp_solver = lp_solver
         self.solver_name = map_solver[lp_solver]
+        self.start_solution: Optional[RCPSPSolution] = None
 
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
@@ -862,7 +863,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
         return super().solve(parameters_milp=parameters_milp, **kwargs)
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
+        # We call explicitly the method to be sure getting the proper one
         return _BaseLP_MRCPSP.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
@@ -883,6 +884,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
                 )
                 self.start_solution = store_solution.get_best_solution_fit()[0]
                 makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
+                print(self.start_solution, makespan)
             else:
                 logger.info("Get dummy solution")
                 solution = self.rcpsp_model.get_dummy_solution()
@@ -960,7 +962,8 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         self.model.add_constraints(
             (
                 self.model.sum(
-                    int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
+                    int(self.rcpsp_model.mode_details[key[0]][key[1]].get(r, 0))
+                    * self.x[key]
                     for key in keys_for_t[t]
                 )
                 <= renewable_quantity[r][t]
@@ -1032,9 +1035,6 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
             self.starts[task] = self.model.integer_var(
                 lb=0, ub=self.index_time[-1], name=f"start({task})"
             )
-            self.starts[task].start = self.start_solution.rcpsp_schedule[task][
-                "start_time"
-            ]
             self.model.add_constraint(
                 self.model.sum(
                     [self.x[key] * key[2] for key in variable_per_task[task]]
