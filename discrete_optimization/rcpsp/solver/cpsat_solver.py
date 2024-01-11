@@ -4,26 +4,42 @@
 #  Native ortools-cpsat implementation for multimode rcpsp with resource calendar.
 #  Note : Model could most likely be improved with https://github.com/google/or-tools/blob/stable/examples/python/rcpsp_sat.py
 import logging
-from typing import Optional, Dict, Any, List
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage, \
-    from_solutions_to_result_storage
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
-from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.cp_tools import ParametersCP, StatusSolver
-from discrete_optimization.generic_tools.do_problem import (ParamsObjectiveFunction,
-                                                            build_aggreg_function_and_params_objective)
-from ortools.sat.python.cp_model import CpModel, CpSolver, VarArraySolutionPrinter, IntervalVar, \
-    VarArrayAndObjectiveSolutionPrinter
-from ortools.sat.python.cp_model import UNKNOWN, OPTIMAL, INFEASIBLE, FEASIBLE
+from typing import Any, Dict, List, Optional
 
+from ortools.sat.python.cp_model import (
+    FEASIBLE,
+    INFEASIBLE,
+    OPTIMAL,
+    UNKNOWN,
+    CpModel,
+    CpSolver,
+    IntervalVar,
+    VarArrayAndObjectiveSolutionPrinter,
+    VarArraySolutionPrinter,
+)
+
+from discrete_optimization.generic_tools.cp_tools import ParametersCP, StatusSolver
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    build_aggreg_function_and_params_objective,
+)
+from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+    from_solutions_to_result_storage,
+)
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import create_fake_tasks
 
 logger = logging.getLogger(__name__)
 
 
 class CPSatRCPSPSolver(SolverDO):
-    def __init__(self, problem: RCPSPModel,
-                 params_objective_function: Optional[ParamsObjectiveFunction] = None):
+    def __init__(
+        self,
+        problem: RCPSPModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         self.problem = problem
         (
             self.aggreg_sol,
@@ -44,21 +60,26 @@ class CPSatRCPSPSolver(SolverDO):
         is_present_var = {}
         interval_var = {}
         for task in self.problem.tasks_list:
-            starts_var[task] = model.NewIntVar(lb=0, ub=self.problem.horizon,
-                                               name=f"start_{task}")
-            ends_var[task] = model.NewIntVar(lb=0, ub=self.problem.horizon,
-                                             name=f"end_{task}")
+            starts_var[task] = model.NewIntVar(
+                lb=0, ub=self.problem.horizon, name=f"start_{task}"
+            )
+            ends_var[task] = model.NewIntVar(
+                lb=0, ub=self.problem.horizon, name=f"end_{task}"
+            )
         interval_per_tasks = {}
         for task in self.problem.mode_details:
             interval_per_tasks[task] = set()
             for mode in self.problem.mode_details[task]:
-                is_present_var[(task, mode)] = model.NewBoolVar(f"is_present_{task,mode}")
-                interval_var[(task, mode)] = \
-                model.NewOptionalIntervalVar(start=starts_var[task],
-                                             size=self.problem.mode_details[task][mode]["duration"],
-                                             end=ends_var[task],
-                                             is_present=is_present_var[(task, mode)],
-                                             name=f"interval_{task,mode}")
+                is_present_var[(task, mode)] = model.NewBoolVar(
+                    f"is_present_{task,mode}"
+                )
+                interval_var[(task, mode)] = model.NewOptionalIntervalVar(
+                    start=starts_var[task],
+                    size=self.problem.mode_details[task][mode]["duration"],
+                    end=ends_var[task],
+                    is_present=is_present_var[(task, mode)],
+                    name=f"interval_{task,mode}",
+                )
                 interval_per_tasks[task].add((task, mode))
         # Precedence constraints
         for task in self.problem.successors:
@@ -70,44 +91,73 @@ class CPSatRCPSPSolver(SolverDO):
 
         resources = self.problem.resources_list
         if self.problem.is_calendar:
-            fake_task: List[Dict[str, int]] = create_fake_tasks(rcpsp_problem=self.problem)
+            fake_task: List[Dict[str, int]] = create_fake_tasks(
+                rcpsp_problem=self.problem
+            )
         else:
             fake_task = []
         for resource in resources:
             if resource in self.problem.non_renewable_resources:
-                task_modes_consuming = [((task, mode), self.problem.mode_details[task][mode].get(resource, 0))
-                                        for task in self.problem.tasks_list
-                                        for mode in self.problem.mode_details[task]
-                                        if self.problem.mode_details[task][mode].get(resource, 0) > 0]
-                model.Add(sum([is_present_var[x[0]]*x[1]
-                               for x in task_modes_consuming]) <= self.problem.get_max_resource_capacity(resource))
+                task_modes_consuming = [
+                    (
+                        (task, mode),
+                        self.problem.mode_details[task][mode].get(resource, 0),
+                    )
+                    for task in self.problem.tasks_list
+                    for mode in self.problem.mode_details[task]
+                    if self.problem.mode_details[task][mode].get(resource, 0) > 0
+                ]
+                model.Add(
+                    sum([is_present_var[x[0]] * x[1] for x in task_modes_consuming])
+                    <= self.problem.get_max_resource_capacity(resource)
+                )
 
             else:
-                task_modes_consuming = [((task, mode), self.problem.mode_details[task][mode].get(resource, 0))
-                                        for task in self.problem.tasks_list
-                                        for mode in self.problem.mode_details[task]
-                                        if self.problem.mode_details[task][mode].get(resource, 0) > 0]
-                fake_task_res = [(model.NewFixedSizeIntervalVar(start=f["start"],
-                                                                size=f["duration"],
-                                                                name=f"res_"),
-                                  f.get(resource, 0))
-                                  for f in fake_task if f.get(resource, 0) > 0]
+                task_modes_consuming = [
+                    (
+                        (task, mode),
+                        self.problem.mode_details[task][mode].get(resource, 0),
+                    )
+                    for task in self.problem.tasks_list
+                    for mode in self.problem.mode_details[task]
+                    if self.problem.mode_details[task][mode].get(resource, 0) > 0
+                ]
+                fake_task_res = [
+                    (
+                        model.NewFixedSizeIntervalVar(
+                            start=f["start"], size=f["duration"], name=f"res_"
+                        ),
+                        f.get(resource, 0),
+                    )
+                    for f in fake_task
+                    if f.get(resource, 0) > 0
+                ]
                 capacity = self.problem.get_max_resource_capacity(resource)
-                if capacity>1:
-                    model.AddCumulative([interval_var[x[0]]
-                                         for x in task_modes_consuming]+[x[0] for x in fake_task_res],
-                                        demands=[x[1] for x in task_modes_consuming]+[x[1] for x in fake_task_res],
-                                        capacity=self.problem.get_max_resource_capacity(resource))
+                if capacity > 1:
+                    model.AddCumulative(
+                        [interval_var[x[0]] for x in task_modes_consuming]
+                        + [x[0] for x in fake_task_res],
+                        demands=[x[1] for x in task_modes_consuming]
+                        + [x[1] for x in fake_task_res],
+                        capacity=self.problem.get_max_resource_capacity(resource),
+                    )
                 if capacity == 1:
-                    model.AddNoOverlap([interval_var[x[0]]
-                                        for x in task_modes_consuming] + [x[0] for x in fake_task_res])
+                    model.AddNoOverlap(
+                        [interval_var[x[0]] for x in task_modes_consuming]
+                        + [x[0] for x in fake_task_res]
+                    )
 
         model.Minimize(starts_var[self.problem.sink_task])
         self.cp_model = model
-        self.variables = {"start": starts_var, "end": ends_var,
-                          "is_present": is_present_var}
+        self.variables = {
+            "start": starts_var,
+            "end": ends_var,
+            "is_present": is_present_var,
+        }
 
-    def solve(self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
+    ) -> ResultStorage:
         if self.cp_model is None:
             self.init_model()
         if parameters_cp is None:
@@ -116,8 +166,8 @@ class CPSatRCPSPSolver(SolverDO):
         solver.parameters.max_time_in_seconds = parameters_cp.time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
         callback = VarArrayAndObjectiveSolutionPrinter(
-            variables=
-            list(self.variables["is_present"].values())+list(self.variables["start"].values())
+            variables=list(self.variables["is_present"].values())
+            + list(self.variables["start"].values())
         )
         status = solver.Solve(self.cp_model, callback)
         if status == UNKNOWN:
@@ -142,17 +192,23 @@ class CPSatRCPSPSolver(SolverDO):
         schedule = {}
         modes_dict = {}
         for task in self.variables["start"]:
-            schedule[task] = {"start_time": solver.Value(self.variables["start"][task]),
-                              "end_time": solver.Value(self.variables["end"][task])}
-        for task,mode in self.variables["is_present"]:
-            if solver.Value(self.variables["is_present"][task,mode]):
+            schedule[task] = {
+                "start_time": solver.Value(self.variables["start"][task]),
+                "end_time": solver.Value(self.variables["end"][task]),
+            }
+        for task, mode in self.variables["is_present"]:
+            if solver.Value(self.variables["is_present"][task, mode]):
                 modes_dict[task] = mode
-        sol = RCPSPSolution(problem=self.problem,
-                            rcpsp_schedule=schedule,
-                            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy])
-        return from_solutions_to_result_storage([sol],
-                                                problem=self.problem,
-                                                params_objective_function=self.params_objective_function)
+        sol = RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=schedule,
+            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+        )
+        return from_solutions_to_result_storage(
+            [sol],
+            problem=self.problem,
+            params_objective_function=self.params_objective_function,
+        )
 
 
 def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
@@ -169,6 +225,3 @@ def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
         return StatusSolver.OPTIMAL
     if status_from_cpsat == FEASIBLE:
         return StatusSolver.SATISFIED
-
-
-
