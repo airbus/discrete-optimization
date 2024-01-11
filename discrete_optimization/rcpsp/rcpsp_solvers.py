@@ -32,9 +32,9 @@ from discrete_optimization.rcpsp.solver.cp_lns_solver import (
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
     CP_RCPSP_MZN,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
     CPSolverName,
 )
 from discrete_optimization.rcpsp.solver.cpm import CPM
@@ -94,14 +94,14 @@ solvers: Dict[
             },
         ),
         (
-            CP_RCPSP_MZN_PREEMMPTIVE,
+            CP_RCPSP_MZN_PREEMPTIVE,
             {
                 "cp_solver_name": CPSolverName.CHUFFED,
                 "parameters_cp": ParametersCP.default(),
             },
         ),
         (
-            CP_MRCPSP_MZN_PREEMMPTIVE,
+            CP_MRCPSP_MZN_PREEMPTIVE,
             {
                 "cp_solver_name": CPSolverName.CHUFFED,
                 "parameters_cp": ParametersCP.default(),
@@ -183,8 +183,8 @@ solvers_compatibility: Dict[
     CP_MRCPSP_MZN: [
         RCPSPModel,
     ],
-    CP_RCPSP_MZN_PREEMMPTIVE: [RCPSPModelPreemptive],
-    CP_MRCPSP_MZN_PREEMMPTIVE: [RCPSPModelPreemptive],
+    CP_RCPSP_MZN_PREEMPTIVE: [RCPSPModelPreemptive],
+    CP_MRCPSP_MZN_PREEMPTIVE: [RCPSPModelPreemptive],
     LNS_LP_RCPSP_SOLVER: [
         RCPSPModel,
     ],

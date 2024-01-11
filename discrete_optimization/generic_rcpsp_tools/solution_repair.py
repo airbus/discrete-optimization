@@ -30,8 +30,8 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
 )
 from discrete_optimization.rcpsp.rcpsp_utils import create_fake_tasks
 from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN_PREEMMPTIVE,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
@@ -153,14 +153,14 @@ def problem_constraints(
     minus_delta: int,
     plus_delta: int,
     cp_solver: Union[
-        CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_MS_MRCPSP_MZN_PREEMPTIVE
+        CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_MS_MRCPSP_MZN_PREEMPTIVE
     ],
     constraint_max_time=False,
     minus_delta_2=0,
     plus_delta_2=0,
 ):
     max_time = current_solution.get_end_time(task=current_solution.problem.sink_task)
-    multimode = isinstance(cp_solver, (CP_MRCPSP_MZN_PREEMMPTIVE, CP_MS_MRCPSP_MZN))
+    multimode = isinstance(cp_solver, (CP_MRCPSP_MZN_PREEMPTIVE, CP_MS_MRCPSP_MZN))
     if multimode:
         modes_dict = current_solution.problem.build_mode_dict(
             current_solution.rcpsp_modes
@@ -440,9 +440,9 @@ class NeighborRepairProblems(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         cp_solver: Union[
-            CP_RCPSP_MZN_PREEMMPTIVE,
+            CP_RCPSP_MZN_PREEMPTIVE,
             CP_MS_MRCPSP_MZN_PREEMPTIVE,
-            CP_MRCPSP_MZN_PREEMMPTIVE,
+            CP_MRCPSP_MZN_PREEMPTIVE,
         ],
         child_instance: Instance,
         result_storage: ResultStorage,
@@ -544,9 +544,9 @@ class NeighborRepairProblems(ConstraintHandler):
     def remove_constraints_from_previous_iteration(
         self,
         cp_solver: Union[
-            CP_RCPSP_MZN_PREEMMPTIVE,
+            CP_RCPSP_MZN_PREEMPTIVE,
             CP_MS_MRCPSP_MZN_PREEMPTIVE,
-            CP_MRCPSP_MZN_PREEMMPTIVE,
+            CP_MRCPSP_MZN_PREEMPTIVE,
         ],
         child_instance,
         previous_constraints: Iterable[Any],

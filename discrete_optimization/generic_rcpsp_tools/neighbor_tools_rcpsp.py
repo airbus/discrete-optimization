@@ -32,7 +32,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPreemptive
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_PREEMMPTIVE
+from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN_PREEMPTIVE
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
     compute_constraints_details,
@@ -181,7 +181,7 @@ def constraints_strings_preemptive(
     params_constraints: ParamsConstraintBuilder,
 ):
     max_time = get_max_time_solution(solution=current_solution)
-    multimode = isinstance(cp_solver, (CP_MRCPSP_MZN_PREEMMPTIVE, CP_MS_MRCPSP_MZN))
+    multimode = isinstance(cp_solver, (CP_MRCPSP_MZN_PREEMPTIVE, CP_MS_MRCPSP_MZN))
     modes_dict = None
     if multimode:
         modes_dict = current_solution.problem.get_modes_dict(current_solution)

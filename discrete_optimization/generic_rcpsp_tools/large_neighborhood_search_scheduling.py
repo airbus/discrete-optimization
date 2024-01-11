@@ -48,9 +48,9 @@ from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
     CP_RCPSP_MZN,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
@@ -105,7 +105,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
     if rcpsp_problem.is_preemptive():
         if not rcpsp_problem.is_multiskill():
             if rcpsp_problem.is_rcpsp_multimode():
-                solver = CP_MRCPSP_MZN_PREEMMPTIVE(
+                solver = CP_MRCPSP_MZN_PREEMPTIVE(
                     rcpsp_model=rcpsp_problem,
                     cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 )
@@ -137,7 +137,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                 )
                 return solver
             if not rcpsp_problem.is_rcpsp_multimode():
-                solver = CP_RCPSP_MZN_PREEMMPTIVE(
+                solver = CP_RCPSP_MZN_PREEMPTIVE(
                     rcpsp_model=rcpsp_problem,
                     cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 )

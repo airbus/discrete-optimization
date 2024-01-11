@@ -40,9 +40,9 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     get_tasks_ending_between_two_times,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
     CP_RCPSP_MZN,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
     RCPSPModelSpecialConstraintsPreemptive,
@@ -302,7 +302,7 @@ def constraints_strings(
     minus_delta: int,
     plus_delta: int,
     jobs_to_fix: Set[Hashable],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE],
     constraint_max_time=True,
     minus_delta_2=0,
     plus_delta_2=0,
@@ -451,7 +451,7 @@ class NeighborFixStart(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE],
+        cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE],
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
@@ -534,7 +534,7 @@ class NeighborFixStartSubproblem(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE],
+        cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE],
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
@@ -766,7 +766,7 @@ class NeighborFlexibleStart(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE],
+        cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE],
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
@@ -1046,7 +1046,7 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE],
+        cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE],
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
@@ -1166,7 +1166,7 @@ class ConstraintHandlerMix(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: Union[CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN_PREEMMPTIVE],
+        cp_solver: Union[CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
