@@ -35,9 +35,9 @@ from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
     CP_RCPSP_MZN,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
@@ -59,7 +59,7 @@ def build_default_cp_model(
         rcpsp_problem, (RCPSPModelPreemptive, RCPSPModelSpecialConstraintsPreemptive)
     ):
         if rcpsp_problem.is_rcpsp_multimode():
-            solver = CP_MRCPSP_MZN_PREEMMPTIVE(
+            solver = CP_MRCPSP_MZN_PREEMPTIVE(
                 rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
             )
             solver.init_model(
@@ -71,7 +71,7 @@ def build_default_cp_model(
                 **kwargs
             )
         else:
-            solver = CP_RCPSP_MZN_PREEMMPTIVE(
+            solver = CP_RCPSP_MZN_PREEMPTIVE(
                 rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
             )
             solver.init_model(

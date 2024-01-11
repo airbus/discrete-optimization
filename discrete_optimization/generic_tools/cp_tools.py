@@ -13,6 +13,7 @@ from datetime import timedelta
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
+import minizinc
 from minizinc import Instance, Result, Status
 
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -34,6 +35,7 @@ class CPSolverName(Enum):
     CPOPT = 3
     GUROBI = 4
     ORTOOLS = 5
+    HIGHS = 6
 
 
 map_cp_solver_name = {
@@ -44,7 +46,28 @@ map_cp_solver_name = {
     # need to install https://github.com/IBMDecisionOptimization/cpofzn
     CPSolverName.GUROBI: "gurobi",
     CPSolverName.ORTOOLS: "ortools",
+    CPSolverName.HIGHS: "highs",
 }
+
+
+def find_right_minizinc_solver_name(cp_solver_name: CPSolverName):
+    """
+    This small utility function is adapting the ortools tag if needed.
+    :param cp_solver_name: desired cp solver backend
+    :return: the tag for minizinc corresponding to the given cpsolver.
+    """
+    driver = minizinc.default_driver
+    assert driver is not None
+    tag_map = driver.available_solvers(False)
+    if map_cp_solver_name[cp_solver_name] not in tag_map:
+        if cp_solver_name == CPSolverName.ORTOOLS:
+            if "com.google.ortools.sat" in tag_map:
+                return "com.google.ortools.sat"
+        else:
+            # You will get a minizinc exception when you will request for this solver.
+            return map_cp_solver_name[cp_solver_name]
+    else:
+        return map_cp_solver_name[cp_solver_name]
 
 
 class ParametersCP:
@@ -249,7 +272,7 @@ class MinizincCPSolver(CPSolver):
                 optimisation_level=parameters_cp.optimisation_level,
             )
         logger.info("Solving finished")
-        logger.debug(result.status)
-        logger.debug(result.statistics)
+        logger.info(result.status)
+        logger.info(result.statistics)
         self.status_solver = map_mzn_status_to_do_status[result.status]
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)

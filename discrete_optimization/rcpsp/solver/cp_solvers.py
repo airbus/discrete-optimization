@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from datetime import timedelta
-from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Hashable, List, Optional, Set, Tuple, Union
 
 from deprecation import deprecated
 from minizinc import Instance, Model, Solver
@@ -16,7 +16,7 @@ from discrete_optimization.generic_tools.cp_tools import (
     MinizincCPSolver,
     ParametersCP,
     SignEnum,
-    map_cp_solver_name,
+    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -162,13 +162,14 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             self.rcpsp_model, params_objective_function=params_objective_function
         )
         self.stats = []
+        self.keys_in_instance: Optional[List[str]] = None
+        self.custom_output_type: Optional[bool] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "single")
         max_time = args.get("max_time", self.rcpsp_model.horizon)
-        fake_tasks = args.get(
-            "fake_tasks", True
-        )  # to modelize varying quantity of resource.
+        # to model varying quantity of resource.
+        fake_tasks = args.get("fake_tasks", True)
         add_objective_makespan = args.get("add_objective_makespan", True)
         if model_type == "single-resource":
             add_objective_makespan = False
@@ -182,7 +183,7 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         if custom_output_type:
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         self.keys_in_instance = []
         instance["add_objective_makespan"] = add_objective_makespan
@@ -206,12 +207,8 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         for key in dict_to_add:
             instance[key] = dict_to_add[key]
             self.keys_in_instance += [key]
-
-        sorted_resources = self.rcpsp_model.resources_list
-        self.resources_index = sorted_resources
-        rcap = [
-            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in sorted_resources
-        ]
+        resources = self.rcpsp_model.resources_list
+        rcap = [int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources]
         instance["rc"] = rcap
         self.keys_in_instance += ["rc"]
         n_tasks = self.rcpsp_model.n_jobs
@@ -229,7 +226,7 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         ]
         rr = [
             [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
-            for res in sorted_resources
+            for res in resources
         ]
         instance["rr"] = rr
         self.keys_in_instance += ["rr"]
@@ -418,6 +415,16 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             self.rcpsp_model, params_objective_function=params_objective_function
         )
         self.calendar = self.rcpsp_model.is_varying_resource()
+        self.keys_in_instance: Optional[List[str]] = None
+
+        # Utility objects to map minizinc vars and do vars.
+        self.modeindex_map: Optional[Dict[int, Dict[str, Any]]] = None
+        self.mode_dict_task_mode_to_index_minizinc: Optional[
+            Dict[Tuple[Hashable, int], int]
+        ] = None
+        self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
+
+        self.custom_output_type: Optional[bool] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multi")
@@ -431,9 +438,8 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         if custom_output_type:
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         resources_list = self.rcpsp_model.resources_list
-        self.resources_index = resources_list
         instance = Instance(solver, model)
         keys = []
         instance["add_objective_makespan"] = add_objective_makespan
@@ -443,7 +449,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         if model_type != "multi-calendar":
             fake_tasks = args.get(
                 "fake_tasks", True
-            )  # to modelize varying quantity of resource.
+            )  # to model varying quantity of resource.
             dict_to_add = add_fake_task_cp_data(
                 rcpsp_model=self.rcpsp_model,
                 ignore_fake_task=not fake_tasks,
@@ -454,7 +460,6 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
                 keys += [key]
         instance["max_time"] = max_time
         keys += ["max_time"]
-
         n_res = len(resources_list)
         instance["n_res"] = n_res
         keys += ["n_res"]
@@ -470,10 +475,6 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             for act in sorted_tasks
             for mode in sorted(self.rcpsp_model.mode_details[act])
         ]
-        self.modeindex_map = {
-            i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
-            for i in range(len(all_modes))
-        }
         self.modeindex_map = {
             i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
             for i in range(len(all_modes))
@@ -497,10 +498,9 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
-        if not self.calendar:
-            rcap = [int(self.rcpsp_model.resources[x]) for x in resources_list]
-        else:
-            rcap = [int(max(self.rcpsp_model.resources[x])) for x in resources_list]
+        rcap = [
+            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources_list
+        ]
         if model_type != "multi-resource-feasibility":
             instance["rcap"] = rcap
             keys += ["rcap"]
@@ -536,17 +536,6 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         ]
         instance["succ"] = succ
         keys += ["succ"]
-        if self.calendar:
-            one_ressource = list(self.rcpsp_model.resources.keys())[0]
-            instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
-            keys += ["max_time"]
-            ressource_capacity_time = [
-                [int(x) for x in self.rcpsp_model.resources[res]]
-                for res in resources_list
-            ]
-            instance["ressource_capacity_time"] = ressource_capacity_time
-            keys += ["ressource_capacity_time"]
-
         self.instance = instance
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
@@ -755,7 +744,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         if custom_output_type:
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         resources_list = self.rcpsp_model.resources_list
         self.resources_index = resources_list
         instance = Instance(solver, model)
@@ -812,10 +801,9 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
-        if not self.calendar:
-            rcap = [int(self.rcpsp_model.resources[x]) for x in resources_list]
-        else:
-            rcap = [int(max(self.rcpsp_model.resources[x])) for x in resources_list]
+        rcap = [
+            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources_list
+        ]
         instance["rcap"] = rcap
         keys += ["rcap"]
         rtype = [
@@ -959,7 +947,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         return [s]
 
 
-class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
+class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
     def __init__(
         self,
         rcpsp_model: RCPSPModelPreemptive,
@@ -987,6 +975,15 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         self.data_dict = None
         self.nb_preemptive = None
 
+        # Utility objects to map minizinc vars and do vars.
+        self.modeindex_map: Optional[Dict[int, Dict[str, Any]]] = None
+        self.mode_dict_task_mode_to_index_minizinc: Optional[
+            Dict[Tuple[Hashable, int], int]
+        ] = None
+        self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
+
+        self.custom_output_type: Optional[bool] = None
+
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-preemptive")
         add_objective_makespan = args.get("add_objective_makespan", True)
@@ -1004,7 +1001,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         if custom_output_type:
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = ignore_sec_objective
@@ -1033,7 +1030,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
             max_time = args.get("max_time", self.rcpsp_model.horizon)
             fake_tasks = args.get(
                 "fake_tasks", True
-            )  # to modelize varying quantity of resource.
+            )  # to model varying quantity of resource.
             dict_to_add = add_fake_task_cp_data(
                 rcpsp_model=self.rcpsp_model,
                 ignore_fake_task=not fake_tasks,
@@ -1070,31 +1067,26 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         keys += ["n_opt"]
         instance["dur"] = dur
         keys += ["dur"]
-        sorted_resources = self.rcpsp_model.resources_list
-        self.resources_index = sorted_resources
+        resources = self.rcpsp_model.resources_list
         rreq = [
             [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
-            for res in sorted_resources
+            for res in resources
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
         rtype = [
             2 if res in self.rcpsp_model.non_renewable_resources else 1
-            for res in sorted_resources
+            for res in resources
         ]
         instance["rtype"] = rtype
         keys += ["rtype"]
-        if not self.calendar:
-            rc = [int(self.rcpsp_model.resources[x]) for x in sorted_resources]
-        else:
-            rc = [int(max(self.rcpsp_model.resources[x])) for x in sorted_resources]
+        rc = [int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources]
         if self.calendar and model_type == "multi-preemptive-calendar":
-            one_ressource = list(self.rcpsp_model.resources.keys())[0]
-            instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
+            one_resource = list(self.rcpsp_model.resources.keys())[0]
+            instance["max_time"] = len(self.rcpsp_model.resources[one_resource])
             keys += ["max_time"]
             ressource_capacity_time = [
-                [int(x) for x in self.rcpsp_model.resources[res]]
-                for res in sorted_resources
+                [int(x) for x in self.rcpsp_model.resources[res]] for res in resources
             ]
             instance["ressource_capacity_time"] = ressource_capacity_time
             keys += ["ressource_capacity_time"]
@@ -1143,7 +1135,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
     def constraint_ressource_requirement_at_time_t(
         self, time, ressource, ressource_number, sign: SignEnum = SignEnum.LEQ
     ):
-        index_ressource = self.resources_index.index(ressource) + 1
+        index_ressource = self.rcpsp_model.resources_list.index(ressource) + 1
         s = (
             """constraint """
             + str(ressource_number)
@@ -1348,7 +1340,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         )
 
     def constraint_start_time_precomputed(self):
-        intervals = precompute_posssible_starting_time_interval(self.rcpsp_model)
+        intervals = precompute_possible_starting_time_interval(self.rcpsp_model)
         list_strings = []
         for t in intervals:
             if self.rcpsp_model.mode_details[t][1]["duration"] == 0:
@@ -1444,7 +1436,7 @@ class CP_MRCPSP_MZN_PREEMMPTIVE(MinizincCPSolver, SolverRCPSP):
         return [s]
 
 
-class CP_RCPSP_MZN_PREEMMPTIVE(CP_MRCPSP_MZN_PREEMMPTIVE):
+class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
     def __init__(
         self,
         rcpsp_model: RCPSPModelPreemptive,
@@ -1483,7 +1475,7 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CP_MRCPSP_MZN_PREEMMPTIVE):
         if custom_output_type:
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = ignore_sec_objective
@@ -1525,10 +1517,9 @@ class CP_RCPSP_MZN_PREEMMPTIVE(CP_MRCPSP_MZN_PREEMMPTIVE):
         keys += ["n_res"]
         sorted_resources = self.rcpsp_model.resources_list
         self.resources_index = sorted_resources
-        if not self.calendar:
-            rc = [int(self.rcpsp_model.resources[x]) for x in sorted_resources]
-        else:
-            rc = [int(max(self.rcpsp_model.resources[x])) for x in sorted_resources]
+        rc = [
+            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in sorted_resources
+        ]
         if self.calendar and model_type == "single-preemptive-calendar":
             one_ressource = list(self.rcpsp_model.resources.keys())[0]
             instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
@@ -1733,6 +1724,8 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         if self.rcpsp_model.is_varying_resource():
             self.calendar = True
 
+        self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
+
     def init_model(self, **args):
         add_objective_makespan = args.get("add_objective_makespan", True)
         ignore_sec_objective = args.get("ignore_sec_objective", True)
@@ -1741,7 +1734,7 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         )
         model = Model(files_mzn["multi-no-bool"])
         model.output_type = MRCPSP_Result
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         resources_list = list(self.rcpsp_model.resources.keys())
         instance = Instance(solver, model)
         keys = []
@@ -1781,14 +1774,11 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
-
-        if not self.calendar:
-            rcap = [self.rcpsp_model.resources[x] for x in resources_list]
-        else:
-            rcap = [int(max(self.rcpsp_model.resources[x])) for x in resources_list]
+        rcap = [
+            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources_list
+        ]
         instance["rcap"] = rcap
         keys += ["rcap"]
-
         rtype = [
             2 if res in self.rcpsp_model.non_renewable_resources else 1
             for res in resources_list
@@ -1975,10 +1965,9 @@ class CP_MRCPSP_MZN_MODES:
         params_objective_function: ParamsObjectiveFunction = None,
     ):
         self.rcpsp_model = rcpsp_model
-        self.instance: Instance = None
+        self.instance: Optional[Instance] = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
-            "start",
             "mrun",
         ]  # For now, I've put the var names of the CP model (not the rcpsp_model)
         (
@@ -1991,15 +1980,14 @@ class CP_MRCPSP_MZN_MODES:
 
     def init_model(self, **args):
         model = Model(files_mzn["modes"])
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
 
         n_res = len(list(self.rcpsp_model.resources.keys()))
         instance["n_res"] = n_res
-
         n_tasks = self.rcpsp_model.n_jobs_non_dummy + 2
         instance["n_tasks"] = n_tasks
-        sorted_tasks = sorted(self.rcpsp_model.mode_details.keys())
+        sorted_tasks = self.rcpsp_model.tasks_list
         n_opt = sum(
             [
                 len(list(self.rcpsp_model.mode_details[key].keys()))
@@ -2028,23 +2016,23 @@ class CP_MRCPSP_MZN_MODES:
 
         rreq = []
         index = 0
-        for res in self.rcpsp_model.resources.keys():
+        for res in self.rcpsp_model.resources_list:
             rreq.append([])
             for task in sorted_tasks:
                 for mod in self.rcpsp_model.mode_details[task].keys():
                     rreq[index].append(
-                        int(self.rcpsp_model.mode_details[task][mod][res])
+                        int(self.rcpsp_model.mode_details[task][mod].get(res, 0))
                     )
             index += 1
         instance["rreq"] = rreq
-        rcap = [val for val in self.rcpsp_model.resources.values()]
-        if isinstance(rcap[0], list):
-            rcap = [int(max(r)) for r in rcap]
-        instance["rcap"] = rcap
+        instance["rcap"] = [
+            self.rcpsp_model.get_max_resource_capacity(res)
+            for res in self.rcpsp_model.resources_list
+        ]
 
         rtype = [
             2 if res in self.rcpsp_model.non_renewable_resources else 1
-            for res in self.rcpsp_model.resources.keys()
+            for res in self.rcpsp_model.resources_list
         ]
         instance["rtype"] = rtype
         self.instance: Instance = instance
@@ -2088,9 +2076,9 @@ class CP_MRCPSP_MZN_MODES:
                         != self.rcpsp_model.n_jobs_non_dummy + 2
                     )
                 ):
-                    modes[self.modeindex_map[i + 1]["task"] - 1] = self.modeindex_map[
-                        i + 1
-                    ]["original_mode_index"]
+                    modes[
+                        self.rcpsp_model.index_task[self.modeindex_map[i + 1]["task"]]
+                    ] = self.modeindex_map[i + 1]["original_mode_index"]
             all_modes.append(modes)
         return all_modes
 
@@ -2113,7 +2101,7 @@ class CP_MRCPSP_MZN_MODES:
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
 
 
-def precompute_posssible_starting_time_interval(problem: RCPSPModelPreemptive):
+def precompute_possible_starting_time_interval(problem: RCPSPModelPreemptive):
     interval_possible = {t: [] for t in problem.tasks_list}
     for task in interval_possible:
         time = 0
@@ -2153,7 +2141,7 @@ def precompute_posssible_starting_time_interval(problem: RCPSPModelPreemptive):
 
 def hard_start_times(
     dict_start_times: Dict[Hashable, int],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
     for task in dict_start_times:
@@ -2170,7 +2158,7 @@ def hard_start_times(
 
 def soft_start_times(
     dict_start_times: Dict[Hashable, int],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     list_task = list(dict_start_times.keys())
     s = (
@@ -2279,7 +2267,7 @@ def hard_start_together_mrcpsp(
 
 def soft_start_together(
     list_start_together: List[Tuple[Hashable, Hashable]],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     s = (
         """
@@ -2304,7 +2292,7 @@ def soft_start_together(
 
 def hard_start_together(
     list_start_together: List[Tuple[Hashable, Hashable]],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
     for t1, t2 in list_start_together:
@@ -2321,7 +2309,7 @@ def hard_start_together(
 
 def hard_start_after_nunit(
     list_start_after_nunit: List[Tuple[Hashable, Hashable, int]],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
     for t1, t2, delta in list_start_after_nunit:
@@ -2340,7 +2328,7 @@ def hard_start_after_nunit(
 
 def soft_start_after_nunit(
     list_start_after_nunit: List[Tuple[Hashable, Hashable, int]],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     s = (
         """
@@ -2458,7 +2446,7 @@ def hard_start_at_end_plus_offset_mrcpsp(
 
 def hard_start_at_end_plus_offset(
     list_start_at_end_plus_offset,
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
     for t1, t2, delta in list_start_at_end_plus_offset:
@@ -2529,7 +2517,7 @@ def soft_start_at_end_plus_offset_mrcpsp(
 
 def soft_start_at_end_plus_offset(
     list_start_at_end_plus_offset: List[Tuple[Hashable, Hashable, int]],
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     s = (
         """
@@ -2617,7 +2605,7 @@ def soft_start_at_end_mrcpsp(
 
 def hard_start_at_end(
     list_start_at_end: List[Tuple[Hashable, Hashable]],
-    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN_PREEMMPTIVE],
+    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     constraint_strings = []
     for t1, t2 in list_start_at_end:
@@ -2645,7 +2633,7 @@ def hard_start_at_end(
 
 def soft_start_at_end(
     list_start_at_end: List[Tuple[Hashable, Hashable]],
-    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN_PREEMMPTIVE],
+    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     s = (
         """
@@ -2662,7 +2650,7 @@ def soft_start_at_end(
         + str([cp_solver.index_in_minizinc[t2] for t1, t2 in list_start_at_end])
         + """;\n"""
     )
-    if isinstance(cp_solver, (CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE)):
+    if isinstance(cp_solver, (CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE)):
         s += """
             %constraint forall(i in 1..nb_start_at_end)(s[st2_9[i]]-s_preemptive[st1_9[i], nb_preemptive]>=0);\n
             constraint sum(i in 1..nb_start_at_end)(abs(s[st2_9[i]]-s_preemptive[st1_9[i], nb_preemptive]))==penalty_start_at_end;\n
@@ -2677,7 +2665,7 @@ def soft_start_at_end(
 
 def soft_start_window(
     start_times_window: Dict[Hashable, Tuple[int, int]],
-    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN_PREEMMPTIVE],
+    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     l_low = [
         (t, start_times_window[t][0])
@@ -2727,7 +2715,7 @@ def soft_start_window(
 
 def soft_end_window(
     end_times_window: Dict[Hashable, Tuple[int, int]],
-    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN_PREEMMPTIVE],
+    cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     l_low = [
         (t, end_times_window[t][0])
@@ -2768,7 +2756,7 @@ def soft_end_window(
         + str([int(x[1]) for x in l_up])
         + """;\n"""
     )
-    if isinstance(cp_solver, (CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE)):
+    if isinstance(cp_solver, (CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE)):
         s += """
             constraint sum(i in 1..nb_end_window_low)(max([times_low_end[i]-s_preemptive[task_id_low_end[i], nb_preemptive], 0]))==penalty_end_low;\n
             constraint sum(i in 1..nb_end_window_up)(max([-times_up_end[i]+s_preemptive[task_id_up_end[i], nb_preemptive], 0]))==penalty_end_up;\n
@@ -2886,8 +2874,8 @@ def hard_start_window(
     start_times_window: Dict[Hashable, Tuple[int, int]],
     cp_solver: Union[
         CP_RCPSP_MZN,
-        CP_MRCPSP_MZN_PREEMMPTIVE,
-        CP_RCPSP_MZN_PREEMMPTIVE,
+        CP_MRCPSP_MZN_PREEMPTIVE,
+        CP_RCPSP_MZN_PREEMPTIVE,
         CP_MRCPSP_MZN,
         CP_MRCPSP_MZN_WITH_FAKE_TASK,
         CP_MRCPSP_MZN_NOBOOL,
@@ -2914,8 +2902,8 @@ def hard_end_window(
     end_times_window: Dict[Hashable, Tuple[int, int]],
     cp_solver: Union[
         CP_RCPSP_MZN,
-        CP_MRCPSP_MZN_PREEMMPTIVE,
-        CP_RCPSP_MZN_PREEMMPTIVE,
+        CP_MRCPSP_MZN_PREEMPTIVE,
+        CP_RCPSP_MZN_PREEMPTIVE,
         CP_MRCPSP_MZN,
         CP_MRCPSP_MZN_WITH_FAKE_TASK,
         CP_MRCPSP_MZN_NOBOOL,
@@ -3111,7 +3099,9 @@ def add_soft_special_constraints_mrcpsp(
 
 def add_hard_special_constraints(
     partial_solution: PartialSolution,
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[
+        CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN, CP_MRCPSP_MZN
+    ],
 ):
     if partial_solution is None:
         return []
@@ -3169,7 +3159,7 @@ def add_hard_special_constraints(
 
 def add_soft_special_constraints(
     partial_solution: PartialSolution,
-    cp_solver: Union[CP_RCPSP_MZN_PREEMMPTIVE, CP_MRCPSP_MZN_PREEMMPTIVE, CP_RCPSP_MZN],
+    cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     if partial_solution is None:
         return [], []

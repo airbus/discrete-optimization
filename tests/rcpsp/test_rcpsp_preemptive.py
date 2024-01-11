@@ -22,8 +22,8 @@ from discrete_optimization.rcpsp.rcpsp_parser import (
     parse_file,
 )
 from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN_PREEMMPTIVE,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
 )
 
 
@@ -161,7 +161,7 @@ def test_run_preemptive(rcpsp_problem):
 
 def test_preemptive_cp_alamano():
     rcpsp_problem = create_alamano_preemptive_model()
-    solver = CP_RCPSP_MZN_PREEMMPTIVE(
+    solver = CP_RCPSP_MZN_PREEMPTIVE(
         rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
     )
     solver.init_model(
@@ -186,7 +186,7 @@ def test_preemptive_cp_alamano():
 
 def test_preemptive_multimode_cp_alamano():
     rcpsp_problem = create_alamano_preemptive_model()
-    solver = CP_MRCPSP_MZN_PREEMMPTIVE(
+    solver = CP_MRCPSP_MZN_PREEMPTIVE(
         rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
     )
     solver.init_model(
@@ -210,7 +210,7 @@ def test_preemptive_multimode_cp_alamano():
 
 def test_preemptive_cp_psplib():
     rcpsp_problem = load_psplib_preemptive_model_2("j601_5.sm")
-    solver = CP_RCPSP_MZN_PREEMMPTIVE(
+    solver = CP_RCPSP_MZN_PREEMPTIVE(
         rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
     )
     solver.init_model(
@@ -233,7 +233,7 @@ def test_preemptive_cp_psplib():
 
 def test_preemptive_multimode_cp_psplib():
     rcpsp_problem = load_psplib_preemptive_model_2("j1010_5.mm")
-    solver = CP_MRCPSP_MZN_PREEMMPTIVE(
+    solver = CP_MRCPSP_MZN_PREEMPTIVE(
         rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
     )
     solver.init_model(

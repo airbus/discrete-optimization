@@ -14,8 +14,8 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPSolutionPree
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN, CP_RCPSP_MZN
 from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN_PREEMMPTIVE,
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
@@ -64,10 +64,10 @@ ANY_SOLUTION_MSRCPSP = Union[
     MS_RCPSPSolution_Preemptive_Variant,
 ]
 ANY_CP_SOLVER = Union[
-    CP_RCPSP_MZN_PREEMMPTIVE,
+    CP_RCPSP_MZN_PREEMPTIVE,
     CP_RCPSP_MZN,
     CP_MRCPSP_MZN,
-    CP_MRCPSP_MZN_PREEMMPTIVE,
+    CP_MRCPSP_MZN_PREEMPTIVE,
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
     CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE,
