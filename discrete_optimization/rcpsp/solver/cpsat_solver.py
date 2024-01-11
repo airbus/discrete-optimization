@@ -170,18 +170,7 @@ class CPSatRCPSPSolver(SolverDO):
             + list(self.variables["start"].values())
         )
         status = solver.Solve(self.cp_model, callback)
-        if status == UNKNOWN:
-            logger.info("Unknown")
-            self.status_solver = StatusSolver.UNKNOWN
-        if status == INFEASIBLE:
-            logger.info("Inf")
-            self.status_solver = StatusSolver.UNSATISFIABLE
-        if status == OPTIMAL:
-            logger.info("Optimal")
-            self.status_solver = StatusSolver.OPTIMAL
-        if status == FEASIBLE:
-            logger.info("Feasible")
-            self.status_solver = StatusSolver.SATISFIED
+        self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
         logger.info(
             f"Solver finished, status={solver.StatusName(status)}, objective = {solver.ObjectiveValue()},"
             f"best obj bound = {solver.BestObjectiveBound()}"
