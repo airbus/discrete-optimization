@@ -6,7 +6,7 @@ import logging
 import random
 from enum import Enum
 from heapq import heappop, heappush
-from typing import Dict, Iterable, List
+from typing import Dict, List
 
 import networkx as nx
 import numpy as np
@@ -308,7 +308,7 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):
-                self.modes_dict[i + 1] = one_mode_setting[i]
+                self.modes_dict[self.rcpsp_model.tasks_list[i]] = one_mode_setting[i]
         else:
             self.modes_dict = {t: 1 for t in self.mode_details}
         self.with_calendar = self.rcpsp_model.is_varying_resource()
@@ -344,19 +344,13 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                     if task in schedule:
                         schedule[task]["end_time"] = partial_solution.end_times[task]
 
-        current_ressource_available = {}
+        current_resource_available = {}
         for r in self.resources:
-            if isinstance(self.resources[r], Iterable):
-                current_ressource_available[r] = (
-                    list(self.resources[r]) + [self.resources[r][-1]] * 100
-                )
-            else:
-                current_ressource_available[r] = [
-                    self.resources[r] for i in range(self.rcpsp_model.horizon)
-                ]
-
-        current_ressource_non_renewable = {
-            nr: current_ressource_available[nr] for nr in self.non_renewable
+            current_resource_available[r] = list(
+                self.rcpsp_model.get_resource_availability_array(r)
+            )
+        current_resource_non_renewable = {
+            nr: current_resource_available[nr] for nr in self.non_renewable
         }
         if self.source not in schedule:
             schedule[self.source] = {"start_time": 0, "end_time": 0}
@@ -377,17 +371,17 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
         current_time = 0
         perm = []
         while len(schedule) < self.n_jobs:
-            logger.debug((len(schedule), current_time))
-            logger.debug(f"available activities : {available_activities}")
+            logger.info((len(schedule), current_time))
+            logger.info(f"available activities : {available_activities}")
             possible_activities = [
                 n
                 for n in available_activities
                 if all(
-                    self.mode_details[n][self.modes_dict[n]][r]
-                    <= current_ressource_available[r][
-                        min(time, len(current_ressource_available[r]) - 1)
+                    self.mode_details[n][self.modes_dict[n]].get(r, 0)
+                    <= current_resource_available[r][
+                        min(time, len(current_resource_available[r]) - 1)
                     ]
-                    for r in current_ressource_available
+                    for r in current_resource_available
                     for time in range(
                         current_time,
                         current_time
@@ -395,8 +389,9 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                     )
                 )
             ]
-            logger.debug(f"Ressources : {current_ressource_available}")
+            logger.debug(f"Resources : {current_resource_available}")
             while len(possible_activities) > 0:
+                next_activity = None
                 if greedy_choice == GreedyChoice.MOST_SUCCESSORS:
                     next_activity = max(
                         possible_activities, key=lambda x: current_succ[x]["nb"]
@@ -431,7 +426,7 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                 if greedy_choice == GreedyChoice.TOTALLY_RANDOM:
                     next_activity = random.choice(possible_activities)
                 available_activities.remove(next_activity)
-                perm += [next_activity - 2]
+                perm += [self.rcpsp_model.index_task_non_dummy.get(next_activity, None)]
                 schedule[next_activity] = {}
                 schedule[next_activity]["start_time"] = current_time
                 schedule[next_activity]["end_time"] = (
@@ -447,20 +442,20 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                 duration = self.mode_details[next_activity][mode]["duration"]
                 for r in self.resources:
                     for t in range(current_time, current_time + duration):
-                        current_ressource_available[r][t] -= self.mode_details[
+                        current_resource_available[r][t] -= self.mode_details[
                             next_activity
-                        ][mode][r]
-                        if r in current_ressource_non_renewable:
-                            current_ressource_non_renewable[r][t] -= self.mode_details[
+                        ][mode].get(r, 0)
+                        if r in current_resource_non_renewable:
+                            current_resource_non_renewable[r][t] -= self.mode_details[
                                 next_activity
-                            ][mode][r]
+                            ][mode].get(r, 0)
                 possible_activities = [
                     n
                     for n in available_activities
                     if all(
-                        self.mode_details[n][self.modes_dict[n]][r]
-                        <= current_ressource_available[r][time]
-                        for r in current_ressource_available
+                        self.mode_details[n][self.modes_dict[n]].get(r, 0)
+                        <= current_resource_available[r][time]
+                        for r in current_resource_available
                         for time in range(
                             current_time,
                             current_time
