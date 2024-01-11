@@ -147,7 +147,9 @@ class Graph:
 
 
 def from_networkx(
-    graph_nx: Union[nx.DiGraph, nx.Graph], undirected: Optional[bool] = None
+    graph_nx: Union[nx.DiGraph, nx.Graph],
+    undirected: Optional[bool] = None,
+    compute_predecessors: bool = False,
 ):
     return Graph(
         nodes=[(n, graph_nx.nodes[n]) for n in graph_nx.nodes()],
@@ -155,4 +157,5 @@ def from_networkx(
         undirected=undirected
         if undirected is not None
         else not isinstance(graph_nx, nx.DiGraph),
+        compute_predecessors=compute_predecessors,
     )
