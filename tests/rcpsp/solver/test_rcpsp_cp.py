@@ -26,7 +26,10 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_NOBOOL,
     CP_RCPSP_MZN,
 )
-from discrete_optimization.rcpsp.solver.cpsat_solver import CPSatRCPSPSolver
+from discrete_optimization.rcpsp.solver.cpsat_solver import (
+    CPSatRCPSPSolver,
+    CPSatRCPSPSolverCumulativeResource,
+)
 
 
 @pytest.mark.parametrize(
@@ -71,7 +74,6 @@ def test_ortools(model):
     solver = CPSatRCPSPSolver(problem=rcpsp_problem)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 100
-    parameters_cp.nr_solutions = 1
     result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
@@ -84,6 +86,22 @@ def test_ortools(model):
     assert rcpsp_problem.satisfy(solution)
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
+
+
+@pytest.mark.parametrize(
+    "model",
+    ["j301_1.sm", "j1010_1.mm"],
+)
+def test_ortools_resource_optim(model):
+    files_available = get_data_available()
+    file = [f for f in files_available if model in f][0]
+    rcpsp_problem = parse_file(file)
+    solver = CPSatRCPSPSolverCumulativeResource(problem=rcpsp_problem)
+    parameters_cp = ParametersCP.default()
+    parameters_cp.time_limit = 50
+    result_storage = solver.solve(parameters_cp=parameters_cp)
+    solution, fit = result_storage.get_best_solution_fit()
+    assert rcpsp_problem.satisfy(solution)
 
 
 def test_cp_sm_intermediate_solution():
