@@ -7,6 +7,38 @@ from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 import networkx as nx
 
 
+class PairModeConstraint:
+    """
+    This data structure exists to express the following constraints :
+    if allowed_mode_assignment is not None :
+    for each key of the dictionary (activity_1, activity_2),
+    the allowed modes assignment to those 2 activity are listed in allowed_mode_assignment[(activity_1, activity_2)]
+    This can be used to express that a given resource has to do both activities.
+
+    Another way of expressing the constraint is :
+    -each interesting tuple (task,mode) is given an int score. (score_mode)
+    -We get a set of pairs of activities (same_score_mode) : indicating that the score_mode of the 2 activity should be
+    equal.
+    """
+
+    def __init__(
+        self,
+        allowed_mode_assignment: Optional[
+            Dict[Tuple[Hashable, Hashable], Set[Tuple[int, int]]]
+        ] = None,
+        same_score_mode: Optional[Set[Tuple[Hashable, Hashable]]] = None,
+        score_mode: Dict[Tuple[Hashable, int], int] = None,
+    ):
+        self.allowed_mode_assignment = allowed_mode_assignment
+        self.same_score_mode = same_score_mode
+        self.score_mode = score_mode
+        # We don't allow both ways of expressing the constraint.
+        assert (
+            allowed_mode_assignment is None
+            and (same_score_mode is not None and score_mode is not None)
+        ) or (allowed_mode_assignment is not None)
+
+
 class SpecialConstraintsDescription:
     def __init__(
         self,
@@ -26,6 +58,7 @@ class SpecialConstraintsDescription:
         start_at_end_plus_offset: Optional[List[Tuple[Hashable, Hashable, int]]] = None,
         start_after_nunit: Optional[List[Tuple[Hashable, Hashable, int]]] = None,
         disjunctive_tasks: Optional[List[Tuple[Hashable, Hashable]]] = None,
+        pair_mode_constraint: Optional[PairModeConstraint] = None,
     ):
         self.task_mode = task_mode
         self.start_times = start_times
@@ -112,3 +145,4 @@ class SpecialConstraintsDescription:
                 self.dict_disjunctive[j] = set()
             self.dict_disjunctive[i].add(j)
             self.dict_disjunctive[j].add(i)
+        self.pair_mode_constraint = pair_mode_constraint

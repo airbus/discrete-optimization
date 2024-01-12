@@ -44,6 +44,7 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import intersect
 from discrete_optimization.rcpsp.special_constraints import (
+    PairModeConstraint,
     SpecialConstraintsDescription,
 )
 
@@ -813,6 +814,10 @@ def compute_constraints_details(
                         -constraints.end_times_window[t][1] + solution.get_end_time(t),  # type: ignore
                     )
                 ]
+    if constraints.pair_mode_constraint is not None:
+        list_constraints_not_respected += compute_details_mode_constraint(
+            solution=solution, pair_mode_constraint=constraints.pair_mode_constraint
+        )
     return list_constraints_not_respected
 
 
@@ -926,4 +931,60 @@ def check_solution_with_special_constraints(
                     )
                 )
                 return False
+    if problem.special_constraints.pair_mode_constraint is not None:
+        b = check_pair_mode_constraint(
+            solution=solution,
+            pair_mode_constraint=problem.special_constraints.pair_mode_constraint,
+        )
+        if not b:
+            return False
     return True
+
+
+def check_pair_mode_constraint(
+    solution: RCPSPSolution, pair_mode_constraint: PairModeConstraint
+):
+    if pair_mode_constraint.allowed_mode_assignment is not None:
+        for ac1, ac2 in pair_mode_constraint.allowed_mode_assignment:
+            mode_ac1 = solution.get_mode(ac1)
+            mode_ac2 = solution.get_mode(ac2)
+            if (mode_ac1, mode_ac2) not in pair_mode_constraint.allowed_mode_assignment[
+                ac1, ac2
+            ]:
+                return False
+        return True
+    if pair_mode_constraint.same_score_mode is not None:
+        for ac1, ac2 in pair_mode_constraint.same_score_mode:
+            score_ac1 = pair_mode_constraint.score_mode[ac1, solution.get_mode(ac1)]
+            score_ac2 = pair_mode_constraint.score_mode[ac2, solution.get_mode(ac2)]
+            if score_ac1 != score_ac2:
+                return False
+        return True
+
+
+def compute_details_mode_constraint(
+    solution: RCPSPSolution, pair_mode_constraint: PairModeConstraint
+):
+    list_constraints_not_respected: List[
+        Tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
+    ] = []
+    if pair_mode_constraint.allowed_mode_assignment is not None:
+        for ac1, ac2 in pair_mode_constraint.allowed_mode_assignment:
+            mode_ac1 = solution.get_mode(ac1)
+            mode_ac2 = solution.get_mode(ac2)
+            if (mode_ac1, mode_ac2) not in pair_mode_constraint.allowed_mode_assignment[
+                ac1, ac2
+            ]:
+                list_constraints_not_respected.append(
+                    ("pair_mode_assignment", ac1, ac2, mode_ac1, mode_ac2, 100)
+                )
+        return list_constraints_not_respected
+    if pair_mode_constraint.same_score_mode is not None:
+        for ac1, ac2 in pair_mode_constraint.same_score_mode:
+            score_ac1 = pair_mode_constraint.score_mode[ac1, solution.get_mode(ac1)]
+            score_ac2 = pair_mode_constraint.score_mode[ac2, solution.get_mode(ac2)]
+            if score_ac1 != score_ac2:
+                list_constraints_not_respected.append(
+                    ("pair_mode_score", ac1, ac2, score_ac1, score_ac2, 100)
+                )
+        return list_constraints_not_respected
