@@ -38,6 +38,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CPSolverName,
 )
 from discrete_optimization.rcpsp.solver.cpm import CPM
+from discrete_optimization.rcpsp.solver.cpsat_solver import CPSatRCPSPSolver
 from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import LNS_CP_RCPSP_SOLVER
 from discrete_optimization.rcpsp.solver.rcpsp_ga_solver import (
     GA_MRCPSP_Solver,
@@ -107,6 +108,7 @@ solvers: Dict[
                 "parameters_cp": ParametersCP.default(),
             },
         ),
+        (CPSatRCPSPSolver, {"parameters_cp": ParametersCP.default()}),
     ],
     "critical-path": [(CPM, {})],
     "lns": [

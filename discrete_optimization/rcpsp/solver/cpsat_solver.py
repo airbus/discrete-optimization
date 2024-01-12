@@ -290,7 +290,7 @@ class CPSatRCPSPSolver(SolverDO):
         self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
     ) -> ResultStorage:
         if self.cp_model is None:
-            self.init_model()
+            self.init_model(**kwargs)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         solver = CpSolver()
@@ -460,7 +460,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
     ) -> ResultStorage:
         if self.cp_model is None:
-            self.init_model()
+            self.init_model(**kwargs)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         solver = CpSolver()
@@ -636,7 +636,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
     ) -> ResultStorage:
         if self.cp_model is None:
-            self.init_model()
+            self.init_model(**kwargs)
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         solver = CpSolver()
