@@ -69,7 +69,8 @@ def initialize_multiscenario():
 
     logging.basicConfig(level=logging.DEBUG)
     res = sa.solve(
-        initial_variable=solution, nb_iteration_max=5000, pickle_result=False
+        initial_variable=solution,
+        nb_iteration_max=5000,
     )
 
 

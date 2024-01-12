@@ -82,7 +82,7 @@ def test_local_search_sm(random_seed):
         store_solution=False,
     )
 
-    sol = sa.solve(dummy, nb_iteration_max=500, pickle_result=False).get_best_solution()
+    sol = sa.solve(dummy, nb_iteration_max=500).get_best_solution()
     assert rcpsp_model.satisfy(sol)
     plot_ressource_view(
         rcpsp_model=rcpsp_model,
@@ -132,7 +132,7 @@ def test_local_search_mm(random_seed):
         store_solution=False,
     )
 
-    sol = sa.solve(dummy, nb_iteration_max=300, pickle_result=False).get_best_solution()
+    sol = sa.solve(dummy, nb_iteration_max=300).get_best_solution()
     assert rcpsp_model.satisfy(sol)
     plot_ressource_view(
         rcpsp_model=rcpsp_model,
@@ -178,9 +178,7 @@ def test_local_search_sm_multiobj(random_seed):
         mode_mutation=ModeMutation.MUTATE,
         store_solution=True,
     )
-    pareto_store = sa.solve(
-        dummy, nb_iteration_max=100, pickle_result=False, update_iteration_pareto=100
-    )
+    pareto_store = sa.solve(dummy, nb_iteration_max=100, update_iteration_pareto=100)
     assert isinstance(pareto_store, ParetoFront)
 
 
@@ -217,7 +215,7 @@ def test_local_search_sm_postpro_multiobj(random_seed):
         params_objective_function=params_objective_function,
         store_solution=True,
     )
-    store = sa.solve(dummy, nb_iteration_max=100, pickle_result=False)
+    store = sa.solve(dummy, nb_iteration_max=100)
     pareto_store = result_storage_to_pareto_front(
         result_storage=store, problem=rcpsp_model
     )
@@ -281,7 +279,6 @@ def test_local_search_mm_multiobj(random_seed):
     pareto_store = sa.solve(
         dummy,
         nb_iteration_max=500,
-        pickle_result=False,
         update_iteration_pareto=100,
     )
     assert isinstance(pareto_store, ParetoFront)
@@ -348,7 +345,7 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
         params_objective_function=params_objective_function,
         store_solution=True,
     )
-    result_sa = sa.solve(dummy, nb_iteration_max=100, pickle_result=False)
+    result_sa = sa.solve(dummy, nb_iteration_max=100)
     result_sa.list_solution_fits = [
         l for l in result_sa.list_solution_fits if l[0].rcpsp_schedule_feasible
     ]

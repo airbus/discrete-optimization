@@ -119,7 +119,5 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
         result_sa = ls.solve(
             dummy,
             nb_iteration_max=kwargs.get("nb_iteration_max", 2000),
-            max_time_seconds=kwargs.get("max_time_seconds", None),
-            pickle_result=False,
         )
         return result_sa

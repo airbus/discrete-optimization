@@ -63,9 +63,6 @@ class HillClimber(SolverDO):
         self,
         initial_variable: Solution,
         nb_iteration_max: int,
-        max_time_seconds: Optional[int] = None,
-        pickle_result: bool = False,
-        pickle_name: str = "debug",
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
@@ -89,10 +86,8 @@ class HillClimber(SolverDO):
                 limit_store=True,
                 nb_best_store=1,
             )
-        cur_best_variable = initial_variable.copy()
         cur_objective = objective
         cur_best_objective = objective
-        init_time = time.time()
         self.restart_handler.best_fitness = objective
         self.restart_handler.solution_best = initial_variable.copy()
         iteration = 0
@@ -132,7 +127,6 @@ class HillClimber(SolverDO):
                 logger.debug(f"iter {iteration}")
                 logger.debug(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
-                cur_best_variable = cur_variable.copy()
                 if not self.store_solution:
                     store.add_solution(cur_variable.copy(), objective)
             # Update the temperature
@@ -153,11 +147,6 @@ class HillClimber(SolverDO):
             if stopping:
                 break
 
-            if pickle_result and iteration % 20000 == 0:
-                pickle.dump(cur_best_variable, open(pickle_name + ".pk", "wb"))
-            if max_time_seconds is not None and iteration % 1000 == 0:
-                if time.time() - init_time > max_time_seconds:
-                    break
         store.finalize()
         # end of solve callback
         callbacks_list.on_solve_end(res=store, solver=self)
@@ -187,16 +176,12 @@ class HillClimberPareto(HillClimber):
         self,
         initial_variable: Solution,
         nb_iteration_max: int,
-        max_time_seconds: Optional[int] = None,
-        pickle_result: bool = False,
-        pickle_name: str = "tsp",
         update_iteration_pareto: int = 1000,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ParetoFront:
         callbacks_list = CallbackList(callbacks=callbacks)
 
-        init_time = time.time()
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
         )
@@ -283,10 +268,6 @@ class HillClimberPareto(HillClimber):
             )
             if stopping:
                 break
-
-            if max_time_seconds is not None and iteration % 1000 == 0:
-                if time.time() - init_time > max_time_seconds:
-                    break
 
         pareto_front.finalize()
         # end of solve callback

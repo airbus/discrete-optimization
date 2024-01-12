@@ -85,20 +85,15 @@ class SimulatedAnnealing(SolverDO):
         self,
         initial_variable: Solution,
         nb_iteration_max: int,
-        max_time_seconds: Optional[int] = None,
-        pickle_result: bool = False,
-        pickle_name: str = "debug",
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
 
-        init_time = time.time()
         objective = self.aggreg_from_dict_values(
             self.evaluator.evaluate(initial_variable)
         )
         cur_variable = initial_variable.copy()
-        cur_best_variable = initial_variable.copy()
         cur_objective = objective
         cur_best_objective = objective
         if self.store_solution:
@@ -169,7 +164,6 @@ class SimulatedAnnealing(SolverDO):
                 logger.info(f"iter {iteration}")
                 logger.info(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
-                cur_best_variable = cur_variable.copy()
                 if not self.store_solution:
                     store.add_solution(cur_variable.copy(), objective)
             self.temperature_handler.next_temperature()
@@ -190,12 +184,6 @@ class SimulatedAnnealing(SolverDO):
             )
             if stopping:
                 break
-
-            if pickle_result and iteration % 20000 == 0:
-                pickle.dump(cur_best_variable, open(pickle_name + ".pk", "wb"))
-            if max_time_seconds is not None and iteration % 1000 == 0:
-                if time.time() - init_time > max_time_seconds:
-                    break
 
         store.finalize()
         # end of solve callback
