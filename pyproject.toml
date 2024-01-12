@@ -55,7 +55,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "scikit-learn>=1.0"]
+test = ["pytest", "pytest-cov", "scikit-learn>=1.0", "optuna"]
 
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"

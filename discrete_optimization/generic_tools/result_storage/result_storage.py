@@ -68,6 +68,13 @@ class ResultStorage:
             self.min = None
             self.max = None
 
+    @property
+    def best_fit(self):
+        if self.maximize:
+            return self.max
+        else:
+            return self.min
+
     def add_solution(self, solution: Solution, fitness: fitness_class) -> None:
         self.list_solution_fits += [(solution, fitness)]
         if solution not in self.map_solutions:
