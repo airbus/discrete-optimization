@@ -357,6 +357,9 @@ class RCPSPSolution(Solution):
     def get_active_time(self, task: Hashable) -> List[int]:
         return list(range(self.get_start_time(task), self.get_end_time(task)))
 
+    def get_mode(self, task: Hashable) -> int:
+        return self.rcpsp_modes[self.problem.index_task_non_dummy[task]]
+
     def __hash__(self) -> int:
         return hash((tuple(self.rcpsp_permutation), tuple(self.rcpsp_modes)))
 
