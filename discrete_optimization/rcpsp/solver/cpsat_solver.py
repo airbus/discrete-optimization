@@ -654,28 +654,6 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         )
         return self.retrieve_solution(solver=solver)
 
-    def retrieve_solution(self, solver: CpSolver):
-        schedule = {}
-        modes_dict = {}
-        for task in self.variables["start"]:
-            schedule[task] = {
-                "start_time": solver.Value(self.variables["start"][task]),
-                "end_time": solver.Value(self.variables["end"][task]),
-            }
-        for task, mode in self.variables["is_present"]:
-            if solver.Value(self.variables["is_present"][task, mode]):
-                modes_dict[task] = mode
-        sol = RCPSPSolution(
-            problem=self.problem,
-            rcpsp_schedule=schedule,
-            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
-        )
-        return from_solutions_to_result_storage(
-            [sol],
-            problem=self.problem,
-            params_objective_function=self.params_objective_function,
-        )
-
 
 def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
     """
