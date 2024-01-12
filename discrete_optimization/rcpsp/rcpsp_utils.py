@@ -120,6 +120,8 @@ def plot_ressource_view(
         list_resource = rcpsp_model.resources_list
     if ax is None:
         fig, ax = plt.subplots(nrows=len(list_resource), figsize=(10, 5), sharex=True)
+        if len(list_resource) == 1:
+            ax = [ax]
         fig.suptitle(title_figure)
     polygons_ax: Dict[int, List[Polygon]] = {i: [] for i in range(len(list_resource))}
     labels_ax: Dict[int, List[Hashable]] = {i: [] for i in range(len(list_resource))}
@@ -595,3 +597,92 @@ def get_tasks_ending_between_two_times(
             for x in solution.rcpsp_schedule
             if time_1 <= solution.rcpsp_schedule[x]["end_time"] <= time_2
         ]
+
+
+def get_start_bounds_from_additional_constraint(
+    rcpsp_problem: RCPSPModel, activity: Hashable
+) -> Tuple[int, int]:
+    assert activity in rcpsp_problem.index_task
+    lb = 0
+    ub = rcpsp_problem.horizon
+    if rcpsp_problem.includes_special_constraint():
+        if (
+            rcpsp_problem.special_constraints.start_times is not None
+            and activity in rcpsp_problem.special_constraints.start_times
+            and rcpsp_problem.special_constraints.start_times[activity] is not None
+        ):
+            lb = ub = rcpsp_problem.special_constraints.start_times[activity]
+        else:
+            if activity in rcpsp_problem.special_constraints.start_times_window:
+                lbs, ubs = rcpsp_problem.special_constraints.start_times_window[
+                    activity
+                ]
+                if lbs is not None:
+                    lb = lbs
+                if ubs is not None:
+                    ub = ubs
+            if activity in rcpsp_problem.special_constraints.end_times_window:
+                lbs, ubs = rcpsp_problem.special_constraints.end_times_window[activity]
+                if lbs is not None:
+                    max_duration = max(
+                        [
+                            rcpsp_problem.mode_details[activity][m]["duration"]
+                            for m in rcpsp_problem.mode_details[activity]
+                        ]
+                    )
+                    lb = max(lb, lbs - max_duration)
+                if ubs is not None:
+                    min_duration = min(
+                        [
+                            rcpsp_problem.mode_details[activity][m]["duration"]
+                            for m in rcpsp_problem.mode_details[activity]
+                        ]
+                    )
+                    ub = min(ub, ubs - min_duration)
+    if ub < 0:
+        print(ub)
+        pass
+    return int(lb), int(ub)
+
+
+def get_end_bounds_from_additional_constraint(
+    rcpsp_problem: RCPSPModel, activity: Hashable
+) -> Tuple[int, int]:
+    assert activity in rcpsp_problem.index_task
+    lb = 0
+    ub = rcpsp_problem.horizon
+    if rcpsp_problem.includes_special_constraint():
+        if (
+            rcpsp_problem.special_constraints.end_times is not None
+            and activity in rcpsp_problem.special_constraints.end_times
+            and rcpsp_problem.special_constraints.end_times[activity] is not None
+        ):
+            lb = ub = rcpsp_problem.special_constraints.end_times[activity]
+        else:
+            if activity in rcpsp_problem.special_constraints.end_times_window:
+                lbs, ubs = rcpsp_problem.special_constraints.end_times_window[activity]
+                if lbs is not None:
+                    lb = lbs
+                if ubs is not None:
+                    ub = ubs
+            if activity in rcpsp_problem.special_constraints.start_times_window:
+                lbs, ubs = rcpsp_problem.special_constraints.start_times_window[
+                    activity
+                ]
+                if lbs is not None:
+                    min_duration = min(
+                        [
+                            rcpsp_problem.mode_details[activity][m]["duration"]
+                            for m in rcpsp_problem.mode_details[activity]
+                        ]
+                    )
+                    lb = max(lb, lbs + min_duration)
+                if ubs is not None:
+                    max_duration = max(
+                        [
+                            rcpsp_problem.mode_details[activity][m]["duration"]
+                            for m in rcpsp_problem.mode_details[activity]
+                        ]
+                    )
+                    ub = min(ub, ubs + max_duration)
+    return int(lb), int(ub)
