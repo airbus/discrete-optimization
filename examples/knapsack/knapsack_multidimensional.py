@@ -82,7 +82,6 @@ def run_ls(multiscenario_model):
     return sa.solve(
         initial_variable=solution,
         nb_iteration_max=3000,
-        pickle_result=False,
     )
 
 

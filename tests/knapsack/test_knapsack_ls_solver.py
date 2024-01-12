@@ -4,6 +4,7 @@
 
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimberPareto
 from discrete_optimization.generic_tools.ls.local_search import RestartHandlerLimit
@@ -48,7 +49,11 @@ def test_sa_knapsack():
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
         mode_mutation=ModeMutation.MUTATE,
     )
-    sa.solve(solution, 1000000, max_time_seconds=20, pickle_result=False)
+    sa.solve(
+        solution,
+        1000000,
+        callbacks=[TimerStopper(total_seconds=20, check_nb_steps=1000)],
+    )
 
 
 def test_hc_knapsack_multiobj():
@@ -78,9 +83,8 @@ def test_hc_knapsack_multiobj():
     result_sa = sa.solve(
         initial_variable=solution,
         nb_iteration_max=50000,
-        max_time_seconds=20,
         update_iteration_pareto=1000,
-        pickle_result=False,
+        callbacks=[TimerStopper(total_seconds=20, check_nb_steps=1000)],
     )
     pareto = result_sa
     pareto.len_pareto_front()
