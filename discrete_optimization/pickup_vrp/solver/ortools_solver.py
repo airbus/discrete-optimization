@@ -103,57 +103,36 @@ def apply_cost(
                 )
 
 
-local_search_metaheuristic_enum = routing_enums_pb2.LocalSearchMetaheuristic
-metaheuristic_names = [
-    (k, getattr(local_search_metaheuristic_enum, k))
-    for k in local_search_metaheuristic_enum.__dict__.keys()
-    if isinstance(getattr(local_search_metaheuristic_enum, k), int)
-]
-name_metaheuristic_to_value = {x[0]: x[1] for x in metaheuristic_names}
-value_metaheuristic_to_name = {x[1]: x[0] for x in metaheuristic_names}
+LocalSearchMetaheuristic = Enum(
+    value="LocalSearchMetaheuristic",
+    names={
+        name: val.number
+        for name, val in routing_enums_pb2.LocalSearchMetaheuristic.DESCRIPTOR.enum_values_by_name.items()
+    },
+    module=__name__,  # to avoid pickle issues
+)
+"""Enumeration of local search meta-heuristic.
 
-first_solution_strategy_enum = routing_enums_pb2.FirstSolutionStrategy
-first_solution_names = [
-    (k, getattr(first_solution_strategy_enum, k))
-    for k in first_solution_strategy_enum.__dict__.keys()
-    if isinstance(getattr(first_solution_strategy_enum, k), int)
-]
-name_firstsolution_to_value = {x[0]: x[1] for x in first_solution_names}
-value_firstsolution_to_name = {x[1]: x[0] for x in first_solution_names}
+Extracted from ortools Enum-like class.
+https://developers.google.com/optimization/routing/routing_options#local_search_options
+
+"""
 
 
-class MetaheuristicEnum(Enum):
-    UNSET = "UNSET"
-    AUTOMATIC = "AUTOMATIC"
-    GREEDY_DESCENT = "GREEDY_DESCENT"
-    GUIDED_LOCAL_SEARCH = "GUIDED_LOCAL_SEARCH"
-    SIMULATED_ANNEALING = "SIMULATED_ANNEALING"
-    TABU_SEARCH = "TABU_SEARCH"
-    GENERIC_TABU_SEARCH = "GENERIC_TABU_SEARCH"
+FirstSolutionStrategy = Enum(
+    value="FirstSolutionStrategy",
+    names={
+        name: val.number
+        for name, val in routing_enums_pb2.FirstSolutionStrategy.DESCRIPTOR.enum_values_by_name.items()
+    },
+    module=__name__,  # to avoid pickle issues
+)
+"""Enumeration of first solution strategies.
 
+Extracted from ortools Enum-like class.
+https://developers.google.com/optimization/routing/routing_options#first_solution_strategy
 
-class FirstSolutionEnum(Enum):
-    UNSET = "UNSET"
-    AUTOMATIC = "AUTOMATIC"
-    PATH_CHEAPEST_ARC = "PATH_CHEAPEST_ARC"
-    PATH_MOST_CONSTRAINED_ARC = "PATH_MOST_CONSTRAINED_ARC"
-    EVALUATOR_STRATEGY = "EVALUATOR_STRATEGY"
-    SAVINGS = "SAVINGS"
-    SWEEP = "SWEEP"
-    CHRISTOFIDES = "CHRISTOFIDES"
-    ALL_UNPERFORMED = "ALL_UNPERFORMED"
-    BEST_INSERTION = "BEST_INSERTION"
-    PARALLEL_CHEAPEST_INSERTION = "PARALLEL_CHEAPEST_INSERTION"
-    SEQUENTIAL_CHEAPEST_INSERTION = "SEQUENTIAL_CHEAPEST_INSERTION"
-    LOCAL_CHEAPEST_INSERTION = "LOCAL_CHEAPEST_INSERTION"
-    GLOBAL_CHEAPEST_ARC = "GLOBAL_CHEAPEST_ARC"
-    LOCAL_CHEAPEST_ARC = "LOCAL_CHEAPEST_ARC"
-    FIRST_UNBOUND_MIN_VALUE = "FIRST_UNBOUND_MIN_VALUE"
-
-
-# LocalSearchMetaheuristic = Enum([k[0] for k in metaheuristic_names])
-# FirstSolutionStrategy = Enum([k[0] for k in first_solution_names])
-# https://developers.google.com/optimization/routing/routing_options
+"""
 
 
 status_description = {
@@ -787,13 +766,17 @@ class ORToolsGPDP(SolverDO):
     def build_search_parameters(
         self, **kwargs: Any
     ) -> routing_parameters_pb2.RoutingSearchParameters:
-        first_solution_strategy = kwargs.get(
-            "first_solution_strategy", first_solution_strategy_enum.SAVINGS
+        first_solution_strategy: Union[int, FirstSolutionStrategy] = kwargs.get(
+            "first_solution_strategy", FirstSolutionStrategy.SAVINGS
         )
+        if not isinstance(first_solution_strategy, int):
+            first_solution_strategy = int(first_solution_strategy.value)
         local_search_metaheuristic = kwargs.get(
             "local_search_metaheuristic",
-            local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
+            LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         )
+        if not isinstance(local_search_metaheuristic, int):
+            local_search_metaheuristic = int(local_search_metaheuristic.value)
         one_visit_per_cluster = kwargs.get("one_visit_per_cluster", False)
 
         use_lns = kwargs.get("use_lns", True)
