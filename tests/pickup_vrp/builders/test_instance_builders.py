@@ -13,10 +13,10 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
 )
 from discrete_optimization.pickup_vrp.gpdp import GPDPSolution
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
+    FirstSolutionStrategy,
+    LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    first_solution_strategy_enum,
-    local_search_metaheuristic_enum,
     plot_ortools_solution,
 )
 
@@ -64,8 +64,8 @@ def test_pickup_and_delivery():
         include_pickup_and_delivery=True,
         parameters_cost=list_params_cost,
         use_lns=True,
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.SAVINGS,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=100,
         n_solutions=10000,
     )
@@ -109,8 +109,8 @@ def test_pickup_and_delivery_equilibrate():
             )
             for v in range(model.number_vehicle)
         },
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.AUTOMATIC,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.AUTOMATIC,
         time_limit=1,
         n_solutions=10000,
     )
@@ -154,8 +154,8 @@ def test_pickup_and_delivery_equilibrate_new_api():
             )
             for v in range(model.number_vehicle)
         },
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.AUTOMATIC,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.AUTOMATIC,
         time_limit=20,
         n_solutions=10000,
     )
@@ -194,8 +194,8 @@ def test_selective_tsp():
         include_mandatory=True,
         include_pickup_and_delivery=False,
         parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.SAVINGS,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=20,
         n_solutions=10000,
     )
@@ -221,8 +221,8 @@ def test_selective_tsp_new_api():
         include_mandatory=True,
         include_pickup_and_delivery=False,
         parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.SAVINGS,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=20,
         n_solutions=10000,
     )

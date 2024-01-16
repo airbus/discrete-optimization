@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 from classic_ortools_example import create_matrix_data
 
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
+    FirstSolutionStrategy,
+    LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    first_solution_strategy_enum,
-    local_search_metaheuristic_enum,
     plot_ortools_solution,
 )
 
@@ -35,8 +35,8 @@ def run_time_windows():
         include_mandatory=False,
         include_time_windows=True,
         include_time_windows_cluster=False,
-        local_search_metaheuristic=local_search_metaheuristic_enum.SIMULATED_ANNEALING,
-        first_solution_strategy=first_solution_strategy_enum.PATH_CHEAPEST_ARC,
+        local_search_metaheuristic=LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+        first_solution_strategy=FirstSolutionStrategy.PATH_CHEAPEST_ARC,
         time_limit=45,
         n_solutions=200,
     )
@@ -64,8 +64,8 @@ def run_pickup():
         include_mandatory=False,
         include_time_windows=False,
         include_time_windows_cluster=False,
-        local_search_metaheuristic=local_search_metaheuristic_enum.TABU_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.PARALLEL_CHEAPEST_INSERTION,
+        local_search_metaheuristic=LocalSearchMetaheuristic.TABU_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION,
         time_limit=15,
         n_solutions=200,
     )
@@ -100,8 +100,8 @@ def run_demand():
         include_mandatory=False,
         include_time_windows=False,
         include_time_windows_cluster=False,
-        local_search_metaheuristic=local_search_metaheuristic_enum.SIMULATED_ANNEALING,
-        first_solution_strategy=first_solution_strategy_enum.PATH_CHEAPEST_ARC,
+        local_search_metaheuristic=LocalSearchMetaheuristic.SIMULATED_ANNEALING,
+        first_solution_strategy=FirstSolutionStrategy.PATH_CHEAPEST_ARC,
         time_limit=15,
         parameters_cost=list_parameters_cost,
         n_solutions=200,

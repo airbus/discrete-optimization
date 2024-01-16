@@ -26,10 +26,10 @@ from discrete_optimization.pickup_vrp.solver.lp_solver import (
     plot_solution,
 )
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
+    FirstSolutionStrategy,
+    LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    first_solution_strategy_enum,
-    local_search_metaheuristic_enum,
     plot_ortools_solution,
 )
 
@@ -160,8 +160,8 @@ def run_ortools_solver_selective():
             for v in range(gpdp.number_vehicle)
         },
         parameters_cost=[ParametersCost(dimension_name="Distance")],
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.SAVINGS,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=200,
         n_solutions=10000,
     )
@@ -224,8 +224,8 @@ def run_ortools_pickup_delivery():
             v: (len(model.all_nodes) // (4 * model.number_vehicle), None)
             for v in range(model.number_vehicle)
         },
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.SAVINGS,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=100,
         n_solutions=10000,
     )
@@ -251,8 +251,8 @@ def run_ortools_pickup_delivery_cluster():
         include_pickup_and_delivery=False,
         include_mandatory=False,
         include_pickup_and_delivery_per_cluster=True,
-        local_search_metaheuristic=local_search_metaheuristic_enum.GUIDED_LOCAL_SEARCH,
-        first_solution_strategy=first_solution_strategy_enum.PARALLEL_CHEAPEST_INSERTION,
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION,
         time_limit=30,
         n_solutions=10000,
     )
