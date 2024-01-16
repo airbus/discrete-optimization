@@ -136,12 +136,18 @@ https://developers.google.com/optimization/routing/routing_options#first_solutio
 
 
 status_description = {
-    0: "ROUTING_NOT_SOLVED",
-    1: "ROUTING_SUCCESS",
-    2: "ROUTING_FAIL",
-    3: "ROUTING_FAIL_TIMEOUT",
-    4: "ROUTING_INVALID",
+    val: key
+    for key, val in pywrapcp.RoutingModel.__dict__.items()
+    if key.startswith("ROUTING_")
 }
+"""Mapping from status integer to description string.
+
+This maps the integer returned by routing_model.status to the corresponding string.
+
+We use the attributes of RoutingModel to construct the dictionary.
+https://developers.google.com/optimization/routing/routing_options#search_status
+
+"""
 
 
 class ORToolsGPDP(SolverDO):
