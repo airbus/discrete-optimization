@@ -807,24 +807,15 @@ class ORToolsGPDP(SolverDO):
         search_parameters.time_limit.seconds = kwargs.get("time_limit", 100)
         return search_parameters
 
-    def solve_intern(
+    def solve(
         self,
         search_parameters: Optional[
             routing_parameters_pb2.RoutingSearchParameters
         ] = None,
         **kwargs: Any,
-    ) -> Iterable[
-        Tuple[
-            Dict[int, List[int]],
-            Dict[Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]],
-            float,
-            float,
-            float,
-        ]
-    ]:
+    ) -> ResultStorage:
         if search_parameters is None:
             search_parameters = self.search_parameters
-        sols = []  # useful for callback
         callback = make_routing_monitor(self)
         self.routing.AddAtSolutionCallback(callback)
         if "initial_solution" in kwargs and kwargs.get("initial_solution") is not None:
@@ -832,27 +823,12 @@ class ORToolsGPDP(SolverDO):
                 kwargs["initial_solution"], True
             )
             print("laucnhing with assignment")
-            sols = self.routing.SolveFromAssignmentWithParameters(
+            self.routing.SolveFromAssignmentWithParameters(
                 initial_sol, search_parameters
             )
         else:
-            sols = self.routing.SolveWithParameters(
-                search_parameters
-            )  # useful for callback
-        return callback.sols
-
-    def solve(self, **kwargs: Any) -> ResultStorage:
-        solutions_fit: List[Tuple[Solution, fitness_class]] = []
-        sols = self.solve_intern()
-        for sol in sols:
-            gpdp_sol = convert_to_gpdpsolution(problem=self.problem, sol=sol)
-            fit = self.aggreg_sol(gpdp_sol)
-            solutions_fit.append((gpdp_sol, fit))
-        return ResultStorage(
-            list_solution_fits=solutions_fit,
-            limit_store=False,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+            self.routing.SolveWithParameters(search_parameters)
+        return callback.res
 
 
 class RoutingMonitor:
@@ -864,18 +840,11 @@ class RoutingMonitor:
         self._best_objective = np.inf
         self._counter_limit = 10000000
         self.nb_solutions = 0
-        self.sols: List[
-            Tuple[
-                Dict[int, List[int]],
-                Dict[
-                    Tuple[int, int, NodePosition],
-                    Dict[str, Tuple[float, float, float]],
-                ],
-                float,
-                float,
-                float,
-            ]
-        ] = []
+        self.res = ResultStorage(
+            [],
+            mode_optim=self.solver.params_objective_function.sense_function,
+            limit_store=False,
+        )
 
     def __call__(self) -> None:
         logger.info(
@@ -895,18 +864,6 @@ class RoutingMonitor:
         self.nb_solutions += 1
 
     def retrieve_current_solution(self) -> None:
-        postpro_sol: List[
-            Tuple[
-                Dict[int, List[int]],
-                Dict[
-                    Tuple[int, int, NodePosition],
-                    Dict[str, Tuple[float, float, float]],
-                ],
-                float,
-                float,
-                float,
-            ]
-        ] = []
         vehicle_count = self.problem.number_vehicle
         vehicle_tours: Dict[int, List[int]] = {i: [] for i in range(vehicle_count)}
         dimension_output: Dict[
@@ -975,16 +932,25 @@ class RoutingMonitor:
                     except Exception as e:
                         logger.warning(("2,", e))
                         break
-        postpro_sol += [
-            (
-                vehicle_tours,
-                dimension_output,
-                route_distance,
-                objective,
-                self.model.CostVar().Max(),
-            )
-        ]
-        self.sols += postpro_sol
+        sol: Tuple[
+            Dict[int, List[int]],
+            Dict[
+                Tuple[int, int, NodePosition],
+                Dict[str, Tuple[float, float, float]],
+            ],
+            float,
+            float,
+            float,
+        ] = (
+            vehicle_tours,
+            dimension_output,
+            route_distance,
+            objective,
+            self.model.CostVar().Max(),
+        )
+        gpdp_sol = convert_to_gpdpsolution(self.problem, sol)
+        fit = self.solver.aggreg_sol(gpdp_sol)
+        self.res.add_solution(solution=gpdp_sol, fitness=fit)
 
 
 def make_routing_monitor(solver: ORToolsGPDP) -> RoutingMonitor:
