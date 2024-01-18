@@ -64,32 +64,47 @@ class ResultStorage:
             if self.best_solution is None:
                 f = min if not self.maximize else max
                 self.best_solution = f(self.list_solution_fits, key=lambda x: x[1])[0]
+        else:
+            self.min = None
+            self.max = None
 
     def add_solution(self, solution: Solution, fitness: fitness_class) -> None:
         self.list_solution_fits += [(solution, fitness)]
         if solution not in self.map_solutions:
             self.map_solutions[solution] = fitness
-            self.list_solution_fits += [(solution, fitness)]
-        if (
-            self.maximize
-            and fitness > self.max
-            or (not self.maximize and fitness < self.min)
-        ):
+
+        if self.max is None or self.min is None:
+            # first solution ever added
+            self.max = fitness
+            self.min = fitness
             self.best_solution = solution
-        if (
-            self.maximize
-            and fitness >= self.min
-            or (not self.maximize and fitness <= self.max)
-        ):
             if self.size_heap >= self.nb_best_score and self.limit_store:
                 heappushpop(self.heap, fitness)
-                self.min = min(fitness, self.min)
-                self.max = max(fitness, self.max)
             else:
                 heappush(self.heap, fitness)
                 self.size_heap += 1
-                self.min = min(fitness, self.min)
-                self.max = max(fitness, self.max)
+        else:
+            # solutions already existed
+            if (
+                self.maximize
+                and fitness > self.max
+                or (not self.maximize and fitness < self.min)
+            ):
+                self.best_solution = solution
+            if (
+                self.maximize
+                and fitness >= self.min
+                or (not self.maximize and fitness <= self.max)
+            ):
+                if self.size_heap >= self.nb_best_score and self.limit_store:
+                    heappushpop(self.heap, fitness)
+                    self.min = min(fitness, self.min)
+                    self.max = max(fitness, self.max)
+                else:
+                    heappush(self.heap, fitness)
+                    self.size_heap += 1
+                    self.min = min(fitness, self.min)
+                    self.max = max(fitness, self.max)
 
     def finalize(self) -> None:
         self.heap = sorted(self.heap, reverse=self.maximize)
