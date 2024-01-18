@@ -882,13 +882,13 @@ class RoutingMonitor:
             f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
         )
         logger.debug(status_description[self.model.status()])
-        if self.nb_solutions % 100 == 0:
-            self.retrieve_current_solution()
         if self.model.CostVar().Max() < self._best_objective:
             self._best_objective = self.model.CostVar().Max()
             self.retrieve_current_solution()
             self._counter = 0
         else:
+            if self.nb_solutions % 100 == 0:
+                self.retrieve_current_solution()
             self._counter += 1
             if self._counter > self._counter_limit:
                 self.model.solver().FinishCurrentSearch()
