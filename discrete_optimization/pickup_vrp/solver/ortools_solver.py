@@ -1029,26 +1029,14 @@ def convert_to_gpdpsolution(
 
 
 def plot_ortools_solution(
-    result: Tuple[
-        Dict[int, List[int]],
-        Dict[Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]],
-        float,
-        float,
-        float,
-    ],
+    sol: GPDPSolution,
     problem: GPDP,
 ) -> Tuple[Figure, Axes]:
     if problem.coordinates_2d is None:
         raise ValueError(
             "problem.coordinates_2d cannot be None when calling plot_ortools_solution."
         )
-    (
-        vehicle_tours,
-        dimension_output,
-        route_distance,
-        objective,
-        cost,
-    ) = result
+    vehicle_tours = sol.trajectories
     fig, ax = plt.subplots(1)
     nb_colors = problem.number_vehicle
     nb_colors_clusters = len(problem.clusters_set)
@@ -1061,32 +1049,17 @@ def plot_ortools_solution(
             colors_nodes(problem.clusters_dict[node]) for node in problem.clusters_dict
         ],
     )
-    for v in range(len(vehicle_tours)):
+    for v, traj in vehicle_tours.items():
         ax.plot(
-            [
-                problem.coordinates_2d[problem.list_nodes[n]][0]
-                for n in vehicle_tours[v]
-            ],
-            [
-                problem.coordinates_2d[problem.list_nodes[n]][1]
-                for n in vehicle_tours[v]
-            ],
+            [problem.coordinates_2d[node][0] for node in traj],
+            [problem.coordinates_2d[node][1] for node in traj],
             label="vehicle n°" + str(v),
         )
         ax.scatter(
-            [
-                problem.coordinates_2d[problem.list_nodes[n]][0]
-                for n in vehicle_tours[v]
-            ],
-            [
-                problem.coordinates_2d[problem.list_nodes[n]][1]
-                for n in vehicle_tours[v]
-            ],
+            [problem.coordinates_2d[node][0] for node in traj],
+            [problem.coordinates_2d[node][1] for node in traj],
             s=10,
-            color=[
-                colors_nodes(problem.clusters_dict[problem.list_nodes[n]])
-                for n in vehicle_tours[v]
-            ],
+            color=[colors_nodes(problem.clusters_dict[node]) for node in traj],
         )
     ax.legend()
     return fig, ax
