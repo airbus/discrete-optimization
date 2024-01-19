@@ -66,6 +66,32 @@ class GPDPSolution(Solution):
             resource_evolution=self.resource_evolution,
         )
 
+    def check_pickup_deliverable(self) -> bool:
+        ok = True
+        for pickup, deliverable in self.problem.list_pickup_deliverable:
+            index_vehicles_pickup = set(
+                [
+                    [v for v, traj in self.trajectories.items() if p in traj][0]
+                    for p in pickup
+                ]
+            )
+            index_vehicles_deliverable = set(
+                [
+                    [v for v, traj in self.trajectories.items() if d in traj][0]
+                    for d in deliverable
+                ]
+            )
+            ok = ok and (
+                len(index_vehicles_pickup) == 1 and len(index_vehicles_deliverable) == 1
+            )
+            vehicle_p = list(index_vehicles_pickup)[0]
+            vehicle_d = list(index_vehicles_deliverable)[0]
+            ok = ok and vehicle_p == vehicle_d
+            index_p = [self.trajectories[vehicle_p].index(p) for p in pickup]
+            index_d = [self.trajectories[vehicle_d].index(d) for d in deliverable]
+            ok = ok and max(index_p) < min(index_d)
+            return ok
+
     def change_problem(self, new_problem: Problem) -> None:
         if not isinstance(new_problem, GPDP):
             raise ValueError("new_problem must be a GPDP for GPDPSolution.")
