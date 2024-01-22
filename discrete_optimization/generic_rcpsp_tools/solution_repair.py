@@ -168,7 +168,7 @@ def problem_constraints(
     subtasks = set(problems_output.keys())
     if len(subtasks) >= 0.2 * current_solution.problem.n_jobs:
         subtasks = set(
-            random.sample(subtasks, int(0.2 * current_solution.problem.n_jobs))
+            random.sample(list(subtasks), int(0.2 * current_solution.problem.n_jobs))
         )
     else:
         subtasks = subtasks.union(
