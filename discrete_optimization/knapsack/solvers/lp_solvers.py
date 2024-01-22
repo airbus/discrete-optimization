@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mip
 from mip import BINARY, MAXIMIZE, xsum
-from ortools.algorithms import pywrapknapsack_solver
+from ortools.algorithms.python import knapsack_solver
 from ortools.linear_solver import pywraplp
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -338,8 +338,8 @@ class KnapsackORTools(SolverKnapsack):
         )
 
     def init_model(self, **kwargs: Any) -> None:
-        solver = pywrapknapsack_solver.KnapsackSolver(
-            pywrapknapsack_solver.KnapsackSolver.KNAPSACK_MULTIDIMENSION_BRANCH_AND_BOUND_SOLVER,
+        solver = knapsack_solver.KnapsackSolver(
+            knapsack_solver.SolverType.KNAPSACK_MULTIDIMENSION_BRANCH_AND_BOUND_SOLVER,
             "KnapsackExample",
         )
         list_item = self.knapsack_model.list_items
@@ -347,7 +347,7 @@ class KnapsackORTools(SolverKnapsack):
         values = [item.value for item in list_item]
         weights = [[item.weight for item in list_item]]
         capacities = [max_capacity]
-        solver.Init(values, weights, capacities)
+        solver.init(values, weights, capacities)
         self.model = solver
 
     def solve(self, **kwargs: Any) -> ResultStorage:
@@ -357,13 +357,13 @@ class KnapsackORTools(SolverKnapsack):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        computed_value = self.model.Solve()
+        computed_value = self.model.solve()
         logger.debug(f"Total value = {computed_value}")
         xs = {}
         weight = 0
         value = 0
         for i in range(self.knapsack_model.nb_items):
-            if self.model.BestSolutionContains(i):
+            if self.model.best_solution_contains(i):
                 weight += self.knapsack_model.list_items[i].weight
                 value += self.knapsack_model.list_items[i].value
                 xs[self.knapsack_model.list_items[i].index] = 1
