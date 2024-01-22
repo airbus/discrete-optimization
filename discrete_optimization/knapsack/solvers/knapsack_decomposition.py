@@ -99,7 +99,7 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             sol, fit = results_storage.get_best_solution_fit()
             indexes_to_remove = set(
                 random.sample(
-                    all_indexes,
+                    list(all_indexes),
                     int(proportion_to_remove * self.knapsack_model.nb_items),
                 )
             )

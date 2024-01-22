@@ -80,7 +80,7 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
-                current_solution.schedule.keys(), int(self.fraction_to_fix * nb_jobs)
+                list(current_solution.schedule), int(self.fraction_to_fix * nb_jobs)
             )
         )
         for lj in last_jobs:
@@ -90,7 +90,7 @@ class ConstraintHandlerStartTimeInterval_CP(ConstraintHandler):
         self.employees_position = self.problem.employees_list
         task_to_fix = set(
             random.sample(
-                current_solution.schedule.keys(),
+                list(current_solution.schedule),
                 int(self.fraction_task_to_fix_employee * nb_jobs),
             )
         )

@@ -462,7 +462,7 @@ class NeighborFixStart(ConstraintHandler):
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
-                current_solution.rcpsp_schedule.keys(),
+                list(current_solution.rcpsp_schedule),
                 int(self.fraction_to_fix * nb_jobs),
             )
         )
@@ -803,7 +803,7 @@ class NeighborFlexibleStart(ConstraintHandler):
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
-                current_solution.rcpsp_schedule.keys(),
+                list(current_solution.rcpsp_schedule),
                 int(self.fraction_to_fix * nb_jobs),
             )
         )

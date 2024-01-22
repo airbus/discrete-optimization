@@ -170,7 +170,7 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
         # Fix start time for a subset of task.
         jobs_to_fix = set(
             random.sample(
-                current_solution.rcpsp_schedule.keys(),
+                list(current_solution.rcpsp_schedule),
                 int(self.fraction_fix_start_time * nb_jobs),
             )
         )
@@ -246,7 +246,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
-                current_solution.rcpsp_schedule.keys(),
+                list(current_solution.rcpsp_schedule),
                 int(self.fraction_to_fix * nb_jobs),
             )
         )
@@ -333,7 +333,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
-                current_solution.rcpsp_schedule.keys(),
+                list(current_solution.rcpsp_schedule),
                 int(self.fraction_to_fix * nb_jobs),
             )
         )
@@ -418,7 +418,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
         nb_jobs = self.problem.n_jobs
         jobs_to_fix = set(
             random.sample(
-                current_solution.rcpsp_schedule.keys(),
+                list(current_solution.rcpsp_schedule),
                 int(self.fraction_to_fix * nb_jobs),
             )
         )

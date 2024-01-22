@@ -1029,7 +1029,7 @@ class ConstraintHandlerOrWarmStart:
                 edges_to_constraint[v].update(
                     set(
                         random.sample(
-                            set(
+                            list(
                                 self.linear_solver.variable_decisions[
                                     "variables_edges"
                                 ][v]
@@ -1049,7 +1049,7 @@ class ConstraintHandlerOrWarmStart:
                 edges_to_constraint[v].update(
                     set(
                         random.sample(
-                            set(
+                            list(
                                 self.linear_solver.variable_decisions[
                                     "variables_edges"
                                 ][v]

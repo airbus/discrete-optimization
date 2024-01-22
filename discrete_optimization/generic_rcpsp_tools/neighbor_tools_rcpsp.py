@@ -1085,7 +1085,7 @@ class NeighborRandomAndNeighborGraph(NeighborBuilder):
             subtasks.update(task_intersect)
             len_subtask = len(subtasks)
         if len(subtasks) >= self.nb_jobs_subproblem:
-            subtasks = set(random.sample(subtasks, self.nb_jobs_subproblem))
+            subtasks = set(random.sample(list(subtasks), self.nb_jobs_subproblem))
         return subtasks, self.set_tasks.difference(subtasks)
 
 
@@ -1184,7 +1184,7 @@ class NeighborConstraintBreaks(NeighborBuilder):
                 )
             len_subtasks = len(subtasks)
             if len_subtasks > self.nb_jobs_subproblem:
-                subtasks = random.sample(subtasks, self.nb_jobs_subproblem)
+                subtasks = set(random.sample(list(subtasks), self.nb_jobs_subproblem))
             return subtasks, self.set_tasks.difference(subtasks)
         else:
             return self.other.find_subtasks(
