@@ -41,7 +41,7 @@ dependencies = [
     "matplotlib>=3.1",
     "seaborn>=0.10.1",
     "pymzn>=0.18.3",
-    "ortools>=9.5,<9.6",
+    "ortools>=9.8",
     "tqdm>=4.62.3",
     "sortedcontainers>=2.4",
     "deprecation",
