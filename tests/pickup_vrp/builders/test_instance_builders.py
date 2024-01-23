@@ -47,8 +47,7 @@ def test_pickup_and_delivery():
         use_lns=True,
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
-        time_limit=100,
-        n_solutions=10000,
+        time_limit=5,
     )
     result_storage: ResultStorage = solver.solve()
     assert isinstance(result_storage, ResultStorage)
@@ -95,8 +94,7 @@ def test_pickup_and_delivery_equilibrate_new_api():
         },
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=FirstSolutionStrategy.AUTOMATIC,
-        time_limit=20,
-        n_solutions=10000,
+        time_limit=5,
     )
     res = solver.solve()
     assert isinstance(res, ResultStorage)
@@ -141,8 +139,7 @@ def test_selective_tsp_new_api():
         parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
-        time_limit=20,
-        n_solutions=10000,
+        time_limit=5,
     )
     res = solver.solve()
     assert isinstance(res, ResultStorage)
