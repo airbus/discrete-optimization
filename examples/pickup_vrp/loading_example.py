@@ -134,12 +134,12 @@ def run_ortools_solver():
         one_visit_per_cluster=False,
         one_visit_per_node=True,
         time_limit=10,
-        n_solutions=100,
     )
-    results = solver.solve_intern()
-    plot_ortools_solution(results[0], gpdp)
+    result_storage = solver.solve()
+    best_sol = result_storage.best_solution
+    assert best_sol.check_pickup_deliverable()
+    plot_ortools_solution(best_sol, gpdp)
     plt.show()
-    print(results)
 
 
 def run_ortools_solver_selective():
@@ -163,13 +163,12 @@ def run_ortools_solver_selective():
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=200,
-        n_solutions=10000,
     )
-    results = solver.solve_intern()
-    res_to_plot = min([r for r in results], key=lambda x: x[-1])
-    plot_ortools_solution(res_to_plot, gpdp)
+    result_storage = solver.solve()
+    best_sol = result_storage.best_solution
+    assert best_sol.check_pickup_deliverable()
+    plot_ortools_solution(best_sol, gpdp)
     plt.show()
-    print(results)
 
 
 def run_ortools_pickup_delivery():
@@ -227,13 +226,12 @@ def run_ortools_pickup_delivery():
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         time_limit=100,
-        n_solutions=10000,
     )
     logging.basicConfig(level=logging.DEBUG)
-    results = solver.solve_intern()
-    res_to_plot = min([r for r in results], key=lambda x: x[-1])
-    check_solution(res_to_plot[0], model)
-    plot_ortools_solution(res_to_plot, model)
+    result_storage = solver.solve()
+    best_sol = result_storage.best_solution
+    assert best_sol.check_pickup_deliverable()
+    plot_ortools_solution(best_sol, model)
     plt.show()
 
 
@@ -254,53 +252,11 @@ def run_ortools_pickup_delivery_cluster():
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION,
         time_limit=30,
-        n_solutions=10000,
     )
-    results = solver.solve_intern()
-
-    def check_solution(res, gpdp: GPDP):
-        for p, d in gpdp.list_pickup_deliverable_per_cluster:
-            index_vehicles_p = []
-            for pp in p:
-                for node in gpdp.clusters_to_node[pp]:
-                    l = [i for i in range(len(res)) if node in res[i]]
-                    if len(l) > 0:
-                        index_vehicles_p += [l[0]]
-            index_vehicles_p = set(index_vehicles_p)
-            index_vehicles_d = []
-            for dd in d:
-                for node in gpdp.clusters_to_node[dd]:
-                    l = [i for i in range(len(res)) if node in res[i]]
-                    if len(l) > 0:
-                        index_vehicles_d += [l[0]]
-            index_vehicles_d = set(index_vehicles_d)
-            assert len(index_vehicles_p) == 1
-            assert len(index_vehicles_d) == 1
-            vehicle_p = list(index_vehicles_p)[0]
-            vehicle_d = list(index_vehicles_d)[0]
-            assert vehicle_p == vehicle_d
-            index_p = [
-                res[vehicle_p].index(node)
-                for pp in p
-                for node in gpdp.clusters_to_node[pp]
-                if node in res[vehicle_p]
-            ]
-            index_d = [
-                res[vehicle_d].index(node)
-                for dd in d
-                for node in gpdp.clusters_to_node[dd]
-                if node in res[vehicle_d]
-            ]
-            assert max(index_p) < min(index_d)
-
-    t_deb = time.time()
-    check_solution(results[-1][0], gpdp=gpdp)
-    t_end = time.time()
-    print(t_end - t_deb, " seconds check")
-    t_deb = time.time()
-    plot_ortools_solution(results[-1], gpdp)
-    t_end = time.time()
-    print(t_end - t_deb, " seconds plot")
+    result_storage = solver.solve()
+    best_sol = result_storage.best_solution
+    assert best_sol.check_pickup_deliverable()
+    plot_ortools_solution(best_sol, gpdp)
     plt.show()
 
 
