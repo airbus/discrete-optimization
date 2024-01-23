@@ -20,12 +20,17 @@ from ortools.constraint_solver import (
 )
 from ortools.util.optional_boolean_pb2 import BOOL_FALSE, BOOL_TRUE
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     fitness_class,
@@ -801,9 +806,6 @@ class ORToolsGPDP(SolverDO):
                 )
         search_parameters.use_cp = BOOL_TRUE if use_cp else BOOL_FALSE
         search_parameters.use_cp_sat = BOOL_TRUE if use_cp_sat else BOOL_FALSE
-        search_parameters.number_of_solutions_to_collect = kwargs.get(
-            "n_solutions", 100
-        )
         search_parameters.time_limit.seconds = kwargs.get("time_limit", 100)
         return search_parameters
 
@@ -812,41 +814,51 @@ class ORToolsGPDP(SolverDO):
         search_parameters: Optional[
             routing_parameters_pb2.RoutingSearchParameters
         ] = None,
+        callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        callbacks_list = CallbackList(callbacks=callbacks)
         if search_parameters is None:
             search_parameters = self.search_parameters
-        callback = make_routing_monitor(self)
-        self.routing.AddAtSolutionCallback(callback)
-        if "initial_solution" in kwargs and kwargs.get("initial_solution") is not None:
-            initial_sol = self.routing.ReadAssignmentFromRoutes(
-                kwargs["initial_solution"], True
-            )
-            print("laucnhing with assignment")
-            self.routing.SolveFromAssignmentWithParameters(
-                initial_sol, search_parameters
-            )
-        else:
-            self.routing.SolveWithParameters(search_parameters)
-        return callback.res
+        monitor = RoutingMonitor(self, callback=callbacks_list)
+        self.routing.AddSearchMonitor(monitor)
+        try:
+            if (
+                "initial_solution" in kwargs
+                and kwargs.get("initial_solution") is not None
+            ):
+                initial_sol = self.routing.ReadAssignmentFromRoutes(
+                    kwargs["initial_solution"], True
+                )
+                print("laucnhing with assignment")
+                self.routing.SolveFromAssignmentWithParameters(
+                    initial_sol, search_parameters
+                )
+            else:
+                self.routing.SolveWithParameters(search_parameters)
+        except SolveEarlyStop as e:
+            logger.info(e)
+        return monitor.res
 
 
-class RoutingMonitor:
-    def __init__(self, solver: ORToolsGPDP):
-        self.model = solver.routing
-        self.problem = solver.problem
-        self.solver = solver
+class RoutingMonitor(pywrapcp.SearchMonitor):
+    def __init__(self, do_solver: ORToolsGPDP, callback: Callback):
+        super().__init__(do_solver.routing.solver())
+        self.callback = callback
+        self.model = do_solver.routing
+        self.problem = do_solver.problem
+        self.do_solver = do_solver
         self._counter = 0
         self._best_objective = np.inf
         self._counter_limit = 10000000
         self.nb_solutions = 0
         self.res = ResultStorage(
             [],
-            mode_optim=self.solver.params_objective_function.sense_function,
+            mode_optim=self.do_solver.params_objective_function.sense_function,
             limit_store=False,
         )
 
-    def __call__(self) -> None:
+    def AtSolution(self) -> bool:
         logger.info(
             f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
         )
@@ -862,6 +874,21 @@ class RoutingMonitor:
             if self._counter > self._counter_limit:
                 self.model.solver().FinishCurrentSearch()
         self.nb_solutions += 1
+        # end of step callback: stopping?
+        stopping = self.callback.on_step_end(
+            step=self.nb_solutions, res=self.res, solver=self.do_solver
+        )
+        if stopping:
+            raise SolveEarlyStop(
+                f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
+            )
+        return not stopping
+
+    def EnterSearch(self):
+        self.callback.on_solve_start(solver=self.do_solver)
+
+    def ExitSearch(self):
+        self.callback.on_solve_end(res=self.res, solver=self.do_solver)
 
     def retrieve_current_solution(self) -> None:
         vehicle_count = self.problem.number_vehicle
@@ -869,7 +896,7 @@ class RoutingMonitor:
         dimension_output: Dict[
             Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]
         ] = {}
-        dimensions_names = self.solver.dimension_names
+        dimensions_names = self.do_solver.dimension_names
         dimensions: Dict[str, pywrapcp.RoutingDimension] = {
             r: self.model.GetDimensionOrDie(r) for r in dimensions_names
         }
@@ -880,7 +907,7 @@ class RoutingMonitor:
             route_load: Dict[str, float] = {r: 0.0 for r in self.problem.resources_set}
             cnt = 0
             while not self.model.IsEnd(index) or cnt > 10000:
-                node_index = self.solver.manager.IndexToNode(index)
+                node_index = self.do_solver.manager.IndexToNode(index)
                 if cnt == 0:
                     node_position = NodePosition.START
                 else:
@@ -900,7 +927,7 @@ class RoutingMonitor:
                     break
                 cnt += 1
                 for r in route_load:
-                    route_load[r] += self.solver.demands[r][node_index]
+                    route_load[r] += self.do_solver.demands[r][node_index]
                 previous_index = index
                 try:
                     index = self.model.NextVar(index).Value()
@@ -912,13 +939,13 @@ class RoutingMonitor:
                 )
                 if self.model.IsEnd(index):
                     vehicle_tours[vehicle_id] += [
-                        self.solver.manager.IndexToNode(index)
+                        self.do_solver.manager.IndexToNode(index)
                     ]
                     try:
                         dimension_output[
                             (
                                 vehicle_id,
-                                self.solver.manager.IndexToNode(index),
+                                self.do_solver.manager.IndexToNode(index),
                                 NodePosition.END,
                             )
                         ] = {
@@ -949,13 +976,8 @@ class RoutingMonitor:
             self.model.CostVar().Max(),
         )
         gpdp_sol = convert_to_gpdpsolution(self.problem, sol)
-        fit = self.solver.aggreg_sol(gpdp_sol)
+        fit = self.do_solver.aggreg_sol(gpdp_sol)
         self.res.add_solution(solution=gpdp_sol, fitness=fit)
-
-
-def make_routing_monitor(solver: ORToolsGPDP) -> RoutingMonitor:
-
-    return RoutingMonitor(solver)
 
 
 def convert_to_gpdpsolution(
