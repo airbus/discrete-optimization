@@ -476,19 +476,16 @@ class VRPIterativeLP(SolverVrp):
     def __init__(
         self,
         vrp_model: VrpProblem2D,
-        params_objective_function: ParamsObjectiveFunction,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        SolverVrp.__init__(self, vrp_model=vrp_model)
+        SolverVrp.__init__(
+            self,
+            vrp_model=vrp_model,
+            params_objective_function=params_objective_function,
+        )
         self.model: Optional[Model] = None
         self.x_var: Optional[Dict[Edge, Var]] = None
         self.constraint_on_edge: Optional[Dict[int, Any]] = None
-        (
-            self.aggreg_sol,
-            self.aggreg_fit,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.vrp_model, params_objective_function=params_objective_function
-        )
 
     def init_model(self, **kwargs: Any) -> None:
         (
@@ -617,7 +614,7 @@ class VRPIterativeLP(SolverVrp):
                 g=g,
                 vrp_problem=self.vrp_model,
             )
-            for comp in component_global_all:
+            for comp in component_all:
                 update_model_2(
                     model=self.model,
                     x_var=self.x_var,
@@ -644,7 +641,7 @@ class VRPIterativeLP(SolverVrp):
                 )
             edges_missing = {e for e in edges_to_add if e not in edges}
 
-            if len(edges_missing) > 0:
+            if len(edges_missing) > 0 or not finished:
                 (
                     g,
                     edges,
@@ -739,8 +736,6 @@ class VRPIterativeLP(SolverVrp):
                 self.model.update()
                 self.model.optimize()
                 objective = self.model.getObjective().getValue()
-            else:
-                finished = True
             finished = finished or iteration >= nb_iteration_max
 
         if plot:
@@ -800,8 +795,11 @@ def plot_solve(
         ax[1].set_title("iter " + str(i) + " obj=" + str(int(rebuilt_obj[i])))
         plt.draw()
         plt.pause(0.01)
-        ax[0].lines = []
-        ax[1].lines = []
+        if len(solutions) > 1 and i < len(solutions) - 1:
+            ax[0].cla()
+            ax[1].cla()
+        # ax[0].lines = []
+        # ax[1].lines = []
     plt.show()
 
 
@@ -1014,6 +1012,7 @@ def retrieve_solutions(
                 x_solution.copy(),
             )
         ]
+        print(f"quality of {s}-th solution", model.getAttr("PoolObjVal"))
     return solutions
 
 
@@ -1121,27 +1120,32 @@ def reevaluate_solutions(
 def update_model_2(
     model: "Model",
     x_var: Dict[Edge, "Var"],
-    components_global: List[Tuple[Set[Node], int]],
+    components_global: Dict[int, List[Tuple[Set[Node], int]]],
     edges_in_customers: Dict[int, Set[Edge]],
     edges_out_customers: Dict[int, Set[Edge]],
 ) -> None:
-    len_component_global = len(components_global)
-    if len_component_global > 1:
-        logger.debug(f"Nb component : {len_component_global}")
-        for s in components_global:
-            customers_component: Set[int] = {customer for vehicle, customer in s[0]}
-            edge_in_of_interest = [
-                e
-                for customer in customers_component
-                for e in edges_in_customers[customer]
-                if e[0][1] not in s[0] and e[1][1] in customers_component
-            ]
-            edge_out_of_interest = [
-                e
-                for customer in customers_component
-                for e in edges_out_customers[customer]
-                if e[1][1] not in customers_component and e[0][1] in customers_component
-            ]
-            model.addLConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
-            model.addLConstr(quicksum([x_var[e] for e in edge_out_of_interest]) >= 1)
+    for vehicle in components_global:
+        if len(components_global[vehicle]) > 1:
+            logger.debug(
+                f"Nb component for vehicle {vehicle}: {len(components_global[vehicle])}"
+            )
+            for s in components_global[vehicle]:
+                customers_component: Set[int] = {customer for vehicle, customer in s[0]}
+                edge_in_of_interest = [
+                    e
+                    for customer in customers_component
+                    for e in edges_in_customers[customer]
+                    if e[0][1] not in s[0] and e[1][1] in customers_component
+                ]
+                edge_out_of_interest = [
+                    e
+                    for customer in customers_component
+                    for e in edges_out_customers[customer]
+                    if e[1][1] not in customers_component
+                    and e[0][1] in customers_component
+                ]
+                model.addLConstr(quicksum([x_var[e] for e in edge_in_of_interest]) >= 1)
+                model.addLConstr(
+                    quicksum([x_var[e] for e in edge_out_of_interest]) >= 1
+                )
     model.update()

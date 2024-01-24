@@ -46,6 +46,6 @@ def build_graph(vrp_model: VrpProblem) -> Tuple[nx.Graph, np.ndarray]:
     matrix_adjacency, matrix_distance = prune_search_space(
         vrp_model=vrp_model, n_shortest=vrp_model.customer_count
     )
-    G = nx.from_numpy_matrix(matrix_adjacency, create_using=nx.DiGraph)
+    G = nx.from_numpy_array(matrix_adjacency, create_using=nx.DiGraph)
     G.add_edge(0, 0, weight=0)
     return G, matrix_distance
