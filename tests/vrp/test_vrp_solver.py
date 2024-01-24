@@ -11,7 +11,7 @@ from discrete_optimization.vrp.vrp_parser import get_data_available, parse_file
 
 def test_ortools_vrp_solver():
     logging.basicConfig(level=logging.ERROR)
-    file_path = get_data_available()[0]
+    file_path = [f for f in get_data_available() if "vrp_31_9_1" in f][0]
     vrp_model = parse_file(file_path)
     solver = VrpORToolsSolver(vrp_model=vrp_model)
     solver.init_model(
@@ -25,9 +25,7 @@ def test_ortools_vrp_solver():
 
 def test_greedy_vrp_solver():
     logging.basicConfig(level=logging.ERROR)
-    print(get_data_available())
     file_path = [f for f in get_data_available() if "vrp_31_9_1" in f][0]
-    print(file_path)
     vrp_model = parse_file(file_path)
     greedy_solver = GreedyVRPSolver(vrp_model=vrp_model, params_objective_function=None)
     res = greedy_solver.solve(limit_time_s=20)
