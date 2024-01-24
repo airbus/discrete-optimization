@@ -6,12 +6,7 @@ from discrete_optimization.vrp.solver.solver_ortools import (
     LocalSearchMetaheuristic,
     VrpORToolsSolver,
 )
-from discrete_optimization.vrp.vrp_parser import (
-    get_data_available,
-    parse_file,
-    parse_input,
-)
-from discrete_optimization.vrp.vrp_solvers import VRPIterativeLP, VRPIterativeLP_Pymip
+from discrete_optimization.vrp.vrp_parser import get_data_available, parse_file
 
 
 def test_ortools_vrp_solver():
