@@ -19,7 +19,12 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_pickup_and_delivery,
     create_selective_tsp,
 )
-from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass, build_pruned_problem
+from discrete_optimization.pickup_vrp.gpdp import (
+    GPDP,
+    GPDPSolution,
+    ProxyClass,
+    build_pruned_problem,
+)
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
@@ -136,8 +141,8 @@ def run_ortools_solver():
         time_limit=10,
         n_solutions=100,
     )
-    results = solver.solve_intern()
-    plot_ortools_solution(results[0], gpdp)
+    results = solver.solve()
+    plot_ortools_solution(results.get_best_solution(), gpdp)
     plt.show()
     print(results)
 
@@ -165,31 +170,14 @@ def run_ortools_solver_selective():
         time_limit=200,
         n_solutions=10000,
     )
-    results = solver.solve_intern()
-    res_to_plot = min([r for r in results], key=lambda x: x[-1])
+    results = solver.solve()
+    res_to_plot = results.get_best_solution()
     plot_ortools_solution(res_to_plot, gpdp)
     plt.show()
     print(results)
 
 
 def run_ortools_pickup_delivery():
-    def check_solution(res, gpdp: GPDP):
-        for p, d in gpdp.list_pickup_deliverable:
-            index_vehicles_p = set(
-                [[i for i in range(len(res)) if pp in res[i]][0] for pp in p]
-            )
-            index_vehicles_d = set(
-                [[i for i in range(len(res)) if dd in res[i]][0] for dd in d]
-            )
-            assert len(index_vehicles_p) == 1
-            assert len(index_vehicles_d) == 1
-            vehicle_p = list(index_vehicles_p)[0]
-            vehicle_d = list(index_vehicles_d)[0]
-            assert vehicle_p == vehicle_d
-            index_p = [res[vehicle_p].index(pp) for pp in p]
-            index_d = [res[vehicle_d].index(dd) for dd in d]
-            assert max(index_p) < min(index_d)
-
     model = create_pickup_and_delivery(
         number_of_vehicles=4,
         number_of_node=100,
@@ -230,9 +218,10 @@ def run_ortools_pickup_delivery():
         n_solutions=10000,
     )
     logging.basicConfig(level=logging.DEBUG)
-    results = solver.solve_intern()
-    res_to_plot = min([r for r in results], key=lambda x: x[-1])
-    check_solution(res_to_plot[0], model)
+    results = solver.solve()
+    res_to_plot = results.get_best_solution()
+    res_to_plot: GPDPSolution
+    res_to_plot.check_pickup_deliverable()
     plot_ortools_solution(res_to_plot, model)
     plt.show()
 

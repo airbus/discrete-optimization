@@ -42,6 +42,37 @@ metaheuristic_map = {
     LocalSearchMetaheuristic.SIMULATED_ANNEALING: routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING,
 }
 
+status_description = {
+    val: key
+    for key, val in pywrapcp.RoutingModel.__dict__.items()
+    if key.startswith("ROUTING_")
+}
+"""Mapping from status integer to description string.
+
+This maps the integer returned by routing_model.status to the corresponding string.
+
+We use the attributes of RoutingModel to construct the dictionary.
+https://developers.google.com/optimization/routing/routing_options#search_status
+
+"""
+
+
+class BasicRoutingMonitor:
+    def __init__(self, do_solver: "VrpORToolsSolver"):
+        self.model = do_solver.routing
+        self.problem = do_solver.vrp_model
+        self.do_solver = do_solver
+        self._counter = 0
+        self._best_objective = np.inf
+        self._counter_limit = 10000000
+        self.nb_solutions = 0
+
+    def __call__(self):
+        logger.info(
+            f"New solution found : --Cur objective : {self.model.CostVar().Max()}"
+        )
+        return True
+
 
 class VrpORToolsSolver(SolverVrp):
     def __init__(
@@ -84,6 +115,7 @@ class VrpORToolsSolver(SolverVrp):
         )
         routing = pywrapcp.RoutingModel(manager)
         # Create and register a transit callback.
+
         def distance_callback(from_index: int, to_index: int) -> int:
             """Returns the distance between the two nodes."""
             # Convert from routing variable Index to distance matrix NodeIndex.
@@ -114,7 +146,6 @@ class VrpORToolsSolver(SolverVrp):
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
         search_parameters.first_solution_strategy = first_solution_strategy
         search_parameters.local_search_metaheuristic = local_search_metaheuristic
-        search_parameters.time_limit.seconds = 100
         # Solve the problem.
         self.manager = manager
         self.routing = routing
@@ -177,8 +208,11 @@ class VrpORToolsSolver(SolverVrp):
                 raise RuntimeError(
                     "self.manager should be not None after self.init_model() being called."
                 )
-        limit_time_s = kwargs.get("limit_time_s", 100)
+        limit_time_s = kwargs.get("time_limit_seconds", 100)
         self.search_parameters.time_limit.seconds = limit_time_s
+        if kwargs.get("verbose", False):
+            callback = BasicRoutingMonitor(do_solver=self)
+            self.routing.AddAtSolutionCallback(callback)
         solution: pywrapcp.Assignment = self.routing.SolveWithParameters(
             self.search_parameters
         )
