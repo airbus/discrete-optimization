@@ -16,9 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class TimerStopper(Callback):
-    """
+    """Callback to stop the optimization after a given time.
+
     Stops the optimization process if a limit training time has been elapsed.
     This time is checked after each `check_nb_steps` steps.
+
     """
 
     def __init__(self, total_seconds: int, check_nb_steps: int = 1):
@@ -47,3 +49,23 @@ class TimerStopper(Callback):
                 logger.info(f"{self.__class__.__name__} callback met its criteria")
                 return True
         return False
+
+
+class NbIterationStopper(Callback):
+    """Callback to stop the optimization when a given number of solutions are found."""
+
+    def __init__(self, nb_iteration_max: int):
+        self.nb_iteration_max = nb_iteration_max
+        self.nb_iteration = 0
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: SolverDO
+    ) -> Optional[bool]:
+        self.nb_iteration += 1
+        if self.nb_iteration >= self.nb_iteration_max:
+            logger.info(
+                f"{self.__class__.__name__} callback met its criteria: max number of iterations reached"
+            )
+            return True
+        else:
+            return False
