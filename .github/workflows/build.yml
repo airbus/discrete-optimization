@@ -18,10 +18,10 @@ jobs:
   linters:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: create requirements.txt so that pip cache with setup-python works
         run: echo "pre-commit" > requirements_precommit.txt
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.8"
           cache: "pip"
@@ -29,7 +29,7 @@ jobs:
       - name: install pre-commit
         run: python -m pip install pre-commit
       - name: get cached pre-commit hooks
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
@@ -55,11 +55,11 @@ jobs:
       do_version: ${{ steps.get_wheel_version.outputs.version }}
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: create requirements.txt so that pip cache with setup-python works
         run:
           echo "build" > requirements_build.txt
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.8"
           cache: "pip"
@@ -77,7 +77,7 @@ jobs:
       - name: Build discrete-optimization wheel
         run: python -m build --wheel
       - name: Upload as build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist/*.whl
@@ -135,15 +135,15 @@ jobs:
         shell: bash
     steps:
       - name: Checkout discrete-optimization source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheels
@@ -174,7 +174,7 @@ jobs:
           echo "path=${{ matrix.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
       - name: Restore MiniZinc cache
         id: cache-minizinc
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.get-mzn-cache-path.outputs.path }}
           key: ${{ matrix.minizinc_url }}
@@ -207,7 +207,7 @@ jobs:
           fi
       - name: Restore tests data cache
         id: cache-data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/discrete_optimization_data
           key: data-${{ hashFiles('discrete_optimization/datasets.py') }}
@@ -249,7 +249,7 @@ jobs:
           cd ..
       - name: Upload coverage report as artifact
         if: ${{ matrix.coverage }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: |
@@ -270,7 +270,7 @@ jobs:
         if: |
           (needs.trigger.outputs.is_push_on_default_branch == 'true')
           || (needs.trigger.outputs.is_release == 'true')
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.BINDER_ENV_DEFAULT_REF }}
       - name: Update environment.yml and binder env reference
@@ -323,7 +323,7 @@ jobs:
         run: |
           echo "binder_env_ref=$BINDER_ENV_REF"
           echo "binder_env_ref=$BINDER_ENV_REF" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v3  # checkout triggering branch to get scripts/trigger_binder.sh
+      - uses: actions/checkout@v4  # checkout triggering branch to get scripts/trigger_binder.sh
       - name: Trigger a build for default binder env ref on each BinderHub deployments in the mybinder.org federation
         continue-on-error: true
         if: |
@@ -382,11 +382,11 @@ jobs:
           # check computed variables
           echo "Binder env: ${AUTODOC_BINDER_ENV_GH_REPO_NAME}/${AUTODOC_BINDER_ENV_GH_BRANCH}"
           echo "Notebooks source: ${AUTODOC_NOTEBOOKS_REPO_URL}/tree/${AUTODOC_NOTEBOOKS_BRANCH}"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.python-version }}
           cache: "pip"
@@ -394,7 +394,7 @@ jobs:
             pyproject.toml
             docs/requirements.txt
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheels
@@ -406,7 +406,7 @@ jobs:
           echo "path=${{ env.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
       - name: Restore MiniZinc cache
         id: cache-minizinc
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.get-mzn-cache-path.outputs.path }}
           key: ${{ env.minizinc_url }}
@@ -439,7 +439,7 @@ jobs:
           # specify it is a nojekyll site
           touch build/html/.nojekyll
       - name: upload as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: doc
           path: docs/build/html
@@ -450,9 +450,9 @@ jobs:
     if: needs.trigger.outputs.is_push_on_default_branch == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: doc
           path: docs/build/html
@@ -472,7 +472,7 @@ jobs:
     if: needs.trigger.outputs.is_release == 'true'
     steps:
       - name: Download wheels artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheels
@@ -505,9 +505,9 @@ jobs:
     if: needs.trigger.outputs.is_release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: doc
           path: docs/build/html
@@ -531,10 +531,10 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: gh-pages
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - name: Generate versions.json
