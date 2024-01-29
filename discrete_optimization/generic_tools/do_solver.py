@@ -3,9 +3,10 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations  # see annotations as str
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -19,6 +20,12 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+if TYPE_CHECKING:  # only for type checkers
+    try:
+        import optuna
+    except ImportError:
+        pass
 
 
 class SolverDO:
@@ -39,7 +46,7 @@ class SolverDO:
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         self.problem = problem
         (
@@ -65,6 +72,67 @@ class SolverDO:
     def get_hyperparameter(cls, name: str) -> Hyperparameter:
         """Get hyperparameter from given name."""
         return cls.get_hyperparameters_by_name()[name]
+
+    @classmethod
+    def suggest_hyperparameter_value_with_optuna(
+        cls, trial: optuna.trial.Trial, name: str, **kwargs
+    ) -> Any:
+        """Suggest hyperparameter value during an Optuna trial.
+
+        This can be used during Optuna hyperparameters tuning.
+
+        Args:
+            trial: optuna trial during hyperparameters tuning
+            name: name of the hyperparameter to choose
+            **kwargs: options for optuna hyperparameter suggestions
+
+        Returns:
+
+
+        kwargs can be used to pass relevant arguments to
+        - trial.suggest_float()
+        - trial.suggest_int()
+        - trial.suggest_categorical()
+
+        For instance it can
+        - add a low/high value if not existing for the hyperparameter
+          or override it to narrow the search. (for float or int hyperparameters)
+        - add a step or log argument (for float or int hyperparameters,
+          see optuna.trial.Trial.suggest_float())
+        - override choices for categorical or enum parameters to narrow the search
+
+        """
+        return cls.get_hyperparameter(name=name).suggest_with_optuna(
+            trial=trial, **kwargs
+        )
+
+    @classmethod
+    def suggest_hyperparameters_values_with_optuna(
+        cls,
+        trial: optuna.trial.Trial,
+        names: List[str],
+        kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> List[Any]:
+        """Suggest hyperparameter value during an Optuna trial.
+
+        Args:
+            trial: optuna trial during hyperparameters tuning
+            names: names of the hyperparameters to choose
+            kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
+
+        Returns:
+
+        kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_value_with_optuna(name=some_name)
+
+        """
+        if kwargs_by_name is None:
+            kwargs_by_name = {}
+        return [
+            cls.suggest_hyperparameter_value_with_optuna(
+                trial=trial, name=name, **kwargs_by_name.get(name, {})
+            )
+            for name in names
+        ]
 
     @abstractmethod
     def solve(
