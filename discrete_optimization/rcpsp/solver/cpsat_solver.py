@@ -14,16 +14,24 @@ from ortools.sat.python.cp_model import (
     UNKNOWN,
     CpModel,
     CpSolver,
+    CpSolverSolutionCallback,
     IntervalVar,
     IntVar,
-    VarArrayAndObjectiveSolutionPrinter,
 )
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCP, StatusSolver
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
+    ParametersCP,
+    StatusSolver,
+)
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
-    from_solutions_to_result_storage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import (
@@ -37,9 +45,7 @@ from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 logger = logging.getLogger(__name__)
 
 
-class CPSatRCPSPSolver(SolverRCPSP):
-    problem: RCPSPModel
-
+class CPSatRCPSPSolver(CPSolver, SolverRCPSP):
     def __init__(
         self,
         problem: RCPSPModel,
@@ -281,8 +287,13 @@ class CPSatRCPSPSolver(SolverRCPSP):
         }
 
     def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        parameters_cp: Optional[ParametersCP] = None,
+        **kwargs: Any,
     ) -> ResultStorage:
+        callbacks_list = CallbackList(callbacks=callbacks)
+        callbacks_list.on_solve_start(solver=self)
         if self.cp_model is None:
             self.init_model(**kwargs)
         if parameters_cp is None:
@@ -290,38 +301,36 @@ class CPSatRCPSPSolver(SolverRCPSP):
         solver = CpSolver()
         solver.parameters.max_time_in_seconds = parameters_cp.time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
-        callback = VarArrayAndObjectiveSolutionPrinter(variables=[])
-        status = solver.Solve(self.cp_model, callback)
-        self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
-        logger.info(
-            f"Solver finished, status={solver.StatusName(status)}, objective = {solver.ObjectiveValue()},"
-            f"best obj bound = {solver.BestObjectiveBound()}"
-        )
-        return self.retrieve_solution(solver=solver)
+        ortools_callback = OrtoolsCallback(do_solver=self, callback=callbacks_list)
+        try:
+            status = solver.Solve(self.cp_model, ortools_callback)
+            self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
+        except SolveEarlyStop as e:
+            logger.info(e)
+            if ortools_callback.nb_solutions > 0:
+                status = StatusSolver.SATISFIED
+            else:
+                status = StatusSolver.UNSATISFIABLE
+            self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
+        res = ortools_callback.res
+        callbacks_list.on_solve_end(res=res, solver=self)
+        return res
 
-    def get_status_solver(self):
-        return self.status_solver
-
-    def retrieve_solution(self, solver: CpSolver):
+    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> RCPSPSolution:
         schedule = {}
         modes_dict = {}
         for task in self.variables["start"]:
             schedule[task] = {
-                "start_time": solver.Value(self.variables["start"][task]),
-                "end_time": solver.Value(self.variables["end"][task]),
+                "start_time": cpsolvercb.Value(self.variables["start"][task]),
+                "end_time": cpsolvercb.Value(self.variables["end"][task]),
             }
         for task, mode in self.variables["is_present"]:
-            if solver.Value(self.variables["is_present"][task, mode]):
+            if cpsolvercb.Value(self.variables["is_present"][task, mode]):
                 modes_dict[task] = mode
-        sol = RCPSPSolution(
+        return RCPSPSolution(
             problem=self.problem,
             rcpsp_schedule=schedule,
             rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
-        )
-        return from_solutions_to_result_storage(
-            [sol],
-            problem=self.problem,
-            params_objective_function=self.params_objective_function,
         )
 
 
@@ -452,28 +461,6 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
             "is_present": is_present_var,
             "is_used_resource": is_used_resource,
         }
-
-    def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
-    ) -> ResultStorage:
-        if self.cp_model is None:
-            self.init_model(**kwargs)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        solver = CpSolver()
-        solver.parameters.max_time_in_seconds = parameters_cp.time_limit
-        solver.parameters.num_workers = parameters_cp.nb_process
-        callback = VarArrayAndObjectiveSolutionPrinter(
-            variables=list(self.variables["is_used_resource"].values())
-            + [self.variables["start"][self.problem.sink_task]]
-        )
-        status = solver.Solve(self.cp_model, callback)
-        self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
-        logger.info(
-            f"Solver finished, status={solver.StatusName(status)}, objective = {solver.ObjectiveValue()},"
-            f"best obj bound = {solver.BestObjectiveBound()}"
-        )
-        return self.retrieve_solution(solver=solver)
 
 
 class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
@@ -629,28 +616,6 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
             "resource_capacity": resource_capacity_var,
         }
 
-    def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
-    ) -> ResultStorage:
-        if self.cp_model is None:
-            self.init_model(**kwargs)
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        solver = CpSolver()
-        solver.parameters.max_time_in_seconds = parameters_cp.time_limit
-        # solver.parameters.num_workers = parameters_cp.nb_process
-        callback = VarArrayAndObjectiveSolutionPrinter(
-            variables=list(self.variables["resource_capacity"].values())
-            + [self.variables["start"][self.problem.sink_task]]
-        )
-        status = solver.Solve(self.cp_model, callback)
-        self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
-        logger.info(
-            f"Solver finished, status={solver.StatusName(status)}, objective = {solver.ObjectiveValue()},"
-            f"best obj bound = {solver.BestObjectiveBound()}"
-        )
-        return self.retrieve_solution(solver=solver)
-
 
 def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
     """
@@ -666,3 +631,33 @@ def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
         return StatusSolver.OPTIMAL
     if status_from_cpsat == FEASIBLE:
         return StatusSolver.SATISFIED
+
+
+class OrtoolsCallback(CpSolverSolutionCallback):
+    def __init__(self, do_solver: CPSatRCPSPSolver, callback: Callback):
+        super().__init__()
+        self.do_solver = do_solver
+        self.callback = callback
+        self.res = ResultStorage(
+            [],
+            mode_optim=self.do_solver.params_objective_function.sense_function,
+            limit_store=False,
+        )
+        self.nb_solutions = 0
+
+    def on_solution_callback(self) -> None:
+        self.store_current_solution()
+        self.nb_solutions += 1
+        # end of step callback: stopping?
+        stopping = self.callback.on_step_end(
+            step=self.nb_solutions, res=self.res, solver=self.do_solver
+        )
+        if stopping:
+            raise SolveEarlyStop(
+                f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
+            )
+
+    def store_current_solution(self):
+        sol = self.do_solver.retrieve_solution(cpsolvercb=self)
+        fit = self.do_solver.aggreg_from_sol(sol)
+        self.res.add_solution(solution=sol, fitness=fit)

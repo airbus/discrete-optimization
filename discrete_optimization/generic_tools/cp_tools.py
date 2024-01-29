@@ -11,11 +11,12 @@ import logging
 from abc import abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import minizinc
 from minizinc import Instance, Result, Status
 
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -190,7 +191,6 @@ class CPSolver(SolverDO):
     Additional function to be implemented by a CP Solver.
     """
 
-    instance: Optional[Any]
     status_solver: Optional[StatusSolver] = None
 
     @abstractmethod
@@ -204,20 +204,11 @@ class CPSolver(SolverDO):
         ...
 
     @abstractmethod
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        """
-        Returns a storage solution coherent with the given parameters.
-        :param result: Result storage returned by the cp solver
-        :param parameters_cp: parameters of the CP solver.
-        :return:
-        """
-        ...
-
-    @abstractmethod
     def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **args: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        parameters_cp: Optional[ParametersCP] = None,
+        **args: Any
     ) -> ResultStorage:
         ...
 
@@ -233,7 +224,10 @@ class MinizincCPSolver(CPSolver):
     """If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned."""
 
     def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        parameters_cp: Optional[ParametersCP] = None,
+        **kwargs: Any
     ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
@@ -276,3 +270,15 @@ class MinizincCPSolver(CPSolver):
         logger.info(result.statistics)
         self.status_solver = map_mzn_status_to_do_status[result.status]
         return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
+
+    @abstractmethod
+    def retrieve_solutions(
+        self, result: Result, parameters_cp: ParametersCP
+    ) -> ResultStorage:
+        """
+        Returns a storage solution coherent with the given parameters.
+        :param result: Result storage returned by the cp solver
+        :param parameters_cp: parameters of the CP solver.
+        :return:
+        """
+        ...
