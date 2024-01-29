@@ -37,6 +37,7 @@ from discrete_optimization.pickup_vrp.solver.lp_solver import (
     convert_temporaryresult_to_gpdpsolution,
     reevaluate_result,
 )
+from discrete_optimization.pickup_vrp.solver.pickup_vrp_solver import SolverPickupVrp
 
 logger = logging.getLogger(__name__)
 
@@ -89,13 +90,14 @@ def retrieve_ith_solution(
     return results, obj
 
 
-class LinearFlowSolver(PymipMilpSolver):
+class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
     problem: GPDP
 
     def __init__(
         self,
         problem: GPDP,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

@@ -27,7 +27,6 @@ import networkx as nx
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.lp_tools import (
@@ -39,6 +38,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     TupleFitness,
 )
 from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, GPDPSolution, Node
+from discrete_optimization.pickup_vrp.solver.pickup_vrp_solver import SolverPickupVrp
 
 try:
     import gurobipy as grb
@@ -157,13 +157,14 @@ def retrieve_solutions(
     return list_results
 
 
-class LinearFlowSolver(GurobiMilpSolver):
+class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
     problem: GPDP
 
     def __init__(
         self,
         problem: GPDP,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
