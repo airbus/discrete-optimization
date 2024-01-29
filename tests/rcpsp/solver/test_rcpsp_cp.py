@@ -1,11 +1,16 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
     result_storage_to_pareto_front,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
@@ -102,6 +107,41 @@ def test_ortools_resource_optim(model):
     result_storage = solver.solve(parameters_cp=parameters_cp)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
+
+
+def test_ortools_with_cb(caplog):
+    model = "j1201_1.sm"
+    files_available = get_data_available()
+    file = [f for f in files_available if model in f][0]
+    rcpsp_problem = parse_file(file)
+    solver = CPSatRCPSPSolver(problem=rcpsp_problem)
+    parameters_cp = ParametersCP.default()
+    parameters_cp.time_limit = 10
+    parameters_cp.nr_solutions = 1
+
+    class VariablePrinterCallback(Callback):
+        def __init__(self) -> None:
+            super().__init__()
+            self.nb_solution = 0
+
+        def on_step_end(self, step: int, res: ResultStorage, solver: CPSatRCPSPSolver):
+            self.nb_solution += 1
+            sol: RCPSPSolution
+            sol, fit = res.list_solution_fits[-1]
+            logging.debug(f"Solution #{self.nb_solution}:")
+            logging.debug(sol.rcpsp_schedule)
+            logging.debug(sol.rcpsp_modes)
+
+    callbacks = [VariablePrinterCallback(), TimerStopper(3)]
+
+    with caplog.at_level(logging.DEBUG):
+        result_storage = solver.solve(callbacks=callbacks, parameters_cp=parameters_cp)
+
+    assert "Solution #1" in caplog.text
+    assert (
+        "stopped by user callback" in caplog.text
+    )  # stopped by timer callback instead of ortools timer
+    # only true if at least one solution found after 3s (timer cb limit) and before 10s (ortools timer limit)
 
 
 def test_cp_sm_intermediate_solution():
