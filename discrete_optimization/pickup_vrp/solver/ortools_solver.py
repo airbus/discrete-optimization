@@ -27,6 +27,10 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -153,6 +157,15 @@ https://developers.google.com/optimization/routing/routing_options#search_status
 
 class ORToolsGPDP(SolverPickupVrp):
     problem: GPDP
+    hyperparameters = [
+        EnumHyperparameter(name="first_solution_strategy", enum=FirstSolutionStrategy),
+        EnumHyperparameter(
+            name="local_search_metaheuristic", enum=LocalSearchMetaheuristic
+        ),
+        CategoricalHyperparameter(name="use_lns", choices=[True, False]),
+        CategoricalHyperparameter(name="use_cp", choices=[True, False]),
+        CategoricalHyperparameter(name="use_cp_sat", choices=[True, False]),
+    ]
 
     def __init__(
         self,
