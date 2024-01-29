@@ -37,6 +37,7 @@ from discrete_optimization.pickup_vrp.gpdp import (
     build_matrix_distance,
     build_matrix_time,
 )
+from discrete_optimization.pickup_vrp.solver.pickup_vrp_solver import SolverPickupVrp
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +151,7 @@ https://developers.google.com/optimization/routing/routing_options#search_status
 """
 
 
-class ORToolsGPDP(SolverDO):
+class ORToolsGPDP(SolverPickupVrp):
     problem: GPDP
 
     def __init__(
@@ -159,6 +160,7 @@ class ORToolsGPDP(SolverDO):
         factor_multiplier_distance: float = 1,
         factor_multiplier_time: float = 1,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
