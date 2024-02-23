@@ -305,6 +305,9 @@ class CPSatRCPSPSolver(SolverDO):
         )
         return self.retrieve_solution(solver=solver)
 
+    def get_status_solver(self):
+        return self.status_solver
+
     def retrieve_solution(self, solver: CpSolver):
         schedule = {}
         modes_dict = {}
