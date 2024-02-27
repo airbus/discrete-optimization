@@ -4,11 +4,7 @@
 
 from typing import Any, Callable, List, Optional
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.knapsack.knapsack_model import (
     Item,
     KnapsackModel,
@@ -76,24 +72,9 @@ def best_of_greedy(knapsack_model: KnapsackModel) -> KnapsackSolution:
 
 
 class GreedyBest(SolverKnapsack):
-    def __init__(
-        self,
-        knapsack_model: KnapsackModel,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-    ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
-
     def solve(self, **kwargs: Any) -> ResultStorage:
-        res = best_of_greedy(self.knapsack_model)
-        fit = self.aggreg_sol(res)
+        res = best_of_greedy(self.problem)
+        fit = self.aggreg_from_sol(res)
         return ResultStorage(
             list_solution_fits=[(res, fit)],
             best_solution=res,
@@ -102,29 +83,14 @@ class GreedyBest(SolverKnapsack):
 
 
 class GreedyDummy(SolverKnapsack):
-    def __init__(
-        self,
-        knapsack_model: KnapsackModel,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-    ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
-
     def solve(self, **kwargs: Any) -> ResultStorage:
         sol = KnapsackSolution(
-            problem=self.knapsack_model,
+            problem=self.problem,
             value=0,
             weight=0,
-            list_taken=[0] * self.knapsack_model.nb_items,
+            list_taken=[0] * self.problem.nb_items,
         )
-        fit = self.aggreg_sol(sol)
+        fit = self.aggreg_from_sol(sol)
         return ResultStorage(
             list_solution_fits=[(sol, fit)],
             best_solution=sol,

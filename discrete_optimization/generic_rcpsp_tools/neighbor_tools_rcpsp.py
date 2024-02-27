@@ -655,7 +655,7 @@ def constraints_start_on_end(
         data[st] = tasks_ending
     selected = listed
     selected_task = random.sample(
-        cp_solver.rcpsp_model.tasks_list, k=int(frac * cp_solver.rcpsp_model.nb_tasks)
+        cp_solver.problem.tasks_list, k=int(frac * cp_solver.problem.nb_tasks)
     )
     s = []
     cnt = 0
@@ -702,7 +702,7 @@ def constraints_start_on_end_preemptive(
         data[st] = tasks_ending
     selected = listed
     selected_task = random.sample(
-        cp_solver.rcpsp_model.tasks_list, k=int(frac * cp_solver.rcpsp_model.nb_tasks)
+        cp_solver.problem.tasks_list, k=int(frac * cp_solver.problem.nb_tasks)
     )
     s = []
     cnt = 0

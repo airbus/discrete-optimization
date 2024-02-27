@@ -9,17 +9,10 @@ from typing import Any, List, Optional
 import clingo
 from clingo import Symbol
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.knapsack.knapsack_model import (
-    KnapsackModel,
-    KnapsackSolution,
-)
+from discrete_optimization.knapsack.knapsack_model import KnapsackSolution
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 
 cur_folder = os.path.abspath(os.path.dirname(__file__))
@@ -27,20 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class KnapsackASPSolver(SolverKnapsack):
-    def __init__(
-        self,
-        knapsack_model: KnapsackModel,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-    ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.knapsack_model, params_objective_function=params_objective_function
-        )
-        self.model: Optional[clingo.Control] = None
+    model: Optional[clingo.Control] = None
 
     def init_model(self, **kwargs: Any) -> None:
         basic_model = """
@@ -70,17 +50,15 @@ class KnapsackASPSolver(SolverKnapsack):
         self.ctl.add("base", [], string_data_input)
 
     def build_string_data_input(self):
-        nb_items = self.knapsack_model.nb_items
+        nb_items = self.problem.nb_items
 
         values = [0] + [
-            self.knapsack_model.list_items[i].value
-            for i in range(self.knapsack_model.nb_items)
+            self.problem.list_items[i].value for i in range(self.problem.nb_items)
         ]
         weights = [0] + [
-            self.knapsack_model.list_items[i].weight
-            for i in range(self.knapsack_model.nb_items)
+            self.problem.list_items[i].weight for i in range(self.problem.nb_items)
         ]
-        max_capacity = self.knapsack_model.max_capacity
+        max_capacity = self.problem.max_capacity
 
         items = [
             f"weight({i},{weights[i]}). value({i},{values[i]})."
@@ -96,13 +74,10 @@ class KnapsackASPSolver(SolverKnapsack):
         for symbols in list_symbols:
             in_list = [s.arguments[0].number for s in symbols if s.name == "in"]
             list_taken = [
-                1 if i in in_list else 0
-                for i in range(1, self.knapsack_model.nb_items + 1)
+                1 if i in in_list else 0 for i in range(1, self.problem.nb_items + 1)
             ]
-            solution = KnapsackSolution(
-                problem=self.knapsack_model, list_taken=list_taken
-            )
-            fit = self.aggreg_sol(solution)
+            solution = KnapsackSolution(problem=self.problem, list_taken=list_taken)
+            fit = self.aggreg_from_sol(solution)
             list_solutions_fit += [(solution, fit)]
 
         return ResultStorage(

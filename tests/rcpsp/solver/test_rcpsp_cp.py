@@ -158,9 +158,9 @@ def test_cp_sm_robust():
     worst, average, many_random_instance = create_models(
         rcpsp_model, range_around_mean=5
     )
-    solver_worst = CP_RCPSP_MZN(rcpsp_model=worst)
-    solver_average = CP_RCPSP_MZN(rcpsp_model=average)
-    solver_original = CP_RCPSP_MZN(rcpsp_model=rcpsp_model)
+    solver_worst = CP_RCPSP_MZN(problem=worst)
+    solver_average = CP_RCPSP_MZN(problem=average)
+    solver_original = CP_RCPSP_MZN(problem=rcpsp_model)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 5
     sol_original, fit_original = solver_original.solve(

@@ -35,14 +35,16 @@ logger = logging.getLogger(__name__)
 class HillClimber(SolverDO):
     def __init__(
         self,
-        evaluator: Problem,
+        problem: Problem,
         mutator: Mutation,
         restart_handler: RestartHandler,
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution: bool = False,
     ):
-        self.evaluator = evaluator
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.mutator = mutator
         self.restart_handler = restart_handler
         self.mode_mutation = mode_mutation
@@ -51,12 +53,6 @@ class HillClimber(SolverDO):
             self.mode_optim = params_objective_function.sense_function
         else:
             self.mode_optim = ModeOptim.MAXIMIZATION
-        (
-            self.aggreg_from_solution,
-            self.aggreg_from_dict_values,
-        ) = build_evaluate_function_aggregated(
-            evaluator, params_objective_function=self.params_objective_function
-        )
         self.store_solution = store_solution
 
     def solve(
@@ -68,9 +64,7 @@ class HillClimber(SolverDO):
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
 
-        objective = self.aggreg_from_dict_values(
-            self.evaluator.evaluate(initial_variable)
-        )
+        objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         cur_variable = initial_variable.copy()
         if self.store_solution:
             store = ResultStorage(
@@ -100,12 +94,12 @@ class HillClimber(SolverDO):
             global_improvement = False
             if self.mode_mutation == ModeMutation.MUTATE:
                 nv, move = self.mutator.mutate(cur_variable)
-                objective = self.aggreg_from_solution(nv)
+                objective = self.aggreg_from_sol(nv)
             elif self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
                 nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
                     cur_variable
                 )
-                objective = self.aggreg_from_dict_values(objective_dict_values)
+                objective = self.aggreg_from_dict(objective_dict_values)
             if self.mode_optim == ModeOptim.MINIMIZATION and objective < cur_objective:
                 accept = True
                 local_improvement = True
@@ -156,7 +150,7 @@ class HillClimber(SolverDO):
 class HillClimberPareto(HillClimber):
     def __init__(
         self,
-        evaluator: Problem,
+        problem: Problem,
         mutator: Mutation,
         restart_handler: RestartHandler,
         mode_mutation: ModeMutation,
@@ -164,7 +158,7 @@ class HillClimberPareto(HillClimber):
         store_solution: bool = False,
     ):
         super().__init__(
-            evaluator=evaluator,
+            problem=problem,
             mutator=mutator,
             restart_handler=restart_handler,
             mode_mutation=mode_mutation,
@@ -182,9 +176,7 @@ class HillClimberPareto(HillClimber):
     ) -> ParetoFront:
         callbacks_list = CallbackList(callbacks=callbacks)
 
-        objective = self.aggreg_from_dict_values(
-            self.evaluator.evaluate(initial_variable)
-        )
+        objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         pareto_front = ParetoFront(
             list_solution_fits=[(initial_variable, objective)],
             best_solution=initial_variable.copy(),
@@ -208,12 +200,12 @@ class HillClimberPareto(HillClimber):
                 pareto_front.finalize()
             if self.mode_mutation == ModeMutation.MUTATE:
                 nv, move = self.mutator.mutate(cur_variable)
-                objective = self.aggreg_from_solution(nv)
+                objective = self.aggreg_from_sol(nv)
             elif self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
                 nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
                     cur_variable
                 )
-                objective = self.aggreg_from_dict_values(objective_dict_values)
+                objective = self.aggreg_from_dict(objective_dict_values)
             if self.mode_optim == ModeOptim.MINIMIZATION and objective < cur_objective:
                 accept = True
                 local_improvement = True

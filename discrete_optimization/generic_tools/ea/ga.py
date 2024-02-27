@@ -14,9 +14,9 @@ from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ObjectiveHandling,
+    ParamsObjectiveFunction,
     Problem,
     TypeAttribute,
-    build_aggreg_function_and_params_objective,
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
 )
@@ -99,8 +99,11 @@ class Ga(SolverDO):
         tournament_size: float = 0.2,  # as a percentage of the population
         deap_verbose: bool = True,
         initial_population: Optional[List[List[Any]]] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         if not hasattr(self.problem, "evaluate_from_encoding"):
             raise ValueError("self.problem shoud define an evaluate_from_encoding()")
             # self.problem.evaluate_from_encoding: Callable[[List[int], str], Dict[str, float]]
@@ -393,14 +396,6 @@ class Ga(SolverDO):
             self._toolbox.register("select", tools.selWorst)
         elif self._selection_type == DeapSelection.SEL_STOCHASTIC_UNIVERSAL_SAMPLING:
             self._toolbox.register("select", tools.selStochasticUniversalSampling)
-
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.problem, params_objective_function=None
-        )
 
     def evaluate_problem(self, int_vector: List[int]) -> Tuple[float]:
         objective_values: Dict[str, float] = self.problem.evaluate_from_encoding(  # type: ignore

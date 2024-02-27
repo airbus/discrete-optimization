@@ -9,16 +9,9 @@ from typing import Any, List, Optional
 import clingo
 from clingo import Symbol
 
-from discrete_optimization.coloring.coloring_model import (
-    ColoringProblem,
-    ColoringSolution,
-)
+from discrete_optimization.coloring.coloring_model import ColoringSolution
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
     SolverColoringWithStartingSolution,
-)
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -29,33 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class ColoringASPSolver(SolverColoringWithStartingSolution):
-    def __init__(
-        self,
-        coloring_model: ColoringProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any,
-    ):
-        """Solver based on Answer Set Programming formulation and clingo solver.
+    """Solver based on Answer Set Programming formulation and clingo solver."""
 
-        Args:
-            coloring_model (ColoringProblem): coloring problem instance to solve
-            params_objective_function (ParamsObjectiveFunction): params of the objective function
-            silent_solve_error: if True, raise a warning instead of an error if the underlying instance.solve() crashes
-            **args:
-        """
-        SolverColoringWithStartingSolution.__init__(self, coloring_model=coloring_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.coloring_model,
-            params_objective_function=params_objective_function,
-        )
-        self.ctl: Optional[clingo.Control] = None
+    ctl: Optional[clingo.Control] = None
 
     def init_model(self, **kwargs: Any) -> None:
-        if self.coloring_model.use_subset:
+        if self.problem.use_subset:
             self.init_model_with_subset(**kwargs)
         else:
             self.init_model_without_subset(**kwargs)
@@ -100,8 +72,8 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
             solution = self.get_starting_solution(
                 params_objective_function=self.params_objective_function, **kwargs
             )
-            nb_colors = self.coloring_model.count_colors_all_index(solution.colors)
-            nb_colors_subset = self.coloring_model.count_colors(solution.colors)
+            nb_colors = self.problem.count_colors_all_index(solution.colors)
+            nb_colors_subset = self.problem.count_colors(solution.colors)
         self.ctl = clingo.Control(
             ["--warn=no-atom-undefined", f"--models={max_models}", "--opt-mode=optN"]
         )
@@ -116,23 +88,21 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
     ):
         if nb_colors_subset is None:
             nb_colors_subset = nb_colors
-        number_of_nodes = self.coloring_model.number_of_nodes
+        number_of_nodes = self.problem.number_of_nodes
         nodes = f"node(1..{number_of_nodes}).\n"
         edges = ""
-        index_nodes_name = self.coloring_model.index_nodes_name
-        for e in self.coloring_model.graph.edges:
+        index_nodes_name = self.problem.index_nodes_name
+        for e in self.problem.graph.edges:
             edges += f"edge({index_nodes_name[e[0]]+1}, {index_nodes_name[e[1]]+1}). "
         types = ""
-        if self.coloring_model.use_subset:
+        if self.problem.use_subset:
             # TODO : make this work.
             # types += f"max_value({nb_colors_subset}). \n"
-            for node in self.coloring_model.subset_nodes:
-                if node in self.coloring_model.subset_nodes:
-                    types += (
-                        f"subset_node({self.coloring_model.index_nodes_name[node]+1}). "
-                    )
+            for node in self.problem.subset_nodes:
+                if node in self.problem.subset_nodes:
+                    types += f"subset_node({self.problem.index_nodes_name[node] + 1}). "
         constraints = ""
-        if self.coloring_model.constraints_coloring:
+        if self.problem.constraints_coloring:
             constraints = self.constrained_data_input()
         colors = " ".join([f"col(c_{i})." for i in range(nb_colors)])
         full_string_input = (
@@ -142,10 +112,10 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
 
     def constrained_data_input(self):
         s = ""
-        if self.coloring_model.constraints_coloring.color_constraint is not None:
-            for node in self.coloring_model.constraints_coloring.color_constraint:
-                value = self.coloring_model.constraints_coloring.color_constraint[node]
-                index_node = self.coloring_model.index_nodes_name[node]
+        if self.problem.constraints_coloring.color_constraint is not None:
+            for node in self.problem.constraints_coloring.color_constraint:
+                value = self.problem.constraints_coloring.color_constraint[node]
+                index_node = self.problem.index_nodes_name[node]
                 s += f"fixed_color({index_node+1}, c_{value}). "
         return s
 
@@ -159,12 +129,12 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
             ]
             colors_name = list(set([s[1] for s in colors]))
             colors_to_index = self.compute_clever_colors_map(colors_name)
-            colors_vect = [0] * self.coloring_model.number_of_nodes
+            colors_vect = [0] * self.problem.number_of_nodes
             for num, color in colors:
                 colors_vect[num - 1] = colors_to_index[color]
 
-            solution = ColoringSolution(problem=self.coloring_model, colors=colors_vect)
-            fit = self.aggreg_sol(solution)
+            solution = ColoringSolution(problem=self.problem, colors=colors_vect)
+            fit = self.aggreg_from_sol(solution)
             list_solutions_fit += [(solution, fit)]
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
@@ -174,16 +144,16 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
     def compute_clever_colors_map(self, colors_name: List[str]):
         colors_to_protect = set()
         colors_to_index = {}
-        if self.coloring_model.has_constraints_coloring:
+        if self.problem.has_constraints_coloring:
             colors_to_protect = set(
                 [
                     f"c_{x}"
-                    for x in self.coloring_model.constraints_coloring.color_constraint.values()
+                    for x in self.problem.constraints_coloring.color_constraint.values()
                 ]
             )
             colors_to_index = {
                 f"c_{x}": x
-                for x in self.coloring_model.constraints_coloring.color_constraint.values()
+                for x in self.problem.constraints_coloring.color_constraint.values()
             }
         color_name = [
             colors_name[j]

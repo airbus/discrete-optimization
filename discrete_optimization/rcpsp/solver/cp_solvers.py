@@ -137,37 +137,35 @@ def add_fake_task_cp_data(
 
 
 class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
+
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = True,
         **kwargs,
     ):
-        if rcpsp_model.is_rcpsp_multimode():
+        if problem.is_rcpsp_multimode():
             raise ValueError("this solver is meant for single mode problems")
 
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
         ]  # For now, I've put the var name of the CP model (not the rcpsp_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
-        )
         self.stats = []
         self.keys_in_instance: Optional[List[str]] = None
         self.custom_output_type: Optional[bool] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "single")
-        max_time = args.get("max_time", self.rcpsp_model.horizon)
+        max_time = args.get("max_time", self.problem.horizon)
         # to model varying quantity of resource.
         fake_tasks = args.get("fake_tasks", True)
         add_objective_makespan = args.get("add_objective_makespan", True)
@@ -194,11 +192,11 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             )
             self.keys_in_instance += ["add_objective_resource"]
         self.keys_in_instance += ["add_objective_makespan", "ignore_sec_objective"]
-        n_res = len(self.rcpsp_model.resources_list)
+        n_res = len(self.problem.resources_list)
         instance["n_res"] = n_res
         self.keys_in_instance += ["n_res"]
         dict_to_add = add_fake_task_cp_data(
-            rcpsp_model=self.rcpsp_model,
+            rcpsp_model=self.problem,
             ignore_fake_task=not fake_tasks,
             max_time_to_consider=max_time,
         )
@@ -207,22 +205,19 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         for key in dict_to_add:
             instance[key] = dict_to_add[key]
             self.keys_in_instance += [key]
-        resources = self.rcpsp_model.resources_list
-        rcap = [int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources]
+        resources = self.problem.resources_list
+        rcap = [int(self.problem.get_max_resource_capacity(x)) for x in resources]
         instance["rc"] = rcap
         self.keys_in_instance += ["rc"]
-        n_tasks = self.rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
         self.keys_in_instance += ["n_tasks"]
-        sorted_tasks = self.rcpsp_model.tasks_list
-        d = [
-            int(self.rcpsp_model.mode_details[key][1]["duration"])
-            for key in sorted_tasks
-        ]
+        sorted_tasks = self.problem.tasks_list
+        d = [int(self.problem.mode_details[key][1]["duration"]) for key in sorted_tasks]
         instance["d"] = d
         self.keys_in_instance += ["d"]
         all_modes = [
-            (act, 1, self.rcpsp_model.mode_details[act][1]) for act in sorted_tasks
+            (act, 1, self.problem.mode_details[act][1]) for act in sorted_tasks
         ]
         rr = [
             [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
@@ -233,8 +228,8 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         suc = [
             set(
                 [
-                    self.rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.rcpsp_model.successors[task]
+                    self.problem.return_index_task(x, offset=1)
+                    for x in self.problem.successors[task]
                 ]
             )
             for task in sorted_tasks
@@ -243,8 +238,8 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         self.keys_in_instance += ["suc"]
         self.instance = instance
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         self.strings_to_add = []
         if add_partial_solution_hard_constraint:
@@ -362,19 +357,19 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         for start_times in starts:
             rcpsp_schedule = {}
             for k in range(len(start_times)):
-                t = self.rcpsp_model.tasks_list[k]
-                rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
+                t = self.problem.tasks_list[k]
+                rcpsp_schedule[self.problem.tasks_list[k]] = {
                     "start_time": start_times[k],
                     "end_time": start_times[k]
-                    + self.rcpsp_model.mode_details[t][1]["duration"],
+                    + self.problem.mode_details[t][1]["duration"],
                 }
             sol = RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[1 for i in range(self.rcpsp_model.n_jobs_non_dummy)],
+                rcpsp_modes=[1 for i in range(self.problem.n_jobs_non_dummy)],
                 rcpsp_schedule_feasible=True,
             )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
@@ -392,29 +387,27 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
 
 
 class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
+
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = False,
         **kwargs,
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
             "mrun",
         ]  # For now, I've put the var names of the CP model (not the rcpsp_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
-        )
-        self.calendar = self.rcpsp_model.is_varying_resource()
+        self.calendar = self.problem.is_varying_resource()
         self.keys_in_instance: Optional[List[str]] = None
 
         # Utility objects to map minizinc vars and do vars.
@@ -439,19 +432,19 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
-        resources_list = self.rcpsp_model.resources_list
+        resources_list = self.problem.resources_list
         instance = Instance(solver, model)
         keys = []
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = ignore_sec_objective
         keys += ["add_objective_makespan", "ignore_sec_objective"]
-        max_time = args.get("max_time", self.rcpsp_model.horizon)
+        max_time = args.get("max_time", self.problem.horizon)
         if model_type != "multi-calendar":
             fake_tasks = args.get(
                 "fake_tasks", True
             )  # to model varying quantity of resource.
             dict_to_add = add_fake_task_cp_data(
-                rcpsp_model=self.rcpsp_model,
+                rcpsp_model=self.problem,
                 ignore_fake_task=not fake_tasks,
                 max_time_to_consider=max_time,
             )
@@ -463,17 +456,17 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         n_res = len(resources_list)
         instance["n_res"] = n_res
         keys += ["n_res"]
-        n_tasks = self.rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
         keys += ["n_tasks"]
-        sorted_tasks = self.rcpsp_model.tasks_list
-        n_opt = sum([len(self.rcpsp_model.mode_details[key]) for key in sorted_tasks])
+        sorted_tasks = self.problem.tasks_list
+        n_opt = sum([len(self.problem.mode_details[key]) for key in sorted_tasks])
         instance["n_opt"] = n_opt
         keys += ["n_opt"]
         all_modes = [
-            (act, mode, self.rcpsp_model.mode_details[act][mode])
+            (act, mode, self.problem.mode_details[act][mode])
             for act in sorted_tasks
-            for mode in sorted(self.rcpsp_model.mode_details[act])
+            for mode in sorted(self.problem.mode_details[act])
         ]
         self.modeindex_map = {
             i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
@@ -486,7 +479,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             self.mode_dict_task_mode_to_index_minizinc[(task, mode)] = ind
         modes = [set() for t in sorted_tasks]
         for j in self.modeindex_map:
-            modes[self.rcpsp_model.index_task[self.modeindex_map[j]["task"]]].add(j)
+            modes[self.problem.index_task[self.modeindex_map[j]["task"]]].add(j)
         dur = [x[2]["duration"] for x in all_modes]
         instance["modes"] = modes
         keys += ["modes"]
@@ -498,9 +491,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
-        rcap = [
-            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources_list
-        ]
+        rcap = [int(self.problem.get_max_resource_capacity(x)) for x in resources_list]
         if model_type != "multi-resource-feasibility":
             instance["rcap"] = rcap
             keys += ["rcap"]
@@ -512,15 +503,12 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             )
             instance["rcap_max"] = args.get(
                 "rcap_max",
-                [
-                    self.rcpsp_model.get_max_resource_capacity(res)
-                    for res in resources_list
-                ],
+                [self.problem.get_max_resource_capacity(res) for res in resources_list],
             )
             instance["rcap_min"] = args.get("rcap_max", [0 for res in resources_list])
             keys += ["rweight", "max_makespan"]
         rtype = [
-            2 if res in self.rcpsp_model.non_renewable_resources else 1
+            2 if res in self.problem.non_renewable_resources else 1
             for res in resources_list
         ]
         instance["rtype"] = rtype
@@ -528,8 +516,8 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         succ = [
             set(
                 [
-                    self.rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.rcpsp_model.successors.get(task, [])
+                    self.problem.return_index_task(x, offset=1)
+                    for x in self.problem.successors.get(task, [])
                 ]
             )
             for task in sorted_tasks
@@ -539,8 +527,8 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         self.instance = instance
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         if add_partial_solution_hard_constraint:
             strings = add_hard_special_constraints_mrcpsp(p_s, self)
@@ -560,7 +548,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         return add_hard_special_constraints(partial_solution, self)
 
     def constraint_task_to_mode(self, task_id, mode):
-        modes = self.rcpsp_model.mode_details[task_id].keys()
+        modes = self.problem.mode_details[task_id].keys()
         list_strings = []
         for m in modes:
             if m == mode:
@@ -682,22 +670,20 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
                     ]["original_mode_index"]
             rcpsp_schedule = {}
             for i in range(len(start_times)):
-                rcpsp_schedule[self.rcpsp_model.tasks_list[i]] = {
+                rcpsp_schedule[self.problem.tasks_list[i]] = {
                     "start_time": start_times[i],
                     "end_time": start_times[i]
-                    + self.rcpsp_model.mode_details[self.rcpsp_model.tasks_list[i]][
-                        modes_dict[self.rcpsp_model.tasks_list[i]]
+                    + self.problem.mode_details[self.problem.tasks_list[i]][
+                        modes_dict[self.problem.tasks_list[i]]
                     ]["duration"],
                 }
             sol = RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[
-                    modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
-                ],
+                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
                 rcpsp_schedule_feasible=True,
             )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
@@ -715,20 +701,20 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
 class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = False,
         **kwargs,
     ):
         super().__init__(
-            rcpsp_model=rcpsp_model,
+            problem=problem,
             cp_solver_name=cp_solver_name,
             params_objective_function=params_objective_function,
             silent_solve_error=silent_solve_error,
             **kwargs,
         )
-        self.fake_tasks = create_fake_tasks(rcpsp_problem=rcpsp_model)
+        self.fake_tasks = create_fake_tasks(rcpsp_problem=problem)
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-faketasks")
@@ -745,7 +731,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             model.output_type = RCPSPSolCP
             self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
-        resources_list = self.rcpsp_model.resources_list
+        resources_list = self.problem.resources_list
         self.resources_index = resources_list
         instance = Instance(solver, model)
         keys = []
@@ -755,29 +741,29 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         n_res = len(resources_list)
         instance["n_res"] = n_res
         keys += ["n_res"]
-        n_tasks = self.rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
         keys += ["n_tasks"]
-        sorted_tasks = self.rcpsp_model.tasks_list
-        n_opt = sum([len(self.rcpsp_model.mode_details[key]) for key in sorted_tasks])
+        sorted_tasks = self.problem.tasks_list
+        n_opt = sum([len(self.problem.mode_details[key]) for key in sorted_tasks])
         instance["n_opt"] = n_opt
         keys += ["n_opt"]
         all_modes = [
-            (act, mode, self.rcpsp_model.mode_details[act][mode])
+            (act, mode, self.problem.mode_details[act][mode])
             for act in sorted_tasks
-            for mode in sorted(self.rcpsp_model.mode_details[act])
+            for mode in sorted(self.problem.mode_details[act])
         ]
         self.modeindex_map = {
             i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
             for i in range(len(all_modes))
         }
 
-        max_time = args.get("max_time", self.rcpsp_model.horizon)
+        max_time = args.get("max_time", self.problem.horizon)
         fake_tasks = args.get(
             "fake_tasks", True
         )  # to modelize varying quantity of resource.
         dict_to_add = add_fake_task_cp_data(
-            rcpsp_model=self.rcpsp_model,
+            rcpsp_model=self.problem,
             ignore_fake_task=not fake_tasks,
             max_time_to_consider=max_time,
         )
@@ -789,7 +775,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
 
         modes = [set() for t in sorted_tasks]
         for j in self.modeindex_map:
-            modes[self.rcpsp_model.index_task[self.modeindex_map[j]["task"]]].add(j)
+            modes[self.problem.index_task[self.modeindex_map[j]["task"]]].add(j)
         dur = [x[2]["duration"] for x in all_modes]
         instance["modes"] = modes
         keys += ["modes"]
@@ -801,13 +787,11 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
-        rcap = [
-            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources_list
-        ]
+        rcap = [int(self.problem.get_max_resource_capacity(x)) for x in resources_list]
         instance["rcap"] = rcap
         keys += ["rcap"]
         rtype = [
-            2 if res in self.rcpsp_model.non_renewable_resources else 1
+            2 if res in self.problem.non_renewable_resources else 1
             for res in resources_list
         ]
         instance["rtype"] = rtype
@@ -815,8 +799,8 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         succ = [
             set(
                 [
-                    self.rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.rcpsp_model.successors.get(task, [])
+                    self.problem.return_index_task(x, offset=1)
+                    for x in self.problem.successors.get(task, [])
                 ]
             )
             for task in sorted_tasks
@@ -826,8 +810,8 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         self.instance = instance
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         if add_partial_solution_hard_constraint:
             strings = add_hard_special_constraints_mrcpsp(p_s, self)
@@ -874,22 +858,20 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
                     ]["original_mode_index"]
             rcpsp_schedule = {}
             for i in range(len(start_times)):
-                rcpsp_schedule[self.rcpsp_model.tasks_list[i]] = {
+                rcpsp_schedule[self.problem.tasks_list[i]] = {
                     "start_time": start_times[i],
                     "end_time": start_times[i]
-                    + self.rcpsp_model.mode_details[self.rcpsp_model.tasks_list[i]][
-                        modes_dict[self.rcpsp_model.tasks_list[i]]
+                    + self.problem.mode_details[self.problem.tasks_list[i]][
+                        modes_dict[self.problem.tasks_list[i]]
                     ]["duration"],
                 }
             sol = RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[
-                    modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
-                ],
+                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
                 rcpsp_schedule_feasible=True,
             )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
@@ -948,29 +930,26 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
 
 
 class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
+    problem: RCPSPModelPreemptive
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModelPreemptive,
+        problem: RCPSPModelPreemptive,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = True,
         **kwargs,
     ):
 
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
         ]  # For now, I've put the var name of the CP model (not the rcpsp_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
-        )
-        self.calendar = rcpsp_model.is_varying_resource()
+        self.calendar = problem.is_varying_resource()
         self.index_in_minizinc = None
         self.data_dict = None
         self.nb_preemptive = None
@@ -1011,28 +990,25 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         keys += ["nb_preemptive"]
         instance["possibly_preemptive"] = args.get(
             "possibly_preemptive",
-            [
-                self.rcpsp_model.can_be_preempted(task)
-                for task in self.rcpsp_model.tasks_list
-            ],
+            [self.problem.can_be_preempted(task) for task in self.problem.tasks_list],
         )
         keys += ["possibly_preemptive"]
         instance["max_preempted"] = args.get(
-            "max_preempted", min(self.rcpsp_model.n_jobs_non_dummy, 5)
+            "max_preempted", min(self.problem.n_jobs_non_dummy, 5)
         )
         keys += ["max_preempted"]
 
-        n_res = len(list(self.rcpsp_model.resources.keys()))
+        n_res = len(list(self.problem.resources.keys()))
         instance["n_res"] = n_res
         keys += ["n_res"]
 
         if model_type != "multi-preemptive-calendar":
-            max_time = args.get("max_time", self.rcpsp_model.horizon)
+            max_time = args.get("max_time", self.problem.horizon)
             fake_tasks = args.get(
                 "fake_tasks", True
             )  # to model varying quantity of resource.
             dict_to_add = add_fake_task_cp_data(
-                rcpsp_model=self.rcpsp_model,
+                rcpsp_model=self.problem,
                 ignore_fake_task=not fake_tasks,
                 max_time_to_consider=max_time,
             )
@@ -1042,11 +1018,11 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
                 instance[key] = dict_to_add[key]
                 keys += [key]
 
-        sorted_tasks = self.rcpsp_model.tasks_list
+        sorted_tasks = self.problem.tasks_list
         all_modes = [
-            (act, mode, self.rcpsp_model.mode_details[act][mode])
+            (act, mode, self.problem.mode_details[act][mode])
             for act in sorted_tasks
-            for mode in sorted(self.rcpsp_model.mode_details[act])
+            for mode in sorted(self.problem.mode_details[act])
         ]
         self.modeindex_map = {
             i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
@@ -1059,7 +1035,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
             self.mode_dict_task_mode_to_index_minizinc[(task, mode)] = ind
         modes = [set() for t in sorted_tasks]
         for j in self.modeindex_map:
-            modes[self.rcpsp_model.index_task[self.modeindex_map[j]["task"]]].add(j)
+            modes[self.problem.index_task[self.modeindex_map[j]["task"]]].add(j)
         dur = [x[2]["duration"] for x in all_modes]
         instance["modes"] = modes
         keys += ["modes"]
@@ -1067,7 +1043,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         keys += ["n_opt"]
         instance["dur"] = dur
         keys += ["dur"]
-        resources = self.rcpsp_model.resources_list
+        resources = self.problem.resources_list
         rreq = [
             [all_modes[i][2].get(res, 0) for i in range(len(all_modes))]
             for res in resources
@@ -1075,18 +1051,17 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         instance["rreq"] = rreq
         keys += ["rreq"]
         rtype = [
-            2 if res in self.rcpsp_model.non_renewable_resources else 1
-            for res in resources
+            2 if res in self.problem.non_renewable_resources else 1 for res in resources
         ]
         instance["rtype"] = rtype
         keys += ["rtype"]
-        rc = [int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources]
+        rc = [int(self.problem.get_max_resource_capacity(x)) for x in resources]
         if self.calendar and model_type == "multi-preemptive-calendar":
-            one_resource = list(self.rcpsp_model.resources.keys())[0]
-            instance["max_time"] = len(self.rcpsp_model.resources[one_resource])
+            one_resource = list(self.problem.resources.keys())[0]
+            instance["max_time"] = len(self.problem.resources[one_resource])
             keys += ["max_time"]
             ressource_capacity_time = [
-                [int(x) for x in self.rcpsp_model.resources[res]] for res in resources
+                [int(x) for x in self.problem.resources[res]] for res in resources
             ]
             instance["ressource_capacity_time"] = ressource_capacity_time
             keys += ["ressource_capacity_time"]
@@ -1094,15 +1069,15 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         instance["rc"] = rc
         keys += ["rc"]
 
-        n_tasks = self.rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
         keys += ["n_tasks"]
 
         suc = [
             set(
                 [
-                    self.rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.rcpsp_model.successors[task]
+                    self.problem.return_index_task(x, offset=1)
+                    for x in self.problem.successors[task]
                 ]
             )
             for task in sorted_tasks
@@ -1112,8 +1087,8 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         self.instance = instance
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         self.name_penalty = []
 
@@ -1135,7 +1110,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
     def constraint_ressource_requirement_at_time_t(
         self, time, ressource, ressource_number, sign: SignEnum = SignEnum.LEQ
     ):
-        index_ressource = self.rcpsp_model.resources_list.index(ressource) + 1
+        index_ressource = self.problem.resources_list.index(ressource) + 1
         s = (
             """constraint """
             + str(ressource_number)
@@ -1205,19 +1180,17 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
                     if j == 0 or duration_preemptive[i][k][j] != 0:
                         starts_k.append(starts_preemptive[i][k][j])
                         ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
-                rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
+                rcpsp_schedule[self.problem.tasks_list[k]] = {
                     "starts": starts_k,
                     "ends": ends_k,
                 }
             sol = RCPSPSolutionPreemptive(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[
-                    modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
-                ],
+                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
                 rcpsp_schedule_feasible=True,
             )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
@@ -1238,7 +1211,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         return result_storage
 
     def constraint_task_to_mode(self, task_id, mode):
-        modes = self.rcpsp_model.mode_details[task_id].keys()
+        modes = self.problem.mode_details[task_id].keys()
         list_strings = []
         for m in modes:
             if m == mode:
@@ -1280,10 +1253,10 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
 
     def constraint_minduration_all_tasks(self):
         list_strings = []
-        for task in self.rcpsp_model.tasks_list:
-            if self.rcpsp_model.duration_subtask[task][0]:
+        for task in self.problem.tasks_list:
+            if self.problem.duration_subtask[task][0]:
                 list_strings += self.constraint_duration_to_min_duration_preemptive(
-                    task=task, min_duration=self.rcpsp_model.duration_subtask[task][1]
+                    task=task, min_duration=self.problem.duration_subtask[task][1]
                 )
         return list_strings
 
@@ -1340,10 +1313,10 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         )
 
     def constraint_start_time_precomputed(self):
-        intervals = precompute_possible_starting_time_interval(self.rcpsp_model)
+        intervals = precompute_possible_starting_time_interval(self.problem)
         list_strings = []
         for t in intervals:
-            if self.rcpsp_model.mode_details[t][1]["duration"] == 0:
+            if self.problem.mode_details[t][1]["duration"] == 0:
                 continue
             s = "constraint "
             s_list = []
@@ -1402,7 +1375,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
 
     def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
-        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
+        weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
         s = (
             """int: nb_indexes="""
             + str(len(indexes))
@@ -1419,7 +1392,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
 
     def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
-        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
+        weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
 
         s = (
             """int: nb_indexes="""
@@ -1437,19 +1410,21 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
 
 
 class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
+    problem: RCPSPModelPreemptive
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModelPreemptive,
+        problem: RCPSPModelPreemptive,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = True,
         **kwargs,
     ):
-        if rcpsp_model.is_rcpsp_multimode():
+        if problem.is_rcpsp_multimode():
             raise ValueError("this solver is meant for single mode problems")
 
         super().__init__(
-            rcpsp_model=rcpsp_model,
+            problem=problem,
             cp_solver_name=cp_solver_name,
             params_objective_function=params_objective_function,
             silent_solve_error=silent_solve_error,
@@ -1485,24 +1460,21 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
         keys += ["nb_preemptive"]
         instance["possibly_preemptive"] = args.get(
             "possibly_preemptive",
-            [
-                self.rcpsp_model.can_be_preempted(task)
-                for task in self.rcpsp_model.tasks_list
-            ],
+            [self.problem.can_be_preempted(task) for task in self.problem.tasks_list],
         )
         keys += ["possibly_preemptive"]
         instance["max_preempted"] = args.get(
-            "max_preempted", min(self.rcpsp_model.n_jobs_non_dummy, 5)
+            "max_preempted", min(self.problem.n_jobs_non_dummy, 5)
         )
         keys += ["max_preempted"]
 
         if model_type != "single-preemptive-calendar":
-            max_time = args.get("max_time", self.rcpsp_model.horizon)
+            max_time = args.get("max_time", self.problem.horizon)
             fake_tasks = args.get(
                 "fake_tasks", True
             )  # to modelize varying quantity of resource.
             dict_to_add = add_fake_task_cp_data(
-                rcpsp_model=self.rcpsp_model,
+                rcpsp_model=self.problem,
                 ignore_fake_task=not fake_tasks,
                 max_time_to_consider=max_time,
             )
@@ -1512,20 +1484,18 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
                 instance[key] = dict_to_add[key]
                 keys += [key]
 
-        n_res = len(list(self.rcpsp_model.resources.keys()))
+        n_res = len(list(self.problem.resources.keys()))
         instance["n_res"] = n_res
         keys += ["n_res"]
-        sorted_resources = self.rcpsp_model.resources_list
+        sorted_resources = self.problem.resources_list
         self.resources_index = sorted_resources
-        rc = [
-            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in sorted_resources
-        ]
+        rc = [int(self.problem.get_max_resource_capacity(x)) for x in sorted_resources]
         if self.calendar and model_type == "single-preemptive-calendar":
-            one_ressource = list(self.rcpsp_model.resources.keys())[0]
-            instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
+            one_ressource = list(self.problem.resources.keys())[0]
+            instance["max_time"] = len(self.problem.resources[one_ressource])
             keys += ["max_time"]
             ressource_capacity_time = [
-                [int(x) for x in self.rcpsp_model.resources[res]]
+                [int(x) for x in self.problem.resources[res]]
                 for res in sorted_resources
             ]
             instance["ressource_capacity_time"] = ressource_capacity_time
@@ -1534,15 +1504,12 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
         instance["rc"] = rc
         keys += ["rc"]
 
-        n_tasks = self.rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
         keys += ["n_tasks"]
 
-        sorted_tasks = self.rcpsp_model.tasks_list
-        d = [
-            int(self.rcpsp_model.mode_details[key][1]["duration"])
-            for key in sorted_tasks
-        ]
+        sorted_tasks = self.problem.tasks_list
+        d = [int(self.problem.mode_details[key][1]["duration"]) for key in sorted_tasks]
         instance["d"] = d
         keys += ["d"]
 
@@ -1551,9 +1518,7 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
         for res in sorted_resources:
             rr.append([])
             for task in sorted_tasks:
-                rr[index].append(
-                    int(self.rcpsp_model.mode_details[task][1].get(res, 0))
-                )
+                rr[index].append(int(self.problem.mode_details[task][1].get(res, 0)))
             index += 1
         instance["rr"] = rr
         keys += ["rr"]
@@ -1561,8 +1526,8 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
         suc = [
             set(
                 [
-                    self.rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.rcpsp_model.successors[task]
+                    self.problem.return_index_task(x, offset=1)
+                    for x in self.problem.successors[task]
                 ]
             )
             for task in sorted_tasks
@@ -1572,8 +1537,8 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
         self.instance = instance
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         self.data_dict = {key: self.instance[key] for key in keys}
         if add_partial_solution_hard_constraint:
@@ -1635,16 +1600,16 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
                     if j == 0 or duration_preemptive[i][k][j] != 0:
                         starts_k.append(starts_preemptive[i][k][j])
                         ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
-                rcpsp_schedule[self.rcpsp_model.tasks_list[k]] = {
+                rcpsp_schedule[self.problem.tasks_list[k]] = {
                     "starts": starts_k,
                     "ends": ends_k,
                 }
             sol = RCPSPSolutionPreemptive(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
                 rcpsp_schedule_feasible=True,
             )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
@@ -1698,30 +1663,28 @@ class MRCPSP_Result:
 
 
 class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
+
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = False,
         **kwargs,
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
             "mrun",
         ]  # For now, I've put the var names of the CP model (not the rcpsp_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
-        )
         self.calendar = False
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             self.calendar = True
 
         self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
@@ -1735,7 +1698,7 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         model = Model(files_mzn["multi-no-bool"])
         model.output_type = MRCPSP_Result
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
-        resources_list = list(self.rcpsp_model.resources.keys())
+        resources_list = list(self.problem.resources.keys())
         instance = Instance(solver, model)
         keys = []
         instance["add_objective_makespan"] = add_objective_makespan
@@ -1744,17 +1707,17 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         n_res = len(resources_list)
         instance["n_res"] = n_res
         keys += ["n_res"]
-        n_tasks = self.rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
         keys += ["n_tasks"]
-        sorted_tasks = self.rcpsp_model.tasks_list
-        n_opt = sum([len(self.rcpsp_model.mode_details[key]) for key in sorted_tasks])
+        sorted_tasks = self.problem.tasks_list
+        n_opt = sum([len(self.problem.mode_details[key]) for key in sorted_tasks])
         instance["n_opt"] = n_opt
         keys += ["n_opt"]
         all_modes = [
-            (act, mode, self.rcpsp_model.mode_details[act][mode])
+            (act, mode, self.problem.mode_details[act][mode])
             for act in sorted_tasks
-            for mode in sorted(self.rcpsp_model.mode_details[act])
+            for mode in sorted(self.problem.mode_details[act])
         ]
         self.modeindex_map = {
             i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
@@ -1762,7 +1725,7 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         }
         modes = [set() for t in sorted_tasks]
         for j in self.modeindex_map:
-            modes[self.rcpsp_model.index_task[self.modeindex_map[j]["task"]]].add(j)
+            modes[self.problem.index_task[self.modeindex_map[j]["task"]]].add(j)
         dur = [x[2]["duration"] for x in all_modes]
         instance["modes"] = modes
         keys += ["modes"]
@@ -1774,39 +1737,36 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         ]
         instance["rreq"] = rreq
         keys += ["rreq"]
-        rcap = [
-            int(self.rcpsp_model.get_max_resource_capacity(x)) for x in resources_list
-        ]
+        rcap = [int(self.problem.get_max_resource_capacity(x)) for x in resources_list]
         instance["rcap"] = rcap
         keys += ["rcap"]
         rtype = [
-            2 if res in self.rcpsp_model.non_renewable_resources else 1
+            2 if res in self.problem.non_renewable_resources else 1
             for res in resources_list
         ]
 
         instance["rtype"] = rtype
         keys += ["rtype"]
 
-        succ = [set(self.rcpsp_model.successors[task]) for task in sorted_tasks]
+        succ = [set(self.problem.successors[task]) for task in sorted_tasks]
 
         instance["succ"] = succ
         keys += ["succ"]
 
         if self.calendar:
-            one_ressource = list(self.rcpsp_model.resources.keys())[0]
-            instance["max_time"] = len(self.rcpsp_model.resources[one_ressource])
+            one_ressource = list(self.problem.resources.keys())[0]
+            instance["max_time"] = len(self.problem.resources[one_ressource])
             keys += ["max_time"]
             ressource_capacity_time = [
-                [int(x) for x in self.rcpsp_model.resources[res]]
-                for res in resources_list
+                [int(x) for x in self.problem.resources[res]] for res in resources_list
             ]
             instance["ressource_capacity_time"] = ressource_capacity_time
             keys += ["ressource_capacity_time"]
 
         self.instance = instance
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         if p_s is not None and add_partial_solution_hard_constraint:
@@ -1929,21 +1889,19 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
             rcpsp_schedule = {}
             start_times = res.dict["start"]
             for i in range(len(start_times)):
-                t = self.rcpsp_model.tasks_list[i]
+                t = self.problem.tasks_list[i]
                 rcpsp_schedule[t] = {
                     "start_time": start_times[i],
                     "end_time": start_times[i]
-                    + self.rcpsp_model.mode_details[t][modes_dict[t]]["duration"],
+                    + self.problem.mode_details[t][modes_dict[t]]["duration"],
                 }
             sol = RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[
-                    modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
-                ],
+                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
                 rcpsp_schedule_feasible=True,
             )
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()
@@ -1958,24 +1916,27 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
 
 
 class CP_MRCPSP_MZN_MODES:
+
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
     ):
-        self.rcpsp_model = rcpsp_model
+        self.problem = problem
         self.instance: Optional[Instance] = None
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "mrun",
         ]  # For now, I've put the var names of the CP model (not the rcpsp_model)
         (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
+            self.aggreg_from_sol,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
+            self.problem, params_objective_function=params_objective_function
         )
 
     def init_model(self, **args):
@@ -1983,16 +1944,13 @@ class CP_MRCPSP_MZN_MODES:
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
 
-        n_res = len(list(self.rcpsp_model.resources.keys()))
+        n_res = len(list(self.problem.resources.keys()))
         instance["n_res"] = n_res
-        n_tasks = self.rcpsp_model.n_jobs_non_dummy + 2
+        n_tasks = self.problem.n_jobs_non_dummy + 2
         instance["n_tasks"] = n_tasks
-        sorted_tasks = self.rcpsp_model.tasks_list
+        sorted_tasks = self.problem.tasks_list
         n_opt = sum(
-            [
-                len(list(self.rcpsp_model.mode_details[key].keys()))
-                for key in sorted_tasks
-            ]
+            [len(list(self.problem.mode_details[key].keys())) for key in sorted_tasks]
         )
         instance["n_opt"] = n_opt
 
@@ -2001,7 +1959,7 @@ class CP_MRCPSP_MZN_MODES:
         self.modeindex_map = {}
 
         for act in sorted_tasks:
-            tmp = list(self.rcpsp_model.mode_details[act].keys())
+            tmp = list(self.problem.mode_details[act].keys())
             for i in range(len(tmp)):
                 original_mode_index = tmp[i]
                 mod_index = counter + tmp[i]
@@ -2016,23 +1974,23 @@ class CP_MRCPSP_MZN_MODES:
 
         rreq = []
         index = 0
-        for res in self.rcpsp_model.resources_list:
+        for res in self.problem.resources_list:
             rreq.append([])
             for task in sorted_tasks:
-                for mod in self.rcpsp_model.mode_details[task].keys():
+                for mod in self.problem.mode_details[task].keys():
                     rreq[index].append(
-                        int(self.rcpsp_model.mode_details[task][mod].get(res, 0))
+                        int(self.problem.mode_details[task][mod].get(res, 0))
                     )
             index += 1
         instance["rreq"] = rreq
         instance["rcap"] = [
-            self.rcpsp_model.get_max_resource_capacity(res)
-            for res in self.rcpsp_model.resources_list
+            self.problem.get_max_resource_capacity(res)
+            for res in self.problem.resources_list
         ]
 
         rtype = [
-            2 if res in self.rcpsp_model.non_renewable_resources else 1
-            for res in self.rcpsp_model.resources_list
+            2 if res in self.problem.non_renewable_resources else 1
+            for res in self.problem.resources_list
         ]
         instance["rtype"] = rtype
         self.instance: Instance = instance
@@ -2066,18 +2024,18 @@ class CP_MRCPSP_MZN_MODES:
             mruns.append(result["mrun"])
         all_modes = []
         for mrun in mruns:
-            modes = [1] * (self.rcpsp_model.n_jobs_non_dummy + 2)
+            modes = [1] * (self.problem.n_jobs_non_dummy + 2)
             for i in range(len(mrun)):
                 if (
                     mrun[i] == 1
                     and (self.modeindex_map[i + 1]["task"] != 1)
                     and (
                         self.modeindex_map[i + 1]["task"]
-                        != self.rcpsp_model.n_jobs_non_dummy + 2
+                        != self.problem.n_jobs_non_dummy + 2
                     )
                 ):
                     modes[
-                        self.rcpsp_model.index_task[self.modeindex_map[i + 1]["task"]]
+                        self.problem.index_task[self.modeindex_map[i + 1]["task"]]
                     ] = self.modeindex_map[i + 1]["original_mode_index"]
             all_modes.append(modes)
         return all_modes

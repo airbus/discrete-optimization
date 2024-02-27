@@ -8,6 +8,11 @@ from abc import abstractmethod
 from typing import Any, List, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Problem,
+    build_aggreg_function_and_params_objective,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -15,6 +20,24 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 
 class SolverDO:
     """Base class for a discrete-optimization solver."""
+
+    problem: Problem
+
+    def __init__(
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any
+    ):
+        self.problem = problem
+        (
+            self.aggreg_from_sol,
+            self.aggreg_from_dict,
+            self.params_objective_function,
+        ) = build_aggreg_function_and_params_objective(
+            problem=self.problem,
+            params_objective_function=params_objective_function,
+        )
 
     @abstractmethod
     def solve(
@@ -33,3 +56,11 @@ class SolverDO:
         to a discrete-optimization problem
         """
         ...
+
+    def init_model(self, **kwargs: Any) -> None:
+        """Initialize intern model used to solve.
+
+        Can initialize a ortools, milp, gurobi, ... model.
+
+        """
+        pass

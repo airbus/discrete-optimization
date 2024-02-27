@@ -29,7 +29,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.tsp.common_tools_tsp import (
@@ -165,7 +164,7 @@ class MILPSolver(Enum):
 class LP_TSP_Iterative(SolverTSP):
     def __init__(
         self,
-        tsp_model: TSPModel,
+        problem: TSPModel,
         graph_builder: Callable[
             [TSPModel],
             Tuple[
@@ -178,25 +177,20 @@ class LP_TSP_Iterative(SolverTSP):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverTSP.__init__(self, tsp_model=tsp_model)
-        self.node_count = self.tsp_model.node_count
-        self.list_points = self.tsp_model.list_points
-        self.start_index = self.tsp_model.start_index
-        self.end_index = self.tsp_model.end_index
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        self.node_count = self.problem.node_count
+        self.list_points = self.problem.list_points
+        self.start_index = self.problem.start_index
+        self.end_index = self.problem.end_index
         self.graph_builder = graph_builder
         self.g: nx.DiGraph
         self.edges: Set[Edge]
         self.method: MILPSolver
         self.variables: Dict[str, Dict[Edge, Any]]
-        self.aggreg_sol: Callable[[Solution], float]
-        self.aggreg: Callable[[Dict[str, float]], float]
-        (
-            self.aggreg_sol,
-            self.aggreg,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(  # type: ignore
-            problem=self.tsp_model, params_objective_function=params_objective_function
-        )
+        self.aggreg_from_sol: Callable[[Solution], float]
+        self.aggreg_from_dict: Callable[[Dict[str, float]], float]
         if (
             self.params_objective_function.objective_handling
             == ObjectiveHandling.MULTI_OBJ
@@ -214,17 +208,17 @@ class LP_TSP_Iterative(SolverTSP):
             self.method = method
 
     def init_model_gurobi(self, **kwargs: Any) -> None:
-        g, g_empty, edges_in, edges_out = self.graph_builder(self.tsp_model)
+        g, g_empty, edges_in, edges_out = self.graph_builder(self.problem)
         tsp_model = Model("TSP-master")
         edges: Set[Edge] = set(g.edges())
         self.edges = edges
         self.g = g
         x_var: Dict[Edge, Any] = {}  # decision variables on edges
-        dummy_sol = self.tsp_model.get_dummy_solution()
+        dummy_sol = self.problem.get_dummy_solution()
         path: List[Node] = (
-            [self.tsp_model.start_index]
+            [self.problem.start_index]
             + dummy_sol.permutation
-            + [self.tsp_model.end_index]
+            + [self.problem.end_index]
         )
         edges_to_add: Set[Edge] = {
             (node0, node1) for node0, node1 in zip(path[:-1], path[1:])
@@ -261,7 +255,7 @@ class LP_TSP_Iterative(SolverTSP):
         tsp_model.update()
         constraint_flow: Dict[Union[Node, Tuple[Node, str], Tuple[Node, int]], Any] = {}
         for n in flow_in:
-            if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
+            if n != self.problem.start_index and n != self.problem.end_index:
                 constraint_flow[n] = tsp_model.addLConstr(
                     quicksum(
                         [x_var[i] for i in flow_in[n]]
@@ -270,27 +264,27 @@ class LP_TSP_Iterative(SolverTSP):
                     == 0,
                     name="flow_" + str(n),
                 )
-            if n != self.tsp_model.start_index:
+            if n != self.problem.start_index:
                 constraint_flow[(n, "sub")] = tsp_model.addLConstr(
                     quicksum([x_var[i] for i in flow_in[n]]) == 1,
                     name="flowin_" + str(n),
                 )
-            if n == self.tsp_model.start_index:
+            if n == self.problem.start_index:
                 constraint_flow[(n, 0)] = tsp_model.addLConstr(
                     quicksum([x_var[i] for i in flow_out[n]]) == 1,
                     name="flowoutsource_" + str(n),
                 )
-                if n != self.tsp_model.end_index:
+                if n != self.problem.end_index:
                     constraint_flow[(n, 1)] = tsp_model.addLConstr(
                         quicksum([x_var[i] for i in flow_in[n]]) == 0,
                         name="flowinsource_" + str(n),
                     )
-            if n == self.tsp_model.end_index:
+            if n == self.problem.end_index:
                 constraint_flow[(n, 0)] = tsp_model.addLConstr(
                     quicksum([x_var[i] for i in flow_in[n]]) == 1,
                     name="flowinsink_" + str(n),
                 )
-                if n != self.tsp_model.start_index:
+                if n != self.problem.start_index:
                     constraint_flow[(n, 1)] = tsp_model.addLConstr(
                         quicksum([x_var[i] for i in flow_out[n]]) == 0,
                         name="flowoutsink_" + str(n),
@@ -308,7 +302,7 @@ class LP_TSP_Iterative(SolverTSP):
         self.variables = {"x": x_var}
 
     def init_model_cbc(self, **kwargs: Any) -> None:
-        g, g_empty, edges_in, edges_out = self.graph_builder(self.tsp_model)
+        g, g_empty, edges_in, edges_out = self.graph_builder(self.problem)
         tsp_model = pywraplp.Solver(
             "TSP-master", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING
         )
@@ -316,11 +310,11 @@ class LP_TSP_Iterative(SolverTSP):
         self.edges = edges
         self.g = g
         x_var = {}  # decision variables on edges
-        dummy_sol = self.tsp_model.get_dummy_solution()
+        dummy_sol = self.problem.get_dummy_solution()
         path = (
-            [self.tsp_model.start_index]
+            [self.problem.start_index]
             + dummy_sol.permutation
-            + [self.tsp_model.end_index]
+            + [self.problem.end_index]
         )
         edges_to_add = {(e0, e1) for e0, e1 in zip(path[:-1], path[1:])}
         flow_in: Dict[Node, Set[Edge]] = {}
@@ -349,7 +343,7 @@ class LP_TSP_Iterative(SolverTSP):
                 cnt_tour += 1
         constraint_flow: Dict[Union[Node, Tuple[Node, str], Tuple[Node, int]], Any] = {}
         for n in flow_in:
-            if n != self.tsp_model.start_index and n != self.tsp_model.end_index:
+            if n != self.problem.start_index and n != self.problem.end_index:
                 constraint_flow[n] = tsp_model.Add(
                     tsp_model.Sum(
                         [x_var[i] for i in flow_in[n]]
@@ -357,23 +351,23 @@ class LP_TSP_Iterative(SolverTSP):
                     )
                     == 0
                 )
-            if n != self.tsp_model.start_index:
+            if n != self.problem.start_index:
                 constraint_flow[(n, "sub")] = tsp_model.Add(
                     tsp_model.Sum([x_var[i] for i in flow_in[n]]) == 1
                 )
-            if n == self.tsp_model.start_index:
+            if n == self.problem.start_index:
                 constraint_flow[(n, 0)] = tsp_model.Add(
                     tsp_model.Sum([x_var[i] for i in flow_out[n]]) == 1
                 )
-                if n != self.tsp_model.end_index:
+                if n != self.problem.end_index:
                     constraint_flow[(n, 1)] = tsp_model.Add(
                         tsp_model.Sum([x_var[i] for i in flow_in[n]]) == 0
                     )
-            if n == self.tsp_model.end_index:
+            if n == self.problem.end_index:
                 constraint_flow[(n, 0)] = tsp_model.Add(
                     tsp_model.Sum([x_var[i] for i in flow_in[n]]) == 1
                 )
-                if n != self.tsp_model.start_index:
+                if n != self.problem.start_index:
                     constraint_flow[(n, 1)] = tsp_model.Add(
                         tsp_model.Sum([x_var[i] for i in flow_out[n]]) == 0
                     )
@@ -508,12 +502,12 @@ class LP_TSP_Iterative(SolverTSP):
                 self.edges,
                 self.node_count,
                 self.list_points,
-                self.tsp_model.evaluate_function_indexes,
-                self.tsp_model,
+                self.problem.evaluate_function_indexes,
+                self.problem,
                 self.start_index,
                 self.end_index,
             )
-            objective = self.aggreg(objective_dict)
+            objective = self.aggreg_from_dict(objective_dict)
             rebuilt_solution += [rebuilt]
             rebuilt_obj += [objective]
             if objective < best_solution_rebuilt:
@@ -565,14 +559,14 @@ class LP_TSP_Iterative(SolverTSP):
         logger.debug(rebuilt_obj[best_solution_rebuilt_index])
         path = rebuilt_solution[best_solution_rebuilt_index]
         var_tsp = SolutionTSP(
-            problem=self.tsp_model,
-            start_index=self.tsp_model.start_index,
-            end_index=self.tsp_model.end_index,
+            problem=self.problem,
+            start_index=self.problem.start_index,
+            end_index=self.problem.end_index,
             permutation=path[1:-1],
             lengths=None,
             length=None,
         )
-        fit = self.aggreg_sol(var_tsp)
+        fit = self.aggreg_from_sol(var_tsp)
         return ResultStorage(
             list_solution_fits=[(var_tsp, fit)],
             mode_optim=self.params_objective_function.sense_function,

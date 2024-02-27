@@ -23,7 +23,7 @@ def run_rcpsp_sm_lp_cplex():
     files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)
-    solver = LP_RCPSP_CPLEX(rcpsp_model=rcpsp_problem)
+    solver = LP_RCPSP_CPLEX(problem=rcpsp_problem)
     solver.init_model(greedy_start=True)
     parameters_milp = ParametersMilp.default()
     parameters_milp.time_limit = 10000

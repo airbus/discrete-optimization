@@ -163,11 +163,11 @@ def look_for_solver_class(class_domain):
     return available
 
 
-def solve(method, rcpsp_model: MS_RCPSPModel, **args) -> ResultStorage:
+def solve(method, problem: MS_RCPSPModel, **args) -> ResultStorage:
     if method == GPHH:
-        solver = GPHH([rcpsp_model], rcpsp_model, **args)
+        solver = GPHH([problem], problem, **args)
     else:
-        solver = method(rcpsp_model, **args)
+        solver = method(problem, **args)
     try:
         solver.init_model(**args)
     except:
@@ -175,11 +175,11 @@ def solve(method, rcpsp_model: MS_RCPSPModel, **args) -> ResultStorage:
     return solver.solve(**args)
 
 
-def return_solver(method, rcpsp_model: MS_RCPSPModel, **args) -> ResultStorage:
+def return_solver(method, problem: MS_RCPSPModel, **args) -> ResultStorage:
     if method == GPHH:
-        solver = GPHH([rcpsp_model], rcpsp_model, **args)
+        solver = GPHH([problem], problem, **args)
     else:
-        solver = method(rcpsp_model, **args)
+        solver = method(problem, **args)
     try:
         solver.init_model(**args)
     except:

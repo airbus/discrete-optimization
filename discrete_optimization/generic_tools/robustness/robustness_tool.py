@@ -190,13 +190,13 @@ def solve_model(
             weights=objective_weights,
             sense_function=ModeOptim.MAXIMIZATION,
         )
-        aggreg_sol: Callable[[Solution], float]
-        aggreg_sol, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
+        aggreg_from_sol: Callable[[Solution], float]
+        aggreg_from_sol, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
             model, params_objective_function
         )
         res = RestartHandlerLimit(200)
         sa = SimulatedAnnealing(
-            evaluator=model,
+            problem=model,
             mutator=mixed_mutation,
             restart_handler=res,
             temperature_handler=TemperatureSchedulingFactor(
@@ -214,13 +214,13 @@ def solve_model(
             weights=objective_weights,
             sense_function=ModeOptim.MAXIMIZATION,
         )
-        aggreg_sol2: Callable[[Solution], TupleFitness]
-        aggreg_sol2, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
+        aggreg_from_sol2: Callable[[Solution], TupleFitness]
+        aggreg_from_sol2, _, _ = build_aggreg_function_and_params_objective(  # type: ignore
             model, params_objective_function
         )
         res = RestartHandlerLimit(200)
         sa_mo = HillClimberPareto(
-            evaluator=model,
+            problem=model,
             mutator=mixed_mutation,
             restart_handler=res,
             params_objective_function=params_objective_function,

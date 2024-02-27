@@ -20,11 +20,7 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCP, StatusSolver
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     from_solutions_to_result_storage,
@@ -35,24 +31,22 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     get_end_bounds_from_additional_constraint,
     get_start_bounds_from_additional_constraint,
 )
+from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 
 logger = logging.getLogger(__name__)
 
 
-class CPSatRCPSPSolver(SolverDO):
+class CPSatRCPSPSolver(SolverRCPSP):
+    problem: RCPSPModel
+
     def __init__(
         self,
         problem: RCPSPModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.problem, params_objective_function=params_objective_function
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
         self.cp_model: Optional[CpModel] = None
         self.cp_solver: Optional[CpSolver] = None

@@ -11,10 +11,6 @@ from typing import Any, List, Optional
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution
@@ -75,21 +71,7 @@ class BasicRoutingMonitor:
 
 
 class VrpORToolsSolver(SolverVrp):
-    def __init__(
-        self,
-        vrp_model: VrpProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any,
-    ):
-        SolverVrp.__init__(self, vrp_model=vrp_model)
-        self.manager: Optional[pywrapcp.RoutingIndexManager] = None
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.vrp_model, params_objective_function=params_objective_function
-        )
+    manager: Optional[pywrapcp.RoutingIndexManager] = None
 
     def init_model(self, **kwargs: Any) -> None:
         first_solution_strategy = kwargs.get(
@@ -100,18 +82,17 @@ class VrpORToolsSolver(SolverVrp):
         )
         first_solution_strategy = first_solution_map[first_solution_strategy]
         local_search_metaheuristic = metaheuristic_map[local_search_metaheuristic]
-        G, matrix_distance = build_graph(self.vrp_model)
+        G, matrix_distance = build_graph(self.problem)
         matrix_distance_int = np.array(10**5 * matrix_distance, dtype=np.int_)
         demands = [
-            self.vrp_model.customers[i].demand
-            for i in range(self.vrp_model.customer_count)
+            self.problem.customers[i].demand for i in range(self.problem.customer_count)
         ]
         # Create the routing index manager.
         manager = pywrapcp.RoutingIndexManager(
-            self.vrp_model.customer_count,
-            self.vrp_model.vehicle_count,
-            self.vrp_model.start_indexes,
-            self.vrp_model.end_indexes,
+            self.problem.customer_count,
+            self.problem.vehicle_count,
+            self.problem.start_indexes,
+            self.problem.end_indexes,
         )
         routing = pywrapcp.RoutingModel(manager)
         # Create and register a transit callback.
@@ -138,7 +119,7 @@ class VrpORToolsSolver(SolverVrp):
         routing.AddDimensionWithVehicleCapacity(
             demand_callback_index,
             0,  # null capacity slack
-            self.vrp_model.vehicle_capacities,  # vehicle maximum capacities
+            self.problem.vehicle_capacities,  # vehicle maximum capacities
             True,  # start cumul to zero
             "Capacity",
         )
@@ -159,7 +140,7 @@ class VrpORToolsSolver(SolverVrp):
             )
         vehicle_tours: List[List[int]] = []
         vehicle_tours_all: List[List[int]] = []
-        vehicle_count: int = self.vrp_model.vehicle_count
+        vehicle_count: int = self.problem.vehicle_count
         objective = 0.0
         route_distance = 0.0
         for vehicle_id in range(vehicle_count):
@@ -175,14 +156,14 @@ class VrpORToolsSolver(SolverVrp):
                     vehicle_tours[-1] += [node_index]
                 vehicle_tours_all[-1] += [node_index]
                 cnt += 1
-                route_load += self.vrp_model.customers[node_index].demand
+                route_load += self.problem.customers[node_index].demand
                 plan_output += f" {node_index} Load({route_load}) -> "
                 previous_index = index
                 index = solution.Value(self.routing.NextVar(index))
                 route_distance += self.routing.GetArcCostForVehicle(
                     previous_index, index, vehicle_id
                 )
-                objective += self.vrp_model.evaluate_function_indexes(
+                objective += self.problem.evaluate_function_indexes(
                     node_index, self.manager.IndexToNode(index)
                 )
             vehicle_tours_all[-1] += [self.manager.IndexToNode(index)]
@@ -191,9 +172,9 @@ class VrpORToolsSolver(SolverVrp):
         logger.debug(f"Objective : {objective}")
         logger.debug(f"Vehicle tours all : {vehicle_tours_all}")
         variable_vrp = VrpSolution(
-            problem=self.vrp_model,
-            list_start_index=self.vrp_model.start_indexes,
-            list_end_index=self.vrp_model.end_indexes,
+            problem=self.problem,
+            list_start_index=self.problem.start_indexes,
+            list_end_index=self.problem.end_indexes,
             list_paths=vehicle_tours,
             length=None,
             lengths=None,
@@ -217,7 +198,7 @@ class VrpORToolsSolver(SolverVrp):
             self.search_parameters
         )
         variable_vrp = self.retrieve(solution)
-        fit = self.aggreg_sol(variable_vrp)
+        fit = self.aggreg_from_sol(variable_vrp)
         return ResultStorage(
             list_solution_fits=[(variable_vrp, fit)],
             mode_optim=self.params_objective_function.sense_function,

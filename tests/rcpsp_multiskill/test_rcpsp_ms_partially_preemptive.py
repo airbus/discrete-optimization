@@ -109,7 +109,7 @@ def test_partial_preemptive(model):
         rcpsp_model=model, rcpsp_sol=dummy_solution
     )
     plot_ressource_view(rcpsp_model=model, rcpsp_sol=dummy_solution)
-    cp_solver = CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(rcpsp_model=model)
+    cp_solver = CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE(problem=model)
     cp_solver.init_model(
         max_time=20,
         max_preempted=3,
@@ -130,7 +130,7 @@ def test_partial_preemptive(model):
 
 def test_ls(model):
     model_variant: MS_RCPSPModel_Variant = model.to_variant_model()
-    solver = LS_RCPSP_Solver(rcpsp_model=model_variant, ls_solver=LS_SOLVER.SA)
+    solver = LS_RCPSP_Solver(problem=model_variant, ls_solver=LS_SOLVER.SA)
     result_storage = solver.solve(nb_iteration_max=5000)
     rcpsp_sol = result_storage.get_last_best_solution()[0]
     assert model.satisfy(rcpsp_sol)

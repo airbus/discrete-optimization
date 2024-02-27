@@ -54,7 +54,7 @@ def run_cp_multidimensional():
     one_file = get_data_available()[10]
     knapsack_model: KnapsackModel = parse_file(one_file)
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
-    cp_solver = CPMultidimensionalSolver(knapsack_model=multidimensional_knapsack)
+    cp_solver = CPMultidimensionalSolver(problem=multidimensional_knapsack)
     cp_solver.init_model(output_type=True)
     params_cp = ParametersCP.default()
     params_cp.time_limit = 5
@@ -73,7 +73,7 @@ def run_ls(multiscenario_model):
     )
     res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(
-        evaluator=multiscenario_model,
+        problem=multiscenario_model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
@@ -98,7 +98,7 @@ def run_cp_multidimensional_multiscenario():
             base_method_aggregating=BaseMethodAggregating.MEAN
         ),
     )
-    solver = CPMultidimensionalMultiScenarioSolver(knapsack_model=multiscenario_model)
+    solver = CPMultidimensionalMultiScenarioSolver(problem=multiscenario_model)
     solver.init_model(output_type=True)
 
     dummy_solution = multiscenario_model.get_dummy_solution()

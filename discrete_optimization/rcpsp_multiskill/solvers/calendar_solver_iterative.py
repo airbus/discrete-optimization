@@ -16,6 +16,7 @@ from minizinc import Instance, Status
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
+    ParamsObjectiveFunction,
     get_default_objective_setup,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler, SolverDO
@@ -445,40 +446,45 @@ class ConstraintHandlerAddCalendarConstraint(ConstraintHandler):
 
 @deprecated(deprecated_in="0.1")
 class SolverWithCalendarIterative(SolverDO):
+    problem: MS_RCPSPModel
+
     def __init__(
         self,
-        problem_calendar: MS_RCPSPModel,
+        problem: MS_RCPSPModel,
         partial_solution: PartialSolution = None,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_FAST,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        self.problem_calendar = problem_calendar
-        self.problem_no_calendar = self.problem_calendar.copy()
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        self.problem_no_calendar = self.problem.copy()
         self.problem_no_calendar = MS_RCPSPModel(
-            skills_set=self.problem_calendar.skills_set,
-            resources_set=self.problem_calendar.resources_set,
-            non_renewable_resources=self.problem_calendar.non_renewable_resources,
+            skills_set=self.problem.skills_set,
+            resources_set=self.problem.resources_set,
+            non_renewable_resources=self.problem.non_renewable_resources,
             resources_availability={
-                r: [int(max(self.problem_calendar.resources_availability[r]))]
-                * len(self.problem_calendar.resources_availability[r])
-                for r in self.problem_calendar.resources_availability
+                r: [int(max(self.problem.resources_availability[r]))]
+                * len(self.problem.resources_availability[r])
+                for r in self.problem.resources_availability
             },
             employees={
-                emp: self.problem_calendar.employees[emp].copy()
-                for emp in self.problem_calendar.employees
+                emp: self.problem.employees[emp].copy()
+                for emp in self.problem.employees
             },
-            employees_availability=self.problem_calendar.employees_availability,
-            mode_details=self.problem_calendar.mode_details,
-            successors=self.problem_calendar.successors,
-            horizon=self.problem_calendar.horizon,
-            horizon_multiplier=self.problem_calendar.horizon_multiplier,
+            employees_availability=self.problem.employees_availability,
+            mode_details=self.problem.mode_details,
+            successors=self.problem.successors,
+            horizon=self.problem.horizon,
+            horizon_multiplier=self.problem.horizon_multiplier,
         )
-        for emp in self.problem_calendar.employees:
+        for emp in self.problem.employees:
             self.problem_no_calendar.employees[emp].calendar_employee = [
-                max(self.problem_calendar.employees[emp].calendar_employee)
-            ] * len(self.problem_calendar.employees[emp].calendar_employee)
+                max(self.problem.employees[emp].calendar_employee)
+            ] * len(self.problem.employees[emp].calendar_employee)
         solver = CP_MS_MRCPSP_MZN(
-            rcpsp_model=self.problem_no_calendar,
+            problem=self.problem_no_calendar,
             cp_solver_name=CPSolverName.CHUFFED,
             **kwargs,
         )
@@ -500,19 +506,19 @@ class SolverWithCalendarIterative(SolverDO):
             option_neighbor=option_neighbor, rcpsp_model=self.problem_no_calendar
         )
         constraint_handler = ConstraintHandlerAddCalendarConstraint(
-            self.problem_calendar, self.problem_no_calendar, constraint_handler
+            self.problem, self.problem_no_calendar, constraint_handler
         )
         initial_solution_provider = InitialSolutionMS_RCPSP(
-            problem=self.problem_calendar,
+            problem=self.problem,
             initial_method=InitialMethodRCPSP.PILE_CALENDAR,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
         self.initial_solution_provider = initial_solution_provider
         self.constraint_handler = constraint_handler
         self.params_objective_function = params_objective_function
         self.cp_solver = solver
         self.post_process_solution = PostProcessSolutionNonFeasible(
-            self.problem_calendar,
+            self.problem,
             self.problem_no_calendar,
             partial_solution=partial_solution,
         )
@@ -543,7 +549,7 @@ class SolverWithCalendarIterative(SolverDO):
             )
             init_solution, objective = store_lns.get_best_solution_fit()
             best_solution = init_solution.copy()
-            satisfy = self.problem_calendar.satisfy(init_solution)
+            satisfy = self.problem.satisfy(init_solution)
             logger.debug(f"Satisfy {satisfy}")
             best_objective = objective
         else:
@@ -616,7 +622,7 @@ class SolverWithCalendarIterative(SolverDO):
                         logger.debug(f"Fitness = {fit}")
                         logger.debug("Post Process..")
                         logger.debug("Satisfy best current sol : ")
-                        logger.debug(self.problem_calendar.satisfy(bsol))
+                        logger.debug(self.problem.satisfy(bsol))
                         result_store = self.post_process_solution.build_other_solution(
                             result_store
                         )

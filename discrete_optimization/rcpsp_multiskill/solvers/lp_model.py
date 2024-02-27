@@ -9,10 +9,7 @@ from typing import Optional
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, xsum
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import (
     MilpSolverName,
     ParametersMilp,
@@ -32,54 +29,50 @@ logger = logging.getLogger(__name__)
 
 
 class LP_Solver_MRSCPSP(PymipMilpSolver):
+    problem: MS_RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: MS_RCPSPModel,
+        problem: MS_RCPSPModel,
         lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs,
     ):
-        self.rcpsp_model = rcpsp_model
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.lp_solver = lp_solver
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(self, **args):
         self.model = Model(
             name="mrcpsp", sense=MINIMIZE, solver_name=map_solver[self.lp_solver]
         )
-        sorted_tasks = self.rcpsp_model.tasks_list
-        max_time = args.get("max_time", self.rcpsp_model.horizon)
+        sorted_tasks = self.problem.tasks_list
+        max_time = args.get("max_time", self.problem.horizon)
         max_duration = max_time
 
         renewable = {
-            r: self.rcpsp_model.resources_availability[r]
-            for r in self.rcpsp_model.resources_availability
-            if r not in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources_availability[r]
+            for r in self.problem.resources_availability
+            if r not in self.problem.non_renewable_resources
         }
         non_renewable = {
-            r: self.rcpsp_model.resources_availability[r]
-            for r in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources_availability[r]
+            for r in self.problem.non_renewable_resources
         }
         list_edges = []
         for task in sorted_tasks:
-            for suc in self.rcpsp_model.successors[task]:
+            for suc in self.problem.successors[task]:
                 list_edges.append([task, suc])
         times = range(max_duration)
         self.modes = {
             task: {
                 mode: self.model.add_var(name=f"mode_{task},{mode}", var_type=BINARY)
-                for mode in self.rcpsp_model.mode_details[task]
+                for mode in self.problem.mode_details[task]
             }
-            for task in self.rcpsp_model.mode_details
+            for task in self.problem.mode_details
         }
 
         self.start_times = {
@@ -90,9 +83,9 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                     )
                     for t in times
                 }
-                for mode in self.rcpsp_model.mode_details[task]
+                for mode in self.problem.mode_details[task]
             }
-            for task in self.rcpsp_model.mode_details
+            for task in self.problem.mode_details
         }
         # you have to choose one starting date :
         for task in self.start_times:
@@ -144,7 +137,7 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
         for task in self.durations:
             self.model.add_constr(
                 xsum(
-                    self.rcpsp_model.mode_details[task][mode]["duration"]
+                    self.problem.mode_details[task][mode]["duration"]
                     * self.modes[task][mode]
                     for mode in self.modes[task]
                 )
@@ -152,20 +145,19 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
             )
         self.employee_usage = tree()
         task_in_employee_usage = set()
-        for employee in self.rcpsp_model.employees:
+        for employee in self.problem.employees:
             skills_employee = [
                 skill
-                for skill in self.rcpsp_model.employees[employee].dict_skill.keys()
-                if self.rcpsp_model.employees[employee].dict_skill[skill].skill_value
-                > 0
+                for skill in self.problem.employees[employee].dict_skill.keys()
+                if self.problem.employees[employee].dict_skill[skill].skill_value > 0
             ]
             for task in sorted_tasks:
-                for mode in self.rcpsp_model.mode_details[task]:
+                for mode in self.problem.mode_details[task]:
                     required_skills = [
                         s
-                        for s in self.rcpsp_model.mode_details[task][mode]
-                        if s in self.rcpsp_model.skills_set
-                        and self.rcpsp_model.mode_details[task][mode][s] > 0
+                        for s in self.problem.mode_details[task][mode]
+                        if s in self.problem.skills_set
+                        and self.problem.mode_details[task][mode][s] > 0
                         and s in skills_employee
                     ]
                     if len(required_skills) == 0:
@@ -191,17 +183,17 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                                 <= 0
                             )
                             len_calendar = len(
-                                self.rcpsp_model.employees[employee].calendar_employee
+                                self.problem.employees[employee].calendar_employee
                             )
                             if any(
-                                not self.rcpsp_model.employees[
-                                    employee
-                                ].calendar_employee[tt]
+                                not self.problem.employees[employee].calendar_employee[
+                                    tt
+                                ]
                                 for tt in range(
                                     t,
                                     min(
                                         t
-                                        + self.rcpsp_model.mode_details[task][mode][
+                                        + self.problem.mode_details[task][mode][
                                             "duration"
                                         ],
                                         len_calendar,
@@ -223,7 +215,7 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                     if x[0] == emp
                     and x[3]
                     <= t
-                    < x[3] + int(self.rcpsp_model.mode_details[x[1]][x[2]]["duration"])
+                    < x[3] + int(self.problem.mode_details[x[1]][x[2]]["duration"])
                 )
                 <= 1
             )
@@ -231,14 +223,14 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
         for (r, t) in product(renewable, times):
             self.model.add_constr(
                 xsum(
-                    int(self.rcpsp_model.mode_details[task][mode][r])
+                    int(self.problem.mode_details[task][mode][r])
                     * self.start_times[task][mode][time]
                     for task in self.start_times
                     for mode in self.start_times[task]
                     for time in self.start_times[task][mode]
                     if time
                     <= t
-                    < time + int(self.rcpsp_model.mode_details[task][mode]["duration"])
+                    < time + int(self.problem.mode_details[task][mode]["duration"])
                 )
                 <= renewable[r][t]
             )
@@ -246,7 +238,7 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
         for r in non_renewable:
             self.model.add_constr(
                 xsum(
-                    int(self.rcpsp_model.mode_details[task][mode][r])
+                    int(self.problem.mode_details[task][mode][r])
                     * self.start_times[task][mode][time]
                     for task in self.start_times
                     for mode in self.start_times[task]
@@ -256,11 +248,11 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
             )
         for task in self.start_times_task:
             required_skills = [
-                (s, mode, self.rcpsp_model.mode_details[task][mode][s])
-                for mode in self.rcpsp_model.mode_details[task]
-                for s in self.rcpsp_model.mode_details[task][mode]
-                if s in self.rcpsp_model.skills_set
-                and self.rcpsp_model.mode_details[task][mode][s] > 0
+                (s, mode, self.problem.mode_details[task][mode][s])
+                for mode in self.problem.mode_details[task]
+                for s in self.problem.mode_details[task][mode]
+                if s in self.problem.skills_set
+                and self.problem.mode_details[task][mode][s] > 0
             ]
             skills = set([s[0] for s in required_skills])
             for s in skills:
@@ -270,12 +262,12 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                 self.model.add_constr(
                     xsum(
                         self.employee_usage[x]
-                        * self.rcpsp_model.employees[x[0]].dict_skill[s].skill_value
+                        * self.problem.employees[x[0]].dict_skill[s].skill_value
                         for x in employee_usage_keys
                     )
                     >= xsum(
                         self.modes[task][mode]
-                        * self.rcpsp_model.mode_details[task][mode].get(s, 0)
+                        * self.problem.mode_details[task][mode].get(s, 0)
                         for mode in self.modes[task]
                     )
                 )
@@ -307,9 +299,7 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                                 "start_time": int(t),
                                 "end_time": int(
                                     t
-                                    + self.rcpsp_model.mode_details[task][mode][
-                                        "duration"
-                                    ]
+                                    + self.problem.mode_details[task][mode]["duration"]
                                 ),
                             }
                             modes[task] = mode
@@ -375,7 +365,7 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
             logger.debug(f"Start time {start_time}")
             logger.debug(f"End time {end_time}")
             solution = MS_RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 modes=modes_task,
                 schedule=rcpsp_schedule,
                 employee_usage=employee_usage_solution,

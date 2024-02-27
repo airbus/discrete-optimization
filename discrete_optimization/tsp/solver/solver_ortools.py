@@ -13,10 +13,7 @@ from typing import Any, Optional
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.solver.tsp_solver import SolverTSP
@@ -28,23 +25,18 @@ logger = logging.getLogger(__name__)
 class TSP_ORtools(SolverTSP):
     def __init__(
         self,
-        tsp_model: TSPModel,
+        problem: TSPModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
 
-        SolverTSP.__init__(self, tsp_model=tsp_model)
-        self.node_count = self.tsp_model.node_count
-        self.list_points = self.tsp_model.list_points
-        self.start_index = self.tsp_model.start_index
-        self.end_index = self.tsp_model.end_index
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.tsp_model, params_objective_function=params_objective_function
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
+        self.node_count = self.problem.node_count
+        self.list_points = self.problem.list_points
+        self.start_index = self.problem.start_index
+        self.end_index = self.problem.end_index
 
     def init_model(self, **kwargs: Any) -> None:
         # Create the routing index manager.
@@ -52,7 +44,7 @@ class TSP_ORtools(SolverTSP):
         if self.node_count < 1000:
             matrix = build_matrice_distance(
                 self.node_count,
-                method=self.tsp_model.evaluate_function_indexes,
+                method=self.problem.evaluate_function_indexes,
             )
             distance_matrix = 10**6 * matrix.astype(np.int_)
 
@@ -68,7 +60,7 @@ class TSP_ORtools(SolverTSP):
                 to_node = manager.IndexToNode(to_index)
                 return int(
                     10**6
-                    * self.tsp_model.evaluate_function_indexes(
+                    * self.problem.evaluate_function_indexes(
                         self.list_points[from_node], self.list_points[to_node]
                     )
                 )
@@ -114,14 +106,14 @@ class TSP_ORtools(SolverTSP):
                 previous_index, index, 0
             )
         variableTSP = SolutionTSP(
-            problem=self.tsp_model,
-            start_index=self.tsp_model.start_index,
-            end_index=self.tsp_model.end_index,
+            problem=self.problem,
+            start_index=self.problem.start_index,
+            end_index=self.problem.end_index,
             permutation=sol[1:-1],
             lengths=None,
             length=None,
         )
-        fitness = self.aggreg_sol(variableTSP)
+        fitness = self.aggreg_from_sol(variableTSP)
         return ResultStorage(
             list_solution_fits=[(variableTSP, fitness)],
             mode_optim=self.params_objective_function.sense_function,

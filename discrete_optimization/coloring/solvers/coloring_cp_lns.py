@@ -18,10 +18,7 @@ from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lns_cp import (
     LNS_CP,
     TrivialPostProcessSolution,
@@ -32,7 +29,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 
 
 def build_default_cp_model(coloring_model: ColoringProblem, **kwargs):
-    cp_model = ColoringCP(coloring_model=coloring_model, **kwargs)
+    cp_model = ColoringCP(problem=coloring_model, **kwargs)
     if coloring_model.use_subset:
         cp_model.init_model(
             cp_model=ColoringCPModel.DEFAULT_WITH_SUBSET, object_output=True
@@ -78,50 +75,43 @@ class LnsCpColoring(SolverColoring):
 
     def __init__(
         self,
-        coloring_model: ColoringProblem,
+        problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        SolverColoring.__init__(self, coloring_model=coloring_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.coloring_model,
-            params_objective_function=params_objective_function,
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
+
         solver = kwargs.get("cp_solver", None)
         if solver is None:
-            solver = build_default_cp_model(
-                coloring_model=self.coloring_model, **kwargs
-            )
+            solver = build_default_cp_model(coloring_model=self.problem, **kwargs)
         self.cp_solver = solver
         self.parameters_cp = kwargs.get("parameters_cp", ParametersCP.default())
         self.constraint_handler = kwargs.get("constraint_handler", None)
         if self.constraint_handler is None:
             self.constraint_handler = build_default_constraint_handler(
-                coloring_model=self.coloring_model, **kwargs
+                coloring_model=self.problem, **kwargs
             )
         self.post_pro = kwargs.get("post_process_solution", None)
         if self.post_pro is None:
             self.post_pro = build_default_postprocess(
-                coloring_model=self.coloring_model,
+                coloring_model=self.problem,
                 params_objective_function=self.params_objective_function,
             )
         self.initial_solution_provider = kwargs.get("initial_solution_provider", None)
         if self.initial_solution_provider is None:
             self.initial_solution_provider = build_default_initial_solution(
-                coloring_model=self.coloring_model,
+                coloring_model=self.problem,
                 params_objective_function=self.params_objective_function,
             )
         self.lns_solver = LNS_CP(
-            problem=self.coloring_model,
+            problem=self.problem,
             cp_solver=self.cp_solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,
             post_process_solution=self.post_pro,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
 
     def solve(

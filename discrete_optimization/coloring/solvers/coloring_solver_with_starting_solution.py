@@ -35,7 +35,7 @@ class SolverColoringWithStartingSolution(SolverColoring):
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
-                self.coloring_model,
+                self.problem,
                 params_objective_function=params_objective_function,
             )
             result_store = greedy_solver.solve(
@@ -53,5 +53,5 @@ class SolverColoringWithStartingSolution(SolverColoring):
                 )
         else:
             logger.info("Get dummy solution")
-            solution = self.coloring_model.get_dummy_solution()
+            solution = self.problem.get_dummy_solution()
         return solution

@@ -44,7 +44,7 @@ def test_sa_2opt():
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = SimulatedAnnealing(
-        evaluator=model,
+        problem=model,
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
@@ -75,7 +75,7 @@ def test_sa_partial_shuffle():
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = SimulatedAnnealing(
-        evaluator=model,
+        problem=model,
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
@@ -105,7 +105,7 @@ def test_sa_swap():
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = SimulatedAnnealing(
-        evaluator=model,
+        problem=model,
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
@@ -136,7 +136,7 @@ def test_sa_twoopttbasic():
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = SimulatedAnnealing(
-        evaluator=model,
+        problem=model,
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(
@@ -167,7 +167,7 @@ def test_hc():
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = HillClimber(
-        evaluator=model,
+        problem=model,
         mutator=mutate_portfolio,
         restart_handler=res,
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,

@@ -23,14 +23,10 @@ from discrete_optimization.generic_tools.cp_tools import (
     SignEnum,
     map_cp_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
@@ -106,28 +102,25 @@ def create_usefull_res_data(rcpsp_model: MS_RCPSPModel):
 
 
 class CP_MSPSP_MZN(MinizincCPSolver):
+    problem: MS_RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: MS_RCPSPModel,
+        problem: MS_RCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = False,
         **kwargs,
     ):
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
-        self.rcpsp_model = rcpsp_model
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "start",
             "mrun",
         ]  # For now, I've put the var names of the CP model (not the rcpsp_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
-        )
         self.one_ressource_per_task = kwargs.get("one_ressource_per_task", False)
         self.resources_index = None
 
@@ -153,13 +146,13 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = args.get("ignore_sec_objective", True)
 
-        resources_list = self.rcpsp_model.resources_list
+        resources_list = self.problem.resources_list
         self.resources_index = resources_list
-        sorted_tasks = self.rcpsp_model.tasks_list
+        sorted_tasks = self.problem.tasks_list
         all_modes = [
-            (act, mode, self.rcpsp_model.mode_details[act][mode])
+            (act, mode, self.problem.mode_details[act][mode])
             for act in sorted_tasks
-            for mode in sorted(self.rcpsp_model.mode_details[act])
+            for mode in sorted(self.problem.mode_details[act])
         ]
         self.modeindex_map = {
             i + 1: {"task": all_modes[i][0], "original_mode_index": all_modes[i][1]}
@@ -167,75 +160,72 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         }
         modes = [set() for t in sorted_tasks]
         for j in self.modeindex_map:
-            modes[self.rcpsp_model.index_task[self.modeindex_map[j]["task"]]].add(j)
+            modes[self.problem.index_task[self.modeindex_map[j]["task"]]].add(j)
         self.mode_dict_task_mode_to_index_minizinc = {}
         for ind in self.modeindex_map:
             task = self.modeindex_map[ind]["task"]
             mode = self.modeindex_map[ind]["original_mode_index"]
             self.mode_dict_task_mode_to_index_minizinc[(task, mode)] = ind
-        self.employees_position = self.rcpsp_model.employees_list
+        self.employees_position = self.problem.employees_list
         self.index_employees_in_minizinc = {
-            self.rcpsp_model.employees_list[i]: i + 1
-            for i in range(len(self.rcpsp_model.employees_list))
+            self.problem.employees_list[i]: i + 1
+            for i in range(len(self.problem.employees_list))
         }
         self.instance = instance
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
 
     def init_from_model(self, **args):
         dict_data = {}
-        list_skills = sorted(list(self.rcpsp_model.skills_set))
+        list_skills = sorted(list(self.problem.skills_set))
         dict_data[
             "mint"
         ] = 10  # here put a better number (from critical path method for example)
-        dict_data["nActs"] = self.rcpsp_model.n_jobs
+        dict_data["nActs"] = self.problem.n_jobs
         dict_data["dur"] = [
-            self.rcpsp_model.mode_details[t][1]["duration"]
-            for t in self.rcpsp_model.tasks_list
+            self.problem.mode_details[t][1]["duration"] for t in self.problem.tasks_list
         ]
-        dict_data["nSkills"] = len(self.rcpsp_model.skills_set)
+        dict_data["nSkills"] = len(self.problem.skills_set)
         dict_data["sreq"] = [
-            [self.rcpsp_model.mode_details[t][1].get(sk, 0) for sk in list_skills]
-            for t in self.rcpsp_model.tasks_list
+            [self.problem.mode_details[t][1].get(sk, 0) for sk in list_skills]
+            for t in self.problem.tasks_list
         ]
-        dict_data["nResources"] = self.rcpsp_model.nb_employees
+        dict_data["nResources"] = self.problem.nb_employees
         dict_data["mastery"] = [
             [
-                self.rcpsp_model.employees[self.rcpsp_model.employees_list[i]]
+                self.problem.employees[self.problem.employees_list[i]]
                 .dict_skill.get(s, SkillDetail(0, 0, 0))
                 .skill_value
                 > 0
                 for s in list_skills
             ]
-            for i in range(self.rcpsp_model.nb_employees)
+            for i in range(self.problem.nb_employees)
         ]
         dict_data["nPrecs"] = sum(
-            [len(self.rcpsp_model.successors[n]) for n in self.rcpsp_model.successors]
+            [len(self.problem.successors[n]) for n in self.problem.successors]
         )
         self.index_in_minizinc = {
-            task: self.rcpsp_model.return_index_task(task, offset=1)
-            for task in self.rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
         pred = []
         succ = []
-        for task in self.rcpsp_model.tasks_list:
-            pred += [self.index_in_minizinc[task]] * len(
-                self.rcpsp_model.successors[task]
-            )
+        for task in self.problem.tasks_list:
+            pred += [self.index_in_minizinc[task]] * len(self.problem.successors[task])
             succ += [
                 self.index_in_minizinc[successor]
-                for successor in self.rcpsp_model.successors[task]
+                for successor in self.problem.successors[task]
             ]
         dict_data["pred"] = pred
         dict_data["succ"] = succ
-        self.graph = build_graph_rcpsp_object(rcpsp_problem=self.rcpsp_model)
+        self.graph = build_graph_rcpsp_object(rcpsp_problem=self.problem)
         _, unrelated = build_unrelated_task(self.graph)
         dict_data["nUnrels"] = len(unrelated)
         dict_data["unpred"] = [self.index_in_minizinc[x[0]] for x in unrelated]
         dict_data["unsucc"] = [self.index_in_minizinc[x[1]] for x in unrelated]
-        useful_res, potential_act = create_usefull_res_data(self.rcpsp_model)
+        useful_res, potential_act = create_usefull_res_data(self.problem)
         dict_data["USEFUL_RES"] = useful_res
         dict_data["POTENTIAL_ACT"] = potential_act
         return dict_data
@@ -275,7 +265,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         return [s]
 
     def constraint_objective_makespan(self):
-        return self.constraint_objective_equal_makespan(self.rcpsp_model.sink_task)
+        return self.constraint_objective_equal_makespan(self.problem.sink_task)
 
     def constraint_used_employee(self, task, employee, indicator: bool = False):
         id_task = self.index_in_minizinc[task]
@@ -305,7 +295,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
 
     def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
-        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
+        weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
         s = (
             """int: nb_indexes="""
             + str(len(indexes))
@@ -322,7 +312,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
 
     def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
-        weights = [10 if s == self.rcpsp_model.sink_task else 1 for s in set_subtasks]
+        weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
         s = (
             """int: nb_indexes="""
             + str(len(indexes))
@@ -354,27 +344,27 @@ class CP_MSPSP_MZN(MinizincCPSolver):
             for i in range(len(result)):
                 if isinstance(result[i], MS_RCPSPSolCP):
                     starts += [result[i].dict["start"]]
-                    mruns += [[1] * len(self.rcpsp_model.tasks_list)]
+                    mruns += [[1] * len(self.problem.tasks_list)]
                     units_used += [result[i].dict["assign"]]
                     objectives_cp += [result[i].objective]
                 else:
                     starts += [result[i, "start"]]
-                    mruns += [[1] * len(self.rcpsp_model.tasks_list)]
+                    mruns += [[1] * len(self.problem.tasks_list)]
                     units_used += [result[i, "assign"]]
                     objectives_cp += [result[i, "objective"]]
         else:
             if isinstance(result, MS_RCPSPSolCP):
                 starts += [result.dict["start"]]
-                mruns += [[1] * len(self.rcpsp_model.tasks_list)]
+                mruns += [[1] * len(self.problem.tasks_list)]
                 units_used += [result.dict["unit_used"]]
                 objectives_cp += [result.objective]
             else:
                 starts += [result["start"]]
-                mruns += [[1] * len(self.rcpsp_model.tasks_list)]
+                mruns += [[1] * len(self.problem.tasks_list)]
                 units_used += [result["assign"]]
                 objectives_cp += [result["objective"]]
         index_solution = 0
-        skills_list = sorted(list(self.rcpsp_model.skills_set))
+        skills_list = sorted(list(self.problem.skills_set))
         for start_times, mrun, unit_used in zip(starts, mruns, units_used):
             usage = {}
             modes_dict = {}
@@ -385,7 +375,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
                     ]["original_mode_index"]
             for w in range(len(unit_used[0])):
                 for task in range(len(unit_used)):
-                    task_id = self.rcpsp_model.tasks_list[task]
+                    task_id = self.problem.tasks_list[task]
                     if unit_used[task][w] == 1:
                         if isinstance(result[index_solution], MS_RCPSPSolCP):
                             if "contrib" in result[index_solution].dict:
@@ -408,19 +398,18 @@ class CP_MSPSP_MZN(MinizincCPSolver):
                             skills_needed = set(
                                 [
                                     s
-                                    for s in self.rcpsp_model.skills_set
-                                    if s in self.rcpsp_model.mode_details[task_id][mode]
-                                    and self.rcpsp_model.mode_details[task_id][mode][s]
-                                    > 0
+                                    for s in self.problem.skills_set
+                                    if s in self.problem.mode_details[task_id][mode]
+                                    and self.problem.mode_details[task_id][mode][s] > 0
                                 ]
                             )
                             skills_worker = set(
                                 [
                                     s
-                                    for s in self.rcpsp_model.employees[
+                                    for s in self.problem.employees[
                                         self.employees_position[w]
                                     ].dict_skill
-                                    if self.rcpsp_model.employees[
+                                    if self.problem.employees[
                                         self.employees_position[w]
                                     ]
                                     .dict_skill[s]
@@ -435,22 +424,22 @@ class CP_MSPSP_MZN(MinizincCPSolver):
                             usage[task_id][self.employees_position[w]] = intersection
             rcpsp_schedule = {}
             for i in range(len(start_times)):
-                task_id = self.rcpsp_model.tasks_list[i]
+                task_id = self.problem.tasks_list[i]
                 rcpsp_schedule[task_id] = {
                     "start_time": start_times[i],
                     "end_time": start_times[i]
-                    + self.rcpsp_model.mode_details[task_id][modes_dict[task_id]][
+                    + self.problem.mode_details[task_id][modes_dict[task_id]][
                         "duration"
                     ],
                 }
             sol = MS_RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 modes=modes_dict,
                 schedule=rcpsp_schedule,
                 employee_usage=usage,
             )
 
-            objective = self.aggreg_from_dict_values(self.rcpsp_model.evaluate(sol))
+            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
             if objective > best_makespan:
                 best_makespan = objective
                 best_solution = sol.copy()

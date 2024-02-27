@@ -15,10 +15,7 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringSolution,
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -57,20 +54,14 @@ class GreedyColoring(SolverColoring):
 
     def __init__(
         self,
-        coloring_model: ColoringProblem,
+        problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverColoring.__init__(self, coloring_model=coloring_model)
-        self.nx_graph = self.coloring_model.graph.to_networkx()
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.coloring_model,
-            params_objective_function=params_objective_function,
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
+        self.nx_graph = self.problem.graph.to_networkx()
 
     def solve(self, **kwargs: Any) -> ResultStorage:
         """Run the greedy solver for the given problem.
@@ -102,8 +93,8 @@ class GreedyColoring(SolverColoring):
                     self.nx_graph, strategy=strategy, interchange=False
                 )
                 # number_colors = len(set(list(colors.values())))
-                raw_solution = [colors[i] for i in self.coloring_model.nodes_name]
-                number_colors = self.coloring_model.count_colors(raw_solution)
+                raw_solution = [colors[i] for i in self.problem.nodes_name]
+                number_colors = self.problem.count_colors(raw_solution)
                 logger.info(f"{strategy} : number colors : {number_colors}")
                 if number_colors < best_nb_color:
                     best_solution = raw_solution
@@ -111,11 +102,9 @@ class GreedyColoring(SolverColoring):
             except Exception as e:
                 logger.info(f"Failed strategy : {strategy} {e}")
         logger.info(f"best found : {best_nb_color}")
-        solution = ColoringSolution(
-            self.coloring_model, colors=best_solution, nb_color=None
-        )
+        solution = ColoringSolution(self.problem, colors=best_solution, nb_color=None)
         solution = solution.to_reformated_solution()
-        fit = self.aggreg_sol(solution)
+        fit = self.aggreg_from_sol(solution)
         logger.debug(f"Solution found : {solution, fit}")
         return ResultStorage(
             list_solution_fits=[(solution, fit)],

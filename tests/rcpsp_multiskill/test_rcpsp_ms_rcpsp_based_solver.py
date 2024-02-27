@@ -99,7 +99,7 @@ def test_rcpsp_based():
         if solvers[k][j][0] == method
     ][0]
     params["lp_solver"] = MilpSolverName.CBC
-    solver = Solver_RCPSP_Based(model=model, method=method, **params)
+    solver = Solver_RCPSP_Based(problem=model, method=method, **params)
     result = solver.solve()
     solution: MS_RCPSPSolution = result.get_best_solution()
     model.evaluate(solution)

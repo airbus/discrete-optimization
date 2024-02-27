@@ -37,7 +37,7 @@ from discrete_optimization.generic_rcpsp_tools.solution_repair import (
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
 from discrete_optimization.generic_tools.lns_mip import InitialSolutionFromSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -70,7 +70,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
     if rcpsp_problem.is_preemptive():
         if rcpsp_problem.is_multiskill():
             solver = CP_MS_MRCPSP_MZN_PREEMPTIVE(
-                rcpsp_model=rcpsp_problem,
+                problem=rcpsp_problem,
                 cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
             )
             solver.init_model(
@@ -106,7 +106,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
         if not rcpsp_problem.is_multiskill():
             if rcpsp_problem.is_rcpsp_multimode():
                 solver = CP_MRCPSP_MZN_PREEMPTIVE(
-                    rcpsp_model=rcpsp_problem,
+                    problem=rcpsp_problem,
                     cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 )
                 solver.init_model(
@@ -138,7 +138,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                 return solver
             if not rcpsp_problem.is_rcpsp_multimode():
                 solver = CP_RCPSP_MZN_PREEMPTIVE(
-                    rcpsp_model=rcpsp_problem,
+                    problem=rcpsp_problem,
                     cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 )
                 solver.init_model(
@@ -171,7 +171,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
     if not rcpsp_problem.is_preemptive():
         if rcpsp_problem.is_multiskill():
             solver = CP_MS_MRCPSP_MZN(
-                rcpsp_model=rcpsp_problem,
+                problem=rcpsp_problem,
                 cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 one_ressource_per_task=kwargs.get(
                     "one_ressource_per_task", rcpsp_problem.one_unit_per_task_max
@@ -194,7 +194,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
         if not rcpsp_problem.is_multiskill():
             if rcpsp_problem.is_rcpsp_multimode():
                 solver = CP_MRCPSP_MZN(
-                    rcpsp_model=rcpsp_problem,
+                    problem=rcpsp_problem,
                     cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 )
                 solver.init_model(
@@ -212,7 +212,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                 return solver
             if not rcpsp_problem.is_rcpsp_multimode():
                 solver = CP_RCPSP_MZN(
-                    rcpsp_model=rcpsp_problem,
+                    problem=rcpsp_problem,
                     cp_solver_name=kwargs.get("cp_solver_name", CPSolverName.CHUFFED),
                 )
                 solver.init_model(
@@ -259,13 +259,13 @@ def build_default_postpro(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kwa
 def build_default_initial_solution(rcpsp_problem: ANY_RCPSP, **kwargs):
     if rcpsp_problem.is_multiskill():
         initial_solution_provider = InitialSolutionFromSolver(
-            LS_RCPSP_Solver(rcpsp_model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
+            LS_RCPSP_Solver(problem=rcpsp_problem, ls_solver=LS_SOLVER.SA),
             nb_iteration_max=500,
         )
         return initial_solution_provider
     if not rcpsp_problem.is_multiskill():
         initial_solution_provider = InitialSolutionFromSolver(
-            LS_RCPSP_Solver(rcpsp_model=rcpsp_problem, ls_solver=LS_SOLVER.SA),
+            LS_RCPSP_Solver(problem=rcpsp_problem, ls_solver=LS_SOLVER.SA),
             nb_iteration_max=200,
         )
         return initial_solution_provider
@@ -446,47 +446,50 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
 
 
 class LargeNeighborhoodSearchScheduling(SolverGenericRCPSP):
-    def __init__(self, rcpsp_model: ANY_RCPSP, partial_solution=None, **kwargs):
-        SolverGenericRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        graph = build_graph_rcpsp_object(self.rcpsp_model)
+    def __init__(
+        self,
+        problem: ANY_RCPSP,
+        partial_solution=None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
+    ):
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        graph = build_graph_rcpsp_object(self.problem)
         solver = kwargs.get("cp_solver", None)
         if solver is None:
             solver = build_default_cp_model(
-                rcpsp_problem=rcpsp_model, partial_solution=partial_solution, **kwargs
+                rcpsp_problem=problem, partial_solution=partial_solution, **kwargs
             )
         self.cp_solver = solver
-        params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_model
-        )
         self.parameters_cp = kwargs.get("parameters_cp", ParametersCP.default())
         self.constraint_handler = kwargs.get("constraint_handler", None)
         if self.constraint_handler is None:
             self.constraint_handler = build_constraint_handler(
-                rcpsp_problem=self.rcpsp_model,
+                rcpsp_problem=self.problem,
                 graph=graph,
-                multiskill=self.rcpsp_model.is_multiskill(),
-                preemptive=self.rcpsp_model.is_preemptive(),
+                multiskill=self.problem.is_multiskill(),
+                preemptive=self.problem.is_preemptive(),
                 **kwargs
             )
         self.post_pro = kwargs.get("post_process_solution", None)
         if self.post_pro is None:
             self.post_pro = build_default_postpro(
-                rcpsp_problem=self.rcpsp_model,
-                partial_solution=partial_solution,
-                **kwargs
+                rcpsp_problem=self.problem, partial_solution=partial_solution, **kwargs
             )
         self.initial_solution_provider = kwargs.get("initial_solution_provider", None)
         if self.initial_solution_provider is None:
             self.initial_solution_provider = build_default_initial_solution(
-                rcpsp_problem=self.rcpsp_model, **kwargs
+                rcpsp_problem=self.problem, **kwargs
             )
         self.lns_solver = LNS_CP(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             cp_solver=self.cp_solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,
             post_process_solution=self.post_pro,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
 
     def solve(

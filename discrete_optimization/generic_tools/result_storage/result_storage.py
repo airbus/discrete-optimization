@@ -206,15 +206,15 @@ def from_solutions_to_result_storage(
         params_objective_function = get_default_objective_setup(problem)
     mode_optim = params_objective_function.sense_function
     (
-        aggreg_sol,
-        aggreg_dict,
+        aggreg_from_sol,
+        aggreg_from_dict,
         params_objective_function,
     ) = build_aggreg_function_and_params_objective(
         problem=problem, params_objective_function=params_objective_function
     )
     list_solution_fit: List[Tuple[Solution, fitness_class]] = []
     for s in list_solution:
-        list_solution_fit += [(s, aggreg_sol(s))]
+        list_solution_fit += [(s, aggreg_from_sol(s))]
     return ResultStorage(
         list_solution_fits=list_solution_fit,
         mode_optim=mode_optim,

@@ -11,7 +11,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
     Problem,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp
@@ -88,7 +87,9 @@ class LNS_MILP(SolverDO):
         post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.milp_solver = milp_solver
         self.initial_solution_provider = initial_solution_provider
         self.constraint_handler = constraint_handler
@@ -97,15 +98,6 @@ class LNS_MILP(SolverDO):
             self.post_process_solution = TrivialPostProcessSolution()
         else:
             self.post_process_solution = post_process_solution
-
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.problem,
-            params_objective_function=params_objective_function,
-        )
 
     def solve_lns(
         self,

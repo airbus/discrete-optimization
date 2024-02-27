@@ -146,7 +146,7 @@ def run_cp_multiscenario():
     )
     res = RestartHandlerLimit(500)
     simulated_annealing = SimulatedAnnealing(
-        evaluator=model_aggreg_mean,
+        problem=model_aggreg_mean,
         mutator=mixed_mutation,
         mode_mutation=ModeMutation.MUTATE,
         restart_handler=res,
@@ -164,7 +164,7 @@ def run_cp_multiscenario():
         annealing += [model.evaluate(s)["makespan"]]
 
     solver = CP_MULTISCENARIO(
-        list_rcpsp_model=list_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+        list_problem=list_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
     )
     solver.init_model(
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
@@ -209,7 +209,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             sense_function=ModeOptim.MAXIMIZATION,
         )
         sa = SimulatedAnnealing(
-            evaluator=rcpsp_model,
+            problem=rcpsp_model,
             mutator=mixed_mutation,
             restart_handler=res,
             temperature_handler=TemperatureSchedulingFactor(
@@ -228,7 +228,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             sense_function=ModeOptim.MAXIMIZATION,
         )
         sa = HillClimberPareto(
-            evaluator=rcpsp_model,
+            problem=rcpsp_model,
             mutator=mixed_mutation,
             restart_handler=res,
             params_objective_function=params_objective_function,
@@ -259,7 +259,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     all_results = []
     results = np.zeros((len(solutions_pareto), len(many_random_instance), 3))
 
-    executor = Executor(rcpsp_model=rcpsp_model)
+    executor = Executor(problem=rcpsp_model)
     for index_instance in range(len(many_random_instance)):
         print("Evaluating in instance #", index_instance)
         instance = many_random_instance[index_instance]
@@ -341,7 +341,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
             sense_function=ModeOptim.MAXIMIZATION,
         )
         sa = SimulatedAnnealing(
-            evaluator=model,
+            problem=model,
             mutator=mixed_mutation,
             restart_handler=res,
             temperature_handler=TemperatureSchedulingFactor(
@@ -360,7 +360,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
             sense_function=ModeOptim.MAXIMIZATION,
         )
         sa = HillClimberPareto(
-            evaluator=model,
+            problem=model,
             mutator=mixed_mutation,
             restart_handler=res,
             params_objective_function=params_objective_function,

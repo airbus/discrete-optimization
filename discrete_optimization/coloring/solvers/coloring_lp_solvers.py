@@ -24,7 +24,6 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
@@ -73,20 +72,22 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
 
     def __init__(
         self,
-        coloring_model: ColoringProblem,
+        problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverColoring.__init__(self, coloring_model=coloring_model)
-        self.number_of_nodes = self.coloring_model.number_of_nodes
-        self.nodes_name = self.coloring_model.graph.nodes_name
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        self.number_of_nodes = self.problem.number_of_nodes
+        self.nodes_name = self.problem.graph.nodes_name
         self.index_nodes_name = {
             self.nodes_name[i]: i for i in range(self.number_of_nodes)
         }
         self.index_to_nodes_name = {
             i: self.nodes_name[i] for i in range(self.number_of_nodes)
         }
-        self.graph = self.coloring_model.graph
+        self.graph = self.problem.graph
         self.model = None
         self.variable_decision: VariableDecision = {}
         one_color_constraints: OneColorConstraints = {}
@@ -103,14 +104,6 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
             }
         }
         self.description_constraint: Dict[str, Dict[str, str]] = {}
-        (
-            self.aggreg_from_sol,
-            self.aggreg_from_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.coloring_model,
-            params_objective_function=params_objective_function,
-        )
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution: Optional[ColoringSolution] = None
 
@@ -131,7 +124,7 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
                     node = variable_decision_key[0]
                     color = variable_decision_key[1]
                     colors[self.index_nodes_name[node]] = color
-            solution = ColoringSolution(self.coloring_model, colors)
+            solution = ColoringSolution(self.problem, colors)
             fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
@@ -140,19 +133,16 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
         )
 
     def get_range_color(self, node_name, range_color_subset, range_color_all):
-        if self.coloring_model.has_constraints_coloring:
-            if node_name in self.coloring_model.constraints_coloring.nodes_fixed():
+        if self.problem.has_constraints_coloring:
+            if node_name in self.problem.constraints_coloring.nodes_fixed():
                 return range(
-                    self.coloring_model.constraints_coloring.color_constraint[
-                        node_name
-                    ],
-                    self.coloring_model.constraints_coloring.color_constraint[node_name]
-                    + 1,
+                    self.problem.constraints_coloring.color_constraint[node_name],
+                    self.problem.constraints_coloring.color_constraint[node_name] + 1,
                 )
-        if self.coloring_model.use_subset:
+        if self.problem.use_subset:
             return (
                 range_color_subset
-                if node_name in self.coloring_model.subset_nodes
+                if node_name in self.problem.subset_nodes
                 else range_color_all
             )
         else:
@@ -183,7 +173,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
-                self.coloring_model,
+                self.problem,
                 params_objective_function=self.params_objective_function,
             )
             sol = greedy_solver.solve(
@@ -202,16 +192,12 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
             self.start_solution = sol
         else:
             logger.info("Get dummy solution")
-            self.start_solution = self.coloring_model.get_dummy_solution()
+            self.start_solution = self.problem.get_dummy_solution()
         nb_colors = self.start_solution.nb_color
         nb_colors_subset = nb_colors
-        if self.coloring_model.use_subset:
-            nb_colors_subset = self.coloring_model.count_colors(
-                self.start_solution.colors
-            )
-            nb_colors = self.coloring_model.count_colors_all_index(
-                self.start_solution.colors
-            )
+        if self.problem.use_subset:
+            nb_colors_subset = self.problem.count_colors(self.start_solution.colors)
+            nb_colors = self.problem.count_colors_all_index(self.start_solution.colors)
 
         if nb_colors is None:
             raise RuntimeError("self.start_solution.nb_color should not be None.")
@@ -331,7 +317,7 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
 
 
     Attributes:
-        coloring_model (ColoringProblem): coloring problem instance to solve
+        problem (ColoringProblem): coloring problem instance to solve
         params_objective_function (ParamsObjectiveFunction): objective function parameters
                     (however this is just used for the ResultStorage creation, not in the optimisation)
         milp_solver_name (MilpSolverName): backend solver to use (either CBC ou GRB)
@@ -340,13 +326,13 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
 
     def __init__(
         self,
-        coloring_model: ColoringProblem,
+        problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         **kwargs: Any,
     ):
         super().__init__(
-            coloring_model=coloring_model,
+            problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
@@ -359,7 +345,7 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
-                self.coloring_model,
+                self.problem,
                 params_objective_function=self.params_objective_function,
             )
             sol = greedy_solver.solve(
@@ -378,16 +364,12 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
             self.start_solution = sol
         else:
             logger.info("Get dummy solution")
-            self.start_solution = self.coloring_model.get_dummy_solution()
+            self.start_solution = self.problem.get_dummy_solution()
         nb_colors = self.start_solution.nb_color
         nb_colors_subset = nb_colors
-        if self.coloring_model.use_subset:
-            nb_colors_subset = self.coloring_model.count_colors(
-                self.start_solution.colors
-            )
-            nb_colors = self.coloring_model.count_colors_all_index(
-                self.start_solution.colors
-            )
+        if self.problem.use_subset:
+            nb_colors_subset = self.problem.count_colors(self.start_solution.colors)
+            nb_colors = self.problem.count_colors_all_index(self.start_solution.colors)
 
         if nb_colors is None:
             raise RuntimeError("self.start_solution.nb_color should not be None.")

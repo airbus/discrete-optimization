@@ -56,8 +56,8 @@ class InitialFacilitySolution(InitialSolution):
         self.problem = problem
         self.initial_method = initial_method
         (
-            self.aggreg_sol,
-            self.aggreg_dict,
+            self.aggreg_from_sol,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem, params_objective_function=params_objective_function
@@ -71,7 +71,7 @@ class InitialFacilitySolution(InitialSolution):
             return greedy_solver.solve()
         else:
             solution = self.problem.get_dummy_solution()
-            fit = self.aggreg_sol(solution)
+            fit = self.aggreg_from_sol(solution)
             return ResultStorage(
                 list_solution_fits=[(solution, fit)],
                 best_solution=solution,

@@ -24,7 +24,6 @@ from deap.gp import (
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ghh_tools import (
@@ -162,13 +161,15 @@ class GPHH(SolverDO):
     def __init__(
         self,
         training_domains: List[Problem],
-        domain_model: MultidimensionalKnapsack,
+        problem: MultidimensionalKnapsack,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.training_domains = training_domains
-        self.domain_model = domain_model
         if params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
         else:
@@ -179,14 +180,6 @@ class GPHH(SolverDO):
             self.params_gphh.set_primitves
         )
         self.weight = weight
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.domain_model,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(self) -> None:
         tournament_ratio = self.params_gphh.tournament_ratio
@@ -263,7 +256,7 @@ class GPHH(SolverDO):
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         solution = self.build_solution(
-            domain=self.domain_model, func_heuristic=self.func_heuristic
+            domain=self.problem, func_heuristic=self.func_heuristic
         )
         return ResultStorage(
             list_solution_fits=[(solution, self.aggreg_from_sol(solution))],
@@ -278,7 +271,7 @@ class GPHH(SolverDO):
         )
         return ResultStorage(
             list_solution_fits=[
-                (solution, self.aggreg_dict(domain.evaluate(solution)))
+                (solution, self.aggreg_from_dict(domain.evaluate(solution)))
             ],
             mode_optim=self.params_objective_function.sense_function,
         )
@@ -345,7 +338,7 @@ class GPHH(SolverDO):
             solution = self.build_solution(
                 individual=individual, domain=domain, func_heuristic=func_heuristic
             )
-            value: float = self.aggreg_dict(domain.evaluate(solution))  # type: ignore # could also be TupleFitness
+            value: float = self.aggreg_from_dict(domain.evaluate(solution))  # type: ignore # could also be TupleFitness
             vals.append(value)
         fitness = [np.mean(vals)]
         return [fitness[0] - 10 * self.evaluate_complexity(individual)]

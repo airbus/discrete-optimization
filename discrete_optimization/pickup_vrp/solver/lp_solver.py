@@ -158,23 +158,19 @@ def retrieve_solutions(
 
 
 class LinearFlowSolver(GurobiMilpSolver):
+    problem: GPDP
+
     def __init__(
         self,
         problem: GPDP,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.model: Optional["grb.Model"] = None
         self.constraint_on_edge: Dict[int, Any] = {}
         self.variable_order: Dict[Node, Any] = {}
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=problem,
-            params_objective_function=params_objective_function,
-        )
 
     def one_visit_per_node(
         self,
@@ -842,7 +838,7 @@ class LinearFlowSolver(GurobiMilpSolver):
             solution = convert_temporaryresult_to_gpdpsolution(
                 temporaryresult=temporaryresult, problem=self.problem
             )
-            fit = self.aggreg_sol(solution)
+            fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
@@ -1031,7 +1027,7 @@ class LinearFlowSolver(GurobiMilpSolver):
             solution = convert_temporaryresult_to_gpdpsolution(
                 temporaryresult=temporaryresults[s], problem=self.problem
             )
-            fit = self.aggreg_sol(solution)
+            fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
@@ -1156,9 +1152,6 @@ def build_path_from_vehicle_type_flow(
 
 
 class LinearFlowSolverLazyConstraint(LinearFlowSolver):
-    def __init__(self, problem: GPDP):
-        super().__init__(problem)
-
     def solve_one_iteration(
         self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
     ) -> List[TemporaryResult]:

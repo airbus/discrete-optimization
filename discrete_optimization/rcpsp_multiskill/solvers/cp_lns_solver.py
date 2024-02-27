@@ -20,7 +20,7 @@ from discrete_optimization.generic_rcpsp_tools.solution_repair import (
     NeighborRepairProblems,
 )
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -58,7 +58,7 @@ def build_default_cp_model(
 ):
     if rcpsp_problem.preemptive:
         solver = CP_MS_MRCPSP_MZN_PREEMPTIVE(
-            rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
+            problem=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
         )
         solver.init_model(
             output_type=True,
@@ -78,7 +78,7 @@ def build_default_cp_model(
         return solver
     else:
         solver = CP_MS_MRCPSP_MZN(
-            rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
+            problem=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
         )
         solver.init_model(
             output_type=True,
@@ -179,49 +179,51 @@ def build_constraint_handler(rcpsp_problem, graph, **kwargs):
 
 
 class LargeNeighborhoodSearchMSRCPSP(SolverDO):
+    problem: GENERIC_CLASS_MULTISKILL
+
     def __init__(
         self,
-        rcpsp_problem: GENERIC_CLASS_MULTISKILL,
+        problem: GENERIC_CLASS_MULTISKILL,
         partial_solution: PartialSolutionPreemptive = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        self.rcpsp_problem = rcpsp_problem
-        graph = build_graph_rcpsp_object(self.rcpsp_problem)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        graph = build_graph_rcpsp_object(self.problem)
         solver = build_default_cp_model(
-            rcpsp_problem=rcpsp_problem, partial_solution=partial_solution, **kwargs
+            rcpsp_problem=problem, partial_solution=partial_solution, **kwargs
         )
         self.cp_solver = solver
-        params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_problem
-        )
         self.parameters_cp = kwargs.get("parameters_cp", ParametersCP.default())
         self.constraint_handler = build_constraint_handler(
-            rcpsp_problem=self.rcpsp_problem,
+            rcpsp_problem=self.problem,
             graph=graph,
-            multiskill=isinstance(self.rcpsp_problem, MS_RCPSPModel),
-            preemptive=self.rcpsp_problem.preemptive,
+            multiskill=isinstance(self.problem, MS_RCPSPModel),
+            preemptive=self.problem.preemptive,
             **kwargs
         )
         self.post_pro = None
-        if not self.rcpsp_problem.preemptive:
+        if not self.problem.preemptive:
             self.post_pro = PostProMSRCPSP(
-                problem=self.rcpsp_problem,
-                params_objective_function=params_objective_function,
+                problem=self.problem,
+                params_objective_function=self.params_objective_function,
             )
         self.initial_solution_provider = kwargs.get("initial_solution_provider", None)
         if self.initial_solution_provider is None:
             self.initial_solution_provider = InitialSolutionMS_RCPSP(
-                problem=self.rcpsp_problem,
+                problem=self.problem,
                 initial_method=InitialMethodRCPSP.DUMMY,
-                params_objective_function=params_objective_function,
+                params_objective_function=self.params_objective_function,
             )
         self.lns_solver = LNS_CP(
-            problem=self.rcpsp_problem,
+            problem=self.problem,
             cp_solver=self.cp_solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,
             post_process_solution=self.post_pro,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
 
     def solve(

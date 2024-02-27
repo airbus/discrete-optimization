@@ -14,7 +14,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
     TupleFitness,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
@@ -49,25 +48,19 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
 
     def __init__(
         self,
-        knapsack_model: KnapsackModel,
+        problem: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.variable_decision: Dict[str, Dict[int, Union["Var", mip.Var]]] = {}
         self.constraints_dict: Dict[
             str, Union["Constr", "QConstr", "MConstr", "GenConstr", "mip.Constr"]
         ] = {}
         self.description_variable_description: Dict[str, Dict[str, Any]] = {}
         self.description_constraint: Dict[str, Dict[str, str]] = {}
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         if parameters_milp.retrieve_all_solution:
@@ -88,20 +81,16 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
                     xs[variable_decision_key] = 0
                     continue
                 xs[variable_decision_key] = 1
-                weight += self.knapsack_model.index_to_item[
-                    variable_decision_key
-                ].weight
-                value_kp += self.knapsack_model.index_to_item[
-                    variable_decision_key
-                ].value
+                weight += self.problem.index_to_item[variable_decision_key].weight
+                value_kp += self.problem.index_to_item[variable_decision_key].value
 
             solution = KnapsackSolution(
-                problem=self.knapsack_model,
+                problem=self.problem,
                 value=value_kp,
                 weight=weight,
                 list_taken=[xs[e] for e in sorted(xs)],
             )
-            fit = self.aggreg_sol(solution)
+            fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
@@ -116,7 +105,7 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
         self.variable_decision = {"x": {}}
         self.description_variable_description = {
             "x": {
-                "shape": self.knapsack_model.nb_items,
+                "shape": self.problem.nb_items,
                 "type": bool,
                 "descr": "dictionary with key the item index \
                                                                  and value the boolean value corresponding \
@@ -127,8 +116,8 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
             "descr": "sum of weight of used items doesn't exceed max capacity"
         }
         weight = {}
-        list_item = self.knapsack_model.list_items
-        max_capacity = self.knapsack_model.max_capacity
+        list_item = self.problem.list_items
+        max_capacity = self.problem.max_capacity
         x = {}
         for item in list_item:
             i = item.index
@@ -159,24 +148,18 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
 class LPKnapsackCBC(SolverKnapsack):
     def __init__(
         self,
-        knapsack_model: KnapsackModel,
+        problem: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.model: Optional[pywraplp.Solver] = None
         self.variable_decision: Dict[str, Dict[int, Any]] = {}
         self.constraints_dict: Dict[str, Any] = {}
         self.description_variable_description: Dict[str, Dict[str, Any]] = {}
         self.description_constraint: Dict[str, Dict[str, str]] = {}
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(
         self, warm_start: Optional[Dict[int, int]] = None, **kwargs: Any
@@ -185,7 +168,7 @@ class LPKnapsackCBC(SolverKnapsack):
             warm_start = {}
         self.description_variable_description = {
             "x": {
-                "shape": self.knapsack_model.nb_items,
+                "shape": self.problem.nb_items,
                 "type": bool,
                 "descr": "dictionary with key the item index \
                                                                  and value the boolean value corresponding \
@@ -199,8 +182,8 @@ class LPKnapsackCBC(SolverKnapsack):
         x = {}
         weight = {}
         value = {}
-        list_item = self.knapsack_model.list_items
-        max_capacity = self.knapsack_model.max_capacity
+        list_item = self.problem.list_items
+        max_capacity = self.problem.max_capacity
         for item in list_item:
             i = item.index
             x[i] = S.BoolVar("x_" + str(i))
@@ -243,16 +226,16 @@ class LPKnapsackCBC(SolverKnapsack):
             sv = x[i].solution_value()
             if sv >= 0.5:
                 xs[i] = 1
-                weight += self.knapsack_model.index_to_item[i].weight
+                weight += self.problem.index_to_item[i].weight
             else:
                 xs[i] = 0
         sol = KnapsackSolution(
-            problem=self.knapsack_model,
+            problem=self.problem,
             value=objective,
             weight=weight,
             list_taken=[xs[e] for e in sorted(xs)],
         )
-        fit = self.aggreg_sol(sol)
+        fit = self.aggreg_from_sol(sol)
         return ResultStorage(
             list_solution_fits=[(sol, fit)],
             mode_optim=self.params_objective_function.sense_function,
@@ -263,13 +246,13 @@ class LPKnapsackCBC(SolverKnapsack):
 class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
     def __init__(
         self,
-        knapsack_model: KnapsackModel,
+        problem: KnapsackModel,
         milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
         super().__init__(
-            knapsack_model=knapsack_model,
+            problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
@@ -283,7 +266,7 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
         self.variable_decision = {"x": {}}
         self.description_variable_description = {
             "x": {
-                "shape": self.knapsack_model.nb_items,
+                "shape": self.problem.nb_items,
                 "type": bool,
                 "descr": "dictionary with key the item index \
                                                                  and value the boolean value corresponding \
@@ -294,8 +277,8 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
             "descr": "sum of weight of used items doesn't exceed max capacity"
         }
         weight = {}
-        list_item = self.knapsack_model.list_items
-        max_capacity = self.knapsack_model.max_capacity
+        list_item = self.problem.list_items
+        max_capacity = self.problem.max_capacity
         x = {}
         start = []
         for item in list_item:
@@ -320,30 +303,15 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
 
 
 class KnapsackORTools(SolverKnapsack):
-    def __init__(
-        self,
-        knapsack_model: KnapsackModel,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any,
-    ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
-        self.model = None
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
+    model: Optional[knapsack_solver.KnapsackSolver] = None
 
     def init_model(self, **kwargs: Any) -> None:
         solver = knapsack_solver.KnapsackSolver(
             knapsack_solver.SolverType.KNAPSACK_MULTIDIMENSION_BRANCH_AND_BOUND_SOLVER,
             "KnapsackExample",
         )
-        list_item = self.knapsack_model.list_items
-        max_capacity = self.knapsack_model.max_capacity
+        list_item = self.problem.list_items
+        max_capacity = self.problem.max_capacity
         values = [item.value for item in list_item]
         weights = [[item.weight for item in list_item]]
         capacities = [max_capacity]
@@ -362,20 +330,20 @@ class KnapsackORTools(SolverKnapsack):
         xs = {}
         weight = 0
         value = 0
-        for i in range(self.knapsack_model.nb_items):
+        for i in range(self.problem.nb_items):
             if self.model.best_solution_contains(i):
-                weight += self.knapsack_model.list_items[i].weight
-                value += self.knapsack_model.list_items[i].value
-                xs[self.knapsack_model.list_items[i].index] = 1
+                weight += self.problem.list_items[i].weight
+                value += self.problem.list_items[i].value
+                xs[self.problem.list_items[i].index] = 1
             else:
-                xs[self.knapsack_model.list_items[i].index] = 0
+                xs[self.problem.list_items[i].index] = 0
         sol = KnapsackSolution(
-            problem=self.knapsack_model,
+            problem=self.problem,
             value=value,
             weight=weight,
             list_taken=[xs[e] for e in sorted(xs)],
         )
-        fit = self.aggreg_sol(sol)
+        fit = self.aggreg_from_sol(sol)
         return ResultStorage(
             list_solution_fits=[(sol, fit)],
             mode_optim=self.params_objective_function.sense_function,

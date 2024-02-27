@@ -103,9 +103,9 @@ def look_for_solver_class(
 
 
 def solve(
-    method: Type[SolverFacility], facility_problem: FacilityProblem, **kwargs: Any
+    method: Type[SolverFacility], problem: FacilityProblem, **kwargs: Any
 ) -> ResultStorage:
-    solver = method(facility_problem, **kwargs)
+    solver = method(problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:
@@ -114,9 +114,9 @@ def solve(
 
 
 def return_solver(
-    method: Type[SolverFacility], coloring_model: FacilityProblem, **kwargs: Any
+    method: Type[SolverFacility], problem: FacilityProblem, **kwargs: Any
 ) -> SolverFacility:
-    solver = method(coloring_model, **kwargs)
+    solver = method(problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:

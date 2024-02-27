@@ -29,11 +29,7 @@ from discrete_optimization.facility.solvers.facility_solver import SolverFacilit
 from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Problem,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.ghh_tools import argsort, protected_div
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -205,12 +201,14 @@ class GPHH(SolverFacility):
     def __init__(
         self,
         training_domains: List[FacilityProblem],
-        facility_problem: FacilityProblem,
+        problem: FacilityProblem,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        SolverFacility.__init__(self, facility_problem=facility_problem)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.training_domains = training_domains
         if params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
@@ -221,17 +219,7 @@ class GPHH(SolverFacility):
         self.list_feature_names = [value.value for value in list(self.list_feature)]
         self.pset: PrimitiveSet = self.init_primitives(self.params_gphh.set_primitives)
         self.weight = weight
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.facility_problem,
-            params_objective_function=params_objective_function,
-        )
-        self.greedy_solver = GreedySolverDistanceBased(
-            facility_problem=self.facility_problem
-        )
+        self.greedy_solver = GreedySolverDistanceBased(problem=self.problem)
 
     def init_model(self, **kwargs: Any) -> None:
         tournament_ratio = self.params_gphh.tournament_ratio
@@ -308,7 +296,7 @@ class GPHH(SolverFacility):
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         result = self.build_solution(
-            domain=self.facility_problem, func_heuristic=self.func_heuristic
+            domain=self.problem, func_heuristic=self.func_heuristic
         )
         return result
 

@@ -72,7 +72,7 @@ def run_lp_debug():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_model = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
+    lp_model = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
     lp_model.init_model()
     result = lp_model.solve(parameters_milp=ParametersMilp.default())
 
@@ -145,7 +145,7 @@ def run_lp_debug_bis():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_model = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
+    lp_model = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
     lp_model.init_model()
     result = lp_model.solve(parameters_milp=ParametersMilp.default())
     best_solution = result.get_best_solution()

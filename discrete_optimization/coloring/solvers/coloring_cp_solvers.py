@@ -38,7 +38,6 @@ from discrete_optimization.generic_tools.cp_tools import (
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -84,7 +83,7 @@ file_dict = {
 class ColoringCP(MinizincCPSolver, SolverColoring):
     def __init__(
         self,
-        coloring_model: ColoringProblem,
+        problem: ColoringProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         silent_solve_error: bool = False,
@@ -93,30 +92,24 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         """CP solver linked with minizinc implementation of coloring problem.
 
         Args:
-            coloring_model (ColoringProblem): coloring problem instance to solve
+            problem (ColoringProblem): coloring problem instance to solve
             params_objective_function (ParamsObjectiveFunction): params of the objective function
             cp_solver_name (CPSolverName): backend solver to use with minizinc
             silent_solve_error: if True, raise a warning instead of an error if the underlying instance.solve() crashes
             **args:
         """
-        SolverColoring.__init__(self, coloring_model=coloring_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
-        self.number_of_nodes = self.coloring_model.number_of_nodes
-        self.number_of_edges = len(self.coloring_model.graph.edges_infos_dict)
-        self.nodes_name = self.coloring_model.graph.nodes_name
-        self.index_nodes_name = self.coloring_model.index_nodes_name
-        self.index_to_nodes_name = self.coloring_model.index_to_nodes_name
-        self.graph = self.coloring_model.graph
+        self.number_of_nodes = self.problem.number_of_nodes
+        self.number_of_edges = len(self.problem.graph.edges_infos_dict)
+        self.nodes_name = self.problem.graph.nodes_name
+        self.index_nodes_name = self.problem.index_nodes_name
+        self.index_to_nodes_name = self.problem.index_to_nodes_name
+        self.graph = self.problem.graph
         self.custom_output_type = False
         self.g = None
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.coloring_model,
-            params_objective_function=params_objective_function,
-        )
         self.cp_solver_name = cp_solver_name
         self.dict_datas: Optional[Dict[str, Any]] = None
 
@@ -138,14 +131,12 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         """
         nb_colors = kwargs.get("nb_colors", None)
         object_output = kwargs.get("object_output", True)
-        with_subset_nodes = kwargs.get(
-            "with_subset_nodes", self.coloring_model.use_subset
-        )
+        with_subset_nodes = kwargs.get("with_subset_nodes", self.problem.use_subset)
         include_seq_chain_constraint = kwargs.get("include_seq_chain_constraint", False)
 
         if nb_colors is None:
             solution: ColoringSolution = self.get_solution(**kwargs)
-            nb_colors = self.coloring_model.count_colors_all_index(solution.colors)
+            nb_colors = self.problem.count_colors_all_index(solution.colors)
         print(nb_colors)
         model_type = kwargs.get(
             "cp_model",
@@ -175,14 +166,13 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
             keys += ["include_seq_chain_constraint"]
         if model_type == ColoringCPModel.DEFAULT_WITH_SUBSET:
             instance["subset_node"] = [
-                node in self.coloring_model.subset_nodes
-                for node in self.coloring_model.nodes_name
+                node in self.problem.subset_nodes for node in self.problem.nodes_name
             ]
             keys += ["subset_node"]
         keys += ["n_nodes", "n_edges", "nb_colors"]
         edges = [
             [self.index_nodes_name[e[0]] + 1, self.index_nodes_name[e[1]] + 1, e[2]]
-            for e in self.coloring_model.graph.edges
+            for e in self.problem.graph.edges
         ]
         g = nx.Graph()
         g.add_nodes_from([i for i in range(1, self.number_of_nodes + 1)])
@@ -196,9 +186,9 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
             keys += ["cliques", "n_cliques", "all_cliques"]
         instance["list_edges"] = [[e[0], e[1]] for e in edges]
         keys += ["list_edges"]
-        if self.coloring_model.has_constraints_coloring:
+        if self.problem.has_constraints_coloring:
             constraints = self.add_coloring_constraint(
-                coloring_constraint=self.coloring_model.constraints_coloring
+                coloring_constraint=self.problem.constraints_coloring
             )
             for c in constraints:
                 instance.add_string(c)
@@ -263,8 +253,8 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
                 colors[k][self.index_nodes_name[self.nodes_name[i]]] - 1
                 for i in range(self.number_of_nodes)
             ]
-            color_sol = ColoringSolution(self.coloring_model, sol)
-            fit = self.aggreg_sol(color_sol)
+            color_sol = ColoringSolution(self.problem, sol)
+            fit = self.aggreg_from_sol(color_sol)
             solutions_fit.append((color_sol, fit))
 
         return ResultStorage(
@@ -296,7 +286,7 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
-                self.coloring_model,
+                self.problem,
                 params_objective_function=self.params_objective_function,
             )
             result_store = greedy_solver.solve(
@@ -314,5 +304,5 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
                 )
         else:
             logger.info("Get dummy solution")
-            solution = self.coloring_model.get_dummy_solution()
+            solution = self.problem.get_dummy_solution()
         return solution

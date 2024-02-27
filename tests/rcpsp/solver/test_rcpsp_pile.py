@@ -23,7 +23,7 @@ def test_pile_sm():
     files = [f for f in files if "j1201_1.sm" in f]
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
-    solver = PileSolverRCPSP(rcpsp_model=rcpsp_model)
+    solver = PileSolverRCPSP(problem=rcpsp_model)
     for k in range(10):
         result_storage = solver.solve(greedy_choice=GreedyChoice.SAMPLE_MOST_SUCCESSORS)
         sol, fit = result_storage.get_best_solution_fit()
@@ -41,7 +41,7 @@ def test_pile_multimode():
     files = [f for f in files if "j1010_1.mm" in f]
     file_path = files[0]
     rcpsp_model = parse_file(file_path)
-    solver = PileSolverRCPSP(rcpsp_model=rcpsp_model)
+    solver = PileSolverRCPSP(problem=rcpsp_model)
     for k in range(10):
         result_storage = solver.solve(greedy_choice=GreedyChoice.SAMPLE_MOST_SUCCESSORS)
         sol, fit = result_storage.get_best_solution_fit()
@@ -68,8 +68,8 @@ def test_pile_robust():
     worst = uncertain.create_rcpsp_model(
         MethodRobustification(MethodBaseRobustification.WORST_CASE, percentile=0)
     )
-    solver = PileSolverRCPSP(rcpsp_model=worst)
-    solver_original = PileSolverRCPSP(rcpsp_model=rcpsp_model)
+    solver = PileSolverRCPSP(problem=worst)
+    solver_original = PileSolverRCPSP(problem=rcpsp_model)
     sol_origin, fit_origin = solver_original.solve(
         greedy_choice=GreedyChoice.MOST_SUCCESSORS
     ).get_best_solution_fit()

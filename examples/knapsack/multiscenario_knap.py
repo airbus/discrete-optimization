@@ -60,7 +60,7 @@ def initialize_multiscenario():
     )
     res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(
-        evaluator=multiscenario_model,
+        problem=multiscenario_model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),

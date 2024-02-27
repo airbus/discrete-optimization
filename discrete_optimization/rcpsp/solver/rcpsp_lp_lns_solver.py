@@ -5,7 +5,7 @@
 import logging
 import random
 from enum import Enum
-from typing import Any, Hashable, Mapping, Union
+from typing import Any, Hashable, Mapping, Optional
 
 import mip
 import numpy as np
@@ -112,7 +112,7 @@ class InitialSolutionRCPSP(InitialSolution):
             )
         elif self.initial_method == InitialMethodRCPSP.CP:
             solver = CP_MRCPSP_MZN(
-                rcpsp_model=self.problem,
+                problem=self.problem,
                 params_objective_function=self.params_objective_function,
             )
             store_solution = solver.solve(parameters_cp=ParametersCP.default())
@@ -129,7 +129,7 @@ class InitialSolutionRCPSP(InitialSolution):
             )
             res = RestartHandlerLimit(500)
             sa = SimulatedAnnealing(
-                evaluator=self.problem,
+                problem=self.problem,
                 mutator=mixed_mutation,
                 restart_handler=res,
                 temperature_handler=TemperatureSchedulingFactor(2, res, 0.9999),
@@ -446,9 +446,18 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
 
 
 class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
-    def __init__(self, rcpsp_model: RCPSPModel, **kwargs):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        solver = LP_MRCPSP(rcpsp_model=self.rcpsp_model, **kwargs)
+    problem: RCPSPModel
+
+    def __init__(
+        self,
+        problem: RCPSPModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
+    ):
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        solver = LP_MRCPSP(problem=problem, **kwargs)
         solver.init_model(greedy_start=False)
         self.parameters_milp = ParametersMilp(
             time_limit=100,
@@ -458,19 +467,16 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
             retrieve_all_solution=True,
             n_solutions_max=100,
         )
-        self.params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_model
-        )
         self.constraint_handler = ConstraintHandlerStartTimeIntervalMRCPSP(
-            problem=rcpsp_model, fraction_to_fix=0.6, minus_delta=5, plus_delta=5
+            problem=problem, fraction_to_fix=0.6, minus_delta=5, plus_delta=5
         )
         self.initial_solution_provider = InitialSolutionRCPSP(
-            problem=self.rcpsp_model,
+            problem=problem,
             initial_method=InitialMethodRCPSP.DUMMY,
             params_objective_function=self.params_objective_function,
         )
         self.lns_solver = LNS_MILP(
-            problem=self.rcpsp_model,
+            problem=problem,
             milp_solver=solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,

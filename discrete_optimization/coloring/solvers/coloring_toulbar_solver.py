@@ -4,16 +4,9 @@
 
 from typing import Any, Dict, List, Optional
 
-from discrete_optimization.coloring.coloring_model import (
-    ColoringProblem,
-    ColoringSolution,
-)
+from discrete_optimization.coloring.coloring_model import ColoringSolution
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
     SolverColoringWithStartingSolution,
-)
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -32,48 +25,32 @@ logger = logging.getLogger(__name__)
 
 
 class ToulbarColoringSolver(SolverColoringWithStartingSolution):
-    def __init__(
-        self,
-        coloring_model: ColoringProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs,
-    ):
-        SolverColoringWithStartingSolution.__init__(self, coloring_model=coloring_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.coloring_model, params_objective_function=params_objective_function
-        )
-        self.model: Optional[pytoulbar2.CFN] = None
+    model: Optional[pytoulbar2.CFN] = None
 
     def get_range_value(
         self, index_node: int, nb_colors_on_subset: int, nb_colors_all: int
     ):
-        node_name = self.coloring_model.nodes_name[index_node]
-        if self.coloring_model.has_constraints_coloring:
-            nodes = self.coloring_model.constraints_coloring.nodes_fixed()
+        node_name = self.problem.nodes_name[index_node]
+        if self.problem.has_constraints_coloring:
+            nodes = self.problem.constraints_coloring.nodes_fixed()
             if node_name in nodes:
-                value = self.coloring_model.constraints_coloring.color_constraint[
-                    node_name
-                ]
+                value = self.problem.constraints_coloring.color_constraint[node_name]
                 return range(value, value + 1)
-        in_subset = self.coloring_model.is_in_subset_index(index_node)
+        in_subset = self.problem.is_in_subset_index(index_node)
         ub_i = nb_colors_on_subset if in_subset else nb_colors_all
         return range(ub_i)
 
     def init_model(self, **kwargs: Any) -> None:
-        number_nodes = self.coloring_model.number_of_nodes
-        index_nodes_name = self.coloring_model.index_nodes_name
+        number_nodes = self.problem.number_of_nodes
+        index_nodes_name = self.problem.index_nodes_name
         nb_colors = kwargs.get("nb_colors", None)
         nb_colors_on_subset = kwargs.get("nb_colors_on_subset", nb_colors)
         if nb_colors is None:
             # Run greedy solver to get an upper bound of the bound.
             sol = self.get_starting_solution(**kwargs)
-            nb_colors = int(self.coloring_model.evaluate(sol)["nb_colors"])
-            nb_colors_all = self.coloring_model.count_colors_all_index(sol.colors)
-            nb_colors_on_subset = self.coloring_model.count_colors(sol.colors)
+            nb_colors = int(self.problem.evaluate(sol)["nb_colors"])
+            nb_colors_all = self.problem.count_colors_all_index(sol.colors)
+            nb_colors_on_subset = self.problem.count_colors(sol.colors)
             logger.info(f"{nb_colors_on_subset} colors found by the greedy method ")
         else:
             nb_colors_all = nb_colors
@@ -83,7 +60,7 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
         Problem.AddFunction(["max_color"], range(nb_colors_on_subset))
         range_map = {}
         for i in range(number_nodes):
-            in_subset = self.coloring_model.is_in_subset_index(i)
+            in_subset = self.problem.is_in_subset_index(i)
             range_map[i] = self.get_range_value(
                 index_node=i,
                 nb_colors_on_subset=nb_colors_on_subset,
@@ -161,7 +138,7 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
                             for val2 in range(nb_colors)
                         ],
                     )
-        len_edges = len(self.coloring_model.graph.edges)
+        len_edges = len(self.problem.graph.edges)
         index = 0
         costs = [
             10000 if val1 == val2 else 0
@@ -171,7 +148,7 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
         costs_dict = self.default_costs_matrix(
             nb_colors_all=nb_colors_all, nb_colors_on_subset=nb_colors_on_subset
         )
-        for e in self.coloring_model.graph.edges:
+        for e in self.problem.graph.edges:
             if index % 100 == 0:
                 logger.info(f"Nb edges introduced {index} / {len_edges}")
             index1 = index_nodes_name[e[0]]
@@ -190,7 +167,7 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
             for val2 in range(nb_colors_all)
         ]
         costs_dict = {}
-        if self.coloring_model.use_subset:
+        if self.problem.use_subset:
             costs_dict = {
                 "out-out": costs,
                 "in-out": [
@@ -219,8 +196,8 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
         costs: Dict[str, List],
         range_map: Dict[int, Any],
     ):
-        in_subset_index1 = self.coloring_model.is_in_subset_index(index1)
-        in_subset_index2 = self.coloring_model.is_in_subset_index(index2)
+        in_subset_index1 = self.problem.is_in_subset_index(index1)
+        in_subset_index2 = self.problem.is_in_subset_index(index2)
         key = "out-out"
         if in_subset_index1 and in_subset_index2:
             key = "in-in"
@@ -230,11 +207,11 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
             key = "in-out"
         if not in_subset_index1 and not in_subset_index2:
             key = "out-out"
-        if not self.coloring_model.has_constraints_coloring:
+        if not self.problem.has_constraints_coloring:
             return costs[key]
-        nodes_fixed = self.coloring_model.constraints_coloring.nodes_fixed()
-        node_index1 = self.coloring_model.index_to_nodes_name[index1]
-        node_index2 = self.coloring_model.index_to_nodes_name[index2]
+        nodes_fixed = self.problem.constraints_coloring.nodes_fixed()
+        node_index1 = self.problem.index_to_nodes_name[index1]
+        node_index2 = self.problem.index_to_nodes_name[index2]
         if not (node_index1 in nodes_fixed or node_index2 in nodes_fixed):
             return costs[key]
         else:
@@ -257,10 +234,10 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
         solution = self.model.Solve(showSolutions=1)
         logger.info(f"=== Solution === \n {solution}")
         rcpsp_sol = ColoringSolution(
-            problem=self.coloring_model,
-            colors=solution[0][1 : 1 + self.coloring_model.number_of_nodes],
+            problem=self.problem,
+            colors=solution[0][1 : 1 + self.problem.number_of_nodes],
         )
-        fit = self.aggreg_sol(rcpsp_sol)
+        fit = self.aggreg_from_sol(rcpsp_sol)
         return ResultStorage(
             list_solution_fits=[(rcpsp_sol, fit)],
             mode_optim=self.params_objective_function.sense_function,

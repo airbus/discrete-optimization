@@ -14,7 +14,7 @@ from discrete_optimization.knapsack.solvers.knapsack_cpmpy import CPMPYKnapsackS
 def test_knapsack_cpmyp():
     file = [f for f in get_data_available() if "ks_30_0" in f][0]
     knapsack_model = parse_file(file)
-    solver = CPMPYKnapsackSolver(knapsack_model=knapsack_model)
+    solver = CPMPYKnapsackSolver(problem=knapsack_model)
     solver.init_model()
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 20
