@@ -17,6 +17,9 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
 )
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
+from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
+    CPSatKnapsackSolver,
+)
 from discrete_optimization.knapsack.solvers.knapsack_decomposition import (
     KnapsackDecomposedSolver,
 )
@@ -78,5 +81,26 @@ def run_decomposed_knapsack_cp():
     print(solution, fit)
 
 
+def run_decomposed_knapsack_cpsat():
+    logging.basicConfig(level=logging.INFO)
+    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    knapsack_model = parse_file(file)
+    solver = KnapsackDecomposedSolver(
+        knapsack_model=knapsack_model,
+        params_objective_function=None,
+    )
+    params_cp = ParametersCP.default()
+    params_cp.time_limit = 5
+    result_store = solver.solve(
+        root_solver=CPSatKnapsackSolver,
+        parameters_cp=params_cp,
+        nb_iteration=200,
+        proportion_to_remove=0.85,
+    )
+    solution, fit = result_store.get_best_solution_fit()
+    print(solution, fit)
+    assert knapsack_model.satisfy(solution)
+
+
 if __name__ == "__main__":
-    run_decomposed_knapsack_asp()
+    run_decomposed_knapsack_cpsat()
