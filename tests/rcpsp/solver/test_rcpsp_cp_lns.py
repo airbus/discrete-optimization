@@ -32,9 +32,7 @@ def test_lns_sm():
     files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem: RCPSPModel = parse_file(file)
-    solver = CP_RCPSP_MZN(
-        rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
-    )
+    solver = CP_RCPSP_MZN(problem=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 5
@@ -80,9 +78,7 @@ def test_lns_mm():
     rcpsp_problem: RCPSPModel = parse_file(file)
     if rcpsp_problem.is_rcpsp_multimode():
         rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
-    solver = CP_MRCPSP_MZN(
-        rcpsp_model=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED
-    )
+    solver = CP_MRCPSP_MZN(problem=rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model()
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 5
@@ -125,7 +121,7 @@ def test_lns_solver():
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 20
     lns_solver = LNS_CP_RCPSP_SOLVER(
-        rcpsp_model=rcpsp_problem, option_neighbor=OptionNeighbor.MIX_ALL
+        problem=rcpsp_problem, option_neighbor=OptionNeighbor.MIX_ALL
     )
     result_store = lns_solver.solve(
         parameters_cp=parameters_cp,

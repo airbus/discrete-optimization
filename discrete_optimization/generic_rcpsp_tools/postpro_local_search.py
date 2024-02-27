@@ -32,7 +32,7 @@ class PostProLocalSearch(PostProcessSolution):
         self.params_objective_function = params_objective_function
         (
             self.aggreg_from_sol,
-            self.aggreg_dict,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,
@@ -41,7 +41,7 @@ class PostProLocalSearch(PostProcessSolution):
         self.dict_params = kwargs
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        solver = LS_RCPSP_Solver(rcpsp_model=self.problem, ls_solver=LS_SOLVER.SA)
+        solver = LS_RCPSP_Solver(problem=self.problem, ls_solver=LS_SOLVER.SA)
         s = result_storage.get_best_solution().copy()
         if isinstance(s, MS_RCPSPSolution_Preemptive):
             s = schedule_solution_preemptive_to_variant(s)

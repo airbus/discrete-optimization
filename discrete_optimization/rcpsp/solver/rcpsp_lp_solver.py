@@ -8,10 +8,7 @@ from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, Var, xsum
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import (
     CplexMilpSolver,
     GurobiMilpSolver,
@@ -55,26 +52,22 @@ logger = logging.getLogger(__name__)
 
 
 class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        if rcpsp_model.is_rcpsp_multimode():
+        if problem.is_rcpsp_multimode():
             raise ValueError("this solver is meant for single mode problems")
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
-        )
         self.lp_solver = lp_solver
         self.solver_name = map_solver[lp_solver]
         self.start_solution: Optional[RCPSPSolution] = None
@@ -85,35 +78,32 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
-                greedy_solver = PileSolverRCPSP(self.rcpsp_model)
+                greedy_solver = PileSolverRCPSP(self.problem)
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
                 )
                 self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
+                makespan = self.problem.evaluate(self.start_solution)["makespan"]
             else:
                 logger.info("Get dummy solution")
-                solution = self.rcpsp_model.get_dummy_solution()
+                solution = self.problem.get_dummy_solution()
                 self.start_solution = solution
-                makespan = self.rcpsp_model.evaluate(solution)["makespan"]
+                makespan = self.problem.evaluate(solution)["makespan"]
         else:
             self.start_solution = start_solution
-            makespan = self.rcpsp_model.evaluate(start_solution)["makespan"]
-        sorted_tasks = self.rcpsp_model.tasks_list
-        resources = self.rcpsp_model.resources_list
-        p = [
-            int(self.rcpsp_model.mode_details[key][1]["duration"])
-            for key in sorted_tasks
-        ]
+            makespan = self.problem.evaluate(start_solution)["makespan"]
+        sorted_tasks = self.problem.tasks_list
+        resources = self.problem.resources_list
+        p = [int(self.problem.mode_details[key][1]["duration"]) for key in sorted_tasks]
         u = [
-            [self.rcpsp_model.mode_details[t][1].get(r, 0) for r in resources]
+            [self.problem.mode_details[t][1].get(r, 0) for r in resources]
             for t in sorted_tasks
         ]
-        c = [self.rcpsp_model.resources[r] for r in resources]
+        c = [self.problem.resources[r] for r in resources]
         S = []
-        logger.debug(f"successors: {self.rcpsp_model.successors}")
+        logger.debug(f"successors: {self.problem.successors}")
         for task in sorted_tasks:
-            for suc in self.rcpsp_model.successors[task]:
+            for suc in self.problem.successors[task]:
                 S.append([task, suc])
         # we have a better self.T to limit the number of variables :
         self.index_time = range(int(makespan + 1))
@@ -126,14 +116,13 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
             for task in sorted_tasks
         ]
         self.index_in_var = {
-            t: self.rcpsp_model.return_index_task(task=t, offset=0)
-            for t in sorted_tasks
+            t: self.problem.return_index_task(task=t, offset=0) for t in sorted_tasks
         }
         self.model.objective = xsum(
-            self.x[self.index_in_var[self.rcpsp_model.sink_task]][t] * t
+            self.x[self.index_in_var[self.problem.sink_task]][t] * t
             for t in self.index_time
         )
-        self.index_task = range(self.rcpsp_model.n_jobs)
+        self.index_task = range(self.problem.n_jobs)
         self.index_resource = range(len(resources))
         for task in self.index_task:
             self.model += xsum(self.x[task][t] for t in self.index_time) == 1
@@ -161,7 +150,7 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
         for j in self.index_task:
             for t in self.index_time:
                 if (
-                    self.start_solution.rcpsp_schedule[self.rcpsp_model.tasks_list[j]][
+                    self.start_solution.rcpsp_schedule[self.problem.tasks_list[j]][
                         "start_time"
                     ]
                     == t
@@ -280,15 +269,15 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
             for (task_index, time) in product(self.index_task, self.index_time):
                 value = self.get_var_value_for_ith_solution(self.x[task_index][time], s)
                 if value >= 0.5:
-                    task = self.rcpsp_model.tasks_list[task_index]
+                    task = self.problem.tasks_list[task_index]
                     rcpsp_schedule[task] = {
                         "start_time": time,
                         "end_time": time
-                        + self.rcpsp_model.mode_details[task][1]["duration"],
+                        + self.problem.mode_details[task][1]["duration"],
                     }
             logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
             solution = RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
                 rcpsp_schedule_feasible=True,
             )
@@ -302,25 +291,20 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
 
 
 class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
+    problem: RCPSPModel
     x: Dict[Tuple[Hashable, int, int], Any]
 
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
-        )
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp):
         if parameters_milp.retrieve_all_solution:
@@ -337,13 +321,13 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
                     rcpsp_schedule[task] = {
                         "start_time": t,
                         "end_time": t
-                        + self.rcpsp_model.mode_details[task][mode]["duration"],
+                        + self.problem.mode_details[task][mode]["duration"],
                     }
                     modes[task] = mode
             logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
-            modes_vec = [modes[k] for k in self.rcpsp_model.tasks_list_non_dummy]
+            modes_vec = [modes[k] for k in self.problem.tasks_list_non_dummy]
             solution = RCPSPSolution(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 rcpsp_schedule=rcpsp_schedule,
                 rcpsp_modes=modes_vec,
                 rcpsp_schedule_feasible=True,
@@ -360,13 +344,13 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
 class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
         super().__init__(
-            rcpsp_model=rcpsp_model,
+            problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
@@ -379,61 +363,60 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
-                greedy_solver = PileSolverRCPSP(self.rcpsp_model)
+                greedy_solver = PileSolverRCPSP(self.problem)
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
                 )
                 self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
+                makespan = self.problem.evaluate(self.start_solution)["makespan"]
             else:
                 logger.info("Get dummy solution")
-                solution = self.rcpsp_model.get_dummy_solution()
+                solution = self.problem.get_dummy_solution()
                 self.start_solution = solution
-                makespan = self.rcpsp_model.evaluate(solution)["makespan"]
+                makespan = self.problem.evaluate(solution)["makespan"]
         else:
             self.start_solution = start_solution
-            makespan = self.rcpsp_model.evaluate(start_solution)["makespan"]
+            makespan = self.problem.evaluate(start_solution)["makespan"]
 
-        sorted_tasks = self.rcpsp_model.tasks_list
+        sorted_tasks = self.problem.tasks_list
         p = [
             int(
                 max(
                     [
-                        self.rcpsp_model.mode_details[key][mode]["duration"]
-                        for mode in self.rcpsp_model.mode_details[key]
+                        self.problem.mode_details[key][mode]["duration"]
+                        for mode in self.problem.mode_details[key]
                     ]
                 )
             )
             for key in sorted_tasks
         ]
-        resources = self.rcpsp_model.resources_list
+        resources = self.problem.resources_list
         renewable = {
-            r: self.rcpsp_model.resources[r]
-            for r in self.rcpsp_model.resources
-            if r not in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources[r]
+            for r in self.problem.resources
+            if r not in self.problem.non_renewable_resources
         }
         non_renewable = {
-            r: self.rcpsp_model.resources[r]
-            for r in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources[r] for r in self.problem.non_renewable_resources
         }
         S = []
         for task in sorted_tasks:
-            for suc in self.rcpsp_model.successors[task]:
+            for suc in self.problem.successors[task]:
                 S.append([task, suc])
         self.index_time = range(sum(p))
-        self.index_task = range(self.rcpsp_model.n_jobs)
+        self.index_task = range(self.problem.n_jobs)
         self.index_resource = range(len(resources))
         # we have a better self.T to limit the number of variables :
         if self.start_solution.rcpsp_schedule_feasible:
             self.index_time = range(int(makespan + 1))
         self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
         self.x: Dict[Tuple[Hashable, int, int], Var] = {}
-        last_task = self.rcpsp_model.sink_task
+        last_task = self.problem.sink_task
         variable_per_task = {}
         for task in sorted_tasks:
             if task not in variable_per_task:
                 variable_per_task[task] = []
-            for mode in self.rcpsp_model.mode_details[task]:
+            for mode in self.problem.mode_details[task]:
                 for t in self.index_time:
                     self.x[(task, mode, t)] = self.model.add_var(
                         name=f"x({task},{mode}, {t})", var_type=BINARY
@@ -444,14 +427,14 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         )
         for j in variable_per_task:
             self.model += xsum(self.x[key] for key in variable_per_task[j]) == 1
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             renewable_quantity = {r: renewable[r] for r in renewable}
         else:
             renewable_quantity = {
                 r: [renewable[r]] * len(self.index_time) for r in renewable
             }
 
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             non_renewable_quantity = {r: non_renewable[r] for r in non_renewable}
         else:
             non_renewable_quantity = {
@@ -461,22 +444,22 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         for (r, t) in product(renewable, self.index_time):
             self.model.add_constr(
                 xsum(
-                    int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
+                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
                     for key in self.x
                     if key[2]
                     <= t
                     < key[2]
-                    + int(self.rcpsp_model.mode_details[key[0]][key[1]]["duration"])
-                    and self.rcpsp_model.mode_details[key[0]][key[1]].get(r, 0) > 0
+                    + int(self.problem.mode_details[key[0]][key[1]]["duration"])
+                    and self.problem.mode_details[key[0]][key[1]].get(r, 0) > 0
                 )
                 <= renewable_quantity[r][t]
             )
         for r in non_renewable:
             self.model.add_constr(
                 xsum(
-                    int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
+                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
                     for key in self.x
-                    if self.rcpsp_model.mode_details[key[0]][key[1]].get(r, 0) > 0
+                    if self.problem.mode_details[key[0]][key[1]].get(r, 0) > 0
                 )
                 <= non_renewable_quantity[r][0]
             )
@@ -489,8 +472,7 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         for j in variable_per_task:
             self.model.add_constr(
                 xsum(
-                    self.rcpsp_model.mode_details[key[0]][key[1]]["duration"]
-                    * self.x[key]
+                    self.problem.mode_details[key[0]][key[1]]["duration"] * self.x[key]
                     for key in variable_per_task[j]
                 )
                 == durations[j]
@@ -505,14 +487,14 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
             )
 
         start = []
-        modes_dict = self.rcpsp_model.build_mode_dict(self.start_solution.rcpsp_modes)
+        modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
         for j in self.start_solution.rcpsp_schedule:
             start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
             mode_j = modes_dict[j]
             start += [
                 (
                     self.durations[j],
-                    self.rcpsp_model.mode_details[j][mode_j]["duration"],
+                    self.problem.mode_details[j][mode_j]["duration"],
                 )
             ]
             for k in self.variable_per_task[j]:
@@ -599,49 +581,48 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
-                if self.rcpsp_model.is_varying_resource():
-                    greedy_solver = PileSolverRCPSP_Calendar(self.rcpsp_model)
+                if self.problem.is_varying_resource():
+                    greedy_solver = PileSolverRCPSP_Calendar(self.problem)
                 else:
-                    greedy_solver = PileSolverRCPSP(self.rcpsp_model)
+                    greedy_solver = PileSolverRCPSP(self.problem)
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
                 )
                 self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
+                makespan = self.problem.evaluate(self.start_solution)["makespan"]
             else:
                 logger.info("Get dummy solution")
-                solution = self.rcpsp_model.get_dummy_solution()
+                solution = self.problem.get_dummy_solution()
                 self.start_solution = solution
-                makespan = self.rcpsp_model.evaluate(solution)["makespan"]
+                makespan = self.problem.evaluate(solution)["makespan"]
         else:
             self.start_solution = start_solution
-            makespan = self.rcpsp_model.evaluate(start_solution)["makespan"]
-        sorted_tasks = self.rcpsp_model.tasks_list
-        resources = self.rcpsp_model.resources_list
+            makespan = self.problem.evaluate(start_solution)["makespan"]
+        sorted_tasks = self.problem.tasks_list
+        resources = self.problem.resources_list
         p = [
             int(
                 max(
                     [
-                        self.rcpsp_model.mode_details[key][mode]["duration"]
-                        for mode in self.rcpsp_model.mode_details[key]
+                        self.problem.mode_details[key][mode]["duration"]
+                        for mode in self.problem.mode_details[key]
                     ]
                 )
             )
             for key in sorted_tasks
         ]
         renewable = {
-            r: self.rcpsp_model.resources[r]
-            for r in self.rcpsp_model.resources
-            if r not in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources[r]
+            for r in self.problem.resources
+            if r not in self.problem.non_renewable_resources
         }
         non_renewable = {
-            r: self.rcpsp_model.resources[r]
-            for r in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources[r] for r in self.problem.non_renewable_resources
         }
         S = []
-        logger.debug(f"successors: {self.rcpsp_model.successors}")
+        logger.debug(f"successors: {self.problem.successors}")
         for task in sorted_tasks:
-            for suc in self.rcpsp_model.successors[task]:
+            for suc in self.problem.successors[task]:
                 S.append([task, suc])
         self.index_time = list(range(sum(p)))
         # we have a better self.T to limit the number of variables :
@@ -651,20 +632,20 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
             self.index_time = list(range(max_horizon + 1))
         self.model = gurobi.Model("MRCPSP")
         self.x: Dict[Tuple[Hashable, int, int], gurobi.Var] = {}
-        last_task = self.rcpsp_model.sink_task
+        last_task = self.problem.sink_task
         variable_per_task = {}
         keys_for_t = {}
         for task in sorted_tasks:
             if task not in variable_per_task:
                 variable_per_task[task] = []
-            for mode in self.rcpsp_model.mode_details[task]:
+            for mode in self.problem.mode_details[task]:
                 for t in self.index_time:
                     self.x[(task, mode, t)] = self.model.addVar(
                         name=f"x({task},{mode}, {t})",
                         vtype=gurobi.GRB.BINARY,
                     )
                     for tt in range(
-                        t, t + self.rcpsp_model.mode_details[task][mode]["duration"]
+                        t, t + self.problem.mode_details[task][mode]["duration"]
                     ):
                         if tt not in keys_for_t:
                             keys_for_t[tt] = set()
@@ -681,14 +662,14 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
             for j in variable_per_task
         )
 
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             renewable_quantity = {r: renewable[r] for r in renewable}
         else:
             renewable_quantity = {
                 r: [renewable[r]] * len(self.index_time) for r in renewable
             }
 
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             non_renewable_quantity = {r: non_renewable[r] for r in non_renewable}
         else:
             non_renewable_quantity = {
@@ -697,7 +678,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
 
         self.model.addConstrs(
             gurobi.quicksum(
-                int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
+                int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
                 for key in keys_for_t[t]
             )
             <= renewable_quantity[r][t]
@@ -706,7 +687,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
 
         self.model.addConstrs(
             gurobi.quicksum(
-                int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
+                int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
                 for key in self.x
             )
             <= non_renewable_quantity[r][0]
@@ -721,7 +702,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
         self.variable_per_task = variable_per_task
         self.model.addConstrs(
             gurobi.quicksum(
-                self.rcpsp_model.mode_details[key[0]][key[1]]["duration"] * self.x[key]
+                self.problem.mode_details[key[0]][key[1]]["duration"] * self.x[key]
                 for key in variable_per_task[j]
             )
             == durations[j]
@@ -754,13 +735,13 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
                 )
                 == self.starts[task]
             )
-        modes_dict = self.rcpsp_model.build_mode_dict(self.start_solution.rcpsp_modes)
+        modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
         for j in self.start_solution.rcpsp_schedule:
             start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
             start += [
                 (
                     self.durations[j],
-                    self.rcpsp_model.mode_details[j][modes_dict[j]]["duration"],
+                    self.problem.mode_details[j][modes_dict[j]]["duration"],
                 )
             ]
             for k in self.variable_per_task[j]:
@@ -875,38 +856,36 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
-                if self.rcpsp_model.is_varying_resource():
-                    greedy_solver = PileSolverRCPSP_Calendar(self.rcpsp_model)
+                if self.problem.is_varying_resource():
+                    greedy_solver = PileSolverRCPSP_Calendar(self.problem)
                 else:
-                    greedy_solver = PileSolverRCPSP(self.rcpsp_model)
+                    greedy_solver = PileSolverRCPSP(self.problem)
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
                 )
                 self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.rcpsp_model.evaluate(self.start_solution)["makespan"]
-                print(self.start_solution, makespan)
+                makespan = self.problem.evaluate(self.start_solution)["makespan"]
             else:
                 logger.info("Get dummy solution")
-                solution = self.rcpsp_model.get_dummy_solution()
+                solution = self.problem.get_dummy_solution()
                 self.start_solution = solution
-                makespan = self.rcpsp_model.evaluate(solution)["makespan"]
+                makespan = self.problem.evaluate(solution)["makespan"]
         else:
             self.start_solution = start_solution
-            makespan = self.rcpsp_model.evaluate(start_solution)["makespan"]
-        sorted_tasks = self.rcpsp_model.tasks_list
+            makespan = self.problem.evaluate(start_solution)["makespan"]
+        sorted_tasks = self.problem.tasks_list
         renewable = {
-            r: self.rcpsp_model.resources[r]
-            for r in self.rcpsp_model.resources_list
-            if r not in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources[r]
+            for r in self.problem.resources_list
+            if r not in self.problem.non_renewable_resources
         }
         non_renewable = {
-            r: self.rcpsp_model.resources[r]
-            for r in self.rcpsp_model.non_renewable_resources
+            r: self.problem.resources[r] for r in self.problem.non_renewable_resources
         }
         S = []
-        logger.debug(f"successors: {self.rcpsp_model.successors}")
+        logger.debug(f"successors: {self.problem.successors}")
         for task in sorted_tasks:
-            for suc in self.rcpsp_model.successors[task]:
+            for suc in self.problem.successors[task]:
                 S.append([task, suc])
         if self.start_solution.rcpsp_schedule_feasible:
             self.index_time = list(range(int(makespan + 1)))
@@ -914,19 +893,19 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
             self.index_time = list(range(max_horizon + 1))
         self.model: "cplex.Model" = cplex.Model("MRCPSP")
         self.x: Dict[Tuple[Hashable, int, int], "cplex_var.Var"] = {}
-        last_task = self.rcpsp_model.sink_task
+        last_task = self.problem.sink_task
         variable_per_task = {}
         keys_for_t = {}
         for task in sorted_tasks:
             if task not in variable_per_task:
                 variable_per_task[task] = []
-            for mode in self.rcpsp_model.mode_details[task]:
+            for mode in self.problem.mode_details[task]:
                 for t in self.index_time:
                     self.x[(task, mode, t)] = self.model.binary_var(
                         name=f"x({task},{mode}, {t})",
                     )
                     for tt in range(
-                        t, t + self.rcpsp_model.mode_details[task][mode]["duration"]
+                        t, t + self.problem.mode_details[task][mode]["duration"]
                     ):
                         if tt not in keys_for_t:
                             keys_for_t[tt] = set()
@@ -944,14 +923,14 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
             )
         )
 
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             renewable_quantity = {r: renewable[r] for r in renewable}
         else:
             renewable_quantity = {
                 r: [renewable[r]] * len(self.index_time) for r in renewable
             }
 
-        if self.rcpsp_model.is_varying_resource():
+        if self.problem.is_varying_resource():
             non_renewable_quantity = {r: non_renewable[r] for r in non_renewable}
         else:
             non_renewable_quantity = {
@@ -962,7 +941,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         self.model.add_constraints(
             (
                 self.model.sum(
-                    int(self.rcpsp_model.mode_details[key[0]][key[1]].get(r, 0))
+                    int(self.problem.mode_details[key[0]][key[1]].get(r, 0))
                     * self.x[key]
                     for key in keys_for_t[t]
                 )
@@ -974,26 +953,26 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         self.model.add_constraints(
             (
                 self.model.sum(
-                    int(self.rcpsp_model.mode_details[key[0]][key[1]][r]) * self.x[key]
+                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
                     for key in self.x
                 )
                 <= non_renewable_quantity[r][0]
                 for r in non_renewable
             )
         )
-        if self.rcpsp_model.is_rcpsp_multimode():
+        if self.problem.is_rcpsp_multimode():
             durations = {
                 j: self.model.integer_var(
                     lb=min(
                         [
-                            self.rcpsp_model.mode_details[j][m]["duration"]
-                            for m in self.rcpsp_model.mode_details[j]
+                            self.problem.mode_details[j][m]["duration"]
+                            for m in self.problem.mode_details[j]
                         ]
                     ),
                     ub=max(
                         [
-                            self.rcpsp_model.mode_details[j][m]["duration"]
-                            for m in self.rcpsp_model.mode_details[j]
+                            self.problem.mode_details[j][m]["duration"]
+                            for m in self.problem.mode_details[j]
                         ]
                     ),
                     name="duration_" + str(j),
@@ -1003,7 +982,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
             self.model.add_constraints(
                 (
                     self.model.sum(
-                        self.rcpsp_model.mode_details[key[0]][key[1]]["duration"]
+                        self.problem.mode_details[key[0]][key[1]]["duration"]
                         * self.x[key]
                         for key in variable_per_task[j]
                     )
@@ -1013,7 +992,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
             )
         else:
             durations = {
-                j: self.rcpsp_model.mode_details[j][1]["duration"]
+                j: self.problem.mode_details[j][1]["duration"]
                 for j in variable_per_task
             }
         self.durations = durations
@@ -1041,7 +1020,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
                 )
                 == self.starts[task]
             )
-        modes_dict = self.rcpsp_model.build_mode_dict(self.start_solution.rcpsp_modes)
+        modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
         if greedy_start:
             warmstart = self.model.new_solution()
             for j in self.start_solution.rcpsp_schedule:

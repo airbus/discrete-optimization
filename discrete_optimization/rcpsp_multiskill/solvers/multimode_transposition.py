@@ -8,10 +8,7 @@ from typing import Dict, Set, Union
 import numpy as np
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -22,10 +19,7 @@ from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPSolutionPreemptive,
 )
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import (
-    MS_RCPSPModel,
-    MultiSkillToRCPSP,
-)
+from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import MultiSkillToRCPSP
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
@@ -43,42 +37,39 @@ logger = logging.getLogger(__name__)
 
 
 class MultimodeTranspositionSolver(SolverDO):
+    problem: MS_RCPSPModel
+
     def __init__(
         self,
-        model: MS_RCPSPModel,
-        multimode_model: Union[RCPSPModel, RCPSPModelPreemptive] = None,
+        problem: MS_RCPSPModel,
+        multimode_problem: Union[RCPSPModel, RCPSPModelPreemptive] = None,
         worker_type_to_worker: Dict[str, Set[Union[str, int]]] = None,
         params_objective_function: ParamsObjectiveFunction = None,
         solver_multimode_rcpsp: SolverDO = None,
     ):
-        self.model = model
-        self.multimode_model = multimode_model
-        self.worker_type_to_worker = worker_type_to_worker
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.model, params_objective_function=params_objective_function
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
+        self.multimode_problem = multimode_problem
+        self.worker_type_to_worker = worker_type_to_worker
         self.solver_multimode_rcpsp = solver_multimode_rcpsp
 
     def solve(self, **kwargs) -> ResultStorage:
-        if self.multimode_model is None or self.worker_type_to_worker is None:
-            algo = MultiSkillToRCPSP(self.model)
+        if self.multimode_problem is None or self.worker_type_to_worker is None:
+            algo = MultiSkillToRCPSP(self.problem)
             rcpsp_model = algo.construct_rcpsp_by_worker_type(
                 limit_number_of_mode_per_task=True,
                 max_number_of_mode=3,
                 check_resource_compliance=True,
             )
-            self.multimode_model = rcpsp_model
+            self.multimode_problem = rcpsp_model
             self.worker_type_to_worker = algo.worker_type_to_worker
         result_store = self.solver_multimode_rcpsp.solve(**kwargs)
         solution, fit = result_store.get_best_solution_fit()
         solution: RCPSPSolutionPreemptive = solution
         res = rebuild_multiskill_solution_cp_based(
-            multiskill_rcpsp_model=self.model,
-            multimode_rcpsp_model=self.multimode_model,
+            multiskill_rcpsp_model=self.problem,
+            multimode_rcpsp_model=self.multimode_problem,
             worker_type_to_worker=self.worker_type_to_worker,
             solution_rcpsp=solution,
         )
@@ -222,7 +213,7 @@ def rebuild_multiskill_solution_cp_based(
 ):
     if isinstance(solution_rcpsp, RCPSPSolution):
         model = CP_MS_MRCPSP_MZN(
-            rcpsp_model=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+            problem=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
         )
         model.init_model(
             add_calendar_constraint_unit=False,
@@ -236,7 +227,7 @@ def rebuild_multiskill_solution_cp_based(
             model.instance.add_string(s)
     else:
         model = CP_MS_MRCPSP_MZN_PREEMPTIVE(
-            rcpsp_model=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+            problem=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
         )
         model.init_model(
             add_calendar_constraint_unit=False,

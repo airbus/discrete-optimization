@@ -34,7 +34,7 @@ class PostProMSRCPSP(PostProcessSolution):
         self.params_objective_function = params_objective_function
         (
             self.aggreg_from_sol,
-            self.aggreg_dict,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,
@@ -87,7 +87,7 @@ class PostProMSRCPSPPreemptive(PostProcessSolution):
         self.params_objective_function = params_objective_function
         (
             self.aggreg_from_sol,
-            self.aggreg_dict,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,

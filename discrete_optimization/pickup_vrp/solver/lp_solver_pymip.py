@@ -23,7 +23,6 @@ import networkx as nx
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp, PymipMilpSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -34,7 +33,6 @@ from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, Node
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     TemporaryResult,
     build_graph_solution,
-    build_path_from_vehicle_type_flow,
     construct_edges_in_out_dict,
     convert_temporaryresult_to_gpdpsolution,
     reevaluate_result,
@@ -92,19 +90,15 @@ def retrieve_ith_solution(
 
 
 class LinearFlowSolver(PymipMilpSolver):
+    problem: GPDP
+
     def __init__(
         self,
         problem: GPDP,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=problem,
-            params_objective_function=params_objective_function,
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
         self.model: Optional[mip.Model] = None
         self.constraint_on_edge: Dict[int, Any] = {}
@@ -715,7 +709,7 @@ class LinearFlowSolver(PymipMilpSolver):
             solution = convert_temporaryresult_to_gpdpsolution(
                 temporaryresult=temporaryresult, problem=self.problem
             )
-            fit = self.aggreg_sol(solution)
+            fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
@@ -875,7 +869,7 @@ class LinearFlowSolver(PymipMilpSolver):
             solution = convert_temporaryresult_to_gpdpsolution(
                 temporaryresult=temporaryresults[s], problem=self.problem
             )
-            fit = self.aggreg_sol(solution)
+            fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,

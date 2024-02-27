@@ -6,16 +6,13 @@ import logging
 import random
 from enum import Enum
 from heapq import heappop, heappush
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import networkx as nx
 import numpy as np
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -41,16 +38,18 @@ push = heappush
 class PileSolverRCPSP(SolverRCPSP):
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        problem: RCPSPModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        self.resources = rcpsp_model.resources
-        self.non_renewable = rcpsp_model.non_renewable_resources
-        self.n_jobs = rcpsp_model.n_jobs
-        self.mode_details = rcpsp_model.mode_details
-        self.graph = rcpsp_model.compute_graph()
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        self.resources = problem.resources
+        self.non_renewable = problem.non_renewable_resources
+        self.n_jobs = problem.n_jobs
+        self.mode_details = problem.mode_details
+        self.graph = problem.compute_graph()
         self.nx_graph: nx.DiGraph = self.graph.to_networkx()
         self.successors_map = {}
         self.predecessors_map = {}
@@ -58,9 +57,9 @@ class PileSolverRCPSP(SolverRCPSP):
             n: nx.algorithms.descendants(self.nx_graph, n)
             for n in self.nx_graph.nodes()
         }
-        self.source = self.rcpsp_model.source_task
-        self.sink = self.rcpsp_model.sink_task
-        self.all_activities = set(self.rcpsp_model.tasks_list)
+        self.source = problem.source_task
+        self.sink = problem.sink_task
+        self.all_activities = set(problem.tasks_list)
         for k in successors:
             self.successors_map[k] = {"succs": successors[k], "nb": len(successors[k])}
         predecessors = {
@@ -71,21 +70,8 @@ class PileSolverRCPSP(SolverRCPSP):
                 "succs": predecessors[k],
                 "nb": len(predecessors[k]),
             }
-        (
-            self.aggreg_from_sol,
-            self.aggreg_from_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
-        )
-        if (
-            self.rcpsp_model.is_rcpsp_multimode()
-            or self.rcpsp_model.is_varying_resource()
-        ):
-            solver = CP_MRCPSP_MZN_MODES(
-                self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
-            )
+        if problem.is_rcpsp_multimode() or problem.is_varying_resource():
+            solver = CP_MRCPSP_MZN_MODES(problem, cp_solver_name=CPSolverName.CHUFFED)
             params_cp = ParametersCP.default()
             params_cp.time_limit = 1
             params_cp.nr_solutions = 1
@@ -184,8 +170,8 @@ class PileSolverRCPSP(SolverRCPSP):
                 if greedy_choice == GreedyChoice.TOTALLY_RANDOM:
                     next_activity = random.choice(possible_activities)
                 available_activities.remove(next_activity)
-                if next_activity in self.rcpsp_model.index_task_non_dummy:
-                    perm += [self.rcpsp_model.index_task_non_dummy[next_activity]]
+                if next_activity in self.problem.index_task_non_dummy:
+                    perm += [self.problem.index_task_non_dummy[next_activity]]
                 schedule[next_activity] = {}
                 schedule[next_activity]["start_time"] = current_time
                 schedule[next_activity]["end_time"] = (
@@ -235,12 +221,10 @@ class PileSolverRCPSP(SolverRCPSP):
                     ].get(r, 0)
         logger.debug(f"Final Time {current_time}")
         sol = RCPSPSolution(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             rcpsp_permutation=perm,
             rcpsp_schedule=schedule,
-            rcpsp_modes=[
-                self.modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
-            ],
+            rcpsp_modes=[self.modes_dict[t] for t in self.problem.tasks_list_non_dummy],
             rcpsp_schedule_feasible=True,
         )
         result_storage = ResultStorage(
@@ -252,19 +236,23 @@ class PileSolverRCPSP(SolverRCPSP):
 
 
 class PileSolverRCPSP_Calendar(SolverRCPSP):
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
-        params_objective_function: ParamsObjectiveFunction = None,
+        problem: RCPSPModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        self.resources = rcpsp_model.resources
-        self.non_renewable = rcpsp_model.non_renewable_resources
-        self.n_jobs = rcpsp_model.n_jobs
-        self.n_jobs_non_dummy = rcpsp_model.n_jobs_non_dummy
-        self.mode_details = rcpsp_model.mode_details
-        self.graph = rcpsp_model.compute_graph()
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        self.resources = problem.resources
+        self.non_renewable = problem.non_renewable_resources
+        self.n_jobs = problem.n_jobs
+        self.n_jobs_non_dummy = problem.n_jobs_non_dummy
+        self.mode_details = problem.mode_details
+        self.graph = problem.compute_graph()
         self.nx_graph: nx.DiGraph = self.graph.to_networkx()
         self.successors_map = {}
         self.predecessors_map = {}
@@ -272,9 +260,9 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
             n: nx.algorithms.descendants(self.nx_graph, n)
             for n in self.nx_graph.nodes()
         }
-        self.source = self.rcpsp_model.source_task
-        self.sink = self.rcpsp_model.sink_task
-        self.all_activities = set(self.rcpsp_model.tasks_list)
+        self.source = problem.source_task
+        self.sink = problem.sink_task
+        self.all_activities = set(problem.tasks_list)
         for k in successors:
             self.successors_map[k] = {"succs": successors[k], "nb": len(successors[k])}
         predecessors = {
@@ -285,21 +273,8 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                 "succs": predecessors[k],
                 "nb": len(predecessors[k]),
             }
-        (
-            self.aggreg_from_sol,
-            self.aggreg_from_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
-        )
-        if (
-            self.rcpsp_model.is_rcpsp_multimode()
-            or self.rcpsp_model.is_varying_resource()
-        ):
-            solver = CP_MRCPSP_MZN_MODES(
-                self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
-            )
+        if problem.is_rcpsp_multimode() or problem.is_varying_resource():
+            solver = CP_MRCPSP_MZN_MODES(problem, cp_solver_name=CPSolverName.CHUFFED)
             params_cp = ParametersCP.default()
             params_cp.time_limit = 1
             params_cp.nr_solutions = 1
@@ -308,10 +283,10 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):
-                self.modes_dict[self.rcpsp_model.tasks_list[i]] = one_mode_setting[i]
+                self.modes_dict[self.problem.tasks_list[i]] = one_mode_setting[i]
         else:
             self.modes_dict = {t: 1 for t in self.mode_details}
-        self.with_calendar = self.rcpsp_model.is_varying_resource()
+        self.with_calendar = problem.is_varying_resource()
 
     def solve(self, **kwargs) -> ResultStorage:
         greedy_choice = kwargs.get("greedy_choice", GreedyChoice.MOST_SUCCESSORS)
@@ -347,7 +322,7 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
         current_resource_available = {}
         for r in self.resources:
             current_resource_available[r] = list(
-                self.rcpsp_model.get_resource_availability_array(r)
+                self.problem.get_resource_availability_array(r)
             )
         current_resource_non_renewable = {
             nr: current_resource_available[nr] for nr in self.non_renewable
@@ -426,7 +401,7 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                 if greedy_choice == GreedyChoice.TOTALLY_RANDOM:
                     next_activity = random.choice(possible_activities)
                 available_activities.remove(next_activity)
-                perm += [self.rcpsp_model.index_task_non_dummy.get(next_activity, None)]
+                perm += [self.problem.index_task_non_dummy.get(next_activity, None)]
                 schedule[next_activity] = {}
                 schedule[next_activity]["start_time"] = current_time
                 schedule[next_activity]["end_time"] = (
@@ -476,12 +451,10 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
                 current_time += 1
         logger.debug(f"Final Time {current_time}")
         sol = RCPSPSolution(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             rcpsp_permutation=perm[:-1],
             rcpsp_schedule=schedule,
-            rcpsp_modes=[
-                self.modes_dict[t] for t in self.rcpsp_model.tasks_list_non_dummy
-            ],
+            rcpsp_modes=[self.modes_dict[t] for t in self.problem.tasks_list_non_dummy],
             rcpsp_schedule_feasible=True,
         )
         result_storage = ResultStorage(
@@ -493,8 +466,15 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
 
 
 class Executor(PileSolverRCPSP):
-    def __init__(self, rcpsp_model: RCPSPModel):
-        super().__init__(rcpsp_model=rcpsp_model)
+    def __init__(
+        self,
+        problem: RCPSPModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.immediate_predecessors = {
             n: list(self.nx_graph.predecessors(n)) for n in self.nx_graph.nodes()
         }
@@ -596,7 +576,7 @@ class Executor(PileSolverRCPSP):
                         modes_dict[activity]
                     ][r]
         sol = RCPSPSolution(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             rcpsp_permutation=perm[:-1],
             rcpsp_schedule=schedule,
             rcpsp_modes=[modes_dict[i + 1] for i in range(self.n_jobs)],

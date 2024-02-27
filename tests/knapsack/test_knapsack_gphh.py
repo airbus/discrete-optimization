@@ -29,7 +29,7 @@ def test_run_one_example():
     params_gphh.max_tree_depth = 5
     gphh_solver = GPHH(
         training_domains=trainings,
-        domain_model=multidimensional_knapsack,
+        problem=multidimensional_knapsack,
         params_gphh=params_gphh,
     )
     gphh_solver.init_model()

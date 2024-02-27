@@ -21,7 +21,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
     TupleFitness,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -57,24 +56,18 @@ class KnapsackSol:
 class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
     def __init__(
         self,
-        knapsack_model: KnapsackModel,
+        problem: KnapsackModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
     ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
 
     def retrieve_solutions(
         self, result: Result, parameters_cp: ParametersCP
@@ -91,21 +84,21 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
             objectives.append(result["objective"])
         list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for items, objective in zip(l_items, objectives):
-            taken = [0] * self.knapsack_model.nb_items
+            taken = [0] * self.problem.nb_items
             weight = 0
             value = 0
             for i in range(len(items)):
                 if items[i] != 0:
-                    taken[self.knapsack_model.list_items[items[i] - 1].index] = 1
-                    weight += self.knapsack_model.list_items[items[i] - 1].weight
-                    value += self.knapsack_model.list_items[items[i] - 1].value
+                    taken[self.problem.list_items[items[i] - 1].index] = 1
+                    weight += self.problem.list_items[items[i] - 1].weight
+                    value += self.problem.list_items[items[i] - 1].value
             sol = KnapsackSolution(
-                problem=self.knapsack_model,
+                problem=self.problem,
                 value=value,
                 weight=weight,
                 list_taken=taken,
             )
-            fit = self.aggreg_sol(sol)
+            fit = self.aggreg_from_sol(sol)
             list_solutions_fit.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
@@ -120,39 +113,31 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
         solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
         # Create an Instance of the n-Queens model for Gecode
         instance = Instance(solver, model)
-        instance["nb_items"] = self.knapsack_model.nb_items
+        instance["nb_items"] = self.problem.nb_items
         instance["values"] = [0] + [
-            self.knapsack_model.list_items[i].value
-            for i in range(self.knapsack_model.nb_items)
+            self.problem.list_items[i].value for i in range(self.problem.nb_items)
         ]
         instance["weights"] = [0] + [
-            self.knapsack_model.list_items[i].weight
-            for i in range(self.knapsack_model.nb_items)
+            self.problem.list_items[i].weight for i in range(self.problem.nb_items)
         ]
-        instance["max_capacity"] = self.knapsack_model.max_capacity
+        instance["max_capacity"] = self.problem.max_capacity
         self.instance = instance
 
 
 class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
     def __init__(
         self,
-        knapsack_model: KnapsackModel,
+        problem: KnapsackModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
     ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(self, **kwargs: Any) -> None:
         # Load n-Queens model from file
@@ -161,16 +146,14 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
         solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
         # Create an Instance of the n-Queens model for Gecode
         instance = Instance(solver, model)
-        instance["nb_items"] = self.knapsack_model.nb_items
+        instance["nb_items"] = self.problem.nb_items
         instance["values"] = [
-            self.knapsack_model.list_items[i].value
-            for i in range(self.knapsack_model.nb_items)
+            self.problem.list_items[i].value for i in range(self.problem.nb_items)
         ]
         instance["weights"] = [
-            self.knapsack_model.list_items[i].weight
-            for i in range(self.knapsack_model.nb_items)
+            self.problem.list_items[i].weight for i in range(self.problem.nb_items)
         ]
-        instance["max_capacity"] = self.knapsack_model.max_capacity
+        instance["max_capacity"] = self.problem.max_capacity
         self.instance = instance
 
     def retrieve_solutions(
@@ -185,25 +168,25 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
             l_items_taken.append(result["taken"])
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for items_taken in l_items_taken:
-            taken = [0] * self.knapsack_model.nb_items
+            taken = [0] * self.problem.nb_items
             weight = 0.0
             value = 0.0
             for i in range(len(items_taken)):
                 if items_taken[i] != 0:
                     taken[
-                        self.knapsack_model.index_to_index_list[
-                            self.knapsack_model.list_items[i].index
+                        self.problem.index_to_index_list[
+                            self.problem.list_items[i].index
                         ]
                     ] = 1
-                    weight += self.knapsack_model.list_items[i].weight
-                    value += self.knapsack_model.list_items[i].value
+                    weight += self.problem.list_items[i].weight
+                    value += self.problem.list_items[i].value
             sol = KnapsackSolution(
-                problem=self.knapsack_model,
+                problem=self.problem,
                 value=value,
                 weight=weight,
                 list_taken=taken,
             )
-            fit = self.aggreg_sol(sol)
+            fit = self.aggreg_from_sol(sol)
             list_solution_fits.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
@@ -212,17 +195,17 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
         )
 
     def retrieve(self, items_taken: List[int]) -> List[KnapsackSolution]:
-        taken = [0] * self.knapsack_model.nb_items
+        taken = [0] * self.problem.nb_items
         weight = 0.0
         value = 0.0
         for i in range(len(items_taken)):
             if items_taken[i] != 0:
-                taken[self.knapsack_model.list_items[i].index] = 1
-                weight += self.knapsack_model.list_items[i].weight
-                value += self.knapsack_model.list_items[i].value
+                taken[self.problem.list_items[i].index] = 1
+                weight += self.problem.list_items[i].weight
+                value += self.problem.list_items[i].value
         return [
             KnapsackSolution(
-                problem=self.knapsack_model,
+                problem=self.problem,
                 value=value,
                 weight=weight,
                 list_taken=taken,
@@ -231,26 +214,22 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
 
 
 class CPMultidimensionalSolver(MinizincCPSolver):
+    problem: MultidimensionalKnapsack
+
     def __init__(
         self,
-        knapsack_model: MultidimensionalKnapsack,
+        problem: MultidimensionalKnapsack,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
     ):
-        self.knapsack_model = knapsack_model
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
@@ -263,20 +242,19 @@ class CPMultidimensionalSolver(MinizincCPSolver):
             model.output_type = KnapsackSol
             self.custom_output_type = True
         instance = Instance(solver, model)
-        instance["nb_items"] = self.knapsack_model.nb_items
-        instance["nb_dimension"] = len(self.knapsack_model.max_capacities)
+        instance["nb_items"] = self.problem.nb_items
+        instance["nb_dimension"] = len(self.problem.max_capacities)
         instance["values"] = [
-            int(self.knapsack_model.list_items[i].value)
-            for i in range(self.knapsack_model.nb_items)
+            int(self.problem.list_items[i].value) for i in range(self.problem.nb_items)
         ]
         instance["weights"] = [
             [
-                self.knapsack_model.list_items[i].weights[j]
+                self.problem.list_items[i].weights[j]
                 for j in range(instance["nb_dimension"])
             ]
-            for i in range(self.knapsack_model.nb_items)
+            for i in range(self.problem.nb_items)
         ]
-        instance["max_capacity"] = self.knapsack_model.max_capacities
+        instance["max_capacity"] = self.problem.max_capacities
         self.instance = instance
 
     def retrieve_solutions(
@@ -303,9 +281,9 @@ class CPMultidimensionalSolver(MinizincCPSolver):
         list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for taken, objective in zip(l_taken, objectives):
             sol = KnapsackSolutionMultidimensional(
-                problem=self.knapsack_model, list_taken=taken
+                problem=self.problem, list_taken=taken
             )
-            fit = self.aggreg_sol(sol)
+            fit = self.aggreg_from_sol(sol)
             list_solutions_fit.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
@@ -315,26 +293,22 @@ class CPMultidimensionalSolver(MinizincCPSolver):
 
 
 class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
+    problem: MultiScenarioMultidimensionalKnapsack
+
     def __init__(
         self,
-        knapsack_model: MultiScenarioMultidimensionalKnapsack,
+        problem: MultiScenarioMultidimensionalKnapsack,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
     ):
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
-        self.knapsack_model = knapsack_model
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.knapsack_model,
-            params_objective_function=params_objective_function,
-        )
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
@@ -347,9 +321,7 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
             model.output_type = KnapsackSol
             self.custom_output_type = True
         instance = Instance(solver, model)
-        list_problems: Sequence[
-            MultidimensionalKnapsack
-        ] = self.knapsack_model.list_problem
+        list_problems: Sequence[MultidimensionalKnapsack] = self.problem.list_problem
         instance["nb_items"] = list_problems[0].nb_items
         instance["nb_dimension"] = len(list_problems[0].max_capacities)
         instance["nb_scenario"] = len(list_problems)
@@ -400,9 +372,9 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
         list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for taken, objective in zip(l_taken, objectives):
             sol = KnapsackSolutionMultidimensional(
-                problem=self.knapsack_model, list_taken=taken
+                problem=self.problem, list_taken=taken
             )
-            fit = self.aggreg_sol(sol)
+            fit = self.aggreg_from_sol(sol)
             list_solutions_fit.append((sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
@@ -429,7 +401,7 @@ class KnapConstraintHandler(ConstraintHandler):
         if last_result_store is None:
             raise ValueError("This constraint need last_result_store to be not None.")
         strings = []
-        nb_item = cp_solver.knapsack_model.list_problem[0].nb_items
+        nb_item = cp_solver.problem.list_problem[0].nb_items
         range_item = range(nb_item)
         subpart_item = set(random.sample(range_item, int(self.fraction_fix * nb_item)))
         current_best_solution = last_result_store.get_last_best_solution()[0]

@@ -203,10 +203,13 @@ class Nsga(SolverDO):
             weights=self._objective_weights,
             sense_function=ModeOptim.MAXIMIZATION,
         )
-        self.evaluate_sol: Union[
+        self.aggreg_from_sol: Union[
             Callable[[Solution], float], Callable[[Solution], TupleFitness]
         ]
-        self.evaluate_sol, _ = build_evaluate_function_aggregated(
+        (
+            self.aggreg_from_sol,
+            self.aggreg_from_dict,
+        ) = build_evaluate_function_aggregated(
             problem=problem, params_objective_function=self.params_objective_function
         )
 
@@ -393,7 +396,7 @@ class Nsga(SolverDO):
             s_pure_int = [i for i in s]
             kwargs = {self._encoding_variable_name: s_pure_int, "problem": self.problem}
             problem_sol = self.problem.get_solution_type()(**kwargs)
-            fits = self.evaluate_sol(problem_sol)
+            fits = self.aggreg_from_sol(problem_sol)
             sols.append((problem_sol, fits))
         rs = ResultStorage(
             list_solution_fits=sols,

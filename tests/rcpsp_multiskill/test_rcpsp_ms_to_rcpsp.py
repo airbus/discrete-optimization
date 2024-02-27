@@ -58,7 +58,7 @@ def test_solve_rcpsp_imopse1(random_seed):
     params_cp.time_limit_iter0 = 100
     params_cp.free_search = False
     lns_solver = LNS_CP_RCPSP_SOLVER(
-        rcpsp_model=rcpsp_model, option_neighbor=OptionNeighbor.MIX_FAST
+        problem=rcpsp_model, option_neighbor=OptionNeighbor.MIX_FAST
     )
     result_storage = lns_solver.solve(
         parameters_cp=params_cp,
@@ -86,7 +86,7 @@ def test_solve_rcpsp_imopse2(random_seed):
     params_cp.time_limit = 200
     params_cp.time_limit_iter0 = 300
 
-    solver = CP_MRCPSP_MZN(rcpsp_model=rcpsp_model, cp_solver_name=CPSolverName.CHUFFED)
+    solver = CP_MRCPSP_MZN(problem=rcpsp_model, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     params_cp = ParametersCP.default()
     params_cp.time_limit = 100

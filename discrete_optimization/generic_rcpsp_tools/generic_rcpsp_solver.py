@@ -9,8 +9,4 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 
 
 class SolverGenericRCPSP(SolverDO):
-    def __init__(self, rcpsp_model: ANY_RCPSP, **kwargs: Any):
-        self.rcpsp_model = rcpsp_model
-
-    def init_model(self, **kwargs: Any) -> None:
-        pass
+    problem: ANY_RCPSP

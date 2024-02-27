@@ -57,7 +57,7 @@ def test_lp():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_solver = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
+    lp_solver = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
     lp_solver.init_model()
     sol = lp_solver.solve(parameters_milp=ParametersMilp.default()).get_best_solution()
     assert model.satisfy(sol)
@@ -131,7 +131,7 @@ def test_lp_bis():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_solver = LP_Solver_MRSCPSP(rcpsp_model=model, lp_solver=MilpSolverName.CBC)
+    lp_solver = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
     lp_solver.init_model()
     result = lp_solver.solve(parameters_milp=ParametersMilp.default())
     best_solution = result.get_best_solution()

@@ -53,8 +53,8 @@ class InitialColoring(InitialSolution):
         self.problem = problem
         self.initial_method = initial_method
         (
-            self.aggreg_sol,
-            self.aggreg_dict,
+            self.aggreg_from_sol,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem, params_objective_function=params_objective_function
@@ -63,7 +63,7 @@ class InitialColoring(InitialSolution):
     def get_starting_solution(self) -> ResultStorage:
         if self.initial_method == InitialColoringMethod.DUMMY:
             sol = self.problem.get_dummy_solution()
-            fit = self.aggreg_sol(sol)
+            fit = self.aggreg_from_sol(sol)
             return ResultStorage(
                 list_solution_fits=[(sol, fit)],
                 best_solution=sol,
@@ -71,7 +71,7 @@ class InitialColoring(InitialSolution):
             )
         else:
             solver = GreedyColoring(
-                coloring_model=self.problem,
+                problem=self.problem,
                 params_objective_function=self.params_objective_function,
             )
             return solver.solve()

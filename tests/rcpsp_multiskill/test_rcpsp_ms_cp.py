@@ -193,7 +193,7 @@ def test_cp_toy_model():
     model_msrcpsp = create_toy_v2()
 
     cp_model = CP_MS_MRCPSP_MZN(
-        rcpsp_model=model_msrcpsp, cp_solver_name=CPSolverName.GECODE
+        problem=model_msrcpsp, cp_solver_name=CPSolverName.GECODE
     )
     cp_model.init_model(
         add_calendar_constraint_unit=False,
@@ -214,7 +214,7 @@ def test_cp_imopse():
     file = [f for f in get_data_available() if "100_5_20_9_D3.def" in f][0]
     model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=1000)
     cp_model = CP_MS_MRCPSP_MZN(
-        rcpsp_model=model_msrcpsp,
+        problem=model_msrcpsp,
         one_ressource_per_task=True,
         cp_solver_name=CPSolverName.CHUFFED,
     )
@@ -257,7 +257,7 @@ def test_lns_small_neighbor():
     makespan = model_msrcpsp.evaluate(solution)["makespan"]
     model_msrcpsp.horizon = makespan + 5
     lns_cp = LNS_CP_MS_RCPSP_SOLVER(
-        rcpsp_model=model_msrcpsp,
+        problem=model_msrcpsp,
         option_neighbor=OptionNeighbor.MIX_FAST,
         one_ressource_per_task=True,
     )
@@ -293,7 +293,7 @@ def test_lns():
     model_msrcpsp.horizon = makespan + 5
     model_rcpsp = model_msrcpsp.build_multimode_rcpsp_calendar_representative()
     lns_cp = LNS_CP_MS_RCPSP_SOLVER(
-        rcpsp_model=model_msrcpsp,
+        problem=model_msrcpsp,
         option_neighbor=OptionNeighbor.MIX_ALL,
         one_ressource_per_task=True,
         fake_tasks=True,

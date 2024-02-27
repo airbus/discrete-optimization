@@ -73,7 +73,7 @@ def test_local_search_sm(random_seed):
         sense_function=ModeOptim.MAXIMIZATION,
     )
     sa = SimulatedAnnealing(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(1, res, 0.9999),
@@ -123,7 +123,7 @@ def test_local_search_mm(random_seed):
         sense_function=ModeOptim.MAXIMIZATION,
     )
     sa = SimulatedAnnealing(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(1, res, 0.9999),
@@ -171,7 +171,7 @@ def test_local_search_sm_multiobj(random_seed):
         sense_function=ModeOptim.MAXIMIZATION,
     )
     sa = HillClimberPareto(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=res,
         params_objective_function=params_objective_function,
@@ -207,7 +207,7 @@ def test_local_search_sm_postpro_multiobj(random_seed):
         sense_function=ModeOptim.MAXIMIZATION,
     )
     sa = SimulatedAnnealing(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(2, res, 0.9999),
@@ -269,7 +269,7 @@ def test_local_search_mm_multiobj(random_seed):
         sense_function=ModeOptim.MAXIMIZATION,
     )
     sa = HillClimberPareto(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=res,
         params_objective_function=params_objective_function,
@@ -337,7 +337,7 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
         sense_function=ModeOptim.MAXIMIZATION,
     )
     sa = SimulatedAnnealing(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(10, res, 0.99999),

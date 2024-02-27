@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional, Union
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
+    ParamsObjectiveFunction,
     Problem,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.ga import (
@@ -53,8 +53,11 @@ class AlternatingGa(SolverDO):
         crossover_rate: Optional[float] = None,
         tournament_size: Optional[float] = None,
         deap_verbose: bool = False,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.encodings = encodings
         self.mutations = mutations
         self.crossovers = crossovers
@@ -69,14 +72,6 @@ class AlternatingGa(SolverDO):
         self.crossover_rate = crossover_rate
         self.tournament_size = tournament_size
         self.deap_verbose = deap_verbose
-
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.problem, params_objective_function=None
-        )
 
     def solve(self, **kwargs: Any) -> ResultStorage:
         # Initialise the population (here at random)

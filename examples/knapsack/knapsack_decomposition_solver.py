@@ -27,7 +27,7 @@ def run_decomposed_knapsack_asp():
     file = [f for f in get_data_available() if "ks_1000_0" in f][0]
     knapsack_model = parse_file(file)
     solver = KnapsackDecomposedSolver(
-        knapsack_model=knapsack_model, params_objective_function=None
+        problem=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
         initial_solver=GreedyBest,
@@ -45,7 +45,7 @@ def run_decomposed_knapsack_greedy():
     file = [f for f in get_data_available() if "ks_10000_0" in f][0]
     knapsack_model = parse_file(file)
     solver = KnapsackDecomposedSolver(
-        knapsack_model=knapsack_model, params_objective_function=None
+        problem=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
         initial_solver=GreedyBest,
@@ -63,7 +63,7 @@ def run_decomposed_knapsack_cp():
     file = [f for f in get_data_available() if "ks_1000_0" in f][0]
     knapsack_model = parse_file(file)
     solver = KnapsackDecomposedSolver(
-        knapsack_model=knapsack_model,
+        problem=knapsack_model,
         params_objective_function=None,
     )
     params_cp = ParametersCP.default()

@@ -21,9 +21,7 @@ from discrete_optimization.facility.solvers.facility_solver import SolverFacilit
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
@@ -122,11 +120,13 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
 
     def __init__(
         self,
-        facility_problem: FacilityProblem,
+        problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverFacility.__init__(self, facility_problem=facility_problem)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.model = None
         self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
         self.constraints_dict: Dict[str, Dict[int, Any]] = {}
@@ -140,14 +140,6 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
             }
         }
         self.description_constraint: Dict[str, Dict[str, str]] = {}
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.facility_problem,
-            params_objective_function=params_objective_function,
-        )
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         if parameters_milp.retrieve_all_solution:
@@ -156,7 +148,7 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
             n_solutions = 1
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for s in range(n_solutions):
-            facility_for_customer = [0] * self.facility_problem.customer_count
+            facility_for_customer = [0] * self.problem.customer_count
             for (
                 variable_decision_key,
                 variable_decision_value,
@@ -171,8 +163,8 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
                     f = variable_decision_key[0]
                     c = variable_decision_key[1]
                     facility_for_customer[c] = f
-            solution = FacilitySolution(self.facility_problem, facility_for_customer)
-            fit = self.aggreg_sol(solution)
+            solution = FacilitySolution(self.problem, facility_for_customer)
+            fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
         return ResultStorage(
             list_solution_fits=list_solution_fits,
@@ -200,8 +192,8 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         Returns: None
 
         """
-        nb_facilities = self.facility_problem.facility_count
-        nb_customers = self.facility_problem.customer_count
+        nb_facilities = self.problem.facility_count
+        nb_customers = self.problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
             "use_matrix_indicator_heuristic", True
         )
@@ -209,11 +201,11 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
             n_shortest = kwargs.get("n_shortest", 10)
             n_cheapest = kwargs.get("n_cheapest", 10)
             matrix_fc_indicator, matrix_length = prune_search_space(
-                self.facility_problem, n_cheapest=n_cheapest, n_shortest=n_shortest
+                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
             )
         else:
             matrix_fc_indicator, matrix_length = prune_search_space(
-                self.facility_problem,
+                self.problem,
                 n_cheapest=nb_facilities,
                 n_shortest=nb_facilities,
             )
@@ -227,8 +219,8 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
                     x[f, c] = 1
                 elif matrix_fc_indicator[f, c] == 2:
                     x[f, c] = s.addVar(vtype=GRB.BINARY, obj=0, name="x_" + str((f, c)))
-        facilities = self.facility_problem.facilities
-        customers = self.facility_problem.customers
+        facilities = self.problem.facilities
+        customers = self.problem.customers
         used = s.addVars(nb_facilities, vtype=GRB.BINARY, name="y")
         constraints_customer: Dict[
             int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
@@ -297,11 +289,13 @@ class LP_Facility_Solver_CBC(SolverFacility):
 
     def __init__(
         self,
-        facility_problem: FacilityProblem,
+        problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        SolverFacility.__init__(self, facility_problem=facility_problem)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.model = None
         self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
         self.constraints_dict: Dict[str, Dict[int, Any]] = {}
@@ -315,18 +309,10 @@ class LP_Facility_Solver_CBC(SolverFacility):
             }
         }
         self.description_constraint: Dict[str, Dict[str, str]] = {}
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.facility_problem,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(self, **kwargs: Any) -> None:
-        nb_facilities = self.facility_problem.facility_count
-        nb_customers = self.facility_problem.customer_count
+        nb_facilities = self.problem.facility_count
+        nb_customers = self.problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
             "use_matrix_indicator_heuristic", True
         )
@@ -334,11 +320,11 @@ class LP_Facility_Solver_CBC(SolverFacility):
             n_shortest = kwargs.get("n_shortest", 10)
             n_cheapest = kwargs.get("n_cheapest", 10)
             matrix_fc_indicator, matrix_length = prune_search_space(
-                self.facility_problem, n_cheapest=n_cheapest, n_shortest=n_shortest
+                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
             )
         else:
             matrix_fc_indicator, matrix_length = prune_search_space(
-                self.facility_problem,
+                self.problem,
                 n_cheapest=nb_facilities,
                 n_shortest=nb_facilities,
             )
@@ -352,11 +338,10 @@ class LP_Facility_Solver_CBC(SolverFacility):
                     x[f, c] = 1
                 elif matrix_fc_indicator[f, c] == 2:
                     x[f, c] = s.BoolVar(name="x_" + str((f, c)))
-        facilities = self.facility_problem.facilities
-        customers = self.facility_problem.customers
+        facilities = self.problem.facilities
+        customers = self.problem.customers
         used = [
-            s.BoolVar(name="y_" + str(j))
-            for j in range(self.facility_problem.facility_count)
+            s.BoolVar(name="y_" + str(j)) for j in range(self.problem.facility_count)
         ]
         constraints_customer: Dict[int, Any] = {}
         for c in range(nb_customers):
@@ -400,7 +385,7 @@ class LP_Facility_Solver_CBC(SolverFacility):
         logger.info("Initialized")
 
     def retrieve(self) -> ResultStorage:
-        solution = [0] * self.facility_problem.customer_count
+        solution = [0] * self.problem.customer_count
         for key in self.variable_decision["x"]:
             variable_decision_key = self.variable_decision["x"][key]
             if not isinstance(variable_decision_key, int):
@@ -411,8 +396,8 @@ class LP_Facility_Solver_CBC(SolverFacility):
                 f = key[0]
                 c = key[1]
                 solution[c] = f
-        facility_solution = FacilitySolution(self.facility_problem, solution)
-        fit = self.aggreg_sol(facility_solution)
+        facility_solution = FacilitySolution(self.problem, solution)
+        fit = self.aggreg_from_sol(facility_solution)
         return ResultStorage(
             [(facility_solution, fit)],
             mode_optim=self.params_objective_function.sense_function,
@@ -457,13 +442,13 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
 
     def __init__(
         self,
-        facility_problem: FacilityProblem,
+        problem: FacilityProblem,
         milp_solver_name: MilpSolverName,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
         super().__init__(
-            facility_problem=facility_problem,
+            problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
@@ -471,8 +456,8 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         self.solver_name = map_solver[milp_solver_name]
 
     def init_model(self, **kwargs: Any) -> None:
-        nb_facilities = self.facility_problem.facility_count
-        nb_customers = self.facility_problem.customer_count
+        nb_facilities = self.problem.facility_count
+        nb_customers = self.problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
             "use_matrix_indicator_heuristic", True
         )
@@ -480,11 +465,11 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
             n_shortest = kwargs.get("n_shortest", 10)
             n_cheapest = kwargs.get("n_cheapest", 10)
             matrix_fc_indicator, matrix_length = prune_search_space(
-                self.facility_problem, n_cheapest=n_cheapest, n_shortest=n_shortest
+                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
             )
         else:
             matrix_fc_indicator, matrix_length = prune_search_space(
-                self.facility_problem,
+                self.problem,
                 n_cheapest=nb_facilities,
                 n_shortest=nb_facilities,
             )
@@ -502,8 +487,8 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
                     x[f, c] = s.add_var(
                         var_type=mip.BINARY, obj=0, name="x_" + str((f, c))
                     )
-        facilities = self.facility_problem.facilities
-        customers = self.facility_problem.customers
+        facilities = self.problem.facilities
+        customers = self.problem.customers
         used = s.add_var_tensor((nb_facilities, 1), var_type=GRB.BINARY, name="y")
         constraints_customer: Dict[int, Any] = {}
         for c in range(nb_customers):

@@ -38,7 +38,7 @@ def main_run():
         if s == LPKnapsackGurobi:
             # skip Except if you have a licence
             continue
-        results = solve(method=s, knapsack_model=knapsack_model, **solvers_map[s][1])
+        results = solve(method=s, problem=knapsack_model, **solvers_map[s][1])
         s, f = results.get_best_solution_fit()
         logging.info(f"sol={s}")
         logging.info(f"fitness={f}")

@@ -33,10 +33,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
     TupleFitness,
-    build_aggreg_function_and_params_objective,
-    get_default_objective_setup,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -78,7 +75,7 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
     """CP solver linked with minizinc implementation of coloring problem.
 
     Attributes:
-        facility_problem (FacilityProblem): facility problem instance to solve
+        problem (FacilityProblem): facility problem instance to solve
         params_objective_function (ParamsObjectiveFunction): params of the objective function
         cp_solver_name (CPSolverName): backend solver to use with minizinc
         silent_solve_error (bool): if True, raise a warning instead of an error if the underlying instance.solve() crashes
@@ -87,29 +84,17 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
 
     def __init__(
         self,
-        facility_problem: FacilityProblem,
+        problem: FacilityProblem,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
     ):
-        SolverFacility.__init__(self, facility_problem=facility_problem)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
         self.cp_solver_name = cp_solver_name
-        if params_objective_function is None:
-            self.params_objective_function = get_default_objective_setup(
-                self.facility_problem
-            )
-        else:
-            self.params_objective_function = params_objective_function
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.facility_problem,
-            params_objective_function=params_objective_function,
-        )
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
@@ -132,9 +117,9 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
             self.custom_output_type = True
         solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
         instance = Instance(solver, self.model)
-        instance["nb_facilities"] = self.facility_problem.facility_count
-        instance["nb_customers"] = self.facility_problem.customer_count
-        setup_costs, closests, distances = compute_length_matrix(self.facility_problem)
+        instance["nb_facilities"] = self.problem.facility_count
+        instance["nb_customers"] = self.problem.customer_count
+        setup_costs, closests, distances = compute_length_matrix(self.problem)
         if model_type in [FacilityCPModel.DEFAULT_INT, FacilityCPModel.DEFAULT_INT_LNS]:
             distances_list = [
                 [int(distances[f, c]) for c in range(distances.shape[1])]
@@ -143,12 +128,12 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
             instance["distance"] = distances_list
             instance["setup_cost_vector"] = [int(s) for s in setup_costs]
             instance["demand"] = [
-                int(self.facility_problem.customers[c].demand)
-                for c in range(self.facility_problem.customer_count)
+                int(self.problem.customers[c].demand)
+                for c in range(self.problem.customer_count)
             ]
             instance["capacity"] = [
-                int(self.facility_problem.facilities[f].capacity)
-                for f in range(self.facility_problem.facility_count)
+                int(self.problem.facilities[f].capacity)
+                for f in range(self.problem.facility_count)
             ]
         else:
             distances_list = [
@@ -158,12 +143,12 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
             instance["distance"] = distances_list
             instance["setup_cost_vector"] = [s for s in setup_costs]
             instance["demand"] = [
-                self.facility_problem.customers[c].demand
-                for c in range(self.facility_problem.customer_count)
+                self.problem.customers[c].demand
+                for c in range(self.problem.customer_count)
             ]
             instance["capacity"] = [
-                self.facility_problem.facilities[f].capacity
-                for f in range(self.facility_problem.facility_count)
+                self.problem.facilities[f].capacity
+                for f in range(self.problem.facility_count)
             ]
         self.instance = instance
 
@@ -190,10 +175,8 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
                 objectives.append(result.objective)
         list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
         for facility, objective in zip(list_facility, objectives):
-            facility_sol = FacilitySolution(
-                self.facility_problem, [f - 1 for f in facility]
-            )
-            fit = self.aggreg_sol(facility_sol)
+            facility_sol = FacilitySolution(self.problem, [f - 1 for f in facility])
+            fit = self.aggreg_from_sol(facility_sol)
             list_solutions_fit.append((facility_sol, fit))
         return ResultStorage(
             list_solution_fits=list_solutions_fit,
@@ -208,7 +191,7 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
         greedy_start = kwargs.get("greedy_start", True)
         if greedy_start:
             logger.info("Computing greedy solution")
-            greedy_solver = GreedySolverDistanceBased(self.facility_problem)
+            greedy_solver = GreedySolverDistanceBased(self.problem)
             result = greedy_solver.solve()
             solution = result.get_best_solution()
             if solution is None:
@@ -222,6 +205,6 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
                 )
         else:
             logger.info("Get dummy solution")
-            solution = self.facility_problem.get_dummy_solution()
+            solution = self.problem.get_dummy_solution()
         logger.info("Greedy Done")
         return solution

@@ -48,6 +48,6 @@ def test_solvers():
         if s == LPKnapsackGurobi:
             continue
         logging.info(f"Solver {s}")
-        results = solve(method=s, knapsack_model=knapsack_model, **solvers_map[s][1])
+        results = solve(method=s, problem=knapsack_model, **solvers_map[s][1])
         s, f = results.get_best_solution_fit()
         logging.info(f"fitness={f}")

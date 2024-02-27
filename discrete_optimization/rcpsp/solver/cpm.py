@@ -9,10 +9,7 @@ from typing import Any, Dict, List
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -48,23 +45,20 @@ class CPMObject:
 
 
 class CPM(SolverRCPSP):
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        self.graph = compute_graph_rcpsp(self.rcpsp_model)
-        self.graph_nx = self.graph.to_networkx()
-        self.source = rcpsp_model.source_task
-        self.sink = rcpsp_model.sink_task
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.rcpsp_model, params_objective_function=params_objective_function
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
+        self.graph = compute_graph_rcpsp(problem)
+        self.graph_nx = self.graph.to_networkx()
+        self.source = problem.source_task
+        self.sink = problem.sink_task
         self.map_node: Dict[Any, CPMObject] = {
             n: CPMObject(None, None, None, None) for n in self.graph_nx.nodes()
         }
@@ -122,8 +116,8 @@ class CPM(SolverRCPSP):
                 done_backward.add(node)
             min_duration = min(
                 [
-                    self.rcpsp_model.mode_details[node][k]["duration"]
-                    for k in self.rcpsp_model.mode_details[node]
+                    self.problem.mode_details[node][k]["duration"]
+                    for k in self.problem.mode_details[node]
                 ]
             )
             if forward:
@@ -186,21 +180,21 @@ class CPM(SolverRCPSP):
             total_order = self.return_order_cpm()
         index_in_order = {total_order[i]: i for i in range(len(total_order))}
         resource_avail_in_time = {}
-        for res in list(self.rcpsp_model.resources.keys()):
-            if self.rcpsp_model.is_varying_resource():
-                resource_avail_in_time[res] = self.rcpsp_model.resources[res][
-                    : self.rcpsp_model.horizon + 1
+        for res in list(self.problem.resources.keys()):
+            if self.problem.is_varying_resource():
+                resource_avail_in_time[res] = self.problem.resources[res][
+                    : self.problem.horizon + 1
                 ]
             else:
                 resource_avail_in_time[res] = np.full(
-                    self.rcpsp_model.horizon,
-                    self.rcpsp_model.resources[res],
+                    self.problem.horizon,
+                    self.problem.resources[res],
                     dtype=np.int_,
                 ).tolist()
         done = set()
         ressource_usage = {
-            res: {time: {} for time in range(self.rcpsp_model.horizon)}
-            for res in self.rcpsp_model.resources.keys()
+            res: {time: {} for time in range(self.problem.horizon)}
+            for res in self.problem.resources.keys()
         }
         current_schedule = {}
         min_time_to_schedule = {n: self.map_node[n]._ESD for n in self.map_node}
@@ -237,13 +231,13 @@ class CPM(SolverRCPSP):
                 ll.remove(j)
                 early_start = min_time_to_schedule[j]
                 ressource_consumption = {
-                    r: self.rcpsp_model.mode_details[j][1][r]
-                    for r in self.rcpsp_model.mode_details[j][1]
+                    r: self.problem.mode_details[j][1][r]
+                    for r in self.problem.mode_details[j][1]
                     if r != "duration"
                 }
-                duration = self.rcpsp_model.mode_details[j][1]["duration"]
+                duration = self.problem.mode_details[j][1]["duration"]
                 delayed_du_to_ressource = False
-                for time in range(early_start, self.rcpsp_model.horizon):
+                for time in range(early_start, self.problem.horizon):
                     valid = True
                     for res in resource_avail_in_time:
                         for t in range(time, time + duration):
@@ -362,13 +356,13 @@ class CPM(SolverRCPSP):
     def get_first_time_to_do_one_task(self, resource_avail_in_time, task_id):
         early_start = self.map_node[task_id]._ESD
         ressource_consumption = {
-            r: self.rcpsp_model.mode_details[task_id][1][r]
-            for r in self.rcpsp_model.mode_details[task_id][1]
+            r: self.problem.mode_details[task_id][1][r]
+            for r in self.problem.mode_details[task_id][1]
             if r != "duration"
         }
-        duration = self.rcpsp_model.mode_details[task_id][1]["duration"]
+        duration = self.problem.mode_details[task_id][1]["duration"]
         time_start = None
-        for time in range(early_start, self.rcpsp_model.horizon):
+        for time in range(early_start, self.problem.horizon):
             valid = True
             for res in resource_avail_in_time:
                 for t in range(time, time + duration):
@@ -389,21 +383,21 @@ class CPM(SolverRCPSP):
         if total_order is None:
             total_order = self.return_order_cpm()
         resource_avail_in_time = {}
-        for res in list(self.rcpsp_model.resources.keys()):
-            if self.rcpsp_model.is_varying_resource():
-                resource_avail_in_time[res] = self.rcpsp_model.resources[res][
-                    : self.rcpsp_model.horizon + 1
+        for res in list(self.problem.resources.keys()):
+            if self.problem.is_varying_resource():
+                resource_avail_in_time[res] = self.problem.resources[res][
+                    : self.problem.horizon + 1
                 ]
             else:
                 resource_avail_in_time[res] = np.full(
-                    self.rcpsp_model.horizon,
-                    self.rcpsp_model.resources[res],
+                    self.problem.horizon,
+                    self.problem.resources[res],
                     dtype=np.int_,
                 ).tolist()
         done = set()
         ressource_usage = {
-            res: {time: {} for time in range(self.rcpsp_model.horizon)}
-            for res in self.rcpsp_model.resources.keys()
+            res: {time: {} for time in range(self.problem.horizon)}
+            for res in self.problem.resources.keys()
         }
         current_schedule = {}
         min_time_to_schedule = {n: self.map_node[n]._ESD for n in self.map_node}
@@ -422,11 +416,11 @@ class CPM(SolverRCPSP):
                 ):
                     if early_start <= cur_time:
                         ressource_consumption = {
-                            r: self.rcpsp_model.mode_details[j][1][r]
-                            for r in self.rcpsp_model.mode_details[j][1]
+                            r: self.problem.mode_details[j][1][r]
+                            for r in self.problem.mode_details[j][1]
                             if r != "duration"
                         }
-                        duration = self.rcpsp_model.mode_details[j][1]["duration"]
+                        duration = self.problem.mode_details[j][1]["duration"]
                         for time in [cur_time]:
                             valid = True
                             for res in resource_avail_in_time:
@@ -522,16 +516,16 @@ class CPM(SolverRCPSP):
             ),
         )
         permutation_sgs = [
-            self.rcpsp_model.index_task_non_dummy[o]
+            self.problem.index_task_non_dummy[o]
             for o in order
-            if o in self.rcpsp_model.index_task_non_dummy
+            if o in self.problem.index_task_non_dummy
         ]
         solution_sgs_0 = RCPSPSolution(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             rcpsp_permutation=permutation_sgs,
-            rcpsp_modes=[1 for i in range(self.rcpsp_model.n_jobs_non_dummy)],
+            rcpsp_modes=[1 for i in range(self.problem.n_jobs_non_dummy)],
         )
-        fit_0 = self.aggreg_sol(solution_sgs_0)
+        fit_0 = self.aggreg_from_sol(solution_sgs_0)
         order = sorted(
             self.map_node,
             key=lambda x: (
@@ -548,11 +542,11 @@ class CPM(SolverRCPSP):
             map_nodes=self.map_node, critical_path=cpath, total_order=order
         )
         solution_1 = RCPSPSolution(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             rcpsp_schedule=schedule,
-            rcpsp_modes=[1 for i in range(self.rcpsp_model.n_jobs_non_dummy)],
+            rcpsp_modes=[1 for i in range(self.problem.n_jobs_non_dummy)],
         )
-        fit_1 = self.aggreg_sol(solution_1)
+        fit_1 = self.aggreg_from_sol(solution_1)
         res = ResultStorage(
             list_solution_fits=[(solution_sgs_0, fit_0), (solution_1, fit_1)],
             mode_optim=self.params_objective_function.sense_function,
@@ -612,8 +606,8 @@ def run_partial_classic_cpm(partial_schedule, cpm_solver):
             done_backward.add(node)
         min_duration = min(
             [
-                cpm_solver.rcpsp_model.mode_details[node][k]["duration"]
-                for k in cpm_solver.rcpsp_model.mode_details[node]
+                cpm_solver.problem.mode_details[node][k]["duration"]
+                for k in cpm_solver.problem.mode_details[node]
             ]
         )
         if forward:
@@ -638,12 +632,12 @@ def run_partial_classic_cpm(partial_schedule, cpm_solver):
                 if all(map_node[n]._LSD is not None for n in pred):
                     max_esd = min([map_node[n]._LSD for n in pred])
                     heappush(queue, (-max_esd, next_node))
-        if node == cpm_solver.rcpsp_model.sink_task:
+        if node == cpm_solver.problem.sink_task:
             forward = False
             heappush(queue, (-map_node[node]._EFD, node))
-    critical_path = [cpm_solver.rcpsp_model.sink_task]
-    cur_node = cpm_solver.rcpsp_model.sink_task
-    while cur_node is not cpm_solver.rcpsp_model.source_task:
+    critical_path = [cpm_solver.problem.sink_task]
+    cur_node = cpm_solver.problem.sink_task
+    while cur_node is not cpm_solver.problem.source_task:
         nodes = [
             n
             for n in cpm_solver.immediate_predecessors[cur_node]

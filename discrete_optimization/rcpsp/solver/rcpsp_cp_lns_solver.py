@@ -18,7 +18,7 @@ from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     ParametersCP,
 )
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lns_cp import LNS_CP, ConstraintHandler
 from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -507,9 +507,7 @@ class PostProcessLeftShift(PostProcessSolution):
                     (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
                 ]
         if self.partial_solution is None:
-            solver = LS_RCPSP_Solver(
-                rcpsp_model=self.rcpsp_problem, ls_solver=LS_SOLVER.SA
-            )
+            solver = LS_RCPSP_Solver(problem=self.rcpsp_problem, ls_solver=LS_SOLVER.SA)
             satisfiable = [
                 (s, f) for s, f in result_storage.list_solution_fits if s.satisfy
             ]
@@ -599,44 +597,46 @@ def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
 
 
 class LNS_CP_RCPSP_SOLVER(SolverRCPSP):
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_ALL,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        self.with_varying_resource = rcpsp_model.is_varying_resource()
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
+        self.with_varying_resource = problem.is_varying_resource()
         if self.with_varying_resource:
             self.solver = CP_MRCPSP_MZN_WITH_FAKE_TASK(
-                rcpsp_model=self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+                problem=problem, cp_solver_name=CPSolverName.CHUFFED
             )
         else:
             self.solver = CP_MRCPSP_MZN(
-                rcpsp_model=self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+                problem=problem, cp_solver_name=CPSolverName.CHUFFED
             )
         self.solver.init_model(output_type=True, **kwargs)
         self.parameters_cp = ParametersCP.default()
-        params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_model
-        )
         self.constraint_handler = build_neighbor_operator(
-            option_neighbor=option_neighbor, rcpsp_model=self.rcpsp_model
+            option_neighbor=option_neighbor, rcpsp_model=problem
         )
         self.initial_solution_provider = InitialSolutionRCPSP(
-            problem=self.rcpsp_model,
+            problem=problem,
             initial_method=InitialMethodRCPSP.DUMMY,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
         self.lns_solver = LNS_CP(
-            problem=self.rcpsp_model,
+            problem=problem,
             cp_solver=self.solver,
             post_process_solution=PostProcessLeftShift(
-                self.rcpsp_model, partial_solution=kwargs.get("partial_solution", None)
+                problem, partial_solution=kwargs.get("partial_solution", None)
             ),
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
 
     def solve(self, **kwargs) -> ResultStorage:

@@ -25,7 +25,7 @@ def example_parsing_and_local_search():
     logger.info("file = ", file)
     model = parse_file_mslib(file).to_variant_model()
     logging.basicConfig(level=logging.DEBUG)
-    solver = LS_RCPSP_Solver(rcpsp_model=model)
+    solver = LS_RCPSP_Solver(problem=model)
     result = solver.solve(nb_iteration_max=5000)
     sol, fit = result.get_best_solution_fit()
     plot_resource_individual_gantt(rcpsp_model=model, rcpsp_sol=sol)

@@ -22,7 +22,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
     Solution,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ls.local_search import (
@@ -47,9 +46,12 @@ class TemperatureScheduling:
 
 
 class SimulatedAnnealing(SolverDO):
+    aggreg_from_sol: Callable[[Solution], float]
+    aggreg_from_dict: Callable[[Dict[str, float]], float]
+
     def __init__(
         self,
-        evaluator: Problem,
+        problem: Problem,
         mutator: Mutation,
         restart_handler: RestartHandler,
         temperature_handler: TemperatureScheduling,
@@ -57,20 +59,13 @@ class SimulatedAnnealing(SolverDO):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution: bool = False,
     ):
-        self.evaluator = evaluator
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.mutator = mutator
         self.restart_handler = restart_handler
         self.temperature_handler = temperature_handler
         self.mode_mutation = mode_mutation
-        self.aggreg_from_solution: Callable[[Solution], float]
-        self.aggreg_from_dict_values: Callable[[Dict[str, float]], float]
-        (
-            self.aggreg_from_solution,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(  # type: ignore
-            evaluator, params_objective_function=params_objective_function
-        )
         if (
             self.params_objective_function.objective_handling
             == ObjectiveHandling.MULTI_OBJ
@@ -90,9 +85,7 @@ class SimulatedAnnealing(SolverDO):
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
 
-        objective = self.aggreg_from_dict_values(
-            self.evaluator.evaluate(initial_variable)
-        )
+        objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         cur_variable = initial_variable.copy()
         cur_objective = objective
         cur_best_objective = objective
@@ -123,12 +116,12 @@ class SimulatedAnnealing(SolverDO):
             global_improvement = False
             if self.mode_mutation == ModeMutation.MUTATE:
                 nv, move = self.mutator.mutate(cur_variable)
-                objective = self.aggreg_from_dict_values(self.evaluator.evaluate(nv))
+                objective = self.aggreg_from_dict(self.problem.evaluate(nv))
             else:  # self.mode_mutation == ModeMutation.MUTATE_AND_EVALUATE:
                 nv, move, objective_dict_values = self.mutator.mutate_and_compute_obj(
                     cur_variable
                 )
-                objective = self.aggreg_from_dict_values(objective_dict_values)
+                objective = self.aggreg_from_dict(objective_dict_values)
             logger.debug(
                 f"{iteration} / {nb_iteration_max} {objective} {cur_objective}"
             )

@@ -4,12 +4,8 @@
 import logging
 import os
 import random
-from typing import Any, Optional, Set
+from typing import Any, Set
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -36,20 +32,6 @@ class KnapsackDecomposedSolver(SolverKnapsack):
     KnapsackDecomposedSolver is a basic iterative solver that starts from a given solution, then freeze random items,
     solve subproblem with a custom root solver, rebuild original solution and repeat the process.
     """
-
-    def __init__(
-        self,
-        knapsack_model: KnapsackModel,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-    ):
-        SolverKnapsack.__init__(self, knapsack_model=knapsack_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.knapsack_model, params_objective_function=params_objective_function
-        )
 
     def rebuild_sol(
         self,
@@ -84,9 +66,7 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         sub_solver = kwargs.get("root_solver", GreedyBest)
         nb_iteration = kwargs.get("nb_iteration", 100)
         proportion_to_remove = kwargs.get("proportion_to_remove", 0.7)
-        initial_results = solve(
-            method=initial_solver, knapsack_model=self.knapsack_model, **kwargs
-        )
+        initial_results = solve(method=initial_solver, problem=self.problem, **kwargs)
         results_storage = ResultStorage(
             list_solution_fits=initial_results.list_solution_fits,
             mode_optim=self.params_objective_function.sense_function,
@@ -94,29 +74,29 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         logger.info(
             f"Initial solution fitness : {results_storage.get_best_solution_fit()[1]}"
         )
-        all_indexes = set(range(self.knapsack_model.nb_items))
+        all_indexes = set(range(self.problem.nb_items))
         for j in range(nb_iteration):
             sol, fit = results_storage.get_best_solution_fit()
             indexes_to_remove = set(
                 random.sample(
                     list(all_indexes),
-                    int(proportion_to_remove * self.knapsack_model.nb_items),
+                    int(proportion_to_remove * self.problem.nb_items),
                 )
             )
             sub_model = create_subknapsack_model(
-                knapsack_model=self.knapsack_model,
+                knapsack_model=self.problem,
                 solution=sol,
                 indexes_to_remove=indexes_to_remove,
             )
-            res = solve(method=sub_solver, knapsack_model=sub_model, **kwargs)
+            res = solve(method=sub_solver, problem=sub_model, **kwargs)
             best_sol, fit = res.get_best_solution_fit()
             reb_sol = self.rebuild_sol(
                 sol=best_sol,
                 original_solution=sol,
-                original_knapsack_model=self.knapsack_model,
+                original_knapsack_model=self.problem,
                 indexes_to_remove=indexes_to_remove,
             )
-            fit = self.aggreg_sol(reb_sol)
+            fit = self.aggreg_from_sol(reb_sol)
             logger.info(f"Iteration {j}/{nb_iteration} : --- Current fitness {fit}")
             results_storage.list_solution_fits += [(reb_sol, fit)]
         return results_storage

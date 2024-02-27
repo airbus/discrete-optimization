@@ -48,13 +48,13 @@ def test_multiskill_imopse():
     model_rcpsp = model.build_multimode_rcpsp_calendar_representative()
     graph = model_rcpsp.compute_graph()
     cycles = graph.check_loop()
-    solver = PileSolverRCPSP_Calendar(rcpsp_model=model_rcpsp)
+    solver = PileSolverRCPSP_Calendar(problem=model_rcpsp)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 200
     store_solution = solver.solve(parameters_cp=parameters_cp)
     best_mrcpsp, fit = store_solution.get_best_solution_fit()
     solver = LP_Solver_MRSCPSP(
-        rcpsp_model=model,
+        problem=model,
         lp_solver=MilpSolverName.GRB,
         # CBC is not working well at all. -> so in unit test you should probably skip this test.
         params_objective_function=params_objective_function,

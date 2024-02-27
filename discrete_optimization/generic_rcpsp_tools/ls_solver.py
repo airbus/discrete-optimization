@@ -11,10 +11,7 @@ from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
     SolverGenericRCPSP,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimber
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -50,29 +47,23 @@ class LS_SOLVER(Enum):
 class LS_RCPSP_Solver(SolverGenericRCPSP):
     def __init__(
         self,
-        rcpsp_model: ANY_RCPSP,
+        problem: ANY_RCPSP,
         params_objective_function: ParamsObjectiveFunction = None,
         ls_solver: LS_SOLVER = LS_SOLVER.SA,
         **args
     ):
-        SolverGenericRCPSP.__init__(self, rcpsp_model=rcpsp_model)
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
         )
         self.ls_solver = ls_solver
 
     def solve(self, **kwargs):
-        model = self.rcpsp_model
+        model = self.problem
         dummy = kwargs.get("starting_point", model.get_dummy_solution())
         find_better_starting_solution = kwargs.get("init_solution_process", False)
         if isinstance(model, MS_RCPSPModel) and find_better_starting_solution:
             init = InitialSolutionMS_RCPSP(
-                problem=self.rcpsp_model,
+                problem=self.problem,
                 initial_method=InitialMethodRCPSP.PILE_CALENDAR,
                 params_objective_function=self.params_objective_function,
             )
@@ -95,7 +86,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
         ls = None
         if self.ls_solver == LS_SOLVER.SA:
             ls = SimulatedAnnealing(
-                evaluator=model,
+                problem=model,
                 mutator=mixed_mutation,
                 restart_handler=res,
                 temperature_handler=TemperatureSchedulingFactor(
@@ -109,7 +100,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
             )
         elif self.ls_solver == LS_SOLVER.HC:
             ls = HillClimber(
-                evaluator=model,
+                problem=model,
                 mutator=mixed_mutation,
                 restart_handler=res,
                 mode_mutation=ModeMutation.MUTATE,

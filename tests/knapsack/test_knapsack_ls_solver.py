@@ -43,7 +43,7 @@ def test_sa_knapsack():
     )
     res = RestartHandlerLimit(3000)
     sa = SimulatedAnnealing(
-        evaluator=model,
+        problem=model,
         mutator=mixed_mutation,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(1000, res, 0.99),
@@ -73,7 +73,7 @@ def test_hc_knapsack_multiobj():
     res = RestartHandlerLimit(3000)
     params_objective_function = get_default_objective_setup(model)
     sa = HillClimberPareto(
-        evaluator=model,
+        problem=model,
         mutator=mixed_mutation,
         restart_handler=res,
         mode_mutation=ModeMutation.MUTATE,

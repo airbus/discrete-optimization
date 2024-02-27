@@ -35,7 +35,7 @@ def test_cpm_sm():
     solution_cp, fit_cp = result_storage.get_best_solution_fit()
     assert fit_dummy <= fit_cp
 
-    cpm = CPM(rcpsp_model=rcpsp_problem)
+    cpm = CPM(problem=rcpsp_problem)
     cpath = cpm.run_classic_cpm()
     order = cpm.return_order_cpm()
     permutation_sgs = [o - 2 for o in order]
@@ -182,7 +182,7 @@ def test_cpm_sm():
                         modified_model.successors[e0].remove(e1)
             gg = modified_model.compute_graph()
             has_loop = gg.check_loop()
-        cpm = CPM(rcpsp_model=modified_model)
+        cpm = CPM(problem=modified_model)
         cpath = cpm.run_classic_cpm()
         order = sorted(
             cpm.map_node,
@@ -222,7 +222,7 @@ def test_cpm_partial():
     files_available = get_data_available()
     file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
-    cpm = CPM(rcpsp_model=rcpsp_problem)
+    cpm = CPM(problem=rcpsp_problem)
     sol = cpm.solve()
     cpm.map_node[rcpsp_problem.sink_task]
     best_sol: RCPSPSolution = sol.get_best_solution_fit()[0]

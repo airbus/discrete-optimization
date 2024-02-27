@@ -250,32 +250,32 @@ def look_for_solver_class(
 
 def solve(
     method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
-    rcpsp_model: ANY_CLASSICAL_RCPSP,
+    problem: ANY_CLASSICAL_RCPSP,
     **kwargs: Any,
 ) -> ResultStorage:
-    solver = return_solver(method=method, rcpsp_model=rcpsp_model, **kwargs)
+    solver = return_solver(method=method, problem=problem, **kwargs)
     return solver.solve(**kwargs)
 
 
 def solve_return_solver(
     method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
-    rcpsp_model: ANY_CLASSICAL_RCPSP,
+    problem: ANY_CLASSICAL_RCPSP,
     **kwargs: Any,
 ) -> Tuple[ResultStorage, Union[SolverRCPSP, SolverGenericRCPSP]]:
-    solver = return_solver(method=method, rcpsp_model=rcpsp_model, **kwargs)
+    solver = return_solver(method=method, problem=problem, **kwargs)
     return solver.solve(**kwargs), solver
 
 
 def return_solver(
     method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
-    rcpsp_model: ANY_CLASSICAL_RCPSP,
+    problem: ANY_CLASSICAL_RCPSP,
     **kwargs: Any,
 ) -> Union[SolverRCPSP, SolverGenericRCPSP]:
     solver: Union[SolverRCPSP, SolverGenericRCPSP]
     if method == GPHH:
-        solver = GPHH(training_domains=[rcpsp_model], rcpsp_model=rcpsp_model, **kwargs)
+        solver = GPHH(training_domains=[problem], problem=problem, **kwargs)
     else:
-        solver = method(rcpsp_model=rcpsp_model, **kwargs)
+        solver = method(problem=problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:

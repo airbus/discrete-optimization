@@ -24,16 +24,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
-    fitness_class,
 )
 from discrete_optimization.pickup_vrp.gpdp import (
     GPDP,
@@ -156,6 +151,8 @@ https://developers.google.com/optimization/routing/routing_options#search_status
 
 
 class ORToolsGPDP(SolverDO):
+    problem: GPDP
+
     def __init__(
         self,
         problem: GPDP,
@@ -163,18 +160,12 @@ class ORToolsGPDP(SolverDO):
         factor_multiplier_time: float = 1,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
-        self.problem = problem
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.dimension_names: List[str] = []
         self.factor_multiplier_distance = factor_multiplier_distance  # 10**3
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=problem,
-            params_objective_function=params_objective_function,
-        )
 
     def init_model(self, **kwargs: Any) -> None:
         include_time_windows = kwargs.get("include_time_windows", False)
@@ -976,7 +967,7 @@ class RoutingMonitor(pywrapcp.SearchMonitor):
             self.model.CostVar().Max(),
         )
         gpdp_sol = convert_to_gpdpsolution(self.problem, sol)
-        fit = self.do_solver.aggreg_sol(gpdp_sol)
+        fit = self.do_solver.aggreg_from_sol(gpdp_sol)
         self.res.add_solution(solution=gpdp_sol, fitness=fit)
 
 

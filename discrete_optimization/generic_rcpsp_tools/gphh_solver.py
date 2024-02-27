@@ -20,7 +20,6 @@ from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
-    build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -489,12 +488,14 @@ class GPHH(SolverGenericRCPSP):
     def __init__(
         self,
         training_domains: List[Problem],
-        rcpsp_model: Problem,
+        problem: Problem,
         weight: int = 1,
         params_gphh: ParametersGPHH = None,
         params_objective_function: ParamsObjectiveFunction = None,
     ):
-        SolverGenericRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.training_domains = training_domains
         self.params_gphh = params_gphh
         if self.params_gphh is None:
@@ -505,7 +506,7 @@ class GPHH(SolverGenericRCPSP):
         self.pset = self.init_primitives(self.params_gphh.set_primitves)
         self.weight = weight
         self.evaluation_method = self.params_gphh.evaluation
-        model = self.rcpsp_model
+        model = self.problem
         try:
             if model.graph.full_successors is None:
                 model.graph.full_predecessors = model.graph.ancestors_map()
@@ -514,14 +515,6 @@ class GPHH(SolverGenericRCPSP):
             pass
         self.initialize_cpm_data_for_training()
         self.graphs = {}
-        (
-            self.aggreg_from_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.rcpsp_model,
-            params_objective_function=params_objective_function,
-        )
         self.toolbox = None
 
     def init_model(self):
@@ -609,7 +602,7 @@ class GPHH(SolverGenericRCPSP):
         self.final_pop = pop
         self.func_heuristic = self.toolbox.compile(expr=self.best_heuristic)
         solution = self.build_solution(
-            domain=self.rcpsp_model, func_heuristic=self.func_heuristic
+            domain=self.problem, func_heuristic=self.func_heuristic
         )
         return ResultStorage(
             list_solution_fits=[(solution, self.aggreg_from_sol(solution))],

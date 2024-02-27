@@ -68,10 +68,8 @@ def look_for_solver_class(class_domain: Type["TSPModel"]) -> List[Type[SolverTSP
     return available
 
 
-def solve(
-    method: Type[SolverTSP], tsp_problem: TSPModel, **kwargs: Any
-) -> ResultStorage:
-    solver = method(tsp_model=tsp_problem, **kwargs)
+def solve(method: Type[SolverTSP], problem: TSPModel, **kwargs: Any) -> ResultStorage:
+    solver = method(problem=problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except AttributeError:
@@ -80,9 +78,9 @@ def solve(
 
 
 def return_solver(
-    method: Type[SolverTSP], tsp_problem: TSPModel, **kwargs: Any
+    method: Type[SolverTSP], problem: TSPModel, **kwargs: Any
 ) -> SolverTSP:
-    solver = method(tsp_problem, **kwargs)
+    solver = method(problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:

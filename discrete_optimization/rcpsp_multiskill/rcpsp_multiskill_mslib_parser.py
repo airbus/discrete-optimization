@@ -191,7 +191,7 @@ if __name__ == "__main__":
     )
 
     logging.basicConfig(level=logging.DEBUG)
-    solver = LS_RCPSP_Solver(rcpsp_model=model)
+    solver = LS_RCPSP_Solver(problem=model)
     result = solver.solve(nb_iteration_max=5000)
     sol, fit = result.get_best_solution_fit()
     plot_resource_individual_gantt(rcpsp_model=model, rcpsp_sol=sol)

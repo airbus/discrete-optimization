@@ -42,10 +42,8 @@ def look_for_solver_class(class_domain: Type[VrpProblem]) -> List[Type[SolverVrp
     return available
 
 
-def solve(
-    method: Type[SolverVrp], vrp_problem: VrpProblem, **kwargs: Any
-) -> ResultStorage:
-    solver = method(vrp_problem, **kwargs)
+def solve(method: Type[SolverVrp], problem: VrpProblem, **kwargs: Any) -> ResultStorage:
+    solver = method(problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:
@@ -54,9 +52,9 @@ def solve(
 
 
 def return_solver(
-    method: Type[SolverVrp], vrp_problem: VrpProblem, **kwargs: Any
+    method: Type[SolverVrp], problem: VrpProblem, **kwargs: Any
 ) -> SolverVrp:
-    solver = method(vrp_problem, **kwargs)
+    solver = method(problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:

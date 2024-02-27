@@ -80,7 +80,7 @@ class PostProLeftShift(PostProcessSolution):
         self.params_objective_function = params_objective_function
         (
             self.aggreg_from_sol,
-            self.aggreg_dict,
+            self.aggreg_from_dict,
             self.params_objective_function,
         ) = build_aggreg_function_and_params_objective(
             problem=self.problem,
@@ -116,7 +116,7 @@ class PostProLeftShift(PostProcessSolution):
         fit = self.aggreg_from_sol(new_solution)
         result_storage.add_solution(new_solution, fit)
         if self.do_ls:
-            solver = LS_RCPSP_Solver(rcpsp_model=self.problem, ls_solver=LS_SOLVER.SA)
+            solver = LS_RCPSP_Solver(problem=self.problem, ls_solver=LS_SOLVER.SA)
             s = result_storage.get_best_solution().copy()
             if self.problem != s.problem:
                 s.change_problem(self.problem)
@@ -1007,7 +1007,7 @@ class PostProcessSolutionNonFeasible(PostProcessSolution):
                 ]
         if self.do_ls:
             solver = LS_RCPSP_Solver(
-                rcpsp_model=self.problem_calendar, ls_solver=LS_SOLVER.SA
+                problem=self.problem_calendar, ls_solver=LS_SOLVER.SA
             )
             satisfiable = [
                 (s, f) for s, f in result_storage.list_solution_fits if s.satisfy

@@ -30,7 +30,7 @@ def run_solvers():
         if s == ColoringLP:
             # you need a gurobi licence to test this solver.
             continue
-        results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])
+        results = solve(method=s, problem=coloring_model, **solvers_map[s][1])
         sol, fit = results.get_best_solution_fit()
         plot_coloring_solution(sol, name_figure=f"{s.__name__} nb_colors={fit}")
         logging.info(f"solver = {s.__name__} sol={sol}, nb_colors={fit}")

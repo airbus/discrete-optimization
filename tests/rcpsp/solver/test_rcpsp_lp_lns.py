@@ -31,7 +31,7 @@ def test_lns_sm():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
-    solver = LP_RCPSP(rcpsp_model=rcpsp_problem, lp_solver=MilpSolverName.CBC)
+    solver = LP_RCPSP(problem=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model(greedy_start=False)
     parameters_milp = ParametersMilp(
         time_limit=10,
@@ -85,7 +85,7 @@ def test_lns_mm():
         sense_function=ModeOptim.MAXIMIZATION,
     )
     solver = LP_MRCPSP(
-        rcpsp_model=rcpsp_problem,
+        problem=rcpsp_problem,
         lp_solver=MilpSolverName.CBC,
         params_objective_function=params_objective_function,
     )

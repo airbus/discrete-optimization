@@ -14,7 +14,7 @@ from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     ParametersCP,
 )
-from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lns_cp import (
     LNS_CP,
     ConstraintHandler,
@@ -610,49 +610,51 @@ def build_neighbor_operator(option_neighbor: OptionNeighbor, rcpsp_model):
 
 
 class LNS_CP_MS_RCPSP_SOLVER(SolverDO):
+    problem: MS_RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: MS_RCPSPModel,
+        problem: MS_RCPSPModel,
         option_neighbor: OptionNeighbor = OptionNeighbor.MIX_ALL,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        self.rcpsp_model = rcpsp_model
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.solver = CP_MS_MRCPSP_MZN(
-            rcpsp_model=self.rcpsp_model, cp_solver_name=CPSolverName.CHUFFED, **kwargs
+            problem=self.problem, cp_solver_name=CPSolverName.CHUFFED, **kwargs
         )
         self.solver.init_model(**kwargs)
         self.parameters_cp = kwargs.get("parameters_cp", ParametersCP.default())
-        params_objective_function = get_default_objective_setup(
-            problem=self.rcpsp_model
-        )
         self.constraint_handler = build_neighbor_operator(
-            option_neighbor=option_neighbor, rcpsp_model=self.rcpsp_model
+            option_neighbor=option_neighbor, rcpsp_model=self.problem
         )
         if "partial_solution" in kwargs:
             if kwargs["partial_solution"] is not None:
                 self.post_pro = None
             else:
                 self.post_pro = PostProMSRCPSP(
-                    problem=self.rcpsp_model,
-                    params_objective_function=params_objective_function,
+                    problem=self.problem,
+                    params_objective_function=self.params_objective_function,
                 )
         else:
             self.post_pro = PostProMSRCPSP(
-                problem=self.rcpsp_model,
-                params_objective_function=params_objective_function,
+                problem=self.problem,
+                params_objective_function=self.params_objective_function,
             )
         self.initial_solution_provider = InitialSolutionMS_RCPSP(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             initial_method=InitialMethodRCPSP.PILE_CALENDAR,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
         self.lns_solver = LNS_CP(
-            problem=self.rcpsp_model,
+            problem=self.problem,
             cp_solver=self.solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,
             post_process_solution=self.post_pro,
-            params_objective_function=params_objective_function,
+            params_objective_function=self.params_objective_function,
         )
 
     def solve(self, **kwargs) -> ResultStorage:

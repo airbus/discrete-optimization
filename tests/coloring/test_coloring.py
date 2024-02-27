@@ -75,7 +75,7 @@ def test_solvers():
         if s == ColoringLP and not gurobi_available:
             # you need a gurobi licence to test this solver.
             continue
-        results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])
+        results = solve(method=s, problem=coloring_model, **solvers_map[s][1])
         sol, fit = results.get_best_solution_fit()
 
 
@@ -96,7 +96,7 @@ def test_solvers_subset():
         if s == ColoringLP and not gurobi_available:
             # you need a gurobi licence to test this solver.
             continue
-        results = solve(method=s, coloring_model=coloring_model, **solvers_map[s][1])
+        results = solve(method=s, problem=coloring_model, **solvers_map[s][1])
         sol, fit = results.get_best_solution_fit()
         print(f"Solver {s}, fitness = {fit}")
         print(f"Evaluation : {coloring_model.evaluate(sol)}")

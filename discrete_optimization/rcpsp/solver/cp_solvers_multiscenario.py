@@ -15,10 +15,7 @@ from discrete_optimization.generic_tools.cp_tools import (
     ParametersCP,
     map_cp_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -92,32 +89,33 @@ def add_fake_task_cp_data(
 
 
 class CP_MULTISCENARIO(MinizincCPSolver):
+    problem: RCPSPModel
+
     def __init__(
         self,
-        list_rcpsp_model: List[RCPSPModel],
+        list_problem: List[RCPSPModel],
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
         silent_solve_error: bool = True,
         **kwargs,
     ):
+        super().__init__(
+            problem=list_problem[0], params_objective_function=params_objective_function
+        )
         self.silent_solve_error = silent_solve_error
-        self.list_rcpsp_model = list_rcpsp_model
+        self.list_rcpsp_model = list_problem
         self.cp_solver_name = cp_solver_name
-        self.base_rcpsp_model = list_rcpsp_model[0]
         self.key_decision_variable = [
             "s"
         ]  # For now, I've put the var name of the CP model (not the rcpsp_model)
-        (
-            self.aggreg_sol,
-            self.aggreg_from_dict_values,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            self.base_rcpsp_model, params_objective_function=params_objective_function
-        )
+
+    @property
+    def base_problem(self):
+        return self.problem
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multiscenario")
-        max_time = args.get("max_time", self.base_rcpsp_model.horizon)
+        max_time = args.get("max_time", self.problem.horizon)
         fake_tasks = args.get(
             "fake_tasks", True
         )  # to modelize varying quantity of resource.
@@ -133,11 +131,11 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         instance = Instance(solver, model)
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = ignore_sec_objective
-        n_res = len(self.base_rcpsp_model.resources_list)
+        n_res = len(self.problem.resources_list)
         instance["n_res"] = n_res
         instance["n_scenario"] = len(self.list_rcpsp_model)
         dict_to_add = add_fake_task_cp_data(
-            rcpsp_model=self.base_rcpsp_model,
+            rcpsp_model=self.problem,
             ignore_fake_task=not fake_tasks,
             max_time_to_consider=max_time,
         )
@@ -145,16 +143,15 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         for key in dict_to_add:
             instance[key] = dict_to_add[key]
 
-        sorted_resources = self.base_rcpsp_model.resources_list
+        sorted_resources = self.problem.resources_list
         self.resources_index = sorted_resources
         rcap = [
-            int(self.base_rcpsp_model.get_max_resource_capacity(x))
-            for x in sorted_resources
+            int(self.problem.get_max_resource_capacity(x)) for x in sorted_resources
         ]
         instance["rc"] = rcap
-        n_tasks = self.base_rcpsp_model.n_jobs
+        n_tasks = self.problem.n_jobs
         instance["n_tasks"] = n_tasks
-        sorted_tasks = self.base_rcpsp_model.tasks_list
+        sorted_tasks = self.problem.tasks_list
         d = [
             [
                 int(self.list_rcpsp_model[j].mode_details[key][1]["duration"])
@@ -184,8 +181,8 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         suc = [
             set(
                 [
-                    self.base_rcpsp_model.return_index_task(x, offset=1)
-                    for x in self.base_rcpsp_model.successors[task]
+                    self.problem.return_index_task(x, offset=1)
+                    for x in self.problem.successors[task]
                 ]
             )
             for task in sorted_tasks
@@ -195,12 +192,10 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         instance["nb_incoherence_limit"] = args.get("nb_incoherence_limit", 3)
         self.instance = instance
         self.index_in_minizinc = {
-            task: self.base_rcpsp_model.return_index_task(task, offset=1)
-            for task in self.base_rcpsp_model.tasks_list
+            task: self.problem.return_index_task(task, offset=1)
+            for task in self.problem.tasks_list
         }
-        self.instance["sink_task"] = self.index_in_minizinc[
-            self.base_rcpsp_model.sink_task
-        ]
+        self.instance["sink_task"] = self.index_in_minizinc[self.problem.sink_task]
 
     def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
         intermediate_solutions = parameters_cp.intermediate_solution
@@ -231,19 +226,16 @@ class CP_MULTISCENARIO(MinizincCPSolver):
                 objectives += [result.objective]
         for order, obj, start in zip(orderings, objectives, starts):
             oo = [
-                self.base_rcpsp_model.index_task_non_dummy[
-                    self.base_rcpsp_model.tasks_list[j - 1]
-                ]
+                self.problem.index_task_non_dummy[self.problem.tasks_list[j - 1]]
                 for j in order
-                if self.base_rcpsp_model.tasks_list[j - 1]
-                in self.base_rcpsp_model.index_task_non_dummy
+                if self.problem.tasks_list[j - 1] in self.problem.index_task_non_dummy
             ]
             ll = [
                 RCPSPSolution(problem=self.list_rcpsp_model[i], rcpsp_permutation=oo)
                 for i in range(len(self.list_rcpsp_model))
             ]
             evaluation = [
-                self.aggreg_from_dict_values(self.list_rcpsp_model[i].evaluate(ll[i]))
+                self.aggreg_from_dict(self.list_rcpsp_model[i].evaluate(ll[i]))
                 for i in range(len(self.list_rcpsp_model))
             ]
             sum_eval = sum(evaluation)

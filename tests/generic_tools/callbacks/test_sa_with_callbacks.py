@@ -91,7 +91,7 @@ def test_sa_with_callbacks(caplog):
         backuper,
     ]
     sa = SimulatedAnnealing(
-        evaluator=rcpsp_model,
+        problem=rcpsp_model,
         mutator=mixed_mutation,
         restart_handler=restart_handler,
         temperature_handler=temperature_handler,

@@ -1675,7 +1675,7 @@ def run_tsp():
     weight = np.ones(len(list_mutation))
     mutate_portfolio = BasicPortfolioMutation(list_mutation, weight)
     sa = SimulatedAnnealing(
-        evaluator=tsp_model,
+        problem=tsp_model,
         mutator=mutate_portfolio,
         restart_handler=res,
         temperature_handler=TemperatureSchedulingFactor(

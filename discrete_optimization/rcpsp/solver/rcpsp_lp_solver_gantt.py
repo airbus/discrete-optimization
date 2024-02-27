@@ -9,7 +9,10 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import networkx as nx
 from mip import BINARY, MINIMIZE, Model, xsum
 
-from discrete_optimization.generic_tools.do_problem import ModeOptim
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
@@ -68,19 +71,24 @@ class ConstraintWorkDuration:
 
 
 class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
+    problem: RCPSPModel
+
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         rcpsp_solution: RCPSPSolution,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        if rcpsp_model.calendar_details is None:
+        if problem.calendar_details is None:
             raise ValueError(
                 "rcpsp_model.calendar_details cannot be None for this solver"
             )
-        SolverRCPSP.__init__(self, rcpsp_model=rcpsp_model)
+        super().__init__(
+            problem=problem, params_objective_function=params_objective_function
+        )
         self.rcpsp_solution = rcpsp_solution
-        self.jobs = sorted(list(self.rcpsp_model.mode_details.keys()))
+        self.jobs = sorted(list(problem.mode_details.keys()))
         self.modes_dict = {
             i + 2: self.rcpsp_solution.rcpsp_modes[i]
             for i in range(len(self.rcpsp_solution.rcpsp_modes))
@@ -151,14 +159,16 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
 class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
     def __init__(
         self,
-        rcpsp_model: RCPSPModel,
+        problem: RCPSPModel,
         rcpsp_solution: RCPSPSolution,
         lp_solver=MilpSolverName.CBC,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
         super().__init__(
-            rcpsp_model=rcpsp_model,
+            problem=problem,
             rcpsp_solution=rcpsp_solution,
+            params_objective_function=params_objective_function,
             **kwargs,
         )
         self.lp_solver = lp_solver
@@ -166,8 +176,8 @@ class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
     def init_model(self, **args):
         self.model = Model(sense=MINIMIZE, solver_name=map_solver[self.lp_solver])
         self.ressource_id_usage = {
-            k: {i: {} for i in range(len(self.rcpsp_model.calendar_details[k]))}
-            for k in self.rcpsp_model.calendar_details.keys()
+            k: {i: {} for i in range(len(self.problem.calendar_details[k]))}
+            for k in self.problem.calendar_details.keys()
         }
         variables_per_task = {}
         variables_per_individual = {}
@@ -178,12 +188,12 @@ class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
             end = self.rcpsp_schedule[task]["end_time"]
             for k in self.ressource_id_usage:  # typically worker
                 needed_ressource = (
-                    self.rcpsp_model.mode_details[task][self.modes_dict[task]][k] > 0
+                    self.problem.mode_details[task][self.modes_dict[task]][k] > 0
                 )
                 if needed_ressource:
                     for individual in self.ressource_id_usage[k]:
                         available = all(
-                            self.rcpsp_model.calendar_details[k][individual][time]
+                            self.problem.calendar_details[k][individual][time]
                             for time in range(start, end)
                         )
                         if available:
@@ -203,7 +213,7 @@ class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
                                 variables_per_individual[k][individual] = set()
                             variables_per_task[task].add(key_variable)
                             variables_per_individual[k][individual].add(key_variable)
-                    ressource_needed = self.rcpsp_model.mode_details[task][
+                    ressource_needed = self.problem.mode_details[task][
                         self.modes_dict[task]
                     ][k]
                     if k not in constraints_ressource_need:
@@ -250,8 +260,8 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
     def init_model(self, **args):
         self.model = gurobi.Model("Gantt")
         self.ressource_id_usage = {
-            k: {i: {} for i in range(len(self.rcpsp_model.calendar_details[k]))}
-            for k in self.rcpsp_model.calendar_details.keys()
+            k: {i: {} for i in range(len(self.problem.calendar_details[k]))}
+            for k in self.problem.calendar_details.keys()
         }
         variables_per_task = {}
         variables_per_individual = {}
@@ -262,12 +272,12 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
             end = self.rcpsp_schedule[task]["end_time"]
             for k in self.ressource_id_usage:  # typically worker
                 needed_ressource = (
-                    self.rcpsp_model.mode_details[task][self.modes_dict[task]][k] > 0
+                    self.problem.mode_details[task][self.modes_dict[task]][k] > 0
                 )
                 if needed_ressource:
                     for individual in self.ressource_id_usage[k]:
                         available = all(
-                            self.rcpsp_model.calendar_details[k][individual][time]
+                            self.problem.calendar_details[k][individual][time]
                             for time in range(start, end)
                         )
                         if available:
@@ -285,7 +295,7 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
                                 variables_per_individual[k][individual] = set()
                             variables_per_task[task].add(key_variable)
                             variables_per_individual[k][individual].add(key_variable)
-                    ressource_needed = self.rcpsp_model.mode_details[task][
+                    ressource_needed = self.problem.mode_details[task][
                         self.modes_dict[task]
                     ][k]
                     if k not in constraints_ressource_need:

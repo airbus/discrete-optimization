@@ -4,17 +4,11 @@
 
 import logging
 import random
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-import matplotlib.pyplot as plt
 import networkx as nx
 from mip import BINARY, CBC, MINIMIZE, Model, Var, xsum
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    build_aggreg_function_and_params_objective,
-)
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.vrp.solver.lp_vrp_iterative import (
@@ -27,15 +21,7 @@ from discrete_optimization.vrp.solver.lp_vrp_iterative import (
     update_graph,
 )
 from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
-from discrete_optimization.vrp.vrp_model import (
-    BasicCustomer,
-    Customer2D,
-    VrpProblem,
-    VrpProblem2D,
-    VrpSolution,
-    compute_length,
-    length,
-)
+from discrete_optimization.vrp.vrp_model import VrpProblem2D, VrpSolution
 
 logger = logging.getLogger(__name__)
 
@@ -183,30 +169,16 @@ def init_model_lp(
 
 
 class VRPIterativeLP_Pymip(SolverVrp):
-    vrp_model: VrpProblem2D
+    problem: VrpProblem2D
     edges: Set[Edge]
     edges_in_customers: Dict[int, Set[Edge]]
     edges_out_customers: Dict[int, Set[Edge]]
     edges_in_merged_graph: Dict[Node, Set[Edge]]
     edges_out_merged_graph: Dict[Node, Set[Edge]]
     edges_warm_set: Set[Edge]
-
-    def __init__(
-        self,
-        vrp_model: VrpProblem2D,
-        params_objective_function: ParamsObjectiveFunction,
-    ):
-        SolverVrp.__init__(self, vrp_model=vrp_model)
-        self.model: Optional[MyModelMilp] = None
-        self.x_var: Optional[Dict[Edge, Var]] = None
-        self.constraint_on_edge: Optional[Dict[int, Any]] = None
-        (
-            self.aggreg_sol,
-            self.aggreg_dict,
-            self.params_objective_function,
-        ) = build_aggreg_function_and_params_objective(
-            problem=self.vrp_model, params_objective_function=params_objective_function
-        )
+    model: Optional[MyModelMilp] = None
+    x_var: Optional[Dict[Edge, Var]] = None
+    constraint_on_edge: Optional[Dict[int, Any]] = None
 
     def init_model(self, **kwargs: Any) -> None:
         (
@@ -216,17 +188,17 @@ class VRPIterativeLP_Pymip(SolverVrp):
             edges_out_customers,
             edges_in_merged_graph,
             edges_out_merged_graph,
-        ) = build_graph_pruned_vrp(self.vrp_model)
+        ) = build_graph_pruned_vrp(self.problem)
 
         initial_solution = kwargs.get("initial_solution", None)
         if initial_solution is None:
-            solution = self.vrp_model.get_dummy_solution()
+            solution = self.problem.get_dummy_solution()
         else:
             vehicle_tours_b = initial_solution
             solution = VrpSolution(
-                problem=self.vrp_model,
-                list_start_index=self.vrp_model.start_indexes,
-                list_end_index=self.vrp_model.end_indexes,
+                problem=self.problem,
+                list_start_index=self.problem.start_indexes,
+                list_end_index=self.problem.end_indexes,
                 list_paths=vehicle_tours_b,
                 length=None,
                 lengths=None,
@@ -234,7 +206,7 @@ class VRPIterativeLP_Pymip(SolverVrp):
             )
         edges = set(g.edges())
         edges_warm, edges_warm_set = build_warm_edges_and_update_graph(
-            vrp_problem=self.vrp_model,
+            vrp_problem=self.problem,
             vrp_solution=solution,
             graph=g,
             edges=edges,
@@ -260,12 +232,12 @@ class VRPIterativeLP_Pymip(SolverVrp):
             edges_in_merged_graph=edges_in_merged_graph,
             edges_out_merged_graph=edges_out_merged_graph,
             edges_warm_set=edges_warm_set,
-            start_indexes=self.vrp_model.start_indexes,
-            end_indexes=self.vrp_model.end_indexes,
+            start_indexes=self.problem.start_indexes,
+            end_indexes=self.problem.end_indexes,
             do_lns=do_lns,
             fraction=fraction,
-            vehicle_count=self.vrp_model.vehicle_count,
-            vehicle_capacity=self.vrp_model.vehicle_capacities,
+            vehicle_count=self.problem.vehicle_count,
+            vehicle_capacity=self.problem.vehicle_capacities,
             solver_name=solver_name,
         )
         self.model = tsp_model
@@ -312,8 +284,8 @@ class VRPIterativeLP_Pymip(SolverVrp):
         rebuilt_obj: List[float] = []
         best_solution_rebuilt_index = 0
         best_solution_objective_rebuilt = float("inf")
-        vehicle_count = self.vrp_model.vehicle_count
-        customers = self.vrp_model.customers
+        vehicle_count = self.problem.vehicle_count
+        customers = self.problem.customers
         edges_in_customers = self.edges_in_customers
         edges_out_customers = self.edges_out_customers
         edges_in_merged_graph = self.edges_in_merged_graph
@@ -337,7 +309,7 @@ class VRPIterativeLP_Pymip(SolverVrp):
                 solutions=solutions_ll,
                 vehicle_count=vehicle_count,
                 g=g,
-                vrp_problem=self.vrp_model,
+                vrp_problem=self.problem,
             )
             for comp in component_global_all:
                 update_model_2(
@@ -400,12 +372,12 @@ class VRPIterativeLP_Pymip(SolverVrp):
                         edges_in_merged_graph=edges_in_merged_graph,
                         edges_out_merged_graph=edges_out_merged_graph,
                         edges_warm_set=edges_warm_set,
-                        start_indexes=self.vrp_model.start_indexes,
-                        end_indexes=self.vrp_model.end_indexes,
+                        start_indexes=self.problem.start_indexes,
+                        end_indexes=self.problem.end_indexes,
                         do_lns=do_lns,
                         fraction=fraction,
-                        vehicle_count=self.vrp_model.vehicle_count,
-                        vehicle_capacity=self.vrp_model.vehicle_capacities,
+                        vehicle_count=self.problem.vehicle_count,
+                        vehicle_capacity=self.problem.vehicle_capacities,
                         solver_name=solver_name,
                     )
                     self.model = tsp_model
@@ -480,9 +452,9 @@ class VRPIterativeLP_Pymip(SolverVrp):
             )
         logger.debug(f"Best obj : {best_solution_objective_rebuilt}")
         solution = VrpSolution(
-            problem=self.vrp_model,
-            list_start_index=self.vrp_model.start_indexes,
-            list_end_index=self.vrp_model.end_indexes,
+            problem=self.problem,
+            list_start_index=self.problem.start_indexes,
+            list_end_index=self.problem.end_indexes,
             list_paths=[
                 [x[1] for x in rebuilt_solution[best_solution_rebuilt_index][l][1:-1]]
                 for l in sorted(rebuilt_solution[best_solution_rebuilt_index])
@@ -491,8 +463,8 @@ class VRPIterativeLP_Pymip(SolverVrp):
             lengths=None,
             capacities=None,
         )
-        _ = self.vrp_model.evaluate(solution)
-        fit = self.aggreg_sol(solution)
+        _ = self.problem.evaluate(solution)
+        fit = self.aggreg_from_sol(solution)
         return ResultStorage(
             list_solution_fits=[(solution, fit)],
             mode_optim=self.params_objective_function.sense_function,

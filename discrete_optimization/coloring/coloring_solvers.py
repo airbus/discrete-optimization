@@ -108,19 +108,19 @@ def look_for_solver_class(
 
 
 def solve(
-    method: Type[SolverColoring], coloring_model: ColoringProblem, **kwargs: Any
+    method: Type[SolverColoring], problem: ColoringProblem, **kwargs: Any
 ) -> ResultStorage:
     """Solve a coloring instance with a given class of solver.
 
     Args:
         method: class of the solver to use
-        coloring_model: coloring problem instance
+        problem: coloring problem instance
         **args: specific options of the solver
 
     Returns: a ResultsStorage objecting obtained by the solver.
 
     """
-    solver_ = method(coloring_model, **kwargs)
+    solver_ = method(problem, **kwargs)
     try:
         solver_.init_model(**kwargs)
     except AttributeError:
@@ -129,19 +129,19 @@ def solve(
 
 
 def return_solver(
-    method: Type[SolverColoring], coloring_model: ColoringProblem, **kwargs: Any
+    method: Type[SolverColoring], problem: ColoringProblem, **kwargs: Any
 ) -> SolverColoring:
     """Return the solver initialized with the coloring problem instance
 
     Args:
         method: class of the solver to use
-        coloring_model: coloring problem instance
+        problem: coloring problem instance
         **args: specific options of the solver
 
     Returns (SolverDO) : a solver object.
 
     """
-    solver_ = method(coloring_model, **kwargs)
+    solver_ = method(problem, **kwargs)
     try:
         solver_.init_model(**kwargs)
     except AttributeError:
