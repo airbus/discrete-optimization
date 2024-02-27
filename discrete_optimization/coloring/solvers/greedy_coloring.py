@@ -89,7 +89,7 @@ class GreedyColoring(SolverColoring):
         greedy_strategy: NXGreedyColoringMethod = kwargs.get(
             "strategy", NXGreedyColoringMethod.best
         )
-        strategy_name = greedy_strategy.name
+        strategy_name = greedy_strategy.value
         if strategy_name == "best":
             strategies_to_test = strategies
         else:
