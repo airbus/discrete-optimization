@@ -99,6 +99,8 @@ class GPDPSolution(Solution):
 
 
 class GPDP(Problem):
+    MAX_VALUE = 10e9
+
     def __init__(
         self,
         number_vehicle: int,
@@ -302,7 +304,7 @@ class GPDP(Problem):
     def compute_distance(self, path: List[Node]) -> float:
         distance = 0.0
         for i in range(len(path) - 1):
-            distance += self.distance_delta[path[i]][path[i + 1]]
+            distance += self.distance_delta[path[i]].get(path[i + 1], GPDP.MAX_VALUE)
         return distance
 
     def evaluate_function_node(self, node_1: Node, node_2: Node) -> float:
