@@ -2,7 +2,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
+import random
 
+import numpy as np
 import pytest
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
@@ -35,6 +37,12 @@ from discrete_optimization.rcpsp.solver.cpsat_solver import (
     CPSatRCPSPSolver,
     CPSatRCPSPSolverCumulativeResource,
 )
+
+
+@pytest.fixture
+def random_seed():
+    random.seed(0)
+    np.random.seed(0)
 
 
 @pytest.mark.parametrize(
@@ -109,7 +117,7 @@ def test_ortools_resource_optim(model):
     assert rcpsp_problem.satisfy(solution)
 
 
-def test_ortools_with_cb(caplog):
+def test_ortools_with_cb(caplog, random_seed):
     model = "j1201_1.sm"
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
@@ -132,7 +140,7 @@ def test_ortools_with_cb(caplog):
             logging.debug(sol.rcpsp_schedule)
             logging.debug(sol.rcpsp_modes)
 
-    callbacks = [VariablePrinterCallback(), TimerStopper(3)]
+    callbacks = [VariablePrinterCallback(), TimerStopper(2)]
 
     with caplog.at_level(logging.DEBUG):
         result_storage = solver.solve(callbacks=callbacks, parameters_cp=parameters_cp)
