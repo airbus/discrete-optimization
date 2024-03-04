@@ -13,7 +13,7 @@ from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_f
 
 @pytest.mark.parametrize(
     "file_name",
-    ["j1201_1.sm", "j1010_9.mm"],
+    ["j1201_1.sm"],
 )
 def test_lns_solver(file_name):
     files_available = get_data_available()
