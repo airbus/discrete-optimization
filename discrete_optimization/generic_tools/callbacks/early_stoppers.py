@@ -44,7 +44,7 @@ class TimerStopper(Callback):
             current_time = datetime.utcnow()
             difference = current_time - self.initial_training_time
             difference_seconds = difference.total_seconds()
-
+            logger.debug(f"{difference_seconds} seconds elapsed since solve start.")
             if difference_seconds >= self.total_seconds:
                 logger.info(f"{self.__class__.__name__} callback met its criteria")
                 return True
