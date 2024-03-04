@@ -287,15 +287,20 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             graph=graph,
             fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),
         )
-        n3 = NeighborConstraintBreaks(
-            problem=rcpsp_problem,
-            graph=graph,
-            fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),
-            other_constraint_handler=n1,
-        )
-        n_mix = NeighborBuilderMix(
-            list_neighbor=[n1, n2, n3], weight_neighbor=[0.2, 0.5, 0.3]
-        )
+        if rcpsp_problem.includes_special_constraint():
+            n3 = NeighborConstraintBreaks(
+                problem=rcpsp_problem,
+                graph=graph,
+                fraction_subproblem=kwargs.get("fraction_subproblem", 0.05),
+                other_constraint_handler=n1,
+            )
+            n_mix = NeighborBuilderMix(
+                list_neighbor=[n1, n2, n3], weight_neighbor=[0.2, 0.5, 0.3]
+            )
+        else:
+            n_mix = NeighborBuilderMix(
+                list_neighbor=[n1, n2], weight_neighbor=[0.5, 0.5]
+            )
         basic_constraint_builder = BasicConstraintBuilder(
             neighbor_builder=n_mix,
             preemptive=kwargs.get("preemptive", False),
