@@ -86,7 +86,7 @@ def run_decomposed_knapsack_cpsat():
     file = [f for f in get_data_available() if "ks_1000_0" in f][0]
     knapsack_model = parse_file(file)
     solver = KnapsackDecomposedSolver(
-        knapsack_model=knapsack_model,
+        problem=knapsack_model,
         params_objective_function=None,
     )
     params_cp = ParametersCP.default()
