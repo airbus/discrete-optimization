@@ -1099,7 +1099,7 @@ class NeighborConstraintBreaks(NeighborBuilder):
     ):
         if (
             not hasattr(problem, "do_special_constraints")
-            or not problem.do_special_constraints
+            or not problem.includes_special_constraint()
         ):
             raise ValueError(
                 "NeighborConstraintBreaks is meant for problems with special constraints"
