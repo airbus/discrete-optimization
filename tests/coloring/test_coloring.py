@@ -23,10 +23,15 @@ from discrete_optimization.coloring.coloring_solvers import (
     solvers_map,
 )
 from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
+from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
+    ColoringCPSatSolver,
+    ModelingCPSat,
+)
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     TypeAttribute,
@@ -100,6 +105,18 @@ def test_solvers_subset():
         sol, fit = results.get_best_solution_fit()
         print(f"Solver {s}, fitness = {fit}")
         print(f"Evaluation : {coloring_model.evaluate(sol)}")
+
+
+@pytest.mark.parametrize("modeling", [ModelingCPSat.BINARY, ModelingCPSat.INTEGER])
+def test_cpsat_solver(modeling):
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = ColoringCPSatSolver(color_problem)
+    solver.init_model(nb_colors=20, modeling=modeling)
+    p = ParametersCP.default()
+    result_store = solver.solve(parameters_cp=p)
+    solution, fit = result_store.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
 
 
 def test_asp_solver():

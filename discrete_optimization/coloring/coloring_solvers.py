@@ -13,6 +13,10 @@ from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     CPSolverName,
     ParametersCP,
 )
+from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
+    ColoringCPSatSolver,
+    ModelingCPSat,
+)
 from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     ColoringLP,
     ColoringLP_MIP,
@@ -59,7 +63,11 @@ solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
                 "parameters_cp": ParametersCP.default(),
                 "object_output": True,
             },
-        )
+        ),
+        (
+            ColoringCPSatSolver,
+            {"modeling": ModelingCPSat.BINARY, "parameters_cp": ParametersCP.default()},
+        ),
     ],
     "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
     "asp": [(ColoringASPSolver, {"timeout_seconds": 5})],
