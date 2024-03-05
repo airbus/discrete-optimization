@@ -4,6 +4,10 @@
 
 import logging
 
+from discrete_optimization.generic_tools.callbacks.loggers import (
+    NbIterationTracker,
+    ObjectiveLogger,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
@@ -28,7 +32,13 @@ def solve_makespan_with_cp_sat(problem: RCPSPModel):
     parameters_cp.time_limit = 10
     parameters_cp.nr_solutions = 1
     parameters_cp.nb_process = 8
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(
+        callbacks=[
+            ObjectiveLogger(step_verbosity_level=logging.INFO),
+            NbIterationTracker(step_verbosity_level=logging.INFO),
+        ],
+        parameters_cp=parameters_cp,
+    )
     solution, fit = result_storage.get_best_solution_fit()
     plot_task_gantt(rcpsp_model=problem, rcpsp_sol=solution, title="Makespan optim")
     plot_ressource_view(
@@ -43,7 +53,13 @@ def solve_resource_with_cp_sat(problem: RCPSPModel):
     parameters_cp.time_limit = 10
     parameters_cp.nr_solutions = 1
     parameters_cp.nb_process = 8
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(
+        callbacks=[
+            ObjectiveLogger(step_verbosity_level=logging.INFO),
+            NbIterationTracker(step_verbosity_level=logging.INFO),
+        ],
+        parameters_cp=parameters_cp,
+    )
     solution, fit = result_storage.get_best_solution_fit()
     plot_task_gantt(rcpsp_model=problem, rcpsp_sol=solution, title="Resource optim")
     plot_ressource_view(

@@ -49,3 +49,40 @@ class NbIterationTracker(Callback):
         logger.log(
             msg=f"Iteration #{self.nb_iteration}", level=self.step_verbosity_level
         )
+
+
+class ObjectiveLogger(Callback):
+    """
+    Stops the optimization process if a limit training time has been elapsed.
+    This time is checked after each `check_nb_steps` steps.
+    """
+
+    def __init__(
+        self,
+        step_verbosity_level: int = logging.DEBUG,
+        end_verbosity_level: int = logging.INFO,
+    ):
+        """
+
+        Args:
+            step_verbosity_level:
+            end_verbosity_level:
+        """
+        self.step_verbosity_level = step_verbosity_level
+        self.end_verbosity_level = end_verbosity_level
+        self.nb_iteration = 0
+
+    def on_solve_end(self, res: ResultStorage, solver: SolverDO):
+        logger.log(
+            msg=f"Solve finished after {self.nb_iteration} iterations",
+            level=self.end_verbosity_level,
+        )
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: SolverDO
+    ) -> Optional[bool]:
+        self.nb_iteration += 1
+        logger.log(
+            msg=f"Iteration #{self.nb_iteration}, objective={res.get_best_solution_fit()[1]}",
+            level=self.step_verbosity_level,
+        )
