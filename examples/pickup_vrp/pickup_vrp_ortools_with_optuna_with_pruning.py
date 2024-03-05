@@ -104,7 +104,7 @@ def objective(trial: Trial):
     sol, fit = solver.solve(
         callbacks=[
             nb_iteration_stopper,
-            OptunaPruningSingleFitCallback(trial=trial, report_nb_steps=1),
+            OptunaPruningSingleFitCallback(trial=trial, optuna_report_nb_steps=1),
         ]
     ).get_best_solution_fit()
     trial.set_user_attr("n_solutions_found", nb_iteration_stopper.nb_iteration)

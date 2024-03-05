@@ -188,7 +188,9 @@ def test_sa_with_optuna_callback(random_seed):
         _, fit = sa.solve(
             dummy,
             nb_iteration_max=nb_iteration_max,
-            callbacks=[OptunaPruningSingleFitCallback(trial=trial, report_nb_steps=10)],
+            callbacks=[
+                OptunaPruningSingleFitCallback(trial=trial, optuna_report_nb_steps=10)
+            ],
         ).get_best_solution_fit()
         return fit
 

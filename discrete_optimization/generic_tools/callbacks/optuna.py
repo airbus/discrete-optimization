@@ -31,13 +31,15 @@ class OptunaPruningSingleFitCallback(Callback):
         trial:
             A :class:`optuna.trial.Trial` corresponding to the current evaluation of the
             objective function.
-        report_nb_steps: report intermediate result every `report_nb_steps` steps
+        optuna_report_nb_steps: report intermediate result every `optuna_report_nb_steps` steps
             when the number of iterations is high, setting this to 1 could slow too much run of a single trial
 
     """
 
-    def __init__(self, trial: optuna.trial.Trial, report_nb_steps: int) -> None:
-        self.report_nb_steps = report_nb_steps
+    def __init__(
+        self, trial: optuna.trial.Trial, optuna_report_nb_steps: int = 1, **kwargs
+    ) -> None:
+        self.report_nb_steps = optuna_report_nb_steps
         self.trial = trial
 
     def on_step_end(
