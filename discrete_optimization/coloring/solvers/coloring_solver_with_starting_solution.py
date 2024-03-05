@@ -14,11 +14,20 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class SolverColoringWithStartingSolution(SolverColoring):
+    hyperparameters = [
+        CategoricalHyperparameter("greedy_start", choices=[True], default=True),
+        EnumHyperparameter("greedy_method", enum=NXGreedyColoringMethod),
+    ]
+
     def get_starting_solution(self, **kwargs: Any) -> ColoringSolution:
         """Used by the init_model method to provide a greedy first solution
 
