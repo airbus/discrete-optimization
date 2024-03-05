@@ -84,7 +84,7 @@ class OrtoolsCPSatSolver(CPSolver):
         if self.cp_model is None:
             self.init_model(**kwargs)
         if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
+            parameters_cp = ParametersCP.default_cpsat()
         solver = CpSolver()
         solver.parameters.max_time_in_seconds = parameters_cp.time_limit
         solver.parameters.num_workers = parameters_cp.nb_process

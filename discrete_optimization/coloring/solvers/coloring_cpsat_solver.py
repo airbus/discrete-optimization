@@ -15,6 +15,10 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 
 
@@ -24,6 +28,11 @@ class ModelingCPSat(Enum):
 
 
 class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution):
+    hyperparameters = [
+        EnumHyperparameter(name="modeling", enum=ModelingCPSat),
+        CategoricalHyperparameter(name="warmstart", choices=[True, False]),
+    ] + SolverColoringWithStartingSolution.hyperparameters
+
     def __init__(
         self,
         problem: Problem,
@@ -102,6 +111,7 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
         self.variables["used"] = used
 
     def init_model_integer(self, nb_colors: int, **kwargs):
+        used_variable = kwargs.get("used_variable", False)
         cp_model = CpModel()
         variables = [
             cp_model.NewIntVar(0, nb_colors - 1, name=f"c_{i}")
@@ -119,39 +129,63 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
                     == self.problem.constraints_coloring.color_constraint[node]
                 )
         used = [cp_model.NewBoolVar(name=f"used_{c}") for c in range(nb_colors)]
+        if used_variable:
 
-        def add_indicator(vars, value, presence_value, model):
-            bool_vars = []
-            for var in vars:
-                bool_var = model.NewBoolVar("")
-                model.Add(var == value).OnlyEnforceIf(bool_var)
-                model.Add(var != value).OnlyEnforceIf(bool_var.Not())
-                bool_vars.append(bool_var)
-            model.AddMaxEquality(presence_value, bool_vars)
+            def add_indicator(vars, value, presence_value, model):
+                bool_vars = []
+                for var in vars:
+                    bool_var = model.NewBoolVar("")
+                    model.Add(var == value).OnlyEnforceIf(bool_var)
+                    model.Add(var != value).OnlyEnforceIf(bool_var.Not())
+                    bool_vars.append(bool_var)
+                model.AddMaxEquality(presence_value, bool_vars)
 
-        for j in range(nb_colors):
-            if self.problem.use_subset:
-                indexes = self.problem.index_subset_nodes
-                vars = [variables[i] for i in indexes]
-            else:
-                vars = variables
-            add_indicator(vars, j, used[j], cp_model)
-        cp_model.Minimize(sum(used))
+            for j in range(nb_colors):
+                if self.problem.use_subset:
+                    indexes = self.problem.index_subset_nodes
+                    vars = [variables[i] for i in indexes]
+                else:
+                    vars = variables
+                add_indicator(vars, j, used[j], cp_model)
+            cp_model.Minimize(sum(used))
+        else:
+            nbc = cp_model.NewIntVar(0, nb_colors, name="nbcolors")
+            cp_model.AddMaxEquality(
+                nbc, [variables[i] for i in self.problem.index_subset_nodes]
+            )
+            cp_model.Minimize(nbc)
         self.cp_model = cp_model
         self.variables["colors"] = variables
         self.variables["used"] = used
 
+    def set_warmstart(self, solution: ColoringSolution):
+        if self.modeling == ModelingCPSat.INTEGER:
+            self.set_warmstart_integer(solution)
+        if self.modeling == ModelingCPSat.BINARY:
+            self.set_warmstart_integer()
+
+    def set_warm_start_integer(self, solution: ColoringSolution):
+        for i in range(len(solution.colors)):
+            self.cp_model.AddHint(self.variables["colors"][i], solution.colors[i])
+
+    def set_warm_start_binary(self, solution: ColoringSolution):
+        for i in range(len(solution.colors)):
+            c = solution.colors[i]
+            for color in self.variables["colors"][i]:
+                self.cp_model.AddHint(self.variables["colors"][i][color], color == c)
+
     def init_model(self, **args: Any) -> None:
         modeling = args.get("modeling", ModelingCPSat.INTEGER)
+        do_warmstart = args.get("warmstart", True)
         assert isinstance(modeling, ModelingCPSat)
-        if "nb_colors" not in args:
+        if "nb_colors" not in args or do_warmstart:
             solution = self.get_starting_solution(**args)
             nb_colors = self.problem.count_colors_all_index(solution.colors)
-            args["nb_colors"] = nb_colors
-        else:
-            nb_colors = args["nb_colors"]
+            args["nb_colors"] = min(args.get("nb_colors", nb_colors), nb_colors)
         if modeling == ModelingCPSat.BINARY:
             self.init_model_binary(**args)
         if modeling == ModelingCPSat.INTEGER:
             self.init_model_integer(**args)
+        if do_warmstart:
+            self.set_warmstart(solution=solution)
         self.modeling = modeling

@@ -130,6 +130,19 @@ class ParametersCP:
         )
 
     @staticmethod
+    def default_cpsat() -> "ParametersCP":
+        return ParametersCP(
+            time_limit=100,
+            intermediate_solution=True,
+            all_solutions=False,
+            nr_solutions=1000,
+            free_search=False,
+            multiprocess=True,
+            nb_process=6,
+            optimisation_level=1,
+        )
+
+    @staticmethod
     def default_fast_lns() -> "ParametersCP":
         return ParametersCP(
             time_limit=10,
