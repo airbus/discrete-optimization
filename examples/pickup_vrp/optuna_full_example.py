@@ -9,6 +9,7 @@ Results can be viewed on optuna-dashboard with:
 
 """
 import logging
+from collections import defaultdict
 from typing import Any, Dict, List, Type
 
 import optuna
@@ -27,6 +28,9 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
 from discrete_optimization.pickup_vrp.solver.ortools_solver import ORToolsGPDP
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s:%(name)s:%(levelname)s:%(message)s"
+)
 
 
 seed = 42
@@ -43,18 +47,21 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 # Solvers to test
 solvers_to_test: List[Type[SolverDO]] = [ORToolsGPDP]
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = {
-    ORToolsGPDP: dict(
-        one_visit_per_cluster=True,
-        one_visit_per_node=False,
-        include_time_dimension=True,
-        include_demand=True,
-        include_mandatory=True,
-        include_pickup_and_delivery=False,
-        time_limit=20,
-        optuna_report_nb_steps=1,  # nb of steps between OptunaPruningSingleFitCallback reports for current best fit
-    ),
-}
+kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+    dict,  # default kwargs factory for unspecified solvers
+    {
+        ORToolsGPDP: dict(
+            one_visit_per_cluster=True,
+            one_visit_per_node=False,
+            include_time_dimension=True,
+            include_demand=True,
+            include_mandatory=True,
+            include_pickup_and_delivery=False,
+            time_limit=20,
+            optuna_report_nb_steps=1,  # nb of steps between OptunaPruningSingleFitCallback reports for current best fit
+        ),
+    },
+)
 # we need to map the classes to a unique string, to be seen as a categoricale hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
 solvers_by_name: Dict[str, Type[SolverDO]] = {
@@ -114,6 +121,9 @@ def objective(trial: Trial):
             raise optuna.TrialPruned(
                 "Pruning trial identical to a previous failed trial."
             )
+
+    # log start of trial with chosen hyperparameters
+    logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
     # construct kwargs for __init__, init_model, and solve
     kwargs = kwargs_fixed_by_solver[solver_class]
