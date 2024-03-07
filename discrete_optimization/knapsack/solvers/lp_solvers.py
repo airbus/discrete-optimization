@@ -3,24 +3,19 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import mip
 from mip import BINARY, MAXIMIZE, xsum
 from ortools.algorithms.python import knapsack_solver
 from ortools.linear_solver import pywraplp
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-    TupleFitness,
-)
-from discrete_optimization.generic_tools.do_solver import ResultStorage, SolverDO
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
-    ParametersMilp,
     PymipMilpSolver,
     map_solver,
 )
@@ -62,39 +57,27 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         self.description_variable_description: Dict[str, Dict[str, Any]] = {}
         self.description_constraint: Dict[str, Dict[str, str]] = {}
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
-            weight = 0.0
-            value_kp = 0.0
-            xs = {}
-            for (
-                variable_decision_key,
-                variable_decision_value,
-            ) in self.variable_decision["x"].items():
-                value = self.get_var_value_for_ith_solution(variable_decision_value, s)
-                if value <= 0.1:
-                    xs[variable_decision_key] = 0
-                    continue
-                xs[variable_decision_key] = 1
-                weight += self.problem.index_to_item[variable_decision_key].weight
-                value_kp += self.problem.index_to_item[variable_decision_key].value
+    def retrieve_ith_solution(self, i: int) -> KnapsackSolution:
+        weight = 0.0
+        value_kp = 0.0
+        xs = {}
+        for (
+            variable_decision_key,
+            variable_decision_value,
+        ) in self.variable_decision["x"].items():
+            value = self.get_var_value_for_ith_solution(variable_decision_value, i)
+            if value <= 0.1:
+                xs[variable_decision_key] = 0
+                continue
+            xs[variable_decision_key] = 1
+            weight += self.problem.index_to_item[variable_decision_key].weight
+            value_kp += self.problem.index_to_item[variable_decision_key].value
 
-            solution = KnapsackSolution(
-                problem=self.problem,
-                value=value_kp,
-                weight=weight,
-                list_taken=[xs[e] for e in sorted(xs)],
-            )
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
+        return KnapsackSolution(
+            problem=self.problem,
+            value=value_kp,
+            weight=weight,
+            list_taken=[xs[e] for e in sorted(xs)],
         )
 
 
@@ -139,10 +122,6 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
         self.model.setParam(GRB.Param.PoolSolutions, 10000)
         self.model.setParam("MIPGapAbs", 0.00001)
         self.model.setParam("MIPGap", 0.00000001)
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _BaseLPKnapsack.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
 class LPKnapsackCBC(SolverKnapsack):
@@ -296,10 +275,6 @@ class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
             xsum([weight[i] * x[i] for i in x]) <= max_capacity, name="capacity_constr"
         )
         self.model.update()
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _BaseLPKnapsack.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
 class KnapsackORTools(SolverKnapsack):

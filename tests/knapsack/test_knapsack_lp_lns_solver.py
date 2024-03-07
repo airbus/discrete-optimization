@@ -4,6 +4,7 @@
 
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -13,12 +14,7 @@ from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
     InitialKnapsackMethod,
     InitialKnapsackSolution,
 )
-from discrete_optimization.knapsack.solvers.lp_solvers import (
-    KnapsackModel,
-    LPKnapsack,
-    MilpSolverName,
-    ParametersMilp,
-)
+from discrete_optimization.knapsack.solvers.lp_solvers import KnapsackModel, LPKnapsack
 
 
 def test_knapsack_lns():

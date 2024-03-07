@@ -4,7 +4,7 @@
 
 import logging
 import random
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 from mip import BINARY, MINIMIZE, Model, xsum
@@ -17,12 +17,8 @@ from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
-    ParametersMilp,
     PymipMilpSolver,
     map_solver,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
@@ -127,33 +123,26 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
         cliques = [c for c in nx.find_cliques(self.graph_intersection_time)]
         self.cliques = cliques
         self.sense_optim = ModeOptim.MINIMIZATION
+        self.params_objective_function.sense_function = self.sense_optim
         self.constraint_additionnal = {}
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits = []
-        for s in range(n_solutions):
-            objective = self.get_obj_value_for_ith_solution(s)
-            resource_id_usage = {
-                k: {
-                    individual: {
-                        task: self.get_var_value_for_ith_solution(resource_usage, s)
-                        for task, resource_usage in self.ressource_id_usage[k][
-                            individual
-                        ].items()
-                    }
-                    for individual in self.ressource_id_usage[k]
+    def retrieve_ith_solution(
+        self, i: int
+    ) -> Tuple[Dict[Any, Dict[Any, Dict[Any, Any]]], float]:
+        objective = self.get_obj_value_for_ith_solution(i)
+        resource_id_usage = {
+            k: {
+                individual: {
+                    task: self.get_var_value_for_ith_solution(resource_usage, i)
+                    for task, resource_usage in self.ressource_id_usage[k][
+                        individual
+                    ].items()
                 }
-                for k in self.ressource_id_usage
+                for individual in self.ressource_id_usage[k]
             }
-            list_solution_fits.append((resource_id_usage, objective))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.sense_optim,
-        )
+            for k in self.ressource_id_usage
+        }
+        return (resource_id_usage, objective)
 
 
 class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
@@ -409,31 +398,23 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
             ]
             self.model.update()
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits = []
-        for s in range(n_solutions):
-            objective = self.get_pool_obj_value_for_ith_solution(s)
-            resource_id_usage = {
-                k: {
-                    individual: {
-                        task: self.get_var_value_for_ith_solution(resource_usage, s)
-                        for task, resource_usage in self.ressource_id_usage[k][
-                            individual
-                        ].items()
-                    }
-                    for individual in self.ressource_id_usage[k]
+    def retrieve_ith_solution(
+        self, i: int
+    ) -> Tuple[Dict[Any, Dict[Any, Dict[Any, Any]]], float]:
+        objective = self.get_pool_obj_value_for_ith_solution(i)
+        resource_id_usage = {
+            k: {
+                individual: {
+                    task: self.get_var_value_for_ith_solution(resource_usage, i)
+                    for task, resource_usage in self.ressource_id_usage[k][
+                        individual
+                    ].items()
                 }
-                for k in self.ressource_id_usage
+                for individual in self.ressource_id_usage[k]
             }
-            list_solution_fits.append((resource_id_usage, objective))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.sense_optim,
-        )
+            for k in self.ressource_id_usage
+        }
+        return (resource_id_usage, objective)
 
     def build_objective_function_from_a_solution(
         self,

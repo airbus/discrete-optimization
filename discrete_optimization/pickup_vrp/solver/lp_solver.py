@@ -822,29 +822,22 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         reevaluate_result(temporaryresult, problem=self.problem)
         return temporaryresult
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+    def retrieve_solutions(
+        self, parameters_milp: ParametersMilp, **kwargs: Any
+    ) -> ResultStorage:
+        kwargs["limit_store"] = False
+        return super().retrieve_solutions(parameters_milp=parameters_milp, **kwargs)
+
+    def retrieve_ith_solution(self, i: int) -> GPDPSolution:
         """
 
         Not used here as GurobiMilpSolver.solve() is overriden
 
 
         """
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
-            temporaryresult = self.retrieve_ith_temporaryresult(i=s)
-            solution = convert_temporaryresult_to_gpdpsolution(
-                temporaryresult=temporaryresult, problem=self.problem
-            )
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            limit_store=False,
-            mode_optim=self.params_objective_function.sense_function,
+        temporaryresult = self.retrieve_ith_temporaryresult(i=i)
+        return convert_temporaryresult_to_gpdpsolution(
+            temporaryresult=temporaryresult, problem=self.problem
         )
 
     def solve_one_iteration(

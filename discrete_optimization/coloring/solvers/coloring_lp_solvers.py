@@ -6,7 +6,7 @@
 
 import logging
 import sys
-from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
+from typing import Any, Dict, Hashable, Optional, Tuple, Union
 
 import mip
 import networkx as nx
@@ -21,21 +21,13 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
-    ParametersMilp,
     PymipMilpSolver,
     map_solver,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-    TupleFitness,
 )
 
 try:
@@ -107,30 +99,18 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution: Optional[ColoringSolution] = None
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
-            colors = [0] * self.number_of_nodes
-            for (
-                variable_decision_key,
-                variable_decision_value,
-            ) in self.variable_decision["colors_var"].items():
-                value = self.get_var_value_for_ith_solution(variable_decision_value, s)
-                if value >= 0.5:
-                    node = variable_decision_key[0]
-                    color = variable_decision_key[1]
-                    colors[self.index_nodes_name[node]] = color
-            solution = ColoringSolution(self.problem, colors)
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.sense_optim,
-        )
+    def retrieve_ith_solution(self, i: int) -> ColoringSolution:
+        colors = [0] * self.number_of_nodes
+        for (
+            variable_decision_key,
+            variable_decision_value,
+        ) in self.variable_decision["colors_var"].items():
+            value = self.get_var_value_for_ith_solution(variable_decision_value, i)
+            if value >= 0.5:
+                node = variable_decision_key[0]
+                color = variable_decision_key[1]
+                colors[self.index_nodes_name[node]] = color
+        return ColoringSolution(self.problem, colors)
 
     def get_range_color(self, node_name, range_color_subset, range_color_all):
         if self.problem.has_constraints_coloring:
@@ -304,10 +284,6 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
             "descr": "no neighbors can have same color"
         }
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _BaseColoringLP.retrieve_solutions(self, parameters_milp=parameters_milp)
-
 
 class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
     """Coloring LP solver based on pymip library.
@@ -468,7 +444,3 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
         self.description_constraint["constraints_neighbors"] = {
             "descr": "no neighbors can have same color"
         }
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _BaseColoringLP.retrieve_solutions(self, parameters_milp=parameters_milp)
