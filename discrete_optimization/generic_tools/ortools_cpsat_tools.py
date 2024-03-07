@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 class OrtoolsCPSatSolver(CPSolver):
     """Generic ortools cp-sat solver."""
 
-    cp_model: Optional[CpModel]
+    cp_model: Optional[CpModel] = None
+    early_stopping_exception: Optional[Exception] = None
 
     @abstractmethod
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
@@ -77,6 +78,7 @@ class OrtoolsCPSatSolver(CPSolver):
         This ortools callback use the method `self.retrieve_solution()` to reconstruct a do Solution from the cpsat solve internal state.
 
         """
+        self.early_stopping_exception = None
         callbacks_list = CallbackList(callbacks=callbacks)
         callbacks_list.on_solve_start(solver=self)
         if self.cp_model is None:
@@ -87,16 +89,13 @@ class OrtoolsCPSatSolver(CPSolver):
         solver.parameters.max_time_in_seconds = parameters_cp.time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
         ortools_callback = OrtoolsCallback(do_solver=self, callback=callbacks_list)
-        try:
-            status = solver.Solve(self.cp_model, ortools_callback)
-            self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
-        except SolveEarlyStop as e:
-            logger.info(e)
-            if ortools_callback.nb_solutions > 0:
-                status = StatusSolver.SATISFIED
+        status = solver.Solve(self.cp_model, ortools_callback)
+        self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
+        if self.early_stopping_exception:
+            if isinstance(self.early_stopping_exception, SolveEarlyStop):
+                logger.info(self.early_stopping_exception)
             else:
-                status = StatusSolver.UNSATISFIABLE
-            self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
+                raise self.early_stopping_exception
         res = ortools_callback.res
         callbacks_list.on_solve_end(res=res, solver=self)
         return res
@@ -118,13 +117,20 @@ class OrtoolsCallback(CpSolverSolutionCallback):
         self.store_current_solution()
         self.nb_solutions += 1
         # end of step callback: stopping?
-        stopping = self.callback.on_step_end(
-            step=self.nb_solutions, res=self.res, solver=self.do_solver
-        )
-        if stopping:
-            raise SolveEarlyStop(
-                f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
+        try:
+            stopping = self.callback.on_step_end(
+                step=self.nb_solutions, res=self.res, solver=self.do_solver
             )
+        except Exception as e:
+            self.do_solver.early_stopping_exception = e
+            stopping = True
+        else:
+            if stopping:
+                self.do_solver.early_stopping_exception = SolveEarlyStop(
+                    f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
+                )
+        if stopping:
+            self.StopSearch()
 
     def store_current_solution(self):
         sol = self.do_solver.retrieve_solution(cpsolvercb=self)
