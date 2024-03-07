@@ -31,6 +31,9 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
     hyperparameters = [
         EnumHyperparameter(name="modeling", enum=ModelingCPSat),
         CategoricalHyperparameter(name="warmstart", choices=[True, False]),
+        CategoricalHyperparameter(name="value_sequence_chain", choices=[True, False]),
+        CategoricalHyperparameter(name="used_variable", choices=[True, False]),
+        CategoricalHyperparameter(name="symmetry_on_used", choices=[True, False]),
     ] + SolverColoringWithStartingSolution.hyperparameters
 
     def __init__(
@@ -112,6 +115,8 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
 
     def init_model_integer(self, nb_colors: int, **kwargs):
         used_variable = kwargs.get("used_variable", False)
+        value_sequence_chain = kwargs.get("value_sequence_chain", False)
+        symmetry_on_used = kwargs.get("symmetry_on_used", True)
         cp_model = CpModel()
         variables = [
             cp_model.NewIntVar(0, nb_colors - 1, name=f"c_{i}")
@@ -128,6 +133,17 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
                     variables[ind]
                     == self.problem.constraints_coloring.color_constraint[node]
                 )
+        if value_sequence_chain:
+            vars = [variables[i] for i in self.problem.index_subset_nodes]
+            sliding_max = [
+                cp_model.NewIntVar(0, min(i, nb_colors), name=f"m_{i}")
+                for i in range(len(vars))
+            ]
+            cp_model.Add(vars[0] == sliding_max[0])
+            self.variables["sliding_max"] = sliding_max
+            for k in range(1, len(vars)):
+                cp_model.AddMaxEquality(sliding_max[k], [sliding_max[k - 1], vars[k]])
+                cp_model.Add(sliding_max[k] <= sliding_max[k - 1] + 1)
         used = [cp_model.NewBoolVar(name=f"used_{c}") for c in range(nb_colors)]
         if used_variable:
 
@@ -147,6 +163,9 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
                 else:
                     vars = variables
                 add_indicator(vars, j, used[j], cp_model)
+            if symmetry_on_used:
+                for j in range(nb_colors - 1):
+                    cp_model.Add(used[j] >= used[j + 1])
             cp_model.Minimize(sum(used))
         else:
             nbc = cp_model.NewIntVar(0, nb_colors, name="nbcolors")

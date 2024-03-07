@@ -31,10 +31,16 @@ logging.basicConfig(level=logging.INFO)
 
 def run_cpsat_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_100_7" in f][0]
+    file = [f for f in get_data_available() if "gc_250_3" in f][0]
     color_problem = parse_file(file)
     solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
-    solver.init_model(modeling=ModelingCPSat.BINARY, warmstart=True)
+    solver.init_model(
+        modeling=ModelingCPSat.INTEGER,
+        warmstart=False,
+        value_sequence_chain=False,
+        used_variable=True,
+        symmetry_on_used=True,
+    )
     p = ParametersCP.default_cpsat()
     p.time_limit = 100
     logging.info("Starting solve")

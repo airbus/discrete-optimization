@@ -28,6 +28,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 )
 from discrete_optimization.generic_tools.callbacks.optuna import (
     OptunaPruningSingleFitCallback,
+    OptunaReportSingleFitCallback,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
@@ -40,7 +41,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(mess
 seed = 42
 optuna_nb_trials = 150
 
-study_name = f"coloring_cpsat-auto-250---"
+study_name = f"coloring_cpsat-auto-250-7"
 storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 # Solvers to test and their associated kwargs
@@ -61,7 +62,7 @@ solvers_by_name: Dict[str, Type[SolverDO]] = {
 }
 
 # problem definition
-file = [f for f in get_data_available() if "gc_250_5" in f][0]
+file = [f for f in get_data_available() if "gc_250_7" in f][0]
 problem = parse_file(file)
 
 # sense of optimization
@@ -123,7 +124,8 @@ def objective(trial: Trial):
     # solve
     sol, fit = solver.solve(
         callbacks=[
-            OptunaPruningSingleFitCallback(trial=trial, **kwargs),
+            OptunaReportSingleFitCallback(trial=trial, **kwargs)
+            # OptunaPruningSingleFitCallback(trial=trial, **kwargs),
         ],
         **kwargs,
     ).get_best_solution_fit()
