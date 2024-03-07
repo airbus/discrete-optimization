@@ -41,14 +41,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(mess
 seed = 42
 optuna_nb_trials = 150
 
-study_name = f"coloring_cpsat-auto-250-7"
+study_name = f"coloring_cpsat-auto-250_7"
 storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 # Solvers to test and their associated kwargs
 solvers_to_test: List[Type[SolverDO]] = [ColoringCPSatSolver]
 
 p = ParametersCP.default_cpsat()
-p.nb_process = 1
+p.nb_process = 6
 p.time_limit = 10
 kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
@@ -124,8 +124,8 @@ def objective(trial: Trial):
     # solve
     sol, fit = solver.solve(
         callbacks=[
-            OptunaReportSingleFitCallback(trial=trial, **kwargs)
-            # OptunaPruningSingleFitCallback(trial=trial, **kwargs),
+            # OptunaReportSingleFitCallback(trial=trial, **kwargs)
+            OptunaPruningSingleFitCallback(trial=trial, **kwargs),
         ],
         **kwargs,
     ).get_best_solution_fit()
