@@ -9,6 +9,7 @@ Results can be viewed on optuna-dashboard with:
 
 """
 import logging
+from collections import defaultdict
 from typing import Any, Dict, List, Type
 
 import optuna
@@ -22,6 +23,9 @@ from discrete_optimization.coloring.coloring_parser import (
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.callbacks.optuna import (
     OptunaPruningSingleFitCallback,
 )
@@ -30,6 +34,7 @@ from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
 
 
 seed = 42
@@ -38,9 +43,17 @@ optuna_nb_trials = 150
 study_name = f"coloring_cpsat-auto-250---"
 storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
-# Solvers to test
+# Solvers to test and their associated kwargs
 solvers_to_test: List[Type[SolverDO]] = [ColoringCPSatSolver]
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = {ColoringCPSatSolver: {}}
+
+p = ParametersCP.default_cpsat()
+p.nb_process = 1
+p.time_limit = 10
+kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+    dict,  # default kwargs for unspecified solvers
+    {ColoringCPSatSolver: dict(parameters_cp=p)},
+)
+
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
 solvers_by_name: Dict[str, Type[SolverDO]] = {
@@ -99,18 +112,16 @@ def objective(trial: Trial):
                 "Pruning trial identical to a previous failed trial."
             )
 
+    logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
+
     # construct kwargs for __init__, init_model, and solve
     kwargs = kwargs_fixed_by_solver[solver_class]
     kwargs.update(dict(zip(hyperparameters_names, hyperparameters_values)))
     # solver init
     solver = solver_class(problem=problem, **kwargs)
     solver.init_model(**kwargs)
-    p = ParametersCP.default_cpsat()
-    p.nb_process = 4
-    p.time_limit = 10
     # solve
     sol, fit = solver.solve(
-        parameters_cp=p,
         callbacks=[
             OptunaPruningSingleFitCallback(trial=trial, **kwargs),
         ],
