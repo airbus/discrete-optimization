@@ -5,12 +5,11 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import mip
 import numpy as np
 import numpy.typing as npt
-from deprecation import deprecated
 from ortools.linear_solver import pywraplp
 
 from discrete_optimization.facility.facility_model import (
@@ -18,10 +17,7 @@ from discrete_optimization.facility.facility_model import (
     FacilitySolution,
 )
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
@@ -32,7 +28,6 @@ from discrete_optimization.generic_tools.lp_tools import (
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
-    TupleFitness,
 )
 
 logger = logging.getLogger(__name__)
@@ -141,35 +136,21 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
         }
         self.description_constraint: Dict[str, Dict[str, str]] = {}
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
-            facility_for_customer = [0] * self.problem.customer_count
-            for (
-                variable_decision_key,
-                variable_decision_value,
-            ) in self.variable_decision["x"].items():
-                if not isinstance(variable_decision_value, int):
-                    value = self.get_var_value_for_ith_solution(
-                        variable_decision_value, s
-                    )
-                else:
-                    value = variable_decision_value
-                if value >= 0.5:
-                    f = variable_decision_key[0]
-                    c = variable_decision_key[1]
-                    facility_for_customer[c] = f
-            solution = FacilitySolution(self.problem, facility_for_customer)
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+    def retrieve_ith_solution(self, i: int) -> FacilitySolution:
+        facility_for_customer = [0] * self.problem.customer_count
+        for (
+            variable_decision_key,
+            variable_decision_value,
+        ) in self.variable_decision["x"].items():
+            if not isinstance(variable_decision_value, int):
+                value = self.get_var_value_for_ith_solution(variable_decision_value, i)
+            else:
+                value = variable_decision_value
+            if value >= 0.5:
+                f = variable_decision_key[0]
+                c = variable_decision_key[1]
+                facility_for_customer[c] = f
+        return FacilitySolution(self.problem, facility_for_customer)
 
 
 class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
@@ -276,12 +257,6 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         }
         self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
         logger.info("Initialized")
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _LPFacilitySolverBase.retrieve_solutions(
-            self, parameters_milp=parameters_milp
-        )
 
 
 class LP_Facility_Solver_CBC(SolverFacility):
@@ -536,9 +511,3 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
             }
         }
         logger.info("Initialized")
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _LPFacilitySolverBase.retrieve_solutions(
-            self, parameters_milp=parameters_milp
-        )

@@ -277,104 +277,89 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
             )
         self.model.objective = self.start_times_task[max(self.start_times_task)]
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits = []
-        for s in range(n_solutions):
-            rcpsp_schedule = {}
-            modes = {}
-            results = {}
-            employee_usage = {}
-            employee_usage_solution = {}
-            for task in self.start_times:
-                for mode in self.start_times[task]:
-                    for t, start_time in self.start_times[task][mode].items():
-                        value = self.get_var_value_for_ith_solution(start_time, s)
-                        results[(task, mode, t)] = value
-                        if value >= 0.5:
-                            rcpsp_schedule[task] = {
-                                "start_time": int(t),
-                                "end_time": int(
-                                    t
-                                    + self.problem.mode_details[task][mode]["duration"]
-                                ),
-                            }
-                            modes[task] = mode
-            for t in self.employee_usage:
-                employee_usage[t] = self.get_var_value_for_ith_solution(
-                    self.employee_usage[t], s
-                )
-                if employee_usage[t] >= 0.5:
-                    if t[1] not in employee_usage_solution:
-                        employee_usage_solution[t[1]] = {}
-                    if t[0] not in employee_usage_solution[t[1]]:
-                        employee_usage_solution[t[1]][t[0]] = set()
-                    employee_usage_solution[t[1]][t[0]].add(t[4])
-                    # (employee, task, mode, time, skill)
+    def retrieve_ith_solution(self, i: int) -> MS_RCPSPSolution:
+        rcpsp_schedule = {}
+        modes = {}
+        results = {}
+        employee_usage = {}
+        employee_usage_solution = {}
+        for task in self.start_times:
+            for mode in self.start_times[task]:
+                for t, start_time in self.start_times[task][mode].items():
+                    value = self.get_var_value_for_ith_solution(start_time, i)
+                    results[(task, mode, t)] = value
+                    if value >= 0.5:
+                        rcpsp_schedule[task] = {
+                            "start_time": int(t),
+                            "end_time": int(
+                                t + self.problem.mode_details[task][mode]["duration"]
+                            ),
+                        }
+                        modes[task] = mode
+        for t in self.employee_usage:
+            employee_usage[t] = self.get_var_value_for_ith_solution(
+                self.employee_usage[t], i
+            )
+            if employee_usage[t] >= 0.5:
+                if t[1] not in employee_usage_solution:
+                    employee_usage_solution[t[1]] = {}
+                if t[0] not in employee_usage_solution[t[1]]:
+                    employee_usage_solution[t[1]][t[0]] = set()
+                employee_usage_solution[t[1]][t[0]].add(t[4])
+                # (employee, task, mode, time, skill)
 
-            modes = {}
-            modes_task = {}
-            for t in self.modes:
-                for m, mode in self.modes[t].items():
-                    modes[(t, m)] = self.get_var_value_for_ith_solution(mode, s)
-                    if modes[(t, m)] >= 0.5:
-                        modes_task[t] = m
-            durations = {}
-            for t in self.durations:
-                durations[t] = self.get_var_value_for_ith_solution(self.durations[t], s)
-            start_time = {}
-            for t in self.start_times_task:
-                start_time[t] = self.get_var_value_for_ith_solution(
-                    self.start_times_task[t], s
-                )
-            end_time = {}
-            for t in self.start_times_task:
-                end_time[t] = self.get_var_value_for_ith_solution(
-                    self.end_times_task[t], s
-                )
-            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
-            logger.debug(
-                (
-                    "results",
-                    "(task, mode, time)",
-                    {x: results[x] for x in results if results[x] == 1.0},
-                )
+        modes = {}
+        modes_task = {}
+        for t in self.modes:
+            for m, mode in self.modes[t].items():
+                modes[(t, m)] = self.get_var_value_for_ith_solution(mode, i)
+                if modes[(t, m)] >= 0.5:
+                    modes_task[t] = m
+        durations = {}
+        for t in self.durations:
+            durations[t] = self.get_var_value_for_ith_solution(self.durations[t], i)
+        start_time = {}
+        for t in self.start_times_task:
+            start_time[t] = self.get_var_value_for_ith_solution(
+                self.start_times_task[t], i
             )
-            logger.debug(
-                (
-                    "Employee usage : ",
-                    "(employee, task, mode, time, skill)",
-                    {
-                        x: employee_usage[x]
-                        for x in employee_usage
-                        if employee_usage[x] == 1.0
-                    },
-                )
+        end_time = {}
+        for t in self.start_times_task:
+            end_time[t] = self.get_var_value_for_ith_solution(self.end_times_task[t], i)
+        logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
+        logger.debug(
+            (
+                "results",
+                "(task, mode, time)",
+                {x: results[x] for x in results if results[x] == 1.0},
             )
-            logger.debug(
-                (
-                    "task mode : ",
-                    "(task, mode)",
-                    {t: modes[t] for t in modes if modes[t] == 1.0},
-                )
+        )
+        logger.debug(
+            (
+                "Employee usage : ",
+                "(employee, task, mode, time, skill)",
+                {
+                    x: employee_usage[x]
+                    for x in employee_usage
+                    if employee_usage[x] == 1.0
+                },
             )
-            logger.debug(f"durations : {durations}")
-            logger.debug(f"Start time {start_time}")
-            logger.debug(f"End time {end_time}")
-            solution = MS_RCPSPSolution(
-                problem=self.problem,
-                modes=modes_task,
-                schedule=rcpsp_schedule,
-                employee_usage=employee_usage_solution,
+        )
+        logger.debug(
+            (
+                "task mode : ",
+                "(task, mode)",
+                {t: modes[t] for t in modes if modes[t] == 1.0},
             )
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
+        )
+        logger.debug(f"durations : {durations}")
+        logger.debug(f"Start time {start_time}")
+        logger.debug(f"End time {end_time}")
+        return MS_RCPSPSolution(
+            problem=self.problem,
+            modes=modes_task,
+            schedule=rcpsp_schedule,
+            employee_usage=employee_usage_solution,
         )
 
     def solve(

@@ -5,11 +5,15 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple, Union
 
 import mip
 
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
+    TupleFitness,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -84,7 +88,37 @@ class MilpSolver(SolverDO):
         ...
 
     @abstractmethod
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+    def retrieve_solutions(
+        self, parameters_milp: ParametersMilp, **kwargs
+    ) -> ResultStorage:
+        """Retrieve solutions found by internal solver.
+
+        Args:
+            parameters_milp:
+            **kwargs: passed to ResultStorage.__init__()
+
+        Returns:
+
+        """
+        if parameters_milp.retrieve_all_solution:
+            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+        else:
+            n_solutions = 1
+        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        for i in range(n_solutions):
+            solution = self.retrieve_ith_solution(i=i)
+            fit = self.aggreg_from_sol(solution)
+            list_solution_fits.append((solution, fit))
+            return ResultStorage(
+                list_solution_fits=list_solution_fits,
+                mode_optim=self.params_objective_function.sense_function,
+                best_solution=min(list_solution_fits, key=lambda x: x[1])[0],
+                **kwargs,
+            )
+
+    @abstractmethod
+    def retrieve_ith_solution(self, i: int) -> Solution:
+        """Retrieve i-th solution from internal milp model."""
         ...
 
     @abstractmethod
@@ -270,6 +304,10 @@ class GurobiMilpSolver(MilpSolver):
             return 0
         else:
             return self.model.SolCount
+
+
+def gurobi_callback(model, where):
+    ...
 
 
 class CplexMilpSolver(MilpSolver):

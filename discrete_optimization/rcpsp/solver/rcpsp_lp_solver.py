@@ -21,7 +21,7 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, Solution, TupleFitness
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_solution import PartialSolution, RCPSPSolution
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     GreedyChoice,
@@ -258,35 +258,21 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
                     ]
             self.constraints_partial_solutions = constraints
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
-            rcpsp_schedule = {}
-            for (task_index, time) in product(self.index_task, self.index_time):
-                value = self.get_var_value_for_ith_solution(self.x[task_index][time], s)
-                if value >= 0.5:
-                    task = self.problem.tasks_list[task_index]
-                    rcpsp_schedule[task] = {
-                        "start_time": time,
-                        "end_time": time
-                        + self.problem.mode_details[task][1]["duration"],
-                    }
-            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
-            solution = RCPSPSolution(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_schedule_feasible=True,
-            )
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits += [(solution, fit)]
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            best_solution=min(list_solution_fits, key=lambda x: x[1])[0],
-            mode_optim=self.params_objective_function.sense_function,
+    def retrieve_ith_solution(self, i: int) -> RCPSPSolution:
+        rcpsp_schedule = {}
+        for (task_index, time) in product(self.index_task, self.index_time):
+            value = self.get_var_value_for_ith_solution(self.x[task_index][time], i)
+            if value >= 0.5:
+                task = self.problem.tasks_list[task_index]
+                rcpsp_schedule[task] = {
+                    "start_time": time,
+                    "end_time": time + self.problem.mode_details[task][1]["duration"],
+                }
+        logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
+        return RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_schedule_feasible=True,
         )
 
 
@@ -306,38 +292,24 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp):
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
-            rcpsp_schedule = {}
-            modes: Dict[Hashable, Union[str, int]] = {}
-            for (task, mode, t), x in self.x.items():
-                value = self.get_var_value_for_ith_solution(x, s)
-                if value >= 0.5:
-                    rcpsp_schedule[task] = {
-                        "start_time": t,
-                        "end_time": t
-                        + self.problem.mode_details[task][mode]["duration"],
-                    }
-                    modes[task] = mode
-            logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
-            modes_vec = [modes[k] for k in self.problem.tasks_list_non_dummy]
-            solution = RCPSPSolution(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=modes_vec,
-                rcpsp_schedule_feasible=True,
-            )
-            fit = self.aggreg_from_sol(solution)
-            list_solution_fits += [(solution, fit)]
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            best_solution=min(list_solution_fits, key=lambda x: x[1])[0],
-            mode_optim=self.params_objective_function.sense_function,
+    def retrieve_ith_solution(self, i: int) -> RCPSPSolution:
+        rcpsp_schedule = {}
+        modes: Dict[Hashable, Union[str, int]] = {}
+        for (task, mode, t), x in self.x.items():
+            value = self.get_var_value_for_ith_solution(x, i)
+            if value >= 0.5:
+                rcpsp_schedule[task] = {
+                    "start_time": t,
+                    "end_time": t + self.problem.mode_details[task][mode]["duration"],
+                }
+                modes[task] = mode
+        logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
+        modes_vec = [modes[k] for k in self.problem.tasks_list_non_dummy]
+        return RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=modes_vec,
+            rcpsp_schedule_feasible=True,
         )
 
 
@@ -567,10 +539,6 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
         return super().solve(parameters_milp=parameters_milp, **kwargs)
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _BaseLP_MRCPSP.retrieve_solutions(self, parameters_milp=parameters_milp)
 
 
 class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
@@ -843,10 +811,6 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
             self.init_model(greedy_start=False, **kwargs)
         return super().solve(parameters_milp=parameters_milp, **kwargs)
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitly the method to be sure getting the proper one
-        return _BaseLP_MRCPSP.retrieve_solutions(self, parameters_milp=parameters_milp)
-
 
 class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
     def init_model(self, **args):
@@ -1040,7 +1004,3 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
         return super().solve(parameters_milp=parameters_milp, **kwargs)
-
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        # We call explicitely the method to be sure getting the proper one
-        return _BaseLP_MRCPSP.retrieve_solutions(self, parameters_milp=parameters_milp)
