@@ -346,6 +346,9 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
                 for mode in self.problem.mode_details[task]
                 if self.problem.mode_details[task][mode].get(resource, 0) > 0
             ]
+            if len(task_modes_consuming) == 0:
+                # when empty, the constraints don't work !
+                return
             fake_task_res = [
                 (
                     model.NewFixedSizeIntervalVar(
@@ -481,6 +484,9 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
                 for mode in self.problem.mode_details[task]
                 if self.problem.mode_details[task][mode].get(resource, 0) > 0
             ]
+            if len(task_modes_consuming) == 0:
+                # when empty, the constraints don't work !
+                return
             fake_task_res = [
                 (
                     model.NewFixedSizeIntervalVar(
