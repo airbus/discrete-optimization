@@ -5,7 +5,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import mip
 import numpy as np
@@ -136,14 +136,18 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
         }
         self.description_constraint: Dict[str, Dict[str, str]] = {}
 
-    def retrieve_ith_solution(self, i: int) -> FacilitySolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> FacilitySolution:
         facility_for_customer = [0] * self.problem.customer_count
         for (
             variable_decision_key,
             variable_decision_value,
         ) in self.variable_decision["x"].items():
             if not isinstance(variable_decision_value, int):
-                value = self.get_var_value_for_ith_solution(variable_decision_value, i)
+                value = get_var_value_for_current_solution(variable_decision_value)
             else:
                 value = variable_decision_value
             if value >= 0.5:

@@ -5,12 +5,17 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import mip
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
     TupleFitness,
 )
@@ -24,6 +29,7 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
+    GRB = gurobipy.GRB
 
 try:
     import docplex
@@ -116,13 +122,55 @@ class MilpSolver(SolverDO):
         )
 
     @abstractmethod
-    def retrieve_ith_solution(self, i: int) -> Solution:
-        """Retrieve i-th solution from internal milp model."""
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> Solution:
+        """Retrieve current solution from internal gurobi solution.
+
+        This converts internal gurobi solution into a discrete-optimization Solution.
+        This method can be called after the solve in `retrieve_solutions()`
+        or during solve within a gurobi/pymilp/cplex callback. The difference will be the
+        `get_var_value_for_current_solution` and `get_obj_value_for_current_solution` callables passed.
+
+        Args:
+            get_var_value_for_current_solution: function extracting the value of the given variable for the current solution
+                will be different when inside a callback or after the solve is finished
+            get_obj_value_for_current_solution: function extracting the value of the objective for the current solution.
+
+        Returns:
+            the converted solution at d-o format
+
+        """
         ...
+
+    def retrieve_ith_solution(self, i: int) -> Solution:
+        """Retrieve i-th solution from internal milp model.
+
+        Args:
+            i:
+
+        Returns:
+
+        """
+        get_var_value_for_current_solution = (
+            lambda var: self.get_var_value_for_ith_solution(var=var, i=i)
+        )
+        get_obj_value_for_current_solution = (
+            lambda: self.get_obj_value_for_ith_solution(i=i)
+        )
+        return self.retrieve_current_solution(
+            get_var_value_for_current_solution=get_var_value_for_current_solution,
+            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
+        )
 
     @abstractmethod
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        parameters_milp: Optional[ParametersMilp] = None,
+        **kwargs: Any,
     ) -> ResultStorage:
         ...
 
@@ -219,14 +267,46 @@ class GurobiMilpSolver(MilpSolver):
     """Milp solver wrapping a solver from gurobi library."""
 
     model: Optional["gurobipy.Model"] = None
+    early_stopping_exception: Optional[Exception] = None
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        parameters_milp: Optional[ParametersMilp] = None,
+        **kwargs: Any,
     ) -> ResultStorage:
+        self.early_stopping_exception = None
+        callbacks_list = CallbackList(callbacks=callbacks)
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
+
+        # callback: solve start
+        callbacks_list.on_solve_start(solver=self)
+
+        if self.model is None:
+            self.init_model(**kwargs)
+            if self.model is None:
+                raise RuntimeError(
+                    "self.model must not be None after self.init_model()."
+                )
+        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+
+        # wrap user callback in a gurobi callback
+        gurobi_callback = GurobiCallback(do_solver=self, callback=callbacks_list)
+        self.model.optimize(gurobi_callback)
+        # raise potential exception found during callback (useful for optuna pruning, and debugging)
+        if self.early_stopping_exception:
+            if isinstance(self.early_stopping_exception, SolveEarlyStop):
+                logger.info(self.early_stopping_exception)
+            else:
+                raise self.early_stopping_exception
+        # get result storage
+        res = gurobi_callback.res
+
+        # callback: solve end
+        callbacks_list.on_solve_end(res=res, solver=self)
+
+        return res
 
     def prepare_model(
         self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
@@ -254,6 +334,7 @@ class GurobiMilpSolver(MilpSolver):
         """Optimize the Gurobi Model.
 
         The solutions are yet to be retrieved via `self.retrieve_solutions()`.
+        No callbacks are passed to the internal solver, and no result_storage is created
 
         """
         if self.model is None:
@@ -296,8 +377,45 @@ class GurobiMilpSolver(MilpSolver):
             return self.model.SolCount
 
 
-def gurobi_callback(model, where):
-    ...
+class GurobiCallback:
+    def __init__(self, do_solver: GurobiMilpSolver, callback: Callback):
+        self.do_solver = do_solver
+        self.callback = callback
+        self.res = ResultStorage(
+            [],
+            mode_optim=self.do_solver.params_objective_function.sense_function,
+            limit_store=False,
+        )
+        self.nb_solutions = 0
+
+    def __call__(self, model, where) -> None:
+        if where == GRB.Callback.MIPSOL:
+            try:
+                # retrieve and store new solution
+                sol = self.do_solver.retrieve_current_solution(
+                    get_var_value_for_current_solution=model.cbGetSolution,
+                    get_obj_value_for_current_solution=lambda: model.cbGet(
+                        GRB.Callback.MIPSOL_OBJ
+                    ),
+                )
+                fit = self.do_solver.aggreg_from_sol(sol)
+                self.res.add_solution(solution=sol, fitness=fit)
+                self.nb_solutions += 1
+                # end of step callback: stopping?
+                stopping = self.callback.on_step_end(
+                    step=self.nb_solutions, res=self.res, solver=self.do_solver
+                )
+            except Exception as e:
+                # catch exceptions because gurobi ignore them and do not stop solving
+                self.do_solver.early_stopping_exception = e
+                stopping = True
+            else:
+                if stopping:
+                    self.do_solver.early_stopping_exception = SolveEarlyStop(
+                        f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
+                    )
+            if stopping:
+                model.terminate()
 
 
 class CplexMilpSolver(MilpSolver):

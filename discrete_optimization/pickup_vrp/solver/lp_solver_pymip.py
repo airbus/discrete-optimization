@@ -6,6 +6,7 @@ import logging
 import random
 from typing import (
     Any,
+    Callable,
     Dict,
     Hashable,
     Iterable,
@@ -53,17 +54,21 @@ class MipModelException(Exception):
         return self.message
 
 
-def retrieve_ith_solution(
-    i: int, model: mip.Model, variable_decisions: Dict[str, Any]
+def retrieve_current_solution(
+    get_var_value_for_current_solution: Callable[[Any], float],
+    get_obj_value_for_current_solution: Callable[[], float],
+    variable_decisions: Dict[str, Any],
 ) -> Tuple[Dict[str, Dict[Hashable, Any]], float]:
     results: Dict[str, Dict[Hashable, Any]] = {}
     xsolution: Dict[int, Dict[Edge, int]] = {
         v: {} for v in variable_decisions["variables_edges"]
     }
-    obj = float(model.objective_values[i])
+    obj = float(get_obj_value_for_current_solution())
     for vehicle in variable_decisions["variables_edges"]:
         for edge in variable_decisions["variables_edges"][vehicle]:
-            value = variable_decisions["variables_edges"][vehicle][edge].xi(i)
+            value = get_var_value_for_current_solution(
+                variable_decisions["variables_edges"][vehicle][edge]
+            )
             if value <= 0.1:
                 continue
             xsolution[vehicle][edge] = 1
@@ -79,13 +84,19 @@ def retrieve_ith_solution(
                     if isinstance(variable_decisions[key][key_2][key_3], dict):
                         results[key][key_2][key_3] = {}
                         for key_4 in variable_decisions[key][key_2][key_3]:
-                            value = variable_decisions[key][key_2][key_3].xi(i)
+                            value = get_var_value_for_current_solution(
+                                variable_decisions[key][key_2][key_3]
+                            )
                             results[key][key_2][key_3][key_4] = value
                     else:
-                        value = variable_decisions[key][key_2][key_3].xi(i)
+                        value = get_var_value_for_current_solution(
+                            variable_decisions[key][key_2][key_3]
+                        )
                         results[key][key_2][key_3] = value
             else:
-                value = variable_decisions[key][key_2].xi(i)
+                value = get_var_value_for_current_solution(
+                    variable_decisions[key][key_2]
+                )
                 results[key][key_2] = value
     return results, obj
 
@@ -700,21 +711,46 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         kwargs["limit_store"] = False
         return super().retrieve_solutions(parameters_milp=parameters_milp, **kwargs)
 
-    def retrieve_ith_solution(self, i: int) -> GPDPSolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> Solution:
         """
 
         Not used here as GurobiMilpSolver.solve() is overriden
 
 
         """
-        temporaryresult = self.retrieve_ith_temporaryresult(i=i)
+        temporaryresult = self.retrieve_current_temporaryresult(
+            get_var_value_for_current_solution=get_var_value_for_current_solution,
+            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
+        )
         return convert_temporaryresult_to_gpdpsolution(
             temporaryresult=temporaryresult, problem=self.problem
         )
 
     def retrieve_ith_temporaryresult(self, i: int) -> TemporaryResult:
-        res, obj = retrieve_ith_solution(
-            i=i, model=self.model, variable_decisions=self.variable_decisions
+        get_var_value_for_current_solution = (
+            lambda var: self.get_var_value_for_ith_solution(var=var, i=i)
+        )
+        get_obj_value_for_current_solution = (
+            lambda: self.get_obj_value_for_ith_solution(i=i)
+        )
+        return self.retrieve_current_temporaryresult(
+            get_var_value_for_current_solution=get_var_value_for_current_solution,
+            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
+        )
+
+    def retrieve_current_temporaryresult(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> TemporaryResult:
+        res, obj = retrieve_current_solution(
+            get_var_value_for_current_solution=get_var_value_for_current_solution,
+            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
+            variable_decisions=self.variable_decisions,
         )
         if self.problem.graph is None:
             raise RuntimeError(

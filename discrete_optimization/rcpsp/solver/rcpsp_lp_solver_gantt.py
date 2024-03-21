@@ -4,7 +4,7 @@
 
 import logging
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 from mip import BINARY, MINIMIZE, Model, xsum
@@ -12,6 +12,7 @@ from mip import BINARY, MINIMIZE, Model, xsum
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
+    Solution,
 )
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
@@ -126,14 +127,16 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
         self.params_objective_function.sense_function = self.sense_optim
         self.constraint_additionnal = {}
 
-    def retrieve_ith_solution(
-        self, i: int
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
     ) -> Tuple[Dict[Any, Dict[Any, Dict[Any, Any]]], float]:
-        objective = self.get_obj_value_for_ith_solution(i)
+        objective = get_obj_value_for_current_solution()
         resource_id_usage = {
             k: {
                 individual: {
-                    task: self.get_var_value_for_ith_solution(resource_usage, i)
+                    task: get_var_value_for_current_solution(resource_usage)
                     for task, resource_usage in self.ressource_id_usage[k][
                         individual
                     ].items()
@@ -398,14 +401,16 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
             ]
             self.model.update()
 
-    def retrieve_ith_solution(
-        self, i: int
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
     ) -> Tuple[Dict[Any, Dict[Any, Dict[Any, Any]]], float]:
-        objective = self.get_pool_obj_value_for_ith_solution(i)
+        objective = get_obj_value_for_current_solution()
         resource_id_usage = {
             k: {
                 individual: {
-                    task: self.get_var_value_for_ith_solution(resource_usage, i)
+                    task: get_var_value_for_current_solution(resource_usage)
                     for task, resource_usage in self.ressource_id_usage[k][
                         individual
                     ].items()

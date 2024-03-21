@@ -6,7 +6,7 @@
 
 import logging
 import sys
-from typing import Any, Dict, Hashable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Hashable, Optional, Tuple, Union
 
 import mip
 import networkx as nx
@@ -99,13 +99,17 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution: Optional[ColoringSolution] = None
 
-    def retrieve_ith_solution(self, i: int) -> ColoringSolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> ColoringSolution:
         colors = [0] * self.number_of_nodes
         for (
             variable_decision_key,
             variable_decision_value,
         ) in self.variable_decision["colors_var"].items():
-            value = self.get_var_value_for_ith_solution(variable_decision_value, i)
+            value = get_var_value_for_current_solution(variable_decision_value)
             if value >= 0.5:
                 node = variable_decision_key[0]
                 color = variable_decision_key[1]

@@ -4,7 +4,7 @@
 
 import logging
 from itertools import product
-from typing import Any, Dict, Hashable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, Var, xsum
 
@@ -258,10 +258,14 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
                     ]
             self.constraints_partial_solutions = constraints
 
-    def retrieve_ith_solution(self, i: int) -> RCPSPSolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> RCPSPSolution:
         rcpsp_schedule = {}
         for (task_index, time) in product(self.index_task, self.index_time):
-            value = self.get_var_value_for_ith_solution(self.x[task_index][time], i)
+            value = get_var_value_for_current_solution(self.x[task_index][time])
             if value >= 0.5:
                 task = self.problem.tasks_list[task_index]
                 rcpsp_schedule[task] = {
@@ -292,11 +296,15 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
 
-    def retrieve_ith_solution(self, i: int) -> RCPSPSolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> RCPSPSolution:
         rcpsp_schedule = {}
         modes: Dict[Hashable, Union[str, int]] = {}
         for (task, mode, t), x in self.x.items():
-            value = self.get_var_value_for_ith_solution(x, i)
+            value = get_var_value_for_current_solution(x)
             if value >= 0.5:
                 rcpsp_schedule[task] = {
                     "start_time": t,
