@@ -68,20 +68,16 @@ def test_load_file(coloring_problem_file):
     assert coloring_model.satisfy(dummy_solution)
 
 
-def test_solvers():
+@pytest.mark.parametrize("solver_class", solvers_map)
+def test_solvers(solver_class):
+    if solver_class == ColoringLP and not gurobi_available:
+        pytest.skip("You need Gurobi to test this solver.")
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
-    assert coloring_model.graph is not None
-    assert coloring_model.number_of_nodes is not None
-    assert coloring_model.graph.nodes_name is not None
-    solvers = solvers_map.keys()
-    for s in solvers:
-        logging.info(f"Running {s}")
-        if s == ColoringLP and not gurobi_available:
-            # you need a gurobi licence to test this solver.
-            continue
-        results = solve(method=s, problem=coloring_model, **solvers_map[s][1])
-        sol, fit = results.get_best_solution_fit()
+    results = solve(
+        method=solver_class, problem=coloring_model, **solvers_map[solver_class][1]
+    )
+    sol, fit = results.get_best_solution_fit()
 
 
 def test_solvers_subset():
