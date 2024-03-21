@@ -87,7 +87,6 @@ class MilpSolver(SolverDO):
     def init_model(self, **kwargs: Any) -> None:
         ...
 
-    @abstractmethod
     def retrieve_solutions(
         self, parameters_milp: ParametersMilp, **kwargs
     ) -> ResultStorage:
@@ -109,12 +108,12 @@ class MilpSolver(SolverDO):
             solution = self.retrieve_ith_solution(i=i)
             fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
-            return ResultStorage(
-                list_solution_fits=list_solution_fits,
-                mode_optim=self.params_objective_function.sense_function,
-                best_solution=min(list_solution_fits, key=lambda x: x[1])[0],
-                **kwargs,
-            )
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.params_objective_function.sense_function,
+            best_solution=min(list_solution_fits, key=lambda x: x[1])[0],
+            **kwargs,
+        )
 
     @abstractmethod
     def retrieve_ith_solution(self, i: int) -> Solution:

@@ -272,6 +272,7 @@ def test_color_lp_gurobi():
     result_store = solver.solve(parameters_milp=ParametersMilp.default())
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
+    assert len(result_store.list_solution_fits) > 1
 
 
 if __name__ == "__main__":
