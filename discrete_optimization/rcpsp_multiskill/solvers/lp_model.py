@@ -5,7 +5,7 @@
 import logging
 import time
 from itertools import product
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, xsum
 
@@ -277,7 +277,11 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
             )
         self.model.objective = self.start_times_task[max(self.start_times_task)]
 
-    def retrieve_ith_solution(self, i: int) -> MS_RCPSPSolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> MS_RCPSPSolution:
         rcpsp_schedule = {}
         modes = {}
         results = {}
@@ -286,7 +290,7 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
         for task in self.start_times:
             for mode in self.start_times[task]:
                 for t, start_time in self.start_times[task][mode].items():
-                    value = self.get_var_value_for_ith_solution(start_time, i)
+                    value = get_var_value_for_current_solution(start_time)
                     results[(task, mode, t)] = value
                     if value >= 0.5:
                         rcpsp_schedule[task] = {
@@ -297,8 +301,8 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
                         }
                         modes[task] = mode
         for t in self.employee_usage:
-            employee_usage[t] = self.get_var_value_for_ith_solution(
-                self.employee_usage[t], i
+            employee_usage[t] = get_var_value_for_current_solution(
+                self.employee_usage[t]
             )
             if employee_usage[t] >= 0.5:
                 if t[1] not in employee_usage_solution:
@@ -312,20 +316,18 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
         modes_task = {}
         for t in self.modes:
             for m, mode in self.modes[t].items():
-                modes[(t, m)] = self.get_var_value_for_ith_solution(mode, i)
+                modes[(t, m)] = get_var_value_for_current_solution(mode)
                 if modes[(t, m)] >= 0.5:
                     modes_task[t] = m
         durations = {}
         for t in self.durations:
-            durations[t] = self.get_var_value_for_ith_solution(self.durations[t], i)
+            durations[t] = get_var_value_for_current_solution(self.durations[t])
         start_time = {}
         for t in self.start_times_task:
-            start_time[t] = self.get_var_value_for_ith_solution(
-                self.start_times_task[t], i
-            )
+            start_time[t] = get_var_value_for_current_solution(self.start_times_task[t])
         end_time = {}
         for t in self.start_times_task:
-            end_time[t] = self.get_var_value_for_ith_solution(self.end_times_task[t], i)
+            end_time[t] = get_var_value_for_current_solution(self.end_times_task[t])
         logger.debug(f"Size schedule : {len(rcpsp_schedule.keys())}")
         logger.debug(
             (

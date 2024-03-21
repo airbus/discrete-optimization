@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import mip
 from mip import BINARY, MAXIMIZE, xsum
@@ -57,7 +57,11 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         self.description_variable_description: Dict[str, Dict[str, Any]] = {}
         self.description_constraint: Dict[str, Dict[str, str]] = {}
 
-    def retrieve_ith_solution(self, i: int) -> KnapsackSolution:
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> KnapsackSolution:
         weight = 0.0
         value_kp = 0.0
         xs = {}
@@ -65,7 +69,7 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
             variable_decision_key,
             variable_decision_value,
         ) in self.variable_decision["x"].items():
-            value = self.get_var_value_for_ith_solution(variable_decision_value, i)
+            value = get_var_value_for_current_solution(variable_decision_value)
             if value <= 0.1:
                 xs[variable_decision_key] = 0
                 continue

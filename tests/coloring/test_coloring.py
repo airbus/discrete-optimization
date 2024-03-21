@@ -31,6 +31,11 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
+from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
+from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
@@ -269,6 +274,61 @@ def test_color_lp_gurobi():
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
     assert len(result_store.list_solution_fits) > 1
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_cb_log():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLP(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    tracker = NbIterationTracker()
+    callbacks = [tracker]
+    result_store = solver.solve(
+        parameters_milp=ParametersMilp.default(), callbacks=callbacks
+    )
+    solution = result_store.get_best_solution_fit()[0]
+    assert len(result_store.list_solution_fits) > 1
+    # check tracker called at each solution found
+    assert tracker.nb_iteration == len(result_store.list_solution_fits)
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_cb_stop():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLP(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    stopper = NbIterationStopper(nb_iteration_max=1)
+    callbacks = [stopper]
+    result_store = solver.solve(
+        parameters_milp=ParametersMilp.default(), callbacks=callbacks
+    )
+    # check stop after 1st iteration
+    assert len(result_store.list_solution_fits) == 1
+
+
+class MyCallbackNok(Callback):
+    def on_step_end(self, step: int, res, solver):
+        raise RuntimeError("Explicit crash")
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_cb_exception():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLP(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    with pytest.raises(RuntimeError, match="Explicit crash"):
+        solver.solve(
+            parameters_milp=ParametersMilp.default(), callbacks=[MyCallbackNok()]
+        )
 
 
 if __name__ == "__main__":
