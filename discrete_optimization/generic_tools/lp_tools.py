@@ -285,15 +285,6 @@ class GurobiMilpSolver(MilpSolver):
                 "self.model should not be None when calling this method."
             )
         self.model.params.SolutionNumber = i
-        return self.model.getAttr("ObjVal")
-
-    def get_pool_obj_value_for_ith_solution(self, i: int) -> float:
-        """Get pool objective value for i-th solution."""
-        if self.model is None:  # for mypy
-            raise RuntimeError(
-                "self.model should not be None when calling this method."
-            )
-        self.model.params.SolutionNumber = i
         return self.model.getAttr("PoolObjVal")
 
     @property
