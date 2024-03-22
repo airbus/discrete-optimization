@@ -60,6 +60,11 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+class MyCallbackNok(Callback):
+    def on_step_end(self, step: int, res, solver):
+        raise RuntimeError("Explicit crash")
+
+
 @pytest.fixture
 def random_seed():
     random.seed(0)
@@ -128,6 +133,41 @@ def test_asp_solver():
     result_store = solver.solve(timeout_seconds=5)
     solution, fit = result_store.get_best_solution_fit()
     assert color_problem.satisfy(solution)
+
+
+def test_asp_solver_cb_log():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = ColoringASPSolver(color_problem, params_objective_function=None)
+    solver.init_model(max_models=50, nb_colors=20)
+    tracker = NbIterationTracker()
+    callbacks = [tracker]
+    result_store = solver.solve(timeout_seconds=5, callbacks=callbacks)
+    solution, fit = result_store.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
+    assert tracker.nb_iteration > 1
+
+
+def test_asp_solver_cb_stop():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = ColoringASPSolver(color_problem, params_objective_function=None)
+    solver.init_model(max_models=50, nb_colors=20)
+    stopper = NbIterationStopper(nb_iteration_max=1)
+    callbacks = [stopper]
+    result_store = solver.solve(timeout_seconds=5, callbacks=callbacks)
+    solution, fit = result_store.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
+    assert stopper.nb_iteration == 1
+
+
+def test_asp_solver_cb_exception():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = ColoringASPSolver(color_problem, params_objective_function=None)
+    solver.init_model(max_models=50, nb_colors=20)
+    with pytest.raises(RuntimeError, match="Explicit crash"):
+        solver.solve(timeout_seconds=5, callbacks=[MyCallbackNok()])
 
 
 def test_model_satisfy():
@@ -310,11 +350,6 @@ def test_color_lp_gurobi_cb_stop():
     )
     # check stop after 1st iteration
     assert len(result_store.list_solution_fits) == 1
-
-
-class MyCallbackNok(Callback):
-    def on_step_end(self, step: int, res, solver):
-        raise RuntimeError("Explicit crash")
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
