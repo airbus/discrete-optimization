@@ -13,6 +13,7 @@ from discrete_optimization.coloring.coloring_model import ColoringSolution
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
     SolverColoringWithStartingSolution,
 )
+from discrete_optimization.generic_tools.asp_tools import ASPClingoSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -21,10 +22,23 @@ cur_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
 
-class ColoringASPSolver(SolverColoringWithStartingSolution):
+class ColoringASPSolver(ASPClingoSolver, SolverColoringWithStartingSolution):
     """Solver based on Answer Set Programming formulation and clingo solver."""
 
-    ctl: Optional[clingo.Control] = None
+    def retrieve_solution(self, model: clingo.Model) -> ColoringSolution:
+        symbols = model.symbols(atoms=True)
+        colors = [
+            (s.arguments[0].number, s.arguments[1].name)
+            for s in symbols
+            if s.name == "color"
+        ]
+        colors_name = list(set([s[1] for s in colors]))
+        colors_to_index = self.compute_clever_colors_map(colors_name)
+        colors_vect = [0] * self.problem.number_of_nodes
+        for num, color in colors:
+            colors_vect[num - 1] = colors_to_index[color]
+
+        return ColoringSolution(problem=self.problem, colors=colors_vect)
 
     def init_model(self, **kwargs: Any) -> None:
         if self.problem.use_subset:
@@ -119,28 +133,6 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
                 s += f"fixed_color({index_node+1}, c_{value}). "
         return s
 
-    def retrieve_solutions(self, list_symbols: List[List[Symbol]]) -> ResultStorage:
-        list_solutions_fit = []
-        for symbols in list_symbols:
-            colors = [
-                (s.arguments[0].number, s.arguments[1].name)
-                for s in symbols
-                if s.name == "color"
-            ]
-            colors_name = list(set([s[1] for s in colors]))
-            colors_to_index = self.compute_clever_colors_map(colors_name)
-            colors_vect = [0] * self.problem.number_of_nodes
-            for num, color in colors:
-                colors_vect[num - 1] = colors_to_index[color]
-
-            solution = ColoringSolution(problem=self.problem, colors=colors_vect)
-            fit = self.aggreg_from_sol(solution)
-            list_solutions_fit += [(solution, fit)]
-        return ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            mode_optim=self.params_objective_function.sense_function,
-        )
-
     def compute_clever_colors_map(self, colors_name: List[str]):
         colors_to_protect = set()
         colors_to_index = {}
@@ -168,63 +160,3 @@ class ColoringASPSolver(SolverColoringWithStartingSolution):
         for c, val in zip(color_name, value_name):
             colors_to_index[c] = val
         return colors_to_index
-
-    def solve(self, **kwargs: Any) -> ResultStorage:
-        start_time_grounding = time.perf_counter()
-        self.ctl.ground([("base", [])])
-        logger.info(
-            f"Grounding programs: ...\n=== Grounding done"
-            f" {time.perf_counter() - start_time_grounding} sec ==="
-        )
-
-        class CallbackASP:
-            def __init__(
-                self,
-                dump_model_in_folders: bool = False,
-            ):
-                self.nb_found_models = 0
-                self.current_time = time.perf_counter()
-                self.model_results = []
-                self.symbols_results = []
-                self.dump_model_in_folders = dump_model_in_folders
-
-            def on_model(self, m: clingo.Model):
-                self.model_results += [m]
-                self.symbols_results += [m.symbols(atoms=True)]
-                self.nb_found_models += 1
-                logger.info(
-                    f"=== New Model [{self.nb_found_models}]"
-                    f" found after {time.perf_counter()-self.current_time}"
-                    f" sec of solving === "
-                )
-                logger.info(f"=== cost = {m.cost} ===")
-                logger.info(f"=== Optimality proven ? {m.optimality_proven} === ")
-                if m.optimality_proven:
-                    return 0
-                if self.dump_model_in_folders:
-                    folder_model = os.path.join(
-                        cur_folder, f"output-folder/model_{self.nb_found_models}"
-                    )
-                    create_empty_folder(folder_model)
-                    logger.info("Dumping model.txt ...")
-                    with open(
-                        os.path.join(folder_model, "model.txt"), "w"
-                    ) as model_file:
-                        model_file.write(str(m))
-
-        timeout_seconds = kwargs.get("timeout_seconds", 100)
-        callback = CallbackASP(
-            dump_model_in_folders=kwargs.get("dump_model_in_folders", False),
-        )
-
-        with self.ctl.solve(on_model=callback.on_model, async_=True) as handle:
-            handle.wait(timeout_seconds)
-            handle.cancel()
-        return self.retrieve_solutions(callback.symbols_results)
-
-
-def create_empty_folder(folder):
-    logger.info(f"Creating empty folder: {folder}")
-    if os.path.exists(folder):
-        os.removedirs(folder)
-    os.makedirs(folder)
