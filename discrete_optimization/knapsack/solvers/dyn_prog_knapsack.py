@@ -4,11 +4,15 @@
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -22,6 +26,15 @@ logger = logging.getLogger(__name__)
 
 
 class KnapsackDynProg(SolverKnapsack):
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="use_numpy", default=True, choices=[True, False]
+        ),
+        CategoricalHyperparameter(
+            name="greedy_start", default=False, choices=[True, False]
+        ),
+    ]
+
     def __init__(
         self,
         problem: KnapsackModel,
@@ -40,8 +53,21 @@ class KnapsackDynProg(SolverKnapsack):
         self.capacity: int = capacity
         self.table = np.zeros((self.nb_items + 1, self.capacity + 1))
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
-        start_by_most_promising = kwargs.get("greedy_start", False)
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        use_numpy = kwargs.get(
+            "use_numpy", self.get_hyperparameter("use_numpy").default
+        )
+        if use_numpy:
+            return self.solve_np(**kwargs)
+        else:
+            return self.solve_list(**kwargs)
+
+    def solve_list(self, **kwargs: Any) -> ResultStorage:
+        start_by_most_promising = kwargs.get(
+            "greedy_start", self.get_hyperparameter("greedy_start").default
+        )
         max_items = kwargs.get("max_items", self.problem.nb_items + 1)
         max_items = min(self.problem.nb_items + 1, max_items)
         max_time_seconds = kwargs.get("max_time_seconds", None)
@@ -116,7 +142,9 @@ class KnapsackDynProg(SolverKnapsack):
         )
 
     def solve_np(self, **kwargs: Any) -> ResultStorage:
-        start_by_most_promising = kwargs.get("greedy_start", False)
+        start_by_most_promising = kwargs.get(
+            "greedy_start", self.get_hyperparameter("greedy_start").default
+        )
         max_items = kwargs.get("max_items", self.problem.nb_items + 1)
         max_time_seconds = kwargs.get("max_time_seconds", None)
         if max_time_seconds is None:
