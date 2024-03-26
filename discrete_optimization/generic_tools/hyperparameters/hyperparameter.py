@@ -9,6 +9,10 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type
 
 if TYPE_CHECKING:  # only for type checkers
+    from discrete_optimization.generic_tools.do_solver import (
+        SolverDO,  # avoid circular imports
+    )
+
     try:
         import optuna  # not necessary to import this module
     except ImportError:
@@ -208,3 +212,94 @@ class EnumHyperparameter(CategoricalHyperparameter):
         choices_str = [c.name for c in choices]
         choice_str: str = trial.suggest_categorical(name=self.name, choices=choices_str, **kwargs)  # type: ignore
         return self.enum[choice_str]
+
+
+class SubSolverHyperparameter(CategoricalHyperparameter):
+    """Hyperparameter whose values are solver classes themselves for meta-solvers."""
+
+    choices: List[Type[SolverDO]]
+
+    def __init__(
+        self, name: str, choices: List[Type[SolverDO]], default: Optional[Any] = None
+    ):
+        super().__init__(name, choices=choices, default=default)
+        # map by their names or (module + name)'s?
+        if len(set([c.__name__ for c in choices])) == len(choices):
+            # names are unique between all choices
+            self.choices_str2cls = {c.__name__: c for c in choices}
+            self.choices_cls2str = {c: c.__name__ for c in choices}
+        else:
+            # we need to disambiguate with module path
+            self.choices_str2cls = {c.__module__ + c.__name__: c for c in choices}
+            self.choices_cls2str = {c: c.__module__ + c.__name__ for c in choices}
+
+    def suggest_with_optuna(
+        self,
+        trial: optuna.trial.Trial,
+        choices: Optional[Iterable[Type[SolverDO]]] = None,
+        **kwargs: Any,
+    ) -> Type[SolverDO]:
+        """Suggest hyperparameter value for an Optuna trial.
+
+        Args:
+            trial: optuna Trial used for choosing the hyperparameter value
+            choices: restricts list of subsolvers to choose from
+            **kwargs: passed to `trial.suggest_categorical()`
+
+        Returns:
+
+        """
+        if choices is None:
+            choices = self.choices
+        choices_str = [self.choices_cls2str[c] for c in choices]
+        choice_str = trial.suggest_categorical(name=self.name, choices=choices_str)
+        return self.choices_str2cls[choice_str]
+
+
+class SubSolverKwargsHyperparameter(Hyperparameter):
+    """Keyword arguments for subsolvers.
+
+    This hyperparameter defines kwargs to be passed to the subsolver defined by another hyperparameter.
+
+    Args:
+        subsolver_hyperparameter: name of the SubSolverHyperparameter this hyperparameter corresponds to.
+
+    """
+
+    def __init__(
+        self,
+        name: str,
+        subsolver_hyperparameter: str,
+        default: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(name=name, default=default)
+        self.subsolver_hyperparameter = subsolver_hyperparameter
+
+    def suggest_with_optuna(
+        self,
+        trial: optuna.trial.Trial,
+        subsolver: Type[SolverDO],
+        names: Optional[List[str]] = None,
+        kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Suggest hyperparameter value for an Optuna trial.
+
+        The subsolver hyperparameters will
+
+        Args:
+            trial: optuna Trial used for choosing the hyperparameter value
+            subsolver: subsolver chosen as hyperparameter value for `self.subsolver_hyperparameter`
+            names: names of the hyperparameters to choose for the subsolver.
+                By default, all available hyperparameters will be suggested.
+                Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
+            kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name.
+                Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
+
+        Returns:
+
+        """
+        return subsolver.suggest_hyperparameters_with_optuna(
+            trial=trial,
+            names=names,
+            kwargs_by_name=kwargs_by_name,
+        )
