@@ -4,11 +4,13 @@
 import logging
 import os
 import random
-from typing import Any, Set
+from typing import Any, Dict, Set, Type
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
     IntegerHyperparameter,
+    SubSolverHyperparameter,
+    SubSolverKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -19,11 +21,35 @@ from discrete_optimization.knapsack.knapsack_model import (
     create_subknapsack_model,
 )
 from discrete_optimization.knapsack.knapsack_solvers import solve
+from discrete_optimization.knapsack.solvers.cp_solvers import (
+    CPKnapsackMZN,
+    CPKnapsackMZN2,
+)
+from discrete_optimization.knapsack.solvers.dyn_prog_knapsack import KnapsackDynProg
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
+from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
+from discrete_optimization.knapsack.solvers.lp_solvers import (
+    KnapsackORTools,
+    LPKnapsack,
+    LPKnapsackCBC,
+    LPKnapsackGurobi,
+)
 
 cur_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
+
+
+subsolvers = [
+    KnapsackORTools,
+    LPKnapsack,
+    LPKnapsackCBC,
+    LPKnapsackGurobi,
+    KnapsackASPSolver,
+    KnapsackDynProg,
+    CPKnapsackMZN,
+    CPKnapsackMZN2,
+]
 
 
 class KnapsackDecomposedSolver(SolverKnapsack):
@@ -37,13 +63,23 @@ class KnapsackDecomposedSolver(SolverKnapsack):
     solve subproblem with a custom root solver, rebuild original solution and repeat the process.
     """
 
-    # TODO : how to handle hyperparams of initial/root solver ?
     hyperparameters = [
         FloatHyperparameter(
             name="proportion_to_remove", low=0.0, high=1.0, default=0.7
         ),
-        IntegerHyperparameter(name="nb_iteration", low=0, high=int(10e6), default=100)
-        # nothing prevent to put higher upper bound in actual call of the solver
+        IntegerHyperparameter(name="nb_iteration", low=0, high=int(10e6), default=100),
+        SubSolverHyperparameter(
+            name="initial_solver", choices=subsolvers, default=GreedyBest
+        ),
+        SubSolverKwargsHyperparameter(
+            name="initial_solver_kwargs", subsolver_hyperparameter="initial_solver"
+        ),
+        SubSolverHyperparameter(
+            name="root_solver", choices=subsolvers, default=GreedyBest
+        ),
+        SubSolverKwargsHyperparameter(
+            name="root_solver_kwargs", subsolver_hyperparameter="root_solver"
+        ),
     ]
 
     def rebuild_sol(
@@ -76,11 +112,22 @@ class KnapsackDecomposedSolver(SolverKnapsack):
 
     def solve(self, **kwargs: Any) -> ResultStorage:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        initial_solver = kwargs.get("initial_solver", GreedyBest)
-        sub_solver = kwargs.get("root_solver", GreedyBest)
+        initial_solver: Type[SolverKnapsack] = kwargs["initial_solver"]
+        if kwargs["initial_solver_kwargs"] is None:
+            initial_solver_kwargs: Dict[str, Any] = {}
+        else:
+            initial_solver_kwargs = kwargs["initial_solver_kwargs"]
+        sub_solver: Type[SolverKnapsack] = kwargs["root_solver"]
+        if kwargs["root_solver_kwargs"] is None:
+            sub_solver_kwargs: Dict[str, Any] = {}
+        else:
+            sub_solver_kwargs = kwargs["root_solver_kwargs"]
         nb_iteration = kwargs["nb_iteration"]
         proportion_to_remove = kwargs["proportion_to_remove"]
-        initial_results = solve(method=initial_solver, problem=self.problem, **kwargs)
+
+        initial_results = solve(
+            method=initial_solver, problem=self.problem, **initial_solver_kwargs
+        )
         results_storage = ResultStorage(
             list_solution_fits=initial_results.list_solution_fits,
             mode_optim=self.params_objective_function.sense_function,
@@ -102,7 +149,7 @@ class KnapsackDecomposedSolver(SolverKnapsack):
                 solution=sol,
                 indexes_to_remove=indexes_to_remove,
             )
-            res = solve(method=sub_solver, problem=sub_model, **kwargs)
+            res = solve(method=sub_solver, problem=sub_model, **sub_solver_kwargs)
             best_sol, fit = res.get_best_solution_fit()
             reb_sol = self.rebuild_sol(
                 sol=best_sol,
