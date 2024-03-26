@@ -5,7 +5,6 @@
 import logging
 import os
 import random
-from datetime import timedelta
 from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
 from minizinc import Instance, Model, Result, Solver
@@ -15,12 +14,18 @@ from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
     ParametersCP,
+    find_right_minizinc_solver_name,
     map_cp_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
     TupleFitness,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+    IntegerHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -54,10 +59,15 @@ class KnapsackSol:
 
 
 class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        )
+    ]
+
     def __init__(
         self,
         problem: KnapsackModel,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
@@ -66,7 +76,6 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
             problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
 
     def retrieve_solutions(
@@ -107,11 +116,11 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
         )
 
     def init_model(self, **kwargs: Any) -> None:
-        # Load n-Queens model from file
+        cp_solver_name = kwargs.get(
+            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
+        )
         model = Model(os.path.join(this_path, "../minizinc/knapsack_mzn.mzn"))
-        # Find the MiniZinc solver configuration for Gecode
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
-        # Create an Instance of the n-Queens model for Gecode
+        solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, model)
         instance["nb_items"] = self.problem.nb_items
         instance["values"] = [0] + [
@@ -125,10 +134,15 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
 
 
 class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        )
+    ]
+
     def __init__(
         self,
         problem: KnapsackModel,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
@@ -137,14 +151,13 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
             problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.cp_solver_name = cp_solver_name
 
     def init_model(self, **kwargs: Any) -> None:
-        # Load n-Queens model from file
+        cp_solver_name = kwargs.get(
+            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
+        )
         model = Model(os.path.join(this_path, "../minizinc/knapsack_global.mzn"))
-        # Find the MiniZinc solver configuration for Gecode
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
-        # Create an Instance of the n-Queens model for Gecode
+        solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, model)
         instance["nb_items"] = self.problem.nb_items
         instance["values"] = [
@@ -194,32 +207,18 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def retrieve(self, items_taken: List[int]) -> List[KnapsackSolution]:
-        taken = [0] * self.problem.nb_items
-        weight = 0.0
-        value = 0.0
-        for i in range(len(items_taken)):
-            if items_taken[i] != 0:
-                taken[self.problem.list_items[i].index] = 1
-                weight += self.problem.list_items[i].weight
-                value += self.problem.list_items[i].value
-        return [
-            KnapsackSolution(
-                problem=self.problem,
-                value=value,
-                weight=weight,
-                list_taken=taken,
-            )
-        ]
-
 
 class CPMultidimensionalSolver(MinizincCPSolver):
     problem: MultidimensionalKnapsack
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        )
+    ]
 
     def __init__(
         self,
         problem: MultidimensionalKnapsack,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
@@ -228,15 +227,17 @@ class CPMultidimensionalSolver(MinizincCPSolver):
             problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
+        cp_solver_name = kwargs.get(
+            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
+        )
         model = Model(
             os.path.join(this_path, "../minizinc/multidimension_knapsack.mzn")
         )
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         custom_output_type = kwargs.get("output_type", False)
         if custom_output_type:
             model.output_type = KnapsackSol
@@ -294,11 +295,15 @@ class CPMultidimensionalSolver(MinizincCPSolver):
 
 class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
     problem: MultiScenarioMultidimensionalKnapsack
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        )
+    ]
 
     def __init__(
         self,
         problem: MultiScenarioMultidimensionalKnapsack,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
@@ -307,15 +312,17 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
             problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.cp_solver_name = cp_solver_name
         self.key_decision_variable = ["list_items"]
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
+        cp_solver_name = kwargs.get(
+            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
+        )
         model = Model(
             os.path.join(this_path, "../minizinc/multidim_multiscenario_knapsack.mzn")
         )
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         custom_output_type = kwargs.get("output_type", False)
         if custom_output_type:
             model.output_type = KnapsackSol

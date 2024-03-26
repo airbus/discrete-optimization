@@ -33,6 +33,10 @@ from discrete_optimization.generic_tools.ghh_tools import (
     min_operator_list,
     protected_div,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -157,6 +161,15 @@ class ParametersGPHH:
 
 class GPHH(SolverDO):
     toolbox: Toolbox
+    hyperparameters = [
+        FloatHyperparameter(name="tournament_ratio", low=0, high=1.0, default=0.1),
+        IntegerHyperparameter(name="pop_size", low=1, high=100, default=10),
+        IntegerHyperparameter(name="min_tree_depth", low=1, high=20, default=1),
+        IntegerHyperparameter(name="max_tree_depth", low=1, high=20, default=4),
+        FloatHyperparameter(name="crossover_rate", low=0.0, high=1.0, default=0.7),
+        FloatHyperparameter(name="mutation_rate", low=0, high=1.0, default=0.3),
+        IntegerHyperparameter(name="n_gen", low=1, high=100, default=2),
+    ]
 
     def __init__(
         self,
@@ -181,15 +194,19 @@ class GPHH(SolverDO):
         )
         self.weight = weight
 
-    def init_model(self) -> None:
-        tournament_ratio = self.params_gphh.tournament_ratio
-        pop_size = self.params_gphh.pop_size
-        min_tree_depth = self.params_gphh.min_tree_depth
-        max_tree_depth = self.params_gphh.max_tree_depth
-
+    def init_model(self, **kwargs) -> None:
+        tournament_ratio = kwargs.get(
+            "tournament_ratio", self.params_gphh.tournament_ratio
+        )
+        pop_size = kwargs.get("pop_size", self.params_gphh.pop_size)
+        min_tree_depth = kwargs.get("min_tree_depth", self.params_gphh.min_tree_depth)
+        max_tree_depth = kwargs.get("max_tree_depth", self.params_gphh.max_tree_depth)
+        self.params_gphh.tournament_ratio = tournament_ratio
+        self.params_gphh.pop_size = pop_size
+        self.params_gphh.min_tree_depth = min_tree_depth
+        self.params_gphh.max_tree_depth = max_tree_depth
         creator.create("FitnessMin", Fitness, weights=(self.weight,))
         creator.create("Individual", PrimitiveTree, fitness=creator.FitnessMin)
-
         self.toolbox = Toolbox()
         self.toolbox.register(
             "expr",
@@ -232,6 +249,12 @@ class GPHH(SolverDO):
         mstats.register("max", np.max)
 
     def solve(self, **kwargs: Any) -> ResultStorage:
+        n_gen = kwargs.get("n_gen", self.params_gphh.n_gen)
+        crossover_rate = kwargs.get("crossover_rate", self.params_gphh.crossover_rate)
+        mutation_rate = kwargs.get("mutation_rate", self.params_gphh.mutation_rate)
+        self.params_gphh.n_gen = n_gen
+        self.params_gphh.crossover_rate = crossover_rate
+        self.params_gphh.mutation_rate = mutation_rate
         stats_fit = tools.Statistics(lambda ind: ind.fitness.values)
         stats_size = tools.Statistics(len)
         mstats = tools.MultiStatistics(fitness=stats_fit, size=stats_size)

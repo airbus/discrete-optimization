@@ -6,6 +6,10 @@ import os
 import random
 from typing import Any, Set
 
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -32,6 +36,15 @@ class KnapsackDecomposedSolver(SolverKnapsack):
     KnapsackDecomposedSolver is a basic iterative solver that starts from a given solution, then freeze random items,
     solve subproblem with a custom root solver, rebuild original solution and repeat the process.
     """
+
+    # TODO : how to handle hyperparams of initial/root solver ?
+    hyperparameters = [
+        FloatHyperparameter(
+            name="proportion_to_remove", low=0.0, high=1.0, default=0.7
+        ),
+        IntegerHyperparameter(name="nb_iteration", low=0, high=int(10e6), default=100)
+        # nothing prevent to put higher upper bound in actual call of the solver
+    ]
 
     def rebuild_sol(
         self,
@@ -64,8 +77,13 @@ class KnapsackDecomposedSolver(SolverKnapsack):
     def solve(self, **kwargs: Any) -> ResultStorage:
         initial_solver = kwargs.get("initial_solver", GreedyBest)
         sub_solver = kwargs.get("root_solver", GreedyBest)
-        nb_iteration = kwargs.get("nb_iteration", 100)
-        proportion_to_remove = kwargs.get("proportion_to_remove", 0.7)
+        nb_iteration = kwargs.get(
+            "nb_iteration", self.get_hyperparameter("nb_iteration").default
+        )
+        proportion_to_remove = kwargs.get(
+            "proportion_to_remove",
+            self.get_hyperparameter("proportion_to_remove").default,
+        )
         initial_results = solve(method=initial_solver, problem=self.problem, **kwargs)
         results_storage = ResultStorage(
             list_solution_fits=initial_results.list_solution_fits,
