@@ -110,14 +110,15 @@ class SolverDO:
     def suggest_hyperparameters_values_with_optuna(
         cls,
         trial: optuna.trial.Trial,
-        names: List[str],
+        names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> List[Any]:
         """Suggest hyperparameter value during an Optuna trial.
 
         Args:
             trial: optuna trial during hyperparameters tuning
-            names: names of the hyperparameters to choose
+            names: names of the hyperparameters to choose.
+                By default, all hyperparameters will be suggested, ordered as in `self.hyperparameters`.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
 
         Returns:
@@ -125,6 +126,8 @@ class SolverDO:
         kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_value_with_optuna(name=some_name)
 
         """
+        if names is None:
+            names = cls.get_hyperparameters_names()
         if kwargs_by_name is None:
             kwargs_by_name = {}
         return [
