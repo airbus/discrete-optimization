@@ -17,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 class NbIterationTracker(Callback):
     """
-    Stops the optimization process if a limit training time has been elapsed.
-    This time is checked after each `check_nb_steps` steps.
+    Log the number of iteration of a given solver
     """
 
     def __init__(
@@ -53,8 +52,7 @@ class NbIterationTracker(Callback):
 
 class ObjectiveLogger(Callback):
     """
-    Stops the optimization process if a limit training time has been elapsed.
-    This time is checked after each `check_nb_steps` steps.
+    Log the current best objective function at every iteration/new solution found by the solver
     """
 
     def __init__(
