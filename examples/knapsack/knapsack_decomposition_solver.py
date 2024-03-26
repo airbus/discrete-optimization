@@ -35,7 +35,7 @@ def run_decomposed_knapsack_asp():
     result_store = solver.solve(
         initial_solver=GreedyBest,
         root_solver=KnapsackASPSolver,
-        timeout_seconds=2,
+        root_solver_kwargs=dict(timeout_seconds=2),
         nb_iteration=1000,
         proportion_to_remove=0.9,
     )
@@ -53,7 +53,6 @@ def run_decomposed_knapsack_greedy():
     result_store = solver.solve(
         initial_solver=GreedyBest,
         root_solver=GreedyBest,
-        timeout_seconds=2,
         nb_iteration=100,
         proportion_to_remove=0.9,
     )
@@ -73,7 +72,7 @@ def run_decomposed_knapsack_cp():
     params_cp.time_limit = 5
     result_store = solver.solve(
         root_solver=CPKnapsackMZN2,
-        parameters_cp=params_cp,
+        root_solver_kwargs=dict(parameters_cp=params_cp),
         nb_iteration=100,
         proportion_to_remove=0.9,
     )
@@ -93,7 +92,7 @@ def run_decomposed_knapsack_cpsat():
     params_cp.time_limit = 5
     result_store = solver.solve(
         root_solver=CPSatKnapsackSolver,
-        parameters_cp=params_cp,
+        root_solver_kwargs=dict(parameters_cp=params_cp),
         nb_iteration=200,
         proportion_to_remove=0.85,
     )
