@@ -74,6 +74,25 @@ class SolverDO:
         return cls.get_hyperparameters_by_name()[name]
 
     @classmethod
+    def get_default_hyperparameters(
+        cls, names: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get hyperparameters default values.
+
+        Args:
+            names: names of the hyperparameters to choose.
+                By default, all available hyperparameters will be suggested.
+
+        Returns:
+            a mapping between hyperparameter name and its default value (None if not specified)
+
+        """
+        if names is None:
+            names = cls.get_hyperparameters_names()
+        hyperparameters_by_names = cls.get_hyperparameters_by_name()
+        return {name: hyperparameters_by_names[name].default for name in names}
+
+    @classmethod
     def suggest_hyperparameter_with_optuna(
         cls, trial: optuna.trial.Trial, name: str, **kwargs
     ) -> Any:
