@@ -74,7 +74,7 @@ class SolverDO:
         return cls.get_hyperparameters_by_name()[name]
 
     @classmethod
-    def suggest_hyperparameter_value_with_optuna(
+    def suggest_hyperparameter_with_optuna(
         cls, trial: optuna.trial.Trial, name: str, **kwargs
     ) -> Any:
         """Suggest hyperparameter value during an Optuna trial.
@@ -107,35 +107,36 @@ class SolverDO:
         )
 
     @classmethod
-    def suggest_hyperparameters_values_with_optuna(
+    def suggest_hyperparameters_with_optuna(
         cls,
         trial: optuna.trial.Trial,
         names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
-    ) -> List[Any]:
-        """Suggest hyperparameter value during an Optuna trial.
+    ) -> Dict[str, Any]:
+        """Suggest hyperparameters values during an Optuna trial.
 
         Args:
             trial: optuna trial during hyperparameters tuning
             names: names of the hyperparameters to choose.
-                By default, all hyperparameters will be suggested, ordered as in `self.hyperparameters`.
+                By default, all available hyperparameters will be suggested.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
 
         Returns:
+            mapping between the hyperparameter name and its suggested value
 
-        kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_value_with_optuna(name=some_name)
+        kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_with_optuna(name=some_name)
 
         """
         if names is None:
             names = cls.get_hyperparameters_names()
         if kwargs_by_name is None:
             kwargs_by_name = {}
-        return [
-            cls.suggest_hyperparameter_value_with_optuna(
+        return {
+            name: cls.suggest_hyperparameter_with_optuna(
                 trial=trial, name=name, **kwargs_by_name.get(name, {})
             )
             for name in names
-        ]
+        }
 
     @abstractmethod
     def solve(
