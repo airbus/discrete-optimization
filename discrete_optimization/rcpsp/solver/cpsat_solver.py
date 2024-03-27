@@ -35,9 +35,11 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP):
         self,
         problem: RCPSPModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(
-            problem=problem, params_objective_function=params_objective_function
+            problem=problem, params_objective_function=params_objective_function,
+            **kwargs
         )
         self.cp_model: Optional[CpModel] = None
         self.cp_solver: Optional[CpSolver] = None
