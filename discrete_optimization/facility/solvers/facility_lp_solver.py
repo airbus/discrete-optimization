@@ -18,6 +18,11 @@ from discrete_optimization.facility.facility_model import (
 )
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
@@ -113,6 +118,14 @@ def prune_search_space(
 class _LPFacilitySolverBase(MilpSolver, SolverFacility):
     """Base class for Facility LP solvers."""
 
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="use_matrix_indicator_heuristic", default=True, choices=[False, True]
+        ),
+        IntegerHyperparameter(name="n_shortest", default=10, low=0, high=100),
+        IntegerHyperparameter(name="n_cheapest", default=10, low=0, high=100),
+    ]
+
     def __init__(
         self,
         problem: FacilityProblem,
@@ -180,11 +193,16 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         nb_facilities = self.problem.facility_count
         nb_customers = self.problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
-            "use_matrix_indicator_heuristic", True
+            "use_matrix_indicator_heuristic",
+            self.get_hyperparameter("use_matrix_indicator_heuristic").default,
         )
         if use_matrix_indicator_heuristic:
-            n_shortest = kwargs.get("n_shortest", 10)
-            n_cheapest = kwargs.get("n_cheapest", 10)
+            n_shortest = kwargs.get(
+                "n_shortest", self.get_hyperparameter("n_shortest").default
+            )
+            n_cheapest = kwargs.get(
+                "n_cheapest", self.get_hyperparameter("n_cheapest").default
+            )
             matrix_fc_indicator, matrix_length = prune_search_space(
                 self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
             )
@@ -259,12 +277,19 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
         logger.info("Initialized")
 
 
 class LP_Facility_Solver_CBC(SolverFacility):
     """Milp formulation using cbc solver."""
+
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="use_matrix_indicator_heuristic", default=True, choices=[False, True]
+        ),
+        IntegerHyperparameter(name="n_shortest", default=10, low=0, high=100),
+        IntegerHyperparameter(name="n_cheapest", default=10, low=0, high=100),
+    ]
 
     def __init__(
         self,
@@ -293,11 +318,16 @@ class LP_Facility_Solver_CBC(SolverFacility):
         nb_facilities = self.problem.facility_count
         nb_customers = self.problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
-            "use_matrix_indicator_heuristic", True
+            "use_matrix_indicator_heuristic",
+            self.get_hyperparameter("use_matrix_indicator_heuristic").default,
         )
         if use_matrix_indicator_heuristic:
-            n_shortest = kwargs.get("n_shortest", 10)
-            n_cheapest = kwargs.get("n_cheapest", 10)
+            n_shortest = kwargs.get(
+                "n_shortest", self.get_hyperparameter("n_shortest").default
+            )
+            n_cheapest = kwargs.get(
+                "n_cheapest", self.get_hyperparameter("n_cheapest").default
+            )
             matrix_fc_indicator, matrix_length = prune_search_space(
                 self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
             )
@@ -360,7 +390,7 @@ class LP_Facility_Solver_CBC(SolverFacility):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint = {"Im lazy.": {"descr": "Im lazy."}}
+        self.description_constraint = {}
         logger.info("Initialized")
 
     def retrieve(self) -> ResultStorage:
@@ -438,11 +468,16 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         nb_facilities = self.problem.facility_count
         nb_customers = self.problem.customer_count
         use_matrix_indicator_heuristic = kwargs.get(
-            "use_matrix_indicator_heuristic", True
+            "use_matrix_indicator_heuristic",
+            self.get_hyperparameter("use_matrix_indicator_heuristic").default,
         )
         if use_matrix_indicator_heuristic:
-            n_shortest = kwargs.get("n_shortest", 10)
-            n_cheapest = kwargs.get("n_cheapest", 10)
+            n_shortest = kwargs.get(
+                "n_shortest", self.get_hyperparameter("n_shortest").default
+            )
+            n_cheapest = kwargs.get(
+                "n_cheapest", self.get_hyperparameter("n_cheapest").default
+            )
             matrix_fc_indicator, matrix_length = prune_search_space(
                 self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
             )
