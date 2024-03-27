@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.solvers.coloring_asp_solver &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/versions.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.solvers.coloring_asp_solver</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.coloring.solvers.coloring_asp_solver</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2023 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">clingo</span>
+<span class="kn">from</span> <span class="nn">clingo</span> <span class="kn">import</span> <span class="n">Symbol</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.coloring.coloring_model</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ColoringProblem</span><span class="p">,</span>
+    <span class="n">ColoringSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SolverColoringWithStartingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">build_aggreg_function_and_params_objective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">cur_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ColoringASPSolver"><a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver">[docs]</a><span class="k">class</span> <span class="nc">ColoringASPSolver</span><span class="p">(</span><span class="n">SolverColoringWithStartingSolution</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coloring_model</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solver based on Answer Set Programming formulation and clingo solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            coloring_model (ColoringProblem): coloring problem instance to solve</span>
+<span class="sd">            params_objective_function (ParamsObjectiveFunction): params of the objective function</span>
+<span class="sd">            silent_solve_error: if True, raise a warning instead of an error if the underlying instance.solve() crashes</span>
+<span class="sd">            **args:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">SolverColoringWithStartingSolution</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coloring_model</span><span class="o">=</span><span class="n">coloring_model</span><span class="p">)</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_sol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_dict</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coloring_model</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">clingo</span><span class="o">.</span><span class="n">Control</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ColoringASPSolver.init_model"><a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.init_model">[docs]</a>    <span class="k">def</span> <span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">basic_model</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        1 {color(X,C) : col(C)} 1 :- node(X).</span>
+<span class="s2">        :- edge(X,Y), color(X,C), color(Y,C).</span>
+
+
+<span class="s2">        #show color/2.</span>
+<span class="s2">        ncolors(C) :- C = #count{Color: color(_,Color)}.</span>
+<span class="s2">        #minimize {C: ncolors(C)}.</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">max_models</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_models&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">nb_colors</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_colors&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nb_colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_starting_solution</span><span class="p">(</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+            <span class="n">nb_colors</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">nb_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span> <span class="o">=</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Control</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;--warn=no-atom-undefined&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;--models=</span><span class="si">{</span><span class="n">max_models</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;--opt-mode=optN&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">basic_model</span><span class="p">)</span>
+        <span class="n">string_data_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_string_data_input</span><span class="p">(</span><span class="n">nb_colors</span><span class="o">=</span><span class="n">nb_colors</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">string_data_input</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColoringASPSolver.build_string_data_input"><a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.build_string_data_input">[docs]</a>    <span class="k">def</span> <span class="nf">build_string_data_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nb_colors</span><span class="p">):</span>
+        <span class="n">number_of_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coloring_model</span><span class="o">.</span><span class="n">number_of_nodes</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node(1..</span><span class="si">{</span><span class="n">number_of_nodes</span><span class="si">}</span><span class="s2">).</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">index_nodes_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coloring_model</span><span class="o">.</span><span class="n">index_nodes_name</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coloring_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+            <span class="n">edges</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;edge(</span><span class="si">{</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">). &quot;</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;col(c_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">).&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">)])</span>
+        <span class="n">full_string_input</span> <span class="o">=</span> <span class="n">nodes</span> <span class="o">+</span> <span class="n">edges</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">colors</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">full_string_input</span></div>
+
+<div class="viewcode-block" id="ColoringASPSolver.retrieve_solutions"><a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.retrieve_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">retrieve_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_symbols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Symbol</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">list_solutions_fit</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">symbols</span> <span class="ow">in</span> <span class="n">list_symbols</span><span class="p">:</span>
+            <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">number</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">symbols</span>
+                <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;color&quot;</span>
+            <span class="p">]</span>
+            <span class="n">colors_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">colors</span><span class="p">]))</span>
+            <span class="n">colors_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">colors_name</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">colors_name</span><span class="p">))}</span>
+            <span class="n">colors_vect</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">coloring_model</span><span class="o">.</span><span class="n">number_of_nodes</span>
+            <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="n">colors</span><span class="p">:</span>
+                <span class="n">colors_vect</span><span class="p">[</span><span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">colors_to_index</span><span class="p">[</span><span class="n">color</span><span class="p">]</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="n">ColoringSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coloring_model</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">colors_vect</span><span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="n">list_solutions_fit</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">solution</span><span class="p">,</span> <span class="n">fit</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">ResultStorage</span><span class="p">(</span>
+            <span class="n">list_solution_fits</span><span class="o">=</span><span class="n">list_solutions_fit</span><span class="p">,</span>
+            <span class="n">mode_optim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">sense_function</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColoringASPSolver.solve"><a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">start_time_grounding</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">ground</span><span class="p">([(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[])])</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Grounding programs: ...</span><span class="se">\n</span><span class="s2">=== Grounding done&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time_grounding</span><span class="si">}</span><span class="s2"> sec ===&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">class</span> <span class="nc">CallbackASP</span><span class="p">:</span>
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">dump_model_in_folders</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nb_found_models</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_results</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">symbols_results</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dump_model_in_folders</span> <span class="o">=</span> <span class="n">dump_model_in_folders</span>
+
+            <span class="k">def</span> <span class="nf">on_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_results</span> <span class="o">+=</span> <span class="p">[</span><span class="n">m</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">symbols_results</span> <span class="o">+=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="n">atoms</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nb_found_models</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;=== New Model [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_found_models</span><span class="si">}</span><span class="s2">]&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; found after </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; sec of solving === &quot;</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=== cost = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">cost</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=== Optimality proven ? </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">optimality_proven</span><span class="si">}</span><span class="s2"> === &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">optimality_proven</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dump_model_in_folders</span><span class="p">:</span>
+                    <span class="n">folder_model</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="n">cur_folder</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;output-folder/model_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_found_models</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">create_empty_folder</span><span class="p">(</span><span class="n">folder_model</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Dumping model.txt ...&quot;</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_model</span><span class="p">,</span> <span class="s2">&quot;model.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span>
+                    <span class="p">)</span> <span class="k">as</span> <span class="n">model_file</span><span class="p">:</span>
+                        <span class="n">model_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+
+        <span class="n">timeout_seconds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;timeout_seconds&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">callback</span> <span class="o">=</span> <span class="n">CallbackASP</span><span class="p">(</span>
+            <span class="n">dump_model_in_folders</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dump_model_in_folders&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">on_model</span><span class="o">=</span><span class="n">callback</span><span class="o">.</span><span class="n">on_model</span><span class="p">,</span> <span class="n">async_</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout_seconds</span><span class="p">)</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_solutions</span><span class="p">(</span><span class="n">callback</span><span class="o">.</span><span class="n">symbols_results</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="create_empty_folder"><a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.create_empty_folder">[docs]</a><span class="k">def</span> <span class="nf">create_empty_folder</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating empty folder: </span><span class="si">{</span><span class="n">folder</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">removedirs</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

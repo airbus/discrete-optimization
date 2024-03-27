@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.solvers package &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/versions.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.facility package" href="discrete_optimization.facility.html" />
+    <link rel="prev" title="discrete_optimization.coloring package" href="discrete_optimization.coloring.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.pickup_vrp.html">discrete_optimization.pickup_vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-coloring-solvers-package">
+<h1>discrete_optimization.coloring.solvers package<a class="headerlink" href="#discrete-optimization-coloring-solvers-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_asp_solver">
+<span id="discrete-optimization-coloring-solvers-coloring-asp-solver-module"></span><h2>discrete_optimization.coloring.solvers.coloring_asp_solver module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_asp_solver" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_asp_solver.</span></span><span class="sig-name descname"><span class="pre">ColoringASPSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_asp_solver.html#ColoringASPSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution" title="discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverColoringWithStartingSolution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.build_string_data_input">
+<span class="sig-name descname"><span class="pre">build_string_data_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nb_colors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_asp_solver.html#ColoringASPSolver.build_string_data_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.build_string_data_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_asp_solver.html#ColoringASPSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.init_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.retrieve_solutions">
+<span class="sig-name descname"><span class="pre">retrieve_solutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_symbols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Symbol</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_asp_solver.html#ColoringASPSolver.retrieve_solutions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.retrieve_solutions" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_asp_solver.html#ColoringASPSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.solve" title="Permalink to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – any argument specific to the solver</p>
+</dd>
+</dl>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_asp_solver.create_empty_folder">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_asp_solver.</span></span><span class="sig-name descname"><span class="pre">create_empty_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_asp_solver.html#create_empty_folder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_asp_solver.create_empty_folder" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_cp_lns_solvers">
+<span id="discrete-optimization-coloring-solvers-coloring-cp-lns-solvers-module"></span><h2>discrete_optimization.coloring.solvers.coloring_cp_lns_solvers module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_cp_lns_solvers" title="Permalink to this heading"></a></h2>
+<p>Large neighborhood search + Constraint programming toolbox for coloring problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">ConstraintHandlerFixColorsCP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#ConstraintHandlerFixColorsCP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.ConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<p>Constraint builder for LNS coloring problem.</p>
+<p>This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.problem" title="Permalink to this definition"></a></dt>
+<dd><p>input coloring problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.fraction_to_fix">
+<span class="sig-name descname"><span class="pre">fraction_to_fix</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.fraction_to_fix" title="Permalink to this definition"></a></dt>
+<dd><p>float between 0 and 1, representing the proportion of nodes to constrain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><span class="pre">CPSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_result_store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#ConstraintHandlerFixColorsCP.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.adding_constraint_from_results_store" title="Permalink to this definition"></a></dt>
+<dd><p>Include constraint that fix decision on a subset of nodes, according to current solutions found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cp_solver</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><em>CPSolver</em></a>) – a coloring CPSolver</p></li>
+<li><p><strong>child_instance</strong> – minizinc instance where to include the constraint</p></li>
+<li><p><strong>result_storage</strong> – current pool of solutions</p></li>
+<li><p><strong>last_result_store</strong> – pool of solutions found in previous LNS iteration (optional)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: an empty list, unused.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.remove_constraints_from_previous_iteration">
+<span class="sig-name descname"><span class="pre">remove_constraints_from_previous_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><span class="pre">CPSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#ConstraintHandlerFixColorsCP.remove_constraints_from_previous_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.remove_constraints_from_previous_iteration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">InitialColoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod" title="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod"><span class="pre">InitialColoringMethod</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#InitialColoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolution" title="discrete_optimization.generic_tools.lns_mip.InitialSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">InitialSolution</span></code></a></p>
+<p>Initial solution provider for lns algorithm.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.problem" title="Permalink to this definition"></a></dt>
+<dd><p>input coloring problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.initial_method">
+<span class="sig-name descname"><span class="pre">initial_method</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.initial_method" title="Permalink to this definition"></a></dt>
+<dd><p>the method to use to provide the initial solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod" title="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod">InitialColoringMethod</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.get_starting_solution">
+<span class="sig-name descname"><span class="pre">get_starting_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#InitialColoring.get_starting_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.get_starting_solution" title="Permalink to this definition"></a></dt>
+<dd><p>Compute initial solution via greedy methods.</p>
+<p>Returns: initial solution storage</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">InitialColoringMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#InitialColoringMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod.DUMMY">
+<span class="sig-name descname"><span class="pre">DUMMY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod.DUMMY" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod.GREEDY">
+<span class="sig-name descname"><span class="pre">GREEDY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod.GREEDY" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">PostProcessSolutionColoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#PostProcessSolutionColoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.PostProcessSolution" title="discrete_optimization.generic_tools.lns_mip.PostProcessSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">PostProcessSolution</span></code></a></p>
+<p>Post process class for coloring problem.</p>
+<blockquote>
+<div><p>It transforms the color vector to have colors between 0 and nb_colors-1</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.problem" title="Permalink to this definition"></a></dt>
+<dd><p>coloring instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.params_objective_function">
+<span class="sig-name descname"><span class="pre">params_objective_function</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.params_objective_function" title="Permalink to this definition"></a></dt>
+<dd><p>params of the objective function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction">ParamsObjectiveFunction</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.build_other_solution">
+<span class="sig-name descname"><span class="pre">build_other_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_lns_solvers.html#PostProcessSolutionColoring.build_other_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.build_other_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_cp_solvers">
+<span id="discrete-optimization-coloring-solvers-coloring-cp-solvers-module"></span><h2>discrete_optimization.coloring.solvers.coloring_cp_solvers module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_cp_solvers" title="Permalink to this heading"></a></h2>
+<p>Module containing Constraint Programming based solver for Coloring Problem.</p>
+<p>CP formulation rely on minizinc models stored in coloring/minizinc folder.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_solvers.</span></span><span class="sig-name descname"><span class="pre">ColoringCP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_solver_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolverName" title="discrete_optimization.generic_tools.cp_tools.CPSolverName"><span class="pre">CPSolverName</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">CPSolverName.CHUFFED</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent_solve_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver" title="discrete_optimization.generic_tools.cp_tools.MinizincCPSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinizincCPSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverColoring</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.export_dzn">
+<span class="sig-name descname"><span class="pre">export_dzn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCP.export_dzn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.export_dzn" title="Permalink to this definition"></a></dt>
+<dd><p>[DEBUG utility] Export the instantiated data into a dzn for potential debugs without python.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_name</strong> (<em>str</em>) – file path where to dump the data file</p></li>
+<li><p><strong>keys</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – list of input data names to dump.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.get_solution">
+<span class="sig-name descname"><span class="pre">get_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCP.get_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.get_solution" title="Permalink to this definition"></a></dt>
+<dd><p>Used by the init_model method to provide a greedy first solution</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>greedy_start</strong> (<em>bool</em>) – use heuristics (based on networkx) to compute starting solution, otherwise the
+dummy method is used.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – verbose option.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns (ColoringSolution): a starting coloring solution that can be used by lns.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCP.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.init_model" title="Permalink to this definition"></a></dt>
+<dd><p>Instantiate a minizinc model with the coloring problem data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nb_colors</strong> (<em>int</em>) – upper bound of number of colors to be considered by the model.</p></li>
+<li><p><strong>object_output</strong> (<em>bool</em>) – specify if the solution are returned in a ColoringCPSolution object
+or native minizinc output.</p></li>
+<li><p><strong>include_seq_chain_constraint</strong> (<em>bool</em>) – include the value_precede_chain in the minizinc model.
+See documentation of minizinc for the specification of this global constraint.</p></li>
+<li><p><strong>cp_model</strong> (<a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel" title="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel"><em>ColoringCPModel</em></a>) – CP model version.</p></li>
+<li><p><strong>max_cliques</strong> (<em>int</em>) – if cp_model == ColoringCPModel.CLIQUES, specify the max number of cliques to include
+in the model.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.retrieve_solutions">
+<span class="sig-name descname"><span class="pre">retrieve_solutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters_cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP" title="discrete_optimization.generic_tools.cp_tools.ParametersCP"><span class="pre">ParametersCP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCP.retrieve_solutions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.retrieve_solutions" title="Permalink to this definition"></a></dt>
+<dd><p>Retrieve the solution found by solving the minizinc instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>result</strong> – result of solve() call on minizinc instance</p></li>
+<li><p><strong>parameters_cp</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP" title="discrete_optimization.generic_tools.cp_tools.ParametersCP"><em>ParametersCP</em></a>) – parameters of the cp solving, to specify notably how much solution is expected.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns (ResultStorage): result object storing the solutions found by the CP solver.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_solvers.</span></span><span class="sig-name descname"><span class="pre">ColoringCPModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCPModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.CLIQUES">
+<span class="sig-name descname"><span class="pre">CLIQUES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.CLIQUES" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.DEFAULT">
+<span class="sig-name descname"><span class="pre">DEFAULT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.DEFAULT" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.LNS">
+<span class="sig-name descname"><span class="pre">LNS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.LNS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_cp_solvers.</span></span><span class="sig-name descname"><span class="pre">ColoringCPSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_output_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCPSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution.check">
+<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_cp_solvers.html#ColoringCPSolution.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution.check" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution.objective">
+<span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution.objective" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_lp_lns_solvers">
+<span id="discrete-optimization-coloring-solvers-coloring-lp-lns-solvers-module"></span><h2>discrete_optimization.coloring.solvers.coloring_lp_lns_solvers module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_lp_lns_solvers" title="Permalink to this heading"></a></h2>
+<p>Large neighborhood search + Linear programming toolbox for coloring problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">ConstraintHandlerFixColorsGrb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#ConstraintHandlerFixColorsGrb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.ConstraintHandler" title="discrete_optimization.generic_tools.lns_mip.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<p>Constraint builder used in LNS+LP (using gurobi solver) for coloring problem.</p>
+<p>This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.problem" title="Permalink to this definition"></a></dt>
+<dd><p>input coloring problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.fraction_to_fix">
+<span class="sig-name descname"><span class="pre">fraction_to_fix</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.fraction_to_fix" title="Permalink to this definition"></a></dt>
+<dd><p>float between 0 and 1, representing the proportion of nodes to constrain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">milp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><span class="pre">MilpSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#ConstraintHandlerFixColorsGrb.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.adding_constraint_from_results_store" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.remove_constraints_from_previous_iteration">
+<span class="sig-name descname"><span class="pre">remove_constraints_from_previous_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">milp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><span class="pre">MilpSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#ConstraintHandlerFixColorsGrb.remove_constraints_from_previous_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.remove_constraints_from_previous_iteration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">ConstraintHandlerFixColorsPyMip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#ConstraintHandlerFixColorsPyMip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.ConstraintHandler" title="discrete_optimization.generic_tools.lns_mip.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<p>Constraint builder used in LNS+ LP (using pymip library) for coloring problem.</p>
+<p>This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.problem" title="Permalink to this definition"></a></dt>
+<dd><p>input coloring problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.fraction_to_fix">
+<span class="sig-name descname"><span class="pre">fraction_to_fix</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.fraction_to_fix" title="Permalink to this definition"></a></dt>
+<dd><p>float between 0 and 1, representing the proportion of nodes to constrain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">milp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><span class="pre">MilpSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#ConstraintHandlerFixColorsPyMip.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.adding_constraint_from_results_store" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.remove_constraints_from_previous_iteration">
+<span class="sig-name descname"><span class="pre">remove_constraints_from_previous_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">milp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><span class="pre">MilpSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#ConstraintHandlerFixColorsPyMip.remove_constraints_from_previous_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.remove_constraints_from_previous_iteration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">InitialColoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod" title="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod"><span class="pre">InitialColoringMethod</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#InitialColoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolution" title="discrete_optimization.generic_tools.lns_mip.InitialSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">InitialSolution</span></code></a></p>
+<p>Initial solution provider for lns algorithm.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.problem" title="Permalink to this definition"></a></dt>
+<dd><p>input coloring problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.initial_method">
+<span class="sig-name descname"><span class="pre">initial_method</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.initial_method" title="Permalink to this definition"></a></dt>
+<dd><p>the method to use to provide the initial solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod" title="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod">InitialColoringMethod</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.get_starting_solution">
+<span class="sig-name descname"><span class="pre">get_starting_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#InitialColoring.get_starting_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.get_starting_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.</span></span><span class="sig-name descname"><span class="pre">InitialColoringMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_lns_solvers.html#InitialColoringMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod.DUMMY">
+<span class="sig-name descname"><span class="pre">DUMMY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod.DUMMY" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod.GREEDY">
+<span class="sig-name descname"><span class="pre">GREEDY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod.GREEDY" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_lp_solvers">
+<span id="discrete-optimization-coloring-solvers-coloring-lp-solvers-module"></span><h2>discrete_optimization.coloring.solvers.coloring_lp_solvers module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_lp_solvers" title="Permalink to this heading"></a></h2>
+<p>Linear programming models and solve functions for Coloring problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_solvers.</span></span><span class="sig-name descname"><span class="pre">ColoringLP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ColoringLP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseColoringLP</span></code></p>
+<p>Coloring LP solver based on gurobipy library.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.coloring_model">
+<span class="sig-name descname"><span class="pre">coloring_model</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.coloring_model" title="Permalink to this definition"></a></dt>
+<dd><p>coloring problem instance to solve</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.params_objective_function">
+<span class="sig-name descname"><span class="pre">params_objective_function</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.params_objective_function" title="Permalink to this definition"></a></dt>
+<dd><p>objective function parameters
+(however this is just used for the ResultStorage creation, not in the optimisation)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction">ParamsObjectiveFunction</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ColoringLP.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.init_model" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize the gurobi model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>greedy_start</strong> (<em>bool</em>) – if True, a greedy solution is computed (using GreedyColoring solver)
+and used as warm start for the LP.</p></li>
+<li><p><strong>use_cliques</strong> (<em>bool</em>) – if True, compute cliques of the coloring problem and add constraints to the model.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – verbose option.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.retrieve_solutions">
+<span class="sig-name descname"><span class="pre">retrieve_solutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_milp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.ParametersMilp" title="discrete_optimization.generic_tools.lp_tools.ParametersMilp"><span class="pre">ParametersMilp</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ColoringLP.retrieve_solutions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.retrieve_solutions" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_solvers.</span></span><span class="sig-name descname"><span class="pre">ColoringLP_MIP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">milp_solver_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolverName" title="discrete_optimization.generic_tools.lp_tools.MilpSolverName"><span class="pre">MilpSolverName</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">MilpSolverName.CBC</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ColoringLP_MIP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.PymipMilpSolver" title="discrete_optimization.generic_tools.lp_tools.PymipMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PymipMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseColoringLP</span></code></p>
+<p>Coloring LP solver based on pymip library.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Gurobi and CBC are available as backend solvers.</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.coloring_model">
+<span class="sig-name descname"><span class="pre">coloring_model</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.coloring_model" title="Permalink to this definition"></a></dt>
+<dd><p>coloring problem instance to solve</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.params_objective_function">
+<span class="sig-name descname"><span class="pre">params_objective_function</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.params_objective_function" title="Permalink to this definition"></a></dt>
+<dd><p>objective function parameters
+(however this is just used for the ResultStorage creation, not in the optimisation)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction">ParamsObjectiveFunction</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.milp_solver_name">
+<span class="sig-name descname"><span class="pre">milp_solver_name</span></span><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.milp_solver_name" title="Permalink to this definition"></a></dt>
+<dd><p>backend solver to use (either CBC ou GRB)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolverName" title="discrete_optimization.generic_tools.lp_tools.MilpSolverName">MilpSolverName</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ColoringLP_MIP.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.init_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.retrieve_solutions">
+<span class="sig-name descname"><span class="pre">retrieve_solutions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_milp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.ParametersMilp" title="discrete_optimization.generic_tools.lp_tools.ParametersMilp"><span class="pre">ParametersMilp</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ColoringLP_MIP.retrieve_solutions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.retrieve_solutions" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_lp_solvers.</span></span><span class="sig-name descname"><span class="pre">ConstraintsDict</span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_lp_solvers.html#ConstraintsDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict.constraints_neighbors">
+<span class="sig-name descname"><span class="pre">constraints_neighbors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Constr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">QConstr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">MConstr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">GenConstr</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict.constraints_neighbors" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict.one_color_constraints">
+<span class="sig-name descname"><span class="pre">one_color_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Constr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">QConstr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">MConstr</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">GenConstr</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict.one_color_constraints" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_solver">
+<span id="discrete-optimization-coloring-solvers-coloring-solver-module"></span><h2>discrete_optimization.coloring.solvers.coloring_solver module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_solver" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_solver.</span></span><span class="sig-name descname"><span class="pre">SolverColoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_solver.html#SolverColoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_solver.html#SolverColoring.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring.init_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution">
+<span id="discrete-optimization-coloring-solvers-coloring-solver-with-starting-solution-module"></span><h2>discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.</span></span><span class="sig-name descname"><span class="pre">SolverColoringWithStartingSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_solver_with_starting_solution.html#SolverColoringWithStartingSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverColoring</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution.get_starting_solution">
+<span class="sig-name descname"><span class="pre">get_starting_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_solver_with_starting_solution.html#SolverColoringWithStartingSolution.get_starting_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution.get_starting_solution" title="Permalink to this definition"></a></dt>
+<dd><p>Used by the init_model method to provide a greedy first solution</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>greedy_start</strong> (<em>bool</em>) – use heuristics (based on networkx) to compute starting solution, otherwise the
+dummy method is used.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – verbose option.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns (ColoringSolution): a starting coloring solution that can be used by lns.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.coloring_toulbar_solver">
+<span id="discrete-optimization-coloring-solvers-coloring-toulbar-solver-module"></span><h2>discrete_optimization.coloring.solvers.coloring_toulbar_solver module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.coloring_toulbar_solver" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.coloring_toulbar_solver.</span></span><span class="sig-name descname"><span class="pre">ToulbarColoringSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_toulbar_solver.html#ToulbarColoringSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution" title="discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverColoringWithStartingSolution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_toulbar_solver.html#ToulbarColoringSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver.init_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/coloring_toulbar_solver.html#ToulbarColoringSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver.solve" title="Permalink to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – any argument specific to the solver</p>
+</dd>
+</dl>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers.greedy_coloring">
+<span id="discrete-optimization-coloring-solvers-greedy-coloring-module"></span><h2>discrete_optimization.coloring.solvers.greedy_coloring module<a class="headerlink" href="#module-discrete_optimization.coloring.solvers.greedy_coloring" title="Permalink to this heading"></a></h2>
+<p>Greedy solvers for coloring problem : binding from networkx library methods.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.GreedyColoring">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.greedy_coloring.</span></span><span class="sig-name descname"><span class="pre">GreedyColoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.coloring.html#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/greedy_coloring.html#GreedyColoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.GreedyColoring" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverColoring</span></code></a></p>
+<p>Binded solver of networkx heuristics for coloring problem.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.GreedyColoring.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/greedy_coloring.html#GreedyColoring.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.GreedyColoring.solve" title="Permalink to this definition"></a></dt>
+<dd><p>Run the greedy solver for the given problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strategy</strong> (<a class="reference internal" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod" title="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod"><em>NXGreedyColoringMethod</em></a>) – one of the method used by networkx to compute coloring solution,
+or use NXGreedyColoringMethod.best to run each of them and return
+the best result.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>storage of solution found by the greedy solver.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>results (<a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage">ResultStorage</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.solvers.greedy_coloring.</span></span><span class="sig-name descname"><span class="pre">NXGreedyColoringMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/solvers/greedy_coloring.html#NXGreedyColoringMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.best">
+<span class="sig-name descname"><span class="pre">best</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'best'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.best" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential">
+<span class="sig-name descname"><span class="pre">connected_sequential</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'connected_sequential'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential_bfs">
+<span class="sig-name descname"><span class="pre">connected_sequential_bfs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'connected_sequential_bfs'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential_bfs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential_dfs">
+<span class="sig-name descname"><span class="pre">connected_sequential_dfs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'connected_sequential_dfs'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential_dfs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.dsatur">
+<span class="sig-name descname"><span class="pre">dsatur</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DSATUR'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.dsatur" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.independent_set">
+<span class="sig-name descname"><span class="pre">independent_set</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'independent_set'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.independent_set" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.largest_first">
+<span class="sig-name descname"><span class="pre">largest_first</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'largest_first'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.largest_first" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.random_sequential">
+<span class="sig-name descname"><span class="pre">random_sequential</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'random_sequential'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.random_sequential" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.saturation_largest_first">
+<span class="sig-name descname"><span class="pre">saturation_largest_first</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'saturation_largest_first'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.saturation_largest_first" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.smallest_last">
+<span class="sig-name descname"><span class="pre">smallest_last</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'smallest_last'</span></em><a class="headerlink" href="#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.smallest_last" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.coloring.solvers" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.coloring.html" class="btn btn-neutral float-left" title="discrete_optimization.coloring package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.facility.html" class="btn btn-neutral float-right" title="discrete_optimization.facility package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+discrete\_optimization.rcpsp package
+====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.rcpsp.mutations
+   discrete_optimization.rcpsp.plots
+   discrete_optimization.rcpsp.solver
+   discrete_optimization.rcpsp.specialized_rcpsp
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.fast\_function\_rcpsp module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.fast_function_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_model module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_model\_preemptive module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_model_preemptive
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_model\_utils module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_model_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_parser module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_solution\_utils module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_solution_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_solvers module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.rcpsp\_utils module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.rcpsp_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.tsp.tsp_model &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/versions.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.tsp.tsp_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.tsp.tsp_model</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">Iterable</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Type</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.typing</span> <span class="k">as</span> <span class="nn">npt</span>
+<span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">njit</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeAttribute</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="SolutionTSP"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.SolutionTSP">[docs]</a><span class="k">class</span> <span class="nc">SolutionTSP</span><span class="p">(</span><span class="n">Solution</span><span class="p">):</span>
+    <span class="n">permutation_from0</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">permutation</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">lengths</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="p">]</span>  <span class="c1"># to store the details of length of the tsp if you want.</span>
+    <span class="n">length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="nb">float</span>
+    <span class="p">]</span>  <span class="c1"># to store the length of the tsp, in case your mutation computes it :)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;TSPModel&quot;</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">permutation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lengths</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># to store the details of length of the tsp if you want.</span>
+        <span class="n">length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">float</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># to store the length of the tsp, in case your mutation computes it :)</span>
+        <span class="n">permutation_from0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">permutation</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">permutation_from0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;permutation and permutation_from0 cannot be both None.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lengths</span> <span class="o">=</span> <span class="n">lengths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="k">if</span> <span class="n">start_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">start_index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span> <span class="o">=</span> <span class="n">start_index</span>
+        <span class="k">if</span> <span class="n">end_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">end_index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span> <span class="o">=</span> <span class="n">end_index</span>
+        <span class="c1"># convert perm</span>
+        <span class="k">if</span> <span class="n">permutation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">permutation_from0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;permutation and permutation_from0 cannot be both None.&quot;</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">convert_perm_from0_to_original_perm</span><span class="p">(</span>
+                <span class="n">permutation_from0</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span> <span class="o">=</span> <span class="n">permutation_from0</span>
+        <span class="k">elif</span> <span class="n">permutation_from0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">convert_original_perm_to_perm_from0</span><span class="p">(</span>
+                <span class="n">permutation</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="o">=</span> <span class="n">permutation</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="o">=</span> <span class="n">permutation</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span> <span class="o">=</span> <span class="n">permutation_from0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SolutionTSP.copy"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.SolutionTSP.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SolutionTSP&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lengths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lengths</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lengths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lengths</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SolutionTSP</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+            <span class="n">end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">),</span>
+            <span class="n">lengths</span><span class="o">=</span><span class="n">lengths</span><span class="p">,</span>
+            <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="n">permutation_from0</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="SolutionTSP.lazy_copy"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.SolutionTSP.lazy_copy">[docs]</a>    <span class="k">def</span> <span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SolutionTSP&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SolutionTSP</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+            <span class="n">end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">,</span>
+            <span class="n">lengths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lengths</span><span class="p">,</span>
+            <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="n">permutation_from0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;perm :&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">obj=&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SolutionTSP.change_problem"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.SolutionTSP.change_problem">[docs]</a>    <span class="k">def</span> <span class="nf">change_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_problem</span><span class="p">,</span> <span class="n">TSPModel</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;new_problem must a TSPModel for a TSPSolution.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">new_problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lengths</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lengths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lengths</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">permutation_from0</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Point"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.Point">[docs]</a><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
+    <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="TSPModel"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel">[docs]</a><span class="k">class</span> <span class="nc">TSPModel</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+    <span class="n">list_points</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Point</span><span class="p">]</span>
+    <span class="n">np_points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">list_points</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Point</span><span class="p">],</span>
+        <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_points</span> <span class="o">=</span> <span class="n">list_points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_count</span> <span class="o">=</span> <span class="n">node_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span> <span class="o">=</span> <span class="n">start_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span> <span class="o">=</span> <span class="n">end_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ind_in_permutation</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">i</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_count</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_permutation</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ind_in_permutation</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">i</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_count</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_count</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">counter</span>
+                <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># for a given tsp kind of problem, you should provide a custom evaluate function, for now still abstract.</span>
+<div class="viewcode-block" id="TSPModel.evaluate_function"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.evaluate_function">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">evaluate_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_tsp</span><span class="p">:</span> <span class="n">SolutionTSP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="o">...</span></div>
+
+<div class="viewcode-block" id="TSPModel.evaluate_function_indexes"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.evaluate_function_indexes">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">evaluate_function_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">index_2</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="o">...</span></div>
+
+<div class="viewcode-block" id="TSPModel.evaluate_from_encoding"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.evaluate_from_encoding">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_from_encoding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">int_vector</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">encoding_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">encoding_name</span> <span class="o">==</span> <span class="s2">&quot;permutation_from0&quot;</span><span class="p">:</span>
+            <span class="n">tsp_sol</span> <span class="o">=</span> <span class="n">SolutionTSP</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+                <span class="n">end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+                <span class="n">permutation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_perm_from0_to_original_perm</span><span class="p">(</span><span class="n">int_vector</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">encoding_name</span> <span class="o">==</span> <span class="s2">&quot;permutation&quot;</span><span class="p">:</span>
+            <span class="n">tsp_sol</span> <span class="o">=</span> <span class="n">SolutionTSP</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+                <span class="n">end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+                <span class="n">permutation</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">int_vector</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">encoding_name</span><span class="p">:</span> <span class="n">int_vector</span><span class="p">,</span>
+                <span class="s2">&quot;start_index&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+                <span class="s2">&quot;end_index&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">tsp_sol</span> <span class="o">=</span> <span class="n">SolutionTSP</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="n">objectives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">tsp_sol</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objectives</span></div>
+
+<div class="viewcode-block" id="TSPModel.evaluate"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_tsp</span><span class="p">:</span> <span class="n">SolutionTSP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>  <span class="c1"># type: ignore # avoid isinstance checks for efficiency</span>
+        <span class="n">lengths</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function</span><span class="p">(</span><span class="n">var_tsp</span><span class="p">)</span>
+        <span class="n">var_tsp</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">obj</span>
+        <span class="n">var_tsp</span><span class="o">.</span><span class="n">lengths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="TSPModel.satisfy"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.satisfy">[docs]</a>    <span class="k">def</span> <span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_tsp</span><span class="p">:</span> <span class="n">SolutionTSP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore # avoid isinstance checks for efficiency</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">var_tsp</span><span class="o">.</span><span class="n">start_index</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_index</span>
+            <span class="ow">and</span> <span class="n">var_tsp</span><span class="o">.</span><span class="n">end_index</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_index</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">var_tsp</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">var_tsp</span><span class="o">.</span><span class="n">permutation</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ind_in_permutation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="TSPModel.get_dummy_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.get_dummy_solution">[docs]</a>    <span class="k">def</span> <span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolutionTSP</span><span class="p">:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">SolutionTSP</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+            <span class="n">end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ind_in_permutation</span><span class="p">),</span>
+            <span class="n">permutation_from0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">lengths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">var</span></div>
+
+<div class="viewcode-block" id="TSPModel.get_random_dummy_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.get_random_dummy_solution">[docs]</a>    <span class="k">def</span> <span class="nf">get_random_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolutionTSP</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ind_in_permutation</span><span class="p">)</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">SolutionTSP</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+            <span class="n">end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">a</span><span class="p">,</span>
+            <span class="n">permutation_from0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">lengths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">var</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;TSP problem with number of nodes :  : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_count</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TSPModel.convert_perm_from0_to_original_perm"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.convert_perm_from0_to_original_perm">[docs]</a>    <span class="k">def</span> <span class="nf">convert_perm_from0_to_original_perm</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">perm_from0</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="n">perm</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">perm_from0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">perm</span></div>
+
+<div class="viewcode-block" id="TSPModel.convert_original_perm_to_perm_from0"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.convert_original_perm_to_perm_from0">[docs]</a>    <span class="k">def</span> <span class="nf">convert_original_perm_to_perm_from0</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perm</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="n">perm_from0</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">perm_from0</span></div>
+
+<div class="viewcode-block" id="TSPModel.get_solution_type"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.get_solution_type">[docs]</a>    <span class="k">def</span> <span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">SolutionTSP</span></div>
+
+<div class="viewcode-block" id="TSPModel.get_attribute_register"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.get_attribute_register">[docs]</a>    <span class="k">def</span> <span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+        <span class="n">dict_register</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;permutation_from0&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;permutation_from0&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION</span><span class="p">],</span>
+                <span class="s2">&quot;range&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">)),</span>
+                <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original_indices_to_permutation_indices</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;permutation&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;permutation&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION</span><span class="p">,</span> <span class="n">TypeAttribute</span><span class="o">.</span><span class="n">PERMUTATION_TSP</span><span class="p">],</span>
+                <span class="s2">&quot;range&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ind_in_permutation</span><span class="p">,</span>
+                <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span><span class="n">dict_register</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TSPModel.get_objective_register"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel.get_objective_register">[docs]</a>    <span class="k">def</span> <span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="n">dict_objective</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">SINGLE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="n">dict_objective</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Point2D"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.Point2D">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Point2D</span><span class="p">(</span><span class="n">Point</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+<div class="viewcode-block" id="TSPModel2D"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel2D">[docs]</a><span class="k">class</span> <span class="nc">TSPModel2D</span><span class="p">(</span><span class="n">TSPModel</span><span class="p">):</span>
+    <span class="n">list_points</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Point2D</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">list_points</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Point2D</span><span class="p">],</span>
+        <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">use_numba</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">TSPModel</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">list_points</span><span class="p">,</span> <span class="n">node_count</span><span class="p">,</span> <span class="n">start_index</span><span class="o">=</span><span class="n">start_index</span><span class="p">,</span> <span class="n">end_index</span><span class="o">=</span><span class="n">end_index</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">np_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">node_count</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_count</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">np_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">np_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function_2d</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">use_numba</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function_2d</span> <span class="o">=</span> <span class="n">build_evaluate_function_np</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function_2d</span> <span class="o">=</span> <span class="n">build_evaluate_function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TSPModel2D.evaluate_function"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel2D.evaluate_function">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_tsp</span><span class="p">:</span> <span class="n">SolutionTSP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function_2d</span><span class="p">(</span><span class="n">var_tsp</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TSPModel2D.evaluate_function_indexes"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModel2D.evaluate_function_indexes">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_function_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">index_2</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">index_1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_points</span><span class="p">[</span><span class="n">index_2</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="TSPModelDistanceMatrix"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix">[docs]</a><span class="k">class</span> <span class="nc">TSPModelDistanceMatrix</span><span class="p">(</span><span class="n">TSPModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">list_points</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Point</span><span class="p">],</span>
+        <span class="n">distance_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">use_numba</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">TSPModel</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">list_points</span><span class="o">=</span><span class="n">list_points</span><span class="p">,</span>
+            <span class="n">node_count</span><span class="o">=</span><span class="n">node_count</span><span class="p">,</span>
+            <span class="n">start_index</span><span class="o">=</span><span class="n">start_index</span><span class="p">,</span>
+            <span class="n">end_index</span><span class="o">=</span><span class="n">end_index</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span> <span class="o">=</span> <span class="n">distance_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function_2d</span> <span class="o">=</span> <span class="n">build_evaluate_function_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TSPModelDistanceMatrix.evaluate_function"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.evaluate_function">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_tsp</span><span class="p">:</span> <span class="n">SolutionTSP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_function_2d</span><span class="p">(</span><span class="n">var_tsp</span><span class="o">.</span><span class="n">permutation</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TSPModelDistanceMatrix.evaluate_function_indexes"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.evaluate_function_indexes">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_function_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">index_2</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">index_1</span><span class="p">,</span> <span class="n">index_2</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="length"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.length">[docs]</a><span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="n">point1</span><span class="p">:</span> <span class="n">Point2D</span><span class="p">,</span> <span class="n">point2</span><span class="p">:</span> <span class="n">Point2D</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">point1</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">point2</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">point1</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">point2</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_length"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.compute_length">[docs]</a><span class="k">def</span> <span class="nf">compute_length</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">list_points</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Point2D</span><span class="p">],</span>
+    <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">length_permutation</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span><span class="n">list_points</span><span class="p">[</span><span class="n">start_index</span><span class="p">],</span> <span class="n">list_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length_permutation</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span><span class="n">list_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span><span class="p">]],</span> <span class="n">list_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]])</span>
+        <span class="n">obj</span> <span class="o">+=</span> <span class="n">ll</span>
+        <span class="n">lengths</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ll</span><span class="p">]</span>
+    <span class="n">lengths</span> <span class="o">+=</span> <span class="p">[</span><span class="n">length</span><span class="p">(</span><span class="n">list_points</span><span class="p">[</span><span class="n">end_index</span><span class="p">],</span> <span class="n">list_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])]</span>
+    <span class="n">obj</span> <span class="o">+=</span> <span class="n">lengths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">lengths</span><span class="p">,</span> <span class="n">obj</span></div>
+
+
+<span class="c1"># More efficient implementation</span>
+<div class="viewcode-block" id="compute_length_np"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.compute_length_np">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">compute_length_np</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">np_points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">length_permutation</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float_</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">np_points</span><span class="p">[</span><span class="n">start_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">np_points</span><span class="p">[</span><span class="n">start_index</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="p">)</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">node_count</span><span class="p">)</span>
+    <span class="n">lengths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length_permutation</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="o">+</span> <span class="p">(</span><span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">obj</span> <span class="o">+=</span> <span class="n">ll</span>
+        <span class="n">lengths</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ll</span>
+    <span class="n">lengths</span><span class="p">[</span><span class="n">node_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">np_points</span><span class="p">[</span><span class="n">end_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">np_points</span><span class="p">[</span><span class="n">end_index</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">np_points</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="p">)</span>
+    <span class="n">obj</span> <span class="o">+=</span> <span class="n">lengths</span><span class="p">[</span><span class="n">node_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">lengths</span><span class="p">,</span> <span class="n">obj</span></div>
+
+
+<div class="viewcode-block" id="compute_length_matrix"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.compute_length_matrix">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">compute_length_matrix</span><span class="p">(</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">start_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">end_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">distance_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">node_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">length_permutation</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">start_index</span><span class="p">,</span> <span class="n">solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">node_count</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">lengths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length_permutation</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">solution</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]])</span>
+        <span class="n">obj</span> <span class="o">+=</span> <span class="n">ll</span>
+        <span class="n">lengths</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ll</span>
+    <span class="n">lengths</span><span class="p">[</span><span class="n">node_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">distance_matrix</span><span class="p">[</span><span class="n">solution</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">end_index</span><span class="p">])</span>
+    <span class="n">obj</span> <span class="o">+=</span> <span class="n">lengths</span><span class="p">[</span><span class="n">node_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">lengths</span><span class="p">),</span> <span class="n">obj</span></div>
+
+
+<div class="viewcode-block" id="build_evaluate_function"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.build_evaluate_function">[docs]</a><span class="k">def</span> <span class="nf">build_evaluate_function</span><span class="p">(</span>
+    <span class="n">tsp_model</span><span class="p">:</span> <span class="n">TSPModel</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">compute_length</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+        <span class="n">length_permutation</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">,</span>
+        <span class="n">list_points</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">list_points</span><span class="p">,</span>
+        <span class="n">node_count</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">node_count</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="build_evaluate_function_np"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.build_evaluate_function_np">[docs]</a><span class="k">def</span> <span class="nf">build_evaluate_function_np</span><span class="p">(</span>
+    <span class="n">tsp_model</span><span class="p">:</span> <span class="n">TSPModel</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float_</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">compute_length_np</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+        <span class="n">length_permutation</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">,</span>
+        <span class="n">np_points</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">np_points</span><span class="p">,</span>
+        <span class="n">node_count</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">node_count</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="build_evaluate_function_matrix"><a class="viewcode-back" href="../../../api/discrete_optimization.tsp.html#discrete_optimization.tsp.tsp_model.build_evaluate_function_matrix">[docs]</a><span class="k">def</span> <span class="nf">build_evaluate_function_matrix</span><span class="p">(</span>
+    <span class="n">tsp_model</span><span class="p">:</span> <span class="n">TSPModelDistanceMatrix</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">compute_length_matrix</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">start_index</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">end_index</span><span class="p">,</span>
+        <span class="n">distance_matrix</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">distance_matrix</span><span class="p">,</span>
+        <span class="n">node_count</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">node_count</span><span class="p">,</span>
+        <span class="n">length_permutation</span><span class="o">=</span><span class="n">tsp_model</span><span class="o">.</span><span class="n">length_permutation</span><span class="p">,</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

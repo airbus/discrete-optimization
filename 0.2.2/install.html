@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/versions.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="getting_started.html" />
+    <link rel="prev" title="Welcome to discrete-optimization’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#minizinc-2-6">Minizinc 2.6+</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#linux-command-line">Linux command line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#macos-command-line">MacOs command line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#windows-command-line">Windows command line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#skipping-minizinc-version-check">Skipping minizinc version check</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#python-3-7-environment">Python 3.7+ environment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#with-conda-all-platforms">With conda (all platforms)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#with-pyenv-venv-linux-macos">With pyenv + venv (Linux/MacOS)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#with-pyenv-win-venv-windows">With pyenv-win + venv (Windows)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#gurobi-optional">Gurobi [optional]</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pip-install-discrete-optimization-library">Pip install discrete-optimization library</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h2>
+<section id="minizinc-2-6">
+<h3>Minizinc 2.6+<a class="headerlink" href="#minizinc-2-6" title="Permalink to this heading"></a></h3>
+<p>You need to install <a class="reference external" href="https://www.minizinc.org/">minizinc</a> (version greater than 2.6) and update the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> environment variable
+so that it can be found by Python.
+See <a class="reference external" href="https://www.minizinc.org/doc-latest/en/installation.html">minizinc documentation</a> for more details.</p>
+<blockquote>
+<div><p><strong>Tip:</strong> You can easily install minizinc from the command line, which can be useful when on cloud.
+In order to make life easier to cloud users, we reproduce below the necessary lines. Please be careful that this
+is not an official documentation for minizinc and that the following lines can stop working without notice
+as we do not test them automatically.</p>
+</div></blockquote>
+<section id="linux-command-line">
+<h4>Linux command line<a class="headerlink" href="#linux-command-line" title="Permalink to this heading"></a></h4>
+<p>On a Linux distribution, you can use the bundled <a class="reference external" href="https://www.minizinc.org/doc-latest/en/installation.html#appimage">minizinc AppImage</a>.</p>
+<p>If <a class="reference external" href="https://en.wikipedia.org/wiki/Filesystem_in_Userspace">FUSE</a> is available:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+curl -o minizinc_install/minizinc -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
+chmod +x minizinc_install/minizinc
+export PATH=&quot;$(pwd)/minizinc_install/&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+<p>Else, this is still possible by extracting the files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+cd minizinc_install
+curl -o minizinc.AppImage -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
+chmod +x minizinc.AppImage
+./minizinc.AppImage --appimage-extract
+cd ..
+export LD_LIBRARY_PATH=&quot;$(pwd)/minizinc_install/squashfs-root/usr/lib/&quot;:$LD_LIBRARY_PATH
+export PATH=&quot;$(pwd)/minizinc_install/squashfs-root/usr/bin/&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+</section>
+<section id="macos-command-line">
+<h4>MacOs command line<a class="headerlink" href="#macos-command-line" title="Permalink to this heading"></a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+curl -o minizinc.dmg -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled.dmg
+hdiutil attach minizinc.dmg
+cp -R /Volumes/MiniZinc*/MiniZincIDE.app minizinc_install/.
+export PATH=&quot;$(pwd)/minizinc_install/MiniZincIDE.app/Contents/Resources&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+</section>
+<section id="windows-command-line">
+<h4>Windows command line<a class="headerlink" href="#windows-command-line" title="Permalink to this heading"></a></h4>
+<p>Works on Windows Server 2022 with bash shell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>mkdir minizinc_install
+curl -o minizinc_setup.exe -L https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled-setup-win64.exe
+cmd //c &quot;minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp&quot;
+export PATH=&quot;~/AppData/Local/Programs/MiniZinc&quot;:$PATH
+minizinc --version
+</pre></div>
+</div>
+</section>
+<section id="skipping-minizinc-version-check">
+<h4>Skipping minizinc version check<a class="headerlink" href="#skipping-minizinc-version-check" title="Permalink to this heading"></a></h4>
+<p>It may happen that you need to use only a part of the library which is not relying on minizinc at all,
+and that you do not want to install minzinc.
+This can be troublesome as the minizinc binary version is checked at library import.
+We provide a way to bypass this check by setting the environment variable DO_SKIP_MZN_CHECK:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">DO_SKIP_MZN_CHECK</span><span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+<p>Please note however that the library is never tested without minizinc (or minizinc versions &lt; 2.6).
+Most modules related to solvers will fail to be imported without minizinc as they are heavily relying on it.</p>
+</section>
+</section>
+<section id="python-3-7-environment">
+<h3>Python 3.7+ environment<a class="headerlink" href="#python-3-7-environment" title="Permalink to this heading"></a></h3>
+<p>The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
+greater than 3.7.
+This can be achieved for instance either by using <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> or by using <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> (or <a class="reference external" href="https://github.com/pyenv-win/pyenv-win">pyenv-win</a> on windows)
+and <a class="reference external" href="https://docs.python.org/fr/3/library/venv.html">venv</a> module.</p>
+<p>The following examples show how to create a virtual environment with Python version 3.8.13 with the mentioned methods.</p>
+<section id="with-conda-all-platforms">
+<h4>With conda (all platforms)<a class="headerlink" href="#with-conda-all-platforms" title="Permalink to this heading"></a></h4>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span><span class="k">do</span>-env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8.13
+conda<span class="w"> </span>activate<span class="w"> </span><span class="k">do</span>-env
+</pre></div>
+</div>
+</section>
+<section id="with-pyenv-venv-linux-macos">
+<h4>With pyenv + venv (Linux/MacOS)<a class="headerlink" href="#with-pyenv-venv-linux-macos" title="Permalink to this heading"></a></h4>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyenv<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.8.13
+pyenv<span class="w"> </span>shell<span class="w"> </span><span class="m">3</span>.8.13
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="k">do</span>-venv
+<span class="nb">source</span><span class="w"> </span><span class="k">do</span>-venv/bin/activate
+</pre></div>
+</div>
+</section>
+<section id="with-pyenv-win-venv-windows">
+<h4>With pyenv-win + venv (Windows)<a class="headerlink" href="#with-pyenv-win-venv-windows" title="Permalink to this heading"></a></h4>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pyenv<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.8.13
+pyenv<span class="w"> </span>shell<span class="w"> </span><span class="m">3</span>.8.13
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span><span class="k">do</span>-venv
+<span class="k">do</span>-venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+</pre></div>
+</div>
+</section>
+</section>
+<section id="gurobi-optional">
+<h3>Gurobi [optional]<a class="headerlink" href="#gurobi-optional" title="Permalink to this heading"></a></h3>
+<p>Optionally, install <a class="reference external" href="https://www.gurobi.com/">gurobi</a> with its python binding (gurobipy)
+and an appropriate license, if you want to try solvers that make use of gurobi. The version of gurobi must be at least 9.0.</p>
+<blockquote>
+<div><p><strong>NB</strong>: If you just do <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">gurobipy</span></code>, you get a minimal license which does not allow to use it on “real” models.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="pip-install-discrete-optimization-library">
+<h2>Pip install discrete-optimization library<a class="headerlink" href="#pip-install-discrete-optimization-library" title="Permalink to this heading"></a></h2>
+<p>Install discrete-optimization from pip:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>discrete-optimization
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to discrete-optimization’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

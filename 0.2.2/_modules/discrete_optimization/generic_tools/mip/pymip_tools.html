@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.mip.pymip_tools &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/versions.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.mip.pymip_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.mip.pymip_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">mip</span>
+<span class="kn">from</span> <span class="nn">mip</span> <span class="kn">import</span> <span class="n">IncumbentUpdater</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">Var</span>
+
+
+<div class="viewcode-block" id="release_token"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.release_token">[docs]</a><span class="k">def</span> <span class="nf">release_token</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Usefull if you are using a token licence of gurobi.. pymip is not well adapted to using those in loop (</span>
+    <span class="c1"># (each new model instanciation will block a token as long your program runs..)</span>
+    <span class="c1"># Running it will normally unblock the token before initalizing a new grb model.</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="IncumbentStoreSolution"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.IncumbentStoreSolution">[docs]</a><span class="k">class</span> <span class="nc">IncumbentStoreSolution</span><span class="p">(</span><span class="n">IncumbentUpdater</span><span class="p">):</span>
+    <span class="c1"># Store intermediate solutions for further use.</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solution_store</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="IncumbentStoreSolution.nb_solutions"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.IncumbentStoreSolution.nb_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">nb_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_solution_store</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IncumbentStoreSolution.get_solutions"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.IncumbentStoreSolution.get_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">get_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solution_store</span></div>
+
+<div class="viewcode-block" id="IncumbentStoreSolution.update_incumbent"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.IncumbentStoreSolution.update_incumbent">[docs]</a>    <span class="k">def</span> <span class="nf">update_incumbent</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">objective_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">best_bound</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">solution</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Var</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Var</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">dict_solution</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;obj&quot;</span><span class="p">:</span> <span class="n">objective_value</span><span class="p">,</span>
+            <span class="s2">&quot;best_bound&quot;</span><span class="p">:</span> <span class="n">best_bound</span><span class="p">,</span>
+            <span class="s2">&quot;solution&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">var</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">var</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">solution</span><span class="p">},</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_solution_store</span> <span class="o">+=</span> <span class="p">[</span><span class="n">dict_solution</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">solution</span></div></div>
+
+
+<div class="viewcode-block" id="MyModelMilp"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.MyModelMilp">[docs]</a><span class="k">class</span> <span class="nc">MyModelMilp</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">sense</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">mip</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">,</span>
+        <span class="n">solver_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mip</span><span class="o">.</span><span class="n">Solver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">sense</span><span class="p">,</span> <span class="n">solver_name</span><span class="o">=</span><span class="n">solver_name</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sense</span> <span class="o">=</span> <span class="n">sense</span>
+
+<div class="viewcode-block" id="MyModelMilp.remove"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.MyModelMilp.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;MyModelMilp&quot;</span><span class="p">,</span>
+        <span class="n">objects</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">mip</span><span class="o">.</span><span class="n">Var</span><span class="p">,</span> <span class="n">mip</span><span class="o">.</span><span class="n">Constr</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="s2">&quot;mip.Var&quot;</span><span class="p">,</span> <span class="s2">&quot;mip.Constr&quot;</span><span class="p">]]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MyModelMilp.add_constr"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.MyModelMilp.add_constr">[docs]</a>    <span class="k">def</span> <span class="nf">add_constr</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;MyModelMilp&quot;</span><span class="p">,</span> <span class="n">lin_expr</span><span class="p">:</span> <span class="s2">&quot;mip.LinExpr&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;mip.Constr&quot;</span><span class="p">:</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_constr</span><span class="p">(</span><span class="n">lin_expr</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">l</span></div>
+
+<div class="viewcode-block" id="MyModelMilp.update"><a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.mip.html#discrete_optimization.generic_tools.mip.pymip_tools.MyModelMilp.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

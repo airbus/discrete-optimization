@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.facility.solvers.facility_cp_solvers &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/versions.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.facility.solvers.facility_cp_solvers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.facility.solvers.facility_cp_solvers</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">deprecation</span> <span class="kn">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span> <span class="nn">minizinc</span> <span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">Result</span><span class="p">,</span> <span class="n">Solver</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.facility.facility_model</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FacilityProblem</span><span class="p">,</span>
+    <span class="n">FacilitySolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.facility.solvers.facility_lp_solver</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">compute_length_matrix</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.facility.solvers.facility_solver</span> <span class="kn">import</span> <span class="n">SolverFacility</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.facility.solvers.greedy_solvers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GreedySolverDistanceBased</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.cp_tools</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CPSolverName</span><span class="p">,</span>
+    <span class="n">MinizincCPSolver</span><span class="p">,</span>
+    <span class="n">ParametersCP</span><span class="p">,</span>
+    <span class="n">map_cp_solver_name</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TupleFitness</span><span class="p">,</span>
+    <span class="n">build_aggreg_function_and_params_objective</span><span class="p">,</span>
+    <span class="n">get_default_objective_setup</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_solver</span> <span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">path_minizinc</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s2">&quot;../minizinc/&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="FacilityCPModel"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilityCPModel">[docs]</a><span class="k">class</span> <span class="nc">FacilityCPModel</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">DEFAULT_INT</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">DEFAULT_INT_LNS</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+<span class="n">file_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">FacilityCPModel</span><span class="o">.</span><span class="n">DEFAULT_INT</span><span class="p">:</span> <span class="s2">&quot;facility_int.mzn&quot;</span><span class="p">,</span>
+    <span class="n">FacilityCPModel</span><span class="o">.</span><span class="n">DEFAULT_INT_LNS</span><span class="p">:</span> <span class="s2">&quot;facility_int_lns.mzn&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="FacilitySolCP"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilitySolCP">[docs]</a><span class="k">class</span> <span class="nc">FacilitySolCP</span><span class="p">:</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">__output_item</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">_output_item</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;One solution </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output </span><span class="si">{</span><span class="n">_output_item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FacilitySolCP.check"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilitySolCP.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span></div></div>
+
+
+<div class="viewcode-block" id="FacilityCP"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilityCP">[docs]</a><span class="k">class</span> <span class="nc">FacilityCP</span><span class="p">(</span><span class="n">MinizincCPSolver</span><span class="p">,</span> <span class="n">SolverFacility</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;CP solver linked with minizinc implementation of coloring problem.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        facility_problem (FacilityProblem): facility problem instance to solve</span>
+<span class="sd">        params_objective_function (ParamsObjectiveFunction): params of the objective function</span>
+<span class="sd">        cp_solver_name (CPSolverName): backend solver to use with minizinc</span>
+<span class="sd">        silent_solve_error (bool): if True, raise a warning instead of an error if the underlying instance.solve() crashes</span>
+<span class="sd">        **args: unused</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">facility_problem</span><span class="p">:</span> <span class="n">FacilityProblem</span><span class="p">,</span>
+        <span class="n">cp_solver_name</span><span class="p">:</span> <span class="n">CPSolverName</span> <span class="o">=</span> <span class="n">CPSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">silent_solve_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">SolverFacility</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">facility_problem</span><span class="o">=</span><span class="n">facility_problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">silent_solve_error</span> <span class="o">=</span> <span class="n">silent_solve_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_solver_name</span> <span class="o">=</span> <span class="n">cp_solver_name</span>
+        <span class="k">if</span> <span class="n">params_objective_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">get_default_objective_setup</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">params_objective_function</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_sol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_dict</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="FacilityCP.init_model"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilityCP.init_model">[docs]</a>    <span class="k">def</span> <span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the minizinc instance to solve for a given instance.</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            cp_model (FacilityCPModel): CP model version</span>
+<span class="sd">            object_output (bool): specify if the solution are returned in a FacilitySolCP object</span>
+<span class="sd">                                  or native minizinc output.</span>
+
+<span class="sd">        Returns: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cp_model&quot;</span><span class="p">,</span> <span class="n">FacilityCPModel</span><span class="o">.</span><span class="n">DEFAULT_INT</span><span class="p">)</span>
+        <span class="n">object_output</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;object_output&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_minizinc</span><span class="p">,</span> <span class="n">file_dict</span><span class="p">[</span><span class="n">model_type</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">object_output</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">output_type</span> <span class="o">=</span> <span class="n">FacilitySolCP</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">map_cp_solver_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_solver_name</span><span class="p">])</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;nb_facilities&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">facility_count</span>
+        <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;nb_customers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">customer_count</span>
+        <span class="n">setup_costs</span><span class="p">,</span> <span class="n">closests</span><span class="p">,</span> <span class="n">distances</span> <span class="o">=</span> <span class="n">compute_length_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">FacilityCPModel</span><span class="o">.</span><span class="n">DEFAULT_INT</span><span class="p">,</span> <span class="n">FacilityCPModel</span><span class="o">.</span><span class="n">DEFAULT_INT_LNS</span><span class="p">]:</span>
+            <span class="n">distances_list</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">distances</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">distances_list</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;setup_cost_vector&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">setup_costs</span><span class="p">]</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;demand&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;capacity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">facility_count</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">distances_list</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">distances</span><span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">distances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">distances_list</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;setup_cost_vector&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">setup_costs</span><span class="p">]</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;demand&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">demand</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">instance</span><span class="p">[</span><span class="s2">&quot;capacity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">facilities</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">facility_count</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span></div>
+
+<div class="viewcode-block" id="FacilityCP.retrieve_solutions"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilityCP.retrieve_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">retrieve_solutions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">Result</span><span class="p">,</span> <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">ParametersCP</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">intermediate_solutions</span> <span class="o">=</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">intermediate_solution</span>
+        <span class="n">list_facility</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">objectives</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">intermediate_solutions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span><span class="p">:</span>
+                    <span class="n">list_facility</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;facility_for_customer&quot;</span><span class="p">])</span>
+                    <span class="n">objectives</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;objective&quot;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">list_facility</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="s2">&quot;facility_for_customer&quot;</span><span class="p">])</span>
+                    <span class="n">objectives</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span><span class="p">:</span>
+                <span class="n">list_facility</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;facility_for_customer&quot;</span><span class="p">])</span>
+                <span class="n">objectives</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;objective&quot;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">list_facility</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="s2">&quot;facility_for_customer&quot;</span><span class="p">])</span>
+                <span class="n">objectives</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span>
+        <span class="n">list_solutions_fit</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Solution</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">TupleFitness</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">facility</span><span class="p">,</span> <span class="n">objective</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">list_facility</span><span class="p">,</span> <span class="n">objectives</span><span class="p">):</span>
+            <span class="n">facility_sol</span> <span class="o">=</span> <span class="n">FacilitySolution</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="p">,</span> <span class="p">[</span><span class="n">f</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">facility</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_sol</span><span class="p">(</span><span class="n">facility_sol</span><span class="p">)</span>
+            <span class="n">list_solutions_fit</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">facility_sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ResultStorage</span><span class="p">(</span>
+            <span class="n">list_solution_fits</span><span class="o">=</span><span class="n">list_solutions_fit</span><span class="p">,</span>
+            <span class="n">best_solution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">mode_optim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">sense_function</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="FacilityCP.get_solution"><a class="viewcode-back" href="../../../../api/discrete_optimization.facility.solvers.html#discrete_optimization.facility.solvers.facility_cp_solvers.FacilityCP.get_solution">[docs]</a>    <span class="nd">@deprecated</span><span class="p">(</span>
+        <span class="n">deprecated_in</span><span class="o">=</span><span class="s2">&quot;0.1&quot;</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="s2">&quot;Use rather initial solution provider utilities&quot;</span>
+    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">get_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FacilitySolution</span><span class="p">:</span>
+        <span class="n">greedy_start</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;greedy_start&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">greedy_start</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing greedy solution&quot;</span><span class="p">)</span>
+            <span class="n">greedy_solver</span> <span class="o">=</span> <span class="n">GreedySolverDistanceBased</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">greedy_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get_best_solution</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;greedy_solver.solve().get_best_solution() &quot;</span> <span class="s2">&quot;should not be None.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">FacilitySolution</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;greedy_solver.solve().get_best_solution() &quot;</span>
+                    <span class="s2">&quot;should be a FacilitySolution.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Get dummy solution&quot;</span><span class="p">)</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">facility_problem</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Greedy Done&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

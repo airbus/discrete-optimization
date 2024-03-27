@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.vrp package &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/versions.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.vrp.mutation package" href="discrete_optimization.vrp.mutation.html" />
+    <link rel="prev" title="discrete_optimization.tsp.solver package" href="discrete_optimization.tsp.solver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.pickup_vrp.html">discrete_optimization.pickup_vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.vrp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.vrp package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-vrp-package">
+<h1>discrete_optimization.vrp package<a class="headerlink" href="#discrete-optimization-vrp-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.vrp.mutation.html">discrete_optimization.vrp.mutation package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#module-discrete_optimization.vrp.mutation.mutation_vrp">discrete_optimization.vrp.mutation.mutation_vrp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationRelocate"><code class="docutils literal notranslate"><span class="pre">MutationRelocate</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationRelocate.build"><code class="docutils literal notranslate"><span class="pre">MutationRelocate.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationRelocate.mutate"><code class="docutils literal notranslate"><span class="pre">MutationRelocate.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationRelocate.mutate_and_compute_obj"><code class="docutils literal notranslate"><span class="pre">MutationRelocate.mutate_and_compute_obj()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationSwap"><code class="docutils literal notranslate"><span class="pre">MutationSwap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationSwap.build"><code class="docutils literal notranslate"><span class="pre">MutationSwap.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationSwap.mutate"><code class="docutils literal notranslate"><span class="pre">MutationSwap.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationSwap.mutate_and_compute_obj"><code class="docutils literal notranslate"><span class="pre">MutationSwap.mutate_and_compute_obj()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP.build"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP.get_points"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP.get_points()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP.get_points_index"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP.get_points_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP.mutate"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP.mutate_and_compute_obj"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP.mutate_and_compute_obj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.MutationTwoOptVRP.node_count"><code class="docutils literal notranslate"><span class="pre">MutationTwoOptVRP.node_count</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.RelocateMove"><code class="docutils literal notranslate"><span class="pre">RelocateMove</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.RelocateMove.apply_local_move"><code class="docutils literal notranslate"><span class="pre">RelocateMove.apply_local_move()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.RelocateMove.backtrack_local_move"><code class="docutils literal notranslate"><span class="pre">RelocateMove.backtrack_local_move()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.SwapMove"><code class="docutils literal notranslate"><span class="pre">SwapMove</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.SwapMove.apply_local_move"><code class="docutils literal notranslate"><span class="pre">SwapMove.apply_local_move()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#discrete_optimization.vrp.mutation.mutation_vrp.SwapMove.backtrack_local_move"><code class="docutils literal notranslate"><span class="pre">SwapMove.backtrack_local_move()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.mutation.html#module-discrete_optimization.vrp.mutation">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.vrp.solver.html">discrete_optimization.vrp.solver package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#module-discrete_optimization.vrp.solver.greedy_vrp">discrete_optimization.vrp.solver.greedy_vrp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.greedy_vrp.GreedyVRPSolver"><code class="docutils literal notranslate"><span class="pre">GreedyVRPSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.greedy_vrp.GreedyVRPSolver.solve"><code class="docutils literal notranslate"><span class="pre">GreedyVRPSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#module-discrete_optimization.vrp.solver.lp_vrp_iterative">discrete_optimization.vrp.solver.lp_vrp_iterative module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.edges"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.edges_in_customers"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.edges_in_customers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.edges_in_merged_graph"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.edges_in_merged_graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.edges_out_customers"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.edges_out_customers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.edges_out_merged_graph"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.edges_out_merged_graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.edges_warm_set"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.edges_warm_set</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.init_model"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.solve"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.VRPIterativeLP.vrp_model"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP.vrp_model</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.build_graph_pruned_vrp"><code class="docutils literal notranslate"><span class="pre">build_graph_pruned_vrp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.build_matrice_distance_np"><code class="docutils literal notranslate"><span class="pre">build_matrice_distance_np()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.build_the_cycles"><code class="docutils literal notranslate"><span class="pre">build_the_cycles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.build_warm_edges_and_update_graph"><code class="docutils literal notranslate"><span class="pre">build_warm_edges_and_update_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.compute_start_end_flows_info"><code class="docutils literal notranslate"><span class="pre">compute_start_end_flows_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.init_model_lp"><code class="docutils literal notranslate"><span class="pre">init_model_lp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.plot_solve"><code class="docutils literal notranslate"><span class="pre">plot_solve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.rebuild_tsp_routine"><code class="docutils literal notranslate"><span class="pre">rebuild_tsp_routine()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.reevaluate_solutions"><code class="docutils literal notranslate"><span class="pre">reevaluate_solutions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">retrieve_solutions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.update_graph"><code class="docutils literal notranslate"><span class="pre">update_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative.update_model_2"><code class="docutils literal notranslate"><span class="pre">update_model_2()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#module-discrete_optimization.vrp.solver.lp_vrp_iterative_pymip">discrete_optimization.vrp.solver.lp_vrp_iterative_pymip module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.edges"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.edges_in_customers"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.edges_in_customers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.edges_in_merged_graph"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.edges_in_merged_graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.edges_out_customers"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.edges_out_customers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.edges_out_merged_graph"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.edges_out_merged_graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.edges_warm_set"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.edges_warm_set</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.init_model"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.solve"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.VRPIterativeLP_Pymip.vrp_model"><code class="docutils literal notranslate"><span class="pre">VRPIterativeLP_Pymip.vrp_model</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.init_model_lp"><code class="docutils literal notranslate"><span class="pre">init_model_lp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">retrieve_solutions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.lp_vrp_iterative_pymip.update_model_2"><code class="docutils literal notranslate"><span class="pre">update_model_2()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#module-discrete_optimization.vrp.solver.solver_ortools">discrete_optimization.vrp.solver.solver_ortools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.FirstSolutionStrategy"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.FirstSolutionStrategy.SAVINGS"><code class="docutils literal notranslate"><span class="pre">FirstSolutionStrategy.SAVINGS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.LocalSearchMetaheuristic"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.LocalSearchMetaheuristic.SIMULATED_ANNEALING"><code class="docutils literal notranslate"><span class="pre">LocalSearchMetaheuristic.SIMULATED_ANNEALING</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.VrpORToolsSolver"><code class="docutils literal notranslate"><span class="pre">VrpORToolsSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.VrpORToolsSolver.init_model"><code class="docutils literal notranslate"><span class="pre">VrpORToolsSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.VrpORToolsSolver.retrieve"><code class="docutils literal notranslate"><span class="pre">VrpORToolsSolver.retrieve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.solver_ortools.VrpORToolsSolver.solve"><code class="docutils literal notranslate"><span class="pre">VrpORToolsSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#module-discrete_optimization.vrp.solver.vrp_solver">discrete_optimization.vrp.solver.vrp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp"><code class="docutils literal notranslate"><span class="pre">SolverVrp</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp.init_model"><code class="docutils literal notranslate"><span class="pre">SolverVrp.init_model()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.vrp.solver.html#module-discrete_optimization.vrp.solver">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.vrp.vrp_model">
+<span id="discrete-optimization-vrp-vrp-model-module"></span><h2>discrete_optimization.vrp.vrp_model module<a class="headerlink" href="#module-discrete_optimization.vrp.vrp_model" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.BasicCustomer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">BasicCustomer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#BasicCustomer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.BasicCustomer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.Customer2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">Customer2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#Customer2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.Customer2D" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.vrp.vrp_model.BasicCustomer" title="discrete_optimization.vrp.vrp_model.BasicCustomer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicCustomer</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">VrpProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vehicle_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vehicle_capacities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customer_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.BasicCustomer" title="discrete_optimization.vrp.vrp_model.BasicCustomer"><span class="pre">BasicCustomer</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_indexes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_indexes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.customers">
+<span class="sig-name descname"><span class="pre">customers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.BasicCustomer" title="discrete_optimization.vrp.vrp_model.BasicCustomer"><span class="pre">BasicCustomer</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.customers" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate a given solution object for the given problem.</p>
+<p>This method should return a dictionnary of KPI, that can be then used for mono or multiobjective optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><em>Solution</em></a>) – the Solution object to evaluate.</p>
+</dd>
+</dl>
+<p>Returns: Dictionnary of float kpi for the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.evaluate_function">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_tsp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.evaluate_function_indexes">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate_function_indexes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.evaluate_function_indexes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.evaluate_function_indexes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.EncodingRegister" title="discrete_optimization.generic_tools.do_problem.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.get_attribute_register" title="Permalink to this definition"></a></dt>
+<dd><p>Returns how the Solution should be encoded.</p>
+<p>Returns (EncodingRegister): content of the encoding of the solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.get_dummy_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.get_objective_register" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the objective definition.</p>
+<p>Returns (ObjectiveRegister): object defining the objective criteria.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.get_solution_type" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the class implementation of a Solution.</p>
+<p>Returns (class): class object of the given Problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.get_stupid_solution">
+<span class="sig-name descname"><span class="pre">get_stupid_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.get_stupid_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.get_stupid_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem.satisfy" title="Permalink to this definition"></a></dt>
+<dd><p>Computes if a solution satisfies or not the constraints of the problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> – the Solution object to check satisfability</p>
+</dd>
+</dl>
+<p>Returns (bool): boolean true if the constraints are fulfilled, false elsewhere.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">VrpProblem2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vehicle_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vehicle_capacities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customer_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">customers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.Customer2D" title="discrete_optimization.vrp.vrp_model.Customer2D"><span class="pre">Customer2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_indexes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_indexes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem2D" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VrpProblem</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem2D.customers">
+<span class="sig-name descname"><span class="pre">customers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.Customer2D" title="discrete_optimization.vrp.vrp_model.Customer2D"><span class="pre">Customer2D</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem2D.customers" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem2D.evaluate_function">
+<span class="sig-name descname"><span class="pre">evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem2D.evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem2D.evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpProblem2D.evaluate_function_indexes">
+<span class="sig-name descname"><span class="pre">evaluate_function_indexes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpProblem2D.evaluate_function_indexes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpProblem2D.evaluate_function_indexes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpSolution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">VrpSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Solution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpSolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpSolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpSolution.change_problem" title="Permalink to this definition"></a></dt>
+<dd><p>If relevant to the optimisation problem, change the underlying problem instance for the solution.</p>
+<p>This method can be used to evaluate a solution for different instance of problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><em>Problem</em></a>) – another problem instance from which the solution can be evaluated</p>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpSolution.copy" title="Permalink to this definition"></a></dt>
+<dd><p>Deep copy of the solution.</p>
+<p>The copy() function should return a new object containing the same input as the current object,
+that respects the following expected behaviour:
+-y = x.copy()
+-if do some inplace change of y, the changes are not done in x.</p>
+<p>Returns: a new object from which you can manipulate attributes without changing the original object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.VrpSolution.lazy_copy">
+<span class="sig-name descname"><span class="pre">lazy_copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#VrpSolution.lazy_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.VrpSolution.lazy_copy" title="Permalink to this definition"></a></dt>
+<dd><p>This function should return a new object but possibly with mutable attributes from the original objects.</p>
+<p>A typical use of lazy copy is in evolutionary algorithms or genetic algorithm where the use of
+local move don’t need to do a possibly costly deepcopy.</p>
+<p>Returns (Solution): copy (possibly shallow) of the Solution</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.build_evaluate_function">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">build_evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#build_evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.build_evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.compute_length">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">compute_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_customers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.BasicCustomer" title="discrete_optimization.vrp.vrp_model.BasicCustomer"><span class="pre">BasicCustomer</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#compute_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.compute_length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.compute_length_np">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">compute_length_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">np_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#compute_length_np"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.compute_length_np" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.length">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.Customer2D" title="discrete_optimization.vrp.vrp_model.Customer2D"><span class="pre">Customer2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">point2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.Customer2D" title="discrete_optimization.vrp.vrp_model.Customer2D"><span class="pre">Customer2D</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.sequential_computing">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">sequential_computing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#sequential_computing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.sequential_computing" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.stupid_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">stupid_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#stupid_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.stupid_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_model.trivial_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_model.</span></span><span class="sig-name descname"><span class="pre">trivial_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpSolution" title="discrete_optimization.vrp.vrp_model.VrpSolution"><span class="pre">VrpSolution</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_model.html#trivial_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_model.trivial_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.vrp.vrp_parser">
+<span id="discrete-optimization-vrp-vrp-parser-module"></span><h2>discrete_optimization.vrp.vrp_parser module<a class="headerlink" href="#module-discrete_optimization.vrp.vrp_parser" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_parser.get_data_available" title="Permalink to this definition"></a></dt>
+<dd><p>Get datasets available for vrp.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for vrp whould be find.</dt><dd><p>If None, we look in “vrp” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. Is None, set by</dt><dd><p>default to “~/discrete_optimization_data “</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_parser.parse_file">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_parser.</span></span><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vehicle_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem2D" title="discrete_optimization.vrp.vrp_model.VrpProblem2D"><span class="pre">VrpProblem2D</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_parser.html#parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_parser.parse_file" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_parser.parse_input">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_parser.</span></span><span class="sig-name descname"><span class="pre">parse_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vehicle_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem2D" title="discrete_optimization.vrp.vrp_model.VrpProblem2D"><span class="pre">VrpProblem2D</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_parser.html#parse_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_parser.parse_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.vrp.vrp_solvers">
+<span id="discrete-optimization-vrp-vrp-solvers-module"></span><h2>discrete_optimization.vrp.vrp_solvers module<a class="headerlink" href="#module-discrete_optimization.vrp.vrp_solvers" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_solvers.look_for_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_solvers.</span></span><span class="sig-name descname"><span class="pre">look_for_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp" title="discrete_optimization.vrp.solver.vrp_solver.SolverVrp"><span class="pre">SolverVrp</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_solvers.html#look_for_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_solvers.look_for_solver" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_solvers.look_for_solver_class">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_solvers.</span></span><span class="sig-name descname"><span class="pre">look_for_solver_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp" title="discrete_optimization.vrp.solver.vrp_solver.SolverVrp"><span class="pre">SolverVrp</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_solvers.html#look_for_solver_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_solvers.look_for_solver_class" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_solvers.return_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_solvers.</span></span><span class="sig-name descname"><span class="pre">return_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp" title="discrete_optimization.vrp.solver.vrp_solver.SolverVrp"><span class="pre">SolverVrp</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vrp_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp" title="discrete_optimization.vrp.solver.vrp_solver.SolverVrp"><span class="pre">SolverVrp</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_solvers.html#return_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_solvers.return_solver" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_solvers.solve">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_solvers.</span></span><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.vrp.solver.html#discrete_optimization.vrp.solver.vrp_solver.SolverVrp" title="discrete_optimization.vrp.solver.vrp_solver.SolverVrp"><span class="pre">SolverVrp</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vrp_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_solvers.html#solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_solvers.solve" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.vrp.vrp_toolbox">
+<span id="discrete-optimization-vrp-vrp-toolbox-module"></span><h2>discrete_optimization.vrp.vrp_toolbox module<a class="headerlink" href="#module-discrete_optimization.vrp.vrp_toolbox" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_toolbox.build_graph">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_toolbox.</span></span><span class="sig-name descname"><span class="pre">build_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Graph</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_toolbox.html#build_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_toolbox.build_graph" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_toolbox.compute_length_matrix">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_toolbox.</span></span><span class="sig-name descname"><span class="pre">compute_length_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_toolbox.html#compute_length_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_toolbox.compute_length_matrix" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.vrp.vrp_toolbox.prune_search_space">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrp.vrp_toolbox.</span></span><span class="sig-name descname"><span class="pre">prune_search_space</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vrp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.vrp.vrp_model.VrpProblem" title="discrete_optimization.vrp.vrp_model.VrpProblem"><span class="pre">VrpProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_shortest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrp/vrp_toolbox.html#prune_search_space"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrp.vrp_toolbox.prune_search_space" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.vrp">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.vrp" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.tsp.solver.html" class="btn btn-neutral float-left" title="discrete_optimization.tsp.solver package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.vrp.mutation.html" class="btn btn-neutral float-right" title="discrete_optimization.vrp.mutation package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
