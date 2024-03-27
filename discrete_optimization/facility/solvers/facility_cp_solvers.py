@@ -4,8 +4,6 @@
 
 import logging
 import os
-import random
-from datetime import timedelta
 from enum import Enum
 from typing import Any, List, Optional, Tuple, Union
 
@@ -27,12 +25,16 @@ from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
     ParametersCP,
+    find_right_minizinc_solver_name,
     map_cp_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
     TupleFitness,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -82,10 +84,18 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
         **args: unused
     """
 
+    hyperparameters = [
+        EnumHyperparameter(
+            "cp_model", enum=FacilityCPModel, default=FacilityCPModel.DEFAULT_INT
+        ),
+        EnumHyperparameter(
+            "cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        ),
+    ]
+
     def __init__(
         self,
         problem: FacilityProblem,
-        cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
         **kwargs: Any,
@@ -94,8 +104,8 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
             problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.cp_solver_name = cp_solver_name
         self.custom_output_type = False
+        self.model: Optional[Model] = None
 
     def init_model(self, **kwargs: Any) -> None:
         """Initialise the minizinc instance to solve for a given instance.
@@ -108,14 +118,17 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
         Returns: None
 
         """
-        model_type = kwargs.get("cp_model", FacilityCPModel.DEFAULT_INT)
+        model_type = kwargs.get("cp_model", self.get_hyperparameter("cp_model").default)
+        cp_solver_name = kwargs.get(
+            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
+        )
         object_output = kwargs.get("object_output", True)
         path = os.path.join(path_minizinc, file_dict[model_type])
         self.model = Model(path)
         if object_output:
             self.model.output_type = FacilitySolCP
             self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, self.model)
         instance["nb_facilities"] = self.problem.facility_count
         instance["nb_customers"] = self.problem.customer_count
