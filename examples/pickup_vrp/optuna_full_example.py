@@ -93,9 +93,7 @@ def objective(trial: Trial):
     solver_class = solvers_by_name[solver_name]
 
     # hyperparameters for the chosen solver
-    hyperparameters_names = solver_class.get_hyperparameters_names()
-    hyperparameters_values = ORToolsGPDP.suggest_hyperparameters_values_with_optuna(
-        names=hyperparameters_names,
+    suggested_hyperparameters_kwargs = solver_class.suggest_hyperparameters_with_optuna(
         trial=trial,
     )
 
@@ -126,8 +124,8 @@ def objective(trial: Trial):
     logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
     # construct kwargs for __init__, init_model, and solve
-    kwargs = kwargs_fixed_by_solver[solver_class]
-    kwargs.update(dict(zip(hyperparameters_names, hyperparameters_values)))
+    kwargs = dict(kwargs_fixed_by_solver[solver_class])  # copy the frozen kwargs dict
+    kwargs.update(suggested_hyperparameters_kwargs)
 
     # solver init
     solver = solver_class(problem=problem, **kwargs)

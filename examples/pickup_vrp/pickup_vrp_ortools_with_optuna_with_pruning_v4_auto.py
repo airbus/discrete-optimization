@@ -13,6 +13,7 @@ Results can be viewed on optuna-dashboard with:
 """
 
 import logging
+from operator import itemgetter
 
 import optuna
 from optuna.trial import Trial, TrialState
@@ -61,21 +62,17 @@ def objective(trial: Trial):
         sense_function=ModeOptim.MINIMIZATION,
     )
     # hyperparameters
-    # hyperparameters
-    (
-        first_solution_strategy,
-        local_search_metaheuristic,
-        use_lns,
-        use_cp_sat,
-    ) = ORToolsGPDP.suggest_hyperparameters_values_with_optuna(
-        names=[
-            "first_solution_strategy",
-            "local_search_metaheuristic",
-            "use_lns",
-            "use_cp_sat",
-        ],
+    hyperparameters_names = [
+        "first_solution_strategy",
+        "local_search_metaheuristic",
+        "use_lns",
+        "use_cp_sat",
+    ]
+    hyperparameters = ORToolsGPDP.suggest_hyperparameters_with_optuna(
+        names=hyperparameters_names,
         trial=trial,
         kwargs_by_name={
+            # restrict choices for `first_solution_strategy`
             "first_solution_strategy": dict(
                 choices=[
                     FirstSolutionStrategy.AUTOMATIC,
@@ -84,6 +81,14 @@ def objective(trial: Trial):
             )
         },
     )
+    # extract individual hyperparameter from the hyperparameters dict
+    (
+        first_solution_strategy,
+        local_search_metaheuristic,
+        use_lns,
+        use_cp_sat,
+    ) = itemgetter(hyperparameters_names)(hyperparameters)
+
     use_cp = True
     n_solutions = trial.suggest_int("n_solutions_max", 10, 200)
 
