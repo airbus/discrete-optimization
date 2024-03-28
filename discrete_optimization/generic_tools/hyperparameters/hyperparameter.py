@@ -38,11 +38,15 @@ class Hyperparameter:
 
     """
 
-    def suggest_with_optuna(self, trial: optuna.trial.Trial, **kwargs: Any) -> Any:
+    def suggest_with_optuna(
+        self, trial: optuna.trial.Trial, prefix: str = "", **kwargs: Any
+    ) -> Any:
         """Suggest hyperparameter value for an Optuna trial.
 
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_xxx()`
 
         Returns:
@@ -81,6 +85,7 @@ class IntegerHyperparameter(Hyperparameter):
         trial: optuna.trial.Trial,
         low: Optional[int] = None,
         high: Optional[int] = None,
+        prefix: str = "",
         **kwargs: Any,
     ) -> Any:
         """Suggest hyperparameter value for an Optuna trial.
@@ -89,6 +94,8 @@ class IntegerHyperparameter(Hyperparameter):
             trial: optuna Trial used for choosing the hyperparameter value
             low: can be used to restrict lower bound
             high: can be used to restrict upper bound
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_int()`
 
         Returns:
@@ -98,7 +105,7 @@ class IntegerHyperparameter(Hyperparameter):
             low = self.low
         if high is None:
             high = self.high
-        return trial.suggest_int(name=self.name, low=low, high=high, **kwargs)  # type: ignore
+        return trial.suggest_int(name=prefix + self.name, low=low, high=high, **kwargs)  # type: ignore
 
 
 @dataclass
@@ -131,6 +138,7 @@ class FloatHyperparameter(Hyperparameter):
         trial: optuna.trial.Trial,
         low: Optional[float] = None,
         high: Optional[float] = None,
+        prefix: str = "",
         **kwargs: Any,
     ) -> Any:
         """Suggest hyperparameter value for an Optuna trial.
@@ -139,6 +147,8 @@ class FloatHyperparameter(Hyperparameter):
             trial: optuna Trial used for choosing the hyperparameter value
             low: can be used to restrict lower bound
             high: can be used to restrict upper bound
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_float()`
 
         Returns:
@@ -148,7 +158,9 @@ class FloatHyperparameter(Hyperparameter):
             low = self.low
         if high is None:
             high = self.high
-        return trial.suggest_float(name=self.name, low=low, high=high, **kwargs)
+        return trial.suggest_float(
+            name=prefix + self.name, low=low, high=high, **kwargs
+        )
 
 
 @dataclass
@@ -162,6 +174,7 @@ class CategoricalHyperparameter(Hyperparameter):
         self,
         trial: optuna.trial.Trial,
         choices: Optional[Iterable[Any]] = None,
+        prefix: str = "",
         **kwargs: Any,
     ) -> Any:
         """Suggest hyperparameter value for an Optuna trial.
@@ -169,6 +182,8 @@ class CategoricalHyperparameter(Hyperparameter):
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
             choices: restricts list of choices
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
 
         Returns:
@@ -176,7 +191,7 @@ class CategoricalHyperparameter(Hyperparameter):
         """
         if self.choices is not None and "choices" not in kwargs:
             kwargs["choices"] = self.choices
-        return trial.suggest_categorical(name=self.name, **kwargs)
+        return trial.suggest_categorical(name=prefix + self.name, **kwargs)
 
 
 class EnumHyperparameter(CategoricalHyperparameter):
@@ -195,6 +210,7 @@ class EnumHyperparameter(CategoricalHyperparameter):
         self,
         trial: optuna.trial.Trial,
         choices: Optional[Iterable[Enum]] = None,
+        prefix: str = "",
         **kwargs: Any,
     ) -> Enum:
         """Suggest hyperparameter value for an Optuna trial.
@@ -202,6 +218,8 @@ class EnumHyperparameter(CategoricalHyperparameter):
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
             choices: restricts list of choices among the enumeration `self.enum`
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
 
         Returns:
@@ -210,7 +228,7 @@ class EnumHyperparameter(CategoricalHyperparameter):
         if choices is None:
             choices = self.choices
         choices_str = [c.name for c in choices]
-        choice_str: str = trial.suggest_categorical(name=self.name, choices=choices_str, **kwargs)  # type: ignore
+        choice_str: str = trial.suggest_categorical(name=prefix + self.name, choices=choices_str, **kwargs)  # type: ignore
         return self.enum[choice_str]
 
 
@@ -218,6 +236,12 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
     """Hyperparameter whose values are solver classes themselves for meta-solvers."""
 
     choices: List[Type[SolverDO]]
+    """List of solvers to choose from for the subsolver.
+
+    NB: for now, it is not possible to pick the metasolver itself as a choice for its subsolver,
+    in order to avoid infinite recursivity issues.
+
+    """
 
     def __init__(
         self, name: str, choices: List[Type[SolverDO]], default: Optional[Any] = None
@@ -237,6 +261,7 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
         self,
         trial: optuna.trial.Trial,
         choices: Optional[Iterable[Type[SolverDO]]] = None,
+        prefix: str = "",
         **kwargs: Any,
     ) -> Type[SolverDO]:
         """Suggest hyperparameter value for an Optuna trial.
@@ -244,6 +269,8 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
             choices: restricts list of subsolvers to choose from
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
 
         Returns:
@@ -252,7 +279,9 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
         if choices is None:
             choices = self.choices
         choices_str = [self.choices_cls2str[c] for c in choices]
-        choice_str = trial.suggest_categorical(name=self.name, choices=choices_str)
+        choice_str = trial.suggest_categorical(
+            name=prefix + self.name, choices=choices_str
+        )
         return self.choices_str2cls[choice_str]
 
 
@@ -281,6 +310,7 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
         subsolver: Type[SolverDO],
         names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        prefix: str = "",
     ) -> Dict[str, Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
@@ -290,16 +320,24 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
             trial: optuna Trial used for choosing the hyperparameter value
             subsolver: subsolver chosen as hyperparameter value for `self.subsolver_hyperparameter`
             names: names of the hyperparameters to choose for the subsolver.
+                Only relevant names will be considered (i.e. corresponding to existing hyperparameters names for the chosen subsolve),
+                the other will be discarded (potentially, being meaningful for other subsolvers).
                 By default, all available hyperparameters will be suggested.
                 Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name.
                 Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
 
         Returns:
 
         """
+        subsolver_hyperparameter_names = subsolver.get_hyperparameters_names()
+        if names is not None:
+            names = [name for name in names if name in subsolver_hyperparameter_names]
         return subsolver.suggest_hyperparameters_with_optuna(
             trial=trial,
             names=names,
             kwargs_by_name=kwargs_by_name,
+            prefix=prefix,
         )
