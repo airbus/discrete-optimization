@@ -51,9 +51,8 @@ class KnapsackDynProg(SolverKnapsack):
         self.table = np.zeros((self.nb_items + 1, self.capacity + 1))
 
     def solve(self, **kwargs: Any) -> ResultStorage:
-        start_by_most_promising = kwargs.get(
-            "greedy_start", self.get_hyperparameter("greedy_start").default
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        start_by_most_promising = kwargs["greedy_start"]
         max_items = kwargs.get("max_items", self.problem.nb_items + 1)
         max_items = min(self.problem.nb_items + 1, max_items)
         max_time_seconds = kwargs.get("max_time_seconds", None)
