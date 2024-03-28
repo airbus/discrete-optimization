@@ -153,6 +153,7 @@ class SolverDO:
         trial: optuna.trial.Trial,
         names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
         prefix: str = "",
     ) -> Dict[str, Any]:
         """Suggest hyperparameters values during an Optuna trial.
@@ -162,6 +163,8 @@ class SolverDO:
             names: names of the hyperparameters to choose.
                 By default, all available hyperparameters will be suggested.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
+            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subsolver hyperparameters,
+                if the subsolver class is not suggested by this method, but already fixed.
             prefix: prefix to add to optuna corresponding parameters
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
 
@@ -176,6 +179,8 @@ class SolverDO:
             names = cls.get_hyperparameters_names()
         if kwargs_by_name is None:
             kwargs_by_name = {}
+        if fixed_hyperparameters is None:
+            fixed_hyperparameters = {}
 
         # Meta-solvers: when defining subsolvers hyperparameters,
         #  be careful to suggest them before trying to suggest their own subset of hyperparameters
@@ -201,9 +206,20 @@ class SolverDO:
         }
         for hyperparameter in subsolvers_kwargs_hyperparameters:
             kwargs_for_optuna_suggestion = kwargs_by_name.get(hyperparameter.name, {})
-            kwargs_for_optuna_suggestion["subsolver"] = suggested_hyperparameters[
-                hyperparameter.subsolver_hyperparameter
-            ]
+            if hyperparameter.subsolver_hyperparameter in names:
+                kwargs_for_optuna_suggestion["subsolver"] = suggested_hyperparameters[
+                    hyperparameter.subsolver_hyperparameter
+                ]
+            elif hyperparameter.subsolver_hyperparameter in fixed_hyperparameters:
+                kwargs_for_optuna_suggestion["subsolver"] = fixed_hyperparameters[
+                    hyperparameter.subsolver_hyperparameter
+                ]
+            else:
+                raise ValueError(
+                    f"The choice of '{hyperparameter.subsolver_hyperparameter}' should be "
+                    "either suggested by this method with `names` containing it or being None "
+                    "or given via `fixed_hyperparameters`."
+                )
             kwargs_for_optuna_suggestion[
                 "prefix"
             ] = f"{prefix}{hyperparameter.subsolver_hyperparameter}."

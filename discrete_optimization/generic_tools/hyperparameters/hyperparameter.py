@@ -310,6 +310,7 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
         subsolver: Type[SolverDO],
         names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
         prefix: str = "",
     ) -> Dict[str, Any]:
         """Suggest hyperparameter value for an Optuna trial.
@@ -326,6 +327,8 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
                 Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name.
                 Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
+            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subsolver hyperparameters,
+                if the subsolver class is not suggested by this method, but already fixed.
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
 
@@ -339,5 +342,6 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
             trial=trial,
             names=names,
             kwargs_by_name=kwargs_by_name,
+            fixed_hyperparameters=fixed_hyperparameters,
             prefix=prefix,
         )
