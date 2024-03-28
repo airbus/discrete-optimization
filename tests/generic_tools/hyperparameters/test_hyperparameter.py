@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, List, Optional
 
 import optuna
+import pytest
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -240,3 +241,60 @@ def test_suggest_with_optuna_meta_solver_level2():
     study.optimize(objective)
 
     assert len(study.trials) == 2 * (4 * 5 + 3 * 5)
+
+
+def test_suggest_with_optuna_meta_solver_nok_fixed_subsolver_not_given():
+    def objective(trial: optuna.Trial) -> float:
+        MetaSolver.suggest_hyperparameters_with_optuna(
+            trial=trial,
+            names=["nb", "kwargs_subsolver"],
+            kwargs_by_name=dict(
+                kwargs_subsolver=dict(
+                    names=["nb", "coeff", "coeff2"],
+                    kwargs_by_name=dict(coeff=dict(step=0.5), coeff2=dict(step=0.5)),
+                )
+            ),
+        )
+
+        return 0.0
+
+    study = optuna.create_study(sampler=optuna.samplers.BruteForceSampler())
+    with pytest.raises(ValueError, match="The choice of 'subsolver'"):
+        study.optimize(objective, n_trials=1)
+
+
+def test_suggest_with_optuna_meta_solver_fixed_subsolver():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            MetaSolver.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                fixed_hyperparameters={"subsolver": DummySolver},
+                names=["nb", "kwargs_subsolver"],
+                kwargs_by_name=dict(
+                    kwargs_subsolver=dict(
+                        names=["nb", "coeff", "coeff2"],
+                        kwargs_by_name=dict(coeff=dict(step=0.5)),
+                    )
+                ),
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 2
+        print(suggested_hyperparameters_kwargs)
+        assert "nb" in suggested_hyperparameters_kwargs
+        assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
+        assert "nb" in trial.params
+        assert "subsolver.nb" in trial.params
+        assert (
+            trial.params["subsolver.nb"]
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+        )
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (3 * 5)
