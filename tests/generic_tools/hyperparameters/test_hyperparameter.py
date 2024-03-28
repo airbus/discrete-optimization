@@ -103,6 +103,29 @@ def test_get_default_hyperparameters():
     assert kwargs["method"] == Method.GREEDY
 
 
+def test_complete_with_default_hyperparameters():
+    kwargs = {"coeff": 0.5, "toto": "youpi"}
+    kwargs = DummySolver.complete_with_default_hyperparameters(kwargs)
+
+    assert kwargs["toto"] == "youpi"
+    assert kwargs["coeff"] == 0.5
+    assert kwargs["nb"] == 1
+    assert kwargs["use_it"]
+    assert kwargs["method"] == Method.GREEDY
+
+
+def test_complete_with_default_hyperparameters_specific_names():
+    kwargs = {"coeff": 0.5, "toto": "youpi"}
+    kwargs = DummySolver.complete_with_default_hyperparameters(
+        kwargs, names=["nb", "coeff"]
+    )
+
+    assert kwargs["toto"] == "youpi"
+    assert kwargs["coeff"] == 0.5
+    assert kwargs["nb"] == 1
+    assert "use_it" not in kwargs
+
+
 def test_suggest_with_optuna():
     def objective(trial: optuna.Trial) -> float:
         # hyperparameters for the chosen solver

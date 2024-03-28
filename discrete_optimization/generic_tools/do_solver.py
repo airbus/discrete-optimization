@@ -94,6 +94,25 @@ class SolverDO:
         return {name: hyperparameters_by_names[name].default for name in names}
 
     @classmethod
+    def complete_with_default_hyperparameters(
+        cls, kwargs: Dict[str, Any], names: Optional[List[str]] = None
+    ):
+        """Add missing hyperparameters to kwargs by using default values
+
+        Args:
+            kwargs: keyword arguments to complete (for `__init__`, `init_model`, or `solve`)
+            names: names of the hyperparameters to add if missing.
+                By default, all available hyperparameters.
+
+        Returns:
+             a new dictionary, completion of kwargs
+
+        """
+        kwargs_complete = cls.get_default_hyperparameters(names=names)
+        kwargs_complete.update(kwargs)  # ensure preferring values from kwargs
+        return kwargs_complete
+
+    @classmethod
     def suggest_hyperparameter_with_optuna(
         cls, trial: optuna.trial.Trial, name: str, prefix: str = "", **kwargs
     ) -> Any:
