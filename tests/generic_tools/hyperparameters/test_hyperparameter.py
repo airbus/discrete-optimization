@@ -1,0 +1,219 @@
+from enum import Enum
+from typing import Any, List, Optional
+
+import optuna
+
+from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+    SubSolverHyperparameter,
+    SubSolverKwargsHyperparameter,
+)
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
+
+
+class Method(Enum):
+    DUMMY = 0
+    GREEDY = 1
+
+
+class DummySolver(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=2, default=1),
+        FloatHyperparameter("coeff", low=-1.0, high=1.0, default=1.0),
+        CategoricalHyperparameter("use_it", choices=[True, False], default=True),
+        EnumHyperparameter("method", enum=Method, default=Method.GREEDY),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
+class DummySolver2(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=3, default=1),
+        FloatHyperparameter("coeff2", low=-1.0, high=1.0, default=1.0),
+        FloatHyperparameter("coeff3", low=-1.0, high=1.0, default=1.0),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
+class MetaSolver(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=1, default=1),
+        SubSolverHyperparameter("subsolver", choices=[DummySolver, DummySolver2]),
+        SubSolverKwargsHyperparameter(
+            "kwargs_subsolver", subsolver_hyperparameter="subsolver"
+        ),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
+class MetaMetaSolver(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=1, high=1, default=1),
+        SubSolverHyperparameter("subsolver", choices=[MetaSolver]),
+        SubSolverKwargsHyperparameter(
+            "kwargs_subsolver", subsolver_hyperparameter="subsolver"
+        ),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
+def test_get_hyperparameters_and_co():
+    assert DummySolver.get_hyperparameters_names() == [
+        "nb",
+        "coeff",
+        "use_it",
+        "method",
+    ]
+    assert isinstance(DummySolver.get_hyperparameter("nb"), IntegerHyperparameter)
+
+
+def test_get_default_hyperparameters():
+    kwargs = DummySolver.get_default_hyperparameters(["coeff", "use_it"])
+    assert len(kwargs) == 2
+    assert "coeff" in kwargs
+    assert "use_it" in kwargs
+
+    kwargs = DummySolver.get_default_hyperparameters()
+    assert kwargs["coeff"] == 1.0
+    assert kwargs["nb"] == 1
+    assert kwargs["use_it"]
+    assert kwargs["method"] == Method.GREEDY
+
+
+def test_suggest_with_optuna():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolver.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={"coeff": dict(step=0.5), "nb": dict(high=1)},
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 4
+        assert isinstance(suggested_hyperparameters_kwargs["method"], Method)
+        assert 0 <= suggested_hyperparameters_kwargs["nb"]
+        assert 1 >= suggested_hyperparameters_kwargs["nb"]
+        assert -1.0 <= suggested_hyperparameters_kwargs["coeff"]
+        assert 1.0 >= suggested_hyperparameters_kwargs["coeff"]
+        assert suggested_hyperparameters_kwargs["use_it"] in (True, False)
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * 2 * 5 * 2
+
+
+def test_suggest_with_optuna_meta_solver():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            MetaSolver.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name=dict(
+                    kwargs_subsolver=dict(
+                        names=["nb", "coeff", "coeff2"],
+                        kwargs_by_name=dict(
+                            coeff=dict(step=0.5), coeff2=dict(step=0.5)
+                        ),
+                    )
+                ),
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 3
+        print(suggested_hyperparameters_kwargs)
+        assert "nb" in suggested_hyperparameters_kwargs
+        assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
+        assert "nb" in trial.params
+        assert "subsolver.nb" in trial.params
+        assert (
+            trial.params["subsolver.nb"]
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+        )
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (4 * 5 + 3 * 5)
+
+
+def test_suggest_with_optuna_meta_solver_level2():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            MetaMetaSolver.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name=dict(
+                    kwargs_subsolver=dict(
+                        kwargs_by_name=dict(
+                            kwargs_subsolver=dict(
+                                names=["nb", "coeff", "coeff2"],
+                                kwargs_by_name=dict(
+                                    coeff=dict(step=0.5), coeff2=dict(step=0.5)
+                                ),
+                            )
+                        )
+                    )
+                ),
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 3
+        print(suggested_hyperparameters_kwargs)
+        assert "nb" in suggested_hyperparameters_kwargs
+        assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
+        assert (
+            "nb"
+            in suggested_hyperparameters_kwargs["kwargs_subsolver"]["kwargs_subsolver"]
+        )
+        assert "nb" in trial.params
+        assert "subsolver.nb" in trial.params
+        assert "subsolver.subsolver.nb" in trial.params
+        assert (
+            trial.params["subsolver.nb"]
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+        )
+        assert (
+            trial.params["subsolver.subsolver.nb"]
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["kwargs_subsolver"][
+                "nb"
+            ]
+        )
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (4 * 5 + 3 * 5)
