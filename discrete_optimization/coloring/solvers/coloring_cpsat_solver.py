@@ -29,11 +29,21 @@ class ModelingCPSat(Enum):
 
 class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution):
     hyperparameters = [
-        EnumHyperparameter(name="modeling", enum=ModelingCPSat),
-        CategoricalHyperparameter(name="warmstart", choices=[True, False]),
-        CategoricalHyperparameter(name="value_sequence_chain", choices=[True, False]),
-        CategoricalHyperparameter(name="used_variable", choices=[True, False]),
-        CategoricalHyperparameter(name="symmetry_on_used", choices=[True, False]),
+        EnumHyperparameter(
+            name="modeling", enum=ModelingCPSat, default=ModelingCPSat.INTEGER
+        ),
+        CategoricalHyperparameter(
+            name="warmstart", choices=[True, False], default=True
+        ),
+        CategoricalHyperparameter(
+            name="value_sequence_chain", choices=[True, False], default=False
+        ),
+        CategoricalHyperparameter(
+            name="used_variable", choices=[True, False], default=False
+        ),
+        CategoricalHyperparameter(
+            name="symmetry_on_used", choices=[True, False], default=True
+        ),
     ] + SolverColoringWithStartingSolution.hyperparameters
 
     def __init__(
@@ -114,9 +124,9 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
         self.variables["used"] = used
 
     def init_model_integer(self, nb_colors: int, **kwargs):
-        used_variable = kwargs.get("used_variable", False)
-        value_sequence_chain = kwargs.get("value_sequence_chain", False)
-        symmetry_on_used = kwargs.get("symmetry_on_used", True)
+        used_variable = kwargs["used_variable"]
+        value_sequence_chain = kwargs["value_sequence_chain"]
+        symmetry_on_used = kwargs["symmetry_on_used"]
         cp_model = CpModel()
         variables = [
             cp_model.NewIntVar(0, nb_colors - 1, name=f"c_{i}")
@@ -194,8 +204,9 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
                 self.cp_model.AddHint(self.variables["colors"][i][color], color == c)
 
     def init_model(self, **args: Any) -> None:
-        modeling = args.get("modeling", ModelingCPSat.INTEGER)
-        do_warmstart = args.get("warmstart", True)
+        args = self.complete_with_default_hyperparameters(args)
+        modeling = args["modeling"]
+        do_warmstart = args["warmstart"]
         assert isinstance(modeling, ModelingCPSat)
         if "nb_colors" not in args or do_warmstart:
             solution = self.get_starting_solution(**args)
