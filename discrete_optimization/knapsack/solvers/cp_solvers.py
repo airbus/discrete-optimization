@@ -116,9 +116,8 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
         )
 
     def init_model(self, **kwargs: Any) -> None:
-        cp_solver_name = kwargs.get(
-            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        cp_solver_name = kwargs["cp_solver_name"]
         model = Model(os.path.join(this_path, "../minizinc/knapsack_mzn.mzn"))
         solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, model)
@@ -153,9 +152,8 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
         self.silent_solve_error = silent_solve_error
 
     def init_model(self, **kwargs: Any) -> None:
-        cp_solver_name = kwargs.get(
-            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        cp_solver_name = kwargs["cp_solver_name"]
         model = Model(os.path.join(this_path, "../minizinc/knapsack_global.mzn"))
         solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, model)
@@ -231,9 +229,8 @@ class CPMultidimensionalSolver(MinizincCPSolver):
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
-        cp_solver_name = kwargs.get(
-            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        cp_solver_name = kwargs["cp_solver_name"]
         model = Model(
             os.path.join(this_path, "../minizinc/multidimension_knapsack.mzn")
         )
@@ -316,9 +313,8 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
         self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
-        cp_solver_name = kwargs.get(
-            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        cp_solver_name = kwargs["cp_solver_name"]
         model = Model(
             os.path.join(this_path, "../minizinc/multidim_multiscenario_knapsack.mzn")
         )

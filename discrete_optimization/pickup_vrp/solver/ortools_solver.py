@@ -158,13 +158,21 @@ https://developers.google.com/optimization/routing/routing_options#search_status
 class ORToolsGPDP(SolverPickupVrp):
     problem: GPDP
     hyperparameters = [
-        EnumHyperparameter(name="first_solution_strategy", enum=FirstSolutionStrategy),
         EnumHyperparameter(
-            name="local_search_metaheuristic", enum=LocalSearchMetaheuristic
+            name="first_solution_strategy",
+            enum=FirstSolutionStrategy,
+            default=FirstSolutionStrategy.SAVINGS,
         ),
-        CategoricalHyperparameter(name="use_lns", choices=[True, False]),
-        CategoricalHyperparameter(name="use_cp", choices=[True, False]),
-        CategoricalHyperparameter(name="use_cp_sat", choices=[True, False]),
+        EnumHyperparameter(
+            name="local_search_metaheuristic",
+            enum=LocalSearchMetaheuristic,
+            default=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        ),
+        CategoricalHyperparameter(name="use_lns", choices=[True, False], default=True),
+        CategoricalHyperparameter(name="use_cp", choices=[True, False], default=True),
+        CategoricalHyperparameter(
+            name="use_cp_sat", choices=[True, False], default=False
+        ),
     ]
 
     def __init__(
@@ -183,6 +191,7 @@ class ORToolsGPDP(SolverPickupVrp):
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
 
     def init_model(self, **kwargs: Any) -> None:
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
         include_time_windows = kwargs.get("include_time_windows", False)
         include_time_windows_cluster = kwargs.get("include_time_windows_cluster", False)
         include_cumulative = kwargs.get("include_cumulative", False)
@@ -783,22 +792,19 @@ class ORToolsGPDP(SolverPickupVrp):
     def build_search_parameters(
         self, **kwargs: Any
     ) -> routing_parameters_pb2.RoutingSearchParameters:
-        first_solution_strategy: Union[int, FirstSolutionStrategy] = kwargs.get(
-            "first_solution_strategy", FirstSolutionStrategy.SAVINGS
-        )
+        first_solution_strategy: Union[int, FirstSolutionStrategy] = kwargs[
+            "first_solution_strategy"
+        ]
         if not isinstance(first_solution_strategy, int):
             first_solution_strategy = int(first_solution_strategy.value)
-        local_search_metaheuristic = kwargs.get(
-            "local_search_metaheuristic",
-            LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
-        )
+        local_search_metaheuristic = kwargs["local_search_metaheuristic"]
         if not isinstance(local_search_metaheuristic, int):
             local_search_metaheuristic = int(local_search_metaheuristic.value)
         one_visit_per_cluster = kwargs.get("one_visit_per_cluster", False)
 
-        use_lns = kwargs.get("use_lns", True)
-        use_cp = kwargs.get("use_cp", True)
-        use_cp_sat = kwargs.get("use_cp_sat", False)
+        use_lns = kwargs["use_lns"]
+        use_cp = kwargs["use_cp"]
+        use_cp_sat = kwargs["use_cp_sat"]
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
         search_parameters.first_solution_strategy = first_solution_strategy
         search_parameters.local_search_metaheuristic = local_search_metaheuristic

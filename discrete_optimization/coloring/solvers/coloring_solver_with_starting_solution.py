@@ -25,7 +25,11 @@ logger = logging.getLogger(__name__)
 class SolverColoringWithStartingSolution(SolverColoring):
     hyperparameters = [
         CategoricalHyperparameter("greedy_start", choices=[True], default=True),
-        EnumHyperparameter("greedy_method", enum=NXGreedyColoringMethod),
+        EnumHyperparameter(
+            "greedy_method",
+            enum=NXGreedyColoringMethod,
+            default=NXGreedyColoringMethod.best,
+        ),
     ]
 
     def get_starting_solution(self, **kwargs: Any) -> ColoringSolution:
@@ -39,7 +43,8 @@ class SolverColoringWithStartingSolution(SolverColoring):
         Returns (ColoringSolution): a starting coloring solution that can be used by lns.
 
         """
-        greedy_start = kwargs.get("greedy_start", True)
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_start = kwargs["greedy_start"]
         params_objective_function = kwargs.get("params_objective_function", None)
         if greedy_start:
             logger.info("Computing greedy solution")
@@ -47,9 +52,7 @@ class SolverColoringWithStartingSolution(SolverColoring):
                 self.problem,
                 params_objective_function=params_objective_function,
             )
-            result_store = greedy_solver.solve(
-                strategy=kwargs.get("greedy_method", NXGreedyColoringMethod.best),
-            )
+            result_store = greedy_solver.solve(strategy=kwargs["greedy_method"])
             solution = result_store.get_best_solution()
             if solution is None:
                 raise RuntimeError(
