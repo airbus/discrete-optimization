@@ -16,6 +16,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     Hyperparameter,
+    SubSolverKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -74,8 +75,46 @@ class SolverDO:
         return cls.get_hyperparameters_by_name()[name]
 
     @classmethod
-    def suggest_hyperparameter_value_with_optuna(
-        cls, trial: optuna.trial.Trial, name: str, **kwargs
+    def get_default_hyperparameters(
+        cls, names: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Get hyperparameters default values.
+
+        Args:
+            names: names of the hyperparameters to choose.
+                By default, all available hyperparameters will be suggested.
+
+        Returns:
+            a mapping between hyperparameter name and its default value (None if not specified)
+
+        """
+        if names is None:
+            names = cls.get_hyperparameters_names()
+        hyperparameters_by_names = cls.get_hyperparameters_by_name()
+        return {name: hyperparameters_by_names[name].default for name in names}
+
+    @classmethod
+    def complete_with_default_hyperparameters(
+        cls, kwargs: Dict[str, Any], names: Optional[List[str]] = None
+    ):
+        """Add missing hyperparameters to kwargs by using default values
+
+        Args:
+            kwargs: keyword arguments to complete (for `__init__`, `init_model`, or `solve`)
+            names: names of the hyperparameters to add if missing.
+                By default, all available hyperparameters.
+
+        Returns:
+             a new dictionary, completion of kwargs
+
+        """
+        kwargs_complete = cls.get_default_hyperparameters(names=names)
+        kwargs_complete.update(kwargs)  # ensure preferring values from kwargs
+        return kwargs_complete
+
+    @classmethod
+    def suggest_hyperparameter_with_optuna(
+        cls, trial: optuna.trial.Trial, name: str, prefix: str = "", **kwargs
     ) -> Any:
         """Suggest hyperparameter value during an Optuna trial.
 
@@ -84,6 +123,8 @@ class SolverDO:
         Args:
             trial: optuna trial during hyperparameters tuning
             name: name of the hyperparameter to choose
+            prefix: prefix to add to optuna corresponding parameter name
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: options for optuna hyperparameter suggestions
 
         Returns:
@@ -103,36 +144,92 @@ class SolverDO:
 
         """
         return cls.get_hyperparameter(name=name).suggest_with_optuna(
-            trial=trial, **kwargs
+            trial=trial, prefix=prefix, **kwargs
         )
 
     @classmethod
-    def suggest_hyperparameters_values_with_optuna(
+    def suggest_hyperparameters_with_optuna(
         cls,
         trial: optuna.trial.Trial,
-        names: List[str],
+        names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
-    ) -> List[Any]:
-        """Suggest hyperparameter value during an Optuna trial.
+        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        prefix: str = "",
+    ) -> Dict[str, Any]:
+        """Suggest hyperparameters values during an Optuna trial.
 
         Args:
             trial: optuna trial during hyperparameters tuning
-            names: names of the hyperparameters to choose
+            names: names of the hyperparameters to choose.
+                By default, all available hyperparameters will be suggested.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
+            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subsolver hyperparameters,
+                if the subsolver class is not suggested by this method, but already fixed.
+            prefix: prefix to add to optuna corresponding parameters
+              (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
+
 
         Returns:
+            mapping between the hyperparameter name and its suggested value
 
-        kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_value_with_optuna(name=some_name)
+        kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_with_optuna(name=some_name)
 
         """
+        if names is None:
+            names = cls.get_hyperparameters_names()
         if kwargs_by_name is None:
             kwargs_by_name = {}
-        return [
-            cls.suggest_hyperparameter_value_with_optuna(
-                trial=trial, name=name, **kwargs_by_name.get(name, {})
-            )
+        if fixed_hyperparameters is None:
+            fixed_hyperparameters = {}
+
+        # Meta-solvers: when defining subsolvers hyperparameters,
+        #  be careful to suggest them before trying to suggest their own subset of hyperparameters
+        name2hyperparameter = cls.get_hyperparameters_by_name()
+        first_batch_hyperparameter_names = [
+            name
             for name in names
+            if not (
+                isinstance(name2hyperparameter[name], SubSolverKwargsHyperparameter)
+            )
         ]
+        subsolvers_kwargs_hyperparameters: List[SubSolverKwargsHyperparameter] = [
+            name2hyperparameter[name]
+            for name in names
+            if isinstance(name2hyperparameter[name], SubSolverKwargsHyperparameter)
+        ]
+
+        suggested_hyperparameters = {
+            name: cls.suggest_hyperparameter_with_optuna(
+                trial=trial, name=name, prefix=prefix, **kwargs_by_name.get(name, {})
+            )
+            for name in first_batch_hyperparameter_names
+        }
+        for hyperparameter in subsolvers_kwargs_hyperparameters:
+            kwargs_for_optuna_suggestion = kwargs_by_name.get(hyperparameter.name, {})
+            if hyperparameter.subsolver_hyperparameter in names:
+                kwargs_for_optuna_suggestion["subsolver"] = suggested_hyperparameters[
+                    hyperparameter.subsolver_hyperparameter
+                ]
+            elif hyperparameter.subsolver_hyperparameter in fixed_hyperparameters:
+                kwargs_for_optuna_suggestion["subsolver"] = fixed_hyperparameters[
+                    hyperparameter.subsolver_hyperparameter
+                ]
+            else:
+                raise ValueError(
+                    f"The choice of '{hyperparameter.subsolver_hyperparameter}' should be "
+                    "either suggested by this method with `names` containing it or being None "
+                    "or given via `fixed_hyperparameters`."
+                )
+            kwargs_for_optuna_suggestion[
+                "prefix"
+            ] = f"{prefix}{hyperparameter.subsolver_hyperparameter}."
+            suggested_hyperparameters[
+                hyperparameter.name
+            ] = cls.suggest_hyperparameter_with_optuna(
+                trial=trial, name=hyperparameter.name, **kwargs_for_optuna_suggestion
+            )
+
+        return suggested_hyperparameters
 
     @abstractmethod
     def solve(
