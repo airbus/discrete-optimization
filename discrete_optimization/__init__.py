@@ -3,9 +3,13 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
+from importlib.metadata import PackageNotFoundError, version
 
-__version__ = "0.0.0"
-
+try:
+    __version__ = version("discrete-optimization")
+except PackageNotFoundError:
+    # package is not installed
+    pass
 
 # Check that minimal minizinc binary version is respected,
 # except if environment variable DO_SKIP_MZN_CHECK is set to 1.

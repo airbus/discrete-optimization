@@ -14,11 +14,11 @@ project = "discrete-optimization"
 copyright = "2022, Airbus"
 author = "Airbus"
 
-DEFAULT_VERSION_NUMBER = "0.0.0"
+DEV_VERSION_PATTERN = "dev"
 GIT_SYMREF_CMD = ["git", "symbolic-ref", "--short", "HEAD"]
 
 version = discrete_optimization.__version__
-if version == DEFAULT_VERSION_NUMBER:
+if DEV_VERSION_PATTERN in version:
     # not a release but rather dev doc => we try to use the current branch name instead of version 0.0.0
     try:
         version = check_output(GIT_SYMREF_CMD, stderr=DEVNULL, encoding="utf-8").strip()

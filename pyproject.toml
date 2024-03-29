@@ -65,8 +65,7 @@ repository = "https://github.com/airbus/discrete-optimization"
 where = ["."]
 include = ["discrete_optimization*"]
 
-[tool.setuptools.dynamic]
-version = {attr = "discrete_optimization.__version__"}
+[tool.setuptools_scm]
 
 [tool.mypy]
 ignore_missing_imports = true
