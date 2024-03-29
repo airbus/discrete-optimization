@@ -1,0 +1,147 @@
+name: Build doc
+
+on:
+  workflow_call:
+    inputs:
+      doc-artifact-name:
+        description: "Name of the artifact containing the built doc"
+        required: false
+        default: "doc"
+        type: string
+      doc-path:
+        description: "Path where to extract the built doc"
+        required: false
+        default: "docs/build/html"
+        type: string
+      notebooks-repo-url:
+        description: |
+          Url of the repository containing the notebooks, used to generate github and colab links.
+          By default, the current repository url.
+        required: false
+        default: ""
+        type: string
+      notebooks-branch:
+        description: |
+          Branch containing the notebooks, used to generate github and colab links.
+          By default, the current branch.
+        required: false
+        default: ""
+        type: string
+    outputs:
+      doc-version:
+        description: "Version name of the generated doc. Correspond to the version name used by Sphinx."
+        value: ${{ jobs.build-doc.outputs.doc_version }}
+
+jobs:
+  build-doc:
+    outputs:
+      doc_version: ${{ steps.sphinx-build.outputs.doc_version }}
+    runs-on: ubuntu-latest
+    env:
+      python-version: "3.9"
+      minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
+      minizinc_cache_path: $(pwd)/bin/squashfs-root
+      minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
+      minizinc_downloaded_filepath: bin/minizinc.AppImage
+      minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
+    steps:
+      - name: Set env variables for github links in doc
+        run: |
+          # notebooks source repo and branch. First try to use workflow inputs
+          AUTODOC_NOTEBOOKS_REPO_URL=${{ inputs.notebooks-repo-url }}
+          AUTODOC_NOTEBOOKS_BRANCH=${{ inputs.notebooks-branch }}
+          # use github context if not defined in inputs
+          if [[ $GITHUB_REF == refs/pull* ]];
+          then
+              if [ -z "${AUTODOC_NOTEBOOKS_REPO_URL}" ]; then
+                AUTODOC_NOTEBOOKS_REPO_URL="${GITHUB_SERVER_URL}/${{ github.event.pull_request.head.repo.full_name }}"
+              fi
+              if [ -z "${AUTODOC_NOTEBOOKS_BRANCH}" ]; then
+                AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_HEAD_REF}
+              fi
+          elif [[ $GITHUB_REF == refs/heads* ]];
+          then
+              if [ -z "${AUTODOC_NOTEBOOKS_REPO_URL}" ]; then
+                AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+              fi
+              if [ -z "${AUTODOC_NOTEBOOKS_BRANCH}" ]; then
+                AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/heads\//}
+              fi
+          elif [[ $GITHUB_REF == refs/tags* ]];
+          then
+              if [ -z "${AUTODOC_NOTEBOOKS_REPO_URL}" ]; then
+                AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+              fi
+              if [ -z "${AUTODOC_NOTEBOOKS_BRANCH}" ]; then
+                AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/tags\//}
+              fi
+          fi
+          # export in GITHUB_ENV for next steps
+          echo "AUTODOC_NOTEBOOKS_REPO_URL=${AUTODOC_NOTEBOOKS_REPO_URL}" >> $GITHUB_ENV
+          echo "AUTODOC_NOTEBOOKS_BRANCH=${AUTODOC_NOTEBOOKS_BRANCH}" >> $GITHUB_ENV
+          # check computed variables
+          echo "Notebooks source: ${AUTODOC_NOTEBOOKS_REPO_URL}/tree/${AUTODOC_NOTEBOOKS_BRANCH}"
+      - uses: actions/checkout@v4
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python-version }}
+          cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            docs/requirements.txt
+      - name: Create bin/
+        run: mkdir -p bin
+      - name: get MininZinc path to cache
+        id: get-mzn-cache-path
+        run: |
+          echo "path=${{ env.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
+      - name: Restore MiniZinc cache
+        id: cache-minizinc
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.get-mzn-cache-path.outputs.path }}
+          key: ${{ env.minizinc_url }}
+      - name: Download MiniZinc
+        if: steps.cache-minizinc.outputs.cache-hit != 'true'
+        run: |
+          curl -o "${{ env.minizinc_downloaded_filepath }}" -L ${{ env.minizinc_url }}
+      - name: Install MiniZinc
+        if: steps.cache-minizinc.outputs.cache-hit != 'true'
+        run: |
+          ${{ env.minizinc_install_cmdline }}
+      - name: Install doc dependencies
+        run: |
+          python -m pip install -U pip setuptools
+          pip install .
+          pip install -r docs/requirements.txt
+      - name: generate documentation
+        id: sphinx-build
+        run: |
+          # configure minzinc (beware: paths are relative to default working directory)
+          ${{ env.minizinc_config_cmdline }}
+          # move to documentation directory
+          cd docs
+          # generate api doc source files
+          sphinx-apidoc -o source/api -f -T ../discrete_optimization
+          # generate available notebooks list
+          python generate_nb_index.py
+          # build doc html pages
+          sphinx-build -M html source build
+          # specify it is a nojekyll site
+          touch build/html/.nojekyll
+          # store version name found by sphinx
+          doc_version=$(python -c '
+          import os
+          import sphinx.config
+
+          config = sphinx.config.Config.read(os.path.abspath("source"))
+          config.init_values()
+          print(config.version)
+          ')
+          echo doc_version=${doc_version} >> $GITHUB_OUTPUT
+      - name: upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.doc-artifact-name }}
+          path: ${{ inputs.doc-path }}
