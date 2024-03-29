@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Update PATH
+export PATH="${PATH}:$(pwd)/minizinc_install/squashfs-root/usr/bin/"
+
+# Update LIB PATH
+# 1- get default paths:
+#   - concatenate all files in /etc/ld.so.conf.d/
+#   - remove commented lines
+#   - replace newlines by :
+export LD_LIBRARY_PATH=$(\
+  cat /etc/ld.so.conf.d/* \
+  | sed -e '/^#/d' \
+  | tr "\n" ":"
+)
+# 2- add path for minizinc *at the end*, so that git continue working
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pwd)/minizinc_install/squashfs-root/usr/lib"
+
+# launch jupyter
+exec "$@"
