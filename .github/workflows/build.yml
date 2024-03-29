@@ -1,5 +1,8 @@
 name: Build discrete-optimization
 
+env:
+  MAIN_REPO_NAME: 'airbus/discrete-optimization'
+
 on:
   push:
     branches:
@@ -45,8 +48,8 @@ jobs:
     steps:
       - id: reason
         run: |
-          echo "is_release=${{ startsWith(github.ref, 'refs/tags/v') }}" >> $GITHUB_OUTPUT
-          echo "is_push_on_default_branch=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}" >> $GITHUB_OUTPUT
+          echo "is_release=${{ startsWith(github.ref, 'refs/tags/v') }}" >> $GITHUB_OUTPUT
+          echo "is_push_on_default_branch=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}" >> $GITHUB_OUTPUT
 
   build:
     runs-on: ubuntu-latest
@@ -256,214 +259,60 @@ jobs:
             tmp/coverage.xml
             tmp/coverage_html
 
-  create-binder-env:
+  update-binder-env:
     runs-on: ubuntu-latest
     needs: [trigger, build]
-    env:
-      BINDER_ENV_DEFAULT_REF: binder  # default reference: binder branch
     outputs:
-      binder_env_ref: ${{ steps.get_binder_env_ref.outputs.binder_env_ref }}
+      notebooks-branch: ${{ steps.write-output.outputs.notebooks_branch }}
+      binder-full-ref: ${{ steps.write-output.outputs.binder_full_ref }}
     steps:
-      - name: Initialize binder env reference
-        run: echo "BINDER_ENV_REF=$BINDER_ENV_DEFAULT_REF" >> $GITHUB_ENV
-      - name: Checkout binder branch
-        if: |
-          (needs.trigger.outputs.is_push_on_default_branch == 'true')
-          || (needs.trigger.outputs.is_release == 'true')
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.BINDER_ENV_DEFAULT_REF }}
-      - name: Update environment.yml and binder env reference
-        if: |
-          (needs.trigger.outputs.is_push_on_default_branch == 'true')
-          || (needs.trigger.outputs.is_release == 'true')
+      - name: Set default notebooks branch and binder env full ref
         run: |
-          if ${{ needs.trigger.outputs.is_release == 'true' }}; then
-            # RELEASE MODE
-            # Specify the proper discrete-optimization version
-            sed_replacement_pattern="\1- discrete-optimization==${{ needs.build.outputs.do_version }}"
-            if ${{ github.repository != 'airbus/discrete-optimization' && secrets.TEST_PYPI_API_TOKEN != '' }} == 'true'; then
-              # release to be deployed on TestPyPI
-              sed_replacement_pattern="${sed_replacement_pattern}\n\1- --extra-index-url https://test.pypi.org/simple/"
-            fi
-            sed_command="s|\(\s*\)-.*egg=discrete-optimization$|${sed_replacement_pattern}|"
-            echo $sed_command
-            sed -i -e "$sed_command" environment.yml
-            cat environment.yml
-            # Commit new environment
-            git config user.name "Actions"
-            git config user.email "actions@github.com"
-            git commit environment.yml -m "Specify binder environment for release ${{ needs.build.outputs.do_version }}"
-            # Get sha1 to be used by binder for the environment, update the binder env reference
-            echo "BINDER_ENV_REF=$(git rev-parse --verify HEAD)" >> $GITHUB_ENV
-            # Revert for the default branch binder env
-            git revert HEAD -n
-            git commit -m "Specify binder environment for default branch"
-          else
-            # DEFAULT BRANCH MODE
-            # Specify the proper discrete-optimization version (current master sha1)
-            pip_spec="git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}@${GITHUB_SHA}#egg=discrete-optimization"
-            echo $pip_spec
-            sed -i -e "s|\(\s*\)-.*egg=discrete-optimization$|\1- ${pip_spec}|" environment.yml
-            cat environment.yml
-            # Commit new environment
-            git config user.name "Actions"
-            git config user.email "actions@github.com"
-            git add environment.yml
-            if ! git diff-index --quiet HEAD -- environment.yml; then
-              # commit only if a difference (else would raise an error)
-              # no diff could happen if relaunching the whole workflow while this action was successful
-              git commit -m "Specify binder environment for default branch"
-            fi
+          # default value: current branch
+          echo 'notebooks_branch="${{ github.ref_name}}"' >> $GITHUB_ENV
+          echo 'binder_full_ref="${{ github.repository }}/${{ github.ref_name}}"' >> $GITHUB_ENV
+      - uses: actions/checkout@v4
+        if: needs.trigger.outputs.is_release == 'true'
+      - name: replace d-o version to install in binder environment
+        if: needs.trigger.outputs.is_release == 'true'
+        run: |
+          version=${{ needs.build.outputs.do_version }}
+          linefilter="/^name/!"
+          old_pip_spec_pattern="\(\s*\)-.*discrete-optimization.*$"
+          new_pip_spec_pattern="\1- discrete-optimization==$version"
+          if ${{ github.repository != env.MAIN_REPO_NAME && secrets.TEST_PYPI_API_TOKEN != '' }} == 'true'; then
+            # install from TestPypi if on a fork
+            new_pip_spec_pattern="${new_pip_spec_pattern}\n\1- --extra-index-url https://test.pypi.org/simple/"
           fi
-          # Push binder branch with the updated environment
-          git push origin $BINDER_ENV_DEFAULT_REF
-      - name: Store binder env reference
-        id: get_binder_env_ref
+          sed_command="${linefilter}s|${old_pip_spec_pattern}|${new_pip_spec_pattern}|"
+          echo sed -i -e ${sed_command} binder/environment.yml
+          sed -i -e "${sed_command}" binder/environment.yml
+      - name: push modifications on a dedicated tag
+        if: needs.trigger.outputs.is_release == 'true'
+        id: push-tuto-release-tag
         run: |
-          echo "binder_env_ref=$BINDER_ENV_REF"
-          echo "binder_env_ref=$BINDER_ENV_REF" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v4  # checkout triggering branch to get scripts/trigger_binder.sh
-      - name: Trigger a build for default binder env ref on each BinderHub deployments in the mybinder.org federation
-        continue-on-error: true
-        if: |
-          (needs.trigger.outputs.is_push_on_default_branch == 'true')
-          || (needs.trigger.outputs.is_release == 'true')
+          current_tag_name=${GITHUB_REF/refs\/tags\//}  # stripping refs/tags/
+          new_tag_name="notebooks-${current_tag_name}"
+          echo ${new_tag_name}
+          git config user.name "Actions"
+          git config user.email "actions@github.com"
+          git commit binder/environment.yml -m "Install appropriate version of discrete-optimization"
+          git tag ${new_tag_name} -m "Use release ${current_tag_name} in binder environment"
+          git push origin ${new_tag_name}
+          # store new tag name as notebooks branch
+          echo "notebooks_branch=${new_tag_name}" >> $GITHUB_ENV
+          echo 'binder_full_ref="${{ github.repository }}/${new_tag_name}"' >> $GITHUB_ENV
+      - name: write new notebooks branch in job outputs
+        id: write-output
         run: |
-          binder_env_full_ref=${GITHUB_REPOSITORY}/${BINDER_ENV_DEFAULT_REF}
-          echo Triggering binder environment build for ${binder_env_full_ref}
-          binderhubs_url="ovh.mybinder.org ovh2.mybinder.org notebooks.gesis.org/binder"
-          return_code=0
-          for binderhub in $binderhubs; do
-            echo "** on ${binderhub}"
-            # go on even though the script crashes
-            bash scripts/trigger_binder.sh https://${binderhub_url}/build/gh/${binder_env_full_ref} || ret_code=$?
-            # remember the potential crash
-            if [ $ret_code != 0 ]; then return_code=$ret_code; fi
-          done
-          # exit with last non-zero return code if any
-          exit $return_code
+          echo "notebooks_branch=${notebooks_branch}" >> $GITHUB_OUTPUT
+          echo "binder_full_ref=${binder_full_ref}" >> $GITHUB_OUTPUT
 
   build-doc:
-    runs-on: ubuntu-latest
-    needs: create-binder-env
-    env:
-      python-version: "3.9"
-      minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
-      minizinc_cache_path: $(pwd)/bin/squashfs-root
-      minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
-      minizinc_downloaded_filepath: bin/minizinc.AppImage
-      minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
-    steps:
-      - name: Set env variables for github+binder links in doc
-        run: |
-          # binder environment repo and branch
-          AUTODOC_BINDER_ENV_GH_REPO_NAME="${GITHUB_REPOSITORY}"
-          AUTODOC_BINDER_ENV_GH_BRANCH="${{ needs.create-binder-env.outputs.binder_env_ref }}"
-          # notebooks source repo and branch depending if it is a commit push or a PR
-          if [[ $GITHUB_REF == refs/pull* ]];
-          then
-              AUTODOC_NOTEBOOKS_REPO_URL="${GITHUB_SERVER_URL}/${{ github.event.pull_request.head.repo.full_name }}"
-              AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_HEAD_REF}
-          elif [[ $GITHUB_REF == refs/heads* ]];
-          then
-              AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
-              AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/heads\//}
-          elif [[ $GITHUB_REF == refs/tags* ]];
-          then
-              AUTODOC_NOTEBOOKS_REPO_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
-              AUTODOC_NOTEBOOKS_BRANCH=${GITHUB_REF/refs\/tags\//}
-          fi
-          # export in GITHUB_ENV for next steps
-          echo "AUTODOC_BINDER_ENV_GH_REPO_NAME=${AUTODOC_BINDER_ENV_GH_REPO_NAME}" >> $GITHUB_ENV
-          echo "AUTODOC_BINDER_ENV_GH_BRANCH=${AUTODOC_BINDER_ENV_GH_BRANCH}" >> $GITHUB_ENV
-          echo "AUTODOC_NOTEBOOKS_REPO_URL=${AUTODOC_NOTEBOOKS_REPO_URL}" >> $GITHUB_ENV
-          echo "AUTODOC_NOTEBOOKS_BRANCH=${AUTODOC_NOTEBOOKS_BRANCH}" >> $GITHUB_ENV
-          # check computed variables
-          echo "Binder env: ${AUTODOC_BINDER_ENV_GH_REPO_NAME}/${AUTODOC_BINDER_ENV_GH_BRANCH}"
-          echo "Notebooks source: ${AUTODOC_NOTEBOOKS_REPO_URL}/tree/${AUTODOC_NOTEBOOKS_BRANCH}"
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.python-version }}
-          cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
-            docs/requirements.txt
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: wheels
-          path: wheels
-      - name: Create bin/
-        run: mkdir -p bin
-      - name: get MininZinc path to cache
-        id: get-mzn-cache-path
-        run: |
-          echo "path=${{ env.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
-      - name: Restore MiniZinc cache
-        id: cache-minizinc
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.get-mzn-cache-path.outputs.path }}
-          key: ${{ env.minizinc_url }}
-      - name: Download MiniZinc
-        if: steps.cache-minizinc.outputs.cache-hit != 'true'
-        run: |
-          curl -o "${{ env.minizinc_downloaded_filepath }}" -L ${{ env.minizinc_url }}
-      - name: Install MiniZinc
-        if: steps.cache-minizinc.outputs.cache-hit != 'true'
-        run: |
-          ${{ env.minizinc_install_cmdline }}
-      - name: Install doc dependencies
-        run: |
-          python -m pip install -U pip
-          wheelfile=$(ls ./wheels/discrete_optimization*.whl)
-          pip install ${wheelfile}
-          pip install -r docs/requirements.txt
-      - name: generate documentation
-        run: |
-          # configure minzinc (beware: paths are relative to default working directory)
-          ${{ env.minizinc_config_cmdline }}
-          # move to documentation directory
-          cd docs
-          # generate api doc source files
-          sphinx-apidoc -o source/api -f -T ../discrete_optimization
-          # generate available notebooks list
-          python generate_nb_index.py
-          # build doc html pages
-          sphinx-build -M html source build
-          # specify it is a nojekyll site
-          touch build/html/.nojekyll
-      - name: upload as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc
-          path: docs/build/html
-
-  deploy-master-doc:
-    # for default branch
-    needs: [trigger, create-binder-env, build-doc, test]
-    if: needs.trigger.outputs.is_push_on_default_branch == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: doc
-          path: docs/build/html
-      - name: Deploy documentation in a version subfolder on GH pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages # The branch the action should deploy to.
-          folder: docs/build/html # The folder the action should deploy.
-          target-folder: /${{ github.event.repository.default_branch }} # The folder the action should deploy to.
-          commit-message: publish documentation
-          single-commit: true
+    needs: ["update-binder-env"]
+    uses: ./.github/workflows/build-doc.yml
+    with:
+      notebooks-branch: ${{ needs.update-binder-env.outputs.notebooks-branch }}
 
   deploy:
     # for release tags
@@ -484,7 +333,7 @@ jobs:
       - name: Publish package to TestPyPI (only for forks)
         env:
           TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        if: github.repository != 'airbus/discrete-optimization' && env.TEST_PYPI_API_TOKEN != ''
+        if: github.repository != env.MAIN_REPO_NAME && env.TEST_PYPI_API_TOKEN != ''
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -493,69 +342,31 @@ jobs:
       - name: Publish package to PyPI (main repo)
         env:
           PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        if: github.repository == 'airbus/discrete-optimization' && env.PYPI_API_TOKEN != ''
+        if: github.repository == env.MAIN_REPO_NAME && env.PYPI_API_TOKEN != ''
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           packages_dir: wheels/
 
-  deploy-release-doc:
-    # for release tags
-    needs: [trigger, build, create-binder-env, build-doc, deploy]
-    if: needs.trigger.outputs.is_release == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: doc
-          path: docs/build/html
-      - name: Deploy documentation in a version subfolder on GH pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages # The branch the action should deploy to.
-          folder: docs/build/html # The folder the action should deploy.
-          target-folder: /${{ needs.build.outputs.do_version }} # The folder the action should deploy to.
-          commit-message: publish documentation
-          single-commit: true
-
-  update-doc-versions:
-    # triggers even if only one needed job succeeded (typically at least one will be skipped)
-    needs: [deploy-release-doc, deploy-master-doc]
+  deploy-doc:
+    needs: [trigger, update-binder-env, build-doc, test, deploy]
+    # if: always()
+    #  -> trigger even if one needed job was skipped (namely deploy)
+    #  -> needed jobs successes must be checked explicitely
     if: |
       always()
+      && (needs.build-doc.result == 'success')
       && (
-        (needs.deploy-master-doc.result == 'success')
-        || (needs.deploy-release-doc.result == 'success')
+        (
+          (needs.trigger.outputs.is_push_on_default_branch == 'true')
+          && (needs.test.result == 'success')
+        )
+        || (
+          (needs.trigger.outputs.is_release == 'true')
+          && (needs.deploy.result == 'success')
+        )
       )
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - name: Generate versions.json
-        shell: python3 {0}
-        run: |
-          import json
-          from pathlib import Path
-
-          cwd = Path.cwd()
-          versions = sorted((item.name for item in cwd.iterdir()
-                             if item.is_dir() and not item.name.startswith('.')),
-                            reverse=True)
-          target_file = Path('versions.json')
-          with target_file.open('w') as f:
-              json.dump(versions, f)
-      - name: Commit versions.json
-        shell: bash
-        run: |
-          # Commit versions.json and squash it with previous commit
-          git config user.name "Actions"
-          git config user.email "actions@github.com"
-          git add versions.json
-          git commit --amend --no-edit
-          git push -f origin gh-pages
+    uses: ./.github/workflows/deploy-doc.yml
+    with:
+      doc-version: ${{ needs.build-doc.outputs.doc-version }}
+      binder-env-fullref: ${{ needs.update-binder-env.outputs.binder-full-ref }}
