@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: trigger
     outputs:
-      do_version: ${{ steps.get_wheel_version.outputs.version }}
+      do_version: ${{ steps.get_library_version.outputs.version }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -69,23 +69,15 @@ jobs:
           cache-dependency-path: requirements_build.txt
       - name: Install build dependencies
         run: pip install -U build
-      - name: Update version number according to pushed tag
-        if: needs.trigger.outputs.is_release == 'true'
-        run: |
-          VERSION=${GITHUB_REF/refs\/tags\/v/}  # stripping "refs/tags/v"
-          echo $VERSION
-          # Replace in-place version number in package __init__.py, also used by pyproject.toml
-          sed -i -e "s/^__version__\s*=.*$/__version__ = \"${VERSION}\"/g" discrete_optimization/__init__.py
-          cat discrete_optimization/__init__.py
-      - name: Build discrete-optimization wheel
-        run: python -m build --wheel
+      - name: Build discrete-optimization (wheel + source code)
+        run: python -m build
       - name: Upload as build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels
-          path: dist/*.whl
-      - name: get wheel version and save it
-        id: get_wheel_version
+          name: dist
+          path: dist
+      - name: get library version and save it
+        id: get_library_version
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
           version=$(python -c "print('$wheelfile'.split('-')[1])")
@@ -148,12 +140,12 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheels
-          path: wheels
+          name: dist
+          path: dist
       - name: Install only discrete-optimization
         run: |
           python -m pip install -U pip
-          wheelfile=$(ls ./wheels/discrete_optimization*.whl)
+          wheelfile=$(ls ./dist/discrete_optimization*.whl)
           pip install ${wheelfile}
       - name: Check import work without minizinc if DO_SKIP_MZN_CHECK set
         run: |
@@ -201,7 +193,7 @@ jobs:
           python tests/test_import_all_submodules.py
       - name: Install test dependencies
         run: |
-          wheelfile=$(ls ./wheels/discrete_optimization*.whl)
+          wheelfile=$(ls ./dist/discrete_optimization*.whl)
           pip install ${wheelfile}[test]
           if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
             echo "install gurobi"
@@ -323,12 +315,12 @@ jobs:
       - name: Download wheels artifact
         uses: actions/download-artifact@v4
         with:
-          name: wheels
-          path: wheels
+          name: dist
+          path: dist
       - name: Create the github release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: wheels/*.whl
+          artifacts: dist
           generateReleaseNotes: true
       - name: Publish package to TestPyPI (only for forks)
         env:
@@ -338,7 +330,6 @@ jobs:
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
-          packages_dir: wheels/
       - name: Publish package to PyPI (main repo)
         env:
           PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
@@ -346,7 +337,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages_dir: wheels/
 
   deploy-doc:
     needs: [trigger, update-binder-env, build-doc, test, deploy]
