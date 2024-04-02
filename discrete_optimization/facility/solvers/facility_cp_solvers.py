@@ -118,10 +118,9 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
         Returns: None
 
         """
-        model_type = kwargs.get("cp_model", self.get_hyperparameter("cp_model").default)
-        cp_solver_name = kwargs.get(
-            "cp_solver_name", self.get_hyperparameter("cp_solver_name").default
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        model_type = kwargs["cp_model"]
+        cp_solver_name = kwargs["cp_solver_name"]
         object_output = kwargs.get("object_output", True)
         path = os.path.join(path_minizinc, file_dict[model_type])
         self.model = Model(path)
