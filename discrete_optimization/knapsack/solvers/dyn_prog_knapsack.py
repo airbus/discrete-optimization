@@ -76,7 +76,7 @@ class KnapsackDynProg(SolverKnapsack):
         if do_time:
             t_start = time.time()
         cur_indexes = (0, 0)
-        for nb_item in range(1, max_items):
+        for nb_item in range(1, len(index_promising) + 1):
             if do_time:
                 if time.time() - t_start > max_time_seconds:
                     break
@@ -106,7 +106,7 @@ class KnapsackDynProg(SolverKnapsack):
                 index_item = self.problem.index_to_index_list[
                     index_promising[cur_indexes[0] - 1]
                 ]
-                taken[self.problem.list_items[index_item].index] = 1
+                taken[index_item] = 1
                 value += self.problem.list_items[index_item].value
                 weight += int(self.problem.list_items[index_item].weight)
                 cur_indexes = (
