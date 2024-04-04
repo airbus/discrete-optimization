@@ -26,18 +26,19 @@ from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.knapsack.solvers.cp_solvers import CPKnapsackMZN2
+from discrete_optimization.knapsack.solvers.cp_solvers import (
+    CPKnapsackMZN,
+    CPKnapsackMZN2,
+)
 from discrete_optimization.knapsack.solvers.dyn_prog_knapsack import KnapsackDynProg
-from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
+from discrete_optimization.knapsack.solvers.greedy_solvers import (
+    GreedyBest,
+    GreedyDummy,
+)
 from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
 from discrete_optimization.knapsack.solvers.knapsack_decomposition import (
     KnapsackDecomposedSolver,
 )
-from discrete_optimization.pickup_vrp.builders.instance_builders import (
-    GPDP,
-    create_selective_tsp,
-)
-from discrete_optimization.pickup_vrp.solver.ortools_solver import ORToolsGPDP
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -57,7 +58,7 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 # Solvers to test
 kwargs_fixed: Dict[str, Any] = dict(
-    initial_solver=GreedyBest,
+    initial_solver=GreedyDummy,  # Start from empty solution : make the experiment more interesting :)
     initial_solver_kwargs={},
 )
 params_cp = ParametersCP.default()
@@ -65,19 +66,20 @@ params_cp.time_limit = 5
 kwargs_fixed_by_root_subsolver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs factory for unspecified solvers
     {
-        CPKnapsackMZN2: dict(params_cp=params_cp),
+        CPKnapsackMZN2: dict(parameters_cp=params_cp),
+        CPKnapsackMZN: dict(parameters_cp=params_cp),
+        KnapsackASPSolver: {"timeout_seconds": 5},
     },
 )
 suggest_optuna_kwargs_by_name: Dict[str, Any] = {
     "root_solver": dict(
-        choices=[CPKnapsackMZN2, KnapsackDynProg]
-    ),  # limit choices to 2 solvers
-    "nb_iteration": dict(high=10),  # limit number of iterations
+        choices=[KnapsackDynProg, CPKnapsackMZN, CPKnapsackMZN2, KnapsackASPSolver]
+    ),  # limit choices to some solvers
+    "nb_iteration": dict(low=5, high=20),  # limit number of iterations
+    "proportion_to_remove": dict(low=0.85),
     "root_solver_kwargs": dict(
         kwargs_by_name={
-            "cp_solver_name": dict(
-                choices=[CPSolverName.CHUFFED, CPSolverName.CPLEX, CPSolverName.GECODE]
-            )
+            "cp_solver_name": dict(choices=[CPSolverName.CHUFFED, CPSolverName.ORTOOLS])
         }
     ),  # avoid not installed solvers
 }
@@ -168,7 +170,10 @@ def objective(trial: Trial):
 
 # create study + database to store it
 storage = JournalStorage(JournalFileStorage(storage_path))
-optuna.delete_study(study_name=study_name, storage=storage)
+try:
+    optuna.delete_study(study_name=study_name, storage=storage)
+except:
+    pass
 study = optuna.create_study(
     study_name=study_name,
     direction=direction,
