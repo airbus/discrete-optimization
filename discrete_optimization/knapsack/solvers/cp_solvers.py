@@ -98,7 +98,7 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
             value = 0
             for i in range(len(items)):
                 if items[i] != 0:
-                    taken[self.problem.list_items[items[i] - 1].index] = 1
+                    taken[items[i] - 1] = 1
                     weight += self.problem.list_items[items[i] - 1].weight
                     value += self.problem.list_items[items[i] - 1].value
             sol = KnapsackSolution(
