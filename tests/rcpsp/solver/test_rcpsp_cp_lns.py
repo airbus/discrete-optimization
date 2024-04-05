@@ -1,7 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
@@ -126,7 +126,7 @@ def test_lns_solver():
     result_store = lns_solver.solve(
         parameters_cp=parameters_cp,
         nb_iteration_lns=10,
-        max_time_seconds=20,
+        callbacks=[TimerStopper(total_seconds=20)],
         nb_iteration_no_improvement=10,
     )
     solution, fit = result_store.get_best_solution_fit()

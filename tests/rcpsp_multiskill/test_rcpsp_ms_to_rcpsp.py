@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CPSolverName,
@@ -63,7 +64,7 @@ def test_solve_rcpsp_imopse1(random_seed):
     result_storage = lns_solver.solve(
         parameters_cp=params_cp,
         nb_iteration_lns=5,
-        max_time_seconds=100,
+        callbacks=[TimerStopper(total_seconds=100)],
         nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )

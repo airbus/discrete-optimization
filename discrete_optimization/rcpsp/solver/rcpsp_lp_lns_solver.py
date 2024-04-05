@@ -5,11 +5,12 @@
 import logging
 import random
 from enum import Enum
-from typing import Any, Hashable, Mapping, Optional
+from typing import Any, Hashable, List, Mapping, Optional
 
 import mip
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -483,8 +484,11 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
             params_objective_function=self.params_objective_function,
         )
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs
+    ) -> ResultStorage:
         return self.lns_solver.solve_lns(
             parameters_milp=self.parameters_milp,
             nb_iteration_lns=kwargs.get("nb_iteration_lns", 100),
+            callbacks=callbacks,
         )

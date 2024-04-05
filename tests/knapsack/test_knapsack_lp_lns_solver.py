@@ -1,7 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
@@ -51,7 +51,9 @@ def test_knapsack_lns():
     )
 
     result_store = lns_solver.solve_lns(
-        parameters_milp=params_milp, nb_iteration_lns=10000, max_time_seconds=30
+        parameters_milp=params_milp,
+        nb_iteration_lns=10000,
+        callbacks=[TimerStopper(total_seconds=30)],
     )
     solution = result_store.get_best_solution_fit()[0]
     assert model.satisfy(solution)

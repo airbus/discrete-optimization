@@ -6,6 +6,7 @@ import logging
 
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
@@ -117,7 +118,9 @@ def run_cp_multidimensional_multiscenario():
         parameters_cp=p,
         nb_iteration_lns=100,
         nb_iteration_no_improvement=1000,
-        max_time_seconds=30,
+        callbacks=[
+            TimerStopper(total_seconds=30),
+        ],
     )
     plot_fitness(r_lns, title="LNS results")
     print(r_lns.get_best_solution_fit()[1])

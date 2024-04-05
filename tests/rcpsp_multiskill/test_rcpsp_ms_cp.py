@@ -4,6 +4,7 @@
 
 from typing import Dict, List, Set
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import InitialMethodRCPSP
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
@@ -269,7 +270,7 @@ def test_lns_small_neighbor():
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
         nb_iteration_lns=100,
-        max_time_seconds=100,
+        callbacks=[TimerStopper(total_seconds=100)],
         nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )
@@ -308,7 +309,7 @@ def test_lns():
     result_storage = lns_cp.solve(
         parameters_cp=parameters_cp,
         nb_iteration_lns=100,
-        max_time_seconds=100,
+        callbacks=[TimerStopper(total_seconds=100)],
         nb_iteration_no_improvement=100,
         skip_first_iteration=False,
     )

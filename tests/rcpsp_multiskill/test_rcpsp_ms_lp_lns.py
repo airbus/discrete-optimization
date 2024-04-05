@@ -4,6 +4,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -87,7 +88,7 @@ def test_multiskill_imopse():
         parameters_milp=parameters_milp,
         nb_iteration_lns=10,
         nb_iteration_no_improvement=10,
-        max_time_seconds=200,
+        callbacks=[TimerStopper(total_seconds=200)],
         skip_first_iteration=False,
     )
     solution, fit = result_store.get_best_solution_fit()
