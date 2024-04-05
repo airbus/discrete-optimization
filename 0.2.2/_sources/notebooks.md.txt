@@ -1,0 +1,120 @@
+# Notebooks
+
+We present here a curated list of notebooks recommended to start with discrete-optimization,
+available in the `notebooks/` folder of the repository.
+
+```{contents}
+---
+depth: 3
+local: true
+---
+```
+
+## Knapsack problem
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/Knapsack%20tutorial.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FKnapsack%2Btutorial.ipynb%26branch%3Dv0.2.2)
+
+This is a very common combinatorial optimization problem where you are given a knapsack of a given weight capacity $C$ and a bunch of items with values and weight. The goal is to fill the knapsack with the best aggregated value, respecting the weight constraint.
+
+![knapsack problem illustration](https://upload.wikimedia.org/wikipedia/commons/f/fd/Knapsack.svg "Image from wikipedia: https://commons.wikimedia.org/wiki/File:Knapsack.svg").
+
+We handle here the *0-1 knapsack problem* where each item can only be taken once.
+
+Many different optimization approach can be tested on the combinatorial problem, we'll see a few during the notebook:
+
+- [Greedy heuristic methods](#Greedy-heuristic)
+- [Mixed Integer Linear Programming (MILP)](#Mixed-integer-linear-programming)
+- [Constraint Programming (CP)](#Constraint-Programming)
+- [Large neighborhood search (LNS)](#Large-neighborhood-search), a metaheuristic on top of CP or MILP
+
+## RCPSP tutorials
+
+### Introduction to RCPSP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FRCPSP%2Btutorials%252FRCPSP-1%2BIntroduction.ipynb%26branch%3Dv0.2.2)
+
+
+What is RCPSP ? (Resource Constrained Project Scheduling Problem)
+
+- $M$ activities or tasks in a project (instance)
+- Precedence constraints: 
+
+    > If activity $j\in[1,M]$ is a successor of activity $i\in[1,M]$, then activity $i$ must be completed before activity $j$ can be started
+
+- Resource constraints: 
+
+    > Each project is assigned a set of K renewable resources where each resource $k$ is available in $R_{k}$ units for the entire duration of the project. Each activity may require one or more of these resources to be completed. While scheduling the activities, the daily resource usage for resource $k$ can not exceed $R_{k}$ units. 
+    
+- Each activity $j$ takes $d_{j}$ time units to complete.
+
+- The overall goal of the problem is usually to minimize the makespan.
+
+Here we focus on *single mode RCPSP with renewable resources*, but there exists also variants of the problem
+- multi-mode: a task can be performed in several ways (modes), with specific duration and resources needs. The choice of the mode is in this case part of the solution.
+- mix of renewable and non-renewable resources.
+
+
+### Solving RCPSP with heuristics
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FRCPSP%2Btutorials%252FRCPSP-2%2BHeuristics%2BSolving.ipynb%26branch%3Dv0.2.2)
+
+
+We admit that you followed the following [notebook](RCPSP%20%231%20Introduction.ipynb) that introduced you all the basics for RCPSP Problems, in this notebook we will test two greedy heuristics that builds feasible solution.
+
+### Solving RCPSP with local search/metaheuristics/genetic algorithm
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FRCPSP%2Btutorials%252FRCPSP-3%2BLocal%2Bsearch.ipynb%26branch%3Dv0.2.2)
+
+
+One big family of combinatorial optimisation solver is local search. We include all metaheuristics and genetic algorithm into this simple terminology. 
+
+In general, a local search algorithm explore the solution space by applying local changes to the current set of solutions.
+
+In the case of RCPSP, we have seen in [the first notebook](RCPSP%20%231%20Introduction.ipynb) that we can represent a solution with a priority list of tasks (equivalent to a permutation). 
+Therefore local search algorithms are available on the search space being the ensemble of all permutation of tasks. We can imagine many kind of local changes possible to explore the permutation set.
+
+Local search (LS) algorithms are anytime algorithm, we have access to the current best solution whenever we want to stop the optimisation process. LS can't prove that a solution is optimal but it is rarely an issue in real world applications.
+
+### Solve RCPSP by linear programming: MILP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FRCPSP%2Btutorials%252FRCPSP-4%2BLinear%2Bprogramming.ipynb%26branch%3Dv0.2.2)
+
+
+We admit that you followed the [first notebook](RCPSP%20%231%20Introduction.ipynb) that introduced you all the basics for RCPSP Problems, on which we will apply here linear programming.
+
+Linear programming is a paradigm to model optimisation problem where the objective function and constraints are linear in terms of the variables : 
+
+$ y = max_{x}(c^t.x) $
+such that $A.x \leq b $
+
+$x$ can be either floating or integer values, which explains the Mixed Integer Linear Programming denomination.
+
+### Solve RCPSP by constraint programming
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FRCPSP%2Btutorials%252FRCPSP-5%2BConstraint%2BProgramming.ipynb%26branch%3Dv0.2.2)
+
+
+One of the main class of methods to solve discrete optimization problem is Constraint programming [(CP)](https://en.wikipedia.org/wiki/Constraint_programming). CP solvers explore the state variables and propagate constraints in a clever way. Using constraint programming, users declaratively state the constraints on the feasible solutions for a set of decision variables. Constraints specify the properties of a solution to be found.
+In discrete-optimization library, [minizinc](https://www.minizinc.org/) declarative language and its [python api](https://minizinc-python.readthedocs.io/en/latest/) is used extensively. However it is quite easy to use other modeling library such as [Cpmpy](https://github.com/CPMpy/cpmpy/tree/master/cpmpy) in the future.
+Some constraint programming models are stored in discrete_optimization/knapsack/minizinc folder.
+
+In this notebook, we'll use the [chuffed](https://github.com/chuffed/chuffed#description) solver which is a state of the art lazy clause solver. 
+
+We assume that you have already been introduced to RCPSP problems thanks to this [notebook](RCPSP%20%231%20Introduction.ipynb).
+
+### Large neighborhood search + CP to solve RCPSP
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.2/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/d5b29689c86f9949bbeb49abe0b1f8ff68bc80d8?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252FRCPSP%2Btutorials%252FRCPSP-6%2BLarge%2BNeighbourhood%2BSearch%2B.ipynb%26branch%3Dv0.2.2)
+
+LNS is an iterative heuristic method consisting in freezing randomly part of the solutions and optimize the remaining part. Full solution is then rebuilt and hopefully, repeating the process lead to a good solution to the original problem.
+
+
+
+

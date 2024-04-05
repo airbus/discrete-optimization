@@ -1,0 +1,61 @@
+discrete\_optimization.generic\_rcpsp\_tools package
+====================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_rcpsp\_tools.graph\_tools\_rcpsp module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.large\_neighborhood\_search\_scheduling module
+-------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.neighbor\_builder module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.neighbor_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.neighbor\_tools\_rcpsp module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.postpro\_local\_search module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.postpro_local_search
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solution\_repair module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solution_repair
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

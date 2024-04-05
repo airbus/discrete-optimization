@@ -1,0 +1,107 @@
+discrete\_optimization.generic\_tools package
+=============================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_tools.ea
+   discrete_optimization.generic_tools.ls
+   discrete_optimization.generic_tools.mip
+   discrete_optimization.generic_tools.mutations
+   discrete_optimization.generic_tools.pytools
+   discrete_optimization.generic_tools.result_storage
+   discrete_optimization.generic_tools.robustness
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.cp\_tools module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.cp_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.do\_mutation module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.do_mutation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.do\_problem module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.do_problem
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.do\_solver module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.do_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.ghh\_tools module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.ghh_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.graph\_api module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.graph_api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.lns\_cp module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.lns_cp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.lns\_mip module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.lns_mip
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.lp\_tools module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.lp_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.path\_tools module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.path_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

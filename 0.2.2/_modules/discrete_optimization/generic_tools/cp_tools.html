@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.cp_tools &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/versions.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.cp_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.cp_tools</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Constraint programming common utilities and class that should be used by any solver using CP</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">minizinc</span> <span class="kn">import</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Result</span><span class="p">,</span> <span class="n">Status</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_solver</span> <span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CPSolverName"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolverName">[docs]</a><span class="k">class</span> <span class="nc">CPSolverName</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum choice of underlying CP/LP solver used by Minizinc typically</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CHUFFED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">GECODE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">CPLEX</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">CPOPT</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">GUROBI</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">ORTOOLS</span> <span class="o">=</span> <span class="mi">5</span></div>
+
+
+<span class="n">map_cp_solver_name</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">CPSolverName</span><span class="o">.</span><span class="n">CHUFFED</span><span class="p">:</span> <span class="s2">&quot;chuffed&quot;</span><span class="p">,</span>
+    <span class="n">CPSolverName</span><span class="o">.</span><span class="n">GECODE</span><span class="p">:</span> <span class="s2">&quot;gecode&quot;</span><span class="p">,</span>
+    <span class="n">CPSolverName</span><span class="o">.</span><span class="n">CPLEX</span><span class="p">:</span> <span class="s2">&quot;cplex&quot;</span><span class="p">,</span>
+    <span class="n">CPSolverName</span><span class="o">.</span><span class="n">CPOPT</span><span class="p">:</span> <span class="s2">&quot;cpo&quot;</span><span class="p">,</span>
+    <span class="c1"># need to install https://github.com/IBMDecisionOptimization/cpofzn</span>
+    <span class="n">CPSolverName</span><span class="o">.</span><span class="n">GUROBI</span><span class="p">:</span> <span class="s2">&quot;gurobi&quot;</span><span class="p">,</span>
+    <span class="n">CPSolverName</span><span class="o">.</span><span class="n">ORTOOLS</span><span class="p">:</span> <span class="s2">&quot;ortools&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="ParametersCP"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP">[docs]</a><span class="k">class</span> <span class="nc">ParametersCP</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters that can be used by any cp - solver</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">time_limit</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">time_limit_iter0</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">intermediate_solution</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">all_solutions</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">nr_solutions</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">free_search</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">multiprocess</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">nb_process</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">optimisation_level</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">intermediate_solution</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">all_solutions</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">nr_solutions</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">time_limit_iter0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">free_search</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">multiprocess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">nb_process</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">optimisation_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param time_limit: in seconds, the time limit of solving the cp model</span>
+<span class="sd">        :param intermediate_solution: retrieve intermediate solutions</span>
+<span class="sd">        :param all_solutions: returns all solutions found by the cp solver</span>
+<span class="sd">        :param nr_solutions: the requested number of solutions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span> <span class="o">=</span> <span class="n">time_limit</span>
+        <span class="k">if</span> <span class="n">time_limit_iter0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_limit_iter0</span> <span class="o">=</span> <span class="n">time_limit</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_limit_iter0</span> <span class="o">=</span> <span class="n">time_limit_iter0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_solution</span> <span class="o">=</span> <span class="n">intermediate_solution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_solutions</span> <span class="o">=</span> <span class="n">all_solutions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nr_solutions</span> <span class="o">=</span> <span class="n">nr_solutions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">free_search</span> <span class="o">=</span> <span class="n">free_search</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multiprocess</span> <span class="o">=</span> <span class="n">multiprocess</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_process</span> <span class="o">=</span> <span class="n">nb_process</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimisation_level</span> <span class="o">=</span> <span class="n">optimisation_level</span>
+
+<div class="viewcode-block" id="ParametersCP.default"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP.default">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersCP&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ParametersCP</span><span class="p">(</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="n">intermediate_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">all_solutions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">nr_solutions</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+            <span class="n">free_search</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">optimisation_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParametersCP.default_fast_lns"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP.default_fast_lns">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">default_fast_lns</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersCP&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ParametersCP</span><span class="p">(</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">intermediate_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">all_solutions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">nr_solutions</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+            <span class="n">free_search</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParametersCP.default_free"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP.default_free">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">default_free</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersCP&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ParametersCP</span><span class="p">(</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="n">intermediate_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">all_solutions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">nr_solutions</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+            <span class="n">free_search</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParametersCP.copy"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ParametersCP&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ParametersCP</span><span class="p">(</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span><span class="p">,</span>
+            <span class="n">time_limit_iter0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_limit_iter0</span><span class="p">,</span>
+            <span class="n">intermediate_solution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_solution</span><span class="p">,</span>
+            <span class="n">all_solutions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">all_solutions</span><span class="p">,</span>
+            <span class="n">nr_solutions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nr_solutions</span><span class="p">,</span>
+            <span class="n">free_search</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">free_search</span><span class="p">,</span>
+            <span class="n">multiprocess</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multiprocess</span><span class="p">,</span>
+            <span class="n">nb_process</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_process</span><span class="p">,</span>
+            <span class="n">optimisation_level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimisation_level</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SignEnum"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.SignEnum">[docs]</a><span class="k">class</span> <span class="nc">SignEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">EQUAL</span> <span class="o">=</span> <span class="s2">&quot;==&quot;</span>
+    <span class="n">LEQ</span> <span class="o">=</span> <span class="s2">&quot;&lt;=&quot;</span>
+    <span class="n">UEQ</span> <span class="o">=</span> <span class="s2">&quot;&gt;=&quot;</span>
+    <span class="n">LESS</span> <span class="o">=</span> <span class="s2">&quot;&lt;&quot;</span>
+    <span class="n">UP</span> <span class="o">=</span> <span class="s2">&quot;&gt;&quot;</span></div>
+
+
+<div class="viewcode-block" id="StatusSolver"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.StatusSolver">[docs]</a><span class="k">class</span> <span class="nc">StatusSolver</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">SATISFIED</span> <span class="o">=</span> <span class="s2">&quot;SATISFIED&quot;</span>
+    <span class="n">UNSATISFIABLE</span> <span class="o">=</span> <span class="s2">&quot;UNSATISFIABLE&quot;</span>
+    <span class="n">OPTIMAL</span> <span class="o">=</span> <span class="s2">&quot;OPTIMAL&quot;</span>
+    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="s2">&quot;UNKNOWN&quot;</span></div>
+
+
+<span class="n">map_mzn_status_to_do_status</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Status</span><span class="p">,</span> <span class="n">StatusSolver</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">SATISFIED</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span><span class="p">,</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span><span class="p">,</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">OPTIMAL_SOLUTION</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">,</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="CPSolver"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver">[docs]</a><span class="k">class</span> <span class="nc">CPSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Additional function to be implemented by a CP Solver.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">status_solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatusSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CPSolver.init_model"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver.init_model">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiate a CP model instance</span>
+
+<span class="sd">        Afterwards, self.instance should not be None anymore.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+<div class="viewcode-block" id="CPSolver.retrieve_solutions"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver.retrieve_solutions">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">retrieve_solutions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">Result</span><span class="p">,</span> <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">ParametersCP</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a storage solution coherent with the given parameters.</span>
+<span class="sd">        :param result: Result storage returned by the cp solver</span>
+<span class="sd">        :param parameters_cp: parameters of the CP solver.</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+<div class="viewcode-block" id="CPSolver.solve"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver.solve">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="o">...</span></div>
+
+<div class="viewcode-block" id="CPSolver.get_status_solver"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver.get_status_solver">[docs]</a>    <span class="k">def</span> <span class="nf">get_status_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">StatusSolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span></div></div>
+
+
+<div class="viewcode-block" id="MinizincCPSolver"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver">[docs]</a><span class="k">class</span> <span class="nc">MinizincCPSolver</span><span class="p">(</span><span class="n">CPSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;CP solver wrapping a minizinc solver.&quot;&quot;&quot;</span>
+
+    <span class="n">instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Instance</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">silent_solve_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MinizincCPSolver.solve"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parameters_cp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_cp</span> <span class="o">=</span> <span class="n">ParametersCP</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;self.instance must not be None after self.init_model().&quot;</span>
+                <span class="p">)</span>
+        <span class="n">limit_time_s</span> <span class="o">=</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">time_limit</span>
+        <span class="n">intermediate_solutions</span> <span class="o">=</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">intermediate_solution</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">silent_solve_error</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">limit_time_s</span><span class="p">),</span>
+                    <span class="n">intermediate_solutions</span><span class="o">=</span><span class="n">intermediate_solutions</span><span class="p">,</span>
+                    <span class="n">processes</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span>
+                    <span class="k">if</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">multiprocess</span>
+                    <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">free_search</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">free_search</span><span class="p">,</span>
+                    <span class="n">optimisation_level</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">optimisation_level</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">ResultStorage</span><span class="p">(</span>
+                    <span class="n">list_solution_fits</span><span class="o">=</span><span class="p">[],</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">limit_time_s</span><span class="p">),</span>
+                <span class="n">intermediate_solutions</span><span class="o">=</span><span class="n">intermediate_solutions</span><span class="p">,</span>
+                <span class="n">processes</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span>
+                <span class="k">if</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">multiprocess</span>
+                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">free_search</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">free_search</span><span class="p">,</span>
+                <span class="n">optimisation_level</span><span class="o">=</span><span class="n">parameters_cp</span><span class="o">.</span><span class="n">optimisation_level</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Solving finished&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">statistics</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">map_mzn_status_to_do_status</span><span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_solutions</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">parameters_cp</span><span class="o">=</span><span class="n">parameters_cp</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+discrete\_optimization.knapsack.solvers package
+===============================================
+
+Submodules
+----------
+
+discrete\_optimization.knapsack.solvers.cp\_solvers module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.cp_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.dyn\_prog\_knapsack module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.dyn_prog_knapsack
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.gphh\_knapsack module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.gphh_knapsack
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.greedy\_solvers module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.greedy_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.knapsack\_asp\_solver module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.knapsack_asp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.knapsack\_cpmpy module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.knapsack_cpmpy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.knapsack\_decomposition module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.knapsack_decomposition
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.knapsack\_lns\_cp\_solver module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.knapsack\_lns\_solver module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.knapsack_lns_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.knapsack\_solver module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.knapsack_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.solvers.lp\_solvers module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.solvers.lp_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.knapsack.solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:

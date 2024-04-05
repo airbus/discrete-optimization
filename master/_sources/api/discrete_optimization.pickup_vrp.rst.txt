@@ -1,0 +1,30 @@
+discrete\_optimization.pickup\_vrp package
+==========================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.pickup_vrp.builders
+   discrete_optimization.pickup_vrp.solver
+
+Submodules
+----------
+
+discrete\_optimization.pickup\_vrp.gpdp module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.pickup_vrp.gpdp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.pickup_vrp
+   :members:
+   :undoc-members:
+   :show-inheritance:

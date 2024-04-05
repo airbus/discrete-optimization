@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.solver.calendar_solver_iterative &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/versions.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.solver.calendar_solver_iterative</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.solver.calendar_solver_iterative</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">deprecation</span> <span class="kn">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span> <span class="nn">minizinc</span> <span class="kn">import</span> <span class="n">Instance</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.cp_tools</span> <span class="kn">import</span> <span class="n">CPSolverName</span><span class="p">,</span> <span class="n">ParametersCP</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="n">get_default_objective_setup</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.lns_cp</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LNS_CP</span><span class="p">,</span>
+    <span class="n">ConstraintHandler</span><span class="p">,</span>
+    <span class="n">SolverDO</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.lns_mip</span> <span class="kn">import</span> <span class="n">PostProcessSolution</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp.rcpsp_model</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PartialSolution</span><span class="p">,</span>
+    <span class="n">RCPSPModel</span><span class="p">,</span>
+    <span class="n">RCPSPModelCalendar</span><span class="p">,</span>
+    <span class="n">RCPSPSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp.solver</span> <span class="kn">import</span> <span class="n">CP_MRCPSP_MZN</span><span class="p">,</span> <span class="n">CP_RCPSP_MZN</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OptionNeighbor</span><span class="p">,</span>
+    <span class="n">build_neighbor_operator</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InitialMethodRCPSP</span><span class="p">,</span>
+    <span class="n">InitialSolutionRCPSP</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_ressource_breaks"><a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solver.html#discrete_optimization.rcpsp.solver.calendar_solver_iterative.get_ressource_breaks">[docs]</a><span class="nd">@deprecated</span><span class="p">(</span><span class="n">deprecated_in</span><span class="o">=</span><span class="s2">&quot;0.1&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_ressource_breaks</span><span class="p">(</span>
+    <span class="n">problem_calendar</span><span class="p">:</span> <span class="n">RCPSPModel</span><span class="p">,</span>
+    <span class="n">problem_no_calendar</span><span class="p">:</span> <span class="n">RCPSPModel</span><span class="p">,</span>
+    <span class="n">solution</span><span class="p">:</span> <span class="n">RCPSPSolution</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">ressources</span> <span class="o">=</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources_list</span>
+    <span class="n">ressource_arrays</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ressource_arrays_usage</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ressources</span><span class="p">:</span>
+        <span class="n">ressource_arrays</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">solution</span><span class="o">.</span><span class="n">get_max_end_time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ressource_arrays_usage</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_max_end_time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="n">sorted_keys_schedule</span> <span class="o">=</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">tasks_list</span>
+    <span class="k">for</span> <span class="n">ji</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_keys_schedule</span><span class="p">)):</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">sorted_keys_schedule</span><span class="p">[</span><span class="n">ji</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="s2">&quot;duration&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="s2">&quot;None&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">r</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="o">==</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">ressource_arrays_usage</span><span class="p">[</span><span class="n">r</span><span class="p">][</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">])</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">ji</span><span class="p">,</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">ressource_arrays</span><span class="p">[</span><span class="n">r</span><span class="p">][</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">])</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">]</span> <span class="o">+=</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">r</span><span class="p">]</span>
+    <span class="n">index_ressource</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">task_concerned</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ressource_arrays</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">ressource_arrays</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">])</span>
+        <span class="n">index_ressource</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="n">task_concerned</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">j</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ressource_arrays_usage</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">ressource_arrays_usage</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">index</span>
+                <span class="k">if</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">task_concerned</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sorted_keys_schedule</span><span class="p">[</span><span class="n">rr</span><span class="p">]</span> <span class="k">for</span> <span class="n">rr</span> <span class="ow">in</span> <span class="n">task_concerned</span><span class="p">[</span><span class="n">r</span><span class="p">]]</span>
+        <span class="n">constraints</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">task_concerned</span><span class="p">[</span><span class="n">r</span><span class="p">]:</span>
+            <span class="n">current_start</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+            <span class="n">first_possible_start_future</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">st</span>
+                    <span class="k">for</span> <span class="n">st</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">current_start</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">]))</span>
+                    <span class="k">if</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">st</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">r</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">first_possible_start_before</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">st</span> <span class="o">-</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="k">for</span> <span class="n">st</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">st</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">r</span><span class="p">]</span>
+                    <span class="ow">and</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">][</span>
+                        <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">st</span> <span class="o">-</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">r</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">constraints</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">first_possible_start_before</span><span class="p">,</span>
+                <span class="n">first_possible_start_future</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">index_ressource</span><span class="p">,</span> <span class="n">constraints</span></div>
+
+
+<span class="nd">@deprecated</span><span class="p">(</span><span class="n">deprecated_in</span><span class="o">=</span><span class="s2">&quot;0.1&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">PostProcessSolutionNonFeasible</span><span class="p">(</span><span class="n">PostProcessSolution</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem_calendar</span><span class="p">:</span> <span class="n">RCPSPModelCalendar</span><span class="p">,</span>
+        <span class="n">problem_no_calendar</span><span class="p">:</span> <span class="n">RCPSPModel</span><span class="p">,</span>
+        <span class="n">partial_solution</span><span class="p">:</span> <span class="n">PartialSolution</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span> <span class="o">=</span> <span class="n">problem_calendar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span> <span class="o">=</span> <span class="n">problem_no_calendar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partial_solution</span> <span class="o">=</span> <span class="n">partial_solution</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">check_solution</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">solution</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">check_solution</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">solution</span><span class="p">):</span>
+                <span class="n">start_together</span> <span class="o">=</span> <span class="n">partial_solution</span><span class="o">.</span><span class="n">start_together</span>
+                <span class="n">start_at_end</span> <span class="o">=</span> <span class="n">partial_solution</span><span class="o">.</span><span class="n">start_at_end</span>
+                <span class="n">start_at_end_plus_offset</span> <span class="o">=</span> <span class="n">partial_solution</span><span class="o">.</span><span class="n">start_at_end_plus_offset</span>
+                <span class="n">start_after_nunit</span> <span class="o">=</span> <span class="n">partial_solution</span><span class="o">.</span><span class="n">start_after_nunit</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">start_together</span><span class="p">:</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t1</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t2</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">start_at_end</span><span class="p">:</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t2</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t1</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span> <span class="ow">in</span> <span class="n">start_at_end_plus_offset</span><span class="p">:</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t2</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                        <span class="o">&gt;=</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t1</span><span class="p">][</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">off</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span> <span class="ow">in</span> <span class="n">start_after_nunit</span><span class="p">:</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t2</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                        <span class="o">&gt;=</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">t1</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">off</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_sol</span> <span class="o">=</span> <span class="n">check_solution</span>
+
+    <span class="k">def</span> <span class="nf">build_other_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">sol</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">result_storage</span><span class="o">.</span><span class="n">list_solution_fits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;satisfy&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">rb</span><span class="p">,</span> <span class="n">constraints</span> <span class="o">=</span> <span class="n">get_ressource_breaks</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span><span class="p">,</span> <span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">satisfy</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rb</span><span class="p">[</span><span class="n">r</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rb</span><span class="p">))</span>
+                <span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">solution</span> <span class="o">=</span> <span class="n">RCPSPSolution</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span>
+                    <span class="n">rcpsp_permutation</span><span class="o">=</span><span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rcpsp_permutation</span><span class="p">,</span>
+                    <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">solution</span><span class="o">.</span><span class="n">satisfy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_sol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+                <span class="n">result_storage</span><span class="o">.</span><span class="n">list_solution_fits</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="n">solution</span><span class="p">,</span>
+                        <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)[</span><span class="s2">&quot;makespan&quot;</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+        <span class="k">return</span> <span class="n">result_storage</span>
+
+
+<span class="nd">@deprecated</span><span class="p">(</span><span class="n">deprecated_in</span><span class="o">=</span><span class="s2">&quot;0.1&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ConstraintHandlerAddCalendarConstraint</span><span class="p">(</span><span class="n">ConstraintHandler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem_calendar</span><span class="p">:</span> <span class="n">RCPSPModelCalendar</span><span class="p">,</span>
+        <span class="n">problem_no_calendar</span><span class="p">:</span> <span class="n">RCPSPModel</span><span class="p">,</span>
+        <span class="n">other_constraint</span><span class="p">:</span> <span class="n">ConstraintHandler</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span> <span class="o">=</span> <span class="n">problem_calendar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span> <span class="o">=</span> <span class="n">problem_no_calendar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_constraint</span> <span class="o">=</span> <span class="n">other_constraint</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_constraints</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cp_solver</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CP_RCPSP_MZN</span><span class="p">,</span> <span class="n">CP_MRCPSP_MZN</span><span class="p">],</span>
+        <span class="n">child_instance</span><span class="p">:</span> <span class="n">Instance</span><span class="p">,</span>
+        <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span>
+        <span class="n">last_result_store</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ResultStorage</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">last_result_store</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This constraint need last_result_store to be not None.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">result_storage</span><span class="o">.</span><span class="n">list_solution_fits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;satisfy&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">satisfy</span><span class="p">:</span>
+                <span class="n">last_result_store</span><span class="o">.</span><span class="n">list_solution_fits</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="n">f</span><span class="p">)]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mf">0.2</span><span class="p">:</span>
+            <span class="n">solution</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">last_result_store</span><span class="o">.</span><span class="n">get_last_best_solution</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mf">0.4</span><span class="p">:</span>
+            <span class="n">solution</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">last_result_store</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mf">0.99</span><span class="p">:</span>
+            <span class="n">solution</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">last_result_store</span><span class="o">.</span><span class="n">get_random_best_solution</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">solution</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">last_result_store</span><span class="o">.</span><span class="n">get_random_solution</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_constraints</span><span class="p">:</span>
+            <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;satisfy&quot;</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="n">solution</span><span class="o">.</span><span class="n">satisfy</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">other_constraint</span><span class="o">.</span><span class="n">adding_constraint_from_results_store</span><span class="p">(</span>
+                <span class="n">cp_solver</span><span class="p">,</span> <span class="n">child_instance</span><span class="p">,</span> <span class="n">last_result_store</span><span class="p">,</span> <span class="n">last_result_store</span>
+            <span class="p">)</span>
+        <span class="n">ressource_breaks</span><span class="p">,</span> <span class="n">constraints</span> <span class="o">=</span> <span class="n">get_ressource_breaks</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span><span class="p">,</span> <span class="n">solution</span>
+        <span class="p">)</span>
+        <span class="n">list_strings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ressource_breaks</span><span class="p">:</span>
+            <span class="n">index_ressource</span> <span class="o">=</span> <span class="n">cp_solver</span><span class="o">.</span><span class="n">resources_index</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ressource_breaks</span><span class="p">[</span><span class="n">r</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="n">ressource_breaks</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ressource_breaks</span><span class="p">[</span><span class="n">r</span><span class="p">]),</span> <span class="mi">20</span><span class="p">)</span>
+            <span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">ressource_breaks</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]]:</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">rq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cp_solver</span><span class="p">,</span> <span class="n">CP_MRCPSP_MZN</span><span class="p">):</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">                        </span><span class="sd">&quot;&quot;&quot;constraint &quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rq</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;&gt;=sum( i in Act ) (</span>
+<span class="s2">                                    bool2int(start[i] &lt;=&quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot; /\ &quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;&lt; start[i] + adur[i]) * arreq[&quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">index_ressource</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;,i]);</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cp_solver</span><span class="p">,</span> <span class="n">CP_RCPSP_MZN</span><span class="p">):</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">                        </span><span class="sd">&quot;&quot;&quot;constraint &quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rq</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;&gt;=sum( i in Tasks ) (</span>
+<span class="s2">                                                        bool2int(s[i] &lt;=&quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot; /\ &quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;&lt; s[i] + d[i]) * rr[&quot;&quot;&quot;</span>
+                        <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">index_ressource</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="s2">&quot;&quot;&quot;,i]);</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">child_instance</span><span class="o">.</span><span class="n">add_string</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="n">list_strings</span> <span class="o">+=</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+        <span class="n">satisfiable</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">last_result_store</span><span class="o">.</span><span class="n">list_solution_fits</span>
+            <span class="k">if</span> <span class="s2">&quot;satisfy&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">satisfy</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">satisfiable</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ResultStorage</span><span class="p">(</span>
+                <span class="n">list_solution_fits</span><span class="o">=</span><span class="n">satisfiable</span><span class="p">,</span> <span class="n">mode_optim</span><span class="o">=</span><span class="n">result_storage</span><span class="o">.</span><span class="n">mode_optim</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">other_constraint</span><span class="o">.</span><span class="n">adding_constraint_from_results_store</span><span class="p">(</span>
+                <span class="n">cp_solver</span><span class="p">,</span> <span class="n">child_instance</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">last_result_store</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_constraints</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">list_strings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_constraints</span>
+
+    <span class="k">def</span> <span class="nf">remove_constraints_from_previous_iteration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cp_solver</span><span class="p">:</span> <span class="n">CP_RCPSP_MZN</span><span class="p">,</span>
+        <span class="n">child_instance</span><span class="p">,</span>
+        <span class="n">previous_constraints</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="k">pass</span>
+
+
+<span class="nd">@deprecated</span><span class="p">(</span><span class="n">deprecated_in</span><span class="o">=</span><span class="s2">&quot;0.1&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">SolverWithCalendarIterative</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem_calendar</span><span class="p">:</span> <span class="n">RCPSPModelCalendar</span><span class="p">,</span>
+        <span class="n">partial_solution</span><span class="p">:</span> <span class="n">PartialSolution</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">option_neighbor</span><span class="p">:</span> <span class="n">OptionNeighbor</span> <span class="o">=</span> <span class="n">OptionNeighbor</span><span class="o">.</span><span class="n">MIX_ALL</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span> <span class="o">=</span> <span class="n">problem_calendar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span> <span class="o">=</span> <span class="n">RCPSPModel</span><span class="p">(</span>
+            <span class="n">resources</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">get_max_resource_capacity</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">resources</span>
+            <span class="p">},</span>
+            <span class="n">non_renewable_resources</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">,</span>
+            <span class="n">mode_details</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">mode_details</span><span class="p">,</span>
+            <span class="n">successors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+            <span class="n">name_task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="o">.</span><span class="n">name_task</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">CP_MRCPSP_MZN</span><span class="p">(</span>
+            <span class="n">rcpsp_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span><span class="p">,</span> <span class="n">cp_solver_name</span><span class="o">=</span><span class="n">CPSolverName</span><span class="o">.</span><span class="n">CHUFFED</span>
+        <span class="p">)</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+            <span class="n">output_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;multi&quot;</span><span class="p">,</span> <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span>
+        <span class="p">)</span>
+        <span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">get_default_objective_setup</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span>
+        <span class="p">)</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">build_neighbor_operator</span><span class="p">(</span>
+            <span class="n">option_neighbor</span><span class="o">=</span><span class="n">option_neighbor</span><span class="p">,</span> <span class="n">rcpsp_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span>
+        <span class="p">)</span>
+        <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">ConstraintHandlerAddCalendarConstraint</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span><span class="p">,</span> <span class="n">constraint_handler</span>
+        <span class="p">)</span>
+        <span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">InitialSolutionRCPSP</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span>
+            <span class="n">initial_method</span><span class="o">=</span><span class="n">InitialMethodRCPSP</span><span class="o">.</span><span class="n">DUMMY</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">initial_solution_provider</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">constraint_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span> <span class="o">=</span> <span class="n">params_objective_function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">PostProcessSolutionNonFeasible</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem_no_calendar</span><span class="p">,</span>
+            <span class="n">partial_solution</span><span class="o">=</span><span class="n">partial_solution</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lns_solver</span> <span class="o">=</span> <span class="n">LNS_CP</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem_calendar</span><span class="p">,</span>
+            <span class="n">cp_solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_solver</span><span class="p">,</span>
+            <span class="n">post_process_solution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span><span class="p">,</span>
+            <span class="n">initial_solution_provider</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_solution_provider</span><span class="p">,</span>
+            <span class="n">constraint_handler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">nb_iteration_lns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">nb_iteration_no_improvement</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_time_seconds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skip_first_iteration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parameters_cp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_cp</span> <span class="o">=</span> <span class="n">ParametersCP</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lns_solver</span><span class="o">.</span><span class="n">solve_lns</span><span class="p">(</span>
+            <span class="n">parameters_cp</span><span class="o">=</span><span class="n">parameters_cp</span><span class="p">,</span>
+            <span class="n">max_time_seconds</span><span class="o">=</span><span class="n">max_time_seconds</span><span class="p">,</span>
+            <span class="n">skip_first_iteration</span><span class="o">=</span><span class="n">skip_first_iteration</span><span class="p">,</span>
+            <span class="n">nb_iteration_no_improvement</span><span class="o">=</span><span class="n">nb_iteration_no_improvement</span><span class="p">,</span>
+            <span class="n">nb_iteration_lns</span><span class="o">=</span><span class="n">nb_iteration_lns</span><span class="p">,</span>
+        <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

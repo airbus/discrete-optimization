@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.tsp package &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/versions.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.tsp.mutation package" href="discrete_optimization.tsp.mutation.html" />
+    <link rel="prev" title="discrete_optimization.rcpsp_multiskill.solvers package" href="discrete_optimization.rcpsp_multiskill.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.pickup_vrp.html">discrete_optimization.pickup_vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.tsp package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-tsp-package">
+<h1>discrete_optimization.tsp package<a class="headerlink" href="#discrete-optimization-tsp-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.tsp.mutation.html">discrete_optimization.tsp.mutation package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#module-discrete_optimization.tsp.mutation.mutation_tsp">discrete_optimization.tsp.mutation.mutation_tsp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.build"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.get_points"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.get_points()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.get_points_index"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.get_points_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.mutate"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.mutate_and_compute_obj"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.mutate_and_compute_obj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.node_count"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.node_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2Opt.points"><code class="docutils literal notranslate"><span class="pre">Mutation2Opt.points</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2OptIntersection"><code class="docutils literal notranslate"><span class="pre">Mutation2OptIntersection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2OptIntersection.build"><code class="docutils literal notranslate"><span class="pre">Mutation2OptIntersection.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2OptIntersection.mutate_and_compute_obj"><code class="docutils literal notranslate"><span class="pre">Mutation2OptIntersection.mutate_and_compute_obj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2OptIntersection.nodeCount"><code class="docutils literal notranslate"><span class="pre">Mutation2OptIntersection.nodeCount</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.Mutation2OptIntersection.points"><code class="docutils literal notranslate"><span class="pre">Mutation2OptIntersection.points</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.MutationSwapTSP"><code class="docutils literal notranslate"><span class="pre">MutationSwapTSP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.MutationSwapTSP.build"><code class="docutils literal notranslate"><span class="pre">MutationSwapTSP.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.MutationSwapTSP.mutate"><code class="docutils literal notranslate"><span class="pre">MutationSwapTSP.mutate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.MutationSwapTSP.mutate_and_compute_obj"><code class="docutils literal notranslate"><span class="pre">MutationSwapTSP.mutate_and_compute_obj()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.SwapTSPMove"><code class="docutils literal notranslate"><span class="pre">SwapTSPMove</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.SwapTSPMove.apply_local_move"><code class="docutils literal notranslate"><span class="pre">SwapTSPMove.apply_local_move()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.SwapTSPMove.backtrack_local_move"><code class="docutils literal notranslate"><span class="pre">SwapTSPMove.backtrack_local_move()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.ccw"><code class="docutils literal notranslate"><span class="pre">ccw()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.find_intersection"><code class="docutils literal notranslate"><span class="pre">find_intersection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.get_points_index"><code class="docutils literal notranslate"><span class="pre">get_points_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#discrete_optimization.tsp.mutation.mutation_tsp.intersect"><code class="docutils literal notranslate"><span class="pre">intersect()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.mutation.html#module-discrete_optimization.tsp.mutation">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.tsp.solver.html">discrete_optimization.tsp.solver package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.solver.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.solver.html#module-discrete_optimization.tsp.solver.solver_lp_iterative">discrete_optimization.tsp.solver.solver_lp_iterative module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.init_model"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.init_model_cbc"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.init_model_cbc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.init_model_gurobi"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.init_model_gurobi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.plot_solve"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.plot_solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.retrieve_results_cbc"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.retrieve_results_cbc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.retrieve_results_gurobi"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.retrieve_results_gurobi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.LP_TSP_Iterative.solve"><code class="docutils literal notranslate"><span class="pre">LP_TSP_Iterative.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.MILPSolver"><code class="docutils literal notranslate"><span class="pre">MILPSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.MILPSolver.CBC"><code class="docutils literal notranslate"><span class="pre">MILPSolver.CBC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.MILPSolver.GUROBI"><code class="docutils literal notranslate"><span class="pre">MILPSolver.GUROBI</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.build_graph_complete"><code class="docutils literal notranslate"><span class="pre">build_graph_complete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.build_graph_pruned"><code class="docutils literal notranslate"><span class="pre">build_graph_pruned()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.build_the_cycles"><code class="docutils literal notranslate"><span class="pre">build_the_cycles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_lp_iterative.rebuild_tsp_routine"><code class="docutils literal notranslate"><span class="pre">rebuild_tsp_routine()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.solver.html#module-discrete_optimization.tsp.solver.solver_ortools">discrete_optimization.tsp.solver.solver_ortools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_ortools.TSP_ORtools"><code class="docutils literal notranslate"><span class="pre">TSP_ORtools</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_ortools.TSP_ORtools.init_model"><code class="docutils literal notranslate"><span class="pre">TSP_ORtools.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.solver_ortools.TSP_ORtools.solve"><code class="docutils literal notranslate"><span class="pre">TSP_ORtools.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.solver.html#module-discrete_optimization.tsp.solver.tsp_cp_solver">discrete_optimization.tsp.solver.tsp_cp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_cp_solver.TSP_CPModel"><code class="docutils literal notranslate"><span class="pre">TSP_CPModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_cp_solver.TSP_CPModel.FLOAT_VERSION"><code class="docutils literal notranslate"><span class="pre">TSP_CPModel.FLOAT_VERSION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_cp_solver.TSP_CPModel.INT_VERSION"><code class="docutils literal notranslate"><span class="pre">TSP_CPModel.INT_VERSION</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_cp_solver.TSP_CP_Solver"><code class="docutils literal notranslate"><span class="pre">TSP_CP_Solver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_cp_solver.TSP_CP_Solver.init_model"><code class="docutils literal notranslate"><span class="pre">TSP_CP_Solver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_cp_solver.TSP_CP_Solver.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">TSP_CP_Solver.retrieve_solutions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.solver.html#module-discrete_optimization.tsp.solver.tsp_solver">discrete_optimization.tsp.solver.tsp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP"><code class="docutils literal notranslate"><span class="pre">SolverTSP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP.init_model"><code class="docutils literal notranslate"><span class="pre">SolverTSP.init_model()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.tsp.solver.html#module-discrete_optimization.tsp.solver">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.tsp.common_tools_tsp">
+<span id="discrete-optimization-tsp-common-tools-tsp-module"></span><h2>discrete_optimization.tsp.common_tools_tsp module<a class="headerlink" href="#module-discrete_optimization.tsp.common_tools_tsp" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.common_tools_tsp.baseline_in_order">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.common_tools_tsp.</span></span><span class="sig-name descname"><span class="pre">baseline_in_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodeCount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/common_tools_tsp.html#baseline_in_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.common_tools_tsp.baseline_in_order" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.common_tools_tsp.build_matrice_distance">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.common_tools_tsp.</span></span><span class="sig-name descname"><span class="pre">build_matrice_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodeCount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/common_tools_tsp.html#build_matrice_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.common_tools_tsp.build_matrice_distance" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.common_tools_tsp.build_matrice_distance_np">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.common_tools_tsp.</span></span><span class="sig-name descname"><span class="pre">build_matrice_distance_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodeCount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/common_tools_tsp.html#build_matrice_distance_np"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.common_tools_tsp.build_matrice_distance_np" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.common_tools_tsp.closest_greedy">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.common_tools_tsp.</span></span><span class="sig-name descname"><span class="pre">closest_greedy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodeCount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/common_tools_tsp.html#closest_greedy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.common_tools_tsp.closest_greedy" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.common_tools_tsp.compute_length">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.common_tools_tsp.</span></span><span class="sig-name descname"><span class="pre">compute_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodeCount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/common_tools_tsp.html#compute_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.common_tools_tsp.compute_length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.common_tools_tsp.length_1">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.common_tools_tsp.</span></span><span class="sig-name descname"><span class="pre">length_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">point2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/common_tools_tsp.html#length_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.common_tools_tsp.length_1" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.tsp.tsp_model">
+<span id="discrete-optimization-tsp-tsp-model-module"></span><h2>discrete_optimization.tsp.tsp_model module<a class="headerlink" href="#module-discrete_optimization.tsp.tsp_model" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.Point">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">Point</span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#Point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.Point" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.Point2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">Point2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#Point2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.Point2D" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point" title="discrete_optimization.tsp.tsp_model.Point"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.Point2D.x">
+<span class="sig-name descname"><span class="pre">x</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.Point2D.x" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.Point2D.y">
+<span class="sig-name descname"><span class="pre">y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.Point2D.y" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">SolutionTSP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permutation_from0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#SolutionTSP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Solution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#SolutionTSP.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.change_problem" title="Permalink to this definition"></a></dt>
+<dd><p>If relevant to the optimisation problem, change the underlying problem instance for the solution.</p>
+<p>This method can be used to evaluate a solution for different instance of problems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><em>Problem</em></a>) – another problem instance from which the solution can be evaluated</p>
+</dd>
+</dl>
+<p>Returns: None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#SolutionTSP.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.copy" title="Permalink to this definition"></a></dt>
+<dd><p>Deep copy of the solution.</p>
+<p>The copy() function should return a new object containing the same input as the current object,
+that respects the following expected behaviour:
+-y = x.copy()
+-if do some inplace change of y, the changes are not done in x.</p>
+<p>Returns: a new object from which you can manipulate attributes without changing the original object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.end_index">
+<span class="sig-name descname"><span class="pre">end_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.end_index" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.lazy_copy">
+<span class="sig-name descname"><span class="pre">lazy_copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#SolutionTSP.lazy_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.lazy_copy" title="Permalink to this definition"></a></dt>
+<dd><p>This function should return a new object but possibly with mutable attributes from the original objects.</p>
+<p>A typical use of lazy copy is in evolutionary algorithms or genetic algorithm where the use of
+local move don’t need to do a possibly costly deepcopy.</p>
+<p>Returns (Solution): copy (possibly shallow) of the Solution</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.length">
+<span class="sig-name descname"><span class="pre">length</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.lengths">
+<span class="sig-name descname"><span class="pre">lengths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.lengths" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.permutation">
+<span class="sig-name descname"><span class="pre">permutation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.permutation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.permutation_from0">
+<span class="sig-name descname"><span class="pre">permutation_from0</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.permutation_from0" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.SolutionTSP.start_index">
+<span class="sig-name descname"><span class="pre">start_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.SolutionTSP.start_index" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">TSPModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point" title="discrete_optimization.tsp.tsp_model.Point"><span class="pre">Point</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.convert_original_perm_to_perm_from0">
+<span class="sig-name descname"><span class="pre">convert_original_perm_to_perm_from0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.convert_original_perm_to_perm_from0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.convert_original_perm_to_perm_from0" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.convert_perm_from0_to_original_perm">
+<span class="sig-name descname"><span class="pre">convert_perm_from0_to_original_perm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm_from0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.convert_perm_from0_to_original_perm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.convert_perm_from0_to_original_perm" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_tsp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate a given solution object for the given problem.</p>
+<p>This method should return a dictionnary of KPI, that can be then used for mono or multiobjective optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><em>Solution</em></a>) – the Solution object to evaluate.</p>
+</dd>
+</dl>
+<p>Returns: Dictionnary of float kpi for the solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.evaluate_from_encoding">
+<span class="sig-name descname"><span class="pre">evaluate_from_encoding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int_vector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.evaluate_from_encoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.evaluate_from_encoding" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.evaluate_function">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_tsp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.evaluate_function_indexes">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate_function_indexes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.evaluate_function_indexes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.evaluate_function_indexes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.EncodingRegister" title="discrete_optimization.generic_tools.do_problem.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.get_attribute_register" title="Permalink to this definition"></a></dt>
+<dd><p>Returns how the Solution should be encoded.</p>
+<p>Returns (EncodingRegister): content of the encoding of the solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.get_dummy_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.get_objective_register" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the objective definition.</p>
+<p>Returns (ObjectiveRegister): object defining the objective criteria.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.get_random_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_random_dummy_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.get_random_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.get_random_dummy_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.get_solution_type" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the class implementation of a Solution.</p>
+<p>Returns (class): class object of the given Problem.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.list_points">
+<span class="sig-name descname"><span class="pre">list_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point" title="discrete_optimization.tsp.tsp_model.Point"><span class="pre">Point</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.list_points" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.node_count">
+<span class="sig-name descname"><span class="pre">node_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.node_count" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.np_points">
+<span class="sig-name descname"><span class="pre">np_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.np_points" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_tsp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel.satisfy" title="Permalink to this definition"></a></dt>
+<dd><p>Computes if a solution satisfies or not the constraints of the problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> – the Solution object to check satisfability</p>
+</dd>
+</dl>
+<p>Returns (bool): boolean true if the constraints are fulfilled, false elsewhere.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">TSPModel2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numba</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel2D" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TSPModel</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel2D.evaluate_function">
+<span class="sig-name descname"><span class="pre">evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_tsp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel2D.evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel2D.evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel2D.evaluate_function_indexes">
+<span class="sig-name descname"><span class="pre">evaluate_function_indexes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModel2D.evaluate_function_indexes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel2D.evaluate_function_indexes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModel2D.list_points">
+<span class="sig-name descname"><span class="pre">list_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModel2D.list_points" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">TSPModelDistanceMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point" title="discrete_optimization.tsp.tsp_model.Point"><span class="pre">Point</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numba</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModelDistanceMatrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TSPModel</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.evaluate_function">
+<span class="sig-name descname"><span class="pre">evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_tsp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.SolutionTSP" title="discrete_optimization.tsp.tsp_model.SolutionTSP"><span class="pre">SolutionTSP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModelDistanceMatrix.evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.evaluate_function_indexes">
+<span class="sig-name descname"><span class="pre">evaluate_function_indexes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#TSPModelDistanceMatrix.evaluate_function_indexes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.evaluate_function_indexes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.list_points">
+<span class="sig-name descname"><span class="pre">list_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point" title="discrete_optimization.tsp.tsp_model.Point"><span class="pre">Point</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.list_points" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.node_count">
+<span class="sig-name descname"><span class="pre">node_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.node_count" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.np_points">
+<span class="sig-name descname"><span class="pre">np_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix.np_points" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.build_evaluate_function">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">build_evaluate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tsp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#build_evaluate_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.build_evaluate_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.build_evaluate_function_matrix">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">build_evaluate_function_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tsp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix" title="discrete_optimization.tsp.tsp_model.TSPModelDistanceMatrix"><span class="pre">TSPModelDistanceMatrix</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#build_evaluate_function_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.build_evaluate_function_matrix" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.build_evaluate_function_np">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">build_evaluate_function_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tsp_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#build_evaluate_function_np"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.build_evaluate_function_np" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.compute_length">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">compute_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length_permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#compute_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.compute_length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.compute_length_matrix">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">compute_length_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length_permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#compute_length_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.compute_length_matrix" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.compute_length_np">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">compute_length_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">np_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length_permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#compute_length_np"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.compute_length_np" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_model.length">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_model.</span></span><span class="sig-name descname"><span class="pre">length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">point2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.Point2D" title="discrete_optimization.tsp.tsp_model.Point2D"><span class="pre">Point2D</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_model.html#length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_model.length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.tsp.tsp_parser">
+<span id="discrete-optimization-tsp-tsp-parser-module"></span><h2>discrete_optimization.tsp.tsp_parser module<a class="headerlink" href="#module-discrete_optimization.tsp.tsp_parser" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_parser.get_data_available" title="Permalink to this definition"></a></dt>
+<dd><p>Get datasets available for tsp.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for tsp whould be find.</dt><dd><p>If None, we look in “tsp” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. Is None, set by</dt><dd><p>default to “~/discrete_optimization_data “</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_parser.parse_file">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_parser.</span></span><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel2D" title="discrete_optimization.tsp.tsp_model.TSPModel2D"><span class="pre">TSPModel2D</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_parser.html#parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_parser.parse_file" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_parser.parse_input_data">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_parser.</span></span><span class="sig-name descname"><span class="pre">parse_input_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel2D" title="discrete_optimization.tsp.tsp_model.TSPModel2D"><span class="pre">TSPModel2D</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_parser.html#parse_input_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_parser.parse_input_data" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.tsp.tsp_solvers">
+<span id="discrete-optimization-tsp-tsp-solvers-module"></span><h2>discrete_optimization.tsp.tsp_solvers module<a class="headerlink" href="#module-discrete_optimization.tsp.tsp_solvers" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_solvers.look_for_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_solvers.</span></span><span class="sig-name descname"><span class="pre">look_for_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP" title="discrete_optimization.tsp.solver.tsp_solver.SolverTSP"><span class="pre">SolverTSP</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_solvers.html#look_for_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_solvers.look_for_solver" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_solvers.look_for_solver_class">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_solvers.</span></span><span class="sig-name descname"><span class="pre">look_for_solver_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP" title="discrete_optimization.tsp.solver.tsp_solver.SolverTSP"><span class="pre">SolverTSP</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_solvers.html#look_for_solver_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_solvers.look_for_solver_class" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_solvers.return_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_solvers.</span></span><span class="sig-name descname"><span class="pre">return_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP" title="discrete_optimization.tsp.solver.tsp_solver.SolverTSP"><span class="pre">SolverTSP</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tsp_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP" title="discrete_optimization.tsp.solver.tsp_solver.SolverTSP"><span class="pre">SolverTSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_solvers.html#return_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_solvers.return_solver" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.tsp.tsp_solvers.solve">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.tsp.tsp_solvers.</span></span><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.tsp.solver.html#discrete_optimization.tsp.solver.tsp_solver.SolverTSP" title="discrete_optimization.tsp.solver.tsp_solver.SolverTSP"><span class="pre">SolverTSP</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tsp_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.tsp.tsp_model.TSPModel" title="discrete_optimization.tsp.tsp_model.TSPModel"><span class="pre">TSPModel</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/tsp/tsp_solvers.html#solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.tsp.tsp_solvers.solve" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.tsp">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.tsp" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.rcpsp_multiskill.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.rcpsp_multiskill.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.tsp.mutation.html" class="btn btn-neutral float-right" title="discrete_optimization.tsp.mutation package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
