@@ -13,6 +13,10 @@ from typing import Any, Dict, Iterable, List, Optional
 import numpy as np
 from minizinc import Instance, Status
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.cp_tools import CPSolver, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -87,14 +91,17 @@ class LNS_CP(SolverDO):
         parameters_cp: ParametersCP,
         nb_iteration_lns: int,
         nb_iteration_no_improvement: Optional[int] = None,
-        max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        **args: Any,
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs: Any,
     ) -> ResultStorage:
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         sense = self.params_objective_function.sense_function
-        if max_time_seconds is None:
-            max_time_seconds = 3600 * 24  # One day
         if nb_iteration_no_improvement is None:
             nb_iteration_no_improvement = 2 * nb_iteration_lns
         current_nb_iteration_no_improvement = 0
@@ -104,7 +111,6 @@ class LNS_CP(SolverDO):
                 raise RuntimeError(
                     "CP model instance must not be None after calling init_model()!"
                 )
-        deb_time = time.time()
         if not skip_first_iteration:
             store_lns = self.initial_solution_provider.get_starting_solution()
             store_lns = self.post_process_solution.build_other_solution(store_lns)
@@ -122,20 +128,24 @@ class LNS_CP(SolverDO):
             except:
                 pass
             best_objective = objective
+            # end of step callback: stopping?
+            stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
         else:
             best_objective = (
                 float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
             )
             store_lns = None
+            stopping = False
+
         result_store: ResultStorage
-        for iteration in range(nb_iteration_lns):
-            logger.info(
-                f"Starting iteration n° {iteration} current objective {best_objective}"
-            )
-            with self.cp_solver.instance.branch() as child:
-                if iteration == 0 and not skip_first_iteration or iteration >= 1:
-                    constraint_iterable = (
-                        self.constraint_handler.adding_constraint_from_results_store(
+        if not stopping:
+            for iteration in range(nb_iteration_lns):
+                logger.info(
+                    f"Starting iteration n° {iteration} current objective {best_objective}"
+                )
+                with self.cp_solver.instance.branch() as child:
+                    if iteration == 0 and not skip_first_iteration or iteration >= 1:
+                        constraint_iterable = self.constraint_handler.adding_constraint_from_results_store(
                             cp_solver=self.cp_solver,
                             child_instance=child,
                             result_storage=store_lns,
@@ -143,100 +153,139 @@ class LNS_CP(SolverDO):
                             if iteration == 0
                             else result_store,
                         )
-                    )
-                try:
-                    if iteration == 0:
-                        result = child.solve(
-                            timeout=timedelta(seconds=parameters_cp.time_limit_iter0),
-                            intermediate_solutions=parameters_cp.intermediate_solution,
-                            free_search=parameters_cp.free_search,
-                            processes=None
-                            if not parameters_cp.multiprocess
-                            else parameters_cp.nb_process,
-                        )
-                    else:
-                        result = child.solve(
-                            timeout=timedelta(seconds=parameters_cp.time_limit),
-                            intermediate_solutions=parameters_cp.intermediate_solution,
-                            free_search=parameters_cp.free_search,
-                            processes=None
-                            if not parameters_cp.multiprocess
-                            else parameters_cp.nb_process,
-                        )
-                    result_store = self.cp_solver.retrieve_solutions(
-                        result, parameters_cp=parameters_cp
-                    )
-                    logger.info(f"iteration n° {iteration} Solved !!!")
-                    logger.info(result.status)
-                    if len(result_store.list_solution_fits) > 0:
-                        logger.debug("Solved !!!")
-                        bsol, fit = result_store.get_best_solution_fit()
-                        logger.debug(f"Fitness Before = {fit}")
-                        if bsol is not None:
-                            logger.debug(
-                                f"Satisfaction Before = {self.problem.satisfy(bsol)}"
+                    try:
+                        if iteration == 0:
+                            result = child.solve(
+                                timeout=timedelta(
+                                    seconds=parameters_cp.time_limit_iter0
+                                ),
+                                intermediate_solutions=parameters_cp.intermediate_solution,
+                                free_search=parameters_cp.free_search,
+                                processes=None
+                                if not parameters_cp.multiprocess
+                                else parameters_cp.nb_process,
                             )
                         else:
-                            logger.debug(f"Satisfaction Before = {False}")
-                        logger.debug("Post Process..")
-                        result_store = self.post_process_solution.build_other_solution(
-                            result_store
-                        )
-                        bsol, fit = result_store.get_best_solution_fit()
-                        if bsol is not None:
-                            logger.debug(
-                                f"Satisfaction After = {self.problem.satisfy(bsol)}"
+                            result = child.solve(
+                                timeout=timedelta(seconds=parameters_cp.time_limit),
+                                intermediate_solutions=parameters_cp.intermediate_solution,
+                                free_search=parameters_cp.free_search,
+                                processes=None
+                                if not parameters_cp.multiprocess
+                                else parameters_cp.nb_process,
                             )
-                        else:
-                            logger.debug(f"Satisfaction After = {False}")
-                        if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
-                            if fit > best_objective:
-                                current_nb_iteration_no_improvement = 0
+                        result_store = self.cp_solver.retrieve_solutions(
+                            result, parameters_cp=parameters_cp
+                        )
+                        logger.info(f"iteration n° {iteration} Solved !!!")
+                        logger.info(result.status)
+                        if len(result_store.list_solution_fits) > 0:
+                            logger.debug("Solved !!!")
+                            bsol, fit = result_store.get_best_solution_fit()
+                            logger.debug(f"Fitness Before = {fit}")
+                            if bsol is not None:
+                                logger.debug(
+                                    f"Satisfaction Before = {self.problem.satisfy(bsol)}"
+                                )
                             else:
-                                current_nb_iteration_no_improvement += 1
-                            best_objective = fit
-                        elif sense == ModeOptim.MAXIMIZATION:
-                            current_nb_iteration_no_improvement += 1
-                        elif sense == ModeOptim.MINIMIZATION and fit <= best_objective:
-                            if fit < best_objective:
-                                current_nb_iteration_no_improvement = 0
+                                logger.debug(f"Satisfaction Before = {False}")
+                            logger.debug("Post Process..")
+                            result_store = (
+                                self.post_process_solution.build_other_solution(
+                                    result_store
+                                )
+                            )
+                            bsol, fit = result_store.get_best_solution_fit()
+                            if bsol is not None:
+                                logger.debug(
+                                    f"Satisfaction After = {self.problem.satisfy(bsol)}"
+                                )
                             else:
+                                logger.debug(f"Satisfaction After = {False}")
+                            if (
+                                sense == ModeOptim.MAXIMIZATION
+                                and fit >= best_objective
+                            ):
+                                if fit > best_objective:
+                                    current_nb_iteration_no_improvement = 0
+                                else:
+                                    current_nb_iteration_no_improvement += 1
+                                best_objective = fit
+                            elif sense == ModeOptim.MAXIMIZATION:
                                 current_nb_iteration_no_improvement += 1
-                            best_objective = fit
-                        elif sense == ModeOptim.MINIMIZATION:
-                            current_nb_iteration_no_improvement += 1
-                        if skip_first_iteration and iteration == 0:
-                            store_lns = result_store
+                            elif (
+                                sense == ModeOptim.MINIMIZATION
+                                and fit <= best_objective
+                            ):
+                                if fit < best_objective:
+                                    current_nb_iteration_no_improvement = 0
+                                else:
+                                    current_nb_iteration_no_improvement += 1
+                                best_objective = fit
+                            elif sense == ModeOptim.MINIMIZATION:
+                                current_nb_iteration_no_improvement += 1
+                            if skip_first_iteration and iteration == 0:
+                                store_lns = result_store
+                            else:
+                                for s, f in list(result_store.list_solution_fits):
+                                    store_lns.add_solution(solution=s, fitness=f)
                         else:
-                            for s, f in list(result_store.list_solution_fits):
-                                store_lns.add_solution(solution=s, fitness=f)
-                    else:
+                            current_nb_iteration_no_improvement += 1
+                        if (
+                            skip_first_iteration
+                            and result.status == Status.OPTIMAL_SOLUTION
+                            and iteration == 0
+                            and self.problem.satisfy(bsol)
+                            and stop_first_iteration_if_optimal
+                        ):
+                            logger.info("Finish LNS because found optimal solution")
+                            break
+                    except Exception as e:
                         current_nb_iteration_no_improvement += 1
+                        logger.warning("Failed ! reason : ", e)
+                    logger.debug(
+                        f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
+                    )
                     if (
-                        skip_first_iteration
-                        and result.status == Status.OPTIMAL_SOLUTION
-                        and iteration == 0
-                        and self.problem.satisfy(bsol)
-                        and stop_first_iteration_if_optimal
+                        current_nb_iteration_no_improvement
+                        > nb_iteration_no_improvement
                     ):
-                        logger.info("Finish LNS because found optimal solution")
+                        logger.info("Finish LNS with maximum no improvement iteration ")
                         break
-                except Exception as e:
-                    current_nb_iteration_no_improvement += 1
-                    logger.warning("Failed ! reason : ", e)
-                if time.time() - deb_time > max_time_seconds:
-                    logger.info("Finish LNS with time limit reached")
-                    break
-                logger.debug(
-                    f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
+                # end of step callback: stopping?
+                if skip_first_iteration:
+                    step = iteration
+                else:
+                    step = iteration + 1
+                stopping = callbacks_list.on_step_end(
+                    step=step, res=store_lns, solver=self
                 )
-                if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                    logger.info("Finish LNS with maximum no improvement iteration ")
+                if stopping:
                     break
+
+        # end of solve callback
+        callbacks_list.on_solve_end(res=store_lns, solver=self)
         return store_lns
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
-        return self.solve_lns(**kwargs)
+    def solve(
+        self,
+        parameters_cp: ParametersCP,
+        nb_iteration_lns: int,
+        nb_iteration_no_improvement: Optional[int] = None,
+        skip_first_iteration: bool = False,
+        stop_first_iteration_if_optimal: bool = True,
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        return self.solve_lns(
+            parameters_cp=parameters_cp,
+            nb_iteration_lns=nb_iteration_lns,
+            nb_iteration_no_improvement=nb_iteration_no_improvement,
+            skip_first_iteration=skip_first_iteration,
+            stop_first_iteration_if_optimal=stop_first_iteration_if_optimal,
+            callbacks=callbacks,
+            **kwargs,
+        )
 
 
 class LNS_CPlex(SolverDO):
@@ -266,18 +315,19 @@ class LNS_CPlex(SolverDO):
         parameters_cp: ParametersCP,
         nb_iteration_lns: int,
         nb_iteration_no_improvement: Optional[int] = None,
-        max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
-        stop_first_iteration_if_optimal: bool = True,
-        **args: Any,
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs: Any,
     ) -> ResultStorage:
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         sense = self.params_objective_function.sense_function
-        if max_time_seconds is None:
-            max_time_seconds = 3600 * 24  # One day
         if nb_iteration_no_improvement is None:
             nb_iteration_no_improvement = 2 * nb_iteration_lns
         current_nb_iteration_no_improvement = 0
-        deb_time = time.time()
         if not skip_first_iteration:
             store_lns = self.initial_solution_provider.get_starting_solution()
             store_lns = self.post_process_solution.build_other_solution(store_lns)
@@ -292,84 +342,119 @@ class LNS_CPlex(SolverDO):
             except:
                 pass
             best_objective = objective
+            # end of step callback: stopping?
+            stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
         else:
             best_objective = (
                 float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
             )
             store_lns = None
-        result_store: ResultStorage
-        for iteration in range(nb_iteration_lns):
-            logger.debug(
-                f"Starting iteration n° {iteration} current objective {best_objective}"
-            )
-            if iteration == 0 and not skip_first_iteration or iteration >= 1:
-                constraint_iterable = (
-                    self.constraint_handler.adding_constraint_from_results_store(
-                        cp_solver=self.cp_solver,
-                        child_instance=None,
-                        result_storage=store_lns,
-                        last_result_store=store_lns if iteration == 0 else result_store,
-                    )
-                )
+            stopping = False
 
-            try:
-                if iteration == 0:
-                    p = parameters_cp.default()
-                    p.time_limit = parameters_cp.time_limit_iter0
-                    result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
-                else:
-                    result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
-                logger.debug(f"iteration n° {iteration} Solved !!!")
-                if len(result_store.list_solution_fits) > 0:
-                    logger.debug("Solved !!!")
-                    bsol, fit = result_store.get_best_solution_fit()
-                    logger.debug(f"Fitness Before = {fit}")
-                    logger.debug(f"Satisfaction Before = {self.problem.satisfy(bsol)}")
-                    logger.debug("Post Process..")
-                    result_store = self.post_process_solution.build_other_solution(
-                        result_store
+        result_store: ResultStorage
+        if not stopping:
+            for iteration in range(nb_iteration_lns):
+                logger.debug(
+                    f"Starting iteration n° {iteration} current objective {best_objective}"
+                )
+                if iteration == 0 and not skip_first_iteration or iteration >= 1:
+                    constraint_iterable = (
+                        self.constraint_handler.adding_constraint_from_results_store(
+                            cp_solver=self.cp_solver,
+                            child_instance=None,
+                            result_storage=store_lns,
+                            last_result_store=store_lns
+                            if iteration == 0
+                            else result_store,
+                        )
                     )
-                    bsol, fit = result_store.get_best_solution_fit()
-                    logger.debug(f"Satisfy after : {self.problem.satisfy(bsol)}")
-                    if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
-                        if fit > best_objective:
-                            current_nb_iteration_no_improvement = 0
-                        else:
-                            current_nb_iteration_no_improvement += 1
-                        best_objective = fit
-                    elif sense == ModeOptim.MAXIMIZATION:
-                        current_nb_iteration_no_improvement += 1
-                    elif sense == ModeOptim.MINIMIZATION and fit <= best_objective:
-                        if fit < best_objective:
-                            current_nb_iteration_no_improvement = 0
-                        else:
-                            current_nb_iteration_no_improvement += 1
-                        best_objective = fit
-                    elif sense == ModeOptim.MINIMIZATION:
-                        current_nb_iteration_no_improvement += 1
-                    if skip_first_iteration and iteration == 0:
-                        store_lns = result_store
+
+                try:
+                    if iteration == 0:
+                        p = parameters_cp.default()
+                        p.time_limit = parameters_cp.time_limit_iter0
+                        result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
                     else:
-                        for s, f in list(result_store.list_solution_fits):
-                            store_lns.add_solution(solution=s, fitness=f)
-                else:
+                        result_store = self.cp_solver.solve(parameters_cp=parameters_cp)
+                    logger.debug(f"iteration n° {iteration} Solved !!!")
+                    if len(result_store.list_solution_fits) > 0:
+                        logger.debug("Solved !!!")
+                        bsol, fit = result_store.get_best_solution_fit()
+                        logger.debug(f"Fitness Before = {fit}")
+                        logger.debug(
+                            f"Satisfaction Before = {self.problem.satisfy(bsol)}"
+                        )
+                        logger.debug("Post Process..")
+                        result_store = self.post_process_solution.build_other_solution(
+                            result_store
+                        )
+                        bsol, fit = result_store.get_best_solution_fit()
+                        logger.debug(f"Satisfy after : {self.problem.satisfy(bsol)}")
+                        if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
+                            if fit > best_objective:
+                                current_nb_iteration_no_improvement = 0
+                            else:
+                                current_nb_iteration_no_improvement += 1
+                            best_objective = fit
+                        elif sense == ModeOptim.MAXIMIZATION:
+                            current_nb_iteration_no_improvement += 1
+                        elif sense == ModeOptim.MINIMIZATION and fit <= best_objective:
+                            if fit < best_objective:
+                                current_nb_iteration_no_improvement = 0
+                            else:
+                                current_nb_iteration_no_improvement += 1
+                            best_objective = fit
+                        elif sense == ModeOptim.MINIMIZATION:
+                            current_nb_iteration_no_improvement += 1
+                        if skip_first_iteration and iteration == 0:
+                            store_lns = result_store
+                        else:
+                            for s, f in list(result_store.list_solution_fits):
+                                store_lns.add_solution(solution=s, fitness=f)
+                    else:
+                        current_nb_iteration_no_improvement += 1
+                except Exception as e:
                     current_nb_iteration_no_improvement += 1
-            except Exception as e:
-                current_nb_iteration_no_improvement += 1
-                logger.warning(f"Failed ! reason : {e}")
-            if time.time() - deb_time > max_time_seconds:
-                logger.info("Finish LNS with time limit reached")
-                break
-            logger.debug(
-                f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
-            )
-            if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                logger.info("Finish LNS with maximum no improvement iteration ")
-                break
+                    logger.warning(f"Failed ! reason : {e}")
+                logger.debug(
+                    f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
+                )
+                if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
+                    logger.info("Finish LNS with maximum no improvement iteration ")
+                    break
+
+                # end of step callback: stopping?
+                if skip_first_iteration:
+                    step = iteration
+                else:
+                    step = iteration + 1
+                stopping = callbacks_list.on_step_end(
+                    step=step, res=store_lns, solver=self
+                )
+                if stopping:
+                    break
+
+        # end of solve callback
+        callbacks_list.on_solve_end(res=store_lns, solver=self)
         return store_lns
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
-        return self.solve_lns(**kwargs)
+    def solve(
+        self,
+        parameters_cp: ParametersCP,
+        nb_iteration_lns: int,
+        nb_iteration_no_improvement: Optional[int] = None,
+        skip_first_iteration: bool = False,
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        return self.solve_lns(
+            parameters_cp=parameters_cp,
+            nb_iteration_lns=nb_iteration_lns,
+            nb_iteration_no_improvement=nb_iteration_no_improvement,
+            skip_first_iteration=skip_first_iteration,
+            callbacks=callbacks,
+            **kwargs,
+        )
 
 
 class ConstraintStatus(TypedDict):

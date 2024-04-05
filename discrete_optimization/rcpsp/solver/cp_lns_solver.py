@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
@@ -18,6 +18,7 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_builder import (
 from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ParamsConstraintBuilder,
 )
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
@@ -247,18 +248,19 @@ class LargeNeighborhoodSearchRCPSP(SolverRCPSP):
         nb_iteration_lns: int,
         parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
-        max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        **args
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs
     ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         return self.lns_solver.solve_lns(
             parameters_cp=parameters_cp,
-            max_time_seconds=max_time_seconds,
             skip_first_iteration=skip_first_iteration,
             stop_first_iteration_if_optimal=stop_first_iteration_if_optimal,
             nb_iteration_no_improvement=nb_iteration_no_improvement,
             nb_iteration_lns=nb_iteration_lns,
+            callbacks=callbacks,
+            **kwargs
         )

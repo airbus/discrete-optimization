@@ -20,6 +20,7 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
     MilpSolverName,
     ParametersMilp,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
 
@@ -67,7 +68,9 @@ def test_facility_lns():
     )
 
     result_store = lns_solver.solve_lns(
-        parameters_milp=params_milp, nb_iteration_lns=100, max_time_seconds=100
+        parameters_milp=params_milp,
+        nb_iteration_lns=100,
+        callbacks=[TimerStopper(total_seconds=100)],
     )
     solution = result_store.get_best_solution_fit()[0]
     assert facility_problem.satisfy(solution)

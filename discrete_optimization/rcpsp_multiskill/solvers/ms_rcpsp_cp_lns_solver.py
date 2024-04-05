@@ -9,6 +9,7 @@ from typing import Any, Iterable, List, Optional
 import numpy as np
 from minizinc import Instance
 
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
@@ -657,11 +658,13 @@ class LNS_CP_MS_RCPSP_SOLVER(SolverDO):
             params_objective_function=self.params_objective_function,
         )
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs
+    ) -> ResultStorage:
         return self.lns_solver.solve_lns(
             parameters_cp=kwargs.get("parameters_cp", self.parameters_cp),
             nb_iteration_lns=kwargs.get("nb_iteration_lns", 100),
             skip_first_iteration=kwargs.get("skip_first_iteration", False),
             nb_iteration_no_improvement=kwargs.get("nb_iteration_no_improvement", None),
-            max_time_seconds=kwargs.get("max_time_seconds", None),
+            callbacks=callbacks,
         )

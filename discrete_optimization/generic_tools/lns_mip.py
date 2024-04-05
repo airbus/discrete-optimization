@@ -5,8 +5,12 @@
 import logging
 import time
 from abc import abstractmethod
-from typing import Any, Hashable, Mapping, Optional
+from typing import Any, Hashable, List, Mapping, Optional
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
@@ -104,17 +108,19 @@ class LNS_MILP(SolverDO):
         parameters_milp: ParametersMilp,
         nb_iteration_lns: int,
         nb_iteration_no_improvement: Optional[int] = None,
-        max_time_seconds: Optional[int] = None,
         skip_first_iteration: Optional[bool] = False,
+        callbacks: Optional[List[Callback]] = None,
         **args: Any,
     ) -> ResultStorage:
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         sense = self.params_objective_function.sense_function
-        if max_time_seconds is None:
-            max_time_seconds = 3600 * 24  # One day
         if nb_iteration_no_improvement is None:
             nb_iteration_no_improvement = 2 * nb_iteration_lns
         current_nb_iteration_no_improvement = 0
-        deb_time = time.time()
         if not skip_first_iteration:
             store_lns = self.initial_solution_provider.get_starting_solution()
             init_solution, objective = store_lns.get_best_solution_fit()
@@ -124,55 +130,94 @@ class LNS_MILP(SolverDO):
                 )
             )
             best_objective = objective
+            # end of step callback: stopping?
+            stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
         else:
             best_objective = float("inf")
             constraint_iterable = {"empty": []}
             store_lns = None
-        for iteration in range(nb_iteration_lns):
-            result_store = self.milp_solver.solve(
-                parameters_milp=parameters_milp, **args
-            )
-            logger.debug("Solved !!!")
-            bsol, fit = result_store.get_best_solution_fit()
-            logger.debug(f"Fitness = {fit}")
-            logger.debug("Post Process..")
-            result_store = self.post_process_solution.build_other_solution(result_store)
-            bsol, fit = result_store.get_best_solution_fit()
-            logger.debug(f"After postpro = {fit}")
-            if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
-                if fit > best_objective:
-                    current_nb_iteration_no_improvement = 0
-                else:
-                    current_nb_iteration_no_improvement += 1
-                best_objective = fit
-            if sense == ModeOptim.MINIMIZATION and fit <= best_objective:
-                if fit < best_objective:
-                    current_nb_iteration_no_improvement = 0
-                else:
-                    current_nb_iteration_no_improvement += 1
-                best_objective = fit
-            if skip_first_iteration and iteration == 0:
-                store_lns = result_store
-            for s, f in result_store.list_solution_fits:
-                if store_lns is None:  # for mypy, should never happen
-                    raise RuntimeError("store_lns should have been initialized for now")
-                store_lns.add_solution(solution=s, fitness=f)
-            logger.debug("Removing constraint:")
-            self.constraint_handler.remove_constraints_from_previous_iteration(
-                milp_solver=self.milp_solver, previous_constraints=constraint_iterable
-            )
-            logger.debug("Adding constraint:")
-            constraint_iterable = (
-                self.constraint_handler.adding_constraint_from_results_store(
-                    milp_solver=self.milp_solver, result_storage=result_store
+            stopping = False
+
+        if not stopping:
+            for iteration in range(nb_iteration_lns):
+                result_store = self.milp_solver.solve(
+                    parameters_milp=parameters_milp, **args
                 )
-            )
-            if time.time() - deb_time > max_time_seconds:
-                logger.info("Finish LNS with time limit reached")
-                break
-            if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
-                logger.info("Finish LNS with maximum no improvement iteration ")
-                break
+                logger.debug("Solved !!!")
+                bsol, fit = result_store.get_best_solution_fit()
+                logger.debug(f"Fitness = {fit}")
+                logger.debug("Post Process..")
+                result_store = self.post_process_solution.build_other_solution(
+                    result_store
+                )
+                bsol, fit = result_store.get_best_solution_fit()
+                logger.debug(f"After postpro = {fit}")
+                if sense == ModeOptim.MAXIMIZATION and fit >= best_objective:
+                    if fit > best_objective:
+                        current_nb_iteration_no_improvement = 0
+                    else:
+                        current_nb_iteration_no_improvement += 1
+                    best_objective = fit
+                if sense == ModeOptim.MINIMIZATION and fit <= best_objective:
+                    if fit < best_objective:
+                        current_nb_iteration_no_improvement = 0
+                    else:
+                        current_nb_iteration_no_improvement += 1
+                    best_objective = fit
+                if skip_first_iteration and iteration == 0:
+                    store_lns = result_store
+                for s, f in result_store.list_solution_fits:
+                    if store_lns is None:  # for mypy, should never happen
+                        raise RuntimeError(
+                            "store_lns should have been initialized for now"
+                        )
+                    store_lns.add_solution(solution=s, fitness=f)
+                logger.debug("Removing constraint:")
+                self.constraint_handler.remove_constraints_from_previous_iteration(
+                    milp_solver=self.milp_solver,
+                    previous_constraints=constraint_iterable,
+                )
+                logger.debug("Adding constraint:")
+                constraint_iterable = (
+                    self.constraint_handler.adding_constraint_from_results_store(
+                        milp_solver=self.milp_solver, result_storage=result_store
+                    )
+                )
+                if current_nb_iteration_no_improvement > nb_iteration_no_improvement:
+                    logger.info("Finish LNS with maximum no improvement iteration ")
+                    break
+
+                # end of step callback: stopping?
+                if skip_first_iteration:
+                    step = iteration
+                else:
+                    step = iteration + 1
+                stopping = callbacks_list.on_step_end(
+                    step=step, res=store_lns, solver=self
+                )
+                if stopping:
+                    break
+
         if store_lns is None:  # for mypy, should never happen
             raise RuntimeError("store_lns should have been initialized for now")
+        # end of solve callback
+        callbacks_list.on_solve_end(res=store_lns, solver=self)
         return store_lns
+
+    def solve(
+        self,
+        parameters_milp: ParametersMilp,
+        nb_iteration_lns: int,
+        nb_iteration_no_improvement: Optional[int] = None,
+        skip_first_iteration: Optional[bool] = False,
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        return self.solve_lns(
+            parameters_milp=parameters_milp,
+            nb_iteration_lns=nb_iteration_lns,
+            nb_iteration_no_improvement=nb_iteration_no_improvement,
+            skip_first_iteration=skip_first_iteration,
+            callbacks=callbacks,
+            **kwargs,
+        )

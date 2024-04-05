@@ -13,6 +13,7 @@ from discrete_optimization.generic_rcpsp_tools.ls_solver import (
     LS_SOLVER,
     LS_RCPSP_Solver,
 )
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
@@ -639,11 +640,13 @@ class LNS_CP_RCPSP_SOLVER(SolverRCPSP):
             params_objective_function=self.params_objective_function,
         )
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs
+    ) -> ResultStorage:
         return self.lns_solver.solve_lns(
             parameters_cp=kwargs.get("parameters_cp", self.parameters_cp),
-            max_time_seconds=kwargs.get("max_time_seconds", 1000),
             skip_first_iteration=kwargs.get("skip_first_iteration", False),
             nb_iteration_no_improvement=kwargs.get("nb_iteration_no_improvement", 100),
             nb_iteration_lns=kwargs.get("nb_iteration_lns", 100),
+            callbacks=callbacks,
         )

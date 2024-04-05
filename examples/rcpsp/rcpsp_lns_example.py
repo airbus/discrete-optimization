@@ -6,6 +6,7 @@ import logging
 from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
     LargeNeighborhoodSearchScheduling,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
@@ -27,7 +28,7 @@ def example_lns_solver():
         stop_first_iteration_if_optimal=False,
         parameters_cp=parameters_cp,
         nb_iteration_no_improvement=200,
-        max_time_seconds=100,
+        callbacks=[TimerStopper(total_seconds=100)],
     )
     sol, fit = results.get_best_solution_fit()
     assert rcpsp_problem.satisfy(sol)

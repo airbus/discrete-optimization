@@ -3,7 +3,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Optional
+from typing import List, Optional
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
 from discrete_optimization.coloring.solvers.coloring_cp_lns_solvers import (
@@ -17,6 +17,7 @@ from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     ColoringCPModel,
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lns_cp import (
@@ -119,18 +120,18 @@ class LnsCpColoring(SolverColoring):
         nb_iteration_lns: int,
         parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
-        max_time_seconds: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
+        callbacks: Optional[List[Callback]] = None,
         **args
     ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         return self.lns_solver.solve_lns(
             parameters_cp=parameters_cp,
-            max_time_seconds=max_time_seconds,
             skip_first_iteration=skip_first_iteration,
             stop_first_iteration_if_optimal=stop_first_iteration_if_optimal,
             nb_iteration_no_improvement=nb_iteration_no_improvement,
             nb_iteration_lns=nb_iteration_lns,
+            callbacks=callbacks,
         )
