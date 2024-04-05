@@ -6,6 +6,9 @@ import pytest
 
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -65,6 +68,28 @@ def test_tsp():
     # check size of trajectories
     nb_nodes_visited = sum([len(traj) for traj in sol.trajectories.values()])
     assert nb_nodes_visited == len(gpdp.all_nodes)
+
+
+def test_tsp_cb():
+    files_available = tsp_parser.get_data_available()
+    file_path = [f for f in files_available if "tsp_5_1" in f][0]
+    tsp_model = tsp_parser.parse_file(file_path)
+    gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
+    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver.init_model(
+        one_visit_per_node=True,
+        include_capacity=False,
+        include_time_evolution=False,
+    )
+    p = ParametersMilp.default()
+    iteration_stopper = NbIterationStopper(nb_iteration_max=2)
+    res = linear_flow_solver.solve(
+        parameters_milp=p,
+        do_lns=True,
+        nb_iteration_max=20,
+        callbacks=[iteration_stopper],
+    )
+    assert iteration_stopper.nb_iteration == iteration_stopper.nb_iteration_max
 
 
 def test_tsp_with_time():

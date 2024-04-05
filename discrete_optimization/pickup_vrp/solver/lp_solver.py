@@ -24,6 +24,10 @@ from typing import (
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -878,8 +882,9 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
+        callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
-    ) -> List[TemporaryResult]:
+    ) -> ResultStorage:
         """
 
         Args:
@@ -893,6 +898,11 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         Returns:
 
         """
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -929,6 +939,14 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             )
         else:
             subtour = SubtourAddingConstraint(problem=self.problem, linear_solver=self)
+        subtour.adding_component_constraints([first_solution])
+        self.model.update()
+        nb_iteration = 0
+        res = ResultStorage(
+            list_solution_fits=self.convert_temporaryresults(solutions),
+            mode_optim=self.params_objective_function.sense_function,
+        )
+
         if (
             max(
                 [
@@ -939,11 +957,12 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             == 1
         ):
             finished = True
-            return solutions
-        subtour.adding_component_constraints([first_solution])
-        self.model.update()
-        all_solutions = solutions
-        nb_iteration = 0
+            return res
+        else:
+            finished = callbacks_list.on_step_end(
+                step=nb_iteration, res=res, solver=self
+            )
+
         while not finished:
             rebuilt_dict = first_solution.rebuilt_dict
             if (json_dump_folder is not None) and all(
@@ -986,7 +1005,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                     "Temporary result attributes rebuilt_dict, component_global"
                     "and connected_components_per_vehicle cannot be None after solving."
                 )
-            all_solutions += solutions
             if self.clusters_version:
                 subtour = SubtourAddingConstraintCluster(
                     problem=self.problem, linear_solver=self
@@ -1008,10 +1026,17 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                 and not do_lns
             ):
                 finished = True
-                return all_solutions
-            nb_iteration += 1
-            finished = nb_iteration > nb_iteration_max
-        return all_solutions
+            else:
+                nb_iteration += 1
+                res.list_solution_fits += self.convert_temporaryresults(solutions)
+                stopping = callbacks_list.on_step_end(
+                    step=nb_iteration, res=res, solver=self
+                )
+                finished = stopping or nb_iteration > nb_iteration_max
+
+        # end of solve callback
+        callbacks_list.on_solve_end(res=res, solver=self)
+        return res
 
     def solve(
         self,
@@ -1020,33 +1045,30 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
+        callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        temporaryresults = self.solve_iterative(
+        return self.solve_iterative(
             parameters_milp=parameters_milp,
             do_lns=do_lns,
             nb_iteration_max=nb_iteration_max,
             json_dump_folder=json_dump_folder,
             warm_start=warm_start,
+            callbacks=callbacks,
             **kwargs,
         )
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
-        else:
-            n_solutions = 1
+
+    def convert_temporaryresults(
+        self, temporary_results: List[TemporaryResult]
+    ) -> List[Tuple[Solution, Union[float, TupleFitness]]]:
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
+        for temporaryresult in temporary_results:
             solution = convert_temporaryresult_to_gpdpsolution(
-                temporaryresult=temporaryresults[s], problem=self.problem
+                temporaryresult=temporaryresult, problem=self.problem
             )
             fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+        return list_solution_fits
 
     def init_warm_start(self, routes: Dict[int, List]) -> None:
         if routes is None:
@@ -1326,8 +1348,9 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
         warm_start: Optional[Dict[Any, Any]] = None,
+        callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
-    ) -> List[TemporaryResult]:
+    ) -> ResultStorage:
         """
 
         Args:
@@ -1341,6 +1364,11 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         Returns:
 
         """
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -1371,8 +1399,11 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                 "and connected_components_per_vehicle cannot be None after solving."
             )
         self.model.update()
-        all_solutions = solutions
         nb_iteration = 0
+        res = ResultStorage(
+            list_solution_fits=self.convert_temporaryresults(solutions),
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
         while not finished:
             rebuilt_dict = first_solution.rebuilt_dict
@@ -1404,10 +1435,16 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             solutions = self.solve_one_iteration(
                 parameters_milp=parameters_milp, no_warm_start=True, **kwargs
             )
-            all_solutions += solutions
             nb_iteration += 1
-            finished = nb_iteration > nb_iteration_max
-        return all_solutions
+            res.list_solution_fits += self.convert_temporaryresults(solutions)
+            stopping = callbacks_list.on_step_end(
+                step=nb_iteration, res=res, solver=self
+            )
+            finished = stopping or nb_iteration > nb_iteration_max
+
+        # end of solve callback
+        callbacks_list.on_solve_end(res=res, solver=self)
+        return res
 
 
 class SubtourAddingConstraint:
