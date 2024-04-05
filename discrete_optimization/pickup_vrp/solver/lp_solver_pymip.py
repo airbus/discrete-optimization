@@ -21,6 +21,10 @@ from typing import (
 import mip
 import networkx as nx
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -774,8 +778,16 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         return list_temporary_results
 
     def solve_iterative(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
-    ) -> List[TemporaryResult]:
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        callbacks: Optional[List[Callback]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -784,7 +796,6 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
                 )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        finished = False
         do_lns = kwargs.get("do_lns", True)
         reinit_model_at_each_iteration = kwargs.get(
             "reinit", self.solver_name == mip.CBC
@@ -813,6 +824,16 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             )
         else:
             subtour = SubtourAddingConstraint(problem=self.problem, linear_solver=self)
+        res = ResultStorage(
+            list_solution_fits=self.convert_temporaryresults(solutions),
+            mode_optim=self.params_objective_function.sense_function,
+        )
+        list_constraints_tuples: List[Any] = []
+        list_constraints_tuples += subtour.adding_component_constraints(
+            [first_solution]
+        )
+        nb_iteration = 0
+
         if (
             max(
                 [
@@ -822,13 +843,12 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             )
             == 1
         ):
-            return solutions
-        list_constraints_tuples: List[Any] = []
-        list_constraints_tuples += subtour.adding_component_constraints(
-            [first_solution]
-        )
-        all_solutions = solutions
-        nb_iteration = 0
+            finished = True
+        else:
+            finished = callbacks_list.on_step_end(
+                step=nb_iteration, res=res, solver=self
+            )
+
         while not finished:
             rebuilt_dict = first_solution.rebuilt_dict
             c = ConstraintHandlerOrWarmStart(
@@ -848,7 +868,6 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
                     "Temporary result attributes rebuilt_dict, component_global"
                     "and connected_components_per_vehicle cannot be None after solving."
                 )
-            all_solutions += solutions
             if self.clusters_version:
                 subtour = SubtourAddingConstraintCluster(
                     problem=self.problem, linear_solver=self
@@ -875,37 +894,42 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
                 == 1
                 and not do_lns
             ):
-                return all_solutions
-            nb_iteration += 1
-            finished = nb_iteration > nb_iteration_max
-        return all_solutions
+                finished = True
+            else:
+                nb_iteration += 1
+                res.list_solution_fits += self.convert_temporaryresults(solutions)
+                stopping = callbacks_list.on_step_end(
+                    step=nb_iteration, res=res, solver=self
+                )
+                finished = stopping or nb_iteration > nb_iteration_max
+
+        # end of solve callback
+        callbacks_list.on_solve_end(res=res, solver=self)
+        return res
 
     def solve(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
+        callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        temporaryresults = self.solve_iterative(
+        return self.solve_iterative(
             parameters_milp=parameters_milp,
+            callbacks=callbacks,
             **kwargs,
         )
-        if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, len(temporaryresults))
-        else:
-            n_solutions = 1
+
+    def convert_temporaryresults(
+        self, temporary_results: List[TemporaryResult]
+    ) -> List[Tuple[Solution, Union[float, TupleFitness]]]:
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for s in range(n_solutions):
+        for temporaryresult in temporary_results:
             solution = convert_temporaryresult_to_gpdpsolution(
-                temporaryresult=temporaryresults[s], problem=self.problem
+                temporaryresult=temporaryresult, problem=self.problem
             )
             fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+        return list_solution_fits
 
     def reapply_constraint(
         self, list_constraint_tuple: List[Tuple[Set[Tuple[int, int]], int]]
