@@ -4,8 +4,12 @@
 import logging
 import os
 import random
-from typing import Any, Dict, Set, Type
+from typing import Any, Dict, List, Optional, Set, Type
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
     IntegerHyperparameter,
@@ -110,7 +114,14 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         )
         return solution
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        # wrap all callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+        # start of solve callback
+        callbacks_list.on_solve_start(solver=self)
+
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         initial_solver: Type[SolverKnapsack] = kwargs["initial_solver"]
         if kwargs["initial_solver_kwargs"] is None:
@@ -160,4 +171,13 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             fit = self.aggreg_from_sol(reb_sol)
             logger.info(f"Iteration {j}/{nb_iteration} : --- Current fitness {fit}")
             results_storage.list_solution_fits += [(reb_sol, fit)]
+
+            stopping = callbacks_list.on_step_end(
+                step=j, res=results_storage, solver=self
+            )
+            if stopping:
+                break
+
+        # end of solve callback
+        callbacks_list.on_solve_end(res=results_storage, solver=self)
         return results_storage
