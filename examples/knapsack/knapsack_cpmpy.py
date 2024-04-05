@@ -3,21 +3,14 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
+from cpmpy import SolverLookup
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName
-from discrete_optimization.knapsack.knapsack_model import (
-    KnapsackModel,
-    KnapsackSolution,
-)
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.knapsack.solvers.knapsack_cpmpy import (
-    CPMPYKnapsackSolver,
-    SolverLookup,
-)
-from discrete_optimization.knapsack.solvers.lp_solvers import LPKnapsack, ParametersMilp
+from discrete_optimization.knapsack.solvers.knapsack_cpmpy import CPMPYKnapsackSolver
 
 
 def run():
