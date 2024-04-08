@@ -189,9 +189,10 @@ class CategoricalHyperparameter(Hyperparameter):
         Returns:
 
         """
-        if self.choices is not None and "choices" not in kwargs:
-            kwargs["choices"] = self.choices
-        return trial.suggest_categorical(name=prefix + self.name, **kwargs)
+        if choices is None:
+            choices = self.choices
+
+        return trial.suggest_categorical(name=prefix + self.name, choices=choices, **kwargs)  # type: ignore
 
 
 class EnumHyperparameter(CategoricalHyperparameter):
@@ -280,7 +281,7 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
             choices = self.choices
         choices_str = [self.choices_cls2str[c] for c in choices]
         choice_str = trial.suggest_categorical(
-            name=prefix + self.name, choices=choices_str
+            name=prefix + self.name, choices=choices_str, **kwargs  # type: ignore
         )
         return self.choices_str2cls[choice_str]
 
@@ -312,6 +313,7 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
         fixed_hyperparameters: Optional[Dict[str, Any]] = None,
         prefix: str = "",
+        **kwargs,
     ) -> Dict[str, Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
@@ -331,6 +333,7 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
                 if the subsolver class is not suggested by this method, but already fixed.
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
+            **kwargs: passed to `trial.suggest_categorical()`
 
         Returns:
 
@@ -344,4 +347,5 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
             kwargs_by_name=kwargs_by_name,
             fixed_hyperparameters=fixed_hyperparameters,
             prefix=prefix,
+            **kwargs,  # type: ignore
         )
