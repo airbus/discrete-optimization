@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.solver.ls_solver &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/versions.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.solver.ls_solver</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.solver.ls_solver</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp</span> <span class="kn">import</span> <span class="n">ANY_RCPSP</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">build_aggreg_function_and_params_objective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_solver</span> <span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.ls.hill_climber</span> <span class="kn">import</span> <span class="n">HillClimber</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.ls.local_search</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeMutation</span><span class="p">,</span>
+    <span class="n">RestartHandlerLimit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.ls.simulated_annealing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SimulatedAnnealing</span><span class="p">,</span>
+    <span class="n">TemperatureSchedulingFactor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.mutations.mixed_mutation</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BasicPortfolioMutation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.mutations.mutation_catalog</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_available_mutations</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp.mutations.mutation_rcpsp</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PermutationMutationRCPSP</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver</span> <span class="kn">import</span> <span class="n">InitialMethodRCPSP</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp_multiskill.rcpsp_multiskill</span> <span class="kn">import</span> <span class="n">MS_RCPSPModel</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InitialSolutionMS_RCPSP</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LS_SOLVER"><a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solver.html#discrete_optimization.rcpsp.solver.ls_solver.LS_SOLVER">[docs]</a><span class="k">class</span> <span class="nc">LS_SOLVER</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">SA</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">HC</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="LS_RCPSP_Solver"><a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solver.html#discrete_optimization.rcpsp.solver.ls_solver.LS_RCPSP_Solver">[docs]</a><span class="k">class</span> <span class="nc">LS_RCPSP_Solver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">ANY_RCPSP</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ls_solver</span><span class="p">:</span> <span class="n">LS_SOLVER</span> <span class="o">=</span> <span class="n">LS_SOLVER</span><span class="o">.</span><span class="n">SA</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_dict</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ls_solver</span> <span class="o">=</span> <span class="n">ls_solver</span>
+
+<div class="viewcode-block" id="LS_RCPSP_Solver.solve"><a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.solver.html#discrete_optimization.rcpsp.solver.ls_solver.LS_RCPSP_Solver.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">dummy</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;starting_point&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">get_dummy_solution</span><span class="p">())</span>
+        <span class="n">find_better_starting_solution</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;init_solution_process&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">MS_RCPSPModel</span><span class="p">)</span> <span class="ow">and</span> <span class="n">find_better_starting_solution</span><span class="p">:</span>
+            <span class="n">init</span> <span class="o">=</span> <span class="n">InitialSolutionMS_RCPSP</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">initial_method</span><span class="o">=</span><span class="n">InitialMethodRCPSP</span><span class="o">.</span><span class="n">PILE_CALENDAR</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="n">get_starting_solution</span><span class="p">()</span>
+            <span class="n">dummy</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">get_best_solution</span><span class="p">()</span>
+        <span class="n">dummy</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;init_solution&quot;</span><span class="p">,</span> <span class="n">dummy</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">mutations</span> <span class="o">=</span> <span class="n">get_available_mutations</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dummy</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">mutations</span><span class="p">)</span>
+        <span class="n">list_mutation</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">mutate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dummy</span><span class="p">,</span> <span class="o">**</span><span class="n">mutate</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">mutate</span> <span class="ow">in</span> <span class="n">mutations</span>
+            <span class="k">if</span> <span class="n">mutate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">PermutationMutationRCPSP</span>
+        <span class="p">]</span>
+        <span class="n">mixed_mutation</span> <span class="o">=</span> <span class="n">BasicPortfolioMutation</span><span class="p">(</span>
+            <span class="n">list_mutation</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">list_mutation</span><span class="p">)))</span>
+        <span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">RestartHandlerLimit</span><span class="p">(</span>
+            <span class="n">nb_iteration_no_improvement</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_iteration_no_improvement&quot;</span><span class="p">,</span> <span class="mi">300</span><span class="p">),</span>
+            <span class="n">cur_solution</span><span class="o">=</span><span class="n">dummy</span><span class="p">,</span>
+            <span class="n">cur_objective</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">dummy</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">ls</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls_solver</span> <span class="o">==</span> <span class="n">LS_SOLVER</span><span class="o">.</span><span class="n">SA</span><span class="p">:</span>
+            <span class="n">ls</span> <span class="o">=</span> <span class="n">SimulatedAnnealing</span><span class="p">(</span>
+                <span class="n">evaluator</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">mutator</span><span class="o">=</span><span class="n">mixed_mutation</span><span class="p">,</span>
+                <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+                <span class="n">temperature_handler</span><span class="o">=</span><span class="n">TemperatureSchedulingFactor</span><span class="p">(</span>
+                    <span class="n">temperature</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                    <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+                    <span class="n">coefficient</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;decay_temperature&quot;</span><span class="p">,</span> <span class="mf">0.9999</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">mode_mutation</span><span class="o">=</span><span class="n">ModeMutation</span><span class="o">.</span><span class="n">MUTATE</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                <span class="n">store_solution</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">nb_solutions</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls_solver</span> <span class="o">==</span> <span class="n">LS_SOLVER</span><span class="o">.</span><span class="n">HC</span><span class="p">:</span>
+            <span class="n">ls</span> <span class="o">=</span> <span class="n">HillClimber</span><span class="p">(</span>
+                <span class="n">evaluator</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">mutator</span><span class="o">=</span><span class="n">mixed_mutation</span><span class="p">,</span>
+                <span class="n">restart_handler</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+                <span class="n">mode_mutation</span><span class="o">=</span><span class="n">ModeMutation</span><span class="o">.</span><span class="n">MUTATE</span><span class="p">,</span>
+                <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                <span class="n">store_solution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">nb_solutions</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">result_sa</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="n">dummy</span><span class="p">,</span>
+            <span class="n">nb_iteration_max</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_iteration_max&quot;</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span>
+            <span class="n">max_time_seconds</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_time_seconds&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">pickle_result</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">result_sa</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

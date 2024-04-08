@@ -1,0 +1,141 @@
+discrete\_optimization.rcpsp.solver package
+===========================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.solver.calendar\_solver\_iterative module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.calendar_solver_iterative
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cp\_lns\_methods\_clean module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cp_lns_methods_clean
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cp\_lns\_methods\_preemptive module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cp\_lns\_solver module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cp_lns_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cp\_model\_input module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cp_model_input
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cp\_solvers module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cp_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cp\_solvers\_multiscenario module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cp_solvers_multiscenario
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.cpm module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.cpm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.gphh\_solver module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.gphh_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.ls\_solver module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.ls_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.rcpsp\_cp\_lns\_solver module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.rcpsp\_ga\_solver module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.rcpsp_ga_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.rcpsp\_lp\_lns\_solver module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.rcpsp\_lp\_solver module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.rcpsp_lp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.rcpsp\_lp\_solver\_gantt module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.rcpsp_lp_solver_gantt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp.solver.rcpsp\_pile module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solver.rcpsp_pile
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:

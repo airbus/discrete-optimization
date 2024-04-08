@@ -1,0 +1,31 @@
+# Notebooks
+
+We present here a curated list of notebooks recommended to start with discrete-optimization,
+available in the `notebooks/` folder of the repository.
+
+```{contents}
+---
+depth: 1
+local: true
+---
+```
+
+## Knapsack problem
+
+[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)](https://github.com/airbus/discrete-optimization/blob/v0.2.1/notebooks/knapsack.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/airbus/discrete-optimization/9ebf721b33f3d7eb55bcd2296495e9385a5a9858?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Fairbus%252Fdiscrete-optimization%26urlpath%3Dtree%252Fdiscrete-optimization%252Fnotebooks%252Fknapsack.ipynb%26branch%3Dv0.2.1)
+
+This is a very common combinatorial optimization problem where you are given a knapsack of a given weight capacity $C$ and a bunch of items with values and weight. The goal is to fill the knapsack with the best aggregated value, respecting the weight constraint.
+
+![knapsack problem illustration](https://upload.wikimedia.org/wikipedia/commons/f/fd/Knapsack.svg "Image from wikipedia: https://commons.wikimedia.org/wiki/File:Knapsack.svg").
+
+We handle here the *0-1 knapsack problem* where each item can only be taken once.
+
+Many different optimization approach can be tested on the combinatorial problem, we'll see a few during the notebook:
+
+- [Greedy heuristic methods](#Greedy-heuristic)
+- [Mixed Integer Linear Programming (MILP)](#Mixed-integer-linear-programming)
+- [Constraint Programming (CP)](#Constraint-Programming)
+- [Large neighborhood search (LNS)](#Large-neighborhood-search), a metaheuristic on top of CP or MILP
+
+

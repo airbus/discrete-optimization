@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring package &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/versions.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.coloring.solvers package" href="discrete_optimization.coloring.solvers.html" />
+    <link rel="prev" title="discrete_optimization package" href="discrete_optimization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.pickup_vrp.html">discrete_optimization.pickup_vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-coloring-package">
+<h1>discrete_optimization.coloring package<a class="headerlink" href="#discrete-optimization-coloring-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.coloring.solvers.html">discrete_optimization.coloring.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_asp_solver">discrete_optimization.coloring.solvers.coloring_asp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver"><code class="docutils literal notranslate"><span class="pre">ColoringASPSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.build_string_data_input"><code class="docutils literal notranslate"><span class="pre">ColoringASPSolver.build_string_data_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.init_model"><code class="docutils literal notranslate"><span class="pre">ColoringASPSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">ColoringASPSolver.retrieve_solutions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.ColoringASPSolver.solve"><code class="docutils literal notranslate"><span class="pre">ColoringASPSolver.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_asp_solver.create_empty_folder"><code class="docutils literal notranslate"><span class="pre">create_empty_folder()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_cp_lns_solvers">discrete_optimization.coloring.solvers.coloring_cp_lns_solvers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsCP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.problem"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsCP.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.fraction_to_fix"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsCP.fraction_to_fix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsCP.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.ConstraintHandlerFixColorsCP.remove_constraints_from_previous_iteration"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsCP.remove_constraints_from_previous_iteration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring"><code class="docutils literal notranslate"><span class="pre">InitialColoring</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.problem"><code class="docutils literal notranslate"><span class="pre">InitialColoring.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.initial_method"><code class="docutils literal notranslate"><span class="pre">InitialColoring.initial_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoring.get_starting_solution"><code class="docutils literal notranslate"><span class="pre">InitialColoring.get_starting_solution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod"><code class="docutils literal notranslate"><span class="pre">InitialColoringMethod</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod.DUMMY"><code class="docutils literal notranslate"><span class="pre">InitialColoringMethod.DUMMY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.InitialColoringMethod.GREEDY"><code class="docutils literal notranslate"><span class="pre">InitialColoringMethod.GREEDY</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring"><code class="docutils literal notranslate"><span class="pre">PostProcessSolutionColoring</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.problem"><code class="docutils literal notranslate"><span class="pre">PostProcessSolutionColoring.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.params_objective_function"><code class="docutils literal notranslate"><span class="pre">PostProcessSolutionColoring.params_objective_function</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns_solvers.PostProcessSolutionColoring.build_other_solution"><code class="docutils literal notranslate"><span class="pre">PostProcessSolutionColoring.build_other_solution()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_cp_solvers">discrete_optimization.coloring.solvers.coloring_cp_solvers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP"><code class="docutils literal notranslate"><span class="pre">ColoringCP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.export_dzn"><code class="docutils literal notranslate"><span class="pre">ColoringCP.export_dzn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.get_solution"><code class="docutils literal notranslate"><span class="pre">ColoringCP.get_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.init_model"><code class="docutils literal notranslate"><span class="pre">ColoringCP.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCP.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">ColoringCP.retrieve_solutions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel"><code class="docutils literal notranslate"><span class="pre">ColoringCPModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.CLIQUES"><code class="docutils literal notranslate"><span class="pre">ColoringCPModel.CLIQUES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.DEFAULT"><code class="docutils literal notranslate"><span class="pre">ColoringCPModel.DEFAULT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPModel.LNS"><code class="docutils literal notranslate"><span class="pre">ColoringCPModel.LNS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution"><code class="docutils literal notranslate"><span class="pre">ColoringCPSolution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution.check"><code class="docutils literal notranslate"><span class="pre">ColoringCPSolution.check()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_solvers.ColoringCPSolution.objective"><code class="docutils literal notranslate"><span class="pre">ColoringCPSolution.objective</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_lp_lns_solvers">discrete_optimization.coloring.solvers.coloring_lp_lns_solvers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsGrb</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.problem"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsGrb.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.fraction_to_fix"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsGrb.fraction_to_fix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsGrb.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsGrb.remove_constraints_from_previous_iteration"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsGrb.remove_constraints_from_previous_iteration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsPyMip</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.problem"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsPyMip.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.fraction_to_fix"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsPyMip.fraction_to_fix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.adding_constraint_from_results_store"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsPyMip.adding_constraint_from_results_store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.ConstraintHandlerFixColorsPyMip.remove_constraints_from_previous_iteration"><code class="docutils literal notranslate"><span class="pre">ConstraintHandlerFixColorsPyMip.remove_constraints_from_previous_iteration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring"><code class="docutils literal notranslate"><span class="pre">InitialColoring</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.problem"><code class="docutils literal notranslate"><span class="pre">InitialColoring.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.initial_method"><code class="docutils literal notranslate"><span class="pre">InitialColoring.initial_method</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoring.get_starting_solution"><code class="docutils literal notranslate"><span class="pre">InitialColoring.get_starting_solution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod"><code class="docutils literal notranslate"><span class="pre">InitialColoringMethod</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod.DUMMY"><code class="docutils literal notranslate"><span class="pre">InitialColoringMethod.DUMMY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_lns_solvers.InitialColoringMethod.GREEDY"><code class="docutils literal notranslate"><span class="pre">InitialColoringMethod.GREEDY</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_lp_solvers">discrete_optimization.coloring.solvers.coloring_lp_solvers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP"><code class="docutils literal notranslate"><span class="pre">ColoringLP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.coloring_model"><code class="docutils literal notranslate"><span class="pre">ColoringLP.coloring_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.params_objective_function"><code class="docutils literal notranslate"><span class="pre">ColoringLP.params_objective_function</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.init_model"><code class="docutils literal notranslate"><span class="pre">ColoringLP.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">ColoringLP.retrieve_solutions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP"><code class="docutils literal notranslate"><span class="pre">ColoringLP_MIP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.coloring_model"><code class="docutils literal notranslate"><span class="pre">ColoringLP_MIP.coloring_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.params_objective_function"><code class="docutils literal notranslate"><span class="pre">ColoringLP_MIP.params_objective_function</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.milp_solver_name"><code class="docutils literal notranslate"><span class="pre">ColoringLP_MIP.milp_solver_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.init_model"><code class="docutils literal notranslate"><span class="pre">ColoringLP_MIP.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ColoringLP_MIP.retrieve_solutions"><code class="docutils literal notranslate"><span class="pre">ColoringLP_MIP.retrieve_solutions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict"><code class="docutils literal notranslate"><span class="pre">ConstraintsDict</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict.constraints_neighbors"><code class="docutils literal notranslate"><span class="pre">ConstraintsDict.constraints_neighbors</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_lp_solvers.ConstraintsDict.one_color_constraints"><code class="docutils literal notranslate"><span class="pre">ConstraintsDict.one_color_constraints</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_solver">discrete_optimization.coloring.solvers.coloring_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><code class="docutils literal notranslate"><span class="pre">SolverColoring</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring.init_model"><code class="docutils literal notranslate"><span class="pre">SolverColoring.init_model()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution">discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution"><code class="docutils literal notranslate"><span class="pre">SolverColoringWithStartingSolution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution.SolverColoringWithStartingSolution.get_starting_solution"><code class="docutils literal notranslate"><span class="pre">SolverColoringWithStartingSolution.get_starting_solution()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.coloring_toulbar_solver">discrete_optimization.coloring.solvers.coloring_toulbar_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver"><code class="docutils literal notranslate"><span class="pre">ToulbarColoringSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver.init_model"><code class="docutils literal notranslate"><span class="pre">ToulbarColoringSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_toulbar_solver.ToulbarColoringSolver.solve"><code class="docutils literal notranslate"><span class="pre">ToulbarColoringSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers.greedy_coloring">discrete_optimization.coloring.solvers.greedy_coloring module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.GreedyColoring"><code class="docutils literal notranslate"><span class="pre">GreedyColoring</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.GreedyColoring.solve"><code class="docutils literal notranslate"><span class="pre">GreedyColoring.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.best"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.best</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.connected_sequential</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential_bfs"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.connected_sequential_bfs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.connected_sequential_dfs"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.connected_sequential_dfs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.dsatur"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.dsatur</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.independent_set"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.independent_set</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.largest_first"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.largest_first</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.random_sequential"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.random_sequential</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.saturation_largest_first"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.saturation_largest_first</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.greedy_coloring.NXGreedyColoringMethod.smallest_last"><code class="docutils literal notranslate"><span class="pre">NXGreedyColoringMethod.smallest_last</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#module-discrete_optimization.coloring.solvers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.coloring.coloring_model">
+<span id="discrete-optimization-coloring-coloring-model-module"></span><h2>discrete_optimization.coloring.coloring_model module<a class="headerlink" href="#module-discrete_optimization.coloring.coloring_model" title="Permalink to this heading"></a></h2>
+<p>Implementation of the famous graph coloring problem (<a class="reference external" href="https://en.wikipedia.org/wiki/Graph_coloring">https://en.wikipedia.org/wiki/Graph_coloring</a>).</p>
+<p>Graph coloring problem consists at assigning different colors to vertexes in a graph.
+The only constraint is that adjacent vertices should be colored by different colors</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_model.</span></span><span class="sig-name descname"><span class="pre">ColoringProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.graph_api.Graph" title="discrete_optimization.generic_tools.graph_api.Graph"><span class="pre">Graph</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a></p>
+<p>Coloring problem class implementation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.graph">
+<span class="sig-name descname"><span class="pre">graph</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.graph" title="Permalink to this definition"></a></dt>
+<dd><p>a graph object representing vertices and edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.graph_api.Graph" title="discrete_optimization.generic_tools.graph_api.Graph">Graph</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.number_of_nodes">
+<span class="sig-name descname"><span class="pre">number_of_nodes</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.number_of_nodes" title="Permalink to this definition"></a></dt>
+<dd><p>number of nodes in the graph</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.nodes_name">
+<span class="sig-name descname"><span class="pre">nodes_name</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.nodes_name" title="Permalink to this definition"></a></dt>
+<dd><p>list of id of the graph vertices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Hashable]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.index_nodes_name">
+<span class="sig-name descname"><span class="pre">index_nodes_name</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.index_nodes_name" title="Permalink to this definition"></a></dt>
+<dd><p>dictionnary node_name-&gt;index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[Hashable, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.index_to_nodes_name">
+<span class="sig-name descname"><span class="pre">index_to_nodes_name</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.index_to_nodes_name" title="Permalink to this definition"></a></dt>
+<dd><p>index-&gt;node_name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[int, Hashable]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.count_violations">
+<span class="sig-name descname"><span class="pre">count_violations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.count_violations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.count_violations" title="Permalink to this definition"></a></dt>
+<dd><p>Count number of violation in graph coloring solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> – ColoringSolution to evaluate the number of violation to the color constraint</p>
+</dd>
+</dl>
+<p>Returns: an integer representing the number of edges (link between 2 vertices) where the colors are equal (thus being a violation)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluation implementation for ColoringProblem.</p>
+<p>Compute number of colors and violation of the current solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.evaluate_from_encoding">
+<span class="sig-name descname"><span class="pre">evaluate_from_encoding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int_vector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.evaluate_from_encoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.evaluate_from_encoding" title="Permalink to this definition"></a></dt>
+<dd><p>Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int_vector</strong> – representing the colors vector of our problem</p></li>
+<li><p><strong>encoding_name</strong> – name of the attribute in ColoringSolution corresponding to the int_vector given.
+In our case, will only work for encoding_name=”colors”</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: the evaluation of the (int_vector, encoding) object on the coloring problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.get_attribute_register">
+<span class="sig-name descname"><span class="pre">get_attribute_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.EncodingRegister" title="discrete_optimization.generic_tools.do_problem.EncodingRegister"><span class="pre">EncodingRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.get_attribute_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.get_attribute_register" title="Permalink to this definition"></a></dt>
+<dd><p>Attribute documenation for ColoringSolution object.</p>
+<p>Returns: an EncodingRegister specifying the colors attribute.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.get_dummy_solution">
+<span class="sig-name descname"><span class="pre">get_dummy_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.get_dummy_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.get_dummy_solution" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a dummy solution.</p>
+<p>A dummy feasible solution consists in giving one different color per vertices.
+Returns: A feasible and dummiest ColoringSolution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.get_objective_register">
+<span class="sig-name descname"><span class="pre">get_objective_register</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ObjectiveRegister" title="discrete_optimization.generic_tools.do_problem.ObjectiveRegister"><span class="pre">ObjectiveRegister</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.get_objective_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.get_objective_register" title="Permalink to this definition"></a></dt>
+<dd><p>Specifies the default objective settings to be used with the evaluate function output.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.get_solution_type" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the class of a solution instance for ColoringProblem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringProblem.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringProblem.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringProblem.satisfy" title="Permalink to this definition"></a></dt>
+<dd><p>Check the color constraint of the solution.</p>
+<p>Check for each edges in the graph if the allocated color of the vertices are different.
+When one counterexample is found, the function directly returns False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><em>ColoringSolution</em></a>) – the solution object we want to check the feasibility</p>
+</dd>
+</dl>
+<p>Returns: boolean indicating if the solution fulfills the constraint.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_model.</span></span><span class="sig-name descname"><span class="pre">ColoringSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_violations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Solution</span></code></a></p>
+<p>Solution class for graph coloring problem.</p>
+<p>The object contains a pointer to the problem instance,
+a list or numpy array giving colors values to each vertices of the graph.
+number of different colors or violation can also be stored to avoid some unnecessary computation
+(think about local search algorithms).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.problem" title="Permalink to this definition"></a></dt>
+<dd><p>instance of the graph coloring problem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem">ColoringProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.colors">
+<span class="sig-name descname"><span class="pre">colors</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.colors" title="Permalink to this definition"></a></dt>
+<dd><p>list/array of the same size of problem.number_of_nodes number.
+It should contain integer values representing discrete colors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[List[int], np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.nb_color">
+<span class="sig-name descname"><span class="pre">nb_color</span></span><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.nb_color" title="Permalink to this definition"></a></dt>
+<dd><p>number of different colors present in colors attributes. can be used directly
+by the problem.evaluate function if this attribute is provided
+(be careful to keep coherence between colors and nb_color !)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.change_problem">
+<span class="sig-name descname"><span class="pre">change_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringSolution.change_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.change_problem" title="Permalink to this definition"></a></dt>
+<dd><p>Change the reference to the problem instance of the solution.</p>
+<p>If two coloring problems have the same number of nodes, we can build a solution of the problem
+from the solution of another one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_problem</strong> – One another ColoringProblem.</p>
+</dd>
+</dl>
+<p>Returns: None, but change in place the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringSolution.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.copy" title="Permalink to this definition"></a></dt>
+<dd><p>Efficient way of copying a coloring solution without deepcopying unnecessary attribute (problem).</p>
+<p>Algorithms can therefore copy this object, modify mutable attributes of interest (i.e colors)
+without modifying the initial object.</p>
+<p>Returns: A copy that can be considered as a deep copy of the current object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.lazy_copy">
+<span class="sig-name descname"><span class="pre">lazy_copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringSolution.lazy_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.lazy_copy" title="Permalink to this definition"></a></dt>
+<dd><p>Shallow copy of the coloring solution object.</p>
+<p class="rubric">Examples</p>
+<p>x = y.lozy_copy()
+id(x) == id(y)  # will be false
+x.colors==y.colors # will be true</p>
+<dl class="simple">
+<dt>Returns: a new ColoringSolution object where the mutable attributes will point to the same object</dt><dd><p>than the original.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.ColoringSolution.to_reformated_solution">
+<span class="sig-name descname"><span class="pre">to_reformated_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#ColoringSolution.to_reformated_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.ColoringSolution.to_reformated_solution" title="Permalink to this definition"></a></dt>
+<dd><p>Computes a new solution where the colors array has a value precede chain (see more details <a class="reference external" href="https://www.minizinc.org/doc-2.5.3/en/lib-globals.html#index-62">https://www.minizinc.org/doc-2.5.3/en/lib-globals.html#index-62</a>) property.</p>
+<blockquote>
+<div><p>Examples : [1, 4, 4, 3, 2, 4] doesnt respect the value_precede_chain because 4 appears before 2 and 3.
+A transformed vector would be : [1, 2, 2, 3, 4, 2].
+For the coloring problem it is the same solution but this time we respect value_precede.</p>
+</div></blockquote>
+<p>The resulting solution is equivalent for the optimization problem to solve, but can reduce a lot the search space
+Returns: New ColoringSolution object with value precede chain property.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_model.transform_color_values_to_value_precede">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_model.</span></span><span class="sig-name descname"><span class="pre">transform_color_values_to_value_precede</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color_vector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_model.html#transform_color_values_to_value_precede"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_model.transform_color_values_to_value_precede" title="Permalink to this definition"></a></dt>
+<dd><p>See method ColoringSolution.to_reformated_solution().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>color_vector</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – vector representing colors of vertices</p>
+</dd>
+</dl>
+<p>Returns: A vector with value precede chain property</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.coloring_parser">
+<span id="discrete-optimization-coloring-coloring-parser-module"></span><h2>discrete_optimization.coloring.coloring_parser module<a class="headerlink" href="#module-discrete_optimization.coloring.coloring_parser" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_parser.get_data_available">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_parser.</span></span><span class="sig-name descname"><span class="pre">get_data_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_home</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_parser.html#get_data_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_parser.get_data_available" title="Permalink to this definition"></a></dt>
+<dd><p>Get datasets available for coloring.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><dl class="simple">
+<dt>data_folder: folder where datasets for coloring whould be find.</dt><dd><p>If None, we look in “coloring” subdirectory of <cite>data_home</cite>.</p>
+</dd>
+<dt>data_home: root directory for all datasets. Is None, set by</dt><dd><p>default to “~/discrete_optimization_data “</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_parser.parse">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_parser.</span></span><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_parser.html#parse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_parser.parse" title="Permalink to this definition"></a></dt>
+<dd><p>From a text input, initialise a coloring problem instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_data</strong> – text input in the format of {data_home}/coloring files</p>
+</dd>
+</dl>
+<p>Returns: a ColoringProblem instance</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_parser.parse_file">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_parser.</span></span><span class="sig-name descname"><span class="pre">parse_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_parser.html#parse_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_parser.parse_file" title="Permalink to this definition"></a></dt>
+<dd><p>From an absolute path to a coloring text file, return the corresponding coloring instance
+:param file_path: absolute path to the file
+:type file_path: str</p>
+<p>Returns: a ColoringProblem instance</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.coloring_plot">
+<span id="discrete-optimization-coloring-coloring-plot-module"></span><h2>discrete_optimization.coloring.coloring_plot module<a class="headerlink" href="#module-discrete_optimization.coloring.coloring_plot" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_plot.plot_coloring_solution">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_plot.</span></span><span class="sig-name descname"><span class="pre">plot_coloring_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringSolution" title="discrete_optimization.coloring.coloring_model.ColoringSolution"><span class="pre">ColoringSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_figure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_plot.html#plot_coloring_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_plot.plot_coloring_solution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.coloring_solvers">
+<span id="discrete-optimization-coloring-coloring-solvers-module"></span><h2>discrete_optimization.coloring.coloring_solvers module<a class="headerlink" href="#module-discrete_optimization.coloring.coloring_solvers" title="Permalink to this heading"></a></h2>
+<p>Utility module to launch different solvers on the coloring problem.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_solvers.look_for_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_solvers.</span></span><span class="sig-name descname"><span class="pre">look_for_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><span class="pre">SolverColoring</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_solvers.html#look_for_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_solvers.look_for_solver" title="Permalink to this definition"></a></dt>
+<dd><p>Given an instance of ColoringProblem, return a list of class of solvers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>domain</strong> (<a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><em>ColoringProblem</em></a>) – coloring problem instance</p>
+</dd>
+</dl>
+<p>Returns: list of solvers class</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_solvers.look_for_solver_class">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_solvers.</span></span><span class="sig-name descname"><span class="pre">look_for_solver_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><span class="pre">SolverColoring</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_solvers.html#look_for_solver_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_solvers.look_for_solver_class" title="Permalink to this definition"></a></dt>
+<dd><p>Given a class domain, return a list of class of solvers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>class_domain</strong> – should be ColoringProblem</p>
+</dd>
+</dl>
+<p>Returns: list of solvers class</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_solvers.return_solver">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_solvers.</span></span><span class="sig-name descname"><span class="pre">return_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><span class="pre">SolverColoring</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><span class="pre">SolverColoring</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_solvers.html#return_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_solvers.return_solver" title="Permalink to this definition"></a></dt>
+<dd><p>Return the solver initialized with the coloring problem instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> – class of the solver to use</p></li>
+<li><p><strong>coloring_model</strong> – coloring problem instance</p></li>
+<li><p><strong>**args</strong> – specific options of the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns (SolverDO) : a solver object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_solvers.solve">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_solvers.</span></span><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_solver.SolverColoring" title="discrete_optimization.coloring.solvers.coloring_solver.SolverColoring"><span class="pre">SolverColoring</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coloring_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.coloring.coloring_model.ColoringProblem" title="discrete_optimization.coloring.coloring_model.ColoringProblem"><span class="pre">ColoringProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_solvers.html#solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_solvers.solve" title="Permalink to this definition"></a></dt>
+<dd><p>Solve a coloring instance with a given class of solver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> – class of the solver to use</p></li>
+<li><p><strong>coloring_model</strong> – coloring problem instance</p></li>
+<li><p><strong>**args</strong> – specific options of the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns: a ResultsStorage objecting obtained by the solver.</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring.coloring_toolbox">
+<span id="discrete-optimization-coloring-coloring-toolbox-module"></span><h2>discrete_optimization.coloring.coloring_toolbox module<a class="headerlink" href="#module-discrete_optimization.coloring.coloring_toolbox" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.coloring.coloring_toolbox.compute_cliques">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.coloring.coloring_toolbox.</span></span><span class="sig-name descname"><span class="pre">compute_cliques</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/coloring/coloring_toolbox.html#compute_cliques"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.coloring.coloring_toolbox.compute_cliques" title="Permalink to this definition"></a></dt>
+<dd><p>Compute nb_max cliques for a given graph (possibly a graph from a coloring model).</p>
+<p>A clique of a graph is a subset of nodes that are all adjacent to each other.
+This is quite relevant for coloring problem where the color of nodes of a clique
+will have to be different.</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>g: a network x Graph
+nb_max: max number of cliques to return.</p>
+</dd>
+</dl>
+<p>Returns: A list of cliques and a boolean indicating if all cliques have been computed.</p>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.coloring">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.coloring" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.html" class="btn btn-neutral float-left" title="discrete_optimization package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.coloring.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.coloring.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

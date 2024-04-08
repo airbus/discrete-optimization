@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.knapsack.solvers.knapsack_decomposition &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/versions.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.knapsack.solvers.knapsack_decomposition</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.knapsack.solvers.knapsack_decomposition</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2023 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">build_aggreg_function_and_params_objective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.knapsack.knapsack_model</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KnapsackModel</span><span class="p">,</span>
+    <span class="n">KnapsackSolution</span><span class="p">,</span>
+    <span class="n">create_subknapsack_model</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.knapsack.knapsack_solvers</span> <span class="kn">import</span> <span class="n">solve</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.knapsack.solvers.greedy_solvers</span> <span class="kn">import</span> <span class="n">GreedyBest</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.knapsack.solvers.knapsack_solver</span> <span class="kn">import</span> <span class="n">SolverKnapsack</span>
+
+<span class="n">cur_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="KnapsackDecomposedSolver"><a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver">[docs]</a><span class="k">class</span> <span class="nc">KnapsackDecomposedSolver</span><span class="p">(</span><span class="n">SolverKnapsack</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This solver is based on the current observation. From a given knapsack model and one current solution,</span>
+<span class="sd">    if we decide to freeze the decision variable for a subset of items, the remaining problem to solve is also a</span>
+<span class="sd">    knapsack problem, with fewer items and smaller capacity.</span>
+<span class="sd">    A solution to this subproblem can be found by any knapsack solver and a full solution to the original problem,</span>
+<span class="sd">    can be rebuilt.</span>
+<span class="sd">    KnapsackDecomposedSolver is a basic iterative solver that starts from a given solution, then freeze random items,</span>
+<span class="sd">    solve subproblem with a custom root solver, rebuild original solution and repeat the process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">knapsack_model</span><span class="p">:</span> <span class="n">KnapsackModel</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">SolverKnapsack</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">knapsack_model</span><span class="o">=</span><span class="n">knapsack_model</span><span class="p">)</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_sol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_dict_values</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">knapsack_model</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="KnapsackDecomposedSolver.rebuild_sol"><a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.rebuild_sol">[docs]</a>    <span class="k">def</span> <span class="nf">rebuild_sol</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sol</span><span class="p">:</span> <span class="n">KnapsackSolution</span><span class="p">,</span>
+        <span class="n">original_knapsack_model</span><span class="p">:</span> <span class="n">KnapsackModel</span><span class="p">,</span>
+        <span class="n">original_solution</span><span class="p">:</span> <span class="n">KnapsackSolution</span><span class="p">,</span>
+        <span class="n">indexes_to_remove</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rebuild a knapsack solution object from a partial solution.</span>
+<span class="sd">        :param sol: solution to a sub-knapsack problem</span>
+<span class="sd">        :param original_knapsack_model: original knapsack model to solve</span>
+<span class="sd">        :param original_solution: original base solution</span>
+<span class="sd">        :param indexes_to_remove: indexes of item removed when building the sub-knapsack problem.</span>
+<span class="sd">        :return: A new solution object for the original problem.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">list_taken</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">original_knapsack_model</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indexes_to_remove</span><span class="p">:</span>
+            <span class="n">list_taken</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">original_solution</span><span class="o">.</span><span class="n">list_taken</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">list_taken</span><span class="p">)):</span>
+            <span class="n">original_index</span> <span class="o">=</span> <span class="n">original_knapsack_model</span><span class="o">.</span><span class="n">index_to_index_list</span><span class="p">[</span>
+                <span class="n">sol</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+            <span class="p">]</span>
+            <span class="n">list_taken</span><span class="p">[</span><span class="n">original_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">list_taken</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">KnapsackSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">original_knapsack_model</span><span class="p">,</span> <span class="n">list_taken</span><span class="o">=</span><span class="n">list_taken</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+<div class="viewcode-block" id="KnapsackDecomposedSolver.solve"><a class="viewcode-back" href="../../../../api/discrete_optimization.knapsack.solvers.html#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">sub_solver</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;root_solver&quot;</span><span class="p">,</span> <span class="n">GreedyBest</span><span class="p">)</span>
+        <span class="n">nb_iteration</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nb_iteration&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">proportion_to_remove</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;proportion_to_remove&quot;</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">initial_results</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">sub_solver</span><span class="p">,</span> <span class="n">knapsack_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">knapsack_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="n">results_storage</span> <span class="o">=</span> <span class="n">ResultStorage</span><span class="p">(</span>
+            <span class="n">list_solution_fits</span><span class="o">=</span><span class="n">initial_results</span><span class="o">.</span><span class="n">list_solution_fits</span><span class="p">,</span>
+            <span class="n">mode_optim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">sense_function</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Initial solution fitness : </span><span class="si">{</span><span class="n">results_storage</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">all_indexes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knapsack_model</span><span class="o">.</span><span class="n">nb_items</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_iteration</span><span class="p">):</span>
+            <span class="n">sol</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">results_storage</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+            <span class="n">indexes_to_remove</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                    <span class="n">all_indexes</span><span class="p">,</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">proportion_to_remove</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">knapsack_model</span><span class="o">.</span><span class="n">nb_items</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">sub_model</span> <span class="o">=</span> <span class="n">create_subknapsack_model</span><span class="p">(</span>
+                <span class="n">knapsack_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">knapsack_model</span><span class="p">,</span>
+                <span class="n">solution</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+                <span class="n">indexes_to_remove</span><span class="o">=</span><span class="n">indexes_to_remove</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">sub_solver</span><span class="p">,</span> <span class="n">knapsack_model</span><span class="o">=</span><span class="n">sub_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">best_sol</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+            <span class="n">reb_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_sol</span><span class="p">(</span>
+                <span class="n">sol</span><span class="o">=</span><span class="n">best_sol</span><span class="p">,</span>
+                <span class="n">original_solution</span><span class="o">=</span><span class="n">sol</span><span class="p">,</span>
+                <span class="n">original_knapsack_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">knapsack_model</span><span class="p">,</span>
+                <span class="n">indexes_to_remove</span><span class="o">=</span><span class="n">indexes_to_remove</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_sol</span><span class="p">(</span><span class="n">reb_sol</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration </span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">nb_iteration</span><span class="si">}</span><span class="s2"> : --- Current fitness </span><span class="si">{</span><span class="n">fit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">results_storage</span><span class="o">.</span><span class="n">list_solution_fits</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">reb_sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">results_storage</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

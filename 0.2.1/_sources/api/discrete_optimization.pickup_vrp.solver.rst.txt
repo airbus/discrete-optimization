@@ -1,0 +1,37 @@
+discrete\_optimization.pickup\_vrp.solver package
+=================================================
+
+Submodules
+----------
+
+discrete\_optimization.pickup\_vrp.solver.lp\_solver module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.pickup_vrp.solver.lp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.pickup\_vrp.solver.lp\_solver\_pymip module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.pickup_vrp.solver.lp_solver_pymip
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.pickup\_vrp.solver.ortools\_solver module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.pickup_vrp.solver.ortools_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.pickup_vrp.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.lns_mip &mdash; discrete-optimization 0.2.2 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/versions.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.2.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.lns_mip</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.lns_mip</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2022 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">build_aggreg_function_and_params_objective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_solver</span> <span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.lp_tools</span> <span class="kn">import</span> <span class="n">MilpSolver</span><span class="p">,</span> <span class="n">ParametersMilp</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ConstraintHandler"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.ConstraintHandler">[docs]</a><span class="k">class</span> <span class="nc">ConstraintHandler</span><span class="p">:</span>
+<div class="viewcode-block" id="ConstraintHandler.adding_constraint_from_results_store"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.ConstraintHandler.adding_constraint_from_results_store">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">adding_constraint_from_results_store</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">milp_solver</span><span class="p">:</span> <span class="n">MilpSolver</span><span class="p">,</span> <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="o">...</span></div>
+
+<div class="viewcode-block" id="ConstraintHandler.remove_constraints_from_previous_iteration"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.ConstraintHandler.remove_constraints_from_previous_iteration">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">remove_constraints_from_previous_iteration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">milp_solver</span><span class="p">:</span> <span class="n">MilpSolver</span><span class="p">,</span> <span class="n">previous_constraints</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span></div></div>
+
+
+<div class="viewcode-block" id="InitialSolution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolution">[docs]</a><span class="k">class</span> <span class="nc">InitialSolution</span><span class="p">:</span>
+<div class="viewcode-block" id="InitialSolution.get_starting_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolution.get_starting_solution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_starting_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="o">...</span></div></div>
+
+
+<div class="viewcode-block" id="InitialSolutionFromSolver"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolutionFromSolver">[docs]</a><span class="k">class</span> <span class="nc">InitialSolutionFromSolver</span><span class="p">(</span><span class="n">InitialSolution</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n">SolverDO</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+<div class="viewcode-block" id="InitialSolutionFromSolver.get_starting_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolutionFromSolver.get_starting_solution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_starting_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">dict</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="TrivialInitialSolution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.TrivialInitialSolution">[docs]</a><span class="k">class</span> <span class="nc">TrivialInitialSolution</span><span class="p">(</span><span class="n">InitialSolution</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solution</span> <span class="o">=</span> <span class="n">solution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+<div class="viewcode-block" id="TrivialInitialSolution.get_starting_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.TrivialInitialSolution.get_starting_solution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_starting_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">solution</span></div></div>
+
+
+<div class="viewcode-block" id="PostProcessSolution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.PostProcessSolution">[docs]</a><span class="k">class</span> <span class="nc">PostProcessSolution</span><span class="p">:</span>
+    <span class="c1"># From solution from MIP or CP you can build other solution.</span>
+    <span class="c1"># Here you can have many different approaches:</span>
+    <span class="c1"># if solution from mip/cp are not feasible you can code a repair function</span>
+    <span class="c1"># you can also do mall changes (filling gap in a schedule) to try to improve the solution</span>
+    <span class="c1"># you can also run algorithms from the new found solution.</span>
+<div class="viewcode-block" id="PostProcessSolution.build_other_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.PostProcessSolution.build_other_solution">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">build_other_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="o">...</span></div></div>
+
+
+<div class="viewcode-block" id="TrivialPostProcessSolution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.TrivialPostProcessSolution">[docs]</a><span class="k">class</span> <span class="nc">TrivialPostProcessSolution</span><span class="p">(</span><span class="n">PostProcessSolution</span><span class="p">):</span>
+<div class="viewcode-block" id="TrivialPostProcessSolution.build_other_solution"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.TrivialPostProcessSolution.build_other_solution">[docs]</a>    <span class="k">def</span> <span class="nf">build_other_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result_storage</span><span class="p">:</span> <span class="n">ResultStorage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">result_storage</span></div></div>
+
+
+<div class="viewcode-block" id="LNS_MILP"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.LNS_MILP">[docs]</a><span class="k">class</span> <span class="nc">LNS_MILP</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">milp_solver</span><span class="p">:</span> <span class="n">MilpSolver</span><span class="p">,</span>
+        <span class="n">initial_solution_provider</span><span class="p">:</span> <span class="n">InitialSolution</span><span class="p">,</span>
+        <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">ConstraintHandler</span><span class="p">,</span>
+        <span class="n">post_process_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PostProcessSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">milp_solver</span> <span class="o">=</span> <span class="n">milp_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">initial_solution_provider</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">constraint_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span><span class="p">:</span> <span class="n">PostProcessSolution</span>
+        <span class="k">if</span> <span class="n">post_process_solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">TrivialPostProcessSolution</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">post_process_solution</span>
+
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_dict</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">build_aggreg_function_and_params_objective</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="LNS_MILP.solve_lns"><a class="viewcode-back" href="../../../api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.LNS_MILP.solve_lns">[docs]</a>    <span class="k">def</span> <span class="nf">solve_lns</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">ParametersMilp</span><span class="p">,</span>
+        <span class="n">nb_iteration_lns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">nb_iteration_no_improvement</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_time_seconds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skip_first_iteration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">sense</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="o">.</span><span class="n">sense_function</span>
+        <span class="k">if</span> <span class="n">max_time_seconds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_time_seconds</span> <span class="o">=</span> <span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span>  <span class="c1"># One day</span>
+        <span class="k">if</span> <span class="n">nb_iteration_no_improvement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">nb_iteration_no_improvement</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">nb_iteration_lns</span>
+        <span class="n">current_nb_iteration_no_improvement</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">deb_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_first_iteration</span><span class="p">:</span>
+            <span class="n">store_lns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution_provider</span><span class="o">.</span><span class="n">get_starting_solution</span><span class="p">()</span>
+            <span class="n">init_solution</span><span class="p">,</span> <span class="n">objective</span> <span class="o">=</span> <span class="n">store_lns</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+            <span class="n">constraint_iterable</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span><span class="o">.</span><span class="n">adding_constraint_from_results_store</span><span class="p">(</span>
+                    <span class="n">milp_solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">milp_solver</span><span class="p">,</span> <span class="n">result_storage</span><span class="o">=</span><span class="n">store_lns</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">best_objective</span> <span class="o">=</span> <span class="n">objective</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">best_objective</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+            <span class="n">constraint_iterable</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;empty&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+            <span class="n">store_lns</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_iteration_lns</span><span class="p">):</span>
+            <span class="n">result_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">milp_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">parameters_milp</span><span class="o">=</span><span class="n">parameters_milp</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Solved !!!&quot;</span><span class="p">)</span>
+            <span class="n">bsol</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">result_store</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fitness = </span><span class="si">{</span><span class="n">fit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Post Process..&quot;</span><span class="p">)</span>
+            <span class="n">result_store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span><span class="o">.</span><span class="n">build_other_solution</span><span class="p">(</span><span class="n">result_store</span><span class="p">)</span>
+            <span class="n">bsol</span><span class="p">,</span> <span class="n">fit</span> <span class="o">=</span> <span class="n">result_store</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;After postpro = </span><span class="si">{</span><span class="n">fit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sense</span> <span class="o">==</span> <span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span> <span class="ow">and</span> <span class="n">fit</span> <span class="o">&gt;=</span> <span class="n">best_objective</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fit</span> <span class="o">&gt;</span> <span class="n">best_objective</span><span class="p">:</span>
+                    <span class="n">current_nb_iteration_no_improvement</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">current_nb_iteration_no_improvement</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">best_objective</span> <span class="o">=</span> <span class="n">fit</span>
+            <span class="k">if</span> <span class="n">sense</span> <span class="o">==</span> <span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span> <span class="ow">and</span> <span class="n">fit</span> <span class="o">&lt;=</span> <span class="n">best_objective</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fit</span> <span class="o">&lt;</span> <span class="n">best_objective</span><span class="p">:</span>
+                    <span class="n">current_nb_iteration_no_improvement</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">current_nb_iteration_no_improvement</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">best_objective</span> <span class="o">=</span> <span class="n">fit</span>
+            <span class="k">if</span> <span class="n">skip_first_iteration</span> <span class="ow">and</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">store_lns</span> <span class="o">=</span> <span class="n">result_store</span>
+            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">result_store</span><span class="o">.</span><span class="n">list_solution_fits</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">store_lns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy, should never happen</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;store_lns should have been initialized for now&quot;</span><span class="p">)</span>
+                <span class="n">store_lns</span><span class="o">.</span><span class="n">add_solution</span><span class="p">(</span><span class="n">solution</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">fitness</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Removing constraint:&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span><span class="o">.</span><span class="n">remove_constraints_from_previous_iteration</span><span class="p">(</span>
+                <span class="n">milp_solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">milp_solver</span><span class="p">,</span> <span class="n">previous_constraints</span><span class="o">=</span><span class="n">constraint_iterable</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adding constraint:&quot;</span><span class="p">)</span>
+            <span class="n">constraint_iterable</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span><span class="o">.</span><span class="n">adding_constraint_from_results_store</span><span class="p">(</span>
+                    <span class="n">milp_solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">milp_solver</span><span class="p">,</span> <span class="n">result_storage</span><span class="o">=</span><span class="n">result_store</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">deb_time</span> <span class="o">&gt;</span> <span class="n">max_time_seconds</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finish LNS with time limit reached&quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">current_nb_iteration_no_improvement</span> <span class="o">&gt;</span> <span class="n">nb_iteration_no_improvement</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finish LNS with maximum no improvement iteration &quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">store_lns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># for mypy, should never happen</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;store_lns should have been initialized for now&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">store_lns</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.2.2
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
