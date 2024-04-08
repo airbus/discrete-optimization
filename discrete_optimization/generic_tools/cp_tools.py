@@ -7,17 +7,24 @@ Constraint programming common utilities and class that should be used by any sol
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 from abc import abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import minizinc
 from minizinc import Instance, Result, Status
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -221,7 +228,7 @@ class CPSolver(SolverDO):
         self,
         callbacks: Optional[List[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
-        **args: Any
+        **args: Any,
     ) -> ResultStorage:
         ...
 
@@ -240,8 +247,14 @@ class MinizincCPSolver(CPSolver):
         self,
         callbacks: Optional[List[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ResultStorage:
+        # wrap callbacks in a single one
+        callbacks_list = CallbackList(callbacks=callbacks)
+
+        # callback: solve start
+        callbacks_list.on_solve_start(solver=self)
+
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         if self.instance is None:
@@ -252,23 +265,14 @@ class MinizincCPSolver(CPSolver):
                 )
         limit_time_s = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
-        if self.silent_solve_error:
-            try:
-                result = self.instance.solve(
-                    timeout=timedelta(seconds=limit_time_s),
-                    intermediate_solutions=intermediate_solutions,
-                    processes=parameters_cp.nb_process
-                    if parameters_cp.multiprocess
-                    else None,
-                    free_search=parameters_cp.free_search,
-                    optimisation_level=parameters_cp.optimisation_level,
-                )
-            except Exception as e:
-                logger.warning(e)
-                return ResultStorage(
-                    list_solution_fits=[],
-                )
-        else:
+
+        # set model output type to use
+        output_type = MinizincCPSolution.generate_subclass_for_solve(
+            solver=self, callback=callbacks_list
+        )
+        self.instance.output_type = output_type
+
+        try:
             result = self.instance.solve(
                 timeout=timedelta(seconds=limit_time_s),
                 intermediate_solutions=intermediate_solutions,
@@ -278,20 +282,113 @@ class MinizincCPSolver(CPSolver):
                 free_search=parameters_cp.free_search,
                 optimisation_level=parameters_cp.optimisation_level,
             )
-        logger.info("Solving finished")
-        logger.info(result.status)
-        logger.info(result.statistics)
-        self.status_solver = map_mzn_status_to_do_status[result.status]
-        return self.retrieve_solutions(result=result, parameters_cp=parameters_cp)
+        except Exception as e:
+            self.status_solver = StatusSolver.UNKNOWN
+            if isinstance(e, SolveEarlyStop):
+                logger.info(e)
+            elif self.silent_solve_error:
+                logger.warning(e)
+            else:
+                raise e
+        else:
+            logger.info("Solving finished")
+            logger.info(result.status)
+            logger.info(result.statistics)
+            self.status_solver = map_mzn_status_to_do_status[result.status]
+
+        # callback: solve end
+        callbacks_list.on_solve_end(res=output_type.res, solver=self)
+
+        return output_type.res
 
     @abstractmethod
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        """
-        Returns a storage solution coherent with the given parameters.
-        :param result: Result storage returned by the cp solver
-        :param parameters_cp: parameters of the CP solver.
-        :return:
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> Solution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
         """
         ...
+
+
+class MinizincCPSolution:
+    """Base class used by minizinc when building a new solution.
+
+    This is used as an entry point for callbacks.
+    It is actually a child class dynamically created during solve that will be used by minizinc,
+    with appropriate callbacks, resultstorage and reference to the solver.
+
+    """
+
+    callback: Callback
+    """User-definied callback to be called at each step."""
+
+    solution: Solution
+    """Solution wrapped."""
+
+    step: int
+    """Step number, updated as a class attribute."""
+
+    res: ResultStorage
+    """ResultStorage in which the solution will be added, class attribute."""
+
+    solver: MinizincCPSolver
+    """Instance of the solver using this class as an output_type."""
+
+    def __init__(self, _output_item: Optional[str] = None, **kwargs: Any):
+        # Convert minizinc variables into a d-o solution
+        self.solution = self.solver.retrieve_solution(
+            _output_item=_output_item, **kwargs
+        )
+        # Actual fitness
+        fit = self.solver.aggreg_from_sol(self.solution)
+
+        # update class attributes to remember step number and global resultstorage
+        self.__class__.res.add_solution(solution=self.solution, fitness=fit)
+        self.__class__.step += 1
+
+        # callback: step end
+        stopping = self.callback.on_step_end(
+            step=self.step, res=self.res, solver=self.solver
+        )
+        # Should we be stopping the solve process?
+        if stopping:
+            raise SolveEarlyStop(
+                f"{self.solver.__class__.__name__}.solve() stopped by user callback."
+            )
+
+    @staticmethod
+    def generate_subclass_for_solve(
+        solver: MinizincCPSolver, callback: Callback
+    ) -> Type[MinizincCPSolution]:
+        """Generate dynamically a subclass with initialized class attributes.
+
+        Args:
+            solver:
+            callback:
+
+        Returns:
+
+        """
+        return type(
+            f"MinizincCPSolution{id(solver)}",
+            (MinizincCPSolution,),
+            dict(
+                solver=solver,
+                callback=callback,
+                step=0,
+                res=ResultStorage(
+                    [],
+                    mode_optim=solver.params_objective_function.sense_function,
+                    limit_store=False,
+                ),
+            ),
+        )
