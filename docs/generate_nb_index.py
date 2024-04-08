@@ -59,6 +59,17 @@ def get_github_link(
     return f"{notebooks_repo_url}/blob/{notebooks_branch}/{urllib.parse.quote(notebook_relative_path)}"
 
 
+def get_colab_link(
+    notebooks_repo_name: str,
+    notebooks_branch: str,
+    notebook_relative_path: str,
+) -> str:
+    if notebooks_repo_name:
+        return f"https://colab.research.google.com/github/{notebooks_repo_name}/blob/{notebooks_branch}/{urllib.parse.quote(notebook_relative_path)}"
+    else:
+        return ""
+
+
 def get_binder_link(
     binder_env_repo_name: str,
     binder_env_branch: str,
@@ -122,7 +133,9 @@ def get_binder_link(
     return link
 
 
-def get_repo_n_branches_for_binder_n_github_links() -> Tuple[bool, str, str, str, str]:
+def get_repo_n_branches_for_binder_n_github_links() -> Tuple[
+    bool, str, str, str, str, str, bool
+]:
     # repos + branches to use for binder environment and notebooks content.
     creating_links = True
     use_nbgitpuller = False
@@ -176,7 +189,7 @@ def get_repo_n_branches_for_binder_n_github_links() -> Tuple[bool, str, str, str
 
 if __name__ == "__main__":
 
-    # List existing notebooks and and write Notebooks page
+    # List existing notebooks and write Notebooks page
     notebook_filepaths = sorted(glob.glob(f"{notebooksdir}/**/*.ipynb", recursive=True))
     notebooks_list_text = ""
     notebooksdir_prefixlen = len(notebooksdir) + 1
@@ -239,10 +252,20 @@ if __name__ == "__main__":
                 notebook_relative_path=notebook_relative_path,
             )
             github_badge = f"[![Github](https://img.shields.io/badge/see-Github-579aca?logo=github)]({github_link})"
-
+            colab_link = get_colab_link(
+                notebooks_repo_name=notebooks_repo_name,
+                notebooks_branch=notebooks_branch,
+                notebook_relative_path=notebook_relative_path,
+            )
+            if colab_link:
+                colab_badge = f"[![Colab](https://colab.research.google.com/assets/colab-badge.svg)]({colab_link})"
+            else:
+                colab_badge = ""
             # markdown item
             # notebooks_list_text += f"{github_badge}\n{binder_badge}\n\n"
             notebooks_list_text += f"{github_badge}\n"
+            if colab_badge:
+                notebooks_list_text += f"{colab_badge}\n"
             if binder_badge:
                 notebooks_list_text += f"{binder_badge}\n"
             notebooks_list_text += "\n"
