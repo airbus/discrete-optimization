@@ -133,7 +133,11 @@ def test_suggest_with_optuna():
         suggested_hyperparameters_kwargs = (
             DummySolver.suggest_hyperparameters_with_optuna(
                 trial=trial,
-                kwargs_by_name={"coeff": dict(step=0.5), "nb": dict(high=1)},
+                kwargs_by_name={
+                    "coeff": dict(step=0.5),
+                    "nb": dict(high=1),
+                    "use_it": dict(choices=[True]),
+                },
             )
         )
         assert len(suggested_hyperparameters_kwargs) == 4
@@ -142,7 +146,7 @@ def test_suggest_with_optuna():
         assert 1 >= suggested_hyperparameters_kwargs["nb"]
         assert -1.0 <= suggested_hyperparameters_kwargs["coeff"]
         assert 1.0 >= suggested_hyperparameters_kwargs["coeff"]
-        assert suggested_hyperparameters_kwargs["use_it"] in (True, False)
+        assert suggested_hyperparameters_kwargs["use_it"] is True
 
         return 0.0
 
@@ -151,7 +155,7 @@ def test_suggest_with_optuna():
     )
     study.optimize(objective)
 
-    assert len(study.trials) == 2 * 2 * 5 * 2
+    assert len(study.trials) == 2 * 2 * 5 * 1
 
 
 def test_suggest_with_optuna_meta_solver():
