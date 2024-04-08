@@ -251,7 +251,7 @@ jobs:
             tmp/coverage.xml
             tmp/coverage_html
 
-  update-binder-env:
+  update-notebooks-for-colab-and-binder:
     runs-on: ubuntu-latest
     needs: [trigger, build]
     outputs:
@@ -265,6 +265,18 @@ jobs:
           echo 'binder_full_ref="${{ github.repository }}/${{ github.ref_name}}"' >> $GITHUB_ENV
       - uses: actions/checkout@v4
         if: needs.trigger.outputs.is_release == 'true'
+      - name: replace d-o version to install in colab notebooks
+        if: needs.trigger.outputs.is_release == 'true'
+        run: |
+          version=${{ needs.build.outputs.do_version }}
+          old_pip_spec_pattern="\(pip.*install.*\)git+https.*egg=discrete-optimization"
+          new_pip_spec_pattern="\1discrete-optimization==$version"
+          if ${{ github.repository != env.MAIN_REPO_NAME && secrets.TEST_PYPI_API_TOKEN != '' }} == 'true'; then
+            # install from TestPypi if on a fork
+            new_pip_spec_pattern="${new_pip_spec_pattern} --extra-index-url https://test.pypi.org/simple/"
+          fi
+          shopt -s globstar  # enable **
+          sed -i -e "s|${old_pip_spec_pattern}|${new_pip_spec_pattern}|" notebooks/**/*.ipynb
       - name: replace d-o version to install in binder environment
         if: needs.trigger.outputs.is_release == 'true'
         run: |
@@ -288,8 +300,8 @@ jobs:
           echo ${new_tag_name}
           git config user.name "Actions"
           git config user.email "actions@github.com"
-          git commit binder/environment.yml -m "Install appropriate version of discrete-optimization"
-          git tag ${new_tag_name} -m "Use release ${current_tag_name} in binder environment"
+          git commit binder/environment.yml notebooks -m "Install appropriate version of discrete-optimization"
+          git tag ${new_tag_name} -m "Use release ${current_tag_name} in binder and colab"
           git push origin ${new_tag_name}
           # store new tag name as notebooks branch
           echo "notebooks_branch=${new_tag_name}" >> $GITHUB_ENV
@@ -301,10 +313,10 @@ jobs:
           echo "binder_full_ref=${binder_full_ref}" >> $GITHUB_OUTPUT
 
   build-doc:
-    needs: ["update-binder-env"]
+    needs: [update-notebooks-for-colab-and-binder]
     uses: ./.github/workflows/build-doc.yml
     with:
-      notebooks-branch: ${{ needs.update-binder-env.outputs.notebooks-branch }}
+      notebooks-branch: ${{ needs.update-notebooks-for-colab-and-binder.outputs.notebooks-branch }}
 
   deploy:
     # for release tags
@@ -339,7 +351,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   deploy-doc:
-    needs: [trigger, update-binder-env, build-doc, test, deploy]
+    needs: [trigger, update-notebooks-for-colab-and-binder, build-doc, test, deploy]
     # if: always()
     #  -> trigger even if one needed job was skipped (namely deploy)
     #  -> needed jobs successes must be checked explicitely
@@ -359,4 +371,4 @@ jobs:
     uses: ./.github/workflows/deploy-doc.yml
     with:
       doc-version: ${{ needs.build-doc.outputs.doc-version }}
-      binder-env-fullref: ${{ needs.update-binder-env.outputs.binder-full-ref }}
+      binder-env-fullref: ${{ needs.update-notebooks-for-colab-and-binder.outputs.binder-full-ref }}
