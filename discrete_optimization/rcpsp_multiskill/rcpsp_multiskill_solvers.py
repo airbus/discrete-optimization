@@ -10,13 +10,12 @@ from discrete_optimization.generic_rcpsp_tools.ls_solver import (
     LS_SOLVER,
     LS_RCPSP_Solver,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.ea.ga_tools import ParametersAltGa
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.solver.cp_solvers import CPSolverName
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,

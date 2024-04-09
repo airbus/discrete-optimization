@@ -9,10 +9,8 @@ from discrete_optimization.facility.facility_model import (
     FacilityProblem2DPoints,
 )
 from discrete_optimization.facility.solvers.facility_cp_solvers import (
-    CPSolverName,
     FacilityCP,
     FacilityCPModel,
-    ParametersCP,
 )
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver,
@@ -26,6 +24,7 @@ from discrete_optimization.facility.solvers.greedy_solvers import (
     GreedySolverDistanceBased,
     GreedySolverFacility,
 )
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,

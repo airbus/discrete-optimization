@@ -16,7 +16,7 @@ from discrete_optimization.generic_rcpsp_tools.ls_solver import (
     LS_RCPSP_Solver,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_CLASSICAL_RCPSP
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
@@ -35,7 +35,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_PREEMPTIVE,
     CP_RCPSP_MZN,
     CP_RCPSP_MZN_PREEMPTIVE,
-    CPSolverName,
 )
 from discrete_optimization.rcpsp.solver.cpm import CPM
 from discrete_optimization.rcpsp.solver.cpsat_solver import CPSatRCPSPSolver

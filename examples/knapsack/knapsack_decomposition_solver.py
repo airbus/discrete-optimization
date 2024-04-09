@@ -6,15 +6,12 @@ import logging
 import os
 
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
 )
-from discrete_optimization.knapsack.solvers.cp_solvers import (
-    CPKnapsackMZN,
-    CPKnapsackMZN2,
-    ParametersCP,
-)
+from discrete_optimization.knapsack.solvers.cp_solvers import CPKnapsackMZN2
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
 from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (

@@ -5,27 +5,19 @@
 import logging
 import os
 import random
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterable, Optional, Sequence
 
-from minizinc import Instance, Model, Result, Solver
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolver,
     CPSolverName,
     MinizincCPSolver,
-    ParametersCP,
     find_right_minizinc_solver_name,
-    map_cp_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-    TupleFitness,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
-    CategoricalHyperparameter,
     EnumHyperparameter,
-    IntegerHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -42,20 +34,6 @@ from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsac
 
 logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
-
-
-class KnapsackSol:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective: int, _output_item: Optional[str], **kwargs: Any):
-        self.objective = objective
-        self.dict = kwargs
-        logger.debug(f"One solution {self.objective}")
-        logger.debug(f"Output {_output_item}")
-
-    def check(self) -> bool:
-        return True
 
 
 class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
@@ -78,41 +56,34 @@ class CPKnapsackMZN(MinizincCPSolver, SolverKnapsack):
         self.silent_solve_error = silent_solve_error
         self.key_decision_variable = ["list_items"]
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        l_items = []
-        objectives = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                l_items.append(result[i, "list_items"])
-                objectives.append(result[i, "objective"])
-        else:
-            l_items.append(result["list_items"])
-            objectives.append(result["objective"])
-        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for items, objective in zip(l_items, objectives):
-            taken = [0] * self.problem.nb_items
-            weight = 0
-            value = 0
-            for i in range(len(items)):
-                if items[i] != 0:
-                    taken[items[i] - 1] = 1
-                    weight += self.problem.list_items[items[i] - 1].weight
-                    value += self.problem.list_items[items[i] - 1].value
-            sol = KnapsackSolution(
-                problem=self.problem,
-                value=value,
-                weight=weight,
-                list_taken=taken,
-            )
-            fit = self.aggreg_from_sol(sol)
-            list_solutions_fit.append((sol, fit))
-        return ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=None,
-            mode_optim=self.params_objective_function.sense_function,
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> KnapsackSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        items = kwargs["list_items"]
+        taken = [0] * self.problem.nb_items
+        weight = 0
+        value = 0
+        for i in range(len(items)):
+            if items[i] != 0:
+                taken[items[i] - 1] = 1
+                weight += self.problem.list_items[items[i] - 1].weight
+                value += self.problem.list_items[items[i] - 1].value
+        return KnapsackSolution(
+            problem=self.problem,
+            value=value,
+            weight=weight,
+            list_taken=taken,
         )
 
     def init_model(self, **kwargs: Any) -> None:
@@ -167,42 +138,36 @@ class CPKnapsackMZN2(MinizincCPSolver, SolverKnapsack):
         instance["max_capacity"] = self.problem.max_capacity
         self.instance = instance
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        l_items_taken = []
-        intermediate_solution = parameters_cp.intermediate_solution
-        if intermediate_solution:
-            for i in range(len(result)):
-                l_items_taken.append(result[i, "taken"])
-        else:
-            l_items_taken.append(result["taken"])
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for items_taken in l_items_taken:
-            taken = [0] * self.problem.nb_items
-            weight = 0.0
-            value = 0.0
-            for i in range(len(items_taken)):
-                if items_taken[i] != 0:
-                    taken[
-                        self.problem.index_to_index_list[
-                            self.problem.list_items[i].index
-                        ]
-                    ] = 1
-                    weight += self.problem.list_items[i].weight
-                    value += self.problem.list_items[i].value
-            sol = KnapsackSolution(
-                problem=self.problem,
-                value=value,
-                weight=weight,
-                list_taken=taken,
-            )
-            fit = self.aggreg_from_sol(sol)
-            list_solution_fits.append((sol, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            best_solution=None,
-            mode_optim=self.params_objective_function.sense_function,
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> KnapsackSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        items_taken = kwargs["taken"]
+        taken = [0] * self.problem.nb_items
+        weight = 0.0
+        value = 0.0
+        for i in range(len(items_taken)):
+            if items_taken[i] != 0:
+                taken[
+                    self.problem.index_to_index_list[self.problem.list_items[i].index]
+                ] = 1
+                weight += self.problem.list_items[i].weight
+                value += self.problem.list_items[i].value
+        return KnapsackSolution(
+            problem=self.problem,
+            value=value,
+            weight=weight,
+            list_taken=taken,
         )
 
 
@@ -226,7 +191,6 @@ class CPMultidimensionalSolver(MinizincCPSolver):
         )
         self.silent_solve_error = silent_solve_error
         self.key_decision_variable = ["list_items"]
-        self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -235,10 +199,6 @@ class CPMultidimensionalSolver(MinizincCPSolver):
             os.path.join(this_path, "../minizinc/multidimension_knapsack.mzn")
         )
         solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
-        custom_output_type = kwargs.get("output_type", False)
-        if custom_output_type:
-            model.output_type = KnapsackSol
-            self.custom_output_type = True
         instance = Instance(solver, model)
         instance["nb_items"] = self.problem.nb_items
         instance["nb_dimension"] = len(self.problem.max_capacities)
@@ -255,39 +215,22 @@ class CPMultidimensionalSolver(MinizincCPSolver):
         instance["max_capacity"] = self.problem.max_capacities
         self.instance = instance
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        l_taken = []
-        objectives = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if self.custom_output_type:
-                    l_taken.append(result[i].dict["taken"])
-                    objectives.append(result[i].objective)
-                else:
-                    l_taken.append(result[i, "taken"])
-                    objectives.append(result[i, "objective"])
-        else:
-            if self.custom_output_type:
-                l_taken.append(result.dict["taken"])
-                objectives.append(result.objective)
-            else:
-                l_taken.append(result["taken"])
-                objectives.append(result["objective"])
-        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for taken, objective in zip(l_taken, objectives):
-            sol = KnapsackSolutionMultidimensional(
-                problem=self.problem, list_taken=taken
-            )
-            fit = self.aggreg_from_sol(sol)
-            list_solutions_fit.append((sol, fit))
-        return ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=None,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> KnapsackSolutionMultidimensional:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        taken = kwargs["taken"]
+        return KnapsackSolutionMultidimensional(problem=self.problem, list_taken=taken)
 
 
 class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
@@ -310,7 +253,6 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
         )
         self.silent_solve_error = silent_solve_error
         self.key_decision_variable = ["list_items"]
-        self.custom_output_type = False
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -319,10 +261,6 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
             os.path.join(this_path, "../minizinc/multidim_multiscenario_knapsack.mzn")
         )
         solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
-        custom_output_type = kwargs.get("output_type", False)
-        if custom_output_type:
-            model.output_type = KnapsackSol
-            self.custom_output_type = True
         instance = Instance(solver, model)
         list_problems: Sequence[MultidimensionalKnapsack] = self.problem.list_problem
         instance["nb_items"] = list_problems[0].nb_items
@@ -351,39 +289,22 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
         ]
         self.instance = instance
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        l_taken = []
-        objectives = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if self.custom_output_type:
-                    l_taken.append(result[i].dict["taken"])
-                    objectives.append(result[i].objective)
-                else:
-                    l_taken.append(result[i, "taken"])
-                    objectives.append(result[i, "objective"])
-        else:
-            if self.custom_output_type:
-                l_taken.append(result.dict["taken"])
-                objectives.append(result.objective)
-            else:
-                l_taken += [result["taken"]]
-                objectives += [result["objective"]]
-        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for taken, objective in zip(l_taken, objectives):
-            sol = KnapsackSolutionMultidimensional(
-                problem=self.problem, list_taken=taken
-            )
-            fit = self.aggreg_from_sol(sol)
-            list_solutions_fit.append((sol, fit))
-        return ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=None,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> KnapsackSolutionMultidimensional:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        taken = kwargs["taken"]
+        return KnapsackSolutionMultidimensional(problem=self.problem, list_taken=taken)
 
 
 class KnapConstraintHandler(ConstraintHandler):

@@ -5,7 +5,7 @@
 from typing import Dict, List, Set
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
-from discrete_optimization.generic_tools.cp_tools import CPSolverName
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import InitialMethodRCPSP
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
@@ -19,7 +19,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
-    ParametersCP,
     SearchStrategyMS_MRCPSP,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
