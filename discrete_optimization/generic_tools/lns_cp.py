@@ -7,17 +7,21 @@ import random
 import sys
 import time
 from abc import abstractmethod
-from datetime import timedelta
 from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np
-from minizinc import Instance, Status
+from minizinc import Instance
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.cp_tools import CPSolver, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
+    MinizincCPSolver,
+    ParametersCP,
+    StatusSolver,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
@@ -68,7 +72,7 @@ class LNS_CP(SolverDO):
     def __init__(
         self,
         problem: Problem,
-        cp_solver: CPSolver,
+        cp_solver: MinizincCPSolver,
         initial_solution_provider: InitialSolution,
         constraint_handler: ConstraintHandler,
         post_process_solution: Optional[PostProcessSolution] = None,
@@ -155,30 +159,18 @@ class LNS_CP(SolverDO):
                         )
                     try:
                         if iteration == 0:
-                            result = child.solve(
-                                timeout=timedelta(
-                                    seconds=parameters_cp.time_limit_iter0
-                                ),
-                                intermediate_solutions=parameters_cp.intermediate_solution,
-                                free_search=parameters_cp.free_search,
-                                processes=None
-                                if not parameters_cp.multiprocess
-                                else parameters_cp.nb_process,
+                            parameters_cp0 = parameters_cp.copy()
+                            parameters_cp0.time_limit = parameters_cp.time_limit_iter0
+                            result_store = self.cp_solver.solve(
+                                parameters_cp=parameters_cp0, instance=child
                             )
+
                         else:
-                            result = child.solve(
-                                timeout=timedelta(seconds=parameters_cp.time_limit),
-                                intermediate_solutions=parameters_cp.intermediate_solution,
-                                free_search=parameters_cp.free_search,
-                                processes=None
-                                if not parameters_cp.multiprocess
-                                else parameters_cp.nb_process,
+                            result_store = self.cp_solver.solve(
+                                parameters_cp=parameters_cp, instance=child
                             )
-                        result_store = self.cp_solver.retrieve_solutions(
-                            result, parameters_cp=parameters_cp
-                        )
                         logger.info(f"iteration n° {iteration} Solved !!!")
-                        logger.info(result.status)
+                        logger.info(self.cp_solver.status_solver)
                         if len(result_store.list_solution_fits) > 0:
                             logger.debug("Solved !!!")
                             bsol, fit = result_store.get_best_solution_fit()
@@ -233,7 +225,7 @@ class LNS_CP(SolverDO):
                             current_nb_iteration_no_improvement += 1
                         if (
                             skip_first_iteration
-                            and result.status == Status.OPTIMAL_SOLUTION
+                            and self.cp_solver.status_solver == StatusSolver.OPTIMAL
                             and iteration == 0
                             and self.problem.satisfy(bsol)
                             and stop_first_iteration_if_optimal
@@ -242,7 +234,7 @@ class LNS_CP(SolverDO):
                             break
                     except Exception as e:
                         current_nb_iteration_no_improvement += 1
-                        logger.warning("Failed ! reason : ", e)
+                        logger.warning(f"Failed ! reason : {e}")
                     logger.debug(
                         f"{current_nb_iteration_no_improvement} / {nb_iteration_no_improvement}"
                     )
