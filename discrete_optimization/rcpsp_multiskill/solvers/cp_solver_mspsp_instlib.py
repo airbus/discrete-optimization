@@ -7,8 +7,7 @@
 
 import logging
 import os
-from datetime import timedelta
-from typing import Hashable, Optional, Set
+from typing import Any, Dict, Hashable, Optional, Set
 
 from minizinc import Instance, Model, Solver
 
@@ -19,14 +18,10 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
-    ParametersCP,
     SignEnum,
-    map_cp_solver_name,
+    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
@@ -44,26 +39,15 @@ files_mzn = {
 }
 
 
-class MS_RCPSPSolCP:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective, _output_item, **kwargs):
-        self.objective = objective
-        self.dict = kwargs
-        logger.debug(f"One solution {self.objective}")
-        if "nb_preemption_subtasks" in self.dict:
-            logger.debug(
-                ("nb_preemption_subtasks", self.dict["nb_preemption_subtasks"])
-            )
-        if "nb_small_tasks" in self.dict:
-            logger.debug(("nb_small_tasks", self.dict["nb_small_tasks"]))
-        keys = [k for k in self.dict if "penalty" in k]
-        logger.debug("".join([str(k) + " : " + str(self.dict[k]) + "\n" for k in keys]))
-        logger.debug(_output_item)
-
-    def check(self) -> bool:
-        return True
+def _log_minzinc_result(_output_item: Optional[str] = None, **kwargs: Any) -> None:
+    logger.debug(f"One solution {kwargs['objective']}")
+    if "nb_preemption_subtasks" in kwargs:
+        logger.debug(("nb_preemption_subtasks", kwargs["nb_preemption_subtasks"]))
+    if "nb_small_tasks" in kwargs:
+        logger.debug(("nb_small_tasks", kwargs["nb_small_tasks"]))
+    keys = [k for k in kwargs if "penalty" in k]
+    logger.debug("".join([str(k) + " : " + str(kwargs[k]) + "\n" for k in keys]))
+    logger.debug(_output_item)
 
 
 def create_usefull_res_data(rcpsp_model: MS_RCPSPModel):
@@ -128,11 +112,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         model_type = args.get("model_type", "mspsp")
         model = Model(files_mzn[model_type])
 
-        custom_output_type = args.get("output_type", False)
-        if custom_output_type:
-            model.output_type = MS_RCPSPSolCP
-            self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         dzn_file = args.get("dzn_file", None)
         instance = Instance(solver, model)
         if dzn_file is not None:
@@ -327,138 +307,86 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         )
         return [s]
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        best_objectives_cp = float("inf")
-        list_solutions_fit = []
-        starts = []
-        mruns = []
-        units_used = []
-        objectives_cp = []
-        index_best = 0
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> MS_RCPSPSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        _log_minzinc_result(_output_item=_output_item, **kwargs)
+
         # array[ACT,RESOURCE] of var bool: assign; % assignment of resources to activities
         # array[ACT,RESOURCE,SKILL] of var bool: contrib; % skill contribution assignment
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], MS_RCPSPSolCP):
-                    starts += [result[i].dict["start"]]
-                    mruns += [[1] * len(self.problem.tasks_list)]
-                    units_used += [result[i].dict["assign"]]
-                    objectives_cp += [result[i].objective]
-                else:
-                    starts += [result[i, "start"]]
-                    mruns += [[1] * len(self.problem.tasks_list)]
-                    units_used += [result[i, "assign"]]
-                    objectives_cp += [result[i, "objective"]]
-        else:
-            if isinstance(result, MS_RCPSPSolCP):
-                starts += [result.dict["start"]]
-                mruns += [[1] * len(self.problem.tasks_list)]
-                units_used += [result.dict["unit_used"]]
-                objectives_cp += [result.objective]
-            else:
-                starts += [result["start"]]
-                mruns += [[1] * len(self.problem.tasks_list)]
-                units_used += [result["assign"]]
-                objectives_cp += [result["objective"]]
-        index_solution = 0
+        start_times = kwargs["start"]
+        mrun = [1] * len(self.problem.tasks_list)
+        unit_used = kwargs["assign"]
         skills_list = sorted(list(self.problem.skills_set))
-        for start_times, mrun, unit_used in zip(starts, mruns, units_used):
-            usage = {}
-            modes_dict = {}
-            for i in range(len(mrun)):
-                if mrun[i]:
-                    modes_dict[self.modeindex_map[i + 1]["task"]] = self.modeindex_map[
-                        i + 1
-                    ]["original_mode_index"]
-            for w in range(len(unit_used[0])):
-                for task in range(len(unit_used)):
-                    task_id = self.problem.tasks_list[task]
-                    if unit_used[task][w] == 1:
-                        if isinstance(result[index_solution], MS_RCPSPSolCP):
-                            if "contrib" in result[index_solution].dict:
-                                intersection = [
-                                    skills_list[i]
-                                    for i in range(
-                                        len(
-                                            result[index_solution].dict["contrib"][
-                                                task
-                                            ][w]
-                                        )
-                                    )
-                                    if result[index_solution].dict["contrib"][task][w][
-                                        i
-                                    ]
-                                    == 1
-                                ]
-                        else:
-                            mode = modes_dict[task_id]
-                            skills_needed = set(
-                                [
-                                    s
-                                    for s in self.problem.skills_set
-                                    if s in self.problem.mode_details[task_id][mode]
-                                    and self.problem.mode_details[task_id][mode][s] > 0
-                                ]
-                            )
-                            skills_worker = set(
-                                [
-                                    s
-                                    for s in self.problem.employees[
-                                        self.employees_position[w]
-                                    ].dict_skill
-                                    if self.problem.employees[
-                                        self.employees_position[w]
-                                    ]
-                                    .dict_skill[s]
-                                    .skill_value
-                                    > 0
-                                ]
-                            )
-                            intersection = skills_needed.intersection(skills_worker)
-                        if len(intersection) > 0:
-                            if task_id not in usage:
-                                usage[task_id] = {}
-                            usage[task_id][self.employees_position[w]] = intersection
-            rcpsp_schedule = {}
-            for i in range(len(start_times)):
-                task_id = self.problem.tasks_list[i]
-                rcpsp_schedule[task_id] = {
-                    "start_time": start_times[i],
-                    "end_time": start_times[i]
-                    + self.problem.mode_details[task_id][modes_dict[task_id]][
-                        "duration"
-                    ],
-                }
-            sol = MS_RCPSPSolution(
-                problem=self.problem,
-                modes=modes_dict,
-                schedule=rcpsp_schedule,
-                employee_usage=usage,
-            )
-
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            if objectives_cp[index_solution] < best_objectives_cp:
-                index_best = index_solution
-                best_objectives_cp = objectives_cp[index_solution]
-            list_solutions_fit += [(sol, objective)]
-            index_solution += 1
-        if len(list_solutions_fit) > 0:
-            list_solutions_fit[index_best][
-                0
-            ].opti_from_cp = True  # Flag the solution obtained for the optimum of cp
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+        usage = {}
+        modes_dict = {}
+        for i in range(len(mrun)):
+            if mrun[i]:
+                modes_dict[self.modeindex_map[i + 1]["task"]] = self.modeindex_map[
+                    i + 1
+                ]["original_mode_index"]
+        for w in range(len(unit_used[0])):
+            for task in range(len(unit_used)):
+                task_id = self.problem.tasks_list[task]
+                if unit_used[task][w] == 1:
+                    if "contrib" in kwargs:
+                        intersection = [
+                            skills_list[i]
+                            for i in range(len(kwargs["contrib"][task][w]))
+                            if kwargs["contrib"][task][w][i] == 1
+                        ]
+                    else:
+                        mode = modes_dict[task_id]
+                        skills_needed = set(
+                            [
+                                s
+                                for s in self.problem.skills_set
+                                if s in self.problem.mode_details[task_id][mode]
+                                and self.problem.mode_details[task_id][mode][s] > 0
+                            ]
+                        )
+                        skills_worker = set(
+                            [
+                                s
+                                for s in self.problem.employees[
+                                    self.employees_position[w]
+                                ].dict_skill
+                                if self.problem.employees[self.employees_position[w]]
+                                .dict_skill[s]
+                                .skill_value
+                                > 0
+                            ]
+                        )
+                        intersection = skills_needed.intersection(skills_worker)
+                    if len(intersection) > 0:
+                        if task_id not in usage:
+                            usage[task_id] = {}
+                        usage[task_id][self.employees_position[w]] = intersection
+        rcpsp_schedule = {}
+        for i in range(len(start_times)):
+            task_id = self.problem.tasks_list[i]
+            rcpsp_schedule[task_id] = {
+                "start_time": start_times[i],
+                "end_time": start_times[i]
+                + self.problem.mode_details[task_id][modes_dict[task_id]]["duration"],
+            }
+        return MS_RCPSPSolution(
+            problem=self.problem,
+            modes=modes_dict,
+            schedule=rcpsp_schedule,
+            employee_usage=usage,
         )
-        return result_storage
 
 
 def chuffed_specific_code():

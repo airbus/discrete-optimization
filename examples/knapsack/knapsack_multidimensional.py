@@ -6,6 +6,7 @@ import logging
 
 import numpy as np
 
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
@@ -44,7 +45,6 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
     CPMultidimensionalMultiScenarioSolver,
     CPMultidimensionalSolver,
     KnapConstraintHandler,
-    ParametersCP,
 )
 
 logging.basicConfig(level=logging.DEBUG)

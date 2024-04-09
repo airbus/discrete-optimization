@@ -11,9 +11,10 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 
-from discrete_optimization.generic_tools.cp_tools import CPSolverName
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
+    MethodAggregating,
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
@@ -38,7 +39,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.generic_tools.robustness.robustness_tool import (
     RobustnessTool,
 )
-from discrete_optimization.rcpsp.rcpsp_model import MethodAggregating, RCPSPModel
+from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.robust_rcpsp import (
@@ -49,10 +50,7 @@ from discrete_optimization.rcpsp.robust_rcpsp import (
     create_poisson_laws_duration,
     create_poisson_laws_resource,
 )
-from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import (
-    CP_MULTISCENARIO,
-    ParametersCP,
-)
+from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import CP_MULTISCENARIO
 from discrete_optimization.rcpsp.solver.rcpsp_pile import Executor
 
 logging.basicConfig(level=logging.DEBUG)

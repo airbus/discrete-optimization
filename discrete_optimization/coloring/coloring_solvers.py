@@ -10,8 +10,6 @@ from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringA
 from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     ColoringCP,
     ColoringCPModel,
-    CPSolverName,
-    ParametersCP,
 )
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
@@ -28,6 +26,7 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (

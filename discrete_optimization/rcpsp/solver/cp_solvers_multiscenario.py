@@ -4,21 +4,16 @@
 
 import logging
 import os
-from datetime import timedelta
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
-    ParametersCP,
-    map_cp_solver_name,
+    find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
@@ -30,20 +25,6 @@ this_path = os.path.dirname(os.path.abspath(__file__))
 files_mzn = {
     "multiscenario": os.path.join(this_path, "../minizinc/rcpsp_multiscenario.mzn")
 }
-
-
-class RCPSPSolCP:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective, _output_item, **kwargs):
-        self.objective = objective
-        self.dict = kwargs
-        logger.debug(f"One solution {self.objective}")
-        logger.debug(f"Output {_output_item}")
-
-    def check(self) -> bool:
-        return True
 
 
 def add_fake_task_cp_data(
@@ -121,13 +102,9 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         )  # to modelize varying quantity of resource.
         add_objective_makespan = args.get("add_objective_makespan", True)
         ignore_sec_objective = args.get("ignore_sec_objective", True)
-        custom_output_type = args.get("output_type", False)
 
         model = Model(files_mzn[model_type])
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = ignore_sec_objective
@@ -197,66 +174,46 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         }
         self.instance["sink_task"] = self.index_in_minizinc[self.problem.sink_task]
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
-        starts = []
-        orderings = []
-        objectives = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts += [result[i].dict["s"]]
-                    orderings += [result[i].dict["ordering"]]
-                    objectives += [result[i].objective]
-                else:
-                    starts += [result[i, "s"]]
-                    orderings += [result[i, "ordering"]]
-                    objectives += [result[i, "objective"]]
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts += [result.dict["s"]]
-                orderings += [result.dict["ordering"]]
-                objectives += [result.objective]
-            else:
-                starts = [result["s"]]
-                orderings += [result["ordering"]]
-                objectives += [result.objective]
-        for order, obj, start in zip(orderings, objectives, starts):
-            oo = [
-                self.problem.index_task_non_dummy[self.problem.tasks_list[j - 1]]
-                for j in order
-                if self.problem.tasks_list[j - 1] in self.problem.index_task_non_dummy
-            ]
-            ll = [
-                RCPSPSolution(problem=self.list_rcpsp_model[i], rcpsp_permutation=oo)
-                for i in range(len(self.list_rcpsp_model))
-            ]
-            evaluation = [
-                self.aggreg_from_dict(self.list_rcpsp_model[i].evaluate(ll[i]))
-                for i in range(len(self.list_rcpsp_model))
-            ]
-            sum_eval = sum(evaluation)
-            if sum_eval > best_makespan:
-                best_solution = tuple(ll)
-                best_makespan = sum_eval
-            logger.debug(f"starts found : {start[-1]}")
-            logger.debug(
-                (
-                    "Sum of makespan : ",
-                    evaluation,
-                    sum_eval / len(self.list_rcpsp_model),
-                    order,
-                    obj,
-                )
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> RCPSPSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        start = kwargs["s"]
+        order = kwargs["ordering"]
+        obj = kwargs["objective"]
+
+        oo = [
+            self.problem.index_task_non_dummy[self.problem.tasks_list[j - 1]]
+            for j in order
+            if self.problem.tasks_list[j - 1] in self.problem.index_task_non_dummy
+        ]
+        ll = [
+            RCPSPSolution(problem=self.list_rcpsp_model[i], rcpsp_permutation=oo)
+            for i in range(len(self.list_rcpsp_model))
+        ]
+        evaluation = [
+            self.aggreg_from_dict(self.list_rcpsp_model[i].evaluate(ll[i]))
+            for i in range(len(self.list_rcpsp_model))
+        ]
+        sum_eval = sum(evaluation)
+        logger.debug(f"starts found : {start[-1]}")
+        logger.debug(
+            (
+                "Sum of makespan : ",
+                evaluation,
+                sum_eval / len(self.list_rcpsp_model),
+                order,
+                obj,
             )
-            list_solutions_fit += [((tuple(ll), obj), sum_eval)]
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
         )
-        return result_storage
+        return (tuple(ll), obj)

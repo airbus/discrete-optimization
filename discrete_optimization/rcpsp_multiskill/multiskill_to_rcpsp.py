@@ -6,11 +6,10 @@ from typing import Dict
 
 import numpy as np
 
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
-    CPSolverName,
     MS_RCPSPModel,
-    ParametersCP,
     PrecomputeEmployeesForTasks,
 )
 

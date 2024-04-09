@@ -8,11 +8,8 @@ import sys
 import numpy as np
 import pytest
 
-from discrete_optimization.rcpsp.solver.cp_solvers import (
-    CP_MRCPSP_MZN,
-    CPSolverName,
-    ParametersCP,
-)
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
+from discrete_optimization.rcpsp.solver.cp_solvers import CP_MRCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import (
     LNS_CP_RCPSP_SOLVER,
     OptionNeighbor,

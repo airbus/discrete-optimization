@@ -4,24 +4,16 @@
 
 import logging
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 
-from minizinc import Instance, Model, Result, Solver
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
-    ParametersCP,
-    map_cp_solver_name,
+    find_right_minizinc_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-    fitness_class,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.tsp.common_tools_tsp import build_matrice_distance
 from discrete_optimization.tsp.solver.tsp_solver import SolverTSP
 from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
@@ -73,7 +65,7 @@ class TSP_CP_Solver(MinizincCPSolver, SolverTSP):
         if self.model_type == TSP_CPModel.INT_VERSION:
             model = Model(os.path.join(this_path, "../minizinc/tsp_int.mzn"))
         # Find the MiniZinc solver configuration for Gecode
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         # Create an Instance of the n-Queens model for Gecode
         instance = Instance(solver, model)
         instance["n"] = self.problem.node_count
@@ -82,26 +74,22 @@ class TSP_CP_Solver(MinizincCPSolver, SolverTSP):
         instance["end"] = self.end_index + 1
         self.instance = instance
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        solutions_fit: List[Tuple[Solution, fitness_class]] = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                circuit = result[i, "x"]
-                var_tsp = self._retrieve_solution_from_circuit(circuit)
-                fit = self.aggreg_from_sol(var_tsp)
-                solutions_fit.append((var_tsp, fit))
-        else:
-            circuit = result["x"]
-            var_tsp = self._retrieve_solution_from_circuit(circuit)
-            fit = self.aggreg_from_sol(var_tsp)
-            solutions_fit.append((var_tsp, fit))
-        return ResultStorage(
-            list_solution_fits=solutions_fit,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> SolutionTSP:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        circuit = kwargs["x"]
+        return self._retrieve_solution_from_circuit(circuit)
 
     def _retrieve_solution_from_circuit(self, circuit: List[int]) -> SolutionTSP:
         path = []

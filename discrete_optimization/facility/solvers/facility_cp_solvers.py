@@ -5,10 +5,10 @@
 import logging
 import os
 from enum import Enum
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional
 
 from deprecation import deprecated
-from minizinc import Instance, Model, Result, Solver
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
@@ -24,20 +24,11 @@ from discrete_optimization.facility.solvers.greedy_solvers import (
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
-    ParametersCP,
     find_right_minizinc_solver_name,
-    map_cp_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-    TupleFitness,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,20 +48,6 @@ file_dict = {
     FacilityCPModel.DEFAULT_INT: "facility_int.mzn",
     FacilityCPModel.DEFAULT_INT_LNS: "facility_int_lns.mzn",
 }
-
-
-class FacilitySolCP:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective: int, _output_item: Optional[str], **kwargs: Any):
-        self.objective = objective
-        self.dict = kwargs
-        logger.debug(f"One solution {self.objective}")
-        logger.debug(f"Output {_output_item}")
-
-    def check(self) -> bool:
-        return True
 
 
 class FacilityCP(MinizincCPSolver, SolverFacility):
@@ -104,7 +81,6 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
             problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.custom_output_type = False
         self.model: Optional[Model] = None
 
     def init_model(self, **kwargs: Any) -> None:
@@ -121,12 +97,8 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         model_type = kwargs["cp_model"]
         cp_solver_name = kwargs["cp_solver_name"]
-        object_output = kwargs.get("object_output", True)
         path = os.path.join(path_minizinc, file_dict[model_type])
         self.model = Model(path)
-        if object_output:
-            self.model.output_type = FacilitySolCP
-            self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, self.model)
         instance["nb_facilities"] = self.problem.facility_count
@@ -164,37 +136,22 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
             ]
         self.instance = instance
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        list_facility = []
-        objectives = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if not self.custom_output_type:
-                    list_facility.append(result[i, "facility_for_customer"])
-                    objectives.append(result[i, "objective"])
-                else:
-                    list_facility.append(result[i].dict["facility_for_customer"])
-                    objectives.append(result[i].objective)
-        else:
-            if not self.custom_output_type:
-                list_facility.append(result["facility_for_customer"])
-                objectives.append(result["objective"])
-            else:
-                list_facility.append(result.dict["facility_for_customer"])
-                objectives.append(result.objective)
-        list_solutions_fit: List[Tuple[Solution, Union[float, TupleFitness]]] = []
-        for facility, objective in zip(list_facility, objectives):
-            facility_sol = FacilitySolution(self.problem, [f - 1 for f in facility])
-            fit = self.aggreg_from_sol(facility_sol)
-            list_solutions_fit.append((facility_sol, fit))
-        return ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=None,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> FacilitySolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        facility = kwargs["facility_for_customer"]
+        return FacilitySolution(self.problem, [f - 1 for f in facility])
 
     @deprecated(
         deprecated_in="0.1", details="Use rather initial solution provider utilities"

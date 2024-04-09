@@ -14,8 +14,8 @@ from discrete_optimization.facility.facility_parser import (
 from discrete_optimization.facility.solvers.facility_cp_solvers import (
     FacilityCP,
     FacilityCPModel,
-    ParametersCP,
 )
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")

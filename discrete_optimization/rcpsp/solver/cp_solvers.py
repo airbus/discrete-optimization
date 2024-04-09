@@ -80,20 +80,6 @@ files_mzn = {
 }
 
 
-class RCPSPSolCP:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective, _output_item, **kwargs):
-        self.objective = objective
-        self.dict = kwargs
-        logger.info(f"One solution {self.objective}")
-        logger.info(f"Output {_output_item}")
-
-    def check(self) -> bool:
-        return True
-
-
 def add_fake_task_cp_data(
     rcpsp_model: Union[RCPSPModel, RCPSPModelPreemptive],
     ignore_fake_task: bool = True,
@@ -161,7 +147,6 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         ]  # For now, I've put the var name of the CP model (not the rcpsp_model)
         self.stats = []
         self.keys_in_instance: Optional[List[str]] = None
-        self.custom_output_type: Optional[bool] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "single")
@@ -175,12 +160,8 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         add_partial_solution_hard_constraint = args.get(
             "add_partial_solution_hard_constraint", True
         )
-        custom_output_type = args.get("output_type", False)
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         model = Model(files_mzn[model_type])
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         self.keys_in_instance = []
@@ -336,51 +317,36 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             + ";\n"
         )
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
-        starts = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts.append(result[i].dict["s"])
-                else:
-                    starts.append(result[i, "s"])
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts.append(result.dict["s"])
-            else:
-                starts = [result["s"]]
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> RCPSPSolution:
+        """Return a d-o solution from the variables computed by minizinc.
 
-        for start_times in starts:
-            rcpsp_schedule = {}
-            for k in range(len(start_times)):
-                t = self.problem.tasks_list[k]
-                rcpsp_schedule[self.problem.tasks_list[k]] = {
-                    "start_time": start_times[k],
-                    "end_time": start_times[k]
-                    + self.problem.mode_details[t][1]["duration"],
-                }
-            sol = RCPSPSolution(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[1 for i in range(self.problem.n_jobs_non_dummy)],
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            list_solutions_fit.append((sol, objective))
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        start_times = kwargs["s"]
+
+        rcpsp_schedule = {}
+        for k in range(len(start_times)):
+            t = self.problem.tasks_list[k]
+            rcpsp_schedule[self.problem.tasks_list[k]] = {
+                "start_time": start_times[k],
+                "end_time": start_times[k]
+                + self.problem.mode_details[t][1]["duration"],
+            }
+        return RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=[1 for i in range(self.problem.n_jobs_non_dummy)],
+            rcpsp_schedule_feasible=True,
         )
-        return result_storage
 
     def get_stats(self):
         return self.stats
@@ -417,20 +383,14 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         ] = None
         self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
 
-        self.custom_output_type: Optional[bool] = None
-
     def init_model(self, **args):
         model_type = args.get("model_type", "multi")
         model = Model(files_mzn[model_type])
-        custom_output_type = args.get("output_type", False)
         add_objective_makespan = args.get("add_objective_makespan", True)
         ignore_sec_objective = args.get("ignore_sec_objective", True)
         add_partial_solution_hard_constraint = args.get(
             "add_partial_solution_hard_constraint", True
         )
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         resources_list = self.problem.resources_list
         instance = Instance(solver, model)
@@ -639,62 +599,43 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             + ";\n"
         )
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
-        starts = []
-        mruns = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts.append(result[i].dict["start"])
-                    mruns.append(result[i].dict["mrun"])
-                else:
-                    starts.append(result[i, "start"])
-                    mruns.append(result[i, "mrun"])
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts.append(result.dict["start"])
-                mruns.append(result.dict["mrun"])
-            else:
-                starts.append(result["start"])
-                mruns.append(result["mrun"])
-        for start_times, mrun in zip(starts, mruns):
-            modes_dict = {}
-            for i in range(len(mrun)):
-                if mrun[i]:
-                    modes_dict[self.modeindex_map[i + 1]["task"]] = self.modeindex_map[
-                        i + 1
-                    ]["original_mode_index"]
-            rcpsp_schedule = {}
-            for i in range(len(start_times)):
-                rcpsp_schedule[self.problem.tasks_list[i]] = {
-                    "start_time": start_times[i],
-                    "end_time": start_times[i]
-                    + self.problem.mode_details[self.problem.tasks_list[i]][
-                        modes_dict[self.problem.tasks_list[i]]
-                    ]["duration"],
-                }
-            sol = RCPSPSolution(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            list_solutions_fit.append((sol, objective))
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> RCPSPSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        start_times = kwargs["start"]
+        mrun = kwargs["mrun"]
+        modes_dict = {}
+        for i in range(len(mrun)):
+            if mrun[i]:
+                modes_dict[self.modeindex_map[i + 1]["task"]] = self.modeindex_map[
+                    i + 1
+                ]["original_mode_index"]
+        rcpsp_schedule = {}
+        for i in range(len(start_times)):
+            rcpsp_schedule[self.problem.tasks_list[i]] = {
+                "start_time": start_times[i],
+                "end_time": start_times[i]
+                + self.problem.mode_details[self.problem.tasks_list[i]][
+                    modes_dict[self.problem.tasks_list[i]]
+                ]["duration"],
+            }
+        return RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+            rcpsp_schedule_feasible=True,
         )
-        return result_storage
 
 
 @deprecated(deprecated_in="0.1")
@@ -726,10 +667,6 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             "add_partial_solution_hard_constraint", True
         )
         model = Model(files_mzn[model_type])
-        custom_output_type = args.get("output_type", False)
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         resources_list = self.problem.resources_list
         self.resources_index = resources_list
@@ -827,62 +764,40 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             for s in strings:
                 self.instance.add_string(s)
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
-        starts = []
-        mruns = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts.append(result[i].dict["start"])
-                    mruns.append(result[i].dict["mrun"])
-                else:
-                    starts.append(result[i, "start"])
-                    mruns.append(result[i, "mrun"])
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts.append(result.dict["start"])
-                mruns.append(result.dict["mrun"])
-            else:
-                starts = [result["start"]]
-                mruns = [result["mrun"]]
-        for start_times, mrun in zip(starts, mruns):
-            modes_dict = {}
-            for i in range(len(mrun)):
-                if mrun[i]:
-                    modes_dict[self.modeindex_map[i + 1]["task"]] = self.modeindex_map[
-                        i + 1
-                    ]["original_mode_index"]
-            rcpsp_schedule = {}
-            for i in range(len(start_times)):
-                rcpsp_schedule[self.problem.tasks_list[i]] = {
-                    "start_time": start_times[i],
-                    "end_time": start_times[i]
-                    + self.problem.mode_details[self.problem.tasks_list[i]][
-                        modes_dict[self.problem.tasks_list[i]]
-                    ]["duration"],
-                }
-            sol = RCPSPSolution(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            list_solutions_fit.append((sol, objective))
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+    def retrieve_solution(self, **kwargs: Any) -> RCPSPSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        start_times = kwargs["start"]
+        mrun = kwargs["mrun"]
+        modes_dict = {}
+        for i in range(len(mrun)):
+            if mrun[i]:
+                modes_dict[self.modeindex_map[i + 1]["task"]] = self.modeindex_map[
+                    i + 1
+                ]["original_mode_index"]
+        rcpsp_schedule = {}
+        for i in range(len(start_times)):
+            rcpsp_schedule[self.problem.tasks_list[i]] = {
+                "start_time": start_times[i],
+                "end_time": start_times[i]
+                + self.problem.mode_details[self.problem.tasks_list[i]][
+                    modes_dict[self.problem.tasks_list[i]]
+                ]["duration"],
+            }
+        return RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+            rcpsp_schedule_feasible=True,
         )
-        return result_storage
 
     def constraint_objective_makespan(self):
         s = """constraint forall ( i in Act where suc[i] == {} )
@@ -961,8 +876,6 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         ] = None
         self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
 
-        self.custom_output_type: Optional[bool] = None
-
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-preemptive")
         add_objective_makespan = args.get("add_objective_makespan", True)
@@ -976,10 +889,6 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
             )
         keys = []
         model = Model(files_mzn[model_type])
-        custom_output_type = args.get("output_type", True)
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         instance["add_objective_makespan"] = add_objective_makespan
@@ -1126,89 +1035,47 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         )
         return s
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        best_objectives_cp = float("inf")
-        list_solutions_fit = []
-        starts = []
-        starts_preemptive = []
-        duration_preemptive = []
-        modes = []
-        objectives_cp = []
-        index_best = 0
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts.append(result[i].dict["s"])
-                    starts_preemptive.append(result[i].dict["s_preemptive"])
-                    duration_preemptive.append(result[i].dict["d_preemptive"])
-                    modes.append(result[i].dict["mrun"])
-                    objectives_cp.append(result[i].objective)
-                else:
-                    starts.append(result[i, "s"])
-                    starts_preemptive.append(result[i, "s_preemptive"])
-                    duration_preemptive.append(result[i, "d_preemptive"])
-                    modes.append(result[i, "mrun"])
-                    objectives_cp.append(result[i, "objective"])
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts.append(result.dict["s"])
-                starts_preemptive.append(result.dict["s_preemptive"])
-                duration_preemptive.append(result.dict["d_preemptive"])
-                modes.append(result.dict["mrun"])
-                objectives_cp.append(result.objective)
-            else:
-                starts = [result["s"]]
-                starts_preemptive = [result["s_preemptive"]]
-                duration_preemptive = [result["d_preemptive"]]
-                modes.append(result["mrun"])
-                objectives_cp.append(result["objective"])
-        for i in range(len(starts)):
-            rcpsp_schedule = {}
-            modes_dict = {}
-            for k in range(len(modes[i])):
-                if modes[i][k]:
-                    modes_dict[self.modeindex_map[k + 1]["task"]] = self.modeindex_map[
-                        k + 1
-                    ]["original_mode_index"]
-            for k in range(len(starts_preemptive[i])):
-                starts_k = []
-                ends_k = []
-                for j in range(len(starts_preemptive[i][k])):
-                    if j == 0 or duration_preemptive[i][k][j] != 0:
-                        starts_k.append(starts_preemptive[i][k][j])
-                        ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
-                rcpsp_schedule[self.problem.tasks_list[k]] = {
-                    "starts": starts_k,
-                    "ends": ends_k,
-                }
-            sol = RCPSPSolutionPreemptive(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            if objectives_cp[i] < best_objectives_cp:
-                index_best = i
-                best_objectives_cp = objectives_cp[i]
-            list_solutions_fit.append((sol, objective))
-        if len(list_solutions_fit) > 0:
-            list_solutions_fit[index_best][
-                0
-            ].opti_from_cp = True  # Flag the solution obtained for the optimum of cp
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> RCPSPSolutionPreemptive:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        starts_preemptive = kwargs["s_preemptive"]
+        duration_preemptive = kwargs["d_preemptive"]
+        modes = kwargs["mrun"]
+        rcpsp_schedule = {}
+        modes_dict = {}
+        for k in range(len(modes)):
+            if modes[k]:
+                modes_dict[self.modeindex_map[k + 1]["task"]] = self.modeindex_map[
+                    k + 1
+                ]["original_mode_index"]
+        for k in range(len(starts_preemptive)):
+            starts_k = []
+            ends_k = []
+            for j in range(len(starts_preemptive[k])):
+                if j == 0 or duration_preemptive[k][j] != 0:
+                    starts_k.append(starts_preemptive[k][j])
+                    ends_k.append(starts_k[-1] + duration_preemptive[k][j])
+            rcpsp_schedule[self.problem.tasks_list[k]] = {
+                "starts": starts_k,
+                "ends": ends_k,
+            }
+        return RCPSPSolutionPreemptive(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+            rcpsp_schedule_feasible=True,
         )
-        return result_storage
 
     def constraint_task_to_mode(self, task_id, mode):
         modes = self.problem.mode_details[task_id].keys()
@@ -1446,10 +1313,6 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
             )
         keys = []
         model = Model(files_mzn[model_type])
-        custom_output_type = args.get("output_type", False)
-        if custom_output_type:
-            model.output_type = RCPSPSolCP
-            self.custom_output_type = True
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         instance["add_objective_makespan"] = add_objective_makespan
@@ -1555,79 +1418,37 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
             for s in strings:
                 self.instance.add_string(s)
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP) -> ResultStorage:
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        best_objectives_cp = float("inf")
-        list_solutions_fit = []
-        starts = []
-        starts_preemptive = []
-        duration_preemptive = []
-        objectives_cp = []
-        index_best = 0
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if isinstance(result[i], RCPSPSolCP):
-                    starts.append(result[i].dict["s"])
-                    starts_preemptive.append(result[i].dict["s_preemptive"])
-                    duration_preemptive.append(result[i].dict["d_preemptive"])
-                    objectives_cp.append(result[i].objective)
-                else:
-                    starts.append(result[i, "s"])
-                    starts_preemptive.append(result[i, "s_preemptive"])
-                    duration_preemptive.append(result[i, "d_preemptive"])
-                    objectives_cp.append(result[i, "objective"])
+    def retrieve_solution(self, **kwargs: Any) -> RCPSPSolutionPreemptive:
+        """Return a d-o solution from the variables computed by minizinc.
 
-        else:
-            if isinstance(result, RCPSPSolCP):
-                starts.append(result.dict["s"])
-                starts_preemptive.append(result.dict["s_preemptive"])
-                duration_preemptive.append(result.dict["d_preemptive"])
-                objectives_cp.append(result.objective)
-            else:
-                starts = [result["s"]]
-                starts_preemptive = [result["s_preemptive"]]
-                duration_preemptive = [result["d_preemptive"]]
-                objectives_cp.append(result["objective"])
+        Args:
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
 
-        for i in range(len(starts)):
-            rcpsp_schedule = {}
-            for k in range(len(starts_preemptive[i])):
-                starts_k = []
-                ends_k = []
-                for j in range(len(starts_preemptive[i][k])):
-                    if j == 0 or duration_preemptive[i][k][j] != 0:
-                        starts_k.append(starts_preemptive[i][k][j])
-                        ends_k.append(starts_k[-1] + duration_preemptive[i][k][j])
-                rcpsp_schedule[self.problem.tasks_list[k]] = {
-                    "starts": starts_k,
-                    "ends": ends_k,
-                }
-            sol = RCPSPSolutionPreemptive(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            if objectives_cp[i] < best_objectives_cp:
-                index_best = i
-                best_objectives_cp = objectives_cp[i]
-            list_solutions_fit.append((sol, objective))
-        if len(list_solutions_fit) > 0:
-            list_solutions_fit[index_best][
-                0
-            ].opti_from_cp = True  # Flag the solution obtained for the optimum of cp
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+        Returns:
+
+        """
+        starts_preemptive = kwargs["s_preemptive"]
+        duration_preemptive = kwargs["d_preemptive"]
+
+        rcpsp_schedule = {}
+        for k in range(len(starts_preemptive)):
+            starts_k = []
+            ends_k = []
+            for j in range(len(starts_preemptive[k])):
+                if j == 0 or duration_preemptive[k][j] != 0:
+                    starts_k.append(starts_preemptive[k][j])
+                    ends_k.append(starts_k[-1] + duration_preemptive[k][j])
+            rcpsp_schedule[self.problem.tasks_list[k]] = {
+                "starts": starts_k,
+                "ends": ends_k,
+            }
+        return RCPSPSolutionPreemptive(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_schedule_feasible=True,
         )
-        return result_storage
 
     def constraint_ressource_requirement_at_time_t(
         self, time, ressource, ressource_number, sign: SignEnum = SignEnum.LEQ
@@ -1647,19 +1468,6 @@ class CP_RCPSP_MZN_PREEMPTIVE(CP_MRCPSP_MZN_PREEMPTIVE):
             + """,i]);\n"""
         )
         return s
-
-
-class MRCPSP_Result:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective, _output_item, **kwargs):
-        self.objective = objective
-        self.dict = kwargs
-        self.mode_chosen = json.loads(_output_item)
-
-    def check(self) -> bool:
-        return True
 
 
 class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
@@ -1696,7 +1504,6 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
             "add_partial_solution_hard_constraint", True
         )
         model = Model(files_mzn["multi-no-bool"])
-        model.output_type = MRCPSP_Result
         solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         resources_list = list(self.problem.resources.keys())
         instance = Instance(solver, model)
@@ -1869,50 +1676,44 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
             + ";\n"
         )
 
-    def retrieve_solutions(self, result, parameters_cp: ParametersCP):
-        intermediate_solutions = parameters_cp.intermediate_solution
-        best_solution = None
-        best_makespan = -float("inf")
-        list_solutions_fit = []
-        object_result: List[MRCPSP_Result] = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                object_result.append(result[i])
-        else:
-            object_result.append(result)
-        for res in object_result:
-            modes_dict = {}
-            for j in range(len(res.mode_chosen)):
-                modes_dict[
-                    self.modeindex_map[res.mode_chosen[j]]["task"]
-                ] = self.modeindex_map[res.mode_chosen[j]]["original_mode_index"]
-            rcpsp_schedule = {}
-            start_times = res.dict["start"]
-            for i in range(len(start_times)):
-                t = self.problem.tasks_list[i]
-                rcpsp_schedule[t] = {
-                    "start_time": start_times[i],
-                    "end_time": start_times[i]
-                    + self.problem.mode_details[t][modes_dict[t]]["duration"],
-                }
-            sol = RCPSPSolution(
-                problem=self.problem,
-                rcpsp_schedule=rcpsp_schedule,
-                rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
-                rcpsp_schedule_feasible=True,
-            )
-            objective = self.aggreg_from_dict(self.problem.evaluate(sol))
-            if objective > best_makespan:
-                best_makespan = objective
-                best_solution = sol.copy()
-            list_solutions_fit.append((sol, objective))
-        result_storage = ResultStorage(
-            list_solution_fits=list_solutions_fit,
-            best_solution=best_solution,
-            mode_optim=self.params_objective_function.sense_function,
-            limit_store=False,
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> RCPSPSolution:
+        """Return a d-o solution from the variables computed by minizinc.
+
+        Args:
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
+
+        Returns:
+
+        """
+        if _output_item is None:
+            raise RuntimeError("_output_item should not be None for this solver.")
+        kwargs["mode_chosen"] = json.loads(_output_item)
+
+        modes_dict = {}
+        for j in range(len(kwargs["mode_chosen"])):
+            modes_dict[
+                self.modeindex_map[kwargs["mode_chosen"][j]]["task"]
+            ] = self.modeindex_map[kwargs["mode_chosen"][j]]["original_mode_index"]
+        rcpsp_schedule = {}
+        start_times = kwargs["start"]
+        for i in range(len(start_times)):
+            t = self.problem.tasks_list[i]
+            rcpsp_schedule[t] = {
+                "start_time": start_times[i],
+                "end_time": start_times[i]
+                + self.problem.mode_details[t][modes_dict[t]]["duration"],
+            }
+        return RCPSPSolution(
+            problem=self.problem,
+            rcpsp_schedule=rcpsp_schedule,
+            rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
+            rcpsp_schedule_feasible=True,
         )
-        return result_storage
 
 
 class CP_MRCPSP_MZN_MODES:
