@@ -41,9 +41,10 @@ jobs:
       python-version: "3.9"
       minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
       minizinc_cache_path: $(pwd)/bin/squashfs-root
-      minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
+      minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.3/MiniZincIDE-2.8.3-x86_64.AppImage
       minizinc_downloaded_filepath: bin/minizinc.AppImage
       minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
+      minizinc_prerequisites_cmdline: sudo apt update && sudo apt install libegl1 -y
     steps:
       - name: Set env variables for github links in doc
         run: |
@@ -92,7 +93,10 @@ jobs:
             docs/requirements.txt
       - name: Create bin/
         run: mkdir -p bin
-      - name: get MininZinc path to cache
+      - name: Minizinc prerequisites
+        run: |
+          ${{ matrix.minizinc_prerequisites_cmdline }}
+      - name: get MiniZinc path to cache
         id: get-mzn-cache-path
         run: |
           echo "path=${{ env.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
