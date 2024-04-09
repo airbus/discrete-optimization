@@ -247,8 +247,21 @@ class MinizincCPSolver(CPSolver):
         self,
         callbacks: Optional[List[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
+        instance: Optional[Instance] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        """Solve the CP problem with minizinc
+
+        Args:
+            callbacks: list of callbacks used to hook into the various stage of the solve
+            parameters_cp: parameters specific to CP solvers
+            instance: if specified, use this minizinc instance (and underlying model) rather than `self.instance`
+               Useful in iterative solvers like LNS_CP.
+            **kwargs: any argument specific to the solver
+
+        Returns:
+
+        """
         # wrap callbacks in a single one
         callbacks_list = CallbackList(callbacks=callbacks)
 
@@ -257,12 +270,16 @@ class MinizincCPSolver(CPSolver):
 
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
-        if self.instance is None:
-            self.init_model(**kwargs)
+
+        if instance is None:
             if self.instance is None:
-                raise RuntimeError(
-                    "self.instance must not be None after self.init_model()."
-                )
+                self.init_model(**kwargs)
+                if self.instance is None:
+                    raise RuntimeError(
+                        "self.instance must not be None after self.init_model()."
+                    )
+            instance = self.instance
+
         limit_time_s = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
 
@@ -270,10 +287,10 @@ class MinizincCPSolver(CPSolver):
         output_type = MinizincCPSolution.generate_subclass_for_solve(
             solver=self, callback=callbacks_list
         )
-        self.instance.output_type = output_type
+        instance.output_type = output_type
 
         try:
-            result = self.instance.solve(
+            result = instance.solve(
                 timeout=timedelta(seconds=limit_time_s),
                 intermediate_solutions=intermediate_solutions,
                 processes=parameters_cp.nb_process
