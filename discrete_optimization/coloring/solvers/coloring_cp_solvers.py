@@ -10,11 +10,11 @@ CP formulation rely on minizinc models stored in coloring/minizinc folder.
 import logging
 import os
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional
 
 import networkx as nx
 import pymzn
-from minizinc import Instance, Model, Result, Solver
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -30,20 +30,12 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,
-    ParametersCP,
-    map_cp_solver_name,
+    find_right_minizinc_solver_name,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
-)
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-    fitness_class,
 )
 
 path_minizinc = os.path.abspath(
@@ -51,20 +43,6 @@ path_minizinc = os.path.abspath(
 )
 
 logger = logging.getLogger(__name__)
-
-
-class ColoringCPSolution:
-    objective: int
-    __output_item: Optional[str] = None
-
-    def __init__(self, objective: int, _output_item: Optional[str], **kwargs: Any):
-        self.objective = objective
-        self.dict = kwargs
-        logger.info(f"New solution {self.objective}")
-        logger.info(f"Output {_output_item}")
-
-    def check(self) -> bool:
-        return True
 
 
 class ColoringCPModel(Enum):
@@ -119,7 +97,6 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         self.index_nodes_name = self.problem.index_nodes_name
         self.index_to_nodes_name = self.problem.index_to_nodes_name
         self.graph = self.problem.graph
-        self.custom_output_type = False
         self.g = None
         self.cp_solver_name = cp_solver_name
         self.dict_datas: Optional[Dict[str, Any]] = None
@@ -154,10 +131,7 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
             model_type = ColoringCPModel.DEFAULT_WITH_SUBSET
         path = os.path.join(path_minizinc, file_dict[model_type])
         model = Model(path)
-        if object_output:
-            model.output_type = ColoringCPSolution
-            self.custom_output_type = True
-        solver = Solver.lookup(map_cp_solver_name[self.cp_solver_name])
+        solver = Solver.lookup(find_right_minizinc_solver_name(self.cp_solver_name))
         instance = Instance(solver, model)
         instance["n_nodes"] = self.number_of_nodes
         instance["n_edges"] = int(self.number_of_edges / 2)
@@ -223,51 +197,26 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         )
         logger.info(f"Successfully dumped data file {file_name}")
 
-    def retrieve_solutions(
-        self, result: Result, parameters_cp: ParametersCP
-    ) -> ResultStorage:
-        """Retrieve the solution found by solving the minizinc instance
+    def retrieve_solution(
+        self, _output_item: Optional[str] = None, **kwargs: Any
+    ) -> ColoringSolution:
+        """Return a d-o solution from the variables computed by minizinc.
 
         Args:
-            result: result of solve() call on minizinc instance
-            parameters_cp (ParametersCP): parameters of the cp solving, to specify notably how much solution is expected.
+            _output_item: string representing the minizinc solver output passed by minizinc to the solution constructor
+            **kwargs: keyword arguments passed by minzinc to the solution contructor
+                containing the objective value (key "objective"),
+                and the computed variables as defined in minizinc model.
 
-        Returns (ResultStorage): result object storing the solutions found by the CP solver.
+        Returns:
 
         """
-        intermediate_solutions = parameters_cp.intermediate_solution
-        colors = []
-        objectives = []
-        solutions_fit: List[Tuple[Solution, fitness_class]] = []
-        if intermediate_solutions:
-            for i in range(len(result)):
-                if not self.custom_output_type:
-                    colors.append(result[i, "color_graph"])
-                    objectives.append(result[i, "objective"])
-                else:
-                    colors.append(result[i].dict["color_graph"])
-                    objectives.append(result[i].objective)
-        else:
-            if not self.custom_output_type:
-                colors.append(result["color_graph"])
-                objectives.append(result["objective"])
-            else:
-                colors.append(result.dict["color_graph"])
-                objectives.append(result.objective)
-        for k in range(len(colors)):
-            sol = [
-                colors[k][self.index_nodes_name[self.nodes_name[i]]] - 1
-                for i in range(self.number_of_nodes)
-            ]
-            color_sol = ColoringSolution(self.problem, sol)
-            fit = self.aggreg_from_sol(color_sol)
-            solutions_fit.append((color_sol, fit))
-
-        return ResultStorage(
-            list_solution_fits=solutions_fit,
-            limit_store=False,
-            mode_optim=self.params_objective_function.sense_function,
-        )
+        colors = kwargs["color_graph"]
+        sol = [
+            colors[self.index_nodes_name[self.nodes_name[i]]] - 1
+            for i in range(self.number_of_nodes)
+        ]
+        return ColoringSolution(self.problem, sol)
 
     def add_coloring_constraint(self, coloring_constraint: ConstraintsColoring):
         s = []

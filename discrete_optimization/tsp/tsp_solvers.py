@@ -4,6 +4,7 @@
 
 from typing import Any, Dict, List, Sequence, Tuple, Type
 
+from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -13,11 +14,7 @@ from discrete_optimization.tsp.solver.solver_lp_iterative import (
     MILPSolver,
 )
 from discrete_optimization.tsp.solver.solver_ortools import TSP_ORtools
-from discrete_optimization.tsp.solver.tsp_cp_solver import (
-    CPSolverName,
-    TSP_CP_Solver,
-    TSP_CPModel,
-)
+from discrete_optimization.tsp.solver.tsp_cp_solver import TSP_CP_Solver, TSP_CPModel
 from discrete_optimization.tsp.solver.tsp_solver import SolverTSP
 from discrete_optimization.tsp.tsp_model import (
     TSPModel,

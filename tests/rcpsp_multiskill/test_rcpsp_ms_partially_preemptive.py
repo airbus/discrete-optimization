@@ -10,6 +10,7 @@ from discrete_optimization.generic_rcpsp_tools.ls_solver import (
     LS_SOLVER,
     LS_RCPSP_Solver,
 )
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive import plot_ressource_view
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
@@ -26,7 +27,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN_PARTIAL_PREEMPTIVE,
-    ParametersCP,
 )
 
 

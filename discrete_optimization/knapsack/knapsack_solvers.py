@@ -4,6 +4,7 @@
 
 from typing import Any, Dict, List, Tuple, Type
 
+from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -13,7 +14,6 @@ from discrete_optimization.knapsack.knapsack_model import KnapsackModel
 from discrete_optimization.knapsack.solvers.cp_solvers import (
     CPKnapsackMZN,
     CPKnapsackMZN2,
-    CPSolverName,
 )
 from discrete_optimization.knapsack.solvers.dyn_prog_knapsack import KnapsackDynProg
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest

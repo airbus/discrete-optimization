@@ -7,10 +7,6 @@
 import logging
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-    MS_RCPSPModel,
-    MS_RCPSPSolution,
-)
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_mspsp_parser import (
     get_data_available_mspsp,
     parse_dzn_file,

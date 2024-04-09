@@ -3,9 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import random
+import sys
 
 import numpy as np
 import pytest
+from minizinc.solver import Solver
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -23,6 +25,10 @@ from discrete_optimization.coloring.coloring_solvers import (
     solvers_map,
 )
 from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
+from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
+    ColoringCP,
+    ColoringCPModel,
+)
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
     ModelingCPSat,
@@ -35,8 +41,15 @@ from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.callbacks.loggers import (
+    NbIterationTracker,
+    ObjectiveLogger,
+)
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolverName,
+    ParametersCP,
+    find_right_minizinc_solver_name,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     TypeAttribute,
@@ -55,6 +68,14 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
+
+
+try:
+    Solver.lookup(find_right_minizinc_solver_name(CPSolverName.ORTOOLS))
+except LookupError:
+    mzn_ortools_available = False
+else:
+    mzn_ortools_available = True
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -111,6 +132,66 @@ def test_solvers_subset():
         sol, fit = results.get_best_solution_fit()
         print(f"Solver {s}, fitness = {fit}")
         print(f"Evaluation : {coloring_model.evaluate(sol)}")
+
+
+def test_mzn_solver_cb(caplog):
+    small_example = [f for f in get_data_available() if "gc_50_9" in f][0]
+    coloring_model: ColoringProblem = parse_file(small_example)
+    parameters_cp = ParametersCP.default()
+    parameters_cp.time_limit = 10
+    kwargs = {
+        "cp_solver_name": CPSolverName.CHUFFED,
+        "cp_model": ColoringCPModel.DEFAULT,
+        "parameters_cp": parameters_cp,
+        "greedy_start": False,
+    }
+    stopper = NbIterationStopper(nb_iteration_max=2)
+    callbacks = [
+        ObjectiveLogger(),
+        stopper,
+    ]
+    solver = ColoringCP(problem=coloring_model, **kwargs)
+    solver.init_model(**kwargs)
+    with caplog.at_level(logging.INFO):
+        res = solver.solve(callbacks=callbacks, **kwargs)
+
+    assert len(res.list_solution_fits) == min(stopper.nb_iteration_max, 3)
+    assert (
+        f"Solve finished after {len(res.list_solution_fits)} iterations" in caplog.text
+    )
+
+
+@pytest.mark.skipif(
+    not mzn_ortools_available, reason="Needs ortools configured for minizinc."
+)
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Hangs for ever on windows.")
+def test_mzn_solver_ortools_parallel_cb(caplog):
+    small_example = [f for f in get_data_available() if "gc_50_9" in f][0]
+    coloring_model: ColoringProblem = parse_file(small_example)
+    parameters_cp = ParametersCP.default()
+    parameters_cp.time_limit = 10
+    parameters_cp.multiprocess = True
+    parameters_cp.nb_process = 4
+    kwargs = {
+        "cp_solver_name": CPSolverName.ORTOOLS,
+        "cp_model": ColoringCPModel.DEFAULT,
+        "parameters_cp": parameters_cp,
+        "greedy_start": False,
+    }
+    callbacks = [
+        ObjectiveLogger(),
+    ]
+    solver = ColoringCP(problem=coloring_model, **kwargs)
+    solver.init_model(**kwargs)
+    with caplog.at_level(logging.DEBUG):
+        res = solver.solve(callbacks=callbacks, **kwargs)
+
+    caploglines = caplog.text.splitlines()
+    nb_callbacks_steps = len([line for line in caploglines if "Iteration #" in line])
+    assert len(res.list_solution_fits) == nb_callbacks_steps
+    assert (
+        f"Solve finished after {len(res.list_solution_fits)} iterations" in caplog.text
+    )
 
 
 @pytest.mark.parametrize("modeling", [ModelingCPSat.BINARY, ModelingCPSat.INTEGER])
