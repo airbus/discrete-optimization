@@ -96,19 +96,19 @@ jobs:
           - os: "ubuntu-latest"
             minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
             minizinc_cache_path: $(pwd)/bin/squashfs-root
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-x86_64.AppImage
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.3/MiniZincIDE-2.8.3-x86_64.AppImage
             minizinc_downloaded_filepath: bin/minizinc.AppImage
-            minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
+            minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..; sudo apt install libegl1 -y
           - os: "macos-latest"
             minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/MiniZincIDE.app/Contents/Resources
             minizinc_cache_path: $(pwd)/bin/MiniZincIDE.app
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled.dmg
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.3/MiniZincIDE-2.8.3-bundled.dmg
             minizinc_downloaded_filepath: bin/minizinc.dmg
             minizinc_install_cmdline: sudo hdiutil attach bin/minizinc.dmg; sudo cp -R /Volumes/MiniZinc*/MiniZincIDE.app bin/.
           - os: "windows-latest"
             minizinc_config_cmdline: export PATH=$PATH:~/AppData/Local/Programs/MiniZinc
             minizinc_cache_path: ~/AppData/Local/Programs/MiniZinc
-            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.6.3/MiniZincIDE-2.6.3-bundled-setup-win64.exe
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.3/MiniZincIDE-2.8.3-bundled-setup-win64.exe
             minizinc_downloaded_filepath: minizinc_setup.exe
             minizinc_install_cmdline: cmd //c "minizinc_setup.exe /verysilent /currentuser /norestart /suppressmsgboxes /sp"
           - coverage: false  # generally no coverage to avoid multiple reports
