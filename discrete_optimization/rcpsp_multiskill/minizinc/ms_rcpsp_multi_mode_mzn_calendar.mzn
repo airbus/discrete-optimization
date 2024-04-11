@@ -110,7 +110,7 @@ constraint forall(sk in Skill, i in Act)(
 
 % Prune.
 constraint forall(w in Units, i in Act)(
-    let{var opt set of Skill: sk = {skl | skl in Skill where skillunits[w, skl]>0 /\
+    let{var set of int: sk = {skl | skl in Skill where skillunits[w, skl]>0 /\
        sum(m in modes[i])(skillreq[skl, m])>0}}
         in(
             if sk=={} then
