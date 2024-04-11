@@ -16,6 +16,9 @@ from discrete_optimization.coloring.coloring_model import (
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -52,6 +55,14 @@ class NXGreedyColoringMethod(Enum):
 class GreedyColoring(SolverColoring):
     """Binded solver of networkx heuristics for coloring problem."""
 
+    hyperparameters = [
+        EnumHyperparameter(
+            name="strategy",
+            enum=NXGreedyColoringMethod,
+            default=NXGreedyColoringMethod.best,
+        )
+    ]
+
     def __init__(
         self,
         problem: ColoringProblem,
@@ -77,9 +88,8 @@ class GreedyColoring(SolverColoring):
             results (ResultStorage) : storage of solution found by the greedy solver.
 
         """
-        greedy_strategy: NXGreedyColoringMethod = kwargs.get(
-            "strategy", NXGreedyColoringMethod.best
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_strategy: NXGreedyColoringMethod = kwargs["strategy"]
         strategy_name = greedy_strategy.value
         if strategy_name == "best":
             strategies_to_test = strategies
