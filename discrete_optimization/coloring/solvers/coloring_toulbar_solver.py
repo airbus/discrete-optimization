@@ -10,6 +10,10 @@ from discrete_optimization.coloring.coloring_model import ColoringSolution
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
     SolverColoringWithStartingSolution,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -27,6 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 class ToulbarColoringSolver(SolverColoringWithStartingSolution):
+    hyperparameters = SolverColoringWithStartingSolution.hyperparameters + [
+        CategoricalHyperparameter(
+            name="value_sequence_chain", choices=[True, False], default=False
+        ),
+        CategoricalHyperparameter(
+            name="hard_value_sequence_chain", choices=[True, False], default=False
+        ),
+        IntegerHyperparameter(name="tolerance_delta_max", low=0, high=2, default=1),
+    ]
     model: Optional[pytoulbar2.CFN] = None
 
     def get_range_value(
@@ -45,6 +58,7 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
     def init_model(self, **kwargs: Any) -> None:
         number_nodes = self.problem.number_of_nodes
         index_nodes_name = self.problem.index_nodes_name
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
         nb_colors = kwargs.get("nb_colors", None)
         nb_colors_on_subset = kwargs.get("nb_colors_on_subset", nb_colors)
         if nb_colors is None:
@@ -79,11 +93,11 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
                     ],
                 )  # encode that x_{i}<=max_color.
                 #  Problem.AddLinearConstraint([1, -1], [0, i+1], '>=', 0)  # max_color>x_{i} (alternative way ?)
-        value_sequence_chain = kwargs.get("value_sequence_chain", False)
+        value_sequence_chain = kwargs["value_sequence_chain"]
         # Warning : don't use this with special "constraints"
         if value_sequence_chain:
-            hard_value_sequence_chain = kwargs.get("hard_value_sequence_chain", False)
-            tolerance_delta_max = kwargs.get("tolerance_delta_max", 1)
+            hard_value_sequence_chain = kwargs["hard_value_sequence_chain"]
+            tolerance_delta_max = kwargs["tolerance_delta_max"]
             # play with how "fidele" should be the "max_x" variable
             for j in range(number_nodes):
                 Problem.AddVariable(f"max_x_{j}", range(nb_colors_all))

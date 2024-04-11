@@ -23,6 +23,9 @@ from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     MilpSolverName,
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
+from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
+    ToulbarColoringSolver,
+)
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     ColoringProblem,
     GreedyColoring,
@@ -71,6 +74,7 @@ solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
     ],
     "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
     "asp": [(ColoringASPSolver, {"timeout_seconds": 5})],
+    "toulbar2": [(ToulbarColoringSolver, {"time_limit": 5})],
 }
 
 solvers_map = {}
