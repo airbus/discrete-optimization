@@ -58,7 +58,7 @@ class OptunaReportSingleFitCallback(Callback):
 
         """
         if step % self.report_nb_steps == 0:
-            fit = res.best_fit
+            _, fit = res.get_best_solution_fit()
 
             # Report current score and step to Optuna's trial.
             self.trial.report(float(fit), step=step)
@@ -99,7 +99,7 @@ class OptunaPruningSingleFitCallback(Callback):
 
         """
         if step % self.report_nb_steps == 0:
-            fit = res.best_fit
+            _, fit = res.get_best_solution_fit()
 
             # Report current score and step to Optuna's trial.
             self.trial.report(float(fit), step=step)
