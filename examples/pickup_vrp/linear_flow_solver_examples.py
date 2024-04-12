@@ -10,7 +10,6 @@ from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_sol
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
-    plot_solution,
     plt,
 )
 
