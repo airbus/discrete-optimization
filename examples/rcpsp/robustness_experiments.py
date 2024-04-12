@@ -162,7 +162,7 @@ def run_cp_multiscenario():
         annealing += [model.evaluate(s)["makespan"]]
 
     solver = CP_MULTISCENARIO(
-        list_problem=list_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+        problem=model_aggreg_mean, cp_solver_name=CPSolverName.CHUFFED
     )
     solver.init_model(
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
@@ -172,8 +172,8 @@ def run_cp_multiscenario():
     params_cp.free_search = True
     result = solver.solve(parameters_cp=params_cp)
     solution_fit = result.list_solution_fits
-    objectives_cp = [s[0][1] for s in solution_fit]
-    real_objective = [s[1] for s in solution_fit]
+    objectives_cp = [sol.minizinc_obj for sol, fit in solution_fit]
+    real_objective = [fit for sol, fit in solution_fit]
 
     plt.scatter(objectives_cp, real_objective)
     plt.show()

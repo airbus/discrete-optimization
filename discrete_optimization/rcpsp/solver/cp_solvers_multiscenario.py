@@ -18,6 +18,7 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import create_fake_tasks
+from discrete_optimization.rcpsp.robust_rcpsp import AggregRCPSPModel
 
 logger = logging.getLogger(__name__)
 this_path = os.path.dirname(os.path.abspath(__file__))
@@ -70,21 +71,20 @@ def add_fake_task_cp_data(
 
 
 class CP_MULTISCENARIO(MinizincCPSolver):
-    problem: RCPSPModel
+    problem: AggregRCPSPModel
 
     def __init__(
         self,
-        list_problem: List[RCPSPModel],
+        problem: AggregRCPSPModel,
         cp_solver_name: CPSolverName = CPSolverName.CHUFFED,
         params_objective_function: ParamsObjectiveFunction = None,
-        silent_solve_error: bool = True,
+        silent_solve_error: bool = False,
         **kwargs,
     ):
         super().__init__(
-            problem=list_problem[0], params_objective_function=params_objective_function
+            problem=problem, params_objective_function=params_objective_function
         )
         self.silent_solve_error = silent_solve_error
-        self.list_rcpsp_model = list_problem
         self.cp_solver_name = cp_solver_name
         self.key_decision_variable = [
             "s"
@@ -110,7 +110,7 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         instance["ignore_sec_objective"] = ignore_sec_objective
         n_res = len(self.problem.resources_list)
         instance["n_res"] = n_res
-        instance["n_scenario"] = len(self.list_rcpsp_model)
+        instance["n_scenario"] = self.problem.nb_problem
         dict_to_add = add_fake_task_cp_data(
             rcpsp_model=self.problem,
             ignore_fake_task=not fake_tasks,
@@ -131,25 +131,22 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         sorted_tasks = self.problem.tasks_list
         d = [
             [
-                int(self.list_rcpsp_model[j].mode_details[key][1]["duration"])
-                for j in range(len(self.list_rcpsp_model))
+                int(self.problem.list_problem[j].mode_details[key][1]["duration"])
+                for j in range(self.problem.nb_problem)
             ]
             for key in sorted_tasks
         ]
         instance["d"] = d
         all_modes = [
             [
-                (act, 1, self.list_rcpsp_model[j].mode_details[act][1])
+                (act, 1, self.problem.list_problem[j].mode_details[act][1])
                 for act in sorted_tasks
             ]
-            for j in range(len(self.list_rcpsp_model))
+            for j in range(self.problem.nb_problem)
         ]
         rr = [
             [
-                [
-                    all_modes[j][i][2].get(res, 0)
-                    for j in range(len(self.list_rcpsp_model))
-                ]
+                [all_modes[j][i][2].get(res, 0) for j in range(self.problem.nb_problem)]
                 for i in range(len(all_modes[0]))
             ]
             for res in sorted_resources
@@ -197,23 +194,11 @@ class CP_MULTISCENARIO(MinizincCPSolver):
             for j in order
             if self.problem.tasks_list[j - 1] in self.problem.index_task_non_dummy
         ]
-        ll = [
-            RCPSPSolution(problem=self.list_rcpsp_model[i], rcpsp_permutation=oo)
-            for i in range(len(self.list_rcpsp_model))
-        ]
-        evaluation = [
-            self.aggreg_from_dict(self.list_rcpsp_model[i].evaluate(ll[i]))
-            for i in range(len(self.list_rcpsp_model))
-        ]
-        sum_eval = sum(evaluation)
+
         logger.debug(f"starts found : {start[-1]}")
-        logger.debug(
-            (
-                "Sum of makespan : ",
-                evaluation,
-                sum_eval / len(self.list_rcpsp_model),
-                order,
-                obj,
-            )
-        )
-        return (tuple(ll), obj)
+        logger.debug(f"minizinc obj : {obj}")
+
+        sol = RCPSPSolution(problem=self.problem, rcpsp_permutation=oo)
+        sol.minizinc_obj = obj
+
+        return sol

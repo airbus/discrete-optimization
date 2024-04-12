@@ -8,9 +8,16 @@ import numpy as np
 import pytest
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+    TimerStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
+from discrete_optimization.generic_tools.do_problem import (
+    BaseMethodAggregating,
+    MethodAggregating,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     result_storage_to_pareto_front,
@@ -23,6 +30,7 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_task_gantt,
 )
 from discrete_optimization.rcpsp.robust_rcpsp import (
+    AggregRCPSPModel,
     MethodBaseRobustification,
     MethodRobustification,
     UncertainRCPSPModel,
@@ -33,6 +41,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN_NOBOOL,
     CP_RCPSP_MZN,
 )
+from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import CP_MULTISCENARIO
 from discrete_optimization.rcpsp.solver.cpsat_solver import (
     CPSatRCPSPSolver,
     CPSatRCPSPSolverCumulativeResource,
@@ -168,7 +177,9 @@ def test_cp_sm_intermediate_solution():
     assert pareto_store.len_pareto_front() == 1
 
 
-def create_models(base_rcpsp_model: RCPSPModel, range_around_mean: int = 3):
+def create_models(
+    base_rcpsp_model: RCPSPModel, range_around_mean: int = 3, nb_models=50
+):
     poisson_laws = create_poisson_laws_duration(
         base_rcpsp_model, range_around_mean=range_around_mean
     )
@@ -185,7 +196,7 @@ def create_models(base_rcpsp_model: RCPSPModel, range_around_mean: int = 3):
                 MethodBaseRobustification.SAMPLE
             )
         )
-        for i in range(50)
+        for i in range(nb_models)
     ]
     many_random_instance += [
         uncertain.create_rcpsp_model(
@@ -242,6 +253,43 @@ def test_cp_sm_robust():
     assert fit_worst < fit_average and fit_worst < fit_original
 
     ktd = kendall_tau_similarity((sol_average, sol_worst))
+
+
+def test_cp_multiscenario(random_seed):
+    files = get_data_available()
+    files = [f for f in files if "j301_1.sm" in f]
+    file_path = files[0]
+    rcpsp_model: RCPSPModel = parse_file(file_path)
+    poisson_laws = create_poisson_laws_duration(rcpsp_model, range_around_mean=2)
+    uncertain_model: UncertainRCPSPModel = UncertainRCPSPModel(
+        base_rcpsp_model=rcpsp_model, poisson_laws=poisson_laws
+    )
+    list_rcpsp_model = [
+        uncertain_model.create_rcpsp_model(
+            MethodRobustification(
+                method_base=MethodBaseRobustification.SAMPLE, percentile=0
+            )
+        )
+        for i in range(20)
+    ]
+    problem = AggregRCPSPModel(
+        list_problem=list_rcpsp_model,
+        method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
+    )
+    solver = CP_MULTISCENARIO(problem=problem, cp_solver_name=CPSolverName.CHUFFED)
+    solver.init_model(
+        output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
+    )
+    params_cp = ParametersCP.default()
+    params_cp.time_limit = 30
+    params_cp.free_search = True
+    result = solver.solve(
+        parameters_cp=params_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    )
+    solution_fit = result.list_solution_fits
+    objectives_cp = [sol.minizinc_obj for sol, fit in solution_fit]
+    real_objective = [fit for sol, fit in solution_fit]
+    assert len(solution_fit) > 0
 
 
 def test_cp_mm_integer_vs_bool():
