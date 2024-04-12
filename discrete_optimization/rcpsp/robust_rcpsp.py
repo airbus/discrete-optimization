@@ -12,6 +12,7 @@ from scipy.stats import poisson, randint, rv_discrete
 from discrete_optimization.generic_tools.do_problem import (
     MethodAggregating,
     RobustProblem,
+    Solution,
 )
 from discrete_optimization.rcpsp import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
@@ -30,13 +31,26 @@ class AggregRCPSPModel(RobustProblem, RCPSPModel):
         RobustProblem.__init__(
             self, list_problem=list_problem, method_aggregating=method_aggregating
         )
-        self.horizon = list_problem[0].horizon
-        self.horizon_multiplier = list_problem[0].horizon_multiplier
-        self.resources = list_problem[0].resources
-        self.successors = list_problem[0].successors
-        self.n_jobs = list_problem[0].n_jobs
-        self.mode_details = list_problem[0].mode_details
-        self.resources_list = list_problem[0].resources_list
+        RCPSPModel.__init__(
+            self,
+            resources=list_problem[0].resources,
+            non_renewable_resources=list_problem[0].non_renewable_resources,
+            mode_details=list_problem[0].mode_details,
+            successors=list_problem[0].successors,
+            horizon=list_problem[0].horizon,
+            horizon_multiplier=list_problem[0].horizon_multiplier,
+            tasks_list=list_problem[0].tasks_list,
+            source_task=list_problem[0].source_task,
+            sink_task=list_problem[0].sink_task,
+            name_task=list_problem[0].name_task,
+            calendar_details=list_problem[0].calendar_details,
+            special_constraints=list_problem[0].special_constraints
+            if list_problem[0].do_special_constraints
+            else None,
+            relax_the_start_at_end=list_problem[0].relax_the_start_at_end,
+            fixed_permutation=list_problem[0].fixed_permutation,
+            fixed_modes=list_problem[0].fixed_modes,
+        )
 
     def get_dummy_solution(self) -> RCPSPSolution:
         a: RCPSPSolution = self.list_problem[0].get_dummy_solution()

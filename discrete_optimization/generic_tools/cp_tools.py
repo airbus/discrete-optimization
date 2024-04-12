@@ -300,7 +300,10 @@ class MinizincCPSolver(CPSolver):
                 optimisation_level=parameters_cp.optimisation_level,
             )
         except Exception as e:
-            self.status_solver = StatusSolver.UNKNOWN
+            if len(output_type.res.list_solution_fits) > 0:
+                self.status_solver = StatusSolver.SATISFIED
+            else:
+                self.status_solver = StatusSolver.UNKNOWN
             if isinstance(e, SolveEarlyStop):
                 logger.info(e)
             elif self.silent_solve_error:
