@@ -19,18 +19,22 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_pickup_and_delivery,
     create_selective_tsp,
 )
-from discrete_optimization.pickup_vrp.gpdp import GPDP, ProxyClass, build_pruned_problem
+from discrete_optimization.pickup_vrp.gpdp import (
+    GPDP,
+    GPDPSolution,
+    ProxyClass,
+    build_pruned_problem,
+)
+from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
-    plot_solution,
 )
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    plot_ortools_solution,
 )
 
 logging.basicConfig(level=logging.DEBUG)
@@ -71,10 +75,11 @@ def debug_lp():
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
     p = ParametersMilp.default()
     p.time_limit = 2000
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=4, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
     plt.show()
 
 
@@ -86,11 +91,11 @@ def selective_tsp():
     linear_flow_solver.init_model(
         one_visit_per_cluster=True, one_visit_per_node=False, include_subtour=False
     )
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=True, nb_iteration_max=4, include_subtour=False
     )
-    print(solutions[-1].flow_solution)
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
     plt.show()
 
 
@@ -115,10 +120,11 @@ def vrp_capacity():
         one_visit_per_node=True,
         include_time_evolution=False,
     )
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=True, nb_iteration_max=4
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
     plt.show()
 
 
@@ -137,8 +143,7 @@ def run_ortools_solver():
     )
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
-    assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, gpdp)
+    plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
 
@@ -166,8 +171,7 @@ def run_ortools_solver_selective():
     )
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
-    assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, gpdp)
+    plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
 
@@ -231,7 +235,7 @@ def run_ortools_pickup_delivery():
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
     assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, model)
+    plot_gpdp_solution(best_sol, model)
     plt.show()
 
 
@@ -256,7 +260,7 @@ def run_ortools_pickup_delivery_cluster():
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
     assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, gpdp)
+    plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
 

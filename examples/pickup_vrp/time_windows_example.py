@@ -8,12 +8,12 @@ import time
 import matplotlib.pyplot as plt
 from classic_ortools_example import create_matrix_data
 
+from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    plot_ortools_solution,
 )
 
 logging.basicConfig(level=logging.DEBUG)
@@ -41,8 +41,7 @@ def run_time_windows():
     )
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
-    assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, gpdp)
+    plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
 
@@ -69,7 +68,7 @@ def run_pickup():
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
     assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, gpdp)
+    plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
 
@@ -104,8 +103,7 @@ def run_demand():
     )
     result_storage = solver.solve()
     best_sol = result_storage.best_solution
-    assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, gpdp)
+    plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
 
