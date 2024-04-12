@@ -23,9 +23,19 @@ from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     MilpSolverName,
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
-from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
-    ToulbarColoringSolver,
-)
+
+try:
+    import pytoulbar2
+except:
+    toulbar2_available = False
+else:
+    from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
+        ToulbarColoringSolver,
+    )
+
+    toulbar2_available = True
+
+
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     ColoringProblem,
     GreedyColoring,
@@ -74,8 +84,9 @@ solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
     ],
     "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
     "asp": [(ColoringASPSolver, {"timeout_seconds": 5})],
-    "toulbar2": [(ToulbarColoringSolver, {"time_limit": 5})],
 }
+if toulbar2_available:
+    solvers["toulbar2"] = [(ToulbarColoringSolver, {"time_limit": 5})]
 
 solvers_map = {}
 for key in solvers:
