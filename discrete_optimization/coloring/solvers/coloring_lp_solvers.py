@@ -22,6 +22,9 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     NXGreedyColoringMethod,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
@@ -61,6 +64,15 @@ class ConstraintsDict(TypedDict):
 
 class _BaseColoringLP(MilpSolver, SolverColoring):
     """Base class for Coloring LP solvers."""
+
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="greedy_start", choices=[True, False], default=True
+        ),
+        CategoricalHyperparameter(
+            name="use_cliques", choices=[True, False], default=False
+        ),
+    ]
 
     def __init__(
         self,
@@ -143,6 +155,8 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
 
     """
 
+    hyperparameters = _BaseColoringLP.hyperparameters
+
     def init_model(self, **kwargs: Any) -> None:
         """Initialize the gurobi model.
 
@@ -152,8 +166,9 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
             use_cliques (bool): if True, compute cliques of the coloring problem and add constraints to the model.
             verbose (bool): verbose option.
         """
-        greedy_start = kwargs.get("greedy_start", True)
-        use_cliques = kwargs.get("use_cliques", False)
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_start = kwargs["greedy_start"]
+        use_cliques = kwargs["use_cliques"]
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(
@@ -304,6 +319,8 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
 
     """
 
+    hyperparameters = _BaseColoringLP.hyperparameters
+
     def __init__(
         self,
         problem: ColoringProblem,
@@ -320,8 +337,9 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
         self.solver_name = map_solver[milp_solver_name]
 
     def init_model(self, **kwargs: Any) -> None:
-        greedy_start = kwargs.get("greedy_start", True)
-        use_cliques = kwargs.get("use_cliques", False)
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_start = kwargs["greedy_start"]
+        use_cliques = kwargs["use_cliques"]
         if greedy_start:
             logger.info("Computing greedy solution")
             greedy_solver = GreedyColoring(

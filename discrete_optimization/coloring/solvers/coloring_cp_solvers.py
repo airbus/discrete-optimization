@@ -9,8 +9,6 @@ CP formulation rely on minizinc models stored in coloring/minizinc folder.
 
 import logging
 import os
-import random
-from datetime import timedelta
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -38,6 +36,10 @@ from discrete_optimization.generic_tools.cp_tools import (
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -81,6 +83,15 @@ file_dict = {
 
 
 class ColoringCP(MinizincCPSolver, SolverColoring):
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_model", enum=ColoringCPModel, default=ColoringCPModel.DEFAULT
+        ),
+        CategoricalHyperparameter(
+            name="include_seq_chain_constraint", choices=[True, False], default=True
+        ),
+    ]
+
     def __init__(
         self,
         problem: ColoringProblem,
@@ -129,21 +140,16 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
 
         Returns: None
         """
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
         nb_colors = kwargs.get("nb_colors", None)
         object_output = kwargs.get("object_output", True)
         with_subset_nodes = kwargs.get("with_subset_nodes", self.problem.use_subset)
-        include_seq_chain_constraint = kwargs.get("include_seq_chain_constraint", False)
+        include_seq_chain_constraint = kwargs["include_seq_chain_constraint"]
 
         if nb_colors is None:
             solution: ColoringSolution = self.get_solution(**kwargs)
             nb_colors = self.problem.count_colors_all_index(solution.colors)
-        print(nb_colors)
-        model_type = kwargs.get(
-            "cp_model",
-            ColoringCPModel.DEFAULT
-            if not with_subset_nodes
-            else ColoringCPModel.DEFAULT_WITH_SUBSET,
-        )
+        model_type = kwargs["cp_model"]
         if with_subset_nodes and model_type != ColoringCPModel.DEFAULT_WITH_SUBSET:
             model_type = ColoringCPModel.DEFAULT_WITH_SUBSET
         path = os.path.join(path_minizinc, file_dict[model_type])
