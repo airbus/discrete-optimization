@@ -20,7 +20,6 @@ from discrete_optimization.pickup_vrp.gpdp import (
     ProxyClass,
     build_pruned_problem,
 )
-from discrete_optimization.pickup_vrp.solver.lp_solver import plot_solution
 from discrete_optimization.pickup_vrp.solver.lp_solver_pymip import (
     LinearFlowSolver,
     ParametersMilp,

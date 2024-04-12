@@ -35,12 +35,12 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_selective_tsp,
 )
 from discrete_optimization.pickup_vrp.gpdp import GPDPSolution
+from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    plot_ortools_solution,
 )
 
 SEED = 42

@@ -5,6 +5,8 @@
 from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_ortools_example,
 )
+from discrete_optimization.pickup_vrp.gpdp import GPDPSolution
+from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
@@ -37,10 +39,11 @@ def example_ortools_example():
     )
     p = ParametersMilp.default()
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
     plt.show()
 
 

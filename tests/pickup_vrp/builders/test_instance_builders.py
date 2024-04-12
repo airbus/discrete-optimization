@@ -11,12 +11,12 @@ from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_selective_tsp,
 )
 from discrete_optimization.pickup_vrp.gpdp import GPDPSolution
+from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.ortools_solver import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     ORToolsGPDP,
     ParametersCost,
-    plot_ortools_solution,
 )
 
 
@@ -54,7 +54,7 @@ def test_pickup_and_delivery():
     best_sol = result_storage.best_solution
     assert isinstance(best_sol, GPDPSolution)
     assert best_sol.check_pickup_deliverable()
-    plot_ortools_solution(best_sol, model)
+    plot_gpdp_solution(best_sol, model)
 
 
 def test_pickup_and_delivery_equilibrate_new_api():

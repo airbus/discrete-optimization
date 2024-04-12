@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import pytest
+from matplotlib import pyplot as plt
 
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
@@ -20,6 +21,7 @@ from discrete_optimization.pickup_vrp.gpdp import (
     ProxyClass,
     build_pruned_problem,
 )
+from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
@@ -139,10 +141,11 @@ def test_tsp():
     p = ParametersMilp.default()
 
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -159,10 +162,11 @@ def test_tsp_simplified():
     p = ParametersMilp.default()
 
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -178,10 +182,11 @@ def test_vrp():
     p = ParametersMilp.default()
 
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skip(reason="build_pruned_problem() is buggy for now.")
@@ -198,10 +203,11 @@ def test_vrp_simplified():
     )
     p = ParametersMilp.default()
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -216,10 +222,11 @@ def test_selective_tsp():
     )
     p = ParametersMilp.default()
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -234,10 +241,11 @@ def test_selective_vrp():
     )
     p = ParametersMilp.default()
     p.time_limit = 100
-    solutions = linear_flow_solver.solve_iterative(
+    res = linear_flow_solver.solve_iterative(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    plot_solution(solutions[-1], gpdp)
+    sol: GPDPSolution = res.get_best_solution()
+    plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
