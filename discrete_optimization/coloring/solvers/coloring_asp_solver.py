@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 class ColoringASPSolver(ASPClingoSolver, SolverColoringWithStartingSolution):
     """Solver based on Answer Set Programming formulation and clingo solver."""
 
+    hyperparameters = SolverColoringWithStartingSolution.hyperparameters
+
     def retrieve_solution(self, model: clingo.Model) -> ColoringSolution:
         symbols = model.symbols(atoms=True)
         colors = [
