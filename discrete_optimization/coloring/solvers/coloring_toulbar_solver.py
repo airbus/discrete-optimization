@@ -156,11 +156,6 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
                     )
         len_edges = len(self.problem.graph.edges)
         index = 0
-        costs = [
-            10000 if val1 == val2 else 0
-            for val1 in range(nb_colors_all)
-            for val2 in range(nb_colors_all)
-        ]
         costs_dict = self.default_costs_matrix(
             nb_colors_all=nb_colors_all, nb_colors_on_subset=nb_colors_on_subset
         )
@@ -183,7 +178,7 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
             for val2 in range(nb_colors_all)
         ]
         costs_dict = {}
-        if self.problem.use_subset:
+        if True:
             costs_dict = {
                 "out-out": costs,
                 "in-out": [
@@ -249,12 +244,18 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
         self.model.CFN.timer(time_limit)
         solution = self.model.Solve(showSolutions=1)
         logger.info(f"=== Solution === \n {solution}")
-        rcpsp_sol = ColoringSolution(
-            problem=self.problem,
-            colors=solution[0][1 : 1 + self.problem.number_of_nodes],
-        )
-        fit = self.aggreg_from_sol(rcpsp_sol)
-        return ResultStorage(
-            list_solution_fits=[(rcpsp_sol, fit)],
-            mode_optim=self.params_objective_function.sense_function,
-        )
+        if solution is not None:
+            rcpsp_sol = ColoringSolution(
+                problem=self.problem,
+                colors=solution[0][1 : 1 + self.problem.number_of_nodes],
+            )
+            fit = self.aggreg_from_sol(rcpsp_sol)
+            return ResultStorage(
+                list_solution_fits=[(rcpsp_sol, fit)],
+                mode_optim=self.params_objective_function.sense_function,
+            )
+        else:
+            return ResultStorage(
+                list_solution_fits=[],
+                mode_optim=self.params_objective_function.sense_function,
+            )

@@ -24,16 +24,17 @@ from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
 
 def run_toulbar_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_70_3" in f][0]
+    file = [f for f in get_data_available() if "gc_100_5" in f][0]
     color_problem = parse_file(file)
     solver = ToulbarColoringSolver(color_problem, params_objective_function=None)
     solver.init_model(
         nb_colors=None,
         value_sequence_chain=True,
-        hard_value_sequence_chain=False,
-        tolerance_delta_max=2,
+        hard_value_sequence_chain=True,
+        tolerance_delta_max=1,
     )
-    result_store = solver.solve(time_limit=10)
+    # solver.model.Dump("test.wcsp")
+    result_store = solver.solve(time_limit=1000)
     solution = result_store.get_best_solution_fit()[0]
     plot_coloring_solution(solution)
     plt.show()
@@ -65,4 +66,4 @@ def run_toulbar_with_constraints():
 
 
 if __name__ == "__main__":
-    run_toulbar_with_constraints()
+    run_toulbar_coloring()
