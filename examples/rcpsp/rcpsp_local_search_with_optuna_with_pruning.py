@@ -20,9 +20,7 @@ import numpy as np
 import optuna
 from optuna.trial import Trial, TrialState
 
-from discrete_optimization.generic_tools.callbacks.optuna import (
-    OptunaPruningSingleFitCallback,
-)
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -122,9 +120,7 @@ def objective(trial: Trial):
     sol, fit = sa.solve(
         dummy,
         nb_iteration_max=nb_iteration_max,
-        callbacks=[
-            OptunaPruningSingleFitCallback(trial=trial, optuna_report_nb_steps=100)
-        ],
+        callbacks=[OptunaCallback(trial=trial, optuna_report_nb_steps=100)],
     ).get_best_solution_fit()
     return fit
 

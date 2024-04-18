@@ -18,9 +18,7 @@ from discrete_optimization.generic_tools.callbacks.backup import (
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
-from discrete_optimization.generic_tools.callbacks.optuna import (
-    OptunaPruningSingleFitCallback,
-)
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -188,9 +186,7 @@ def test_sa_with_optuna_callback(random_seed):
         _, fit = sa.solve(
             dummy,
             nb_iteration_max=nb_iteration_max,
-            callbacks=[
-                OptunaPruningSingleFitCallback(trial=trial, optuna_report_nb_steps=10)
-            ],
+            callbacks=[OptunaCallback(trial=trial, optuna_report_nb_steps=10)],
         ).get_best_solution_fit()
         return fit
 

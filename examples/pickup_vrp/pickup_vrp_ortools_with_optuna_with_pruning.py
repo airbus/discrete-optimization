@@ -20,9 +20,7 @@ from optuna.trial import Trial, TrialState
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.callbacks.optuna import (
-    OptunaPruningSingleFitCallback,
-)
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -104,7 +102,7 @@ def objective(trial: Trial):
     sol, fit = solver.solve(
         callbacks=[
             nb_iteration_stopper,
-            OptunaPruningSingleFitCallback(trial=trial, optuna_report_nb_steps=1),
+            OptunaCallback(trial=trial, optuna_report_nb_steps=1),
         ]
     ).get_best_solution_fit()
     trial.set_user_attr("n_solutions_found", nb_iteration_stopper.nb_iteration)

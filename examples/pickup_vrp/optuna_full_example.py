@@ -16,9 +16,7 @@ import optuna
 from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import Trial, TrialState
 
-from discrete_optimization.generic_tools.callbacks.optuna import (
-    OptunaPruningSingleFitCallback,
-)
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.pickup_vrp.builders.instance_builders import (
@@ -58,7 +56,7 @@ kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
             include_mandatory=True,
             include_pickup_and_delivery=False,
             time_limit=20,
-            optuna_report_nb_steps=1,  # nb of steps between OptunaPruningSingleFitCallback reports for current best fit
+            optuna_report_nb_steps=1,  # nb of steps between OptunaCallback reports for current best fit
         ),
     },
 )
@@ -134,7 +132,7 @@ def objective(trial: Trial):
     # solve
     sol, fit = solver.solve(
         callbacks=[
-            OptunaPruningSingleFitCallback(trial=trial, **kwargs),
+            OptunaCallback(trial=trial, **kwargs),
         ],
         **kwargs,
     ).get_best_solution_fit()
