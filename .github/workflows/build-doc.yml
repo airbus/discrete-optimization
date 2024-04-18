@@ -27,6 +27,13 @@ on:
         required: false
         default: ""
         type: string
+      doc-prerequisites-cmdline:
+        description: |
+          Command line to run before building doc.
+        required: false
+        default: ""
+        type: string
+
     outputs:
       doc-version:
         description: "Version name of the generated doc. Correspond to the version name used by Sphinx."
@@ -39,12 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       python-version: "3.9"
-      minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
-      minizinc_cache_path: $(pwd)/bin/squashfs-root
-      minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.3/MiniZincIDE-2.8.3-x86_64.AppImage
-      minizinc_downloaded_filepath: bin/minizinc.AppImage
-      minizinc_install_cmdline: cd bin; sudo chmod +x minizinc.AppImage; sudo ./minizinc.AppImage --appimage-extract; cd ..
-      minizinc_prerequisites_cmdline: sudo apt update && sudo apt install libegl1 -y
     steps:
       - name: Set env variables for github links in doc
         run: |
@@ -91,29 +92,6 @@ jobs:
           cache-dependency-path: |
             pyproject.toml
             docs/requirements.txt
-      - name: Create bin/
-        run: mkdir -p bin
-      - name: Minizinc prerequisites
-        run: |
-          ${{ matrix.minizinc_prerequisites_cmdline }}
-      - name: get MiniZinc path to cache
-        id: get-mzn-cache-path
-        run: |
-          echo "path=${{ env.minizinc_cache_path }}" >> $GITHUB_OUTPUT  # expands variables
-      - name: Restore MiniZinc cache
-        id: cache-minizinc
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.get-mzn-cache-path.outputs.path }}
-          key: ${{ env.minizinc_url }}
-      - name: Download MiniZinc
-        if: steps.cache-minizinc.outputs.cache-hit != 'true'
-        run: |
-          curl -o "${{ env.minizinc_downloaded_filepath }}" -L ${{ env.minizinc_url }}
-      - name: Install MiniZinc
-        if: steps.cache-minizinc.outputs.cache-hit != 'true'
-        run: |
-          ${{ env.minizinc_install_cmdline }}
       - name: Install doc dependencies
         run: |
           python -m pip install -U pip setuptools
@@ -122,8 +100,8 @@ jobs:
       - name: generate documentation
         id: sphinx-build
         run: |
-          # configure minzinc (beware: paths are relative to default working directory)
-          ${{ env.minizinc_config_cmdline }}
+          # prerequisites
+          ${{ inputs.doc-prerequisites-cmdline }}
           # move to documentation directory
           cd docs
           # generate api doc source files
