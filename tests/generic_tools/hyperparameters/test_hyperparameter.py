@@ -11,8 +11,8 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,
     IntegerHyperparameter,
-    SubSolverHyperparameter,
-    SubSolverKwargsHyperparameter,
+    SubBrickHyperparameter,
+    SubBrickKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -54,9 +54,9 @@ class DummySolver2(SolverDO):
 class MetaSolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=0, high=1, default=1),
-        SubSolverHyperparameter("subsolver", choices=[DummySolver, DummySolver2]),
-        SubSolverKwargsHyperparameter(
-            "kwargs_subsolver", subsolver_hyperparameter="subsolver"
+        SubBrickHyperparameter("subsolver", choices=[DummySolver, DummySolver2]),
+        SubBrickKwargsHyperparameter(
+            "kwargs_subsolver", subbrick_hyperparameter="subsolver"
         ),
     ]
 
@@ -69,9 +69,9 @@ class MetaSolver(SolverDO):
 class MetaMetaSolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=1, high=1, default=1),
-        SubSolverHyperparameter("subsolver", choices=[MetaSolver]),
-        SubSolverKwargsHyperparameter(
-            "kwargs_subsolver", subsolver_hyperparameter="subsolver"
+        SubBrickHyperparameter("subsolver", choices=[MetaSolver]),
+        SubBrickKwargsHyperparameter(
+            "kwargs_subsolver", subbrick_hyperparameter="subsolver"
         ),
     ]
 
