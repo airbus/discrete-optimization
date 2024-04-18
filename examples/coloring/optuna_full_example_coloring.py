@@ -26,10 +26,7 @@ from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.callbacks.optuna import (
-    OptunaPruningSingleFitCallback,
-    OptunaReportSingleFitCallback,
-)
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -125,8 +122,7 @@ def objective(trial: Trial):
     # solve
     sol, fit = solver.solve(
         callbacks=[
-            # OptunaReportSingleFitCallback(trial=trial, **kwargs)
-            OptunaPruningSingleFitCallback(trial=trial, **kwargs),
+            OptunaCallback(trial=trial, **kwargs),
         ],
         **kwargs,
     ).get_best_solution_fit()

@@ -38,10 +38,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
-from discrete_optimization.generic_tools.callbacks.optuna import (
-    OptunaPruningSingleFitCallback,
-    OptunaReportSingleFitCallback,
-)
+from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
@@ -150,7 +147,7 @@ def objective(trial: Trial):
     # solve
     res = solver.solve(
         callbacks=[
-            OptunaReportSingleFitCallback(trial=trial, **kwargs),
+            OptunaCallback(trial=trial, pruning=False, **kwargs),
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
             ),
