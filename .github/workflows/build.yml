@@ -323,6 +323,7 @@ jobs:
     uses: ./.github/workflows/build-doc.yml
     with:
       notebooks-branch: ${{ needs.update-notebooks-for-colab-and-binder.outputs.notebooks-branch }}
+      doc-prerequisites-cmdline: export DO_SKIP_MZN_CHECK=1
 
   deploy:
     # for release tags
