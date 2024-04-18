@@ -5,4 +5,7 @@ dependencies:
   - python=3.9
   - pip
   - pip:
+      - optuna
+      - optuna-dashboard
+      - jupyter-server-proxy
       - ..  # discrete-optimization
