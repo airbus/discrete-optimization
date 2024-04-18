@@ -1,7 +1,10 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-"""Example using OPTUNA to tune hyperparameters of Cpsat solver for coloring.
+"""Example using OPTUNA to choose a solving method and tune its hyperparameters for coloring.
+
+We visualize intermediate values at each optimization step,
+but do not prune as we compare different solvers with different notions of optimization step?
 
 Results can be viewed on optuna-dashboard with:
 
@@ -9,6 +12,7 @@ Results can be viewed on optuna-dashboard with:
 
 """
 import logging
+import time
 from collections import defaultdict
 from typing import Any, Dict, List, Type
 
@@ -24,8 +28,6 @@ from discrete_optimization.coloring.coloring_solvers import (
     ColoringASPSolver,
     ColoringLP,
     ParametersMilp,
-    solve,
-    solvers,
     solvers_map,
     toulbar2_available,
 )
@@ -34,48 +36,58 @@ from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
 )
 from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLP_MIP
-from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    NbIterationStopper,
+from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
+    ToulbarColoringSolver,
 )
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.lp_tools import gurobi_available
 
-if toulbar2_available:
-    from discrete_optimization.coloring.coloring_solvers import ToulbarColoringSolver
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
 
 
 seed = 42
-optuna_nb_trials = 150
+optuna_nb_trials = 100
+gurobi_full_license_available = False
+create_another_study = True
+max_time_per_solver = 10
 
-study_name = f"coloring_all_solvers-auto-70_9"
+modelfilename = "gc_70_9"
+
+suffix = f"-{time.time()}" if create_another_study else ""
+study_name = f"coloring_all_solvers-auto-pruning-{modelfilename}{suffix}"
 storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
+elapsed_time_attr = "elapsed_time"  # name of the user attribute used to store duration of trials (updated during intermediate reports)
 
 # Solvers to test and their associated kwargs
+solvers_to_remove = {ColoringLP_MIP, ColoringCP}
+if not gurobi_available or not gurobi_full_license_available:
+    solvers_to_remove.add(ColoringLP)
+if not toulbar2_available:
+    solvers_to_remove.add(ToulbarColoringSolver)
 solvers_to_test: List[Type[SolverDO]] = [
-    s for s in solvers_map if s not in {ColoringLP_MIP, ColoringCP}
+    s for s in solvers_map if s not in solvers_to_remove
 ]
 # solvers_to_test = [ColoringLP]
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-p.time_limit = 10
+p.time_limit = max_time_per_solver
 p_m = ParametersMilp.default()
-p_m.time_limit = 10
+p_m.time_limit = max_time_per_solver
 kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
         ColoringCPSatSolver: dict(parameters_cp=p),
         ColoringCP: dict(parameters_cp=p),
         ColoringLP: dict(parameters_milp=p_m),
-        ColoringASPSolver: dict(timeout_seconds=10),
+        ColoringASPSolver: dict(timeout_seconds=max_time_per_solver),
+        ToulbarColoringSolver: dict(time_limit=max_time_per_solver),
     },
 )
-if toulbar2_available:
-    kwargs_fixed_by_solver[ToulbarColoringSolver] = dict(time_limit=10)
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
@@ -144,16 +156,30 @@ def objective(trial: Trial):
     solver = solver_class(problem=problem, **kwargs)
     solver.init_model(**kwargs)
 
+    # init timer
+    starting_time = time.perf_counter()
+
     # solve
     res = solver.solve(
         callbacks=[
-            OptunaCallback(trial=trial, pruning=False, **kwargs),
+            OptunaCallback(
+                trial=trial,
+                pruning=False,
+                starting_time=starting_time,
+                elapsed_time_attr=elapsed_time_attr,
+                **kwargs,
+            ),
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
             ),
         ],
         **kwargs,
     )
+
+    # store elapsed time
+    elapsed_time = time.perf_counter() - starting_time
+    trial.set_user_attr(elapsed_time_attr, elapsed_time)
+
     if len(res.list_solution_fits) != 0:
         _, fit = res.get_best_solution_fit()
         return fit
@@ -163,14 +189,11 @@ def objective(trial: Trial):
 
 # create study + database to store it
 storage = JournalStorage(JournalFileStorage(storage_path))
-try:
-    optuna.delete_study(study_name=study_name, storage=storage)
-except:
-    pass
 study = optuna.create_study(
     study_name=study_name,
     direction=direction,
     sampler=optuna.samplers.TPESampler(seed=seed),
+    pruner=optuna.pruners.NopPruner(),  # no pruning
     storage=storage,
     load_if_exists=True,
 )
