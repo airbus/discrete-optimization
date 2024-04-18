@@ -9,8 +9,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type
 
 if TYPE_CHECKING:  # only for type checkers
-    from discrete_optimization.generic_tools.do_solver import (
-        SolverDO,  # avoid circular imports
+    from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+        Hyperparametrizable,
     )
 
     try:
@@ -233,19 +233,26 @@ class EnumHyperparameter(CategoricalHyperparameter):
         return self.enum[choice_str]
 
 
-class SubSolverHyperparameter(CategoricalHyperparameter):
-    """Hyperparameter whose values are solver classes themselves for meta-solvers."""
+class SubBrickHyperparameter(CategoricalHyperparameter):
+    """Hyperparameter whose values are Hyperparametrizable subclasses themselves.
 
-    choices: List[Type[SolverDO]]
-    """List of solvers to choose from for the subsolver.
+    For instance subsolvers for meta-solvers.
 
-    NB: for now, it is not possible to pick the metasolver itself as a choice for its subsolver,
+    """
+
+    choices: List[Type[Hyperparametrizable]]
+    """List of Hyperparametrizable subclasses to choose from for the subbrick.
+
+    NB: for now, it is not possible to pick the metasolver itself as a choice for its subbrick,
     in order to avoid infinite recursivity issues.
 
     """
 
     def __init__(
-        self, name: str, choices: List[Type[SolverDO]], default: Optional[Any] = None
+        self,
+        name: str,
+        choices: List[Type[Hyperparametrizable]],
+        default: Optional[Any] = None,
     ):
         super().__init__(name, choices=choices, default=default)
         # map by their names or (module + name)'s?
@@ -261,15 +268,15 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        choices: Optional[Iterable[Type[SolverDO]]] = None,
+        choices: Optional[Iterable[Type[Hyperparametrizable]]] = None,
         prefix: str = "",
         **kwargs: Any,
-    ) -> Type[SolverDO]:
+    ) -> Type[Hyperparametrizable]:
         """Suggest hyperparameter value for an Optuna trial.
 
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
-            choices: restricts list of subsolvers to choose from
+            choices: restricts list of subbricks to choose from
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
@@ -286,29 +293,29 @@ class SubSolverHyperparameter(CategoricalHyperparameter):
         return self.choices_str2cls[choice_str]
 
 
-class SubSolverKwargsHyperparameter(Hyperparameter):
-    """Keyword arguments for subsolvers.
+class SubBrickKwargsHyperparameter(Hyperparameter):
+    """Keyword arguments for subbricks.
 
-    This hyperparameter defines kwargs to be passed to the subsolver defined by another hyperparameter.
+    This hyperparameter defines kwargs to be passed to the subbrick defined by another hyperparameter.
 
     Args:
-        subsolver_hyperparameter: name of the SubSolverHyperparameter this hyperparameter corresponds to.
+        subbrick_hyperparameter: name of the SubBrickHyperparameter this hyperparameter corresponds to.
 
     """
 
     def __init__(
         self,
         name: str,
-        subsolver_hyperparameter: str,
+        subbrick_hyperparameter: str,
         default: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(name=name, default=default)
-        self.subsolver_hyperparameter = subsolver_hyperparameter
+        self.subbrick_hyperparameter = subbrick_hyperparameter
 
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        subsolver: Type[SolverDO],
+        subbrick: Type[Hyperparametrizable],
         names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
         fixed_hyperparameters: Optional[Dict[str, Any]] = None,
@@ -317,20 +324,18 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
     ) -> Dict[str, Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
-        The subsolver hyperparameters will
-
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
-            subsolver: subsolver chosen as hyperparameter value for `self.subsolver_hyperparameter`
-            names: names of the hyperparameters to choose for the subsolver.
-                Only relevant names will be considered (i.e. corresponding to existing hyperparameters names for the chosen subsolve),
-                the other will be discarded (potentially, being meaningful for other subsolvers).
+            subbrick: subbrick chosen as hyperparameter value for `self.subbrick_hyperparameter`
+            names: names of the hyperparameters to choose for the subbrick.
+                Only relevant names will be considered (i.e. corresponding to existing hyperparameters names for the chosen subbrick),
+                the other will be discarded (potentially, being meaningful for other subbricks).
                 By default, all available hyperparameters will be suggested.
-                Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
+                Passed to `subbrick.suggest_hyperparameters_with_optuna()`.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name.
-                Passed to `subsolver.suggest_hyperparameters_with_optuna()`.
-            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subsolver hyperparameters,
-                if the subsolver class is not suggested by this method, but already fixed.
+                Passed to `subbrick.suggest_hyperparameters_with_optuna()`.
+            fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,
+                if the subbrick class is not suggested by this method, but already fixed.
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
@@ -338,10 +343,10 @@ class SubSolverKwargsHyperparameter(Hyperparameter):
         Returns:
 
         """
-        subsolver_hyperparameter_names = subsolver.get_hyperparameters_names()
+        subbrick_hyperparameter_names = subbrick.get_hyperparameters_names()
         if names is not None:
-            names = [name for name in names if name in subsolver_hyperparameter_names]
-        return subsolver.suggest_hyperparameters_with_optuna(
+            names = [name for name in names if name in subbrick_hyperparameter_names]
+        return subbrick.suggest_hyperparameters_with_optuna(
             trial=trial,
             names=names,
             kwargs_by_name=kwargs_by_name,

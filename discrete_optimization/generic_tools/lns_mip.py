@@ -17,6 +17,9 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+    Hyperparametrizable,
+)
 from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -25,7 +28,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class ConstraintHandler:
+class ConstraintHandler(Hyperparametrizable):
     @abstractmethod
     def adding_constraint_from_results_store(
         self, milp_solver: MilpSolver, result_storage: ResultStorage
@@ -39,7 +42,7 @@ class ConstraintHandler:
         ...
 
 
-class InitialSolution:
+class InitialSolution(Hyperparametrizable):
     @abstractmethod
     def get_starting_solution(self) -> ResultStorage:
         ...
@@ -65,7 +68,7 @@ class TrivialInitialSolution(InitialSolution):
         return self.solution
 
 
-class PostProcessSolution:
+class PostProcessSolution(Hyperparametrizable):
     # From solution from MIP or CP you can build other solution.
     # Here you can have many different approaches:
     # if solution from mip/cp are not feasible you can code a repair function

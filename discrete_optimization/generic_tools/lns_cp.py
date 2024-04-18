@@ -28,6 +28,9 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+    Hyperparametrizable,
+)
 from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
     PostProcessSolution,
@@ -47,7 +50,7 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class ConstraintHandler:
+class ConstraintHandler(Hyperparametrizable):
     @abstractmethod
     def adding_constraint_from_results_store(
         self,
