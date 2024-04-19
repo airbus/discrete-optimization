@@ -80,6 +80,9 @@ class PostProcessSolution(Hyperparametrizable):
 
 
 class TrivialPostProcessSolution(PostProcessSolution):
+    def __init__(self, **kwargs):
+        ...
+
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
         return result_storage
 
