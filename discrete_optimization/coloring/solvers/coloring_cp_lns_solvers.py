@@ -23,6 +23,10 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+    FloatHyperparameter,
+)
 from discrete_optimization.generic_tools.lns_cp import (
     ConstraintHandler,
     InitialSolution,
@@ -45,6 +49,14 @@ class InitialColoring(InitialSolution):
         problem (ColoringProblem): input coloring problem
         initial_method (InitialColoringMethod): the method to use to provide the initial solution.
     """
+
+    hyperparameters = [
+        EnumHyperparameter(
+            "initial_method",
+            enum=InitialColoringMethod,
+            default=InitialColoringMethod.GREEDY,
+        )
+    ]
 
     def __init__(
         self,
@@ -92,6 +104,10 @@ class ConstraintHandlerFixColorsCP(ConstraintHandler):
         problem (ColoringProblem): input coloring problem
         fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
     """
+
+    hyperparameters = [
+        FloatHyperparameter("fraction_to_fix", low=0.0, high=1.0, default=0.9),
+    ]
 
     def __init__(self, problem: ColoringProblem, fraction_to_fix: float = 0.9):
         self.problem = problem
