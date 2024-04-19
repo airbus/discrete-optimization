@@ -372,6 +372,15 @@ class Problem:
         """
         ...
 
+    def get_optuna_study_direction(self) -> str:
+        """Convert the objective sense into the expected string by Optuna."""
+        objective_register = self.get_objective_register()
+        if objective_register.objective_sense == ModeOptim.MINIMIZATION:
+            direction = "minimize"
+        else:
+            direction = "maximize"
+        return direction
+
 
 class BaseMethodAggregating(Enum):
     """Enum class used to specify how an evaluation of a multiscenario problem should be aggregated."""
