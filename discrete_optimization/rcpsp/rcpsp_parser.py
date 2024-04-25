@@ -27,7 +27,9 @@ def get_data_available(
 
     try:
         files = [
-            f for f in os.listdir(data_folder) if f.endswith(".sm") or f.endswith(".mm")
+            f
+            for f in os.listdir(data_folder)
+            if f.endswith(".sm") or f.endswith(".mm") or f.endswith(".rcp")
         ]
     except FileNotFoundError:
         files = []
@@ -107,8 +109,84 @@ def parse_psplib(input_data: str) -> RCPSPModel:
     )
 
 
+def parse_patterson(input_data: str) -> RCPSPModel:
+    lines = input_data.split()
+    parsed_values = []
+
+    for line in lines:
+        parsed_values.extend([int(_) for _ in line.split()])
+
+    # Number of all activities, including dummy activities
+    n_all_activities = parsed_values[0]
+
+    # Number of renewable resources
+    n_renewable_resources = parsed_values[1]
+
+    # Creating resource dict with only renewable resources
+    resources: Dict[str, Union[int, List[int]]] = {
+        "R" + str(i + 1): parsed_values[2] for i in range(n_renewable_resources)
+    }
+
+    # no non-renewable resources in patterson files
+    non_renewable_resources = [
+        name for name in list(resources.keys()) if name.startswith("N")
+    ]
+
+    # setting up dict data structure for successor and mode_detail information
+    successors: Dict[Hashable, List[Hashable]] = {}
+    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]] = {}
+
+    # pruning irrelevant content from parsed values
+    start_index_activity_information = 2 + n_renewable_resources
+    parsed_values = parsed_values[start_index_activity_information:]
+
+    task_id = 0
+    horizon = 0
+
+    # Patterson instances are not multi-mode, every task has only mode 1
+    mode_id = 1
+
+    # iterationg over remaining parsed values to populate previously created dicts (successors and mode_details)
+    while True:
+        task_id += 1
+        mode_details[int(task_id)] = {}
+        duration = parsed_values.pop(0)
+
+        mode_details[int(task_id)][mode_id] = {}  # Dict[int, Dict[str, int]]
+        mode_details[int(task_id)][mode_id]["duration"] = duration
+
+        horizon += duration
+
+        for res in range(n_renewable_resources):
+            mode_details[int(task_id)][mode_id][
+                list(resources.keys())[res]
+            ] = parsed_values.pop(0)
+
+        n_successors = parsed_values.pop(0)
+        task_successors = []
+        for suc in range(n_successors):
+            task_successors.append(parsed_values.pop(0))
+
+        successors[task_id] = task_successors
+
+        if task_id == n_all_activities:
+            break
+
+    return RCPSPModel(
+        resources=resources,
+        non_renewable_resources=non_renewable_resources,
+        mode_details=mode_details,
+        successors=successors,
+        horizon=horizon,
+        horizon_multiplier=30,
+    )
+
+
 def parse_file(file_path: str) -> RCPSPModel:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
-        rcpsp_model = parse_psplib(input_data)
+        if file_path.endswith(".rcp"):
+            rcpsp_model = parse_patterson(input_data)
+        else:
+            rcpsp_model = parse_psplib(input_data)
         return rcpsp_model
