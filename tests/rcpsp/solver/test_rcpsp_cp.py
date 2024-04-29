@@ -7,6 +7,7 @@ import random
 import numpy as np
 import pytest
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
@@ -71,6 +72,38 @@ def test_cp_sm(optimisation_level):
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 100
+    parameters_cp.nr_solutions = 1
+    parameters_cp.optimisation_level = optimisation_level
+    result_storage = solver.solve(parameters_cp=parameters_cp)
+    solution, fit = result_storage.get_best_solution_fit()
+    solution_rebuilt = RCPSPSolution(
+        problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
+    )
+    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
+    assert fit == -fit_2["makespan"]
+    assert rcpsp_problem.satisfy(solution)
+    rcpsp_problem.plot_ressource_view(solution)
+    plot_task_gantt(rcpsp_problem, solution)
+
+
+@pytest.mark.parametrize(
+    "optimisation_level",
+    [
+        0,
+        1,
+        2,
+        3,
+    ],
+)
+def test_cp_rcp(optimisation_level):
+    data_folder_rcp = f"{get_data_home()}/rcpsp/RG30/Set 1/"
+    files_patterson = get_data_available(data_folder=data_folder_rcp)
+    file = [f for f in files_patterson if "Pat8.rcp" in f][0]
+    rcpsp_problem = parse_file(file)
+    solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
+    solver.init_model(output_type=True)
+    parameters_cp = ParametersCP.default()
+    parameters_cp.time_limit = 10
     parameters_cp.nr_solutions = 1
     parameters_cp.optimisation_level = optimisation_level
     result_storage = solver.solve(parameters_cp=parameters_cp)
