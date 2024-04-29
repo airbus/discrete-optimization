@@ -124,7 +124,7 @@ def parse_patterson(input_data: str) -> RCPSPModel:
 
     # Creating resource dict with only renewable resources
     resources: Dict[str, Union[int, List[int]]] = {
-        "R" + str(i + 1): parsed_values[2+i] for i in range(n_renewable_resources)
+        "R" + str(i + 1): parsed_values[2 + i] for i in range(n_renewable_resources)
     }
 
     # no non-renewable resources in patterson files

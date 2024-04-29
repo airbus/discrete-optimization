@@ -8,16 +8,21 @@ from typing import Dict, Hashable, Tuple
 
 import pytest
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution, TaskDetails
 
 files_rcpsp = get_data_available()
 single_modes_files = [f for f in files_rcpsp if "sm" in f]
+
 multi_modes_files = [f for f in files_rcpsp if "mm" in f]
 
+data_folder_rcp = f"{get_data_home()}/rcpsp/RG30/Set 1/"
+files_patterson = get_data_available(data_folder=data_folder_rcp)
 
-@pytest.mark.parametrize("rcpsp_model_file", single_modes_files)
+
+@pytest.mark.parametrize("rcpsp_model_file", single_modes_files + files_patterson)
 def test_single_mode(rcpsp_model_file):
     rcpsp_model: RCPSPModel = parse_file(rcpsp_model_file)
     assert rcpsp_model.is_rcpsp_multimode() is False

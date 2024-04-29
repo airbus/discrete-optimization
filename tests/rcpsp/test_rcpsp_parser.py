@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 
 
@@ -165,3 +166,41 @@ def test_parsing_mm():
     assert rcpsp_model.resources == {"R1": 10, "R2": 13, "N1": 29, "N2": 30}
     assert rcpsp_model.non_renewable_resources == ["N1", "N2"]
     assert rcpsp_model.horizon == 77
+
+
+def test_parsing_rcp():
+    data_folder = f"{get_data_home()}/rcpsp/RG30/Set 1/"
+    files = get_data_available(data_folder=data_folder)
+    files = [f for f in files if "Pat8.rcp" in f]
+    assert len(files) > 0
+    file_path = files[0]
+    rcpsp_model = parse_file(file_path)
+    # Checking expected values to check at least partially the parsing of rcp files.
+    assert len(rcpsp_model.resources_list) == 4
+    assert all(rcpsp_model.resources[r] == 10 for r in rcpsp_model.resources_list)
+    assert rcpsp_model.source_task == 1
+    assert rcpsp_model.sink_task == 32
+    assert len(rcpsp_model.successors[rcpsp_model.source_task]) == 18
+    successors_source = [
+        2,
+        3,
+        4,
+        5,
+        7,
+        10,
+        11,
+        12,
+        13,
+        14,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+    ]
+    assert all(
+        s in rcpsp_model.successors[rcpsp_model.source_task] for s in successors_source
+    )

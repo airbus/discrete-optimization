@@ -20,6 +20,11 @@ COURSERA_REPO_URL_SHA1 = "f69378420ce2bb845abaef0f448eab303aa7a7e7"
 COURSERA_DATASETS = ["coloring", "facility", "knapsack", "tsp", "vrp"]
 COURSERA_DATADIRNAME = "data"
 
+SOLUTIONSUPDATE_BASE_URL = (
+    "http://solutionsupdate.ugent.be/sites/default/files/datasets/instances"
+)
+SOLUTIONSUPDATE_DATASETS = ["RG30", "RG300"]
+
 PSPLIB_FILES_BASE_URL = "https://www.om-db.wi.tum.de/psplib/files"
 PSPLIB_DATASETS = {
     "j10.mm": "j1010_",
@@ -97,6 +102,37 @@ def fetch_data_from_coursera(data_home: Optional[str] = None):
                     )
                 os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
     finally:
+        urlcleanup()
+
+
+def fetch_data_from_solutionsupdate(data_home: Optional[str] = None):
+    """Fetch data for rcpsp examples from solutionsupdate.
+
+    cf http://solutionsupdate.ugent.be/index.php/solutions-update
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    # get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get rcpsp data directory
+    rcpsp_dir = f"{data_home}/rcpsp"
+    os.makedirs(rcpsp_dir, exist_ok=True)
+
+    try:
+        # download each datasets
+        for dataset in SOLUTIONSUPDATE_DATASETS:
+            url = f"{SOLUTIONSUPDATE_BASE_URL}/{dataset}.zip"
+            local_file_path, _ = urlretrieve(url)
+            with zipfile.ZipFile(local_file_path) as zipf:
+                namelist = zipf.namelist()
+                for name in namelist:
+                    zipf.extract(name, path=rcpsp_dir)
+    finally:
+        # remove temporary files
         urlcleanup()
 
 
@@ -237,6 +273,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_coursera(data_home=data_home)
     fetch_data_from_psplib(data_home=data_home)
     fetch_data_from_imopse(data_home=data_home)
+    fetch_data_from_solutionsupdate(data_home=data_home)
 
 
 if __name__ == "__main__":

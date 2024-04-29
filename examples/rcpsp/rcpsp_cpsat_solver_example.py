@@ -4,6 +4,7 @@
 
 import logging
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.callbacks.loggers import (
     NbIterationTracker,
     ObjectiveLogger,
@@ -60,7 +61,8 @@ def solve_resource_with_cp_sat(problem: RCPSPModel):
         ],
         parameters_cp=parameters_cp,
     )
-    solution, fit = result_storage.get_best_solution_fit()
+    # solution, fit = result_storage.get_best_solution_fit()
+    solution, fit = result_storage.list_solution_fits[-1]
     plot_task_gantt(rcpsp_model=problem, rcpsp_sol=solution, title="Resource optim")
     plot_ressource_view(
         rcpsp_model=problem, rcpsp_sol=solution, title_figure="Resource optim"
@@ -81,7 +83,34 @@ def cpsat_single_mode_resource_optimization():
     solve_resource_with_cp_sat(rcpsp_problem)
 
 
+def cpsat_single_mode_makespan_optimization_rcp():
+    data_folder_rcp = f"{get_data_home()}/rcpsp/RG30/Set 1/"
+    files_patterson = get_data_available(data_folder=data_folder_rcp)
+    file = [f for f in files_patterson if "Pat8.rcp" in f][0]
+    rcpsp_problem = parse_file(file)
+    solve_makespan_with_cp_sat(rcpsp_problem)
+
+
+def cpsat_single_mode_resource_optimization_rcp():
+    data_folder_rcp = f"{get_data_home()}/rcpsp/RG30/Set 1/"
+    files_patterson = get_data_available(data_folder=data_folder_rcp)
+    file = [f for f in files_patterson if "Pat8.rcp" in f][0]
+    rcpsp_problem = parse_file(file)
+    solve_resource_with_cp_sat(rcpsp_problem)
+
+
+def cpsat_single_mode_resource_optimization_rcp_sd():
+    data_folder_rcp = f"{get_data_home()}/rcpsp/sD"
+    files_patterson = get_data_available(data_folder=data_folder_rcp)
+    file = [f for f in files_patterson if "sD1.rcp" in f][0]
+    rcpsp_problem = parse_file(file)
+    solve_resource_with_cp_sat(rcpsp_problem)
+
+
 if __name__ == "__main__":
+    # cpsat_single_mode_resource_optimization_rcp_sd()
     cpsat_single_mode_makespan_optimization()
     cpsat_single_mode_resource_optimization()
+    cpsat_single_mode_makespan_optimization_rcp()
+    cpsat_single_mode_resource_optimization_rcp()
     plt.show()
