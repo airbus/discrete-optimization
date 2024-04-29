@@ -119,6 +119,15 @@ jobs:
             os: "ubuntu-latest"
             python-version: "3.11"
             wo_gurobi: ""
+          - os: "macos-12"
+            python-version: "3.8"
+            wo_gurobi: ""
+            minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/MiniZincIDE.app/Contents/Resources
+            minizinc_cache_path: $(pwd)/bin/MiniZincIDE.app
+            minizinc_url: https://github.com/MiniZinc/MiniZincIDE/releases/download/2.8.3/MiniZincIDE-2.8.3-bundled.dmg
+            minizinc_downloaded_filepath: bin/minizinc.dmg
+            minizinc_install_cmdline: sudo hdiutil attach bin/minizinc.dmg; sudo cp -R /Volumes/MiniZinc*/MiniZincIDE.app bin/.
+            minizinc_prerequisites_cmdline: ""
         exclude:
           - os: "windows-latest"
             wo_gurobi: "without gurobi"
@@ -126,6 +135,8 @@ jobs:
             wo_gurobi: "without gurobi"
           - os: "ubuntu-latest"
             wo_gurobi: "without gurobi"
+            python-version: "3.8"
+          - os: "macos-latest"
             python-version: "3.8"
     runs-on: ${{ matrix.os }}
     defaults:
