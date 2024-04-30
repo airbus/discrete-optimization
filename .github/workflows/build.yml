@@ -327,7 +327,7 @@ jobs:
           git push origin ${new_tag_name}
           # store new tag name as notebooks branch
           echo "notebooks_branch=${new_tag_name}" >> $GITHUB_ENV
-          echo 'binder_full_ref="${{ github.repository }}/${new_tag_name}"' >> $GITHUB_ENV
+          echo "binder_full_ref=${{ github.repository }}/${new_tag_name}" >> $GITHUB_ENV
       - name: write new notebooks branch in job outputs
         id: write-output
         run: |
