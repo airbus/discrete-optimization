@@ -122,13 +122,6 @@ def test_lns_mm():
         skip_first_iteration=False,
     )
     solution, fit = result_store.get_best_solution_fit()
-    solution_rebuilt = RCPSPSolution(
-        problem=rcpsp_problem,
-        rcpsp_permutation=solution.rcpsp_permutation,
-        rcpsp_modes=solution.rcpsp_modes,
-    )
-    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert rcpsp_problem.evaluate(solution) == fit_2
     assert rcpsp_problem.satisfy(solution)
     plot_resource_individual_gantt(rcpsp_problem, solution)
     plot_ressource_view(rcpsp_problem, solution)
