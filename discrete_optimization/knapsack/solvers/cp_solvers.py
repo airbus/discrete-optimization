@@ -18,6 +18,7 @@ from discrete_optimization.generic_tools.cp_tools import (
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
+    FloatHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -308,6 +309,10 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
 
 
 class KnapConstraintHandler(ConstraintHandler):
+    hyperparameters = [
+        FloatHyperparameter(name="fraction_fix", default=0.95, low=0.0, high=1.0),
+    ]
+
     def __init__(self, fraction_fix: float = 0.95):
         self.fraction_fix = fraction_fix
 

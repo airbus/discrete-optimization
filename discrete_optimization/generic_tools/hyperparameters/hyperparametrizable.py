@@ -4,6 +4,9 @@
 
 from __future__ import annotations  # see annotations as str
 
+import inspect
+from collections import defaultdict
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -52,6 +55,33 @@ class Hyperparametrizable:
     def get_hyperparameter(cls, name: str) -> Hyperparameter:
         """Get hyperparameter from given name."""
         return cls.get_hyperparameters_by_name()[name]
+
+    @classmethod
+    def copy_and_update_hyperparameters(
+        cls, names: Optional[List[str]] = None, **kwargs_by_name: Dict[str, Any]
+    ) -> List[Hyperparameter]:
+        """Copy hyperparameters definition of this class and update them with specified kwargs.
+
+        This is useful to define hyperparameters for a child class
+        for which only choices of the hyperparameter change for instance.
+
+        Args:
+            names: names of hyperparameters to copy. Default to all.
+            **kwargs_by_name: for each hyperparameter specified by its name,
+                the attributes to update. If a given hyperparameter name is not specified,
+                the hyperparameter is copied without further update.
+
+        Returns:
+
+        """
+        if names is None:
+            names = cls.get_hyperparameters_names()
+        kwargs_by_name = defaultdict(dict, kwargs_by_name)  # add missing names
+        return [
+            _copy_and_update_attributes(h, **kwargs_by_name[h.name])
+            for h in cls.hyperparameters
+            if h.name in names
+        ]
 
     @classmethod
     def get_default_hyperparameters(
@@ -207,3 +237,13 @@ class Hyperparametrizable:
             )
 
         return suggested_hyperparameters
+
+
+def _copy_and_update_attributes(h: Hyperparameter, **kwargs) -> Hyperparameter:
+    hyperparameter_cls = h.__class__
+    init_args_names = list(inspect.signature(h.__init__).parameters)
+    for name in init_args_names:
+        if name not in kwargs:
+            kwargs[name] = getattr(h, name)
+    h_new = hyperparameter_cls(**kwargs)
+    return h_new

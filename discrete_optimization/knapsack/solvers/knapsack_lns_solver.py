@@ -10,6 +10,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.lns_mip import (
     ConstraintHandler,
     InitialSolution,
@@ -32,6 +35,13 @@ class InitialKnapsackMethod(Enum):
 
 
 class InitialKnapsackSolution(InitialSolution):
+    hyperparameters = [
+        EnumHyperparameter(
+            name="initial_method",
+            enum=InitialKnapsackMethod,
+        ),
+    ]
+
     def __init__(
         self,
         problem: KnapsackModel,
