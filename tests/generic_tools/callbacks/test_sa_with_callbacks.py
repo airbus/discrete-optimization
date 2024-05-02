@@ -9,7 +9,6 @@ import random
 from time import sleep
 
 import numpy as np
-import optuna
 import pytest
 
 from discrete_optimization.generic_tools.callbacks.backup import (
@@ -37,11 +36,18 @@ from discrete_optimization.generic_tools.mutations.mutation_catalog import (
     PermutationMutationRCPSP,
     get_available_mutations,
 )
-from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
-    TimedPercentilePruner,
-)
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
+
+try:
+    import optuna
+except ImportError:
+    optuna_available = False
+else:
+    optuna_available = True
+    from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
+        TimedPercentilePruner,
+    )
 
 SEED = 42
 
@@ -128,6 +134,9 @@ def test_sa_with_callbacks(caplog, random_seed):
     assert len([line for line in caplog.text.splitlines() if "Pickling" in line]) == 2
 
 
+@pytest.mark.skipif(
+    not optuna_available, reason="You need Optuna to test this callback."
+)
 def test_sa_with_optuna_callback(random_seed):
     def objective(trial: optuna.trial.Trial) -> float:
         files = get_data_available()
@@ -212,6 +221,9 @@ def test_sa_with_optuna_callback(random_seed):
     assert len(complete_trials) > 0
 
 
+@pytest.mark.skipif(
+    not optuna_available, reason="You need Optuna to test this callback."
+)
 def test_sa_with_optuna_timed_callback(random_seed):
     def objective(trial: optuna.trial.Trial) -> float:
         files = get_data_available()
