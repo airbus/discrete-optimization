@@ -8,6 +8,9 @@ from typing import Any, Iterable, Optional
 from minizinc import Instance
 
 from discrete_optimization.generic_tools.cp_tools import CPSolver
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    FloatHyperparameter,
+)
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
@@ -18,6 +21,10 @@ from discrete_optimization.knapsack.solvers.greedy_solvers import ResultStorage
 
 
 class ConstraintHandlerKnapsack(ConstraintHandler):
+    hyperparameters = [
+        FloatHyperparameter(name="fraction_to_fix", default=0.9, low=0.0, high=1.0),
+    ]
+
     def __init__(self, problem: KnapsackModel, fraction_to_fix: float = 0.9):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix

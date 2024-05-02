@@ -26,6 +26,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.lns_mip import (
     ConstraintHandler,
     InitialSolution,
@@ -46,6 +49,13 @@ class InitialFacilitySolution(InitialSolution):
         problem (FacilityProblem): input coloring problem
         initial_method (InitialFacilityMethod): the method to use to provide the initial solution.
     """
+
+    hyperparameters = [
+        EnumHyperparameter(
+            name="initial_method",
+            enum=InitialFacilityMethod,
+        ),
+    ]
 
     def __init__(
         self,

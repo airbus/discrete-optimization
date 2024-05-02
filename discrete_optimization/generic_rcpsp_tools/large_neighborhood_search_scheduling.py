@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Optional
 
 import discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver as rcpsp_lns
 from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
@@ -36,13 +36,21 @@ from discrete_optimization.generic_rcpsp_tools.solution_repair import (
     NeighborRepairProblems,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
-from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import CPSolverName, MinizincCPSolver
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.lns_cp import LNS_CP
-from discrete_optimization.generic_tools.lns_mip import InitialSolutionFromSolver
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+    SubBrickHyperparameter,
+    SubBrickKwargsHyperparameter,
+)
+from discrete_optimization.generic_tools.lns_cp import LNS_CP, ConstraintHandler
+from discrete_optimization.generic_tools.lns_mip import (
+    InitialSolution,
+    InitialSolutionFromSolver,
+    PostProcessSolution,
 )
 from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
     PostProLeftShift,
@@ -100,7 +108,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                         "fake_tasks",
                         "add_partial_solution_hard_constraint",
                     ]
-                }
+                },
             )
             return solver
     if rcpsp_problem.is_preemptive():
@@ -134,7 +142,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                             "fake_tasks",
                             "add_partial_solution_hard_constraint",
                         ]
-                    }
+                    },
                 )
                 return solver
             if not rcpsp_problem.is_rcpsp_multimode():
@@ -166,7 +174,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                             "fake_tasks",
                             "add_partial_solution_hard_constraint",
                         ]
-                    }
+                    },
                 )
                 return solver
     if not rcpsp_problem.is_preemptive():
@@ -189,7 +197,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                     x: kwargs[x]
                     for x in kwargs
                     if x not in ["add_partial_solution_hard_constraint"]
-                }
+                },
             )
             return solver
         if not rcpsp_problem.is_multiskill():
@@ -208,7 +216,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                         x: kwargs[x]
                         for x in kwargs
                         if x not in ["add_partial_solution_hard_constraint"]
-                    }
+                    },
                 )
                 return solver
             if not rcpsp_problem.is_rcpsp_multimode():
@@ -226,7 +234,7 @@ def build_default_cp_model(rcpsp_problem: ANY_RCPSP, partial_solution=None, **kw
                         x: kwargs[x]
                         for x in kwargs
                         if x not in ["add_partial_solution_hard_constraint"]
-                    }
+                    },
                 )
                 return solver
 
@@ -307,25 +315,34 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             preemptive=kwargs.get("preemptive", False),
             multiskill=kwargs.get("multiskill", False),
         )
-        params_list = kwargs.get(
-            "params_list",
-            [
-                ParamsConstraintBuilder(
+        if "params_list" in kwargs:
+            params_list = kwargs["params_list"]
+        else:
+            if kwargs["params_0_kwargs"] is None:
+                params_0 = ParamsConstraintBuilder(
                     minus_delta_primary=6000,
                     plus_delta_primary=6000,
                     minus_delta_secondary=400,
                     plus_delta_secondary=400,
                     constraint_max_time_to_current_solution=False,
-                ),
-                ParamsConstraintBuilder(
+                )
+            else:
+                params_0_cls = kwargs["params_0_cls"]
+                params_0_kwargs = kwargs["params_0_kwargs"]
+                params_0 = params_0_cls(**params_0_kwargs)
+            if kwargs["params_1_kwargs"] is None:
+                params_1 = ParamsConstraintBuilder(
                     minus_delta_primary=6000,
                     plus_delta_primary=6000,
                     minus_delta_secondary=0,
                     plus_delta_secondary=0,
                     constraint_max_time_to_current_solution=False,
-                ),
-            ],
-        )
+                )
+            else:
+                params_1_cls = kwargs["params_1_cls"]
+                params_1_kwargs = kwargs["params_1_kwargs"]
+                params_1 = params_1_cls(**params_1_kwargs)
+            params_list = [params_0, params_1]
         constraint_handler = ConstraintHandlerScheduling(
             problem=rcpsp_problem,
             basic_constraint_builder=basic_constraint_builder,
@@ -333,25 +350,34 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             use_makespan_of_subtasks=kwargs.get("use_makespan_of_subtasks", False),
         )
     elif constraint_handler_type == ConstraintHandlerType.SOLUTION_REPAIR:
-        params_list = kwargs.get(
-            "params_list",
-            [
-                ParamsConstraintBuilder(
+        if "params_list" in kwargs:
+            params_list = kwargs["params_list"]
+        else:
+            if kwargs["params_0_kwargs"] is None:
+                params_0 = ParamsConstraintBuilder(
                     minus_delta_primary=6000,
                     plus_delta_primary=6000,
                     minus_delta_secondary=400,
                     plus_delta_secondary=400,
                     constraint_max_time_to_current_solution=False,
-                ),
-                ParamsConstraintBuilder(
+                )
+            else:
+                params_0_cls = kwargs["params_0_cls"]
+                params_0_kwargs = kwargs["params_0_kwargs"]
+                params_0 = params_0_cls(**params_0_kwargs)
+            if kwargs["params_1_kwargs"] is None:
+                params_1 = ParamsConstraintBuilder(
                     minus_delta_primary=5000,
                     plus_delta_primary=5000,
                     minus_delta_secondary=2,
                     plus_delta_secondary=2,
                     constraint_max_time_to_current_solution=False,
-                ),
-            ],
-        )
+                )
+            else:
+                params_1_cls = kwargs["params_1_cls"]
+                params_1_kwargs = kwargs["params_1_kwargs"]
+                params_1 = params_1_cls(**params_1_kwargs)
+            params_list = [params_0, params_1]
         constraint_handler = NeighborRepairProblems(
             problem=rcpsp_problem, params_list=params_list
         )
@@ -451,70 +477,151 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
     return constraint_handler
 
 
-class LargeNeighborhoodSearchScheduling(SolverGenericRCPSP):
+class LargeNeighborhoodSearchScheduling(LNS_CP, SolverGenericRCPSP):
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        ),
+        CategoricalHyperparameter(name="do_ls", choices=[True, False], default=False),
+        EnumHyperparameter(
+            name="constraint_handler_type",
+            enum=ConstraintHandlerType,
+            default=ConstraintHandlerType.MIX_SUBPROBLEMS,
+        ),
+        FloatHyperparameter(
+            name="fraction_subproblem", default=0.05, low=0.0, high=1.0
+        ),
+        IntegerHyperparameter(name="nb_cut_part", default=10, low=0, high=100),
+        CategoricalHyperparameter(
+            name="use_makespan_of_subtasks", choices=[True, False], default=False
+        ),
+        SubBrickHyperparameter(
+            name="params_0_cls",
+            choices=[ParamsConstraintBuilder],
+            default=ParamsConstraintBuilder,
+        ),
+        SubBrickKwargsHyperparameter(
+            name="params_0_kwargs", subbrick_hyperparameter="params_0_cls"
+        ),
+        SubBrickHyperparameter(
+            name="params_1_cls",
+            choices=[ParamsConstraintBuilder],
+            default=ParamsConstraintBuilder,
+        ),
+        SubBrickKwargsHyperparameter(
+            name="params_1_kwargs", subbrick_hyperparameter="params_1_cls"
+        ),
+    ]
+
     def __init__(
         self,
         problem: ANY_RCPSP,
         partial_solution=None,
+        cp_solver: Optional[MinizincCPSolver] = None,
+        initial_solution_provider: Optional[InitialSolution] = None,
+        constraint_handler: Optional[ConstraintHandler] = None,
+        post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs: Any,
     ):
-        super().__init__(
-            problem=problem, params_objective_function=params_objective_function
+        SolverGenericRCPSP.__init__(
+            self, problem=problem, params_objective_function=params_objective_function
         )
         graph = build_graph_rcpsp_object(self.problem)
-        solver = kwargs.get("cp_solver", None)
-        if solver is None:
-            solver = build_default_cp_model(
-                rcpsp_problem=problem, partial_solution=partial_solution, **kwargs
-            )
-        self.cp_solver = solver
-        self.parameters_cp = kwargs.get("parameters_cp", ParametersCP.default())
-        self.constraint_handler = kwargs.get("constraint_handler", None)
-        if self.constraint_handler is None:
-            self.constraint_handler = build_constraint_handler(
-                rcpsp_problem=self.problem,
-                graph=graph,
-                multiskill=self.problem.is_multiskill(),
-                preemptive=self.problem.is_preemptive(),
-                **kwargs
-            )
-        self.post_pro = kwargs.get("post_process_solution", None)
-        if self.post_pro is None:
-            self.post_pro = build_default_postpro(
-                rcpsp_problem=self.problem, partial_solution=partial_solution, **kwargs
-            )
-        self.initial_solution_provider = kwargs.get("initial_solution_provider", None)
-        if self.initial_solution_provider is None:
-            self.initial_solution_provider = build_default_initial_solution(
-                rcpsp_problem=self.problem, **kwargs
-            )
-        self.lns_solver = LNS_CP(
-            problem=self.problem,
-            cp_solver=self.cp_solver,
-            initial_solution_provider=self.initial_solution_provider,
-            constraint_handler=self.constraint_handler,
-            post_process_solution=self.post_pro,
-            params_objective_function=self.params_objective_function,
-        )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
 
-    def solve(
-        self,
-        nb_iteration_lns: int,
-        parameters_cp: Optional[ParametersCP] = None,
-        nb_iteration_no_improvement: Optional[int] = None,
-        skip_first_iteration: bool = False,
-        stop_first_iteration_if_optimal: bool = True,
-        callbacks: Optional[List[Callback]] = None,
-        **args
-    ) -> ResultStorage:
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
-        return self.lns_solver.solve_lns(
-            parameters_cp=parameters_cp,
-            skip_first_iteration=skip_first_iteration,
-            stop_first_iteration_if_optimal=stop_first_iteration_if_optimal,
-            nb_iteration_no_improvement=nb_iteration_no_improvement,
-            nb_iteration_lns=nb_iteration_lns,
-            callbacks=callbacks,
-        )
+        if cp_solver is None:
+            if "cp_solver_kwargs" not in kwargs or kwargs["cp_solver_kwargs"] is None:
+                cp_solver_kwargs = kwargs
+            else:
+                cp_solver_kwargs = kwargs["cp_solver_kwargs"]
+            if "cp_solver_cls" not in kwargs or kwargs["cp_solver_cls"] is None:
+                cp_solver = build_default_cp_model(
+                    rcpsp_problem=problem,
+                    partial_solution=partial_solution,
+                    **cp_solver_kwargs,
+                )
+            else:
+                cp_solver_cls = kwargs["cp_solver_cls"]
+                cp_solver = cp_solver_cls(problem=self.problem, **cp_solver_kwargs)
+                cp_solver.init_model(**cp_solver_kwargs)
+        self.cp_solver = cp_solver
+
+        if constraint_handler is None:
+            if (
+                "constraint_handler_kwargs" not in kwargs
+                or kwargs["constraint_handler_kwargs"] is None
+            ):
+                constraint_handler_kwargs = kwargs
+            else:
+                constraint_handler_kwargs = kwargs["constraint_handler_kwargs"]
+            if (
+                "constraint_handler_cls" not in kwargs
+                or kwargs["constraint_handler_cls"] is None
+            ):
+                constraint_handler = build_constraint_handler(
+                    rcpsp_problem=self.problem,
+                    graph=graph,
+                    multiskill=self.problem.is_multiskill(),
+                    preemptive=self.problem.is_preemptive(),
+                    **constraint_handler_kwargs,
+                )
+            else:
+                constraint_handler_cls = kwargs["constraint_handler_cls"]
+                constraint_handler = constraint_handler_cls(
+                    problem=self.problem, **constraint_handler_kwargs
+                )
+        self.constraint_handler = constraint_handler
+
+        if post_process_solution is None:
+            if (
+                "post_process_solution_kwargs" not in kwargs
+                or kwargs["post_process_solution_kwargs"] is None
+            ):
+                post_process_solution_kwargs = kwargs
+            else:
+                post_process_solution_kwargs = kwargs["post_process_solution_kwargs"]
+            if (
+                "post_process_solution_cls" not in kwargs
+                or kwargs["post_process_solution_cls"] is None
+            ):
+                post_process_solution = build_default_postpro(
+                    rcpsp_problem=self.problem,
+                    partial_solution=partial_solution,
+                    **post_process_solution_kwargs,
+                )
+            else:
+                post_process_solution_cls = kwargs["post_process_solution_cls"]
+                post_process_solution = post_process_solution_cls(
+                    problem=self.problem,
+                    params_objective_function=self.params_objective_function,
+                    **post_process_solution_kwargs,
+                )
+        self.post_process_solution = post_process_solution
+
+        if initial_solution_provider is None:
+            if (
+                "initial_solution_provider_kwargs" not in kwargs
+                or kwargs["initial_solution_provider_kwargs"] is None
+            ):
+                initial_solution_provider_kwargs = kwargs
+            else:
+                initial_solution_provider_kwargs = kwargs[
+                    "initial_solution_provider_kwargs"
+                ]
+            if (
+                "initial_solution_provider_cls" not in kwargs
+                or kwargs["initial_solution_provider_cls"] is None
+            ):
+                initial_solution_provider = build_default_initial_solution(
+                    rcpsp_problem=self.problem,
+                    **initial_solution_provider_kwargs,
+                )
+            else:
+                initial_solution_provider_cls = kwargs["initial_solution_provider_cls"]
+                initial_solution_provider = initial_solution_provider_cls(
+                    problem=self.problem,
+                    params_objective_function=self.params_objective_function,
+                    **initial_solution_provider_kwargs,
+                )
+        self.initial_solution_provider = initial_solution_provider

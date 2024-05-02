@@ -51,10 +51,10 @@ class DummySolver2(SolverDO):
         return ResultStorage([])
 
 
-class MetaSolver(SolverDO):
+class BaseMetaSolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=0, high=1, default=1),
-        SubBrickHyperparameter("subsolver", choices=[DummySolver, DummySolver2]),
+        SubBrickHyperparameter("subsolver", choices=[DummySolver]),
         SubBrickKwargsHyperparameter(
             "kwargs_subsolver", subbrick_hyperparameter="subsolver"
         ),
@@ -64,6 +64,14 @@ class MetaSolver(SolverDO):
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return ResultStorage([])
+
+
+class MetaSolver(BaseMetaSolver):
+    # we check that copy_and_update_hyperparameters create a hyperparameter subsolver
+    # whose attribute choices_str2cls is working properly
+    hyperparameters = BaseMetaSolver.copy_and_update_hyperparameters(
+        subsolver=dict(choices=[DummySolver, DummySolver2]),
+    )
 
 
 class MetaMetaSolver(SolverDO):
@@ -302,3 +310,20 @@ def test_suggest_with_optuna_meta_solver_fixed_subsolver():
     study.optimize(objective)
 
     assert len(study.trials) == 2 * (3 * 5)
+
+
+def test_copy_and_update_hyperparameters():
+    hyperparameters = DummySolver.copy_and_update_hyperparameters(
+        nb=dict(high=5), use_it=dict(choices=[False])
+    )
+    original_hyperparameters = DummySolver.hyperparameters
+    assert len(hyperparameters) == len(original_hyperparameters)
+    for h, ho in zip(hyperparameters, original_hyperparameters):
+        assert h.name == ho.name
+        assert h is not ho
+        if h.name == "nb":
+            assert h.high == 5
+            assert ho.high == 2
+        elif h.name == "use_it":
+            assert len(h.choices) == 1
+            assert len(ho.choices) == 2

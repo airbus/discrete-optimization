@@ -28,6 +28,12 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    IntegerHyperparameter,
+    SubBrickHyperparameter,
+    SubBrickKwargsHyperparameter,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
@@ -72,26 +78,122 @@ class ConstraintHandler(Hyperparametrizable):
 
 
 class LNS_CP(SolverDO):
+    hyperparameters = [
+        SubBrickHyperparameter("cp_solver_cls", choices=[], default=None),
+        SubBrickKwargsHyperparameter(
+            "cp_solver_kwargs", subbrick_hyperparameter="cp_solver_cls"
+        ),
+        SubBrickHyperparameter(
+            "initial_solution_provider_cls", choices=[], default=None
+        ),
+        SubBrickKwargsHyperparameter(
+            "initial_solution_provider_kwargs",
+            subbrick_hyperparameter="initial_solution_provider_cls",
+        ),
+        SubBrickHyperparameter(
+            "constraint_handler_cls",
+            choices=[],
+            default=None,
+        ),
+        SubBrickKwargsHyperparameter(
+            "constraint_handler_kwargs",
+            subbrick_hyperparameter="constraint_handler_cls",
+        ),
+        SubBrickHyperparameter(
+            "post_process_solution_cls",
+            choices=[],
+            default=TrivialPostProcessSolution,
+        ),
+        SubBrickKwargsHyperparameter(
+            "post_process_solution_kwargs",
+            subbrick_hyperparameter="post_process_solution_cls",
+        ),
+        CategoricalHyperparameter(
+            name="skip_first_iteration", choices=[True, False], default=False
+        ),
+    ]
+
     def __init__(
         self,
         problem: Problem,
-        cp_solver: MinizincCPSolver,
-        initial_solution_provider: InitialSolution,
-        constraint_handler: ConstraintHandler,
+        cp_solver: Optional[MinizincCPSolver] = None,
+        initial_solution_provider: Optional[InitialSolution] = None,
+        constraint_handler: Optional[ConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+
+        if cp_solver is None:
+            if kwargs["cp_solver_kwargs"] is None:
+                cp_solver_kwargs = kwargs
+            else:
+                cp_solver_kwargs = kwargs["cp_solver_kwargs"]
+            if kwargs["cp_solver_cls"] is None:
+                raise ValueError(
+                    "`cp_solver_cls` cannot be None if `cp_solver` is not specified."
+                )
+            else:
+                cp_solver_cls = kwargs["cp_solver_cls"]
+                cp_solver = cp_solver_cls(problem=self.problem, **cp_solver_kwargs)
+                cp_solver.init_model(**cp_solver_kwargs)
         self.cp_solver = cp_solver
-        self.initial_solution_provider = initial_solution_provider
+
+        if constraint_handler is None:
+            if kwargs["constraint_handler_kwargs"] is None:
+                constraint_handler_kwargs = kwargs
+            else:
+                constraint_handler_kwargs = kwargs["constraint_handler_kwargs"]
+            if kwargs["constraint_handler_cls"] is None:
+                raise ValueError(
+                    "`constraint_handler_cls` cannot be None if `constraint_handler` is not specified."
+                )
+            else:
+                constraint_handler_cls = kwargs["constraint_handler_cls"]
+                constraint_handler = constraint_handler_cls(
+                    problem=self.problem, **constraint_handler_kwargs
+                )
         self.constraint_handler = constraint_handler
-        self.post_process_solution: PostProcessSolution
+
         if post_process_solution is None:
-            self.post_process_solution = TrivialPostProcessSolution()
-        else:
-            self.post_process_solution = post_process_solution
+            if kwargs["post_process_solution_kwargs"] is None:
+                post_process_solution_kwargs = kwargs
+            else:
+                post_process_solution_kwargs = kwargs["post_process_solution_kwargs"]
+            if kwargs["post_process_solution_cls"] is None:
+                post_process_solution = None
+            else:
+                post_process_solution_cls = kwargs["post_process_solution_cls"]
+                post_process_solution = post_process_solution_cls(
+                    problem=self.problem,
+                    params_objective_function=self.params_objective_function,
+                    **post_process_solution_kwargs,
+                )
+        self.post_process_solution = post_process_solution
+
+        if initial_solution_provider is None:
+            if kwargs["initial_solution_provider_kwargs"] is None:
+                initial_solution_provider_kwargs = kwargs
+            else:
+                initial_solution_provider_kwargs = kwargs[
+                    "initial_solution_provider_kwargs"
+                ]
+            if kwargs["initial_solution_provider_cls"] is None:
+                initial_solution_provider = (
+                    None  # ok if solve_lns with skip_first_iteration
+                )
+            else:
+                initial_solution_provider_cls = kwargs["initial_solution_provider_cls"]
+                initial_solution_provider = initial_solution_provider_cls(
+                    problem=self.problem,
+                    params_objective_function=self.params_objective_function,
+                    **initial_solution_provider_kwargs,
+                )
+        self.initial_solution_provider = initial_solution_provider
 
     def solve_lns(
         self,
@@ -108,6 +210,10 @@ class LNS_CP(SolverDO):
         # start of solve callback
         callbacks_list.on_solve_start(solver=self)
 
+        # manage None post_process_solution (can happen in subclasses __init__)
+        if self.post_process_solution is None:
+            self.post_process_solution = TrivialPostProcessSolution()
+
         sense = self.params_objective_function.sense_function
         if nb_iteration_no_improvement is None:
             nb_iteration_no_improvement = 2 * nb_iteration_lns
@@ -119,6 +225,10 @@ class LNS_CP(SolverDO):
                     "CP model instance must not be None after calling init_model()!"
                 )
         if not skip_first_iteration:
+            if self.initial_solution_provider is None:
+                raise ValueError(
+                    "self.initial_solution_provider cannot be None if not skip_first_iteration."
+                )
             store_lns = self.initial_solution_provider.get_starting_solution()
             store_lns = self.post_process_solution.build_other_solution(store_lns)
             init_solution, objective = store_lns.get_best_solution_fit()
@@ -264,14 +374,16 @@ class LNS_CP(SolverDO):
 
     def solve(
         self,
-        parameters_cp: ParametersCP,
         nb_iteration_lns: int,
+        parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
         skip_first_iteration: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         return self.solve_lns(
             parameters_cp=parameters_cp,
             nb_iteration_lns=nb_iteration_lns,
@@ -435,13 +547,15 @@ class LNS_CPlex(SolverDO):
 
     def solve(
         self,
-        parameters_cp: ParametersCP,
         nb_iteration_lns: int,
+        parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
         skip_first_iteration: bool = False,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        if parameters_cp is None:
+            parameters_cp = ParametersCP.default()
         return self.solve_lns(
             parameters_cp=parameters_cp,
             nb_iteration_lns=nb_iteration_lns,

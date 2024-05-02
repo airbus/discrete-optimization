@@ -25,6 +25,14 @@ from discrete_optimization.generic_rcpsp_tools.typing import (
     ANY_SOLUTION_PREEMPTIVE,
 )
 from discrete_optimization.generic_tools.cp_tools import CPSolver, SignEnum
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+    Hyperparametrizable,
+)
 from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -60,7 +68,40 @@ def get_max_time_solution(solution: ANY_SOLUTION):
     return solution.get_max_end_time()
 
 
-class ParamsConstraintBuilder:
+class ParamsConstraintBuilder(Hyperparametrizable):
+    hyperparameters = [
+        IntegerHyperparameter(name="minus_delta_primary", low=0, default=100),
+        IntegerHyperparameter(name="plus_delta_primary", low=0, default=100),
+        IntegerHyperparameter(name="minus_delta_secondary", low=0, default=0),
+        IntegerHyperparameter(name="plus_delta_secondary", low=0, default=0),
+        IntegerHyperparameter(name="minus_delta_primary_duration", default=5, low=0),
+        IntegerHyperparameter(name="plus_delta_primary_duration", default=5, low=0),
+        IntegerHyperparameter(name="minus_delta_secondary_duration", default=5, low=0),
+        IntegerHyperparameter(name="plus_delta_secondary_duration", default=5, low=0),
+        CategoricalHyperparameter(
+            name="constraint_max_time_to_current_solution",
+            choices=[True, False],
+            default=False,
+        ),
+        FloatHyperparameter(
+            name="fraction_of_task_assigned_multiskill", default=0.6, low=0.0, high=1.0
+        ),
+        CategoricalHyperparameter(
+            name="except_assigned_multiskill_primary_set",
+            choices=[True, False],
+            default=False,
+        ),
+        CategoricalHyperparameter(
+            name="first_method_multiskill", choices=[True, False], default=True
+        ),
+        CategoricalHyperparameter(
+            name="second_method_multiskill", choices=[True, False], default=False
+        ),
+        CategoricalHyperparameter(
+            name="additional_methods", choices=[True, False], default=False
+        ),
+    ]
+
     def __init__(
         self,
         minus_delta_primary: int,
