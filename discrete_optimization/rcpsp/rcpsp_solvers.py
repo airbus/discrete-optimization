@@ -27,9 +27,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
-from discrete_optimization.rcpsp.solver.cp_lns_solver import (
-    LargeNeighborhoodSearchRCPSP,
-)
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_PREEMPTIVE,
@@ -38,7 +35,6 @@ from discrete_optimization.rcpsp.solver.cp_solvers import (
 )
 from discrete_optimization.rcpsp.solver.cpm import CPM
 from discrete_optimization.rcpsp.solver.cpsat_solver import CPSatRCPSPSolver
-from discrete_optimization.rcpsp.solver.rcpsp_cp_lns_solver import LNS_CP_RCPSP_SOLVER
 from discrete_optimization.rcpsp.solver.rcpsp_ga_solver import (
     GA_MRCPSP_Solver,
     GA_RCPSP_Solver,
@@ -115,34 +111,11 @@ solvers: Dict[
             LNS_LP_RCPSP_SOLVER,
             {"nb_iteration_lns": 100, "lp_solver": MilpSolverName.CBC},
         ),
-        (
-            LNS_CP_RCPSP_SOLVER,
-            {"nb_iteration_lns": 100, "nb_iteration_no_improvement": 100},
-        ),
     ],
     "lns-lp": [
         (
             LNS_LP_RCPSP_SOLVER,
             {"nb_iteration_lns": 100, "lp_solver": MilpSolverName.CBC},
-        )
-    ],
-    "lns-cp": [
-        (
-            LNS_CP_RCPSP_SOLVER,
-            {"nb_iteration_lns": 100, "nb_iteration_no_improvement": 100},
-        )
-    ],
-    "lns-cp-rcpsp": [
-        (
-            LargeNeighborhoodSearchRCPSP,
-            {
-                "nb_iteration_lns": 100,
-                "nb_iteration_no_improvement": 100,
-                "parameters_cp": ParametersCP.default(),
-                "cut_part": 1,
-                "add_objective_makespan": False,
-                "fraction_subproblem": 0.6,
-            },
         )
     ],
     "lns-scheduling": [
@@ -189,9 +162,6 @@ solvers_compatibility: Dict[
     LNS_LP_RCPSP_SOLVER: [
         RCPSPModel,
     ],
-    LNS_CP_RCPSP_SOLVER: [
-        RCPSPModel,
-    ],
     LS_RCPSP_Solver: [
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
@@ -203,11 +173,6 @@ solvers_compatibility: Dict[
         RCPSPModel,
     ],
     GA_MRCPSP_Solver: [
-        RCPSPModelPreemptive,
-        RCPSPModelSpecialConstraintsPreemptive,
-        RCPSPModel,
-    ],
-    LargeNeighborhoodSearchRCPSP: [
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,
         RCPSPModel,

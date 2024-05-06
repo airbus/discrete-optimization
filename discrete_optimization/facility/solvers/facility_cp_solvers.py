@@ -152,28 +152,3 @@ class FacilityCP(MinizincCPSolver, SolverFacility):
         """
         facility = kwargs["facility_for_customer"]
         return FacilitySolution(self.problem, [f - 1 for f in facility])
-
-    @deprecated(
-        deprecated_in="0.1", details="Use rather initial solution provider utilities"
-    )
-    def get_solution(self, **kwargs: Any) -> FacilitySolution:
-        greedy_start = kwargs.get("greedy_start", True)
-        if greedy_start:
-            logger.info("Computing greedy solution")
-            greedy_solver = GreedySolverDistanceBased(self.problem)
-            result = greedy_solver.solve()
-            solution = result.get_best_solution()
-            if solution is None:
-                raise RuntimeError(
-                    "greedy_solver.solve().get_best_solution() " "should not be None."
-                )
-            if not isinstance(solution, FacilitySolution):
-                raise RuntimeError(
-                    "greedy_solver.solve().get_best_solution() "
-                    "should be a FacilitySolution."
-                )
-        else:
-            logger.info("Get dummy solution")
-            solution = self.problem.get_dummy_solution()
-        logger.info("Greedy Done")
-        return solution
