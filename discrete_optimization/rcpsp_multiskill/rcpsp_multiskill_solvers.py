@@ -20,12 +20,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.calendar_solver_iterative import (
-    SolverWithCalendarIterative,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.cp_lns_solver import (
-    LargeNeighborhoodSearchMSRCPSP,
-)
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
@@ -33,10 +27,6 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
     LP_Solver_MRSCPSP,
     MilpSolverName,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
-    LNS_CP_MS_RCPSP_SOLVER,
-    OptionNeighbor,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_ga_solver import (
     GA_MSRCPSP_Solver,
@@ -71,52 +61,8 @@ solvers = {
             },
         ),
     ],
-    "lns": [
-        (
-            LNS_CP_MS_RCPSP_SOLVER,
-            {
-                "nb_iteration_lns": 500,
-                "option_neighbor": OptionNeighbor.MIX_LARGE_NEIGH,
-                "exact_skills_need": False,
-            },
-        )
-    ],
-    "lns-cp": [
-        (
-            LNS_CP_MS_RCPSP_SOLVER,
-            {
-                "nb_iteration_lns": 20,
-                "option_neighbor": OptionNeighbor.MIX_LARGE_NEIGH,
-                "exact_skills_need": False,
-            },
-        )
-    ],
     "ls": [(LS_RCPSP_Solver, {"ls_solver": LS_SOLVER.SA, "nb_iteration_max": 20})],
     "ga": [(GA_MSRCPSP_Solver, {"parameters_ga": ParametersAltGa.default_msrcpsp()})],
-    "lns-cp-calendar": [
-        (
-            SolverWithCalendarIterative,
-            {
-                "option_neighbor": OptionNeighbor.MIX_LARGE_NEIGH,
-                "parameters_cp": ParametersCP.default(),
-                "nb_iteration_lns": 20,
-                "skip_first_iteration": False,
-            },
-        )
-    ],
-    "lns-cp-rcpsp": [
-        (
-            LargeNeighborhoodSearchMSRCPSP,
-            {
-                "nb_iteration_lns": 100,
-                "nb_iteration_no_improvement": 100,
-                "parameters_cp": ParametersCP.default_free(),
-                "cut_part": 6,
-                "add_objective_makespan": False,
-                "fraction_subproblem": 0.4,
-            },
-        )
-    ],
     "lns-scheduling": [
         (
             LargeNeighborhoodSearchScheduling,
@@ -137,13 +83,10 @@ for key in solvers:
 
 solvers_compatibility = {
     LP_Solver_MRSCPSP: [MS_RCPSPModel, MS_RCPSPModel_Variant],
-    SolverWithCalendarIterative: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     CP_MS_MRCPSP_MZN: [MS_RCPSPModel, MS_RCPSPModel_Variant],
-    LNS_CP_MS_RCPSP_SOLVER: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     LS_RCPSP_Solver: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     GA_MSRCPSP_Solver: [MS_RCPSPModel_Variant],
     CP_MS_MRCPSP_MZN_PREEMPTIVE: [MS_RCPSPModel, MS_RCPSPModel_Variant],
-    LargeNeighborhoodSearchMSRCPSP: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     LargeNeighborhoodSearchScheduling: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     GPHH: [MS_RCPSPModel, MS_RCPSPModel_Variant],
 }

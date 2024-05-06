@@ -4,9 +4,7 @@
 
 from typing import Dict, List, Set
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import InitialMethodRCPSP
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel_Variant,
@@ -20,13 +18,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     SearchStrategyMS_MRCPSP,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_cp_lns_solver import (
-    LNS_CP_MS_RCPSP_SOLVER,
-    OptionNeighbor,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_lp_lns_solver import (
-    InitialSolutionMS_RCPSP,
 )
 
 
@@ -238,80 +229,6 @@ def test_cp_imopse():
     parameters_cp.intermediate_solution = True
     parameters_cp.time_limit = 30
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
-    solution: MS_RCPSPSolution = result_storage.get_best_solution()
-    assert model_msrcpsp.satisfy(solution)
-    model_msrcpsp.evaluate(solution)
-
-
-def test_lns_small_neighbor():
-    files = [f for f in get_data_available() if f.endswith("100_5_64_9.def")]
-    f = files[0]
-    model_msrcpsp, new_tame_to_original_task_id = parse_file(f, max_horizon=2000)
-    model_msrcpsp = model_msrcpsp.to_variant_model()
-    initial_solution_provider = InitialSolutionMS_RCPSP(
-        problem=model_msrcpsp,
-        initial_method=InitialMethodRCPSP.PILE_CALENDAR,
-        params_objective_function=None,
-    )
-    solution = initial_solution_provider.get_starting_solution().get_best_solution()
-    makespan = model_msrcpsp.evaluate(solution)["makespan"]
-    model_msrcpsp.horizon = makespan + 5
-    lns_cp = LNS_CP_MS_RCPSP_SOLVER(
-        problem=model_msrcpsp,
-        option_neighbor=OptionNeighbor.MIX_FAST,
-        one_ressource_per_task=True,
-    )
-    parameters_cp = ParametersCP.default()
-    parameters_cp.intermediate_solution = True
-    parameters_cp.all_solutions = False
-    parameters_cp.time_limit = 10
-    parameters_cp.time_limit_iter0 = 10
-    result_storage = lns_cp.solve(
-        parameters_cp=parameters_cp,
-        nb_iteration_lns=100,
-        callbacks=[TimerStopper(total_seconds=100)],
-        nb_iteration_no_improvement=100,
-        skip_first_iteration=False,
-    )
-    solution: MS_RCPSPSolution = result_storage.get_best_solution()
-    assert model_msrcpsp.satisfy(solution)
-    model_msrcpsp.evaluate(solution)
-
-
-def test_lns():
-    file = [f for f in get_data_available() if "100_5_22_15.def" in f][0]
-
-    model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=2000)
-    model_msrcpsp = model_msrcpsp.to_variant_model()
-    initial_solution_provider = InitialSolutionMS_RCPSP(
-        problem=model_msrcpsp,
-        initial_method=InitialMethodRCPSP.PILE_CALENDAR,
-        params_objective_function=None,
-    )
-    solution = initial_solution_provider.get_starting_solution().get_best_solution()
-    makespan = model_msrcpsp.evaluate(solution)["makespan"]
-    model_msrcpsp.horizon = makespan + 5
-    model_rcpsp = model_msrcpsp.build_multimode_rcpsp_calendar_representative()
-    lns_cp = LNS_CP_MS_RCPSP_SOLVER(
-        problem=model_msrcpsp,
-        option_neighbor=OptionNeighbor.MIX_ALL,
-        one_ressource_per_task=True,
-        fake_tasks=True,
-        output_type=True,
-        exact_skills_need=False,
-    )
-    parameters_cp = ParametersCP.default()
-    parameters_cp.intermediate_solution = True
-    parameters_cp.all_solutions = False
-    parameters_cp.time_limit = 10
-    parameters_cp.time_limit_iter0 = 10
-    result_storage = lns_cp.solve(
-        parameters_cp=parameters_cp,
-        nb_iteration_lns=100,
-        callbacks=[TimerStopper(total_seconds=100)],
-        nb_iteration_no_improvement=100,
-        skip_first_iteration=False,
-    )
     solution: MS_RCPSPSolution = result_storage.get_best_solution()
     assert model_msrcpsp.satisfy(solution)
     model_msrcpsp.evaluate(solution)
