@@ -4,6 +4,7 @@
 
 import logging
 from enum import Enum
+from typing import List, Optional
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
     SolverGenericRCPSP,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimber
 from discrete_optimization.generic_tools.ls.local_search import (
@@ -57,7 +59,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
         )
         self.ls_solver = ls_solver
 
-    def solve(self, **kwargs):
+    def solve(self, callbacks: Optional[List[Callback]] = None, **kwargs):
         model = self.problem
         dummy = kwargs.get("starting_point", model.get_dummy_solution())
         find_better_starting_solution = kwargs.get("init_solution_process", False)
@@ -109,6 +111,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
             )
         result_sa = ls.solve(
             dummy,
+            callbacks=callbacks,
             nb_iteration_max=kwargs.get("nb_iteration_max", 2000),
         )
         return result_sa
