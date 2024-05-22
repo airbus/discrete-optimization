@@ -4,15 +4,21 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict, List, Tuple, Type, Any
+from typing import Any, Dict, List, Tuple, Type
 
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import ModelingCPSat
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
-from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import MisMilpSolver
-from discrete_optimization.maximum_independent_set.solvers.mis_ortools import MisOrtoolsSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
+    MisMilpSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_ortools import (
+    MisOrtoolsSolver,
+)
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
@@ -27,8 +33,7 @@ solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
     "ortools": [
         (
             MisOrtoolsSolver,
-            {"modeling": ModelingCPSat.BINARY, "parameters_cp": ParametersCP.default()}
-            ,
+            {"modeling": ModelingCPSat.BINARY, "parameters_cp": ParametersCP.default()},
         ),
     ],
 }
@@ -39,9 +44,7 @@ for key in solvers:
         solvers_map[solver] = (key, param)
 
 
-def solve(
-    method: Type[MisSolver], problem: MisProblem, **kwargs: Any
-) -> ResultStorage:
+def solve(method: Type[MisSolver], problem: MisProblem, **kwargs: Any) -> ResultStorage:
     """Solve a mis instance with a given class of solver.
 
     Args:

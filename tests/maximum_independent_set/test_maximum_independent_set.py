@@ -3,9 +3,14 @@ import logging
 import pytest
 
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
-from discrete_optimization.maximum_independent_set.mis_parser import dimacs_parser_nx, get_data_available
-from discrete_optimization.maximum_independent_set.mis_solvers import solvers_map, solve
-from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import MisMilpSolver
+from discrete_optimization.maximum_independent_set.mis_parser import (
+    dimacs_parser_nx,
+    get_data_available,
+)
+from discrete_optimization.maximum_independent_set.mis_solvers import solve, solvers_map
+from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
+    MisMilpSolver,
+)
 
 try:
     import gurobipy
@@ -28,5 +33,5 @@ def test_solvers(solver_class):
         method=solver_class, problem=mis_model, **solvers_map[solver_class][1]
     )
     sol, fit = results.get_best_solution_fit()
-    assert(sum(sol.chosen) == 10)
-    assert(mis_model.satisfy(sol))
+    assert sum(sol.chosen) == 10
+    assert mis_model.satisfy(sol)
