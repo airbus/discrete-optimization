@@ -1,8 +1,14 @@
 from typing import Any, Callable, Optional
 
-import gurobipy as gp
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+else:
+    gurobi_available = True
+    from gurobipy import GRB, LinExpr, Model
+
 import networkx as nx
-from gurobipy import GRB, LinExpr
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
@@ -26,7 +32,7 @@ class MisMilpSolver(MisSolver, GurobiMilpSolver):
     def init_model(self, **kwargs: Any) -> None:
 
         # Create a new model
-        self.model = gp.Model()
+        self.model = Model()
 
         # Create variables
 
