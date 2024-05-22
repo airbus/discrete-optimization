@@ -53,6 +53,9 @@ dependencies = [
     "typing_extensions>=4.4",
     "clingo>=5.6",
     "setuptools",
+    "qiskit>=1.0.2",
+    "qiskit-algorithms>=0.3.0",
+    "qiskit-optimization>=0.6.1"
 ]
 dynamic = ["version"]
 
