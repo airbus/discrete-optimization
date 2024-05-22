@@ -7,8 +7,10 @@
 
 import glob
 import os
+import shutil
 import tempfile
 import zipfile
+import gzip
 from typing import Optional
 from urllib.request import urlcleanup, urlretrieve
 
@@ -42,6 +44,11 @@ MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
 
 MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
 MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
+
+MIS_FILES = ["https://oeis.org/A265032/a265032_1dc.64.txt.gz", "https://oeis.org/A265032/a265032_1dc.128.txt.gz",
+             "https://oeis.org/A265032/a265032_1dc.256.txt.gz", "https://oeis.org/A265032/a265032_1dc.512.txt.gz",
+             "https://oeis.org/A265032/a265032_1dc.1024.txt.gz", "https://oeis.org/A265032/a265032_1dc.2048.txt.gz",
+             ]
 
 
 def get_data_home(data_home: Optional[str] = None) -> str:
@@ -261,6 +268,38 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
         # remove temporary files
         urlcleanup()
 
+def decompress_gz_to_folder(input_file, output_folder):
+    with gzip.open(input_file, 'rb') as f_in:
+        # Get the base name of the gzipped file without the .gz extension
+        base_name = os.path.basename(input_file)
+        file_name = os.path.splitext(base_name)[0]
+        # Create the output folder if it doesn't exist
+        os.makedirs(output_folder, exist_ok=True)
+        # Construct the output file path for each extracted file
+        output_file = os.path.join(output_folder, f"{file_name}.txt")
+        # Open the output file in write-binary mode ('wb')
+        with open(output_file, 'wb') as f_out:
+            # Write the extracted file data to the output file
+            shutil.copyfileobj(f_in, f_out)
+
+
+def fetch_data_for_mis(data_home: Optional[str] = None):
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # get mis data directory
+    mis_dir = f"{data_home}/mis"
+    os.makedirs(mis_dir, exist_ok=True)
+
+    try:
+        # download each datasets
+        for url in MIS_FILES:
+            filename, _ = urlretrieve(url)
+            decompress_gz_to_folder(filename, mis_dir)
+    finally:
+        # remove temporary files
+        urlcleanup()
+
 
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
@@ -274,6 +313,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_psplib(data_home=data_home)
     fetch_data_from_imopse(data_home=data_home)
     fetch_data_from_solutionsupdate(data_home=data_home)
+    fetch_data_for_mis(data_home=data_home)
 
 
 if __name__ == "__main__":
