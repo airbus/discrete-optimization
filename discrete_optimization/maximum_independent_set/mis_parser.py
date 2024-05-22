@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple, Hashable, Dict, Any, Optional
+from typing import Any, Dict, Hashable, List, Optional, Tuple
 
 import networkx as nx
 
@@ -56,9 +56,7 @@ def dimacs_parser(filename: str):
         line = lines[i]
         parts = line.split()
         edges.append((int(parts[1]), int(parts[2]), {}))
-    return MisProblem(
-        Graph(nodes, edges, undirected=True, compute_predecessors=False)
-    )
+    return MisProblem(Graph(nodes, edges, undirected=True, compute_predecessors=False))
 
 
 def basic_parser(filename: str):
@@ -81,9 +79,7 @@ def basic_parser(filename: str):
         line = lines[i]
         parts = line.split()
         edges.append((int(parts[0]), int(parts[1]), {}))
-    return MisProblem(
-        Graph(nodes, edges, undirected=True, compute_predecessors=False)
-    )
+    return MisProblem(Graph(nodes, edges, undirected=True, compute_predecessors=False))
 
 
 def dimacs_parser_nx(filename: str):

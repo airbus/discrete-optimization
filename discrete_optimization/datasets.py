@@ -6,11 +6,11 @@
 #  LICENSE file in the root directory of this source tree.
 
 import glob
+import gzip
 import os
 import shutil
 import tempfile
 import zipfile
-import gzip
 from typing import Optional
 from urllib.request import urlcleanup, urlretrieve
 
@@ -45,10 +45,14 @@ MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
 MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
 MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
 
-MIS_FILES = ["https://oeis.org/A265032/a265032_1dc.64.txt.gz", "https://oeis.org/A265032/a265032_1dc.128.txt.gz",
-             "https://oeis.org/A265032/a265032_1dc.256.txt.gz", "https://oeis.org/A265032/a265032_1dc.512.txt.gz",
-             "https://oeis.org/A265032/a265032_1dc.1024.txt.gz", "https://oeis.org/A265032/a265032_1dc.2048.txt.gz",
-             ]
+MIS_FILES = [
+    "https://oeis.org/A265032/a265032_1dc.64.txt.gz",
+    "https://oeis.org/A265032/a265032_1dc.128.txt.gz",
+    "https://oeis.org/A265032/a265032_1dc.256.txt.gz",
+    "https://oeis.org/A265032/a265032_1dc.512.txt.gz",
+    "https://oeis.org/A265032/a265032_1dc.1024.txt.gz",
+    "https://oeis.org/A265032/a265032_1dc.2048.txt.gz",
+]
 
 
 def get_data_home(data_home: Optional[str] = None) -> str:
@@ -268,8 +272,9 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
         # remove temporary files
         urlcleanup()
 
+
 def decompress_gz_to_folder(input_file, output_folder):
-    with gzip.open(input_file, 'rb') as f_in:
+    with gzip.open(input_file, "rb") as f_in:
         # Get the base name of the gzipped file without the .gz extension
         base_name = os.path.basename(input_file)
         file_name = os.path.splitext(base_name)[0]
@@ -278,7 +283,7 @@ def decompress_gz_to_folder(input_file, output_folder):
         # Construct the output file path for each extracted file
         output_file = os.path.join(output_folder, f"{file_name}.txt")
         # Open the output file in write-binary mode ('wb')
-        with open(output_file, 'wb') as f_out:
+        with open(output_file, "wb") as f_out:
             # Write the extracted file data to the output file
             shutil.copyfileobj(f_in, f_out)
 

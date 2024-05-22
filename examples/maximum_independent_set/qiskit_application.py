@@ -1,7 +1,9 @@
 import networkx as nx
 
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
-from discrete_optimization.maximum_independent_set.solvers.mis_quantum import QAOAMisSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
+    QAOAMisSolver,
+)
 
 
 def qiskit_example():
@@ -37,4 +39,3 @@ def qiskit_example():
 
     sol, fit = res.get_best_solution_fit()
     print(sol.chosen)
-

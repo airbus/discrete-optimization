@@ -6,13 +6,20 @@ from gurobipy import GRB, LinExpr
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
-from discrete_optimization.maximum_independent_set.mis_model import MisSolution, MisProblem
+from discrete_optimization.maximum_independent_set.mis_model import (
+    MisProblem,
+    MisSolution,
+)
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 
 class MisMilpSolver(MisSolver, GurobiMilpSolver):
-
-    def __init__(self, problem: MisProblem, params_objective_function: Optional[ParamsObjectiveFunction] = None, **kwargs: Any):
+    def __init__(
+        self,
+        problem: MisProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any
+    ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.vars_node = None
 
@@ -23,7 +30,9 @@ class MisMilpSolver(MisSolver, GurobiMilpSolver):
 
         # Create variables
 
-        self.vars_node = self.model.addVars(self.problem.number_nodes, vtype=GRB.BINARY, name="N")
+        self.vars_node = self.model.addVars(
+            self.problem.number_nodes, vtype=GRB.BINARY, name="N"
+        )
         value = nx.get_node_attributes(self.problem.graph_nx, "value", default=1)
 
         # Set objective
@@ -35,7 +44,9 @@ class MisMilpSolver(MisSolver, GurobiMilpSolver):
 
         for edge in self.problem.graph_nx.edges():
             self.model.addConstr(
-                self.vars_node[self.problem.nodes_to_index[edge[0]]] <= 1 - self.vars_node[self.problem.nodes_to_index[edge[1]]])
+                self.vars_node[self.problem.nodes_to_index[edge[0]]]
+                <= 1 - self.vars_node[self.problem.nodes_to_index[edge[1]]]
+            )
 
     def retrieve_current_solution(
         self,
