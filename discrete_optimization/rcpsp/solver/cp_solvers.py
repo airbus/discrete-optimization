@@ -22,8 +22,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
 )
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
@@ -123,7 +124,7 @@ def add_fake_task_cp_data(
 
 
 class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
-
+    hyperparameters = MinizincCPSolver.hyperparameters
     problem: RCPSPModel
 
     def __init__(
@@ -353,7 +354,7 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
 
 
 class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
-
+    hyperparameters = MinizincCPSolver.hyperparameters
     problem: RCPSPModel
 
     def __init__(

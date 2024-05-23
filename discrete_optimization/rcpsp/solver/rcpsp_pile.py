@@ -13,6 +13,9 @@ import numpy as np
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -36,6 +39,14 @@ push = heappush
 
 
 class PileSolverRCPSP(SolverRCPSP):
+    hyperparameters = [
+        EnumHyperparameter(
+            name="greedy_choice",
+            enum=GreedyChoice,
+            default=GreedyChoice.MOST_SUCCESSORS,
+        )
+    ]
+
     def __init__(
         self,
         problem: RCPSPModel,
@@ -85,7 +96,8 @@ class PileSolverRCPSP(SolverRCPSP):
             self.modes_dict = {t: 1 for t in self.mode_details}
 
     def solve(self, **kwargs) -> ResultStorage:
-        greedy_choice = kwargs.get("greedy_choice", GreedyChoice.MOST_SUCCESSORS)
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_choice: GreedyChoice = kwargs["greedy_choice"]
         current_succ = {
             k: {
                 "succs": set(self.successors_map[k]["succs"]),
@@ -236,6 +248,7 @@ class PileSolverRCPSP(SolverRCPSP):
 
 
 class PileSolverRCPSP_Calendar(SolverRCPSP):
+    hyperparameters = PileSolverRCPSP.hyperparameters
     problem: RCPSPModel
 
     def __init__(
@@ -289,7 +302,8 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
         self.with_calendar = problem.is_varying_resource()
 
     def solve(self, **kwargs) -> ResultStorage:
-        greedy_choice = kwargs.get("greedy_choice", GreedyChoice.MOST_SUCCESSORS)
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_choice = kwargs["greedy_choice"]
         current_succ = {
             k: {
                 "succs": set(self.successors_map[k]["succs"]),

@@ -25,6 +25,9 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -239,6 +242,11 @@ class CPSolver(SolverDO):
 class MinizincCPSolver(CPSolver):
     """CP solver wrapping a minizinc solver."""
 
+    hyperparameters = [
+        EnumHyperparameter(
+            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+        )
+    ]
     instance: Optional[Instance] = None
     silent_solve_error: bool = False
     """If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned."""

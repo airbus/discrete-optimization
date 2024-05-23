@@ -1,6 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from typing import Optional
 
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import Ga
@@ -14,8 +15,14 @@ from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 class GA_RCPSP_Solver(SolverRCPSP):
     problem: RCPSPModel
+    hyperparameters = Ga.hyperparameters
 
-    def solve(self, parameters_ga: ParametersGa = ParametersGa.default_rcpsp(), **args):
+    def solve(self, parameters_ga: Optional[ParametersGa] = None, **args):
+        if parameters_ga is None:
+            parameters_ga = ParametersGa.default_rcpsp()
+            args = self.complete_with_default_hyperparameters(args)
+            for key in args:
+                setattr(parameters_ga, key, args[key])
         ga_solver = Ga(
             problem=self.problem,
             encoding=parameters_ga.encoding,
