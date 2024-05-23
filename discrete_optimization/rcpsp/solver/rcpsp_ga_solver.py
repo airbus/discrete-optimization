@@ -21,8 +21,8 @@ class GA_RCPSP_Solver(SolverRCPSP):
         if parameters_ga is None:
             parameters_ga = ParametersGa.default_rcpsp()
             args = self.complete_with_default_hyperparameters(args)
-            for key in args:
-                setattr(parameters_ga, key, args[key])
+        for key in args:
+            setattr(parameters_ga, key, args[key])
         ga_solver = Ga(
             problem=self.problem,
             encoding=parameters_ga.encoding,
@@ -44,10 +44,16 @@ class GA_RCPSP_Solver(SolverRCPSP):
 
 class GA_MRCPSP_Solver(SolverRCPSP):
     problem: RCPSPModel
+    hyperparameters = Ga.hyperparameters
 
     def solve(
         self, parameters_ga: ParametersAltGa = ParametersAltGa.default_mrcpsp(), **args
     ):
+        if parameters_ga is None:
+            parameters_ga = ParametersAltGa.default_mrcpsp()
+            args = self.complete_with_default_hyperparameters(args)
+        for key in args:
+            setattr(parameters_ga, key, args[key])
         ga_solver = AlternatingGa(
             problem=self.problem,
             encodings=parameters_ga.encodings,
