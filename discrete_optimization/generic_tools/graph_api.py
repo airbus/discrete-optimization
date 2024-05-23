@@ -1,7 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import string
 from typing import Any, Dict, Hashable, KeysView, List, Optional, Set, Tuple, Union
 
 import networkx as nx
@@ -159,3 +159,16 @@ def from_networkx(
         else not isinstance(graph_nx, nx.DiGraph),
         compute_predecessors=compute_predecessors,
     )
+
+
+# this method is implemented to bypass the fact that networkX >= 3.2 is not compatible with python 3.8
+def get_node_attributes(graph: nx.Graph, name: string, default: Any):
+    """
+    @param graph: a nx.Graph
+    @param name: name of attribut of intereste
+    @param default:  default value if no value for attribute of interest
+    @return: a dictionnary with for each node of graph, the attribute value corresponding
+    """
+    if default is not None:
+        return {n: d.get(name, default) for n, d in graph.nodes.items()}
+    return {n: d[name] for n, d in graph.nodes.items() if name in d}
