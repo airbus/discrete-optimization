@@ -1,5 +1,7 @@
 from typing import Any, Callable, Optional
 
+from discrete_optimization.generic_tools.graph_api import get_node_attributes
+
 try:
     import gurobipy
 except ImportError:
@@ -7,8 +9,6 @@ except ImportError:
 else:
     gurobi_available = True
     from gurobipy import GRB, LinExpr, Model
-
-import networkx as nx
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
@@ -39,7 +39,7 @@ class MisMilpSolver(MisSolver, GurobiMilpSolver):
         self.vars_node = self.model.addVars(
             self.problem.number_nodes, vtype=GRB.BINARY, name="N"
         )
-        value = nx.get_node_attributes(self.problem.graph_nx, "value", default=1)
+        value = get_node_attributes(self.problem.graph_nx, "value", default=1)
 
         # Set objective
         obj_exp = LinExpr()
