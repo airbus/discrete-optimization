@@ -5,7 +5,6 @@
 import logging
 from typing import List, Union
 
-import matplotlib.cm
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import PatchCollection
@@ -13,6 +12,10 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
 
+from discrete_optimization.generic_tools.plot_utils import (
+    get_cmap,
+    get_cmap_with_nb_colors,
+)
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,
@@ -149,7 +152,7 @@ def plot_ressource_view(
             x, y = polygon.exterior.xy
             ax[i].plot(x, y, zorder=-1, color="b")
             patches.append(pp(xy=polygon.exterior.coords))
-        p = PatchCollection(patches, cmap=matplotlib.cm.get_cmap("Blues"), alpha=0.4)
+        p = PatchCollection(patches, cmap=get_cmap("Blues"), alpha=0.4)
 
         ax[i].add_collection(p)
     merged_times, merged_cons = compute_nice_resource_consumption(
@@ -226,7 +229,7 @@ def plot_task_gantt(
     patches = []
     for j in range(nb_task):
         nb_colors = len(tasks) // 2
-        colors = plt.cm.get_cmap("hsv", nb_colors)
+        colors = get_cmap_with_nb_colors("hsv", nb_colors)
         for start, end in zip(
             rcpsp_sol.rcpsp_schedule[tasks[j]]["starts"],
             rcpsp_sol.rcpsp_schedule[tasks[j]]["ends"],
@@ -481,7 +484,7 @@ def plot_resource_individual_gantt(
     for i in range(len(resources_list)):
         patches = []
         nb_colors = len(sorted_task_by_start) // 2
-        colors = plt.cm.get_cmap("hsv", nb_colors)
+        colors = get_cmap_with_nb_colors("hsv", nb_colors)
         for boxe in array_ressource_usage[resources_list[i]]["boxes_time"]:
             polygon = Polygon([(b[1], b[0]) for b in boxe])
             activity = boxe[0][2]

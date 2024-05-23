@@ -6,10 +6,10 @@ from __future__ import print_function
 from typing import Tuple
 
 import matplotlib.pyplot as plt
-from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
+from discrete_optimization.generic_tools.plot_utils import get_cmap_with_nb_colors
 from discrete_optimization.pickup_vrp.gpdp import GPDP, GPDPSolution
 
 
@@ -23,9 +23,8 @@ def plot_gpdp_solution(
         )
     vehicle_tours = sol.trajectories
     fig, ax = plt.subplots(1)
-    nb_colors = problem.number_vehicle
     nb_colors_clusters = len(problem.clusters_set)
-    colors_nodes = plt.cm.get_cmap("hsv", nb_colors_clusters)
+    colors_nodes = get_cmap_with_nb_colors("hsv", nb_colors_clusters)
     ax.scatter(
         [problem.coordinates_2d[node][0] for node in problem.clusters_dict],
         [problem.coordinates_2d[node][1] for node in problem.clusters_dict],
