@@ -22,6 +22,11 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -81,6 +86,17 @@ class Ga(SolverDO):
             by default, the first encoding in the problem register_solution will be used.
 
     """
+
+    hyperparameters = [
+        EnumHyperparameter(name="crossover", enum=DeapCrossover, default=None),
+        EnumHyperparameter(
+            name="selection", enum=DeapSelection, default=DeapSelection.SEL_TOURNAMENT
+        ),
+        IntegerHyperparameter(name="pop_size", low=1, high=1000, default=100),
+        FloatHyperparameter(name="mut_rate", low=0, high=0.9, default=0.1),
+        FloatHyperparameter(name="crossover_rate", low=0, high=1, default=0.9),
+        FloatHyperparameter(name="tournament_size", low=0, high=1, default=0.2),
+    ]
 
     def __init__(
         self,

@@ -9,6 +9,10 @@ from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 from mip import BINARY, INTEGER, MINIMIZE, Model, Var, xsum
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+)
 from discrete_optimization.generic_tools.lp_tools import (
     CplexMilpSolver,
     GurobiMilpSolver,
@@ -53,6 +57,14 @@ logger = logging.getLogger(__name__)
 
 class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
     problem: RCPSPModel
+    hyperparameters = [
+        EnumHyperparameter(
+            name="lp_solver", enum=MilpSolverName, default=MilpSolverName.CBC
+        ),
+        CategoricalHyperparameter(
+            name="greedy_start", choices=[True, False], default=True
+        ),
+    ]
 
     def __init__(
         self,
@@ -283,6 +295,11 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
 class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
     problem: RCPSPModel
     x: Dict[Tuple[Hashable, int, int], Any]
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="greedy_start", choices=[True, False], default=True
+        )
+    ]
 
     def __init__(
         self,
@@ -322,6 +339,8 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
 
 
 class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
+    hyperparameters = LP_RCPSP.hyperparameters
+
     def __init__(
         self,
         problem: RCPSPModel,
@@ -338,7 +357,8 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         self.solver_name = map_solver[lp_solver]
 
     def init_model(self, **args):
-        greedy_start = args.get("greedy_start", True)
+        args = self.complete_with_default_hyperparameters(args)
+        greedy_start = args["greedy_start"]
         start_solution = args.get("start_solution", None)
         if start_solution is None:
             if greedy_start:
@@ -550,8 +570,11 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
 
 
 class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
+    hyperparameters = _BaseLP_MRCPSP.hyperparameters
+
     def init_model(self, **args):
-        greedy_start = args.get("greedy_start", True)
+        args = self.complete_with_default_hyperparameters(args)
+        greedy_start = args["greedy_start"]
         start_solution = args.get("start_solution", None)
         max_horizon = args.get("max_horizon", None)
         if start_solution is None:
@@ -812,15 +835,10 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
             )
             self.model.update()
 
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> ResultStorage:
-        if self.model is None:
-            self.init_model(greedy_start=False, **kwargs)
-        return super().solve(parameters_milp=parameters_milp, **kwargs)
-
 
 class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
+    hyperparameters = _BaseLP_MRCPSP.hyperparameters
+
     def init_model(self, **args):
         greedy_start = args.get("greedy_start", True)
         start_solution = args.get("start_solution", None)
@@ -1005,10 +1023,3 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
                     else:
                         warmstart.add_var_value(self.x[k], 0)
             self.model.add_mip_start(warmstart)
-
-    def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
-    ) -> ResultStorage:
-        if self.model is None:
-            self.init_model(greedy_start=False, **kwargs)
-        return super().solve(parameters_milp=parameters_milp, **kwargs)

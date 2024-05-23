@@ -17,6 +17,9 @@ from ortools.sat.python.cp_model import (
 
 from discrete_optimization.generic_tools.cp_tools import StatusSolver
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import (
@@ -154,7 +157,7 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP):
             ]
             fake_task_res = [
                 (
-                    model.NewFixedSizeIntervalVar(
+                    model.NewFixedSizedIntervalVar(
                         start=f["start"], size=f["duration"], name=f"res_"
                     ),
                     f.get(resource, 0),
@@ -354,7 +357,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
                 return
             fake_task_res = [
                 (
-                    model.NewFixedSizeIntervalVar(
+                    model.NewFixedSizedIntervalVar(
                         start=f["start"], size=f["duration"], name=f"res_"
                     ),
                     int(f.get(resource, 0)),
@@ -443,6 +446,14 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
     In this version we sum up the resource for each given time to do the resource optimisation.
     """
 
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="use_overlap_for_disjunctive_resource",
+            default=True,
+            choices=[True, False],
+        )
+    ]
+
     def create_resource_capacity_var(self, model: CpModel):
         resource_capacity_var = {}
         for resource in self.problem.resources_list:
@@ -492,7 +503,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
                 return
             fake_task_res = [
                 (
-                    model.NewFixedSizeIntervalVar(
+                    model.NewFixedSizedIntervalVar(
                         start=f["start"], size=f["duration"], name=f"res_"
                     ),
                     f.get(resource, 0),

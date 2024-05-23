@@ -14,6 +14,10 @@ from discrete_optimization.generic_tools.cp_tools import (
     find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
@@ -71,6 +75,12 @@ def add_fake_task_cp_data(
 
 
 class CP_MULTISCENARIO(MinizincCPSolver):
+    hyperparameters = MinizincCPSolver.hyperparameters + [
+        CategoricalHyperparameter(
+            name="relax_ordering", default=False, choices=[True, False]
+        ),
+        IntegerHyperparameter(name="nb_incoherence_limit", low=0, high=10, default=3),
+    ]
     problem: AggregRCPSPModel
 
     def __init__(
@@ -95,6 +105,7 @@ class CP_MULTISCENARIO(MinizincCPSolver):
         return self.problem
 
     def init_model(self, **args):
+        args = self.complete_with_default_hyperparameters(args)
         model_type = args.get("model_type", "multiscenario")
         max_time = args.get("max_time", self.problem.horizon)
         fake_tasks = args.get(
@@ -162,8 +173,8 @@ class CP_MULTISCENARIO(MinizincCPSolver):
             for task in sorted_tasks
         ]
         instance["suc"] = suc
-        instance["relax_ordering"] = args.get("relax_ordering", False)
-        instance["nb_incoherence_limit"] = args.get("nb_incoherence_limit", 3)
+        instance["relax_ordering"] = args["relax_ordering"]
+        instance["nb_incoherence_limit"] = args["nb_incoherence_limit"]
         self.instance = instance
         self.index_in_minizinc = {
             task: self.problem.return_index_task(task, offset=1)

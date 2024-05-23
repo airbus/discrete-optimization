@@ -48,8 +48,9 @@ def intersect(i1, i2):
 
 class ConstraintTaskIndividual:
     list_tuple: List[Tuple[str, int, int, bool]]
-    # task, ressource, ressource_individual, has or has not to do a task
-    # indicates constraint for a given resource individual that has to do a tas
+    # task, resource, resource_individual, has or has not to do a task
+    # indicates constraint for a given resource individual that has to do a task
+
     def __init__(self, list_tuple):
         self.list_tuple = list_tuple
 
@@ -246,8 +247,8 @@ class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
                         )
 
 
-# gurobi solver which is ussefull to get a pool of solution (indeed, using the other one we dont have usually a lot of
-# ssolution since we converge rapidly to the "optimum" (we don't have an objective value..)
+# gurobi solver which is usefull to get a pool of solution (indeed, using the other one we dont have usually a lot of
+# solution since we converge rapidly to the "optimum" (we don't have an objective value..)
 class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
     def init_model(self, **args):
         self.model = gurobi.Model("Gantt")

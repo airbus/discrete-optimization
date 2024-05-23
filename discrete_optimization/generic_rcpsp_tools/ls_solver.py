@@ -14,6 +14,12 @@ from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    EnumHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
 from discrete_optimization.generic_tools.ls.hill_climber import HillClimber
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -47,6 +53,17 @@ class LS_SOLVER(Enum):
 
 
 class LS_RCPSP_Solver(SolverGenericRCPSP):
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="init_solution_process", choices=[True, False], default=False
+        ),
+        EnumHyperparameter(name="ls_solver", enum=LS_SOLVER, default=LS_SOLVER.SA),
+        FloatHyperparameter(name="temperature", low=0.01, high=10, default=3),
+        IntegerHyperparameter(
+            name="nb_iteration_no_improvement", low=10, high=2000, default=200
+        ),
+    ]
+
     def __init__(
         self,
         problem: ANY_RCPSP,
@@ -60,6 +77,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
         self.ls_solver = ls_solver
 
     def solve(self, callbacks: Optional[List[Callback]] = None, **kwargs):
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
         model = self.problem
         dummy = kwargs.get("starting_point", model.get_dummy_solution())
         find_better_starting_solution = kwargs.get("init_solution_process", False)
@@ -83,7 +101,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
             list_mutation, np.ones((len(list_mutation)))
         )
         res = RestartHandlerLimit(
-            nb_iteration_no_improvement=kwargs.get("nb_iteration_no_improvement", 300),
+            nb_iteration_no_improvement=kwargs["nb_iteration_no_improvement"],
         )
         ls = None
         if self.ls_solver == LS_SOLVER.SA:
@@ -92,7 +110,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
                 mutator=mixed_mutation,
                 restart_handler=res,
                 temperature_handler=TemperatureSchedulingFactor(
-                    temperature=kwargs.get("temperature", 3),
+                    temperature=kwargs["temperature"],
                     restart_handler=res,
                     coefficient=kwargs.get("decay_temperature", 0.9999),
                 ),

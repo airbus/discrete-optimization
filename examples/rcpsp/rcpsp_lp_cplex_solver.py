@@ -3,6 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 import os
 
+from discrete_optimization.datasets import get_data_home
+
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -36,5 +38,23 @@ def run_rcpsp_sm_lp_cplex():
     plt.show()
 
 
+def run_rcpsp_lp_cplex():
+    data_folder_rcp = f"{get_data_home()}/rcpsp/RG300/"
+    files_patterson = get_data_available(data_folder=data_folder_rcp)
+    file = [f for f in files_patterson if "RG300_190.rcp" in f][0]
+    rcpsp_problem: RCPSPModel = parse_file(file)
+    solver = LP_RCPSP_CPLEX(problem=rcpsp_problem)
+    solver.init_model(greedy_start=False, max_horizon=370)
+    parameters_milp = ParametersMilp.default()
+    parameters_milp.time_limit = 10000
+    results_storage: ResultStorage = solver.solve(parameters_milp=parameters_milp)
+    solution, fit = results_storage.get_best_solution_fit()
+    print(results_storage.list_solution_fits)
+    assert rcpsp_problem.satisfy(solution)
+    plot_resource_individual_gantt(rcpsp_problem, solution)
+    plot_ressource_view(rcpsp_problem, solution)
+    plt.show()
+
+
 if __name__ == "__main__":
-    run_rcpsp_sm_lp_cplex()
+    run_rcpsp_lp_cplex()
