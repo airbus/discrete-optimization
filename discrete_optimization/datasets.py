@@ -273,15 +273,15 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
         urlcleanup()
 
 
-def decompress_gz_to_folder(input_file, output_folder):
+def decompress_gz_to_folder(input_file, output_folder, url):
     with gzip.open(input_file, "rb") as f_in:
         # Get the base name of the gzipped file without the .gz extension
-        base_name = os.path.basename(input_file)
+        base_name = url[33:]
         file_name = os.path.splitext(base_name)[0]
         # Create the output folder if it doesn't exist
         os.makedirs(output_folder, exist_ok=True)
         # Construct the output file path for each extracted file
-        output_file = os.path.join(output_folder, f"{file_name}.txt")
+        output_file = os.path.join(output_folder, f"{file_name}")
         # Open the output file in write-binary mode ('wb')
         with open(output_file, "wb") as f_out:
             # Write the extracted file data to the output file
@@ -300,7 +300,7 @@ def fetch_data_for_mis(data_home: Optional[str] = None):
         # download each datasets
         for url in MIS_FILES:
             filename, _ = urlretrieve(url)
-            decompress_gz_to_folder(filename, mis_dir)
+            decompress_gz_to_folder(filename, mis_dir, url)
     finally:
         # remove temporary files
         urlcleanup()

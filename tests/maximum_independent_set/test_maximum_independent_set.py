@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 def test_solvers(solver_class):
     if solver_class == MisMilpSolver and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
-    small_example = get_data_available()[0]
+    small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     results = solve(
         method=solver_class, problem=mis_model, **solvers_map[solver_class][1]
