@@ -6,7 +6,6 @@ import logging
 import math
 from typing import Dict, List, Optional, Tuple, cast
 
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -18,6 +17,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
     TupleFitness,
 )
+from discrete_optimization.generic_tools.plot_utils import get_cmap_with_nb_colors
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ParetoFront,
     ResultStorage,
@@ -139,8 +139,9 @@ class ResultComparator:
             for obj in objectives_str:
                 obj_index = self.objectives_str.index(obj)
                 objectives_index.append(obj_index)
-
-        colors = cm.rainbow(np.linspace(0, 1, len(self.list_result_storage)))
+        colors = get_cmap_with_nb_colors(
+            color_map_str="rainbow", nb_colors=len(self.list_result_storage)
+        )
         fig, ax = plt.subplots(1)
         ax.set_xlabel(objecives_names[0])
         ax.set_ylabel(objecives_names[1])
@@ -165,10 +166,10 @@ class ResultComparator:
     ) -> Figure:
 
         if objectives_str is None:
-            objecives_names = self.objectives_str[:2]
+            objectives_names = self.objectives_str[:2]
             objectives_index = [0, 1]
         else:
-            objecives_names = objectives_str
+            objectives_names = objectives_str
             objectives_index = []
             for obj in objectives_str:
                 obj_index = self.objectives_str.index(obj)
@@ -180,7 +181,9 @@ class ResultComparator:
         )  # I have to do this to ensure at least 2 rows or else it creates axs with only 1 diumension and it crashes
         fig, axs = plt.subplots(rows, cols)
         axis = axs.flatten()
-        colors = cm.rainbow(np.linspace(0, 1, len(self.list_result_storage)))
+        colors = get_cmap_with_nb_colors(
+            color_map_str="rainbow", nb_colors=len(self.list_result_storage)
+        )
         for i, ax in zip(
             range(len(self.list_result_storage)), axis[: len(self.list_result_storage)]
         ):

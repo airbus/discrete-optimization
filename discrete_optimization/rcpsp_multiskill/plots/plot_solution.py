@@ -9,6 +9,7 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
 
+from discrete_optimization.generic_tools.plot_utils import get_cmap_with_nb_colors
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPSolution,
@@ -163,7 +164,7 @@ def plot_resource_individual_gantt(
     for i in range(len(sorted_employees)):
         patches = []
         nb_colors = len(sorted_task_by_start) // 2
-        colors = plt.cm.get_cmap("hsv", nb_colors)
+        colors = get_cmap_with_nb_colors("hsv", nb_colors)
         for boxe in array_ressource_usage[sorted_employees[i]]["boxes_time"]:
             polygon = Polygon([(b[1], b[0]) for b in boxe])
             activity = boxe[0][2]
@@ -253,7 +254,7 @@ def plot_resource_individual_gantt_preemptive(
     for i in range(len(sorted_employees)):
         patches = []
         nb_colors = len(sorted_task_by_start) // 2
-        colors = plt.cm.get_cmap("hsv", nb_colors)
+        colors = get_cmap_with_nb_colors("hsv", nb_colors)
         for boxe in array_ressource_usage[sorted_employees[i]]["boxes_time"]:
             polygon = Polygon([(b[1], b[0]) for b in boxe])
             activity = boxe[0][2]
@@ -336,7 +337,7 @@ def plot_task_gantt(
     patches = []
     for j in range(nb_task):
         nb_colors = len(tasks) // 2
-        colors = plt.cm.get_cmap("hsv", nb_colors)
+        colors = get_cmap_with_nb_colors("hsv", nb_colors)
         for start, end in zip(
             rcpsp_sol.get_start_times_list(tasks[j]),
             rcpsp_sol.get_end_times_list(tasks[j]),
