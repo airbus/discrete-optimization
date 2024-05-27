@@ -2,6 +2,10 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import platform
+
+import pytest
+
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -13,6 +17,13 @@ from discrete_optimization.rcpsp.rcpsp_utils import (
     plot_ressource_view,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
+
+if platform.machine() == "arm64":
+    pytest.skip(
+        "Python-mip has issues with cbclib on macos arm64. "
+        "See https://github.com/coin-or/python-mip/issues/167",
+        allow_module_level=True,
+    )
 
 
 def test_rcpsp_sm_lp_cbc():

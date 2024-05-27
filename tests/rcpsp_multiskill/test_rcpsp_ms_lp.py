@@ -1,8 +1,10 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+import platform
 from typing import Dict, List, Set
+
+import pytest
 
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
@@ -14,6 +16,13 @@ from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
     MilpSolverName,
     ParametersMilp,
 )
+
+if platform.machine() == "arm64":
+    pytest.skip(
+        "Python-mip has issues with cbclib on macos arm64. "
+        "See https://github.com/coin-or/python-mip/issues/167",
+        allow_module_level=True,
+    )
 
 
 def test_lp():

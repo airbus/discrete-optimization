@@ -1,6 +1,10 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import platform
+
+import pytest
+
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
@@ -17,6 +21,13 @@ from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
 from discrete_optimization.knapsack.solvers.lp_solvers import KnapsackModel, LPKnapsack
 
 
+@pytest.mark.skipif(
+    platform.machine() == "arm64",
+    reason=(
+        "Python-mip has issues with cbclib on macos arm64. "
+        "See https://github.com/coin-or/python-mip/issues/167"
+    ),
+)
 def test_knapsack_lns():
     model_file = [f for f in get_data_available() if "ks_30_0" in f][0]
     model: KnapsackModel = parse_file(model_file)
