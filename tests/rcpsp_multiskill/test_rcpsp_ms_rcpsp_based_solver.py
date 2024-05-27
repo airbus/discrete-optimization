@@ -2,7 +2,10 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import platform
 from typing import Dict, List, Set
+
+import pytest
 
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.rcpsp.rcpsp_solvers import LP_MRCPSP, solvers
@@ -15,6 +18,13 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 from discrete_optimization.rcpsp_multiskill.solvers.solver_rcpsp_based import (
     Solver_RCPSP_Based,
 )
+
+if platform.machine() == "arm64":
+    pytest.skip(
+        "Python-mip has issues with cbclib on macos arm64. "
+        "See https://github.com/coin-or/python-mip/issues/167",
+        allow_module_level=True,
+    )
 
 
 def create_toy_msrcpsp():

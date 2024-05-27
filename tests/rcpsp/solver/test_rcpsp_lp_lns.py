@@ -2,6 +2,10 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import platform
+
+import pytest
+
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -25,6 +29,13 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialSolutionRCPSP,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
+
+if platform.machine() == "arm64":
+    pytest.skip(
+        "Python-mip has issues with cbclib on macos arm64. "
+        "See https://github.com/coin-or/python-mip/issues/167",
+        allow_module_level=True,
+    )
 
 
 def test_lns_sm():

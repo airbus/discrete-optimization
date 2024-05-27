@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
+import platform
 
 import pytest
 
@@ -33,6 +34,13 @@ else:
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+@pytest.mark.skipif(
+    platform.machine() == "arm64",
+    reason=(
+        "Python-mip has issues with cbclib on macos arm64. "
+        "See https://github.com/coin-or/python-mip/issues/167"
+    ),
+)
 def test_facility_lns():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
     facility_problem = parse_file(file)

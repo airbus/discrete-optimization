@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
+import platform
 import random
 import sys
 
@@ -57,7 +58,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.nsga import Nsga
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import ParametersMilp, PymipMilpSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
 )
@@ -103,6 +104,11 @@ def test_load_file(coloring_problem_file):
 def test_solvers(solver_class):
     if solver_class == ColoringLP and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
+    if issubclass(solver_class, PymipMilpSolver) and platform.machine() == "arm64":
+        pytest.skip(
+            "Python-mip has issues with cbclib on macos arm64. "
+            "See https://github.com/coin-or/python-mip/issues/167"
+        )
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
     results = solve(
@@ -111,7 +117,16 @@ def test_solvers(solver_class):
     sol, fit = results.get_best_solution_fit()
 
 
-def test_solvers_subset():
+@pytest.mark.parametrize("solver_class", solvers_map)
+def test_solvers_subset(solver_class):
+    if solver_class == ColoringLP and not gurobi_available:
+        pytest.skip("You need Gurobi to test this solver.")
+    if issubclass(solver_class, PymipMilpSolver) and platform.machine() == "arm64":
+        pytest.skip(
+            "Python-mip has issues with cbclib on macos arm64. "
+            "See https://github.com/coin-or/python-mip/issues/167"
+        )
+
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
     coloring_model = transform_coloring_problem(
@@ -122,16 +137,13 @@ def test_solvers_subset():
     assert coloring_model.graph is not None
     assert coloring_model.number_of_nodes is not None
     assert coloring_model.graph.nodes_name is not None
-    solvers = solvers_map.keys()
-    for s in solvers:
-        logger.info(f"Running {s}")
-        if s == ColoringLP and not gurobi_available:
-            # you need a gurobi licence to test this solver.
-            continue
-        results = solve(method=s, problem=coloring_model, **solvers_map[s][1])
-        sol, fit = results.get_best_solution_fit()
-        print(f"Solver {s}, fitness = {fit}")
-        print(f"Evaluation : {coloring_model.evaluate(sol)}")
+
+    results = solve(
+        method=solver_class, problem=coloring_model, **solvers_map[solver_class][1]
+    )
+    sol, fit = results.get_best_solution_fit()
+    print(f"Solver {solver_class}, fitness = {fit}")
+    print(f"Evaluation : {coloring_model.evaluate(sol)}")
 
 
 def test_mzn_solver_cb(caplog):
