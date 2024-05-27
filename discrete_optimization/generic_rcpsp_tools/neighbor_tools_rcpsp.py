@@ -24,7 +24,7 @@ from discrete_optimization.generic_rcpsp_tools.typing import (
     ANY_SOLUTION,
     ANY_SOLUTION_PREEMPTIVE,
 )
-from discrete_optimization.generic_tools.cp_tools import CPSolver, SignEnum
+from discrete_optimization.generic_tools.cp_tools import SignEnum
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     FloatHyperparameter,
@@ -33,7 +33,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
-from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
+from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -1347,7 +1347,7 @@ class ObjectiveSubproblem(Enum):
     GLOBAL_MAKESPAN = 3
 
 
-class ConstraintHandlerScheduling(ConstraintHandler):
+class ConstraintHandlerScheduling(MznConstraintHandler):
     def __init__(
         self,
         problem: ANY_RCPSP,
@@ -1395,10 +1395,11 @@ class ConstraintHandlerScheduling(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: ANY_CP_SOLVER,
+        solver: ANY_CP_SOLVER,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1437,7 +1438,7 @@ class ConstraintHandlerScheduling(ConstraintHandler):
             subtasks_2,
         ) = self.basic_constraint_builder.return_constraints(
             current_solution=current_solution,
-            cp_solver=cp_solver,
+            cp_solver=solver,
             params_constraint_builder=p,
         )
         for s in list_strings:
@@ -1448,7 +1449,7 @@ class ConstraintHandlerScheduling(ConstraintHandler):
             )
             # We ignore this part of objective.
         else:
-            string = cp_solver.constraint_start_time_string(
+            string = solver.constraint_start_time_string(
                 task=self.problem.sink_task,
                 start_time=current_solution.get_start_time(self.problem.sink_task) + 20,
                 sign=SignEnum.LEQ,
@@ -1467,7 +1468,7 @@ class ConstraintHandlerScheduling(ConstraintHandler):
             strings = []
         else:
             try:
-                strings = cp_solver.add_hard_special_constraints(
+                strings = solver.add_hard_special_constraints(
                     self.problem.special_constraints
                 )
                 for s in strings:
@@ -1480,19 +1481,17 @@ class ConstraintHandlerScheduling(ConstraintHandler):
                 )
             strings = []
             if self.objective_subproblem == ObjectiveSubproblem.MAKESPAN_SUBTASKS:
-                strings = cp_solver.constraint_objective_max_time_set_of_jobs(
-                    subtasks_1
-                )
+                strings = solver.constraint_objective_max_time_set_of_jobs(subtasks_1)
                 current_max = max(
                     [current_solution.get_end_time(t) for t in subtasks_1]
                 )
                 strings += ["constraint objective<=" + str(current_max) + ";\n"]
             elif self.objective_subproblem == ObjectiveSubproblem.GLOBAL_MAKESPAN:
-                strings = cp_solver.constraint_objective_equal_makespan(
+                strings = solver.constraint_objective_equal_makespan(
                     self.problem.sink_task
                 )
             elif self.objective_subproblem == ObjectiveSubproblem.SUM_START_SUBTASKS:
-                strings = cp_solver.constraint_sum_of_starting_time(subtasks_1)
+                strings = solver.constraint_sum_of_starting_time(subtasks_1)
                 sum_end = sum(
                     [
                         (10 if t == self.problem.sink_task else 1)
@@ -1502,7 +1501,7 @@ class ConstraintHandlerScheduling(ConstraintHandler):
                 )
                 strings += ["constraint objective<=" + str(sum_end) + ";\n"]
             elif self.objective_subproblem == ObjectiveSubproblem.SUM_END_SUBTASKS:
-                strings = cp_solver.constraint_sum_of_ending_time(subtasks_1)
+                strings = solver.constraint_sum_of_ending_time(subtasks_1)
                 sum_end = sum(
                     [
                         (10 if t == self.problem.sink_task else 1)
@@ -1518,14 +1517,15 @@ class ConstraintHandlerScheduling(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: ANY_CP_SOLVER,
+        solver: ANY_CP_SOLVER,
         child_instance,
         previous_constraints: Iterable[Any],
+        **kwargs: Any,
     ):
         pass
 
 
-class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
+class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
@@ -1536,10 +1536,11 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: ANY_CP_SOLVER,
+        solver: ANY_CP_SOLVER,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1567,7 +1568,7 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
         evaluation = self.problem.evaluate(current_solution)
         list_strings = constraints_strings(
             current_solution=current_solution,
-            cp_solver=cp_solver,
+            cp_solver=solver,
             tasks_primary=self.problem.tasks_list,
             tasks_secondary=set(),
             params_constraints=ParamsConstraintBuilder(
@@ -1589,23 +1590,31 @@ class ConstraintHandlerMultiskillAllocation(ConstraintHandler):
                 )
             ),
             current_solution=current_solution,
-            cp_solver=cp_solver,
+            cp_solver=solver,
         )
-        list_strings += cp_solver.constraint_objective_makespan()
+        list_strings += solver.constraint_objective_makespan()
         for s in list_strings:
             child_instance.add_string(s)
         child_instance.add_string("constraint sec_objective==max(res_load);\n")
         return list_strings
 
     def remove_constraints_from_previous_iteration(
-        self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
+        self,
+        solver: ANY_CP_SOLVER,
+        child_instance,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
     ):
         pass
 
 
-class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
+class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
     def remove_constraints_from_previous_iteration(
-        self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
+        self,
+        solver: ANY_CP_SOLVER,
+        child_instance,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
     ):
         pass
 
@@ -1619,10 +1628,11 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: ANY_CP_SOLVER,
+        solver: ANY_CP_SOLVER,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1654,7 +1664,7 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
         child_instance.add_string(ss)
         list_strings = constraints_strings_multiskill(
             current_solution=current_solution,
-            cp_solver=cp_solver,
+            cp_solver=solver,
             tasks_primary=set(),
             tasks_secondary=self.problem.tasks_list,
             params_constraints=ParamsConstraintBuilder(
@@ -1670,7 +1680,7 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
                 additional_methods=False,
             ),
         )
-        list_strings += cp_solver.constraint_objective_max_time_set_of_jobs(
+        list_strings += solver.constraint_objective_max_time_set_of_jobs(
             [self.problem.sink_task]
         )
         list_strings += [
@@ -1694,9 +1704,13 @@ class EquilibrateMultiskillAllocationNonPreemptive(ConstraintHandler):
         return []
 
 
-class EquilibrateMultiskillAllocation(ConstraintHandler):
+class EquilibrateMultiskillAllocation(MznConstraintHandler):
     def remove_constraints_from_previous_iteration(
-        self, cp_solver: CPSolver, child_instance, previous_constraints: Iterable[Any]
+        self,
+        solver: ANY_CP_SOLVER,
+        child_instance,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
     ):
         pass
 
@@ -1710,10 +1724,11 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: ANY_CP_SOLVER,
+        solver: ANY_CP_SOLVER,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -1755,7 +1770,7 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
         child_instance.add_string(ss)
         list_strings = constraints_strings_multiskill_preemptive(
             current_solution=current_solution,
-            cp_solver=cp_solver,
+            cp_solver=solver,
             tasks_primary=set(),
             tasks_secondary=self.problem.tasks_list,
             params_constraints=ParamsConstraintBuilder(
@@ -1767,7 +1782,7 @@ class EquilibrateMultiskillAllocation(ConstraintHandler):
                 fraction_of_task_assigned_multiskill=0.65,
             ),
         )
-        list_strings += cp_solver.constraint_objective_max_time_set_of_jobs(
+        list_strings += solver.constraint_objective_max_time_set_of_jobs(
             [self.problem.sink_task]
         )
         list_strings += [

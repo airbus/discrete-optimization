@@ -81,13 +81,13 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
         self.iter = 0
 
     def adding_constraint_from_results_store(
-        self, milp_solver: MilpSolver, result_storage: ResultStorage
+        self, solver: MilpSolver, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
-        if not isinstance(milp_solver, LPKnapsack):
+        if not isinstance(solver, LPKnapsack):
             raise ValueError("milp_solver must a LPKnapsack for this constraint.")
-        if milp_solver.model is None:
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()"
                 )
@@ -113,30 +113,33 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
             dict_f_start[c] = current_solution.list_taken[c]
             if c in subpart_item:
                 dict_f_fixed[c] = dict_f_start[c]
-        x_var = milp_solver.variable_decision["x"]
+        x_var = solver.variable_decision["x"]
         lns_constraint: Dict[Hashable, Any] = {}
         for key in x_var:
             start += [(x_var[key], dict_f_start[key])]
             if key in subpart_item:
-                lns_constraint[key] = milp_solver.model.add_constr(
+                lns_constraint[key] = solver.model.add_constr(
                     x_var[key] == dict_f_start[key], name=str(key)
                 )
-        if milp_solver.milp_solver_name == MilpSolverName.GRB:
-            milp_solver.model.solver.update()
-        milp_solver.model.start = start
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()
+        solver.model.start = start
         return lns_constraint
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: MilpSolver,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ) -> None:
-        if not isinstance(milp_solver, LPKnapsack):
+        if not isinstance(solver, LPKnapsack):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if milp_solver.model is None:
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()"
                 )
-        milp_solver.model.remove(list(previous_constraints.values()))
-        if milp_solver.milp_solver_name == MilpSolverName.GRB:
-            milp_solver.model.solver.update()
+        solver.model.remove(list(previous_constraints.values()))
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()

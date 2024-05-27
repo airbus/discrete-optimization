@@ -79,12 +79,12 @@ def test_multiskill_imopse():
     )
     lns_solver = LNS_MILP(
         problem=model,
-        milp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
-    result_store = lns_solver.solve_lns(
+    result_store = lns_solver.solve(
         parameters_milp=parameters_milp,
         nb_iteration_lns=10,
         nb_iteration_no_improvement=10,

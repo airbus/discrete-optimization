@@ -55,13 +55,13 @@ def test_knapsack_lns():
     constraint_handler = ConstraintHandlerKnapsack(problem=model, fraction_to_fix=0.95)
     lns_solver = LNS_MILP(
         problem=model,
-        milp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
 
-    result_store = lns_solver.solve_lns(
+    result_store = lns_solver.solve(
         parameters_milp=params_milp,
         nb_iteration_lns=10000,
         callbacks=[TimerStopper(total_seconds=30)],

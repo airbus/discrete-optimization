@@ -68,3 +68,14 @@ class SolverDO(Hyperparametrizable):
 
         """
         pass
+
+    def is_optimal(self) -> Optional[bool]:
+        """Tell if found solution is supposed to be optimal.
+
+        To be called after a solve.
+
+        Returns:
+            optimality of the solution. If information missing, returns None instead.
+
+        """
+        return None

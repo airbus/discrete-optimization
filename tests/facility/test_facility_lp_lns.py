@@ -69,13 +69,13 @@ def test_facility_lns():
     )
     lns_solver = LNS_MILP(
         problem=facility_problem,
-        milp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
 
-    result_store = lns_solver.solve_lns(
+    result_store = lns_solver.solve(
         parameters_milp=params_milp,
         nb_iteration_lns=100,
         callbacks=[TimerStopper(total_seconds=100)],

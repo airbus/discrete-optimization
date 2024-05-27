@@ -112,15 +112,15 @@ class ConstraintHandlerFacility(ConstraintHandler):
         self.skip_first_iter = skip_first_iter
 
     def adding_constraint_from_results_store(
-        self, milp_solver: MilpSolver, result_storage: ResultStorage
+        self, solver: MilpSolver, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
-        if not isinstance(milp_solver, LP_Facility_Solver_PyMip):
+        if not isinstance(solver, LP_Facility_Solver_PyMip):
             raise ValueError(
                 "milp_solver must a LP_Facility_Solver_PyMip for this constraint."
             )
-        if milp_solver.model is None:  # for mypy
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:  # for mypy
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()."
                 )
@@ -152,7 +152,7 @@ class ConstraintHandlerFacility(ConstraintHandler):
             dict_f_start[c] = current_solution.facility_for_customers[c]
             if c in subpart_customer:
                 dict_f_fixed[c] = dict_f_start[c]
-        x_var = milp_solver.variable_decision["x"]
+        x_var = solver.variable_decision["x"]
         lns_constraint: Dict[Hashable, Any] = {}
         for key in x_var:
             f, c = key
@@ -165,32 +165,35 @@ class ConstraintHandlerFacility(ConstraintHandler):
             if c in dict_f_fixed:
                 if f == dict_f_fixed[c]:
                     if isinstance(x_var[f, c], mip.Var):
-                        lns_constraint[(f, c)] = milp_solver.model.add_constr(
+                        lns_constraint[(f, c)] = solver.model.add_constr(
                             x_var[key] == 1, name=str((f, c))
                         )
                 else:
                     if isinstance(x_var[f, c], mip.Var):
-                        lns_constraint[(f, c)] = milp_solver.model.add_constr(
+                        lns_constraint[(f, c)] = solver.model.add_constr(
                             x_var[key] == 0, name=str((f, c))
                         )
-        if milp_solver.milp_solver_name == MilpSolverName.GRB:
-            milp_solver.model.solver.update()
-        milp_solver.model.start = start
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()
+        solver.model.start = start
         return lns_constraint
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: MilpSolver,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any,
     ) -> None:
-        if not isinstance(milp_solver, LP_Facility_Solver_PyMip):
+        if not isinstance(solver, LP_Facility_Solver_PyMip):
             raise ValueError(
                 "milp_solver must a LP_Facility_Solver_PyMip for this constraint."
             )
-        if milp_solver.model is None:  # for mypy
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:  # for mypy
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()."
                 )
-        milp_solver.model.remove(list(previous_constraints.values()))
-        if milp_solver.milp_solver_name == MilpSolverName.GRB:
-            milp_solver.model.solver.update()
+        solver.model.remove(list(previous_constraints.values()))
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()

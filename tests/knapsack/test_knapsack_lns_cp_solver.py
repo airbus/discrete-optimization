@@ -51,14 +51,14 @@ def test_knapsack_lns():
     constraint_handler = ConstraintHandlerKnapsack(problem=model, fraction_to_fix=0.83)
     lns_solver = LNS_CP(
         problem=model,
-        cp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
     result_store_pure_cp = solver.solve(parameters_cp=params_cp)
     solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
-    result_store = lns_solver.solve_lns(
+    result_store = lns_solver.solve(
         parameters_cp=params_cp,
         nb_iteration_lns=200,
         callbacks=[TimerStopper(total_seconds=30)],
@@ -93,7 +93,7 @@ def test_knapsack_lns_timer():
     constraint_handler = ConstraintHandlerKnapsack(problem=model, fraction_to_fix=0.83)
     lns_solver = LNS_CP(
         problem=model,
-        cp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
@@ -160,7 +160,7 @@ def test_knapsack_lns_cb_nbiter(skip_first_iteration):
     constraint_handler = ConstraintHandlerKnapsack(problem=model, fraction_to_fix=0.83)
     lns_solver = LNS_CP(
         problem=model,
-        cp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,

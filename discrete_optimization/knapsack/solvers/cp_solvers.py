@@ -10,7 +10,6 @@ from typing import Any, Iterable, Optional, Sequence
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
     CPSolverName,
     MinizincCPSolver,
     find_right_minizinc_solver_name,
@@ -20,7 +19,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,
 )
-from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
+from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -308,7 +307,7 @@ class CPMultidimensionalMultiScenarioSolver(MinizincCPSolver):
         return KnapsackSolutionMultidimensional(problem=self.problem, list_taken=taken)
 
 
-class KnapConstraintHandler(ConstraintHandler):
+class KnapConstraintHandler(MznConstraintHandler):
     hyperparameters = [
         FloatHyperparameter(name="fraction_fix", default=0.95, low=0.0, high=1.0),
     ]
@@ -318,19 +317,20 @@ class KnapConstraintHandler(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: CPSolver,
+        solver: MinizincCPSolver,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
     ) -> Iterable[Any]:
-        if not isinstance(cp_solver, CPMultidimensionalMultiScenarioSolver):
+        if not isinstance(solver, CPMultidimensionalMultiScenarioSolver):
             raise ValueError(
                 "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
             )
         if last_result_store is None:
             raise ValueError("This constraint need last_result_store to be not None.")
         strings = []
-        nb_item = cp_solver.problem.list_problem[0].nb_items
+        nb_item = solver.problem.list_problem[0].nb_items
         range_item = range(nb_item)
         subpart_item = set(random.sample(range_item, int(self.fraction_fix * nb_item)))
         current_best_solution = last_result_store.get_last_best_solution()[0]
@@ -355,11 +355,12 @@ class KnapConstraintHandler(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: CPSolver,
+        solver: MinizincCPSolver,
         child_instance: Instance,
         previous_constraints: Iterable[Any],
+        **kwargs: Any,
     ) -> None:
-        if not isinstance(cp_solver, CPMultidimensionalMultiScenarioSolver):
+        if not isinstance(solver, CPMultidimensionalMultiScenarioSolver):
             raise ValueError(
                 "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
             )

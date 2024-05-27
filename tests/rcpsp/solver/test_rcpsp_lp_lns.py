@@ -63,12 +63,12 @@ def test_lns_sm():
     )
     lns_solver = LNS_MILP(
         problem=rcpsp_problem,
-        milp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
-    result_store = lns_solver.solve_lns(
+    result_store = lns_solver.solve(
         parameters_milp=parameters_milp, nb_iteration_lns=10
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -122,12 +122,12 @@ def test_lns_mm():
     )
     lns_solver = LNS_MILP(
         problem=rcpsp_problem,
-        milp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=initial_solution_provider,
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
-    result_store = lns_solver.solve_lns(
+    result_store = lns_solver.solve(
         parameters_milp=parameters_milp,
         nb_iteration_lns=10,
         skip_first_iteration=False,

@@ -25,8 +25,8 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
 from discrete_optimization.generic_tools.lns_cp import (
-    ConstraintHandler,
     ConstraintHandlerMix,
+    MznConstraintHandler,
 )
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
@@ -74,7 +74,7 @@ class Params:
 
 def build_neighbor_random(
     option_neighbor: OptionNeighborRandom, rcpsp_model: ANY_RCPSP
-) -> ConstraintHandler:
+) -> MznConstraintHandler:
     graph = build_graph_rcpsp_object(rcpsp_problem=rcpsp_model)
     params_use_case = [
         ConstraintHandlerScheduling(

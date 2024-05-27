@@ -46,12 +46,12 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     SubBrickHyperparameter,
     SubBrickKwargsHyperparameter,
 )
-from discrete_optimization.generic_tools.lns_cp import LNS_CP, ConstraintHandler
+from discrete_optimization.generic_tools.lns_cp import LNS_CP, MznConstraintHandler
 from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
-    InitialSolutionFromSolver,
     PostProcessSolution,
 )
+from discrete_optimization.generic_tools.lns_tools import InitialSolutionFromSolver
 from discrete_optimization.rcpsp.solver.cp_lns_methods_preemptive import (
     PostProLeftShift,
 )
@@ -517,9 +517,9 @@ class LargeNeighborhoodSearchScheduling(LNS_CP, SolverGenericRCPSP):
         self,
         problem: ANY_RCPSP,
         partial_solution=None,
-        cp_solver: Optional[MinizincCPSolver] = None,
+        subsolver: Optional[MinizincCPSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
-        constraint_handler: Optional[ConstraintHandler] = None,
+        constraint_handler: Optional[MznConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
@@ -530,22 +530,22 @@ class LargeNeighborhoodSearchScheduling(LNS_CP, SolverGenericRCPSP):
         graph = build_graph_rcpsp_object(self.problem)
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
-        if cp_solver is None:
-            if "cp_solver_kwargs" not in kwargs or kwargs["cp_solver_kwargs"] is None:
-                cp_solver_kwargs = kwargs
+        if subsolver is None:
+            if "subsolver_kwargs" not in kwargs or kwargs["subsolver_kwargs"] is None:
+                subsolver_kwargs = kwargs
             else:
-                cp_solver_kwargs = kwargs["cp_solver_kwargs"]
-            if "cp_solver_cls" not in kwargs or kwargs["cp_solver_cls"] is None:
-                cp_solver = build_default_cp_model(
+                subsolver_kwargs = kwargs["subsolver_kwargs"]
+            if "subsolver_cls" not in kwargs or kwargs["subsolver_cls"] is None:
+                subsolver = build_default_cp_model(
                     rcpsp_problem=problem,
                     partial_solution=partial_solution,
-                    **cp_solver_kwargs,
+                    **subsolver_kwargs,
                 )
             else:
-                cp_solver_cls = kwargs["cp_solver_cls"]
-                cp_solver = cp_solver_cls(problem=self.problem, **cp_solver_kwargs)
-                cp_solver.init_model(**cp_solver_kwargs)
-        self.cp_solver = cp_solver
+                subsolver_cls = kwargs["subsolver_cls"]
+                subsolver = subsolver_cls(problem=self.problem, **subsolver_kwargs)
+                subsolver.init_model(**subsolver_kwargs)
+        self.subsolver = subsolver
 
         if constraint_handler is None:
             if (
