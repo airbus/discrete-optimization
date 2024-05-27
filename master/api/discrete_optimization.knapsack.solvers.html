@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.knapsack.solvers package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=30d551ce"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.pickup_vrp package" href="discrete_optimization.pickup_vrp.html" />
+    <link rel="prev" title="discrete_optimization.knapsack.mutation package" href="discrete_optimization.knapsack.mutation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                master
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.pickup_vrp.html">discrete_optimization.pickup_vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.knapsack.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-knapsack-solvers-package">
+<h1>discrete_optimization.knapsack.solvers package<a class="headerlink" href="#discrete-optimization-knapsack-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.cp_solvers">
+<span id="discrete-optimization-knapsack-solvers-cp-solvers-module"></span><h2>discrete_optimization.knapsack.solvers.cp_solvers module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.cp_solvers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.cp_solvers.</span></span><span class="sig-name descname"><span class="pre">CPKnapsackMZN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent_solve_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPKnapsackMZN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver" title="discrete_optimization.generic_tools.cp_tools.MinizincCPSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinizincCPSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='cp_solver_name',</span> <span class="pre">default=&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">choices=[&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">&lt;CPSolverName.GECODE:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;CPSolverName.CPLEX:</span> <span class="pre">2&gt;,</span> <span class="pre">&lt;CPSolverName.CPOPT:</span> <span class="pre">3&gt;,</span> <span class="pre">&lt;CPSolverName.GUROBI:</span> <span class="pre">4&gt;,</span> <span class="pre">&lt;CPSolverName.ORTOOLS:</span> <span class="pre">5&gt;,</span> <span class="pre">&lt;CPSolverName.HIGHS:</span> <span class="pre">6&gt;])]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPKnapsackMZN.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_output_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPKnapsackMZN.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Return a d-o solution from the variables computed by minizinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_output_item</strong> – string representing the minizinc solver output passed by minizinc to the solution constructor</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments passed by minzinc to the solution contructor
+containing the objective value (key “objective”),
+and the computed variables as defined in minizinc model.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.cp_solvers.</span></span><span class="sig-name descname"><span class="pre">CPKnapsackMZN2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent_solve_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPKnapsackMZN2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver" title="discrete_optimization.generic_tools.cp_tools.MinizincCPSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinizincCPSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='cp_solver_name',</span> <span class="pre">default=&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">choices=[&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">&lt;CPSolverName.GECODE:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;CPSolverName.CPLEX:</span> <span class="pre">2&gt;,</span> <span class="pre">&lt;CPSolverName.CPOPT:</span> <span class="pre">3&gt;,</span> <span class="pre">&lt;CPSolverName.GUROBI:</span> <span class="pre">4&gt;,</span> <span class="pre">&lt;CPSolverName.ORTOOLS:</span> <span class="pre">5&gt;,</span> <span class="pre">&lt;CPSolverName.HIGHS:</span> <span class="pre">6&gt;])]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPKnapsackMZN2.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_output_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPKnapsackMZN2.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Return a d-o solution from the variables computed by minizinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_output_item</strong> – string representing the minizinc solver output passed by minizinc to the solution constructor</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments passed by minzinc to the solution contructor
+containing the objective value (key “objective”),
+and the computed variables as defined in minizinc model.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.cp_solvers.</span></span><span class="sig-name descname"><span class="pre">CPMultidimensionalMultiScenarioSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultiScenarioMultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultiScenarioMultidimensionalKnapsack"><span class="pre">MultiScenarioMultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent_solve_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPMultidimensionalMultiScenarioSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver" title="discrete_optimization.generic_tools.cp_tools.MinizincCPSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinizincCPSolver</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='cp_solver_name',</span> <span class="pre">default=&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">choices=[&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">&lt;CPSolverName.GECODE:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;CPSolverName.CPLEX:</span> <span class="pre">2&gt;,</span> <span class="pre">&lt;CPSolverName.CPOPT:</span> <span class="pre">3&gt;,</span> <span class="pre">&lt;CPSolverName.GUROBI:</span> <span class="pre">4&gt;,</span> <span class="pre">&lt;CPSolverName.ORTOOLS:</span> <span class="pre">5&gt;,</span> <span class="pre">&lt;CPSolverName.HIGHS:</span> <span class="pre">6&gt;])]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPMultidimensionalMultiScenarioSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultiScenarioMultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultiScenarioMultidimensionalKnapsack"><span class="pre">MultiScenarioMultidimensionalKnapsack</span></a></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_output_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolutionMultidimensional" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolutionMultidimensional"><span class="pre">KnapsackSolutionMultidimensional</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPMultidimensionalMultiScenarioSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalMultiScenarioSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Return a d-o solution from the variables computed by minizinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_output_item</strong> – string representing the minizinc solver output passed by minizinc to the solution constructor</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments passed by minzinc to the solution contructor
+containing the objective value (key “objective”),
+and the computed variables as defined in minizinc model.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.cp_solvers.</span></span><span class="sig-name descname"><span class="pre">CPMultidimensionalSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent_solve_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPMultidimensionalSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.MinizincCPSolver" title="discrete_optimization.generic_tools.cp_tools.MinizincCPSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinizincCPSolver</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='cp_solver_name',</span> <span class="pre">default=&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">choices=[&lt;CPSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">&lt;CPSolverName.GECODE:</span> <span class="pre">1&gt;,</span> <span class="pre">&lt;CPSolverName.CPLEX:</span> <span class="pre">2&gt;,</span> <span class="pre">&lt;CPSolverName.CPOPT:</span> <span class="pre">3&gt;,</span> <span class="pre">&lt;CPSolverName.GUROBI:</span> <span class="pre">4&gt;,</span> <span class="pre">&lt;CPSolverName.ORTOOLS:</span> <span class="pre">5&gt;,</span> <span class="pre">&lt;CPSolverName.HIGHS:</span> <span class="pre">6&gt;])]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPMultidimensionalSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Instantiate a CP model instance</p>
+<p>Afterwards, self.instance should not be None anymore.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_output_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolutionMultidimensional" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolutionMultidimensional"><span class="pre">KnapsackSolutionMultidimensional</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#CPMultidimensionalSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.CPMultidimensionalSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Return a d-o solution from the variables computed by minizinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_output_item</strong> – string representing the minizinc solver output passed by minizinc to the solution constructor</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments passed by minzinc to the solution contructor
+containing the objective value (key “objective”),
+and the computed variables as defined in minizinc model.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.cp_solvers.</span></span><span class="sig-name descname"><span class="pre">KnapConstraintHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.95</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#KnapConstraintHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.ConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><span class="pre">CPSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_result_store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#KnapConstraintHandler.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='fraction_fix',</span> <span class="pre">default=0.95,</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0)]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler.remove_constraints_from_previous_iteration">
+<span class="sig-name descname"><span class="pre">remove_constraints_from_previous_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><span class="pre">CPSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/cp_solvers.html#KnapConstraintHandler.remove_constraints_from_previous_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.cp_solvers.KnapConstraintHandler.remove_constraints_from_previous_iteration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.dyn_prog_knapsack">
+<span id="discrete-optimization-knapsack-solvers-dyn-prog-knapsack-module"></span><h2>discrete_optimization.knapsack.solvers.dyn_prog_knapsack module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.dyn_prog_knapsack" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.dyn_prog_knapsack.</span></span><span class="sig-name descname"><span class="pre">KnapsackDynProg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/dyn_prog_knapsack.html#KnapsackDynProg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='greedy_start',</span> <span class="pre">default=False,</span> <span class="pre">choices=[True,</span> <span class="pre">False])]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/dyn_prog_knapsack.html#KnapsackDynProg.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.gphh_knapsack">
+<span id="discrete-optimization-knapsack-solvers-gphh-knapsack-module"></span><h2>discrete_optimization.knapsack.solvers.gphh_knapsack module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.gphh_knapsack" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">FeatureEnum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#FeatureEnum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY">
+<span class="sig-name descname"><span class="pre">AVG_RES_CONSUMPTION_DELTA_CAPACITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'avg_res_consumption_delta_capacity'</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.AVG_RES_CONSUMPTION_DELTA_CAPACITY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.CAPACITIES">
+<span class="sig-name descname"><span class="pre">CAPACITIES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'capacities'</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.CAPACITIES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.PROFIT">
+<span class="sig-name descname"><span class="pre">PROFIT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'profit'</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.PROFIT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.RES_CONSUMPTION_ARRAY">
+<span class="sig-name descname"><span class="pre">RES_CONSUMPTION_ARRAY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'res_consumption'</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum.RES_CONSUMPTION_ARRAY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">GPHH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_domains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_gphh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH" title="discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH"><span class="pre">ParametersGPHH</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.build_result_storage_for_domain">
+<span class="sig-name descname"><span class="pre">build_result_storage_for_domain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.build_result_storage_for_domain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.build_result_storage_for_domain" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.build_solution">
+<span class="sig-name descname"><span class="pre">build_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">individual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func_heuristic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolutionMultidimensional" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolutionMultidimensional"><span class="pre">KnapsackSolutionMultidimensional</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.build_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.build_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.evaluate_complexity">
+<span class="sig-name descname"><span class="pre">evaluate_complexity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.evaluate_complexity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.evaluate_complexity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.evaluate_heuristic">
+<span class="sig-name descname"><span class="pre">evaluate_heuristic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.evaluate_heuristic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.evaluate_heuristic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='tournament_ratio',</span> <span class="pre">default=0.1,</span> <span class="pre">low=0,</span> <span class="pre">high=1.0),</span> <span class="pre">IntegerHyperparameter(name='pop_size',</span> <span class="pre">default=10,</span> <span class="pre">low=1,</span> <span class="pre">high=100),</span> <span class="pre">IntegerHyperparameter(name='min_tree_depth',</span> <span class="pre">default=1,</span> <span class="pre">low=1,</span> <span class="pre">high=20),</span> <span class="pre">IntegerHyperparameter(name='max_tree_depth',</span> <span class="pre">default=4,</span> <span class="pre">low=1,</span> <span class="pre">high=20),</span> <span class="pre">FloatHyperparameter(name='crossover_rate',</span> <span class="pre">default=0.7,</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0),</span> <span class="pre">FloatHyperparameter(name='mutation_rate',</span> <span class="pre">default=0.3,</span> <span class="pre">low=0,</span> <span class="pre">high=1.0),</span> <span class="pre">IntegerHyperparameter(name='n_gen',</span> <span class="pre">default=2,</span> <span class="pre">low=1,</span> <span class="pre">high=100)]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.init_primitives">
+<span class="sig-name descname"><span class="pre">init_primitives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PrimitiveSetTyped</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">PrimitiveSetTyped</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.init_primitives"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.init_primitives" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.plot_solution">
+<span class="sig-name descname"><span class="pre">plot_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.plot_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.plot_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#GPHH.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.toolbox">
+<span class="sig-name descname"><span class="pre">toolbox</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Toolbox</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.GPHH.toolbox" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">ParametersGPHH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_feature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum" title="discrete_optimization.knapsack.solvers.gphh_knapsack.FeatureEnum"><span class="pre">FeatureEnum</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_primitves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PrimitiveSetTyped</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tournament_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tree_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tree_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossover_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutation_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deap_verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#ParametersGPHH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH.default">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">default</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH" title="discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH"><span class="pre">ParametersGPHH</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#ParametersGPHH.default"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.ParametersGPHH.default" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.get_avg_res_consumption_delta_capacity">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">get_avg_res_consumption_delta_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#get_avg_res_consumption_delta_capacity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.get_avg_res_consumption_delta_capacity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.get_capacities">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">get_capacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#get_capacities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.get_capacities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.get_profit">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">get_profit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#get_profit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.get_profit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.gphh_knapsack.get_res_consumption">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.gphh_knapsack.</span></span><span class="sig-name descname"><span class="pre">get_res_consumption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack" title="discrete_optimization.knapsack.knapsack_model.MultidimensionalKnapsack"><span class="pre">MultidimensionalKnapsack</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/gphh_knapsack.html#get_res_consumption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.gphh_knapsack.get_res_consumption" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.greedy_solvers">
+<span id="discrete-optimization-knapsack-solvers-greedy-solvers-module"></span><h2>discrete_optimization.knapsack.solvers.greedy_solvers module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.greedy_solvers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.GreedyBest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.greedy_solvers.</span></span><span class="sig-name descname"><span class="pre">GreedyBest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#GreedyBest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.GreedyBest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.GreedyBest.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#GreedyBest.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.GreedyBest.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.GreedyDummy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.greedy_solvers.</span></span><span class="sig-name descname"><span class="pre">GreedyDummy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#GreedyDummy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.GreedyDummy" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.GreedyDummy.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#GreedyDummy.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.GreedyDummy.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.best_of_greedy">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.greedy_solvers.</span></span><span class="sig-name descname"><span class="pre">best_of_greedy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">knapsack_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#best_of_greedy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.best_of_greedy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.compute_density">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.greedy_solvers.</span></span><span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">knapsack_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.Item" title="discrete_optimization.knapsack.knapsack_model.Item"><span class="pre">Item</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.compute_density" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.compute_density_and_penalty">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.greedy_solvers.</span></span><span class="sig-name descname"><span class="pre">compute_density_and_penalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">knapsack_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.Item" title="discrete_optimization.knapsack.knapsack_model.Item"><span class="pre">Item</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#compute_density_and_penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.compute_density_and_penalty" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.greedy_solvers.greedy_using_queue">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.greedy_solvers.</span></span><span class="sig-name descname"><span class="pre">greedy_using_queue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">knapsack_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_queue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.Item" title="discrete_optimization.knapsack.knapsack_model.Item"><span class="pre">Item</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/greedy_solvers.html#greedy_using_queue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.greedy_solvers.greedy_using_queue" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_asp_solver">
+<span id="discrete-optimization-knapsack-solvers-knapsack-asp-solver-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_asp_solver module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_asp_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_asp_solver.</span></span><span class="sig-name descname"><span class="pre">KnapsackASPSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_asp_solver.html#KnapsackASPSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.asp_tools.ASPClingoSolver" title="discrete_optimization.generic_tools.asp_tools.ASPClingoSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">ASPClingoSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<p>Solver based on Answer Set Programming formulation and clingo solver.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver.build_string_data_input">
+<span class="sig-name descname"><span class="pre">build_string_data_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_asp_solver.html#KnapsackASPSolver.build_string_data_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver.build_string_data_input" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_asp_solver.html#KnapsackASPSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_asp_solver.html#KnapsackASPSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from a clingo model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> – the current constructed clingo model</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_cpmpy">
+<span id="discrete-optimization-knapsack-solvers-knapsack-cpmpy-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_cpmpy module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_cpmpy" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_cpmpy.CPMPYKnapsackSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_cpmpy.</span></span><span class="sig-name descname"><span class="pre">CPMPYKnapsackSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_cpmpy.html#CPMPYKnapsackSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_cpmpy.CPMPYKnapsackSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_cpmpy.CPMPYKnapsackSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_cpmpy.html#CPMPYKnapsackSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_cpmpy.CPMPYKnapsackSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_cpmpy.CPMPYKnapsackSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_cp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.ParametersCP" title="discrete_optimization.generic_tools.cp_tools.ParametersCP"><span class="pre">ParametersCP</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_cpmpy.html#CPMPYKnapsackSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_cpmpy.CPMPYKnapsackSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_cpsat_solver">
+<span id="discrete-optimization-knapsack-solvers-knapsack-cpsat-solver-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_cpsat_solver module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_cpsat_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.CPSatKnapsackSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.</span></span><span class="sig-name descname"><span class="pre">CPSatKnapsackSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_cpsat_solver.html#CPSatKnapsackSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.CPSatKnapsackSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCPSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCPSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCPSatSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.CPSatKnapsackSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_cpsat_solver.html#CPSatKnapsackSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.CPSatKnapsackSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init CP model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.CPSatKnapsackSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_cpsat_solver.html#CPSatKnapsackSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_cpsat_solver.CPSatKnapsackSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_decomposition">
+<span id="discrete-optimization-knapsack-solvers-knapsack-decomposition-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_decomposition module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_decomposition" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_decomposition.</span></span><span class="sig-name descname"><span class="pre">KnapsackDecomposedSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_decomposition.html#KnapsackDecomposedSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<p>This solver is based on the current observation. From a given knapsack model and one current solution,
+if we decide to freeze the decision variable for a subset of items, the remaining problem to solve is also a
+knapsack problem, with fewer items and smaller capacity.
+A solution to this subproblem can be found by any knapsack solver and a full solution to the original problem,
+can be rebuilt.
+KnapsackDecomposedSolver is a basic iterative solver that starts from a given solution, then freeze random items,
+solve subproblem with a custom root solver, rebuild original solution and repeat the process.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='proportion_to_remove',</span> <span class="pre">default=0.7,</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0),</span> <span class="pre">IntegerHyperparameter(name='nb_iteration',</span> <span class="pre">default=100,</span> <span class="pre">low=0,</span> <span class="pre">high=10000000),</span> <span class="pre">SubBrickHyperparameter(name='initial_solver',</span> <span class="pre">default=&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.greedy_solvers.GreedyBest'&gt;,</span> <span class="pre">choices=[&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsack'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackGurobi'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2'&gt;]),</span> <span class="pre">SubBrickKwargsHyperparameter(name='initial_solver_kwargs',</span> <span class="pre">default=None),</span> <span class="pre">SubBrickHyperparameter(name='root_solver',</span> <span class="pre">default=&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.greedy_solvers.GreedyBest'&gt;,</span> <span class="pre">choices=[&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsack'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackGurobi'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.knapsack_asp_solver.KnapsackASPSolver'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.dyn_prog_knapsack.KnapsackDynProg'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'discrete_optimization.knapsack.solvers.cp_solvers.CPKnapsackMZN2'&gt;]),</span> <span class="pre">SubBrickKwargsHyperparameter(name='root_solver_kwargs',</span> <span class="pre">default=None)]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.rebuild_sol">
+<span class="sig-name descname"><span class="pre">rebuild_sol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_knapsack_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackSolution" title="discrete_optimization.knapsack.knapsack_model.KnapsackSolution"><span class="pre">KnapsackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes_to_remove</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_decomposition.html#KnapsackDecomposedSolver.rebuild_sol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.rebuild_sol" title="Link to this definition"></a></dt>
+<dd><p>Rebuild a knapsack solution object from a partial solution.
+:param sol: solution to a sub-knapsack problem
+:param original_knapsack_model: original knapsack model to solve
+:param original_solution: original base solution
+:param indexes_to_remove: indexes of item removed when building the sub-knapsack problem.
+:return: A new solution object for the original problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_decomposition.html#KnapsackDecomposedSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_decomposition.KnapsackDecomposedSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver">
+<span id="discrete-optimization-knapsack-solvers-knapsack-lns-cp-solver-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.</span></span><span class="sig-name descname"><span class="pre">ConstraintHandlerKnapsack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_cp_solver.html#ConstraintHandlerKnapsack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_cp.ConstraintHandler" title="discrete_optimization.generic_tools.lns_cp.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><span class="pre">CPSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_result_store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_cp_solver.html#ConstraintHandlerKnapsack.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[FloatHyperparameter(name='fraction_to_fix',</span> <span class="pre">default=0.9,</span> <span class="pre">low=0.0,</span> <span class="pre">high=1.0)]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack.remove_constraints_from_previous_iteration">
+<span class="sig-name descname"><span class="pre">remove_constraints_from_previous_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CPSolver" title="discrete_optimization.generic_tools.cp_tools.CPSolver"><span class="pre">CPSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child_instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_cp_solver.html#ConstraintHandlerKnapsack.remove_constraints_from_previous_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver.ConstraintHandlerKnapsack.remove_constraints_from_previous_iteration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_lns_solver">
+<span id="discrete-optimization-knapsack-solvers-knapsack-lns-solver-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_lns_solver module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_lns_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.ConstraintHandlerKnapsack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_lns_solver.</span></span><span class="sig-name descname"><span class="pre">ConstraintHandlerKnapsack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction_to_fix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_solver.html#ConstraintHandlerKnapsack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.ConstraintHandlerKnapsack" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.ConstraintHandler" title="discrete_optimization.generic_tools.lns_mip.ConstraintHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintHandler</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.ConstraintHandlerKnapsack.adding_constraint_from_results_store">
+<span class="sig-name descname"><span class="pre">adding_constraint_from_results_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">milp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><span class="pre">MilpSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_storage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_solver.html#ConstraintHandlerKnapsack.adding_constraint_from_results_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.ConstraintHandlerKnapsack.adding_constraint_from_results_store" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.ConstraintHandlerKnapsack.remove_constraints_from_previous_iteration">
+<span class="sig-name descname"><span class="pre">remove_constraints_from_previous_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">milp_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolver" title="discrete_optimization.generic_tools.lp_tools.MilpSolver"><span class="pre">MilpSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_solver.html#ConstraintHandlerKnapsack.remove_constraints_from_previous_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.ConstraintHandlerKnapsack.remove_constraints_from_previous_iteration" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_lns_solver.</span></span><span class="sig-name descname"><span class="pre">InitialKnapsackMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_solver.html#InitialKnapsackMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod.DUMMY">
+<span class="sig-name descname"><span class="pre">DUMMY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod.DUMMY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod.GREEDY">
+<span class="sig-name descname"><span class="pre">GREEDY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod.GREEDY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackSolution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_lns_solver.</span></span><span class="sig-name descname"><span class="pre">InitialKnapsackSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod" title="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackMethod"><span class="pre">InitialKnapsackMethod</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_solver.html#InitialKnapsackSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lns_mip.InitialSolution" title="discrete_optimization.generic_tools.lns_mip.InitialSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">InitialSolution</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackSolution.get_starting_solution">
+<span class="sig-name descname"><span class="pre">get_starting_solution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_lns_solver.html#InitialKnapsackSolution.get_starting_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackSolution.get_starting_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackSolution.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='initial_method',</span> <span class="pre">default=None,</span> <span class="pre">choices=[&lt;InitialKnapsackMethod.DUMMY:</span> <span class="pre">0&gt;,</span> <span class="pre">&lt;InitialKnapsackMethod.GREEDY:</span> <span class="pre">1&gt;])]</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_lns_solver.InitialKnapsackSolution.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.knapsack_solver">
+<span id="discrete-optimization-knapsack-solvers-knapsack-solver-module"></span><h2>discrete_optimization.knapsack.solvers.knapsack_solver module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.knapsack_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.knapsack_solver.</span></span><span class="sig-name descname"><span class="pre">SolverKnapsack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/knapsack_solver.html#SolverKnapsack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers.lp_solvers">
+<span id="discrete-optimization-knapsack-solvers-lp-solvers-module"></span><h2>discrete_optimization.knapsack.solvers.lp_solvers module<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers.lp_solvers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.lp_solvers.</span></span><span class="sig-name descname"><span class="pre">KnapsackORTools</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#KnapsackORTools"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#KnapsackORTools.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">KnapsackSolver</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools.model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#KnapsackORTools.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.KnapsackORTools.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsack">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.lp_solvers.</span></span><span class="sig-name descname"><span class="pre">LPKnapsack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">milp_solver_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.MilpSolverName" title="discrete_optimization.generic_tools.lp_tools.MilpSolverName"><span class="pre">MilpSolverName</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">MilpSolverName.CBC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsack" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.PymipMilpSolver" title="discrete_optimization.generic_tools.lp_tools.PymipMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PymipMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLPKnapsack</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsack.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsack.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsack.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.lp_solvers.</span></span><span class="sig-name descname"><span class="pre">LPKnapsackCBC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsackCBC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack" title="discrete_optimization.knapsack.solvers.knapsack_solver.SolverKnapsack"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverKnapsack</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsackCBC.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsackCBC.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackCBC.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackGurobi">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.knapsack.solvers.lp_solvers.</span></span><span class="sig-name descname"><span class="pre">LPKnapsackGurobi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.knapsack.html#discrete_optimization.knapsack.knapsack_model.KnapsackModel" title="discrete_optimization.knapsack.knapsack_model.KnapsackModel"><span class="pre">KnapsackModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsackGurobi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackGurobi" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLPKnapsack</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackGurobi.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/knapsack/solvers/lp_solvers.html#LPKnapsackGurobi.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.knapsack.solvers.lp_solvers.LPKnapsackGurobi.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize intern model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.knapsack.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.knapsack.solvers" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.knapsack.mutation.html" class="btn btn-neutral float-left" title="discrete_optimization.knapsack.mutation package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.pickup_vrp.html" class="btn btn-neutral float-right" title="discrete_optimization.pickup_vrp package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

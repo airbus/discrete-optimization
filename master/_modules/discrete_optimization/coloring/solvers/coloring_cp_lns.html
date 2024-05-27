@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.solvers.coloring_cp_lns &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                master
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.solvers.coloring_cp_lns</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.coloring.solvers.coloring_cp_lns</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Easy Large neighborhood search solver for coloring. &quot;&quot;&quot;</span>
+<span class="c1">#  Copyright (c) 2023 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">discrete_optimization.coloring.coloring_model</span> <span class="kn">import</span> <span class="n">ColoringProblem</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.coloring.solvers.coloring_cp_lns_solvers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstraintHandlerFixColorsCP</span><span class="p">,</span>
+    <span class="n">InitialColoring</span><span class="p">,</span>
+    <span class="n">InitialColoringMethod</span><span class="p">,</span>
+    <span class="n">PostProcessSolutionColoring</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.coloring.solvers.coloring_cp_solvers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ColoringCP</span><span class="p">,</span>
+    <span class="n">ColoringCPModel</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.coloring.solvers.coloring_solver</span> <span class="kn">import</span> <span class="n">SolverColoring</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.callbacks.callback</span> <span class="kn">import</span> <span class="n">Callback</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.cp_tools</span> <span class="kn">import</span> <span class="n">MinizincCPSolver</span><span class="p">,</span> <span class="n">ParametersCP</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.do_problem</span> <span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SubBrickHyperparameter</span><span class="p">,</span>
+    <span class="n">SubBrickKwargsHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.lns_cp</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LNS_CP</span><span class="p">,</span>
+    <span class="n">ConstraintHandler</span><span class="p">,</span>
+    <span class="n">TrivialPostProcessSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.lns_mip</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InitialSolution</span><span class="p">,</span>
+    <span class="n">PostProcessSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="build_default_cp_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns.build_default_cp_model">[docs]</a>
+<span class="k">def</span> <span class="nf">build_default_cp_model</span><span class="p">(</span><span class="n">coloring_model</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">cp_model</span> <span class="o">=</span> <span class="n">ColoringCP</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">coloring_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">coloring_model</span><span class="o">.</span><span class="n">use_subset</span><span class="p">:</span>
+        <span class="n">cp_model</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+            <span class="n">cp_model</span><span class="o">=</span><span class="n">ColoringCPModel</span><span class="o">.</span><span class="n">DEFAULT_WITH_SUBSET</span><span class="p">,</span> <span class="n">object_output</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cp_model</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="n">cp_model</span><span class="o">=</span><span class="n">ColoringCPModel</span><span class="o">.</span><span class="n">DEFAULT</span><span class="p">,</span> <span class="n">object_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cp_model</span></div>
+
+
+
+<div class="viewcode-block" id="build_default_constraint_handler">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns.build_default_constraint_handler">[docs]</a>
+<span class="k">def</span> <span class="nf">build_default_constraint_handler</span><span class="p">(</span><span class="n">coloring_model</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ConstraintHandlerFixColorsCP</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">coloring_model</span><span class="p">,</span> <span class="n">fraction_to_fix</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fraction_to_fix&quot;</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_default_postprocess">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns.build_default_postprocess">[docs]</a>
+<span class="k">def</span> <span class="nf">build_default_postprocess</span><span class="p">(</span>
+    <span class="n">coloring_model</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+    <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">coloring_model</span><span class="o">.</span><span class="n">has_constraints_coloring</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">TrivialPostProcessSolution</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">PostProcessSolutionColoring</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">coloring_model</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_default_initial_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns.build_default_initial_solution">[docs]</a>
+<span class="k">def</span> <span class="nf">build_default_initial_solution</span><span class="p">(</span>
+    <span class="n">coloring_model</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+    <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">return</span> <span class="n">InitialColoring</span><span class="p">(</span>
+        <span class="n">problem</span><span class="o">=</span><span class="n">coloring_model</span><span class="p">,</span>
+        <span class="n">initial_method</span><span class="o">=</span><span class="n">InitialColoringMethod</span><span class="o">.</span><span class="n">GREEDY</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LnsCpColoring">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.solvers.html#discrete_optimization.coloring.solvers.coloring_cp_lns.LnsCpColoring">[docs]</a>
+<span class="k">class</span> <span class="nc">LnsCpColoring</span><span class="p">(</span><span class="n">LNS_CP</span><span class="p">,</span> <span class="n">SolverColoring</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Most easy way to use LNS-CP for coloring with some default parameters for constraint handler.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="n">LNS_CP</span><span class="o">.</span><span class="n">copy_and_update_hyperparameters</span><span class="p">(</span>
+        <span class="n">cp_solver_cls</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="n">ColoringCP</span><span class="p">]),</span>
+        <span class="n">initial_solution_provider_cls</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="n">InitialColoring</span><span class="p">]),</span>
+        <span class="n">constraint_handler_cls</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="n">ConstraintHandlerFixColorsCP</span><span class="p">]),</span>
+        <span class="n">post_process_solution_cls</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="n">TrivialPostProcessSolution</span><span class="p">,</span> <span class="n">PostProcessSolutionColoring</span><span class="p">]</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">ColoringProblem</span><span class="p">,</span>
+        <span class="n">cp_solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MinizincCPSolver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">initial_solution_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InitialSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConstraintHandler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">post_process_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PostProcessSolution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="n">SolverColoring</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="o">=</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cp_solver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;cp_solver_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cp_solver_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cp_solver_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;cp_solver_kwargs&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;cp_solver_cls&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cp_solver</span> <span class="o">=</span> <span class="n">build_default_cp_model</span><span class="p">(</span>
+                    <span class="n">coloring_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">cp_solver_kwargs</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cp_solver_cls</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;cp_solver_cls&quot;</span><span class="p">]</span>
+                <span class="n">cp_solver</span> <span class="o">=</span> <span class="n">cp_solver_cls</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">cp_solver_kwargs</span><span class="p">)</span>
+                <span class="n">cp_solver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">cp_solver_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_solver</span> <span class="o">=</span> <span class="n">cp_solver</span>
+
+        <span class="k">if</span> <span class="n">constraint_handler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;constraint_handler_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">constraint_handler_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">constraint_handler_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;constraint_handler_kwargs&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;constraint_handler_cls&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">build_default_constraint_handler</span><span class="p">(</span>
+                    <span class="n">coloring_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">constraint_handler_kwargs</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">constraint_handler_cls</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;constraint_handler_cls&quot;</span><span class="p">]</span>
+                <span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">constraint_handler_cls</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">constraint_handler_kwargs</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_handler</span> <span class="o">=</span> <span class="n">constraint_handler</span>
+
+        <span class="k">if</span> <span class="n">post_process_solution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;post_process_solution_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">post_process_solution_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">post_process_solution_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;post_process_solution_kwargs&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;post_process_solution_cls&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">build_default_postprocess</span><span class="p">(</span>
+                    <span class="n">coloring_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                    <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">post_process_solution_cls</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;post_process_solution_cls&quot;</span><span class="p">]</span>
+                <span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">post_process_solution_cls</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                    <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">post_process_solution_kwargs</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_process_solution</span> <span class="o">=</span> <span class="n">post_process_solution</span>
+
+        <span class="k">if</span> <span class="n">initial_solution_provider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;initial_solution_provider_kwargs&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">initial_solution_provider_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">initial_solution_provider_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span>
+                    <span class="s2">&quot;initial_solution_provider_kwargs&quot;</span>
+                <span class="p">]</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;initial_solution_provider_cls&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">build_default_initial_solution</span><span class="p">(</span>
+                    <span class="n">coloring_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                    <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">initial_solution_provider_cls</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;initial_solution_provider_cls&quot;</span><span class="p">]</span>
+                <span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">initial_solution_provider_cls</span><span class="p">(</span>
+                    <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                    <span class="n">params_objective_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">initial_solution_provider_kwargs</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution_provider</span> <span class="o">=</span> <span class="n">initial_solution_provider</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+discrete\_optimization.pickup\_vrp.builders package
+===================================================
+
+Submodules
+----------
+
+discrete\_optimization.pickup\_vrp.builders.instance\_builders module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.pickup_vrp.builders.instance_builders
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.pickup_vrp.builders
+   :members:
+   :undoc-members:
+   :show-inheritance:
