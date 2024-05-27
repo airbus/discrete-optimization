@@ -26,7 +26,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 )
 from discrete_optimization.generic_tools.lns_cp import (
     LNS_CP,
-    ConstraintHandler,
+    MznConstraintHandler,
     TrivialPostProcessSolution,
 )
 from discrete_optimization.generic_tools.lns_mip import (
@@ -84,7 +84,7 @@ class LnsCpColoring(LNS_CP, SolverColoring):
     """
 
     hyperparameters = LNS_CP.copy_and_update_hyperparameters(
-        cp_solver_cls=dict(choices=[ColoringCP]),
+        subsolver_cls=dict(choices=[ColoringCP]),
         initial_solution_provider_cls=dict(choices=[InitialColoring]),
         constraint_handler_cls=dict(choices=[ConstraintHandlerFixColorsCP]),
         post_process_solution_cls=dict(
@@ -95,85 +95,23 @@ class LnsCpColoring(LNS_CP, SolverColoring):
     def __init__(
         self,
         problem: ColoringProblem,
-        cp_solver: Optional[MinizincCPSolver] = None,
+        subsolver: Optional[MinizincCPSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
-        constraint_handler: Optional[ConstraintHandler] = None,
+        constraint_handler: Optional[MznConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        SolverColoring.__init__(
-            self, problem=problem, params_objective_function=params_objective_function
+        super().__init__(
+            problem=problem,
+            subsolver=subsolver,
+            initial_solution_provider=initial_solution_provider,
+            constraint_handler=constraint_handler,
+            post_process_solution=post_process_solution,
+            params_objective_function=params_objective_function,
+            build_default_initial_solution_provider=build_default_initial_solution,
+            build_default_contraint_handler=build_default_constraint_handler,
+            build_default_post_process_solution=build_default_postprocess,
+            build_default_subsolver=build_default_cp_model,
+            **kwargs,
         )
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-
-        if cp_solver is None:
-            if kwargs["cp_solver_kwargs"] is None:
-                cp_solver_kwargs = kwargs
-            else:
-                cp_solver_kwargs = kwargs["cp_solver_kwargs"]
-            if kwargs["cp_solver_cls"] is None:
-                cp_solver = build_default_cp_model(
-                    coloring_model=self.problem, **cp_solver_kwargs
-                )
-            else:
-                cp_solver_cls = kwargs["cp_solver_cls"]
-                cp_solver = cp_solver_cls(problem=self.problem, **cp_solver_kwargs)
-                cp_solver.init_model(**cp_solver_kwargs)
-        self.cp_solver = cp_solver
-
-        if constraint_handler is None:
-            if kwargs["constraint_handler_kwargs"] is None:
-                constraint_handler_kwargs = kwargs
-            else:
-                constraint_handler_kwargs = kwargs["constraint_handler_kwargs"]
-            if kwargs["constraint_handler_cls"] is None:
-                constraint_handler = build_default_constraint_handler(
-                    coloring_model=self.problem, **constraint_handler_kwargs
-                )
-            else:
-                constraint_handler_cls = kwargs["constraint_handler_cls"]
-                constraint_handler = constraint_handler_cls(
-                    problem=self.problem, **constraint_handler_kwargs
-                )
-        self.constraint_handler = constraint_handler
-
-        if post_process_solution is None:
-            if kwargs["post_process_solution_kwargs"] is None:
-                post_process_solution_kwargs = kwargs
-            else:
-                post_process_solution_kwargs = kwargs["post_process_solution_kwargs"]
-            if kwargs["post_process_solution_cls"] is None:
-                post_process_solution = build_default_postprocess(
-                    coloring_model=self.problem,
-                    params_objective_function=self.params_objective_function,
-                )
-            else:
-                post_process_solution_cls = kwargs["post_process_solution_cls"]
-                post_process_solution = post_process_solution_cls(
-                    problem=self.problem,
-                    params_objective_function=self.params_objective_function,
-                    **post_process_solution_kwargs
-                )
-        self.post_process_solution = post_process_solution
-
-        if initial_solution_provider is None:
-            if kwargs["initial_solution_provider_kwargs"] is None:
-                initial_solution_provider_kwargs = kwargs
-            else:
-                initial_solution_provider_kwargs = kwargs[
-                    "initial_solution_provider_kwargs"
-                ]
-            if kwargs["initial_solution_provider_cls"] is None:
-                initial_solution_provider = build_default_initial_solution(
-                    coloring_model=self.problem,
-                    params_objective_function=self.params_objective_function,
-                )
-            else:
-                initial_solution_provider_cls = kwargs["initial_solution_provider_cls"]
-                initial_solution_provider = initial_solution_provider_cls(
-                    problem=self.problem,
-                    params_objective_function=self.params_objective_function,
-                    **initial_solution_provider_kwargs
-                )
-        self.initial_solution_provider = initial_solution_provider

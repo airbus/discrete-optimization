@@ -92,20 +92,20 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
         self.fraction_to_fix = fraction_to_fix
 
     def adding_constraint_from_results_store(
-        self, milp_solver: MilpSolver, result_storage: ResultStorage
+        self, solver: MilpSolver, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
-        if not isinstance(milp_solver, ColoringLP):
+        if not isinstance(solver, ColoringLP):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if milp_solver.model is None:
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()"
                 )
         subpart_color = set(
             random.sample(
-                milp_solver.nodes_name,
-                int(self.fraction_to_fix * milp_solver.number_of_nodes),
+                solver.nodes_name,
+                int(self.fraction_to_fix * solver.number_of_nodes),
             )
         )
         dict_color_fixed = {}
@@ -124,13 +124,11 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
                 "result_storage.get_best_solution().colors " "should not be None."
             )
         max_color = max(current_solution.colors)
-        for n in milp_solver.nodes_name:
-            dict_color_start[n] = current_solution.colors[
-                milp_solver.index_nodes_name[n]
-            ]
+        for n in solver.nodes_name:
+            dict_color_start[n] = current_solution.colors[solver.index_nodes_name[n]]
             if n in subpart_color and dict_color_start[n] <= max_color - 1:
                 dict_color_fixed[n] = dict_color_start[n]
-        colors_var = milp_solver.variable_decision["colors_var"]
+        colors_var = solver.variable_decision["colors_var"]
         lns_constraint: Dict[Hashable, Any] = {}
         for key in colors_var:
             n, c = key
@@ -142,28 +140,31 @@ class ConstraintHandlerFixColorsGrb(ConstraintHandler):
                 colors_var[n, c].varhintval = 0
             if n in dict_color_fixed:
                 if c == dict_color_fixed[n]:
-                    lns_constraint[(n, c)] = milp_solver.model.addLConstr(
+                    lns_constraint[(n, c)] = solver.model.addLConstr(
                         colors_var[key] == 1, name=str((n, c))
                     )
                 else:
-                    lns_constraint[(n, c)] = milp_solver.model.addLConstr(
+                    lns_constraint[(n, c)] = solver.model.addLConstr(
                         colors_var[key] == 0, name=str((n, c))
                     )
         return lns_constraint
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: MilpSolver,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ) -> None:
-        if not isinstance(milp_solver, ColoringLP):
+        if not isinstance(solver, ColoringLP):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if milp_solver.model is None:
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()"
                 )
-        milp_solver.model.remove(list(previous_constraints.values()))
-        milp_solver.model.update()
+        solver.model.remove(list(previous_constraints.values()))
+        solver.model.update()
 
 
 class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
@@ -181,20 +182,20 @@ class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
         self.fraction_to_fix = fraction_to_fix
 
     def adding_constraint_from_results_store(
-        self, milp_solver: MilpSolver, result_storage: ResultStorage
+        self, solver: MilpSolver, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
-        if not isinstance(milp_solver, ColoringLP_MIP):
+        if not isinstance(solver, ColoringLP_MIP):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if milp_solver.model is None:
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()"
                 )
         subpart_color = set(
             random.sample(
-                milp_solver.nodes_name,
-                int(self.fraction_to_fix * milp_solver.number_of_nodes),
+                solver.nodes_name,
+                int(self.fraction_to_fix * solver.number_of_nodes),
             )
         )
 
@@ -214,13 +215,11 @@ class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
                 "result_storage.get_best_solution().colors " "should not be None."
             )
         max_color = max(current_solution.colors)
-        for n in milp_solver.nodes_name:
-            dict_color_start[n] = current_solution.colors[
-                milp_solver.index_nodes_name[n]
-            ]
+        for n in solver.nodes_name:
+            dict_color_start[n] = current_solution.colors[solver.index_nodes_name[n]]
             if n in subpart_color and dict_color_start[n] <= max_color - 1:
                 dict_color_fixed[n] = dict_color_start[n]
-        colors_var = milp_solver.variable_decision["colors_var"]
+        colors_var = solver.variable_decision["colors_var"]
         lns_constraint: Dict[Hashable, Any] = {}
         start = []
         for key in colors_var:
@@ -231,29 +230,32 @@ class ConstraintHandlerFixColorsPyMip(ConstraintHandler):
                 start += [(colors_var[n, c], 0)]
             if n in dict_color_fixed:
                 if c == dict_color_fixed[n]:
-                    lns_constraint[(n, c)] = milp_solver.model.add_constr(
+                    lns_constraint[(n, c)] = solver.model.add_constr(
                         colors_var[key] == 1, name=str((n, c))
                     )
                 else:
-                    lns_constraint[(n, c)] = milp_solver.model.add_constr(
+                    lns_constraint[(n, c)] = solver.model.add_constr(
                         colors_var[key] == 0, name=str((n, c))
                     )
-        milp_solver.model.start = start
-        if milp_solver.milp_solver_name == MilpSolverName.GRB:
-            milp_solver.model.solver.update()
+        solver.model.start = start
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()
         return lns_constraint
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: MilpSolver, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: MilpSolver,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ) -> None:
-        if not isinstance(milp_solver, ColoringLP_MIP):
+        if not isinstance(solver, ColoringLP_MIP):
             raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if milp_solver.model is None:
-            milp_solver.init_model()
-            if milp_solver.model is None:
+        if solver.model is None:
+            solver.init_model()
+            if solver.model is None:
                 raise RuntimeError(
                     "milp_solver.model must be not None after calling milp_solver.init_model()"
                 )
-        milp_solver.model.remove(list(previous_constraints.values()))
-        if milp_solver.milp_solver_name == MilpSolverName.GRB:
-            milp_solver.model.solver.update()
+        solver.model.remove(list(previous_constraints.values()))
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()

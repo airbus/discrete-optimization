@@ -19,7 +19,7 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     constraint_unit_used_to_tasks_preemptive,
 )
 from discrete_optimization.generic_tools.cp_tools import SignEnum
-from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
+from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -399,7 +399,7 @@ def post_process_solution(model, solution):
     problem = find_possible_problems_preemptive(model, solution)
 
 
-class NeighborRepairProblems(ConstraintHandler):
+class NeighborRepairProblems(MznConstraintHandler):
     def __init__(
         self,
         problem: Union[
@@ -439,7 +439,7 @@ class NeighborRepairProblems(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: Union[
+        solver: Union[
             CP_RCPSP_MZN_PREEMPTIVE,
             CP_MS_MRCPSP_MZN_PREEMPTIVE,
             CP_MRCPSP_MZN_PREEMPTIVE,
@@ -447,6 +447,7 @@ class NeighborRepairProblems(ConstraintHandler):
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
     ) -> Iterable[Any]:
         if last_result_store is not None:
             current_solution, fit = next(
@@ -491,7 +492,7 @@ class NeighborRepairProblems(ConstraintHandler):
             problems_output=problems,
             minus_delta=p.minus_delta_primary,
             plus_delta=p.plus_delta_primary,
-            cp_solver=cp_solver,
+            cp_solver=solver,
             constraint_max_time=p.constraint_max_time_to_current_solution,
             minus_delta_2=p.minus_delta_secondary,
             plus_delta_2=p.plus_delta_secondary,
@@ -503,22 +504,22 @@ class NeighborRepairProblems(ConstraintHandler):
                 "constraint objective=" + str(evaluation["makespan"]) + ";\n"
             )
         else:
-            string = cp_solver.constraint_start_time_string(
+            string = solver.constraint_start_time_string(
                 task=self.problem.sink_task,
                 start_time=current_solution.get_start_time(self.problem.sink_task)
                 + 200,
                 sign=SignEnum.LEQ,
             )
             child_instance.add_string(string)
-            string = cp_solver.constraint_start_time_string_preemptive_i(
+            string = solver.constraint_start_time_string_preemptive_i(
                 task=self.problem.sink_task,
                 start_time=current_solution.get_end_time(self.problem.sink_task) + 200,
-                part_id=cp_solver.nb_preemptive,
+                part_id=solver.nb_preemptive,
                 sign=SignEnum.LEQ,
             )
             child_instance.add_string(string)
-        weights = cp_solver.second_objectives["weights"]
-        name_penalty = cp_solver.second_objectives["name_penalty"]
+        weights = solver.second_objectives["weights"]
+        name_penalty = solver.second_objectives["name_penalty"]
         sum_string = "+".join(
             ["0"]
             + [str(weights[i]) + "*" + name_penalty[i] for i in range(len(weights))]
@@ -533,9 +534,7 @@ class NeighborRepairProblems(ConstraintHandler):
         if evaluation.get("constraint_penalty", 0) > 0:
             strings = []
         else:
-            strings = cp_solver.constraint_objective_equal_makespan(
-                self.problem.sink_task
-            )
+            strings = solver.constraint_objective_equal_makespan(self.problem.sink_task)
         for s in strings:
             child_instance.add_string(s)
             list_strings += [s]
@@ -543,12 +542,13 @@ class NeighborRepairProblems(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: Union[
+        solver: Union[
             CP_RCPSP_MZN_PREEMPTIVE,
             CP_MS_MRCPSP_MZN_PREEMPTIVE,
             CP_MRCPSP_MZN_PREEMPTIVE,
         ],
         child_instance,
         previous_constraints: Iterable[Any],
+        **kwargs: Any,
     ):
         pass

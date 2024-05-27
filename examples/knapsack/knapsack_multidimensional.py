@@ -108,13 +108,13 @@ def run_cp_multidimensional_multiscenario():
     )
     lns = LNS_CP(
         problem=multiscenario_model,
-        cp_solver=solver,
+        subsolver=solver,
         initial_solution_provider=TrivialInitialSolution(res_storage),
         constraint_handler=KnapConstraintHandler(fraction_fix=0.93),
     )
     p = ParametersCP.default()
     p.time_limit = 5
-    r_lns = lns.solve_lns(
+    r_lns = lns.solve(
         parameters_cp=p,
         nb_iteration_lns=100,
         nb_iteration_no_improvement=1000,

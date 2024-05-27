@@ -7,11 +7,11 @@ from typing import Any, Iterable, Optional
 
 from minizinc import Instance
 
-from discrete_optimization.generic_tools.cp_tools import CPSolver
+from discrete_optimization.generic_tools.cp_tools import MinizincCPSolver
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
 )
-from discrete_optimization.generic_tools.lns_cp import ConstraintHandler
+from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
@@ -20,7 +20,7 @@ from discrete_optimization.knapsack.solvers.cp_solvers import CPKnapsackMZN2
 from discrete_optimization.knapsack.solvers.greedy_solvers import ResultStorage
 
 
-class ConstraintHandlerKnapsack(ConstraintHandler):
+class ConstraintHandlerKnapsack(MznConstraintHandler):
     hyperparameters = [
         FloatHyperparameter(name="fraction_to_fix", default=0.9, low=0.0, high=1.0),
     ]
@@ -32,12 +32,13 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: CPSolver,
+        solver: MinizincCPSolver,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any
     ) -> Iterable[Any]:
-        if not isinstance(cp_solver, CPKnapsackMZN2):
+        if not isinstance(solver, CPKnapsackMZN2):
             raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
         subpart_item = set(
             random.sample(
@@ -68,10 +69,11 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: CPSolver,
+        solver: MinizincCPSolver,
         child_instance: Instance,
         previous_constraints: Iterable[Any],
+        **kwargs: Any
     ) -> None:
-        if not isinstance(cp_solver, CPKnapsackMZN2):
+        if not isinstance(solver, CPKnapsackMZN2):
             raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
         pass

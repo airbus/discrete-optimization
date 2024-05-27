@@ -213,6 +213,20 @@ class CPSolver(SolverDO):
 
     status_solver: Optional[StatusSolver] = None
 
+    def is_optimal(self) -> Optional[bool]:
+        """Tell if found solution is supposed to be optimal.
+
+        To be called after a solve.
+
+        Returns:
+            optimality of the solution. If information missing, returns None instead.
+
+        """
+        if self.status_solver is None or self.status_solver == StatusSolver.UNKNOWN:
+            return None
+        else:
+            return self.status_solver == StatusSolver.OPTIMAL
+
     @abstractmethod
     def init_model(self, **args: Any) -> None:
         """

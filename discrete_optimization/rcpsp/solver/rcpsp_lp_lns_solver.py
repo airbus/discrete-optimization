@@ -148,7 +148,7 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
         self.fraction_fix_start_time = fraction_fix_start_time
 
     def adding_constraint_from_results_store(
-        self, milp_solver: LP_RCPSP, result_storage: ResultStorage
+        self, solver: LP_RCPSP, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
 
         nb_jobs = self.problem.n_jobs + 2
@@ -159,12 +159,12 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
         start = []
         for j in self.problem.tasks_list:
             start_time_j = current_solution.rcpsp_schedule[j]["start_time"]
-            for t in milp_solver.index_time:
+            for t in solver.index_time:
                 if start_time_j == t:
-                    start += [(milp_solver.x[milp_solver.index_in_var[j]][t], 1)]
+                    start += [(solver.x[solver.index_in_var[j]][t], 1)]
                 else:
-                    start += [(milp_solver.x[milp_solver.index_in_var[j]][t], 0)]
-        milp_solver.model.start = start
+                    start += [(solver.x[solver.index_in_var[j]][t], 0)]
+        solver.model.start = start
 
         # Fix start time for a subset of task.
         jobs_to_fix = set(
@@ -175,29 +175,32 @@ class ConstraintHandlerFixStartTime(ConstraintHandler):
         )
         constraints_dict["fix_start_time"] = []
         for job_to_fix in jobs_to_fix:
-            for t in milp_solver.index_time:
+            for t in solver.index_time:
                 if current_solution.rcpsp_schedule[job_to_fix]["start_time"] == t:
                     constraints_dict["fix_start_time"].append(
-                        milp_solver.model.add_constr(
-                            milp_solver.x[milp_solver.index_in_var[job_to_fix]][t] == 1
+                        solver.model.add_constr(
+                            solver.x[solver.index_in_var[job_to_fix]][t] == 1
                         )
                     )
                 else:
                     constraints_dict["fix_start_time"].append(
-                        milp_solver.model.add_constr(
-                            milp_solver.x[milp_solver.index_in_var[job_to_fix]][t] == 0
+                        solver.model.add_constr(
+                            solver.x[solver.index_in_var[job_to_fix]][t] == 0
                         )
                     )
-            if milp_solver.solver_name == mip.GRB:
-                milp_solver.model.solver.update()
+            if solver.solver_name == mip.GRB:
+                solver.model.solver.update()
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_RCPSP, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: LP_RCPSP,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ):
-        milp_solver.model.remove(previous_constraints["fix_start_time"])
-        if milp_solver.solver_name == mip.GRB:
-            milp_solver.model.solver.update()
+        solver.model.remove(previous_constraints["fix_start_time"])
+        if solver.solver_name == mip.GRB:
+            solver.model.solver.update()
 
 
 class ConstraintHandlerStartTimeInterval(ConstraintHandler):
@@ -214,7 +217,7 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
         self.plus_delta = plus_delta
 
     def adding_constraint_from_results_store(
-        self, milp_solver: LP_RCPSP, result_storage: ResultStorage
+        self, solver: LP_RCPSP, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
         constraints_dict = {}
         current_solution, fit = result_storage.get_best_solution_fit()
@@ -224,12 +227,12 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
         start = []
         for j in self.problem.tasks_list:
             start_time_j = current_solution.rcpsp_schedule[j]["start_time"]
-            for t in milp_solver.index_time:
+            for t in solver.index_time:
                 if start_time_j == t:
-                    start += [(milp_solver.x[milp_solver.index_in_var[j]][t], 1)]
+                    start += [(solver.x[solver.index_in_var[j]][t], 1)]
                 else:
-                    start += [(milp_solver.x[milp_solver.index_in_var[j]][t], 0)]
-        milp_solver.model.start = start
+                    start += [(solver.x[solver.index_in_var[j]][t], 0)]
+        solver.model.start = start
         constraints_dict["range_start_time"] = []
         max_time = max(
             [
@@ -256,23 +259,26 @@ class ConstraintHandlerStartTimeInterval(ConstraintHandler):
             start_time_j = current_solution.rcpsp_schedule[job]["start_time"]
             min_st = max(start_time_j - self.minus_delta, 0)
             max_st = min(start_time_j + self.plus_delta, max_time)
-            for t in milp_solver.index_time:
+            for t in solver.index_time:
                 if t < min_st or t > max_st:
                     constraints_dict["range_start_time"].append(
-                        milp_solver.model.add_constr(
-                            milp_solver.x[milp_solver.index_in_var[job]][t] == 0
+                        solver.model.add_constr(
+                            solver.x[solver.index_in_var[job]][t] == 0
                         )
                     )
-        if milp_solver.solver_name == mip.GRB:
-            milp_solver.model.solver.update()
+        if solver.solver_name == mip.GRB:
+            solver.model.solver.update()
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_RCPSP, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: LP_RCPSP,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ):
-        milp_solver.model.remove(previous_constraints["range_start_time"])
-        if milp_solver.solver_name == mip.GRB:
-            milp_solver.model.solver.update()
+        solver.model.remove(previous_constraints["range_start_time"])
+        if solver.solver_name == mip.GRB:
+            solver.model.solver.update()
 
 
 class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
@@ -289,11 +295,11 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
         self.plus_delta = plus_delta
 
     def adding_constraint_from_results_store(
-        self, milp_solver: LP_MRCPSP, result_storage: ResultStorage
+        self, solver: LP_MRCPSP, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
         current_solution, fit = result_storage.get_best_solution_fit()
         current_solution: RCPSPSolution = current_solution
-        st = milp_solver.start_solution
+        st = solver.start_solution
         if (
             self.problem.evaluate(st)["makespan"]
             < self.problem.evaluate(current_solution)["makespan"]
@@ -306,17 +312,17 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
             mode_j = modes_dict[j]
             start += [
                 (
-                    milp_solver.durations[j],
+                    solver.durations[j],
                     self.problem.mode_details[j][mode_j]["duration"],
                 )
             ]
-            for k in milp_solver.variable_per_task[j]:
+            for k in solver.variable_per_task[j]:
                 task, mode, time = k
                 if start_time_j == time and mode == mode_j:
-                    start += [(milp_solver.x[k], 1)]
+                    start += [(solver.x[k], 1)]
                 else:
-                    start += [(milp_solver.x[k], 0)]
-        milp_solver.model.start = start
+                    start += [(solver.x[k], 0)]
+        solver.model.start = start
         constraints_dict = {"range_start_time": []}
         max_time = max(
             [
@@ -343,22 +349,25 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
             start_time_j = current_solution.rcpsp_schedule[job]["start_time"]
             min_st = max(start_time_j - self.minus_delta, 0)
             max_st = min(start_time_j + self.plus_delta, max_time)
-            for key in milp_solver.variable_per_task[job]:
+            for key in solver.variable_per_task[job]:
                 t = key[2]
                 if t < min_st or t > max_st:
                     constraints_dict["range_start_time"].append(
-                        milp_solver.model.add_constr(milp_solver.x[key] == 0)
+                        solver.model.add_constr(solver.x[key] == 0)
                     )
-        if milp_solver.solver_name == mip.GRB:
-            milp_solver.model.solver.update()
+        if solver.solver_name == mip.GRB:
+            solver.model.solver.update()
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
-        self, milp_solver: LP_MRCPSP, previous_constraints: Mapping[Hashable, Any]
+        self,
+        solver: LP_MRCPSP,
+        previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ):
-        milp_solver.model.remove(previous_constraints["range_start_time"])
-        if milp_solver.solver_name == mip.GRB:
-            milp_solver.model.solver.update()
+        solver.model.remove(previous_constraints["range_start_time"])
+        if solver.solver_name == mip.GRB:
+            solver.model.solver.update()
 
 
 class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
@@ -375,10 +384,10 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
         self.plus_delta = plus_delta
 
     def adding_constraint_from_results_store(
-        self, milp_solver: LP_MRCPSP_GUROBI, result_storage: ResultStorage
+        self, solver: LP_MRCPSP_GUROBI, result_storage: ResultStorage, **kwargs: Any
     ) -> Mapping[Hashable, Any]:
         current_solution, fit = result_storage.get_best_solution_fit()
-        st = milp_solver.start_solution
+        st = solver.start_solution
         if (
             self.problem.evaluate(st)["makespan"]
             < self.problem.evaluate(current_solution)["makespan"]
@@ -391,17 +400,17 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
             mode_j = modes_dict[j]
             start += [
                 (
-                    milp_solver.durations[j],
+                    solver.durations[j],
                     self.problem.mode_details[j][mode_j]["duration"],
                 )
             ]
-            for k in milp_solver.variable_per_task[j]:
+            for k in solver.variable_per_task[j]:
                 task, mode, time = k
                 if start_time_j == time and mode == mode_j:
-                    milp_solver.x[k].start = 1
-                    milp_solver.starts[j].start = start_time_j
+                    solver.x[k].start = 1
+                    solver.starts[j].start = start_time_j
                 else:
-                    milp_solver.x[k].start = 0
+                    solver.x[k].start = 0
         constraints_dict = {"range_start_time": []}
         max_time = max(
             [
@@ -428,22 +437,23 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(ConstraintHandler):
             start_time_j = current_solution.rcpsp_schedule[job]["start_time"]
             min_st = max(start_time_j - self.minus_delta, 0)
             max_st = min(start_time_j + self.plus_delta, max_time)
-            for key in milp_solver.variable_per_task[job]:
+            for key in solver.variable_per_task[job]:
                 t = key[2]
                 if t < min_st or t > max_st:
                     constraints_dict["range_start_time"].append(
-                        milp_solver.model.addLConstr(milp_solver.x[key] == 0)
+                        solver.model.addLConstr(solver.x[key] == 0)
                     )
-        milp_solver.model.update()
+        solver.model.update()
         return constraints_dict
 
     def remove_constraints_from_previous_iteration(
         self,
-        milp_solver: LP_MRCPSP_GUROBI,
+        solver: LP_MRCPSP_GUROBI,
         previous_constraints: Mapping[Hashable, Any],
+        **kwargs: Any
     ):
-        milp_solver.model.remove(previous_constraints.get("range_start_time", []))
-        milp_solver.model.update()
+        solver.model.remove(previous_constraints.get("range_start_time", []))
+        solver.model.update()
 
 
 class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
@@ -478,7 +488,7 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
         )
         self.lns_solver = LNS_MILP(
             problem=problem,
-            milp_solver=solver,
+            subsolver=solver,
             initial_solution_provider=self.initial_solution_provider,
             constraint_handler=self.constraint_handler,
             params_objective_function=self.params_objective_function,
@@ -487,7 +497,7 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs
     ) -> ResultStorage:
-        return self.lns_solver.solve_lns(
+        return self.lns_solver.solve(
             parameters_milp=self.parameters_milp,
             nb_iteration_lns=kwargs.get("nb_iteration_lns", 100),
             callbacks=callbacks,

@@ -18,7 +18,7 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
-from discrete_optimization.generic_tools.cp_tools import CPSolver
+from discrete_optimization.generic_tools.cp_tools import MinizincCPSolver
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
@@ -28,8 +28,8 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import (
-    ConstraintHandler,
     InitialSolution,
+    MznConstraintHandler,
     PostProcessSolution,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -95,7 +95,7 @@ class InitialColoring(InitialSolution):
             return solver.solve(strategy=NXGreedyColoringMethod.largest_first)
 
 
-class ConstraintHandlerFixColorsCP(ConstraintHandler):
+class ConstraintHandlerFixColorsCP(MznConstraintHandler):
     """Constraint builder for LNS coloring problem.
 
     This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
@@ -115,23 +115,25 @@ class ConstraintHandlerFixColorsCP(ConstraintHandler):
 
     def remove_constraints_from_previous_iteration(
         self,
-        cp_solver: CPSolver,
+        solver: MinizincCPSolver,
         child_instance: Instance,
         previous_constraints: Iterable[Any],
+        **kwargs: Any
     ) -> None:
         pass
 
     def adding_constraint_from_results_store(
         self,
-        cp_solver: CPSolver,
+        solver: MinizincCPSolver,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any
     ) -> Iterable[Any]:
         """Include constraint that fix decision on a subset of nodes, according to current solutions found.
 
         Args:
-            cp_solver (CPSolver): a coloring CPSolver
+            solver: a coloring CPSolver
             child_instance: minizinc instance where to include the constraint
             result_storage: current pool of solutions
             last_result_store: pool of solutions found in previous LNS iteration (optional)
