@@ -77,6 +77,7 @@ class MisQuadraticSolver(MisSolver, GurobiMilpSolver):
     The quadratic gurobi solver work only for graph without weight on nodes,
     if there is weight, it's going to ignore them
     """
+
     def __init__(
         self,
         problem: MisProblem,

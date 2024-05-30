@@ -9,9 +9,12 @@ from discrete_optimization.maximum_independent_set.mis_parser import (
 )
 from discrete_optimization.maximum_independent_set.mis_solvers import solve, solvers_map
 from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
-    MisMilpSolver, MisQuadraticSolver,
+    MisMilpSolver,
+    MisQuadraticSolver,
 )
-from discrete_optimization.maximum_independent_set.solvers.mis_kamis import MisKamisSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
+    MisKamisSolver,
+)
 
 try:
     import gurobipy
@@ -28,7 +31,9 @@ logging.basicConfig(level=logging.INFO)
 
 @pytest.mark.parametrize("solver_class", solvers_map)
 def test_solvers(solver_class):
-    if (solver_class == MisMilpSolver or solver_class == MisQuadraticSolver) and not gurobi_available:
+    if (
+        solver_class == MisMilpSolver or solver_class == MisQuadraticSolver
+    ) and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
     if solver_class == MisKamisSolver and not kamis_available:
         pytest.skip("You need Kamis to test this solver.")
