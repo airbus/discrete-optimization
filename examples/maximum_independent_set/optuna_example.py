@@ -11,6 +11,10 @@ Results can be viewed on optuna-dashboard with:
 
 import os
 
+from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
+    MisKamisSolver,
+)
+
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
 import logging
@@ -58,6 +62,7 @@ seed = 42
 optuna_nb_trials = 10
 
 gurobi_full_license_available = True
+kamis_available = False
 create_another_study = True  # avoid relaunching the same study, keep the previous ones
 max_time_per_solver = 60  # max duration (s)
 min_time_per_solver = 5  # min duration before pruning (s)
@@ -73,6 +78,8 @@ solvers_to_remove = {MisNetworkXSolver}
 if not gurobi_available or not gurobi_full_license_available:
     solvers_to_remove.add(MisMilpSolver)
     solvers_to_remove.add(MisQuadraticSolver)
+if not kamis_available:
+    solvers_to_remove.add(MisKamisSolver)
 solvers_to_test: List[Type[SolverDO]] = [
     s for s in solvers_map if s not in solvers_to_remove
 ]
