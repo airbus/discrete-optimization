@@ -80,6 +80,7 @@ MIS_FILES = [
     "https://oeis.org/A265032/a265032_1zc.4096.txt.gz",
 ]
 
+
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the discrete-optimization data directory.
 

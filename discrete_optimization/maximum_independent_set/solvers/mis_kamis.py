@@ -2,7 +2,9 @@ import os
 import subprocess
 import warnings
 
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import CategoricalHyperparameter
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )

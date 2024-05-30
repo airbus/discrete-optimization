@@ -10,16 +10,17 @@ Results can be viewed on optuna-dashboard with:
 """
 
 import os
+
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
 import logging
 import time
 from collections import defaultdict
-from typing import List, Type, Dict, Any
+from typing import Any, Dict, List, Type
 
 import optuna
 from optuna import Trial
-from optuna.storages import JournalStorage, JournalFileStorage
+from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import TrialState
 
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
@@ -27,13 +28,28 @@ from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.lp_tools import gurobi_available, ParametersMilp
-from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import TimedPercentilePruner
-from discrete_optimization.maximum_independent_set.mis_parser import get_data_available, dimacs_parser_nx
+from discrete_optimization.generic_tools.lp_tools import (
+    ParametersMilp,
+    gurobi_available,
+)
+from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
+    TimedPercentilePruner,
+)
+from discrete_optimization.maximum_independent_set.mis_parser import (
+    dimacs_parser_nx,
+    get_data_available,
+)
 from discrete_optimization.maximum_independent_set.mis_solvers import solvers_map
-from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import MisMilpSolver, MisQuadraticSolver
-from discrete_optimization.maximum_independent_set.solvers.mis_networkx import MisNetworkXSolver
-from discrete_optimization.maximum_independent_set.solvers.mis_ortools import MisOrtoolsSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
+    MisMilpSolver,
+    MisQuadraticSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_networkx import (
+    MisNetworkXSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_ortools import (
+    MisOrtoolsSolver,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
@@ -57,7 +73,9 @@ solvers_to_remove = {MisNetworkXSolver}
 if not gurobi_available or not gurobi_full_license_available:
     solvers_to_remove.add(MisMilpSolver)
     solvers_to_remove.add(MisQuadraticSolver)
-solvers_to_test: List[Type[SolverDO]] = [s for s in solvers_map if s not in solvers_to_remove]
+solvers_to_test: List[Type[SolverDO]] = [
+    s for s in solvers_map if s not in solvers_to_remove
+]
 
 p = ParametersCP.default_cpsat()
 p.nb_process = 6

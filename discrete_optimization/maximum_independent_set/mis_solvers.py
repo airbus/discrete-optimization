@@ -14,10 +14,15 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
-    MisMilpSolver, MisQuadraticSolver,
+    MisMilpSolver,
+    MisQuadraticSolver,
 )
-from discrete_optimization.maximum_independent_set.solvers.mis_kamis import MisKamisSolver
-from discrete_optimization.maximum_independent_set.solvers.mis_networkx import MisNetworkXSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
+    MisKamisSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_networkx import (
+    MisNetworkXSolver,
+)
 from discrete_optimization.maximum_independent_set.solvers.mis_ortools import (
     MisOrtoolsSolver,
 )
@@ -36,7 +41,7 @@ solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
             {
                 "parameters_milp": ParametersMilp.default(),
             },
-        )
+        ),
     ],
     "ortools": [
         (
@@ -44,18 +49,8 @@ solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
             {"modeling": ModelingCPSat.BINARY, "parameters_cp": ParametersCP.default()},
         ),
     ],
-    "networkX": [
-        (
-            MisNetworkXSolver,
-            {}
-        )
-    ],
-    "kamis": [
-        (
-            MisKamisSolver,
-            {}
-        )
-    ]
+    "networkX": [(MisNetworkXSolver, {})],
+    "kamis": [(MisKamisSolver, {})],
 }
 
 solvers_map = {}
