@@ -2,6 +2,7 @@ import os
 import subprocess
 import warnings
 
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import CategoricalHyperparameter
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -9,17 +10,18 @@ from discrete_optimization.maximum_independent_set.mis_model import MisSolution
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 this_folder = os.path.abspath(os.path.dirname(__file__))
-folder_ = os.environ["KAMIS_DEPLOY"]
-redumis = os.path.join(folder_, "redumis")
-online_mis = os.path.join(folder_, "online_mis")
-weighted = os.path.join(folder_, "weighted_branch_reduce")
-weighted_local_search = os.path.join(folder_, "weighted_local_search")
+folder_ = os.environ.get("KAMIS_DEPLOY", None)
+redumis = os.path.join(str(folder_), "redumis")
+online_mis = os.path.join(str(folder_), "online_mis")
+weighted = os.path.join(str(folder_), "weighted_branch_reduce")
+weighted_local_search = os.path.join(str(folder_), "weighted_local_search")
 methods = {
     "redumis": redumis,
     "weighted": weighted,
     "weighted_local_search": weighted_local_search,
     "online_mis": online_mis,
 }
+
 tmp_dir = os.path.join(this_folder, "tmp/")
 import logging
 import time
@@ -33,7 +35,13 @@ class MisKamisSolver(MisSolver):
     to the folder where are Kamis executable.
     """
 
-    def init_model(self):
+    hyperparameters = [
+        CategoricalHyperparameter(
+            name="method", choices=[key for key in methods.keys()], default="weighted"
+        )
+    ]
+
+    def init_model(self, **kwargs):
 
         t = time.time_ns()
         file = os.path.join(tmp_dir, f"file_{t}.graph")
@@ -68,13 +76,15 @@ class MisKamisSolver(MisSolver):
 
     def solve(self, **kwargs) -> ResultStorage:
 
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+
         if folder_ is None:
             warnings.warn(
                 'The environment variable "KAMIS_DEPLOY" is not define, you need to define it as the path to the folder where are Kamis executable'
             )
 
         time_limit = kwargs.get("time_limit", 60)
-        method = kwargs.get("method", "weighted")
+        method = kwargs["method"]
 
         if method not in methods:
             logger.warning(

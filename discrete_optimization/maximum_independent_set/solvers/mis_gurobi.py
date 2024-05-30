@@ -1,5 +1,8 @@
 from typing import Any, Callable, Optional
 
+import networkx as nx
+import numpy as np
+
 from discrete_optimization.generic_tools.graph_api import get_node_attributes
 
 try:
@@ -63,6 +66,52 @@ class MisMilpSolver(MisSolver, GurobiMilpSolver):
         chosen = [0] * self.problem.number_nodes
 
         for i in range(0, self.problem.number_nodes):
-            chosen[i] = int(get_var_value_for_current_solution(self.vars_node[i]))
+            if get_var_value_for_current_solution(self.vars_node[i]) > 0.5:
+                chosen[i] = 1
+
+        return MisSolution(self.problem, chosen)
+
+
+class MisQuadraticSolver(MisSolver, GurobiMilpSolver):
+    """
+    The quadratic gurobi solver work only for graph without weight on nodes,
+    if there is weight, it's going to ignore them
+    """
+    def __init__(
+        self,
+        problem: MisProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any
+    ):
+        super().__init__(problem, params_objective_function, **kwargs)
+        self.vars_node = None
+
+    def init_model(self, **kwargs: Any) -> None:
+
+        # Create a new model
+        self.model = Model()
+
+        # Create variables
+        self.vars_node = self.model.addMVar(
+            self.problem.number_nodes, vtype=GRB.BINARY, name="N"
+        )
+
+        # Set objective
+        adj = nx.to_numpy_array(self.problem.graph_nx)
+        J = np.identity(self.problem.number_nodes)
+        A = J - adj
+        self.model.setObjective(self.vars_node @ A @ self.vars_node, GRB.MAXIMIZE)
+
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> MisSolution:
+
+        chosen = [0] * self.problem.number_nodes
+
+        for i in range(0, self.problem.number_nodes):
+            if get_var_value_for_current_solution(self.vars_node[i]) > 0.5:
+                chosen[i] = 1
 
         return MisSolution(self.problem, chosen)
