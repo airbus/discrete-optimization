@@ -9,20 +9,28 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    SubBrickKwargsHyperparameter,
+)
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 
 class GA_RCPSP_Solver(SolverRCPSP):
     problem: RCPSPModel
-    hyperparameters = Ga.hyperparameters
+    hyperparameters = [
+        SubBrickKwargsHyperparameter(
+            name="parameters_ga_kwargs", subbrick_cls=ParametersGa
+        )
+    ]
 
-    def solve(self, parameters_ga: Optional[ParametersGa] = None, **args):
+    def solve(self, parameters_ga: Optional[ParametersGa] = None, **kwargs):
         if parameters_ga is None:
             parameters_ga = ParametersGa.default_rcpsp()
-            args = self.complete_with_default_hyperparameters(args)
-        for key in args:
-            setattr(parameters_ga, key, args[key])
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        if kwargs["parameters_ga_kwargs"] is not None:
+            for key in kwargs["parameters_ga_kwargs"]:
+                setattr(parameters_ga, key, kwargs["parameters_ga_kwargs"][key])
         ga_solver = Ga(
             problem=self.problem,
             encoding=parameters_ga.encoding,

@@ -11,9 +11,28 @@ from discrete_optimization.generic_tools.ea.ga import (
     DeapSelection,
     ObjectiveHandling,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    EnumHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+    Hyperparametrizable,
+)
 
 
-class ParametersGa:
+class ParametersGa(Hyperparametrizable):
+    hyperparameters = [
+        EnumHyperparameter(name="crossover", enum=DeapCrossover, default=None),
+        EnumHyperparameter(
+            name="selection", enum=DeapSelection, default=DeapSelection.SEL_TOURNAMENT
+        ),
+        IntegerHyperparameter(name="pop_size", low=1, high=1000, default=100),
+        FloatHyperparameter(name="mut_rate", low=0, high=0.9, default=0.1),
+        FloatHyperparameter(name="crossover_rate", low=0, high=1, default=0.9),
+        FloatHyperparameter(name="tournament_size", low=0, high=1, default=0.2),
+    ]
+
     def __init__(
         self,
         mutation: Union[Mutation, DeapMutation],

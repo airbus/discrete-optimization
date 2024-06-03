@@ -300,22 +300,32 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
 
     Args:
         subbrick_hyperparameter: name of the SubBrickHyperparameter this hyperparameter corresponds to.
+            If None, this means the subbrick is always constructed from the same class which should be then specified
+            via `subbrick_cls`.
+        subbrick_cls: class of the subbrick.
+            Relevant only if `subbrick_hyperparmeter` is None. This means the class of the subbrick is always the same.
 
     """
 
     def __init__(
         self,
         name: str,
-        subbrick_hyperparameter: str,
+        subbrick_hyperparameter: Optional[str] = None,
+        subbrick_cls: Optional[Type[Hyperparametrizable]] = None,
         default: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(name=name, default=default)
+        self.subbrick_cls = subbrick_cls
         self.subbrick_hyperparameter = subbrick_hyperparameter
+        if subbrick_cls is None and subbrick_hyperparameter is None:
+            raise ValueError(
+                "subbricl_cls and subbrick_hyperparameter cannot be both None."
+            )
 
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        subbrick: Type[Hyperparametrizable],
+        subbrick: Optional[Type[Hyperparametrizable]] = None,
         names: Optional[List[str]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
         fixed_hyperparameters: Optional[Dict[str, Any]] = None,
@@ -326,7 +336,9 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
 
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
-            subbrick: subbrick chosen as hyperparameter value for `self.subbrick_hyperparameter`
+            subbrick: subbrick chosen as hyperparameter value for `self.subbrick_hyperparameter`.
+                Can be None only if `self.subbrick_hyperparameter` is None and the subbrick class has already
+                been specified by `self.subbrick_cls`.
             names: names of the hyperparameters to choose for the subbrick.
                 Only relevant names will be considered (i.e. corresponding to existing hyperparameters names for the chosen subbrick),
                 the other will be discarded (potentially, being meaningful for other subbricks).
@@ -343,6 +355,13 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
         Returns:
 
         """
+        if subbrick is None:
+            if self.subbrick_cls is None:
+                raise ValueError(
+                    "`subbrick` cannot be None if `self.subbrick_cls` is None."
+                )
+            else:
+                subbrick = self.subbrick_cls
         subbrick_hyperparameter_names = subbrick.get_hyperparameters_names()
         if names is not None:
             names = [name for name in names if name in subbrick_hyperparameter_names]
