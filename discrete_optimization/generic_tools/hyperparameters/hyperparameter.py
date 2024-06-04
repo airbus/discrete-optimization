@@ -6,7 +6,17 @@ from __future__ import annotations  # see annotations as str
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Container,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+)
 
 if TYPE_CHECKING:  # only for type checkers
     from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
@@ -35,6 +45,25 @@ class Hyperparameter:
     """Default value for the hyperparameter.
 
     None means "no default value".
+
+    """
+
+    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    """Other hyperparameter on which this ones depends on.
+
+    If None: this hyperparameter is always needed.
+    Else:
+        depends_on = hyperparameter2.name, possible_values
+        this hyperparameter is needed if hyperparameter2 value is in possible_values.
+
+    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.
+
+    Notes:
+        - How to define possible_values?
+          - Usually a set or a list can be used. But sometime we need something smarter.
+          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)
+        - For now, only simple dependency on a single hyperparameter, and a "set" of values is possible.
+          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.
 
     """
 
@@ -77,6 +106,25 @@ class IntegerHyperparameter(Hyperparameter):
     """Default value for the hyperparameter.
 
     None means "no default value".
+
+    """
+
+    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    """Other hyperparameter on which this ones depends on.
+
+    If None: this hyperparameter is always needed.
+    Else:
+        depends_on = hyperparameter2.name, possible_values
+        this hyperparameter is needed if hyperparameter2 value is in possible_values.
+
+    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.
+
+    Notes:
+        - How to define possible_values?
+          - Usually a set or a list can be used. But sometime we need something smarter.
+          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)
+        - For now, only simple dependency on a single hyperparameter, and a "set" of values is possible.
+          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.
 
     """
 
@@ -133,6 +181,25 @@ class FloatHyperparameter(Hyperparameter):
 
     """
 
+    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    """Other hyperparameter on which this ones depends on.
+
+    If None: this hyperparameter is always needed.
+    Else:
+        depends_on = hyperparameter2.name, possible_values
+        this hyperparameter is needed if hyperparameter2 value is in possible_values.
+
+    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.
+
+    Notes:
+        - How to define possible_values?
+          - Usually a set or a list can be used. But sometime we need something smarter.
+          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)
+        - For now, only simple dependency on a single hyperparameter, and a "set" of values is possible.
+          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.
+
+    """
+
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
@@ -170,6 +237,25 @@ class CategoricalHyperparameter(Hyperparameter):
     choices: List[Any] = field(default_factory=list)
     """List of possible choices."""
 
+    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    """Other hyperparameter on which this ones depends on.
+
+    If None: this hyperparameter is always needed.
+    Else:
+        depends_on = hyperparameter2.name, possible_values
+        this hyperparameter is needed if hyperparameter2 value is in possible_values.
+
+    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.
+
+    Notes:
+        - How to define possible_values?
+          - Usually a set or a list can be used. But sometime we need something smarter.
+          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)
+        - For now, only simple dependency on a single hyperparameter, and a "set" of values is possible.
+          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.
+
+    """
+
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
@@ -203,8 +289,16 @@ class EnumHyperparameter(CategoricalHyperparameter):
 
     """
 
-    def __init__(self, name: str, enum: Type[Enum], default: Optional[Any] = None):
-        super().__init__(name, choices=list(enum), default=default)
+    def __init__(
+        self,
+        name: str,
+        enum: Type[Enum],
+        default: Optional[Any] = None,
+        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+    ):
+        super().__init__(
+            name, choices=list(enum), default=default, depends_on=depends_on
+        )
         self.enum = enum
 
     def suggest_with_optuna(
@@ -253,8 +347,9 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
         name: str,
         choices: List[Type[Hyperparametrizable]],
         default: Optional[Any] = None,
+        depends_on: Optional[Tuple[str, Container[Any]]] = None,
     ):
-        super().__init__(name, choices=choices, default=default)
+        super().__init__(name, choices=choices, default=default, depends_on=depends_on)
         # map by their names or (module + name)'s?
         if len(set([c.__name__ for c in choices])) == len(choices):
             # names are unique between all choices
@@ -313,8 +408,9 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
         subbrick_hyperparameter: Optional[str] = None,
         subbrick_cls: Optional[Type[Hyperparametrizable]] = None,
         default: Optional[Dict[str, Any]] = None,
+        depends_on: Optional[Tuple[str, Container[Any]]] = None,
     ):
-        super().__init__(name=name, default=default)
+        super().__init__(name=name, default=default, depends_on=depends_on)
         self.subbrick_cls = subbrick_cls
         self.subbrick_hyperparameter = subbrick_hyperparameter
         if subbrick_cls is None and subbrick_hyperparameter is None:

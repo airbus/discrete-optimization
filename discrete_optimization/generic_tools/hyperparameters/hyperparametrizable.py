@@ -5,9 +5,10 @@
 from __future__ import annotations  # see annotations as str
 
 import inspect
-from collections import defaultdict
-from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from collections import ChainMap, defaultdict
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Set
+
+import networkx as nx
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     Hyperparameter,
@@ -171,6 +172,7 @@ class Hyperparametrizable:
             trial: optuna trial during hyperparameters tuning
             names: names of the hyperparameters to choose.
                 By default, all available hyperparameters will be suggested.
+                If `fixed_hyperparameters` is provided, the corresponding names are removed from `names`.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
             fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,
                 if the subbrick class is not suggested by this method, but already fixed.
@@ -190,61 +192,109 @@ class Hyperparametrizable:
             kwargs_by_name = {}
         if fixed_hyperparameters is None:
             fixed_hyperparameters = {}
+        # Remove fixed hyperparameters from names of hyperparameters to suggest
+        names = [name for name in names if name not in fixed_hyperparameters]
 
-        # Meta-solvers: when defining subsolvers hyperparameters,
-        #  be careful to suggest them before trying to suggest their own subset of hyperparameters
+        # We suggest the hyperparameters by batch so that hyperparameters depending on other
+        # are suggested in a batch after batches involving their depending hyperparameters.
+        # Dependency can come from `depends_on` attribute or, in case of `SubBrickKwargsHyperparameter`,
+        # from `subbrick_hyperparameter` attribute.
         name2hyperparameter = cls.get_hyperparameters_by_name()
-        first_batch_hyperparameter_names = [
-            name
-            for name in names
-            if not (isinstance(name2hyperparameter[name], SubBrickKwargsHyperparameter))
-        ]
-        subsolvers_kwargs_hyperparameters: List[SubBrickKwargsHyperparameter] = [
-            name2hyperparameter[name]
-            for name in names
-            if isinstance(name2hyperparameter[name], SubBrickKwargsHyperparameter)
-        ]
+        suggested_hyperparameters = {}
+        suggested_and_fixed_hyperparameters = ChainMap(
+            suggested_hyperparameters, fixed_hyperparameters
+        )
+        skipped_hyperparameters: Set[str] = set()
 
-        suggested_hyperparameters = {
-            name: cls.suggest_hyperparameter_with_optuna(
-                trial=trial, name=name, prefix=prefix, **kwargs_by_name.get(name, {})
-            )
-            for name in first_batch_hyperparameter_names
-        }
-        for hyperparameter in subsolvers_kwargs_hyperparameters:
-            kwargs_for_optuna_suggestion = kwargs_by_name.get(hyperparameter.name, {})
-            if hyperparameter.subbrick_hyperparameter is None:
-                kwargs_for_optuna_suggestion["subbrick"] = hyperparameter.subbrick_cls
-                kwargs_for_optuna_suggestion[
-                    "prefix"
-                ] = f"{prefix}{hyperparameter.name}."
-            else:
-                if hyperparameter.subbrick_hyperparameter in names:
+        for name in cls._sort_hyperparameters_by_dependency():
+            hyperparameter = name2hyperparameter[name]
+            kwargs_for_optuna_suggestion = kwargs_by_name.get(name, {})
+            kwargs_for_optuna_suggestion["prefix"] = prefix
+
+            # check if dependency condition is fulfilled or not
+            if hyperparameter.depends_on is not None:
+                previous_hp_name, possible_values = hyperparameter.depends_on
+                if previous_hp_name in skipped_hyperparameters or (
+                    previous_hp_name in suggested_and_fixed_hyperparameters
+                    and suggested_and_fixed_hyperparameters[previous_hp_name]
+                    not in possible_values
+                ):
+                    # condition unfulfilled: do not suggest hyperparameter
+                    skipped_hyperparameters.add(name)
+                    continue
+                elif previous_hp_name not in suggested_and_fixed_hyperparameters:
+                    raise ValueError(
+                        f"'{hyperparameter.name}' depends on '{previous_hp_name}', "
+                        "but the latter has not been suggested by this method "
+                        "with `names` including it or being None, nor has it been "
+                        "provided via `fixed_hyperparameters`."
+                    )
+
+            # subbrickkwargs: add subbrick choice
+            if isinstance(hyperparameter, SubBrickKwargsHyperparameter):
+                if hyperparameter.subbrick_hyperparameter is None:
                     kwargs_for_optuna_suggestion[
                         "subbrick"
-                    ] = suggested_hyperparameters[
+                    ] = hyperparameter.subbrick_cls
+                    kwargs_for_optuna_suggestion[
+                        "prefix"
+                    ] = f"{prefix}{hyperparameter.name}."
+                elif (
+                    hyperparameter.subbrick_hyperparameter
+                    in suggested_and_fixed_hyperparameters
+                ):
+                    kwargs_for_optuna_suggestion[
+                        "subbrick"
+                    ] = suggested_and_fixed_hyperparameters[
                         hyperparameter.subbrick_hyperparameter
                     ]
-                elif hyperparameter.subbrick_hyperparameter in fixed_hyperparameters:
-                    kwargs_for_optuna_suggestion["subbrick"] = fixed_hyperparameters[
-                        hyperparameter.subbrick_hyperparameter
-                    ]
+                    kwargs_for_optuna_suggestion[
+                        "prefix"
+                    ] = f"{prefix}{hyperparameter.subbrick_hyperparameter}."
+                elif hyperparameter.subbrick_hyperparameter in skipped_hyperparameters:
+                    # subbrick_kwargs must be skipped if subbrick itself is skipped
+                    skipped_hyperparameters.add(name)
+                    continue
                 else:
                     raise ValueError(
-                        f"The choice of '{hyperparameter.subbrick_hyperparameter}' should be "
-                        "either suggested by this method with `names` containing it or being None "
-                        "or given via `fixed_hyperparameters`."
+                        f"'{hyperparameter.name}' needs the choice of '{hyperparameter.subbrick_hyperparameter}', "
+                        "but the latter has not been suggested by this method "
+                        "with `names` including it or being None, nor has it been "
+                        "provided via `fixed_hyperparameters`."
                     )
-                kwargs_for_optuna_suggestion[
-                    "prefix"
-                ] = f"{prefix}{hyperparameter.subbrick_hyperparameter}."
-            suggested_hyperparameters[
-                hyperparameter.name
-            ] = cls.suggest_hyperparameter_with_optuna(
-                trial=trial, name=hyperparameter.name, **kwargs_for_optuna_suggestion
-            )
+
+            # suggest the hyperparameter with optuna if needed
+            # NB: we filter the name only now in order to have the skip decision taken before
+            # as it could have consequences on hyperparameters further in the dependency graph
+            if name in names:
+                suggested_and_fixed_hyperparameters[
+                    name
+                ] = cls.suggest_hyperparameter_with_optuna(
+                    trial=trial, name=name, **kwargs_for_optuna_suggestion
+                )
 
         return suggested_hyperparameters
+
+    @classmethod
+    def _get_hyperparameters_dependency_graph(cls) -> nx.DiGraph:
+        g = nx.DiGraph()
+        g.add_nodes_from(cls.get_hyperparameters_names())
+        for hp in cls.hyperparameters:
+            if hp.depends_on is not None:
+                previous_hp_name, _ = hp.depends_on
+                g.add_edge(previous_hp_name, hp.name)
+            if (
+                isinstance(hp, SubBrickKwargsHyperparameter)
+                and hp.subbrick_hyperparameter is not None
+            ):
+                g.add_edge(hp.subbrick_hyperparameter, hp.name)
+        return g
+
+    @classmethod
+    def _sort_hyperparameters_by_dependency(cls) -> Iterator[str]:
+        return nx.algorithms.dag.topological_sort(
+            cls._get_hyperparameters_dependency_graph()
+        )
 
 
 def _copy_and_update_attributes(h: Hyperparameter, **kwargs) -> Hyperparameter:
