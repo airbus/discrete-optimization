@@ -1,5 +1,6 @@
 from typing import Optional, Union
 
+import networkx as nx
 import numpy as np
 from qiskit_optimization import QuadraticProgram
 from qiskit_optimization.algorithms import OptimizationResult
@@ -30,6 +31,10 @@ class MisQiskit(OptimizationApplication):
 
     def to_quadratic_program(self) -> QuadraticProgram:
 
+        adj = nx.to_numpy_array(self.problem.graph_nx)
+        J = np.identity(self.problem.number_nodes)
+        A = J - adj
+
         quadratic_program = QuadraticProgram()
         var_names = {}
         for x in range(0, self.problem.number_nodes):
@@ -41,18 +46,11 @@ class MisQiskit(OptimizationApplication):
         quadratic = {}
 
         for i in range(0, self.problem.number_nodes):
-            linear[var_names[i]] = 1
+            for j in range(i, self.problem.number_nodes):
+                quadratic[(var_names[i], var_names[j])] = A[i][j]
 
         # we maximize the number of node in the independent set
         quadratic_program.maximize(constant, linear, quadratic)
-
-        # for each edge, his two nodes can't be in the same independent set
-        for edge in self.problem.graph_nx.edges():
-            constraint = {
-                self.problem.nodes_to_index[edge[0]]: 1,
-                self.problem.nodes_to_index[edge[1]]: 1,
-            }
-            quadratic_program.linear_constraint(constraint, "<=", 1)
 
         return quadratic_program
 

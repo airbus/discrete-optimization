@@ -23,6 +23,21 @@ class MisSolution(Solution):
         self.problem = problem
         self.chosen = chosen
 
+    def __str__(self) -> str:
+        return (
+            "nb_node in mis = "
+            + str(sum(self.chosen))
+            + "\n"
+            + "nodes in mis ="
+            + str(
+                [
+                    self.problem.index_to_nodes[i]
+                    for i in range(0, len(self.chosen))
+                    if self.chosen[i] == 1
+                ]
+            )
+        )
+
     def copy(self) -> Solution:
         return MisSolution(problem=self.problem, chosen=deepcopy(self.chosen))
 
@@ -69,7 +84,6 @@ class MisProblem(Problem):
             self.func = sum
 
     def evaluate(self, variable: MisSolution) -> Dict[str, float]:
-        print(variable)
         return {
             "value": self.func(variable.chosen),
             "penalty": self.compute_violation(variable),
