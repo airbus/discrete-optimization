@@ -213,23 +213,31 @@ class Hyperparametrizable:
         }
         for hyperparameter in subsolvers_kwargs_hyperparameters:
             kwargs_for_optuna_suggestion = kwargs_by_name.get(hyperparameter.name, {})
-            if hyperparameter.subbrick_hyperparameter in names:
-                kwargs_for_optuna_suggestion["subbrick"] = suggested_hyperparameters[
-                    hyperparameter.subbrick_hyperparameter
-                ]
-            elif hyperparameter.subbrick_hyperparameter in fixed_hyperparameters:
-                kwargs_for_optuna_suggestion["subbrick"] = fixed_hyperparameters[
-                    hyperparameter.subbrick_hyperparameter
-                ]
+            if hyperparameter.subbrick_hyperparameter is None:
+                kwargs_for_optuna_suggestion["subbrick"] = hyperparameter.subbrick_cls
+                kwargs_for_optuna_suggestion[
+                    "prefix"
+                ] = f"{prefix}{hyperparameter.name}."
             else:
-                raise ValueError(
-                    f"The choice of '{hyperparameter.subbrick_hyperparameter}' should be "
-                    "either suggested by this method with `names` containing it or being None "
-                    "or given via `fixed_hyperparameters`."
-                )
-            kwargs_for_optuna_suggestion[
-                "prefix"
-            ] = f"{prefix}{hyperparameter.subbrick_hyperparameter}."
+                if hyperparameter.subbrick_hyperparameter in names:
+                    kwargs_for_optuna_suggestion[
+                        "subbrick"
+                    ] = suggested_hyperparameters[
+                        hyperparameter.subbrick_hyperparameter
+                    ]
+                elif hyperparameter.subbrick_hyperparameter in fixed_hyperparameters:
+                    kwargs_for_optuna_suggestion["subbrick"] = fixed_hyperparameters[
+                        hyperparameter.subbrick_hyperparameter
+                    ]
+                else:
+                    raise ValueError(
+                        f"The choice of '{hyperparameter.subbrick_hyperparameter}' should be "
+                        "either suggested by this method with `names` containing it or being None "
+                        "or given via `fixed_hyperparameters`."
+                    )
+                kwargs_for_optuna_suggestion[
+                    "prefix"
+                ] = f"{prefix}{hyperparameter.subbrick_hyperparameter}."
             suggested_hyperparameters[
                 hyperparameter.name
             ] = cls.suggest_hyperparameter_with_optuna(
