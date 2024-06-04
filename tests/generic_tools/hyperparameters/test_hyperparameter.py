@@ -74,6 +74,19 @@ class MetaSolver(BaseMetaSolver):
     )
 
 
+class MetaSolverFixedSubsolver(SolverDO):
+    # subbrickkwargs with fixed subbrick class
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=1, default=1),
+        SubBrickKwargsHyperparameter("kwargs_subsolver", subbrick_cls=DummySolver),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
 class MetaMetaSolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=1, high=1, default=1),
@@ -299,6 +312,42 @@ def test_suggest_with_optuna_meta_solver_fixed_subsolver():
         assert "subsolver.nb" in trial.params
         assert (
             trial.params["subsolver.nb"]
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+        )
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (3 * 5)
+
+
+def test_suggest_with_optuna_meta_solver_subsolver_kwargs_only():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            MetaSolverFixedSubsolver.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                names=["nb", "kwargs_subsolver"],
+                kwargs_by_name=dict(
+                    kwargs_subsolver=dict(
+                        names=["nb", "coeff", "coeff2"],
+                        kwargs_by_name=dict(coeff=dict(step=0.5)),
+                    )
+                ),
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 2
+        print(suggested_hyperparameters_kwargs)
+        assert "nb" in suggested_hyperparameters_kwargs
+        assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
+        assert "nb" in trial.params
+        assert "kwargs_subsolver.nb" in trial.params
+        assert (
+            trial.params["kwargs_subsolver.nb"]
             == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
         )
 
