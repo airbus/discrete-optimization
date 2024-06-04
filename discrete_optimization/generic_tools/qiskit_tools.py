@@ -1,4 +1,3 @@
-import string
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +23,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 
-def get_result_from_dict_result(dict_result: Dict[(string, int)]) -> np.ndarray:
+def get_result_from_dict_result(dict_result: Dict[(str, int)]) -> np.ndarray:
     """
     @param dict_result: dictionnary where keys are qubit's value and values are the number of time where this qubit's value have been chosen
     @return: the qubit's value the must often chose
