@@ -38,6 +38,28 @@ class DummySolver(SolverDO):
         return ResultStorage([])
 
 
+class DummySolverWithDependencies(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=2, default=1),
+        FloatHyperparameter(
+            "coeff",
+            low=-1.0,
+            high=1.0,
+            default=1.0,
+            depends_on=("method", [Method.GREEDY]),
+        ),
+        CategoricalHyperparameter("use_it", choices=[True, False], default=True),
+        EnumHyperparameter(
+            "method", enum=Method, default=Method.GREEDY, depends_on=("use_it", [True])
+        ),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
 class DummySolver2(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=0, high=3, default=1),
@@ -179,6 +201,64 @@ def test_suggest_with_optuna():
     assert len(study.trials) == 2 * 2 * 5 * 1
 
 
+def test_suggest_with_optuna_with_dependencies():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithDependencies.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "coeff": dict(step=0.5),
+                    "nb": dict(high=1),
+                },
+            )
+        )
+        if suggested_hyperparameters_kwargs["use_it"]:
+            if suggested_hyperparameters_kwargs["method"] == Method.GREEDY:
+                assert len(suggested_hyperparameters_kwargs) == 4
+            else:
+                assert len(suggested_hyperparameters_kwargs) == 3
+        else:
+            assert len(suggested_hyperparameters_kwargs) == 2
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (1 + (1 + 5))
+
+
+def test_suggest_with_optuna_with_dependencies_and_fixed_hyperparameters():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithDependencies.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "coeff": dict(step=0.5),
+                    "nb": dict(high=1),
+                },
+                fixed_hyperparameters={"method": Method.GREEDY},
+            )
+        )
+        if suggested_hyperparameters_kwargs["use_it"]:
+            assert len(suggested_hyperparameters_kwargs) == 3
+        else:
+            assert len(suggested_hyperparameters_kwargs) == 2
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (1 + 5)
+
+
 def test_suggest_with_optuna_meta_solver():
     def objective(trial: optuna.Trial) -> float:
         # hyperparameters for the chosen solver
@@ -284,7 +364,7 @@ def test_suggest_with_optuna_meta_solver_nok_fixed_subsolver_not_given():
         return 0.0
 
     study = optuna.create_study(sampler=optuna.samplers.BruteForceSampler())
-    with pytest.raises(ValueError, match="The choice of 'subsolver'"):
+    with pytest.raises(ValueError, match="choice of 'subsolver'"):
         study.optimize(objective, n_trials=1)
 
 
