@@ -65,15 +65,19 @@ def cost_func(params, ansatz, hamiltonian, estimator, callback_dict):
     return cost
 
 
-def execute_ansatz_with_Hamiltonian(ansatz, hamiltonian, **kwargs) -> np.ndarray:
+def execute_ansatz_with_Hamiltonian(
+    backend, ansatz, hamiltonian, **kwargs
+) -> np.ndarray:
     """
+    @param backend: the backend use to run the circuit (simulator or real device)
     @param ansatz: the quantum circuit
     @param hamiltonian: the hamiltonian corresponding to the problem
     @param kwargs: a list of parameters who can be specified
     @return: the qubit's value the must often chose
     """
 
-    backend = kwargs.get("backend", AerSimulator())
+    if backend is None:
+        backend = AerSimulator()
     with_session = kwargs.get("with_session", False)
     optimization_level = kwargs.get("optimization_level", 3)
     nb_shots = kwargs.get("nb_shot", 10000)
@@ -141,16 +145,24 @@ class QiskitQAOASolver(SolverDO):
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
         **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
+        self.backend = backend
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        backend: Optional = None,
+        **kwargs: Any,
     ) -> ResultStorage:
 
         reps = kwargs.get("reps", 2)
+
+        if backend is not None:
+            self.backend = backend
 
         if self.quadratic_programm is None:
             self.init_model()
@@ -164,7 +176,9 @@ class QiskitQAOASolver(SolverDO):
         hamiltonian, offset = qubo.to_ising()
         ansatz = QAOAAnsatz(hamiltonian, reps=reps)
 
-        result = execute_ansatz_with_Hamiltonian(ansatz, hamiltonian, **kwargs)
+        result = execute_ansatz_with_Hamiltonian(
+            self.backend, ansatz, hamiltonian, **kwargs
+        )
         result = conv.interpret(result)
 
         sol = self.retrieve_current_solution(result)
@@ -196,15 +210,23 @@ class QiskitVQESolver(SolverDO):
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
         **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
         self.nb_variable = 0
+        self.backend = backend
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        backend: Optional = None,
+        **kwargs: Any,
     ) -> ResultStorage:
+
+        if backend is not None:
+            self.backend = backend
 
         if self.quadratic_programm is None or self.nb_variable == 0:
             self.init_model()
@@ -222,7 +244,9 @@ class QiskitVQESolver(SolverDO):
         hamiltonian, offset = qubo.to_ising()
         ansatz = EfficientSU2(hamiltonian.num_qubits)
 
-        result = execute_ansatz_with_Hamiltonian(ansatz, hamiltonian, **kwargs)
+        result = execute_ansatz_with_Hamiltonian(
+            self.backend, ansatz, hamiltonian, **kwargs
+        )
         result = conv.interpret(result)
 
         sol = self.retrieve_current_solution(result)
