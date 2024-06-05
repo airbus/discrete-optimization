@@ -4,7 +4,6 @@ from qiskit_aer import AerSimulator
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
     QAOAMisSolver,
-    VQEMisSolver,
 )
 
 
@@ -31,7 +30,7 @@ def quantum_mis():
     # we create an instance of MisProblem
     misProblem = MisProblem(graph)
     # we create an instance of a QAOAMisSolver
-    misSolver = VQEMisSolver(misProblem)
+    misSolver = QAOAMisSolver(misProblem)
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     misSolver.init_model()
     # we solve the mis problem
@@ -39,13 +38,11 @@ def quantum_mis():
     by default we use a quantum simulator to solve the problem, a AerSimulator() but it's possible to use
     any backend (the same simulator with defined parameters, an other simulator or any real quantum device we can
     use as a qiskit backend)
-    for this you have just to define your own backend and then pass it into a kwargs parameters
-    backend = ...
-    kwargs = {"backend": backend}
-    res = misSolver.solve(**kwargs)
+    for this you have just to define your own backend and then pass it at the creation of the solver or
+    when you use the solve function of the solver
     """
-    kwargs = {"backend": AerSimulator()}
-    res = misSolver.solve(**kwargs)
+    backend = AerSimulator()
+    res = misSolver.solve(backend=backend)
 
     sol, fit = res.get_best_solution_fit()
     print(sol)
