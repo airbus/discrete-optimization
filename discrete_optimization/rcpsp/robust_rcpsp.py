@@ -12,7 +12,6 @@ from scipy.stats import poisson, randint, rv_discrete
 from discrete_optimization.generic_tools.do_problem import (
     MethodAggregating,
     RobustProblem,
-    Solution,
 )
 from discrete_optimization.rcpsp import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution

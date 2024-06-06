@@ -22,11 +22,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
-from discrete_optimization.generic_tools.ea.ga import (
-    DeapCrossover,
-    DeapMutation,
-    DeapSelection,
-)
+from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,

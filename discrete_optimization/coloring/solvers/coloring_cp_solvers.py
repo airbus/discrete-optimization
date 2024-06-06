@@ -10,7 +10,7 @@ CP formulation rely on minizinc models stored in coloring/minizinc folder.
 import logging
 import os
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, Optional
 
 import networkx as nx
 import pymzn

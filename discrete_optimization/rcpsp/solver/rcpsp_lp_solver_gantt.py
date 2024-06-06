@@ -12,7 +12,6 @@ from mip import BINARY, MINIMIZE, Model, xsum
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
-    Solution,
 )
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,

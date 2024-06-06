@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 

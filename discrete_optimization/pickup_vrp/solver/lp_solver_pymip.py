@@ -34,7 +34,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
 )
-from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, GPDPSolution, Node
+from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, Node
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     TemporaryResult,
     build_graph_solution,

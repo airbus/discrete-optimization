@@ -3,7 +3,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import List, Optional
+from typing import Optional
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
 from discrete_optimization.coloring.solvers.coloring_cp_lns_solvers import (
@@ -17,25 +17,14 @@ from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
     ColoringCPModel,
 )
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
-from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.cp_tools import MinizincCPSolver, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import MinizincCPSolver
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
-    SubBrickHyperparameter,
-    SubBrickKwargsHyperparameter,
-)
-from discrete_optimization.generic_tools.lns_cp import (
-    LNS_CP,
-    MznConstraintHandler,
-    TrivialPostProcessSolution,
-)
+from discrete_optimization.generic_tools.lns_cp import LNS_CP, MznConstraintHandler
 from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
     PostProcessSolution,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
+from discrete_optimization.generic_tools.lns_tools import TrivialPostProcessSolution
 
 
 def build_default_cp_model(coloring_model: ColoringProblem, **kwargs):

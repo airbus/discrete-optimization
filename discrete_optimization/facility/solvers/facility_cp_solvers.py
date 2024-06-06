@@ -7,7 +7,6 @@ import os
 from enum import Enum
 from typing import Any, Optional
 
-from deprecation import deprecated
 from minizinc import Instance, Model, Solver
 
 from discrete_optimization.facility.facility_model import (
@@ -18,9 +17,6 @@ from discrete_optimization.facility.solvers.facility_lp_solver import (
     compute_length_matrix,
 )
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
-from discrete_optimization.facility.solvers.greedy_solvers import (
-    GreedySolverDistanceBased,
-)
 from discrete_optimization.generic_tools.cp_tools import (
     CPSolverName,
     MinizincCPSolver,

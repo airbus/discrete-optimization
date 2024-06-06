@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from datetime import datetime
 from typing import Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback

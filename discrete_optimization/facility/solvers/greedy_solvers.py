@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import numpy as np
 import numpy.typing as npt

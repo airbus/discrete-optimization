@@ -9,9 +9,7 @@
 from __future__ import print_function
 
 import logging
-import sys
 import threading
-from time import sleep
 
 try:
     import thread

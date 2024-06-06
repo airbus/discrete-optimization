@@ -5,7 +5,7 @@
 import logging
 import random
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from deap import algorithms, base, creator, tools

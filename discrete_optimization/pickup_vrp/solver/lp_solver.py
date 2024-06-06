@@ -21,7 +21,6 @@ from typing import (
     cast,
 )
 
-import matplotlib.pyplot as plt
 import networkx as nx
 
 from discrete_optimization.generic_tools.callbacks.callback import (

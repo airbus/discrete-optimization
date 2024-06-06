@@ -7,7 +7,6 @@ from abc import abstractmethod
 from typing import Any, List, Optional
 
 import clingo
-from clingo import Symbol
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,

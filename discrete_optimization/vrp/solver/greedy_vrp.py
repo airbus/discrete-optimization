@@ -6,7 +6,7 @@ from typing import Any
 
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
-from discrete_optimization.vrp.vrp_model import VrpProblem, trivial_solution
+from discrete_optimization.vrp.vrp_model import trivial_solution
 
 
 class GreedyVRPSolver(SolverVrp):

@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from collections import namedtuple
 from typing import Tuple
 
 import networkx as nx

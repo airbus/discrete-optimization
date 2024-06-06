@@ -13,7 +13,7 @@ from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
-from discrete_optimization.vrp.vrp_model import VrpProblem, VrpSolution
+from discrete_optimization.vrp.vrp_model import VrpSolution
 from discrete_optimization.vrp.vrp_toolbox import build_graph
 
 logger = logging.getLogger(__name__)

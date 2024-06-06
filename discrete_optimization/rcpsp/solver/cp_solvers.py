@@ -22,10 +22,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
-    CategoricalHyperparameter,
-    EnumHyperparameter,
-)
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,

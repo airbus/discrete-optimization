@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Type, Union
 
 import minizinc
-from minizinc import Instance, Result, Status
+from minizinc import Instance, Status
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,

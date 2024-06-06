@@ -3,16 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
-import time
-from typing import Any, List, Optional
+from typing import Any
 
 import clingo
-from clingo import Symbol
 
 from discrete_optimization.generic_tools.asp_tools import ASPClingoSolver
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 from discrete_optimization.knapsack.knapsack_model import KnapsackSolution
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 
