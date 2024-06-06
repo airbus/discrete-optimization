@@ -122,8 +122,20 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
         CategoricalHyperparameter(
             name="use_matrix_indicator_heuristic", default=True, choices=[False, True]
         ),
-        IntegerHyperparameter(name="n_shortest", default=10, low=0, high=100),
-        IntegerHyperparameter(name="n_cheapest", default=10, low=0, high=100),
+        IntegerHyperparameter(
+            name="n_shortest",
+            default=10,
+            low=0,
+            high=100,
+            depends_on=("use_matrix_indicator_heuristic", [True]),
+        ),
+        IntegerHyperparameter(
+            name="n_cheapest",
+            default=10,
+            low=0,
+            high=100,
+            depends_on=("use_matrix_indicator_heuristic", [True]),
+        ),
     ]
 
     def __init__(

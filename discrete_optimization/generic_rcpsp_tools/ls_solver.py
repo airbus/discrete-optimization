@@ -58,7 +58,13 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
             name="init_solution_process", choices=[True, False], default=False
         ),
         EnumHyperparameter(name="ls_solver", enum=LS_SOLVER, default=LS_SOLVER.SA),
-        FloatHyperparameter(name="temperature", low=0.01, high=10, default=3),
+        FloatHyperparameter(
+            name="temperature",
+            low=0.01,
+            high=10,
+            default=3,
+            depends_on=("ls_solver", [LS_SOLVER.SA]),
+        ),
         IntegerHyperparameter(
             name="nb_iteration_no_improvement", low=10, high=2000, default=200
         ),

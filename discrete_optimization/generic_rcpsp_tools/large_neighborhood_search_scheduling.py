@@ -489,11 +489,33 @@ class LargeNeighborhoodSearchScheduling(LNS_CP, SolverGenericRCPSP):
             default=ConstraintHandlerType.MIX_SUBPROBLEMS,
         ),
         FloatHyperparameter(
-            name="fraction_subproblem", default=0.05, low=0.0, high=1.0
+            name="fraction_subproblem",
+            default=0.05,
+            low=0.0,
+            high=1.0,
+            depends_on=(
+                "constraint_handler_type",
+                [ConstraintHandlerType.MIX_SUBPROBLEMS],
+            ),
         ),
-        IntegerHyperparameter(name="nb_cut_part", default=10, low=0, high=100),
+        IntegerHyperparameter(
+            name="nb_cut_part",
+            default=10,
+            low=0,
+            high=100,
+            depends_on=(
+                "constraint_handler_type",
+                [ConstraintHandlerType.MIX_SUBPROBLEMS],
+            ),
+        ),
         CategoricalHyperparameter(
-            name="use_makespan_of_subtasks", choices=[True, False], default=False
+            name="use_makespan_of_subtasks",
+            choices=[True, False],
+            default=False,
+            depends_on=(
+                "constraint_handler_type",
+                [ConstraintHandlerType.MIX_SUBPROBLEMS],
+            ),
         ),
         SubBrickHyperparameter(
             name="params_0_cls",

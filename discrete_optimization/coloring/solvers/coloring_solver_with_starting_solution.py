@@ -24,11 +24,12 @@ logger = logging.getLogger(__name__)
 
 class SolverColoringWithStartingSolution(SolverColoring):
     hyperparameters = [
-        CategoricalHyperparameter("greedy_start", choices=[True], default=True),
+        CategoricalHyperparameter("greedy_start", choices=[True, False], default=True),
         EnumHyperparameter(
             "greedy_method",
             enum=NXGreedyColoringMethod,
             default=NXGreedyColoringMethod.best,
+            depends_on=("greedy_start", [True]),
         ),
     ]
 
