@@ -36,9 +36,18 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
             name="value_sequence_chain", choices=[True, False], default=False
         ),
         CategoricalHyperparameter(
-            name="hard_value_sequence_chain", choices=[True, False], default=False
+            name="hard_value_sequence_chain",
+            choices=[True, False],
+            default=False,
+            depends_on=("value_sequence_chain", [True]),
         ),
-        IntegerHyperparameter(name="tolerance_delta_max", low=0, high=2, default=1),
+        IntegerHyperparameter(
+            name="tolerance_delta_max",
+            low=0,
+            high=2,
+            default=1,
+            depends_on=("value_sequence_chain", [True]),
+        ),
     ]
     model: Optional[pytoulbar2.CFN] = None
 

@@ -90,6 +90,7 @@ class ParamsConstraintBuilder(Hyperparametrizable):
             name="except_assigned_multiskill_primary_set",
             choices=[True, False],
             default=False,
+            depends_on=("first_method_multiskill", [True]),
         ),
         CategoricalHyperparameter(
             name="first_method_multiskill", choices=[True, False], default=True

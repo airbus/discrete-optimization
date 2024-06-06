@@ -111,7 +111,10 @@ class BaseLNS(SolverDO):
             "subsolver_kwargs", subbrick_hyperparameter="subsolver_cls"
         ),
         SubBrickHyperparameter(
-            "initial_solution_provider_cls", choices=[], default=None
+            "initial_solution_provider_cls",
+            choices=[],
+            default=None,
+            depends_on=("skip_first_iteration", [False]),
         ),
         SubBrickKwargsHyperparameter(
             "initial_solution_provider_kwargs",

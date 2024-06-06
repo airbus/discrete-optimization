@@ -36,13 +36,22 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
             name="warmstart", choices=[True, False], default=True
         ),
         CategoricalHyperparameter(
-            name="value_sequence_chain", choices=[True, False], default=False
+            name="value_sequence_chain",
+            choices=[True, False],
+            default=False,
+            depends_on=("modeling", [ModelingCPSat.INTEGER]),
         ),
         CategoricalHyperparameter(
-            name="used_variable", choices=[True, False], default=False
+            name="used_variable",
+            choices=[True, False],
+            default=False,
+            depends_on=("modeling", [ModelingCPSat.INTEGER]),
         ),
         CategoricalHyperparameter(
-            name="symmetry_on_used", choices=[True, False], default=True
+            name="symmetry_on_used",
+            choices=[True, False],
+            default=True,
+            depends_on=("modeling", [ModelingCPSat.INTEGER]),
         ),
     ] + SolverColoringWithStartingSolution.hyperparameters
 
