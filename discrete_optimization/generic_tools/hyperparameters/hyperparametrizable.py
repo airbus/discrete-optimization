@@ -248,9 +248,10 @@ class Hyperparametrizable:
                     ] = suggested_and_fixed_hyperparameters[
                         hyperparameter.subbrick_hyperparameter
                     ]
-                    kwargs_for_optuna_suggestion[
-                        "prefix"
-                    ] = f"{prefix}{hyperparameter.subbrick_hyperparameter}."
+                    kwargs_for_optuna_suggestion["prefix"] = (
+                        f"{prefix}{hyperparameter.subbrick_hyperparameter}."
+                        f"{suggested_and_fixed_hyperparameters[hyperparameter.subbrick_hyperparameter].__name__}."
+                    )
                 elif hyperparameter.subbrick_hyperparameter in skipped_hyperparameters:
                     # subbrick_kwargs must be skipped if subbrick itself is skipped
                     skipped_hyperparameters.add(name)

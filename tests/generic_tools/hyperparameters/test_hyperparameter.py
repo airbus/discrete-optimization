@@ -62,7 +62,7 @@ class DummySolverWithDependencies(SolverDO):
 
 class DummySolver2(SolverDO):
     hyperparameters = [
-        IntegerHyperparameter("nb", low=0, high=3, default=1),
+        CategoricalHyperparameter("nb", choices=[0, 1, 2, 3], default=1),
         FloatHyperparameter("coeff2", low=-1.0, high=1.0, default=1.0),
         FloatHyperparameter("coeff3", low=-1.0, high=1.0, default=1.0),
     ]
@@ -280,9 +280,17 @@ def test_suggest_with_optuna_meta_solver():
         assert "nb" in suggested_hyperparameters_kwargs
         assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
         assert "nb" in trial.params
-        assert "subsolver.nb" in trial.params
         assert (
-            trial.params["subsolver.nb"]
+            "subsolver.DummySolver.nb" in trial.params
+            or "subsolver.DummySolver2.nb" in trial.params
+        )
+        if "subsolver.DummySolver.nb" in trial.params:
+            param_name = "subsolver.DummySolver.nb"
+        else:
+            param_name = "subsolver.DummySolver2.nb"
+
+        assert (
+            trial.params[param_name]
             == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
         )
 
@@ -325,14 +333,20 @@ def test_suggest_with_optuna_meta_solver_level2():
             in suggested_hyperparameters_kwargs["kwargs_subsolver"]["kwargs_subsolver"]
         )
         assert "nb" in trial.params
-        assert "subsolver.nb" in trial.params
-        assert "subsolver.subsolver.nb" in trial.params
+        assert "subsolver.MetaSolver.nb" in trial.params
         assert (
-            trial.params["subsolver.nb"]
-            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+            "subsolver.MetaSolver.subsolver.DummySolver.nb" in trial.params
+            or "subsolver.MetaSolver.subsolver.DummySolver2.nb" in trial.params
         )
         assert (
-            trial.params["subsolver.subsolver.nb"]
+            trial.params["subsolver.MetaSolver.nb"]
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+        )
+        param_name = "subsolver.MetaSolver.subsolver.DummySolver.nb"
+        if param_name not in trial.params:
+            param_name = "subsolver.MetaSolver.subsolver.DummySolver2.nb"
+        assert (
+            trial.params[param_name]
             == suggested_hyperparameters_kwargs["kwargs_subsolver"]["kwargs_subsolver"][
                 "nb"
             ]
@@ -389,9 +403,9 @@ def test_suggest_with_optuna_meta_solver_fixed_subsolver():
         assert "nb" in suggested_hyperparameters_kwargs
         assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
         assert "nb" in trial.params
-        assert "subsolver.nb" in trial.params
+        assert "subsolver.DummySolver.nb" in trial.params
         assert (
-            trial.params["subsolver.nb"]
+            trial.params["subsolver.DummySolver.nb"]
             == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
         )
 
