@@ -33,9 +33,6 @@ else:
 
 try:
     import docplex
-    from docplex.mp.constr import LinearConstraint
-    from docplex.mp.dvar import Var
-    from docplex.mp.model import Model
     from docplex.mp.progress import SolutionListener
     from docplex.mp.solution import SolveSolution
 except ImportError:
@@ -177,18 +174,15 @@ class MilpSolver(SolverDO):
     @abstractmethod
     def get_var_value_for_ith_solution(self, var: Any, i: int) -> float:
         """Get value for i-th solution of a given variable."""
-        pass
 
     @abstractmethod
     def get_obj_value_for_ith_solution(self, i: int) -> float:
         """Get objective value for i-th solution."""
-        pass
 
     @property
     @abstractmethod
     def nb_solutions(self) -> int:
         """Number of solutions found by the solver."""
-        pass
 
 
 class PymipMilpSolver(MilpSolver):

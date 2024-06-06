@@ -12,7 +12,6 @@ capacity of the facility.
 
 import math
 from abc import abstractmethod
-from collections import namedtuple
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type

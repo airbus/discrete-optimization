@@ -3,8 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import pickle
-import time
 from typing import Any, List, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import (
@@ -17,7 +15,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
     Solution,
-    build_evaluate_function_aggregated,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.ls.local_search import (

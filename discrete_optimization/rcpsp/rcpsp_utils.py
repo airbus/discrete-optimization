@@ -20,8 +20,6 @@ from typing import (
     Union,
 )
 
-import matplotlib
-import matplotlib.cm
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
@@ -646,7 +644,6 @@ def get_start_bounds_from_additional_constraint(
                     ub = min(ub, ubs - min_duration)
     if ub < 0:
         print(ub)
-        pass
     return int(lb), int(ub)
 
 

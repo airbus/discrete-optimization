@@ -11,7 +11,6 @@ from discrete_optimization.generic_tools.do_mutation import (
     Mutation,
 )
 from discrete_optimization.tsp.tsp_model import (
-    Point,
     Point2D,
     SolutionTSP,
     TSPModel,

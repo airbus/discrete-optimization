@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 import contextlib
 import logging
-import time
 from abc import abstractmethod
 from typing import Any, Hashable, List, Mapping, Optional
 
@@ -25,7 +24,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
-from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )

@@ -9,7 +9,6 @@ from discrete_optimization.datasets import get_data_home
 from discrete_optimization.facility.facility_model import (
     Customer,
     Facility,
-    FacilityProblem,
     FacilityProblem2DPoints,
     Point,
 )

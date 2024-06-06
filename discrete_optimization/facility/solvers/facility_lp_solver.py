@@ -20,7 +20,6 @@ from discrete_optimization.facility.solvers.facility_solver import SolverFacilit
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
-    EnumHyperparameter,
     IntegerHyperparameter,
 )
 from discrete_optimization.generic_tools.lp_tools import (

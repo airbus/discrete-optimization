@@ -7,7 +7,7 @@
 
 import logging
 import os
-from typing import Any, Dict, Hashable, Optional, Set
+from typing import Any, Hashable, Optional, Set
 
 from minizinc import Instance, Model, Solver
 

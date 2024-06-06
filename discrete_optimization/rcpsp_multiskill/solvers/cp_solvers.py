@@ -9,7 +9,7 @@ from datetime import timedelta
 from enum import Enum
 from typing import Any, Dict, Hashable, List, Optional, Set, Tuple, Union
 
-from minizinc import Instance, Model, Solver, Status
+from minizinc import Instance, Model, Solver
 
 from discrete_optimization.generic_rcpsp_tools.graph_tools_rcpsp import (
     build_graph_rcpsp_object,

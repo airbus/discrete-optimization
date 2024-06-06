@@ -1228,7 +1228,6 @@ def sgs_fast_partial_schedule_preemptive_minduration(
                         )
                     ):
                         logger.debug("passed")
-                        pass
                     else:
                         starts.append(current_min_time)
                         ends.append(reached_t + 1)

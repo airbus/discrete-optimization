@@ -67,7 +67,7 @@ class SolverDO(Hyperparametrizable):
         Can initialize a ortools, milp, gurobi, ... model.
 
         """
-        pass
+        ...
 
     def is_optimal(self) -> Optional[bool]:
         """Tell if found solution is supposed to be optimal.

@@ -76,4 +76,3 @@ class ConstraintHandlerKnapsack(MznConstraintHandler):
     ) -> None:
         if not isinstance(solver, CPKnapsackMZN2):
             raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
-        pass

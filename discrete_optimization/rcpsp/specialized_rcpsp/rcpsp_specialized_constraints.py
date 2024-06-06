@@ -26,7 +26,6 @@ from discrete_optimization.rcpsp.fast_function_rcpsp import (
     sgs_fast_preemptive_minduration,
     sgs_fast_preemptive_some_special_constraints,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
     RCPSPModelPreemptive,
     RCPSPSolutionPreemptive,

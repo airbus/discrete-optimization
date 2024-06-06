@@ -364,4 +364,3 @@ class KnapConstraintHandler(MznConstraintHandler):
             raise ValueError(
                 "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
             )
-        pass

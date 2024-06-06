@@ -3,20 +3,15 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
-import time
 from typing import Any, List, Optional
 
 import clingo
-from clingo import Symbol
 
 from discrete_optimization.coloring.coloring_model import ColoringSolution
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
     SolverColoringWithStartingSolution,
 )
 from discrete_optimization.generic_tools.asp_tools import ASPClingoSolver
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 
 cur_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)

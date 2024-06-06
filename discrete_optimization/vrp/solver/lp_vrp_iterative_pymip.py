@@ -15,7 +15,6 @@ from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.vrp.solver.lp_vrp_iterative import (
     build_graph_pruned_vrp,
-    build_the_cycles,
     build_warm_edges_and_update_graph,
     compute_start_end_flows_info,
     plot_solve,

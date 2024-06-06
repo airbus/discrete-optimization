@@ -9,12 +9,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import numpy.typing as npt
 from deap import algorithms, creator, gp, tools
 from deap.base import Fitness, Toolbox
 from deap.gp import (
     Primitive,
-    PrimitiveSet,
     PrimitiveSetTyped,
     PrimitiveTree,
     Terminal,

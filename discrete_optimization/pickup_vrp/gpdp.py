@@ -7,18 +7,7 @@
 # February 1995 Transportation Science 29(1):17-29
 # https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem
 import logging
-from typing import (
-    Any,
-    Dict,
-    Hashable,
-    KeysView,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Dict, Hashable, KeysView, List, Optional, Set, Tuple, Type
 
 import networkx as nx
 import numpy as np

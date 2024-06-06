@@ -4,11 +4,10 @@
 
 import logging
 import time
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
