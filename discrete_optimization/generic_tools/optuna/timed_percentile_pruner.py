@@ -20,6 +20,11 @@ try:
     import optuna
 except ImportError:
     logger.warning("You should install optuna to use TimedPercentilePruner for optuna.")
+
+    class TimedPercentilePruner:
+        def __init__(self, **kwargs):
+            raise RuntimeError("Cannot be instantiated if optuna is not installed.")
+
 else:
     from optuna.pruners import BasePruner
     from optuna.study._study_direction import StudyDirection
