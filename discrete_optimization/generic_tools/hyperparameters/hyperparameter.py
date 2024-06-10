@@ -101,6 +101,8 @@ class IntegerHyperparameter(Hyperparameter):
     If None, the hyperparameter value has no upper bound.
 
     """
+    step: int = 1
+    """step to discretize."""
 
     default: Optional[int] = None
     """Default value for the hyperparameter.
@@ -133,6 +135,7 @@ class IntegerHyperparameter(Hyperparameter):
         trial: optuna.trial.Trial,
         low: Optional[int] = None,
         high: Optional[int] = None,
+        step: Optional[int] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Any:
@@ -142,6 +145,7 @@ class IntegerHyperparameter(Hyperparameter):
             trial: optuna Trial used for choosing the hyperparameter value
             low: can be used to restrict lower bound
             high: can be used to restrict upper bound
+            step: can be used to discretize by a given step
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_int()`
@@ -153,7 +157,9 @@ class IntegerHyperparameter(Hyperparameter):
             low = self.low
         if high is None:
             high = self.high
-        return trial.suggest_int(name=prefix + self.name, low=low, high=high, **kwargs)  # type: ignore
+        if step is None:
+            step = self.step
+        return trial.suggest_int(name=prefix + self.name, low=low, high=high, step=step, **kwargs)  # type: ignore
 
 
 @dataclass

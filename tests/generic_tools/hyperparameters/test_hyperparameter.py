@@ -99,7 +99,7 @@ class MetaSolver(BaseMetaSolver):
 class MetaSolverFixedSubsolver(SolverDO):
     # subbrickkwargs with fixed subbrick class
     hyperparameters = [
-        IntegerHyperparameter("nb", low=0, high=1, default=1),
+        IntegerHyperparameter("nb", low=0, high=2, step=2, default=2),
         SubBrickKwargsHyperparameter("kwargs_subsolver", subbrick_cls=DummySolver),
     ]
 
