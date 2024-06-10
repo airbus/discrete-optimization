@@ -70,14 +70,22 @@ def get_max_time_solution(solution: ANY_SOLUTION):
 
 class ParamsConstraintBuilder(Hyperparametrizable):
     hyperparameters = [
-        IntegerHyperparameter(name="minus_delta_primary", low=0, default=100),
-        IntegerHyperparameter(name="plus_delta_primary", low=0, default=100),
-        IntegerHyperparameter(name="minus_delta_secondary", low=0, default=0),
-        IntegerHyperparameter(name="plus_delta_secondary", low=0, default=0),
-        IntegerHyperparameter(name="minus_delta_primary_duration", default=5, low=0),
-        IntegerHyperparameter(name="plus_delta_primary_duration", default=5, low=0),
-        IntegerHyperparameter(name="minus_delta_secondary_duration", default=5, low=0),
-        IntegerHyperparameter(name="plus_delta_secondary_duration", default=5, low=0),
+        IntegerHyperparameter(name="minus_delta_primary", low=0, default=100, high=200),
+        IntegerHyperparameter(name="plus_delta_primary", low=0, default=100, high=200),
+        IntegerHyperparameter(name="minus_delta_secondary", low=0, default=0, high=10),
+        IntegerHyperparameter(name="plus_delta_secondary", low=0, default=0, high=10),
+        IntegerHyperparameter(
+            name="minus_delta_primary_duration", default=5, low=0, high=10
+        ),
+        IntegerHyperparameter(
+            name="plus_delta_primary_duration", default=5, low=0, high=10
+        ),
+        IntegerHyperparameter(
+            name="minus_delta_secondary_duration", default=5, low=0, high=10
+        ),
+        IntegerHyperparameter(
+            name="plus_delta_secondary_duration", default=5, low=0, high=10
+        ),
         CategoricalHyperparameter(
             name="constraint_max_time_to_current_solution",
             choices=[True, False],
