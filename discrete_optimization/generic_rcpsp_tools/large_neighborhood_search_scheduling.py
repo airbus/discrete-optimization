@@ -327,9 +327,8 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
                     constraint_max_time_to_current_solution=False,
                 )
             else:
-                params_0_cls = kwargs["params_0_cls"]
                 params_0_kwargs = kwargs["params_0_kwargs"]
-                params_0 = params_0_cls(**params_0_kwargs)
+                params_0 = ParamsConstraintBuilder(**params_0_kwargs)
             if kwargs["params_1_kwargs"] is None:
                 params_1 = ParamsConstraintBuilder(
                     minus_delta_primary=6000,
@@ -339,9 +338,8 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
                     constraint_max_time_to_current_solution=False,
                 )
             else:
-                params_1_cls = kwargs["params_1_cls"]
                 params_1_kwargs = kwargs["params_1_kwargs"]
-                params_1 = params_1_cls(**params_1_kwargs)
+                params_1 = ParamsConstraintBuilder(**params_1_kwargs)
             params_list = [params_0, params_1]
         constraint_handler = ConstraintHandlerScheduling(
             problem=rcpsp_problem,
@@ -362,9 +360,8 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
                     constraint_max_time_to_current_solution=False,
                 )
             else:
-                params_0_cls = kwargs["params_0_cls"]
                 params_0_kwargs = kwargs["params_0_kwargs"]
-                params_0 = params_0_cls(**params_0_kwargs)
+                params_0 = ParamsConstraintBuilder(**params_0_kwargs)
             if kwargs["params_1_kwargs"] is None:
                 params_1 = ParamsConstraintBuilder(
                     minus_delta_primary=5000,
@@ -374,9 +371,8 @@ def build_constraint_handler(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
                     constraint_max_time_to_current_solution=False,
                 )
             else:
-                params_1_cls = kwargs["params_1_cls"]
                 params_1_kwargs = kwargs["params_1_kwargs"]
-                params_1 = params_1_cls(**params_1_kwargs)
+                params_1 = ParamsConstraintBuilder(**params_1_kwargs)
             params_list = [params_0, params_1]
         constraint_handler = NeighborRepairProblems(
             problem=rcpsp_problem, params_list=params_list
@@ -517,21 +513,11 @@ class LargeNeighborhoodSearchScheduling(LNS_CP, SolverGenericRCPSP):
                 [ConstraintHandlerType.MIX_SUBPROBLEMS],
             ),
         ),
-        SubBrickHyperparameter(
-            name="params_0_cls",
-            choices=[ParamsConstraintBuilder],
-            default=ParamsConstraintBuilder,
+        SubBrickKwargsHyperparameter(
+            name="params_0_kwargs", subbrick_cls=ParamsConstraintBuilder
         ),
         SubBrickKwargsHyperparameter(
-            name="params_0_kwargs", subbrick_hyperparameter="params_0_cls"
-        ),
-        SubBrickHyperparameter(
-            name="params_1_cls",
-            choices=[ParamsConstraintBuilder],
-            default=ParamsConstraintBuilder,
-        ),
-        SubBrickKwargsHyperparameter(
-            name="params_1_kwargs", subbrick_hyperparameter="params_1_cls"
+            name="params_1_kwargs", subbrick_cls=ParamsConstraintBuilder
         ),
     ]
 
