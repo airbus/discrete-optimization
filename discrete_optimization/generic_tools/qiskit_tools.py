@@ -89,16 +89,7 @@ def execute_ansatz_with_Hamiltonian(
         """
 
     optimization_level = kwargs["optimization_level"]
-    method = kwargs["method"]
     nb_shots = kwargs["nb_shots"]
-
-    if kwargs.get("options"):
-        options = kwargs["options"]
-    else:
-        if method == "COBYLA":
-            options = {"maxiter": kwargs["maxiter"], "rhobeg": kwargs["rhobeg"]}
-        else:
-            options = {}
 
     # transpile and optimize the quantum circuit depending on the device who are going to use
     # there are four level_optimization, to 0 to 3, 3 is the better but also the longest
@@ -112,7 +103,6 @@ def execute_ansatz_with_Hamiltonian(
     # open a session if desired
     if use_session:
         session = Session(backend=backend, max_time="2h")
-        # TODO what happend if we create a session for a simulator? crash or not?
     else:
         session = None
 
@@ -130,14 +120,39 @@ def execute_ansatz_with_Hamiltonian(
         "cost_history": [],
     }
     # step of minimization
-    res = minimize(
-        cost_func,
-        validate_initial_point(point=None, circuit=ansatz),
-        args=(ansatz, hamiltonian, estimator, callback_dict),
-        method=method,
-        bounds=validate_bounds(ansatz),
-        options=options,
-    )
+    if kwargs.get("optimizer"):
+        def fun(x):
+            pub = (ansatz, [hamiltonian], [x])
+            result = estimator.run(pubs=[pub]).result()
+            cost = result[0].data.evs[0]
+            callback_dict["iters"] += 1
+            callback_dict["prev_vector"] = x
+            callback_dict["cost_history"].append(cost)
+            print(f"Iters. done: {callback_dict['iters']} [Current cost: {cost}]")
+            return cost
+
+        optimizer = kwargs["optimizer"]
+        res = optimizer.minimize(fun, validate_initial_point(point=None, circuit=ansatz))
+
+    else:
+
+        method = kwargs["method"]
+        if kwargs.get("options"):
+            options = kwargs["options"]
+        else:
+            if method == "COBYLA":
+                options = {"maxiter": kwargs["maxiter"], "rhobeg": kwargs["rhobeg"]}
+            else:
+                options = {}
+
+        res = minimize(
+            cost_func,
+            validate_initial_point(point=None, circuit=ansatz),
+            args=(ansatz, hamiltonian, estimator, callback_dict),
+            method=method,
+            bounds=validate_bounds(ansatz),
+            options=options,
+        )
 
     # Assign solution parameters to our ansatz
     qc = ansatz.assign_parameters(res.x)
@@ -148,13 +163,14 @@ def execute_ansatz_with_Hamiltonian(
     # run our circuit with optimal parameters find at the minimization step
     results = sampler.run([qc]).result()
     # extract a dictionnary of results, key is binary values of variable and value is number of time of these values has been found
-    result = get_result_from_dict_result(results[0].data.meas.get_counts())
+    best_result = get_result_from_dict_result(results[0].data.meas.get_counts())
+    print(best_result)
 
     # Close the session since we are now done with it
     if use_session:  # with_session:
         session.close()
 
-    return result
+    return best_result
 
 
 class QiskitSolver(SolverDO):
@@ -189,6 +205,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
             name="rhobeg", low=0.5, high=1.5, default=1.
         ),
         # TODO 3 hyperparam Cobyla : rhobeg, tol ??, maxiter
+        # TODO rajouter initial_point et initial_bound dans les hyperparams ?
     ]
 
     def __init__(
