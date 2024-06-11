@@ -24,12 +24,37 @@ class Method(Enum):
     GREEDY = 1
 
 
+class BigMethod(Enum):
+    DUMMY = 0
+    GREEDY = 1
+    OTHER = 2
+
+
 class DummySolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=0, high=2, default=1),
         FloatHyperparameter("coeff", low=-1.0, high=1.0, default=1.0),
         CategoricalHyperparameter("use_it", choices=[True, False], default=True),
         EnumHyperparameter("method", enum=Method, default=Method.GREEDY),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
+class DummySolverWithEnumSubset(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=2, default=1),
+        FloatHyperparameter("coeff", low=-1.0, high=1.0, default=1.0),
+        CategoricalHyperparameter("use_it", choices=[True, False], default=True),
+        EnumHyperparameter(
+            "method",
+            enum=BigMethod,
+            default=BigMethod.GREEDY,
+            choices=[BigMethod.DUMMY, BigMethod.GREEDY],
+        ),
     ]
 
     def solve(
@@ -185,6 +210,37 @@ def test_suggest_with_optuna():
         )
         assert len(suggested_hyperparameters_kwargs) == 4
         assert isinstance(suggested_hyperparameters_kwargs["method"], Method)
+        assert 0 <= suggested_hyperparameters_kwargs["nb"]
+        assert 1 >= suggested_hyperparameters_kwargs["nb"]
+        assert -1.0 <= suggested_hyperparameters_kwargs["coeff"]
+        assert 1.0 >= suggested_hyperparameters_kwargs["coeff"]
+        assert suggested_hyperparameters_kwargs["use_it"] is True
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * 2 * 5 * 1
+
+
+def test_suggest_with_optuna_with_enum_subset():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithEnumSubset.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "coeff": dict(step=0.5),
+                    "nb": dict(high=1),
+                    "use_it": dict(choices=[True]),
+                },
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 4
+        assert isinstance(suggested_hyperparameters_kwargs["method"], BigMethod)
         assert 0 <= suggested_hyperparameters_kwargs["nb"]
         assert 1 >= suggested_hyperparameters_kwargs["nb"]
         assert -1.0 <= suggested_hyperparameters_kwargs["coeff"]
