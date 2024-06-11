@@ -106,10 +106,7 @@ def look_for_solver_class(class_domain):
 
 
 def solve(method, problem: MS_RCPSPModel, **args) -> ResultStorage:
-    if method == GPHH:
-        solver = GPHH([problem], problem, **args)
-    else:
-        solver = method(problem, **args)
+    solver = method(problem, **args)
     try:
         solver.init_model(**args)
     except:
@@ -118,10 +115,7 @@ def solve(method, problem: MS_RCPSPModel, **args) -> ResultStorage:
 
 
 def return_solver(method, problem: MS_RCPSPModel, **args) -> ResultStorage:
-    if method == GPHH:
-        solver = GPHH([problem], problem, **args)
-    else:
-        solver = method(problem, **args)
+    solver = method(problem, **args)
     try:
         solver.init_model(**args)
     except:

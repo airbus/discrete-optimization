@@ -6,7 +6,7 @@ import logging
 import operator
 import random
 from enum import Enum
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 import numpy as np
 from deap import algorithms, creator, gp, tools
@@ -487,8 +487,8 @@ class GPHH(SolverGenericRCPSP):
 
     def __init__(
         self,
-        training_domains: List[Problem],
         problem: Problem,
+        training_domains: Optional[List[Problem]] = None,
         weight: int = 1,
         params_gphh: ParametersGPHH = None,
         params_objective_function: ParamsObjectiveFunction = None,
@@ -496,7 +496,10 @@ class GPHH(SolverGenericRCPSP):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.training_domains = training_domains
+        if training_domains is None:
+            self.training_domains = [problem]
+        else:
+            self.training_domains = training_domains
         self.params_gphh = params_gphh
         if self.params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
