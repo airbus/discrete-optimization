@@ -30,6 +30,8 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
         # X_i,j == 1 si le noeud i prend la couleur j
         # C_j == 1 si la couleur j est choisit au moins une fois
 
+        p = self.nb_max_color
+
         var_names = {}
         for i in range(0, self.nb_max_color):
             for j in range(0, self.problem.number_of_nodes):
@@ -45,7 +47,7 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
         quadratic = {}
 
         for i in range(0, self.nb_max_color):
-            quadratic[var_names[i], var_names[i]] = 1  # essayer de modifier le 1 ??
+            quadratic[var_names[i], var_names[i]] = 1
 
         """
         On va ici intégrer sous forme de pénalité les différentes contraintes afin d'avoir directement une formulation QUBO
@@ -54,8 +56,6 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
         x + y <= 1 devient P(xy)
         où P est un scalaire qui doit idéalement être ni trop petit, ni trop grand (ici on prend le nombre de couleur max autorisé)
         """
-
-        p = self.nb_max_color
 
         # si une couleur j est attribué à un noeud, la contrainte C_j doit valoir 1
         for i in range(0, self.problem.number_of_nodes):
@@ -136,7 +136,7 @@ class VQEColoringSolver_MinimizeNbColor(SolverColoring, QiskitVQESolver):
         return self.coloring_qiskit.interpret(result)
 
 
-class ColoringQiskit_FeasibleNbColor(OptimizationApplication):  # TODO à tester
+class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
 
     def __init__(self, problem: ColoringProblem, nb_color=None) -> None:
         """
