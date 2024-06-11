@@ -511,16 +511,10 @@ def generic_optuna_experiment_multiproblem(
                     trial.set_user_attr(
                         "Error", f"Pruned by pruner at problem instance #{instance_id}."
                     )
-                    if report_cumulated_fitness:
-                        return cumulated_fitness
-                    else:
-                        return current_average
+                    return current_average
 
         trial.set_user_attr("pruned", False)
-        if report_cumulated_fitness:
-            return cumulated_fitness
-        else:
-            return sum(fitnesses) / len(fitnesses)
+        return sum(fitnesses) / len(fitnesses)
 
     # create study + database to store it
     storage = JournalStorage(JournalFileStorage(storage_path))
