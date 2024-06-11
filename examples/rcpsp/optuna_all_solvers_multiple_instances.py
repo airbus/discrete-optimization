@@ -18,9 +18,14 @@ from typing import Any, Dict, Type
 from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
     LargeNeighborhoodSearchScheduling,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolverName,
+    MinizincCPSolver,
+    ParametersCP,
+)
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
     MilpSolverName,
     ParametersMilp,
     gurobi_available,
@@ -82,11 +87,30 @@ suggest_optuna_kwargs_by_name_by_solver: Dict[
 )
 if not gurobi_available or not gurobi_full_license_available:
     # Remove possibility for gurobi if not available
+    solvers_to_test = [
+        s for s in solvers_to_test if not isinstance(s, GurobiMilpSolver)
+    ]
     suggest_optuna_kwargs_by_name_by_solver[LP_RCPSP].update(
         {"lp_solver": dict(choices=[MilpSolverName.CBC])}
     )
     suggest_optuna_kwargs_by_name_by_solver[LP_MRCPSP].update(
         {"lp_solver": dict(choices=[MilpSolverName.CBC])}
+    )
+    for s in solvers_to_test:
+        if isinstance(s, MinizincCPSolver):
+            suggest_optuna_kwargs_by_name_by_solver[s].update(
+                {
+                    "cp_solver_name": dict(
+                        choices=[x for x in CPSolverName if x != CPSolverName.GUROBI]
+                    )
+                }
+            )
+    suggest_optuna_kwargs_by_name_by_solver[LargeNeighborhoodSearchScheduling].update(
+        {
+            "cp_solver_name": dict(
+                choices=[x for x in CPSolverName if x != CPSolverName.GUROBI]
+            )
+        }
     )
 
 # Generate and launch the optuna study
