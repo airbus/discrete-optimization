@@ -373,7 +373,8 @@ class RCPSPModel(Problem):
         if rcpsp_sol.rcpsp_schedule_feasible is False:
             logger.debug("Schedule flagged as infeasible when generated")
             return False
-
+        if len(rcpsp_sol.rcpsp_schedule) != self.n_jobs:
+            logger.debug("Missing task in schedule")
         if self.do_special_constraints:
             if not check_solution_with_special_constraints(
                 problem=self,
