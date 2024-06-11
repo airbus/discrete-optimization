@@ -117,12 +117,21 @@ class ResultStorage:
         self.heap = sorted(self.heap, reverse=self.maximize)
 
     def get_best_solution_fit(
-        self,
+        self, satisfying: Optional[Problem] = None
     ) -> Union[Tuple[Solution, fitness_class], Tuple[None, None]]:
         if len(self.list_solution_fits) == 0:
             return None, None
-        f = max if self.maximize else min
-        return f(self.list_solution_fits, key=lambda x: x[1])
+        if satisfying is None:
+            f = max if self.maximize else min
+            return f(self.list_solution_fits, key=lambda x: x[1])
+        else:
+            sorted_solution_fits = sorted(
+                self.list_solution_fits, key=lambda x: x[1], reverse=self.maximize
+            )
+            for sol, fit in sorted_solution_fits:
+                if satisfying.satisfy(sol):
+                    return sol, fit
+            return None, None
 
     def get_last_best_solution(self) -> Tuple[Solution, fitness_class]:
         f = max if self.maximize else min

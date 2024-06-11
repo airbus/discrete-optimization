@@ -237,21 +237,25 @@ def generic_optuna_experiment_monoproblem(
         trial.set_user_attr(elapsed_time_attr, elapsed_time)
 
         # store result for this instance and report it as an intermediate value (=> dashboard + pruning)
-        if len(res.list_solution_fits) != 0:
-            sol, fit = res.get_best_solution_fit()
-            # satisfy?
+        if check_satisfy:
+            # accept only satisfying solutions
             try:
-                if check_satisfy and not (problem.satisfy(sol)):
-                    msg = f"Solution found does not satisfy the problem."
-                    trial.set_user_attr("Error", msg)
-                    raise optuna.TrialPruned(msg)  # show failed
+                sol, fit = res.get_best_solution_fit(satisfying=problem)
             except Exception as e:
                 # Store exception message as trial user attribute
                 msg = f"{e.__class__}: {e}"
                 trial.set_user_attr("Error", msg)
                 raise optuna.TrialPruned(msg)  # show failed
         else:
-            msg = f"No solution found."
+            # take the solution with best fit regardless of satifaction
+            sol, fit = res.get_best_solution_fit()
+
+        if fit is None:
+            # no solution found
+            if check_satisfy:
+                msg = f"No solution found satisfying the problem."
+            else:
+                msg = f"No solution found."
             trial.set_user_attr("Error", msg)
             raise optuna.TrialPruned(msg)  # show failed
 
@@ -467,22 +471,30 @@ def generic_optuna_experiment_multiproblem(
                 raise optuna.TrialPruned(msg)  # show failed
 
             # store result for this instance and report it as an intermediate value (=> dashboard + pruning)
-            if len(res.list_solution_fits) != 0:
-                sol, fit = res.get_best_solution_fit()
-                # satisfy?
+            if check_satisfy:
+                # accept only satisfying solutions
                 try:
-                    if check_satisfy and not (problem.satisfy(sol)):
-                        msg = f"Solution found for problem #{instance_id} does not satisfy the problem."
-                        trial.set_user_attr("Error", msg)
-                        trial.set_user_attr("pruned", True)
-                        raise optuna.TrialPruned(msg)  # show failed
+                    sol, fit = res.get_best_solution_fit(satisfying=problem)
                 except Exception as e:
                     # Store exception message as trial user attribute
                     msg = f"{e.__class__}: {e}"
-                    trial.set_user_attr("Error", msg)
                     trial.set_user_attr("pruned", True)
+                    trial.set_user_attr("Error", msg)
                     raise optuna.TrialPruned(msg)  # show failed
+            else:
+                # take the solution with best fit regardless of satifaction
+                sol, fit = res.get_best_solution_fit()
 
+            if fit is None:
+                # no solution found
+                if check_satisfy:
+                    msg = f"No solution found satisfying problem #{instance_id}."
+                else:
+                    msg = f"No solution found for problem #{instance_id}."
+                trial.set_user_attr("pruned", True)
+                trial.set_user_attr("Error", msg)
+                raise optuna.TrialPruned(msg)  # show failed
+            else:
                 fitnesses.append(fit)
                 if report_cumulated_fitness:
                     cumulated_fitness += fit
@@ -496,17 +508,13 @@ def generic_optuna_experiment_multiproblem(
                     # return current average instead of raising TrialPruned,
                     # else optuna dashboard thinks that last intermediate fitness is the value for the trial
                     trial.set_user_attr("pruned", True)
-                    trial.set_user_attr("Error", "Pruned by pruner.")
+                    trial.set_user_attr(
+                        "Error", f"Pruned by pruner at problem instance #{instance_id}."
+                    )
                     if report_cumulated_fitness:
                         return cumulated_fitness
                     else:
                         return current_average
-
-            else:
-                trial.set_user_attr("pruned", True)
-                msg = f"No solution found for problem #{instance_id}."
-                trial.set_user_attr("Error", msg)
-                raise optuna.TrialPruned(msg)  # show failed
 
         trial.set_user_attr("pruned", False)
         if report_cumulated_fitness:
