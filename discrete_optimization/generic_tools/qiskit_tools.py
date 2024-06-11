@@ -92,7 +92,7 @@ def execute_ansatz_with_Hamiltonian(
     method = kwargs["method"]
     nb_shots = kwargs["nb_shots"]
 
-    if kwargs["options"]:
+    if kwargs.get("options"):
         options = kwargs["options"]
     else:
         if method == "COBYLA":
@@ -169,8 +169,6 @@ class QiskitSolver(SolverDO):
 
 class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
 
-    kwargs = {"step": 50}
-
     hyperparameters = [
         IntegerHyperparameter(
             name="reps", low=1, high=6, default=2
@@ -180,6 +178,9 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         ),
         CategoricalHyperparameter(
             name="method", choices=["COBYLA"], default="COBYLA"
+        ),
+        IntegerHyperparameter(
+            name="nb_shots", low=10000, high=100000, step=10000, default=10000
         ),
         IntegerHyperparameter(
             name="maxiter", low=100, high=1000, step=50, default=300
