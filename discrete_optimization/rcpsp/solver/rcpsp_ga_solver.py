@@ -6,6 +6,7 @@ from typing import Optional
 from discrete_optimization.generic_tools.ea.alternating_ga import AlternatingGa
 from discrete_optimization.generic_tools.ea.ga import Ga
 from discrete_optimization.generic_tools.ea.ga_tools import (
+    DeapCrossover,
     ParametersAltGa,
     ParametersGa,
 )
@@ -15,7 +16,16 @@ from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
 
 class GA_RCPSP_Solver(SolverRCPSP):
     problem: RCPSPModel
-    hyperparameters = Ga.hyperparameters
+    hyperparameters = Ga.copy_and_update_hyperparameters(
+        crossover=dict(
+            choices=[
+                DeapCrossover.CX_UNIFORM_PARTIALY_MATCHED,
+                DeapCrossover.CX_ORDERED,
+                DeapCrossover.CX_PARTIALY_MATCHED,
+            ]
+        )
+    )
+    # RCPSP needs permutation encoding, not all crossover are available.
 
     def solve(self, parameters_ga: Optional[ParametersGa] = None, **args):
         if parameters_ga is None:
