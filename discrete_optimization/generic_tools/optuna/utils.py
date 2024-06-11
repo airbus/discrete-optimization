@@ -201,12 +201,7 @@ def generic_optuna_experiment_monoproblem(
 
         try:
             # solver init
-            if solver_class.__name__ == "GPHH":
-                solver = solver_class(
-                    problem=problem, training_domains=[problem], **kwargs
-                )
-            else:
-                solver = solver_class(problem=problem, **kwargs)
+            solver = solver_class(problem=problem, **kwargs)
             solver.init_model(**kwargs)
 
             # init timer
@@ -456,12 +451,7 @@ def generic_optuna_experiment_multiproblem(
 
             try:
                 # solver init
-                if solver_class.__name__ == "GPHH":
-                    solver = solver_class(
-                        problem=problem, training_domains=[problem], **kwargs
-                    )
-                else:
-                    solver = solver_class(problem=problem, **kwargs)
+                solver = solver_class(problem=problem, **kwargs)
                 solver.init_model(**kwargs)
 
                 # solve
