@@ -197,7 +197,7 @@ def test_generic_optuna_experiment_multiproblem_cumulative(random_seed):
         seed=random_seed,
         check_satisfy=False,
     )
-    assert study.best_value == -len(problems)
+    assert study.best_value == -2.0
 
 
 @pytest.mark.skipif(
