@@ -236,10 +236,7 @@ def return_solver(
     **kwargs: Any,
 ) -> Union[SolverRCPSP, SolverGenericRCPSP]:
     solver: Union[SolverRCPSP, SolverGenericRCPSP]
-    if method == GPHH:
-        solver = GPHH(training_domains=[problem], problem=problem, **kwargs)
-    else:
-        solver = method(problem=problem, **kwargs)
+    solver = method(problem=problem, **kwargs)
     try:
         solver.init_model(**kwargs)
     except:

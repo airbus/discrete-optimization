@@ -171,8 +171,8 @@ class GPHH(SolverDO):
 
     def __init__(
         self,
-        training_domains: List[Problem],
         problem: MultidimensionalKnapsack,
+        training_domains: Optional[List[MultidimensionalKnapsack]] = None,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
@@ -180,7 +180,10 @@ class GPHH(SolverDO):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.training_domains = training_domains
+        if training_domains is None:
+            self.training_domains = [problem]
+        else:
+            self.training_domains = training_domains
         if params_gphh is None:
             self.params_gphh = ParametersGPHH.default()
         else:
