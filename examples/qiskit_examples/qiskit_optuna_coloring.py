@@ -14,7 +14,7 @@ import os
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
-from discrete_optimization.coloring.solvers.coloring_quantum import QAOAColoringSolver, VQEColoringSolver
+from discrete_optimization.coloring.solvers.coloring_quantum import QAOAColoringSolver_MinimizeNbColor, VQEColoringSolver_MinimizeNbColor
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 import logging
@@ -63,14 +63,14 @@ elapsed_time_attr = "elapsed_time"  # name of the user attribute used to store d
 solvers: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
         (
-            QAOAColoringSolver,
+            QAOAColoringSolver_MinimizeNbColor,
             {
             },
         ),
     ],
     "vqe": [
         (
-            VQEColoringSolver,
+            VQEColoringSolver_MinimizeNbColor,
             {
             },
         ),

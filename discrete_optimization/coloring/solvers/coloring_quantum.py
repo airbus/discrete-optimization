@@ -11,14 +11,13 @@ from discrete_optimization.generic_tools.qiskit_tools import QiskitQAOASolver, Q
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction, Solution
 
 
-class ColoringQiskit(OptimizationApplication):
+class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
 
     def __init__(self, problem: ColoringProblem, nb_max_color=None) -> None:
         """
         Args:
             problem : the coloring problem instance
         """
-        super().__init__(problem)
         self.problem = problem
         if nb_max_color is None:
             nb_max_color = self.problem.number_of_nodes
@@ -27,10 +26,6 @@ class ColoringQiskit(OptimizationApplication):
 
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
-
-        # TODO supprimer les X_i_j et se ramener à un problème "peut on colorer nos noeuds avec n nolors?" ??
-        # TODO faire les deux ??
-        # serait plus adapté pour qaoa ??
 
         # X_i,j == 1 si le noeud i prend la couleur j
         # C_j == 1 si la couleur j est choisit au moins une fois
@@ -50,7 +45,7 @@ class ColoringQiskit(OptimizationApplication):
         quadratic = {}
 
         for i in range(0, self.nb_max_color):
-            quadratic[var_names[i], var_names[i]] = 1
+            quadratic[var_names[i], var_names[i]] = 1  # essayer de modifier le 1 ??
 
         """
         On va ici intégrer sous forme de pénalité les différentes contraintes afin d'avoir directement une formulation QUBO
@@ -73,7 +68,7 @@ class ColoringQiskit(OptimizationApplication):
             for j in range(0, self.nb_max_color):
                 # quadratic[var_names[(i, j)], var_names[(i, j)]] = -p
                 for k in range(j + 1, self.nb_max_color):
-                    quadratic[var_names[(i, j)], var_names[(i, k)]] = p
+                    quadratic[var_names[(i, j)], var_names[(i, k)]] = 2*p
 
         # deux noeuds adjacents ne peuvent avoir la même couleur
         for edge in self.problem.graph.graph_nx.edges():
@@ -112,12 +107,12 @@ class ColoringQiskit(OptimizationApplication):
         return sol
 
 
-class QAOAColoringSolver(SolverColoring, QiskitQAOASolver):
+class QAOAColoringSolver_MinimizeNbColor(SolverColoring, QiskitQAOASolver):
 
     def __init__(self, problem: ColoringProblem, params_objective_function: Optional[ParamsObjectiveFunction] = None,
                  nb_max_color=None):
         super().__init__(problem, params_objective_function)
-        self.coloring_qiskit = ColoringQiskit(problem, nb_max_color=nb_max_color)
+        self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(problem, nb_max_color=nb_max_color)
 
     def init_model(self):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
@@ -126,12 +121,124 @@ class QAOAColoringSolver(SolverColoring, QiskitQAOASolver):
         return self.coloring_qiskit.interpret(result)
 
 
-class VQEColoringSolver(SolverColoring, QiskitVQESolver):
+class VQEColoringSolver_MinimizeNbColor(SolverColoring, QiskitVQESolver):
 
     def __init__(self, problem: ColoringProblem, params_objective_function: Optional[ParamsObjectiveFunction] = None,
                  nb_max_color=None):
         super().__init__(problem, params_objective_function)
-        self.coloring_qiskit = ColoringQiskit(problem, nb_max_color=nb_max_color)
+        self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(problem, nb_max_color=nb_max_color)
+
+    def init_model(self):
+        self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
+        self.nb_variable = self.coloring_qiskit.nb_variable
+
+    def retrieve_current_solution(self, result) -> Solution:
+        return self.coloring_qiskit.interpret(result)
+
+
+class ColoringQiskit_FeasibleNbColor(OptimizationApplication):  # TODO à tester
+
+    def __init__(self, problem: ColoringProblem, nb_color=None) -> None:
+        """
+        Args:
+            problem : the coloring problem instance
+        """
+        self.problem = problem
+        if nb_color is None:
+            nb_color = self.problem.number_of_nodes
+        self.nb_color = nb_color
+        self.nb_variable = self.problem.number_of_nodes * self.nb_color
+
+    def to_quadratic_program(self) -> QuadraticProgram:
+        quadratic_program = QuadraticProgram()
+
+        # C_j == 1 si la couleur j est choisit au moins une fois
+
+        var_names = {}
+        for i in range(0, self.nb_color):
+            for j in range(0, self.problem.number_of_nodes):
+                x_new = quadratic_program.binary_var("x" + str(j) + str(i))
+                var_names[(j, i)] = x_new.name
+
+        # on cherche à savoir si il est possible de satisfaire le problème de coloring avec ce nombre de couleur
+
+        constant = 0
+        linear = {}
+        quadratic = {}
+
+        """
+        On va ici intégrer sous forme de pénalité les différentes contraintes afin d'avoir directement une formulation QUBO
+        x1 + ... + xi = 1 devient P(-x1 + ... + -xi + 2x1x2 + ... + 2x1xi + 2x2x3 + .... + 2x2xi + ... + 2x(i-1)xi)
+        x + y <= 1 devient P(xy)
+        où P est un scalaire qui doit idéalement être ni trop petit, ni trop grand (ici on prend le nombre de couleur max autorisé)
+        """
+
+        p = self.nb_color
+
+        # chaque noeud doit avoir une unique couleur
+        for i in range(0, self.problem.number_of_nodes):
+            for j in range(0, self.nb_color):
+                quadratic[var_names[(i, j)], var_names[(i, j)]] = -p
+                for k in range(j + 1, self.nb_color):
+                    quadratic[var_names[(i, j)], var_names[(i, k)]] = 2*p
+
+        # deux noeuds adjacents ne peuvent avoir la même couleur
+        for edge in self.problem.graph.graph_nx.edges():
+            for j in range(0, self.nb_color):
+                quadratic[var_names[(self.problem.index_nodes_name[edge[0]], j)], var_names[
+                    (self.problem.index_nodes_name[edge[1]], j)]] = p
+
+        quadratic_program.minimize(constant, linear, quadratic)
+
+        return quadratic_program
+
+    def interpret(self, result: Union[OptimizationResult, np.ndarray]):
+
+        x = self._result_to_x(result)
+
+        colors = [0] * self.problem.number_of_nodes
+
+        color_used = set()
+
+        for node in range(0, self.problem.number_of_nodes):
+            color_find = False
+            color = 0
+            while not color_find and color < self.nb_color:
+                if x[self.problem.number_of_nodes * color + node] == 1:
+                    colors[node] = color
+                    color_find = True
+                    color_used.add(color)
+                color += 1
+
+            # TODO think about what we want to do when a node has no color
+
+        sol = ColoringSolution(self.problem, colors=colors, nb_color=len(color_used))
+
+        return sol
+
+
+class QAOAColoringSolver_FeasibleNbColor(SolverColoring, QiskitQAOASolver):
+
+    def __init__(self, problem: ColoringProblem,
+                 params_objective_function: Optional[ParamsObjectiveFunction] = None,
+                 nb_color=None):
+        super().__init__(problem, params_objective_function)
+        self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(problem, nb_color=nb_color)
+
+    def init_model(self):
+        self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
+
+    def retrieve_current_solution(self, result) -> Solution:
+        return self.coloring_qiskit.interpret(result)
+
+
+class VQEColoringSolver_FeasibleNbColor(SolverColoring, QiskitVQESolver):
+
+    def __init__(self, problem: ColoringProblem,
+                 params_objective_function: Optional[ParamsObjectiveFunction] = None,
+                 nb_color=None):
+        super().__init__(problem, params_objective_function)
+        self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(problem, nb_color=nb_color)
 
     def init_model(self):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
