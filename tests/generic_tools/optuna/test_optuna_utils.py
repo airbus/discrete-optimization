@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from time import sleep
 from typing import Any, List, Optional
 
 import numpy as np
@@ -18,7 +17,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
@@ -127,9 +125,14 @@ def test_generic_optuna_experiment_monoproblem(random_seed):
 
     solvers_to_test = [FakeSolver, FakeSolver2]
 
-    generic_optuna_experiment_monoproblem(
-        problem=problem, solvers_to_test=solvers_to_test, n_trials=10
+    study = generic_optuna_experiment_monoproblem(
+        problem=problem,
+        solvers_to_test=solvers_to_test,
+        n_trials=10,
+        seed=random_seed,
+        check_satisfy=False,
     )
+    assert study.best_value == -2.0
 
 
 @pytest.mark.skipif(
@@ -143,6 +146,104 @@ def test_generic_optuna_experiment_multiproblem(random_seed):
 
     solvers_to_test = [FakeSolver, FakeSolver2]
 
-    generic_optuna_experiment_multiproblem(
-        problems=problems, solvers_to_test=solvers_to_test, n_trials=10
+    study = generic_optuna_experiment_multiproblem(
+        problems=problems,
+        solvers_to_test=solvers_to_test,
+        n_trials=10,
+        seed=random_seed,
+        check_satisfy=False,
+    )
+    assert study.best_value == -2.0
+
+
+@pytest.mark.skipif(
+    not optuna_available, reason="You need Optuna to test this callback."
+)
+def test_generic_optuna_experiment_multiproblem_cumulative_wilcoxon_nok(random_seed):
+    # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
+    files = get_data_available()
+    files = [f for f in files if "gc_70_" in f]  # Multi mode RCPSP
+    problems = [parse_file(file_path) for file_path in files]
+
+    solvers_to_test = [FakeSolver, FakeSolver2]
+
+    with pytest.raises(ValueError):
+        generic_optuna_experiment_multiproblem(
+            problems=problems,
+            solvers_to_test=solvers_to_test,
+            n_trials=10,
+            report_cumulated_fitness=True,
+        )
+
+
+@pytest.mark.skipif(
+    not optuna_available, reason="You need Optuna to test this callback."
+)
+def test_generic_optuna_experiment_multiproblem_cumulative(random_seed):
+    # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
+    files = get_data_available()
+    files = [f for f in files if "gc_70_" in f]  # Multi mode RCPSP
+    problems = [parse_file(file_path) for file_path in files]
+
+    solvers_to_test = [FakeSolver, FakeSolver2]
+
+    study = generic_optuna_experiment_multiproblem(
+        problems=problems,
+        solvers_to_test=solvers_to_test,
+        n_trials=10,
+        report_cumulated_fitness=True,
+        pruner=optuna.pruners.MedianPruner(),
+        randomize_instances=False,
+        seed=random_seed,
+        check_satisfy=False,
+    )
+    assert study.best_value == -len(problems)
+
+
+@pytest.mark.skipif(
+    not optuna_available, reason="You need Optuna to test this callback."
+)
+def test_generic_optuna_experiment_multiproblem_check_satisfy(random_seed):
+    # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
+    files = get_data_available()
+    files = [f for f in files if "gc_70_" in f]  # Multi mode RCPSP
+    problems = [parse_file(file_path) for file_path in files]
+
+    solvers_to_test = [FakeSolver, FakeSolver2]
+
+    study = generic_optuna_experiment_multiproblem(
+        problems=problems,
+        solvers_to_test=solvers_to_test,
+        n_trials=10,
+        seed=random_seed,
+        check_satisfy=True,
+    )
+    assert (
+        len(study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]))
+        == 0
+    )
+
+
+@pytest.mark.skipif(
+    not optuna_available, reason="You need Optuna to test this callback."
+)
+def test_generic_optuna_experiment_monoproblem_check_satisfy(random_seed):
+    # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
+    files = get_data_available()
+    files = [f for f in files if "gc_70_9" in f]  # Multi mode RCPSP
+    file_path = files[0]
+    problem = parse_file(file_path)
+
+    solvers_to_test = [FakeSolver, FakeSolver2]
+
+    study = generic_optuna_experiment_monoproblem(
+        problem=problem,
+        solvers_to_test=solvers_to_test,
+        n_trials=10,
+        seed=random_seed,
+        check_satisfy=True,
+    )
+    assert (
+        len(study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]))
+        == 0
     )
