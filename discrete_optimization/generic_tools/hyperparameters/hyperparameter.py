@@ -292,6 +292,7 @@ class EnumHyperparameter(CategoricalHyperparameter):
 
     Args:
         enum: enumeration used to create the hyperparameter
+        choices: subset of the enumeration allowed. By default, the whole enumeration.
 
     """
 
@@ -299,12 +300,13 @@ class EnumHyperparameter(CategoricalHyperparameter):
         self,
         name: str,
         enum: Type[Enum],
+        choices: Optional[Iterable[Enum]] = None,
         default: Optional[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
     ):
-        super().__init__(
-            name, choices=list(enum), default=default, depends_on=depends_on
-        )
+        if choices is None:
+            choices = list(enum)
+        super().__init__(name, choices=choices, default=default, depends_on=depends_on)
         self.enum = enum
 
     def suggest_with_optuna(
