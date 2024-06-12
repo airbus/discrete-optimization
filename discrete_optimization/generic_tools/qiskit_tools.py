@@ -18,9 +18,14 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import IntegerHyperparameter, \
-    CategoricalHyperparameter, FloatHyperparameter
-from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import Hyperparametrizable
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+    Hyperparametrizable,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -69,7 +74,7 @@ def cost_func(params, ansatz, hamiltonian, estimator, callback_dict):
 
 
 def execute_ansatz_with_Hamiltonian(
-        backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
+    backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
 ) -> np.ndarray:
     """
     @param backend: the backend use to run the circuit (simulator or real device)
@@ -121,6 +126,7 @@ def execute_ansatz_with_Hamiltonian(
     }
     # step of minimization
     if kwargs.get("optimizer"):
+
         def fun(x):
             pub = (ansatz, [hamiltonian], [x])
             result = estimator.run(pubs=[pub]).result()
@@ -132,7 +138,9 @@ def execute_ansatz_with_Hamiltonian(
             return cost
 
         optimizer = kwargs["optimizer"]
-        res = optimizer.minimize(fun, validate_initial_point(point=None, circuit=ansatz))
+        res = optimizer.minimize(
+            fun, validate_initial_point(point=None, circuit=ansatz)
+        )
 
     else:
 
@@ -141,7 +149,11 @@ def execute_ansatz_with_Hamiltonian(
             options = kwargs["options"]
         else:
             if method == "COBYLA":
-                options = {"maxiter": kwargs["maxiter"], "rhobeg": kwargs["rhobeg"]}
+                options = {
+                    "maxiter": kwargs["maxiter"],
+                    "rhobeg": kwargs["rhobeg"],
+                    "tol": kwargs["tol"],
+                }
             else:
                 options = {}
 
@@ -174,11 +186,10 @@ def execute_ansatz_with_Hamiltonian(
 
 
 class QiskitSolver(SolverDO):
-
     def __init__(
-            self,
-            problem: Problem,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         super().__init__(problem, params_objective_function)
 
@@ -186,47 +197,38 @@ class QiskitSolver(SolverDO):
 class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
 
     hyperparameters = [
-        IntegerHyperparameter(
-            name="reps", low=1, high=6, default=2
-        ),
-        IntegerHyperparameter(
-            name="optimization_level", low=0, high=3, default=1
-        ),
-        CategoricalHyperparameter(
-            name="method", choices=["COBYLA"], default="COBYLA"
-        ),
+        IntegerHyperparameter(name="reps", low=1, high=6, default=2),
+        IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
+        CategoricalHyperparameter(name="method", choices=["COBYLA"], default="COBYLA"),
         IntegerHyperparameter(
             name="nb_shots", low=10000, high=100000, step=10000, default=10000
         ),
-        IntegerHyperparameter(
-            name="maxiter", low=100, high=1000, step=50, default=300
-        ),
-        FloatHyperparameter(
-            name="rhobeg", low=0.5, high=1.5, default=1.
-        ),
-        # TODO 3 hyperparam Cobyla : rhobeg, tol ??, maxiter
+        IntegerHyperparameter(name="maxiter", low=100, high=1000, step=50, default=300),
+        FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
+        CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
         # TODO rajouter initial_point et initial_bound dans les hyperparams ?
     ]
 
     def __init__(
-            self,
-            problem: Problem,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
-            backend: Optional = None
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
         self.backend = backend
 
     def solve(
-            self,
-            callbacks: Optional[List[Callback]] = None,
-            backend: Optional = None,
-            use_session: Optional[bool] = False,
-            **kwargs: Any,
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        backend: Optional = None,
+        use_session: Optional[bool] = False,
+        **kwargs: Any,
     ) -> ResultStorage:
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
+        print(kwargs)
 
         reps = kwargs["reps"]
 
@@ -277,19 +279,22 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
 class QiskitVQESolver(QiskitSolver):
 
     hyperparameters = [
+        IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
+        CategoricalHyperparameter(name="method", choices=["COBYLA"], default="COBYLA"),
         IntegerHyperparameter(
-            name="optimization_level", low=0, high=3, default=1
+            name="nb_shots", low=10000, high=100000, step=10000, default=10000
         ),
-        CategoricalHyperparameter(
-            name="method", choices=["COBYLA"], default="COBYLA"
-        ),
+        IntegerHyperparameter(name="maxiter", low=100, high=1000, step=50, default=300),
+        FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
+        CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
+        # TODO rajouter initial_point et initial_bound dans les hyperparams ?
     ]
 
     def __init__(
-            self,
-            problem: Problem,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
-            backend: Optional = None
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
@@ -297,11 +302,11 @@ class QiskitVQESolver(QiskitSolver):
         self.backend = backend
 
     def solve(
-            self,
-            callbacks: Optional[List[Callback]] = None,
-            backend: Optional = None,
-            use_session: Optional[bool] = False,
-            **kwargs: Any,
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        backend: Optional = None,
+        use_session: Optional[bool] = False,
+        **kwargs: Any,
     ) -> ResultStorage:
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -352,4 +357,3 @@ class QiskitVQESolver(QiskitSolver):
 
         """
         ...
-

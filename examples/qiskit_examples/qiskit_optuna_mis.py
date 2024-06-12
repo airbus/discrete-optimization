@@ -13,15 +13,11 @@ import os
 
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
-import networkx as nx
-
-from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
-from discrete_optimization.maximum_independent_set.solvers.mis_quantum import QAOAMisSolver, VQEMisSolver
-from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 import logging
 import time
-from typing import Any, Dict, List, Type, Tuple
+from typing import Any, Dict, List, Tuple, Type
 
+import networkx as nx
 import optuna
 from optuna import Trial
 from optuna.storages import JournalFileStorage, JournalStorage
@@ -31,9 +27,14 @@ from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogge
 from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
-
 from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
     TimedPercentilePruner,
+)
+from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
+from discrete_optimization.maximum_independent_set.mis_model import MisProblem
+from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
+    QAOAMisSolver,
+    VQEMisSolver,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,17 +73,15 @@ solvers: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAMisSolver,
-            {
-            },
+            {},
         ),
     ],
     "vqe": [
         (
             VQEMisSolver,
-            {
-            },
+            {},
         ),
-    ]
+    ],
 }
 
 solvers_map = {}
@@ -90,9 +89,7 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_to_test: List[Type[SolverDO]] = [
-    s for s in solvers_map
-]
+solvers_to_test: List[Type[SolverDO]] = [s for s in solvers_map]
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.

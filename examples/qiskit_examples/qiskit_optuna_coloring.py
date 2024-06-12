@@ -13,27 +13,29 @@ import os
 
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
-from discrete_optimization.coloring.coloring_model import ColoringProblem
-from discrete_optimization.coloring.solvers.coloring_quantum import QAOAColoringSolver_MinimizeNbColor, VQEColoringSolver_MinimizeNbColor
-from discrete_optimization.generic_tools.graph_api import Graph
-from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 import logging
 import time
-from typing import Any, Dict, List, Type, Tuple
+from typing import Any, Dict, List, Tuple, Type
 
 import optuna
 from optuna import Trial
 from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import TrialState
 
+from discrete_optimization.coloring.coloring_model import ColoringProblem
+from discrete_optimization.coloring.solvers.coloring_quantum import (
+    QAOAColoringSolver_MinimizeNbColor,
+    VQEColoringSolver_MinimizeNbColor,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
-
+from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
     TimedPercentilePruner,
 )
+from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
@@ -64,17 +66,15 @@ solvers: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAColoringSolver_MinimizeNbColor,
-            {
-            },
+            {},
         ),
     ],
     "vqe": [
         (
             VQEColoringSolver_MinimizeNbColor,
-            {
-            },
+            {},
         ),
-    ]
+    ],
 }
 
 solvers_map = {}
@@ -82,9 +82,7 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_to_test: List[Type[SolverDO]] = [
-    s for s in solvers_map
-]
+solvers_to_test: List[Type[SolverDO]] = [s for s in solvers_map]
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
@@ -141,6 +139,7 @@ def objective(trial: Trial):
     # construct kwargs for __init__, init_model, and solve
     kwargs = {}
     kwargs.update(suggested_hyperparameters_kwargs)
+    print(kwargs)
 
     # solver init
     solver = solver_class(problem=problem, nb_max_color=nb_max_color)
