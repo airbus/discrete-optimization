@@ -1,7 +1,9 @@
 from qiskit_aer import AerSimulator
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
-from discrete_optimization.coloring.solvers.coloring_quantum import QAOAColoringSolver_MinimizeNbColor
+from discrete_optimization.coloring.solvers.coloring_quantum import (
+    QAOAColoringSolver_MinimizeNbColor,
+)
 from discrete_optimization.generic_tools.graph_api import Graph
 
 
@@ -22,7 +24,9 @@ def quantum_coloring():
     # we create an instance of ColoringProblem
     coloringProblem = ColoringProblem(Graph(nodes=nodes, edges=edges))
     # we create an instance of a QAOAMisSolver
-    coloringSolver = QAOAColoringSolver_MinimizeNbColor(coloringProblem, nb_max_color=nb_max_color)
+    coloringSolver = QAOAColoringSolver_MinimizeNbColor(
+        coloringProblem, nb_max_color=nb_max_color
+    )
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     coloringSolver.init_model()
     # we solve the mis problem
@@ -39,5 +43,7 @@ def quantum_coloring():
 
     sol, fit = res.get_best_solution_fit()
     print(sol)
-    print("Two nodes connected by an edge have never the same color : ", coloringProblem.satisfy(sol))
-
+    print(
+        "Two nodes connected by an edge have never the same color : ",
+        coloringProblem.satisfy(sol),
+    )
