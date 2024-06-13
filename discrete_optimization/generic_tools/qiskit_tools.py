@@ -138,8 +138,8 @@ def execute_ansatz_with_Hamiltonian(
     pm = generate_preset_pass_manager(
         target=target, optimization_level=optimization_level
     )
-    ansatz = pm.run(ansatz)
-    hamiltonian = hamiltonian.apply_layout(ansatz.layout)
+    new_ansatz = pm.run(ansatz)
+    hamiltonian = hamiltonian.apply_layout(new_ansatz.layout)
 
     # open a session if desired
     if use_session:
@@ -164,7 +164,7 @@ def execute_ansatz_with_Hamiltonian(
     if kwargs.get("optimizer"):
 
         def fun(x):
-            pub = (ansatz, [hamiltonian], [x])
+            pub = (new_ansatz, [hamiltonian], [x])
             result = estimator.run(pubs=[pub]).result()
             cost = result[0].data.evs[0]
             callback_dict["iters"] += 1
@@ -175,7 +175,7 @@ def execute_ansatz_with_Hamiltonian(
 
         optimizer = kwargs["optimizer"]
         res = optimizer.minimize(
-            fun, validate_initial_point(point=None, circuit=ansatz)
+            fun, validate_initial_point(point=None, circuit=ansatz), bounds=validate_bounds(ansatz)
         )
 
     else:
@@ -196,14 +196,14 @@ def execute_ansatz_with_Hamiltonian(
         res = minimize(
             cost_func,
             validate_initial_point(point=None, circuit=ansatz),
-            args=(ansatz, hamiltonian, estimator, callback_dict),
+            args=(new_ansatz, hamiltonian, estimator, callback_dict),
             method=method,
             bounds=validate_bounds(ansatz),
             options=options,
         )
 
     # Assign solution parameters to our ansatz
-    qc = ansatz.assign_parameters(res.x)
+    qc = new_ansatz.assign_parameters(res.x)
     # Add measurements to our circuit
     qc.measure_all()
     # transpile our circuit
@@ -212,7 +212,6 @@ def execute_ansatz_with_Hamiltonian(
     results = sampler.run([qc]).result()
     # extract a dictionnary of results, key is binary values of variable and value is number of time of these values has been found
     best_result = get_result_from_dict_result(results[0].data.meas.get_counts())
-    print(best_result)
 
     # Close the session since we are now done with it
     if use_session:  # with_session:
@@ -264,7 +263,6 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
     ) -> ResultStorage:
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        print(kwargs)
 
         reps = kwargs["reps"]
 
@@ -282,6 +280,16 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         qubo = conv.convert(self.quadratic_programm)
         hamiltonian, offset = qubo.to_ising()
         ansatz = QAOAAnsatz(hamiltonian, reps=reps)
+        """
+        by default only hyperparameters of the mixer operator are initialized
+        but for some optimizer we need to initialize also hyperparameters of the cost operator
+        """
+        bounds = []
+        for hp in ansatz.parameter_bounds:
+            if hp == (None, None):
+                hp = (0, np.pi)
+            bounds.append(hp)
+        ansatz.parameter_bounds = bounds
 
         result = execute_ansatz_with_Hamiltonian(
             self.backend, ansatz, hamiltonian, use_session, **kwargs
