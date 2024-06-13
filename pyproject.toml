@@ -52,17 +52,19 @@ dependencies = [
     "numpy>=1.21",
     "typing_extensions>=4.4",
     "clingo>=5.6",
-    "setuptools",
+    "setuptools"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov", "scikit-learn>=1.0", "optuna"]
+quantum = [
     "qiskit>=1.0.2",
     "qiskit-algorithms>=0.3.0",
     "qiskit-optimization>=0.6.1",
     "qiskit-aer>=0.14.1",
     "qiskit-ibm-runtime>=0.23.0"
 ]
-dynamic = ["version"]
-
-[project.optional-dependencies]
-test = ["pytest", "pytest-cov", "scikit-learn>=1.0", "optuna"]
 
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"

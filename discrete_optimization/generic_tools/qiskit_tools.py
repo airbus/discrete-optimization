@@ -1,14 +1,8 @@
+import logging
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from qiskit.circuit.library import EfficientSU2, QAOAAnsatz
-from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_aer import AerSimulator
-from qiskit_algorithms.utils import validate_bounds, validate_initial_point
-from qiskit_ibm_runtime import EstimatorV2 as Estimator
-from qiskit_ibm_runtime import SamplerV2, Session
-from qiskit_optimization.converters import QuadraticProgramToQubo
 from scipy.optimize import minimize
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
@@ -21,6 +15,48 @@ from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+
+logger = logging.getLogger(__name__)
+
+try:
+    from qiskit.circuit.library import EfficientSU2, QAOAAnsatz
+    from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+    from qiskit_aer import AerSimulator
+    from qiskit_algorithms.utils import validate_bounds, validate_initial_point
+    from qiskit_ibm_runtime import EstimatorV2 as Estimator
+    from qiskit_ibm_runtime import SamplerV2, Session
+    from qiskit_optimization.converters import QuadraticProgramToQubo
+except ImportError:
+    qiskit_available = False
+    msg = (
+        "QiskitQAOASolver and QiskitVQESolver need qiskit, qiskit_aer, qiskit_algorithms, qiskit_ibm_runtime, "
+        "and qiskit_optimization to be installed. "
+        "You can use the command `pip install discrete-optimization[quantum]` to install them."
+    )
+    logger.warning(msg)
+
+    class QiskitQAOASolver(SolverDO):
+        def __init__(
+            self,
+            problem: Problem,
+            params_objective_function: Optional[ParamsObjectiveFunction] = None,
+            backend: Optional = None,
+            **kwargs: Any,
+        ):
+            raise RuntimeError(msg)
+
+    class QiskitVQESolver(SolverDO):
+        def __init__(
+            self,
+            problem: Problem,
+            params_objective_function: Optional[ParamsObjectiveFunction] = None,
+            backend: Optional = None,
+            **kwargs: Any,
+        ):
+            raise RuntimeError(msg)
+
+else:
+    qiskit_available = True
 
 
 def get_result_from_dict_result(dict_result: Dict[(str, int)]) -> np.ndarray:
