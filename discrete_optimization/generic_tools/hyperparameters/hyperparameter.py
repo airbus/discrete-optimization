@@ -4,19 +4,12 @@
 
 from __future__ import annotations  # see annotations as str
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Container,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Type,
-)
+from typing import TYPE_CHECKING, Any, Container, Dict, Iterable, List
+from typing import Mapping as MappingType
+from typing import Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:  # only for type checkers
     from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
@@ -236,36 +229,36 @@ class FloatHyperparameter(Hyperparameter):
         )
 
 
-@dataclass
+LabelType = Optional[Union[bool, int, float, str]]
+"""Licit labels type for categorical hyperparameter."""
+
+
 class CategoricalHyperparameter(Hyperparameter):
     """Categorical hyperparameter."""
 
-    choices: List[Any] = field(default_factory=list)
-    """List of possible choices."""
+    choices: MappingType[LabelType, Any]
+    """Mapping lables to corresponding possible choices."""
 
-    depends_on: Optional[Tuple[str, Container[Any]]] = None
-    """Other hyperparameter on which this ones depends on.
-
-    If None: this hyperparameter is always needed.
-    Else:
-        depends_on = hyperparameter2.name, possible_values
-        this hyperparameter is needed if hyperparameter2 value is in possible_values.
-
-    Warning: For now, the hyperparameter on which this one depends on cannot be a SubBrickKwargsHyperparameter.
-
-    Notes:
-        - How to define possible_values?
-          - Usually a set or a list can be used. But sometime we need something smarter.
-          - For integer or float hyperparameters, possible_values could be an interval (e.g. by using pandas.Interval)
-        - For now, only simple dependency on a single hyperparameter, and a "set" of values is possible.
-          The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.
-
-    """
+    def __init__(
+        self,
+        name: str,
+        choices: Union[Iterable[LabelType], MappingType[LabelType, Any]],
+        default: Optional[Any] = None,
+        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+    ):
+        super().__init__(name=name, default=default, depends_on=depends_on)
+        if isinstance(choices, Mapping):
+            self.choices = choices
+        else:
+            # list given instead of a mapping: choices should already be suitable labels
+            self.choices = {c: c for c in choices}
 
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        choices: Optional[Iterable[Any]] = None,
+        choices: Optional[
+            Union[Iterable[LabelType], MappingType[LabelType, Any]]
+        ] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Any:
@@ -273,7 +266,7 @@ class CategoricalHyperparameter(Hyperparameter):
 
         Args:
             trial: optuna Trial used for choosing the hyperparameter value
-            choices: restricts list of choices
+            choices: restricts choices
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
@@ -283,8 +276,11 @@ class CategoricalHyperparameter(Hyperparameter):
         """
         if choices is None:
             choices = self.choices
+        elif not isinstance(choices, Mapping):
+            choices = {c: c for c in choices}
 
-        return trial.suggest_categorical(name=prefix + self.name, choices=choices, **kwargs)  # type: ignore
+        label = trial.suggest_categorical(name=prefix + self.name, choices=choices.keys(), **kwargs)  # type: ignore
+        return choices[label]
 
 
 class EnumHyperparameter(CategoricalHyperparameter):
@@ -300,12 +296,14 @@ class EnumHyperparameter(CategoricalHyperparameter):
         self,
         name: str,
         enum: Type[Enum],
-        choices: Optional[Iterable[Enum]] = None,
+        choices: Optional[Union[Iterable[Enum], Dict[str, Enum]]] = None,
         default: Optional[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
     ):
         if choices is None:
-            choices = list(enum)
+            choices = {c.name: c for c in enum}
+        elif not isinstance(choices, Mapping):
+            choices = {c.name: c for c in choices}
         super().__init__(name, choices=choices, default=default, depends_on=depends_on)
         self.enum = enum
 
@@ -330,9 +328,11 @@ class EnumHyperparameter(CategoricalHyperparameter):
         """
         if choices is None:
             choices = self.choices
-        choices_str = [c.name for c in choices]
-        choice_str: str = trial.suggest_categorical(name=prefix + self.name, choices=choices_str, **kwargs)  # type: ignore
-        return self.enum[choice_str]
+        else:
+            choices = {c.name: c for c in choices}
+        return super().suggest_with_optuna(
+            trial=trial, choices=choices, prefix=prefix, **kwargs
+        )
 
 
 class SubBrickHyperparameter(CategoricalHyperparameter):
@@ -342,36 +342,49 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
 
     """
 
-    choices: List[Type[Hyperparametrizable]]
-    """List of Hyperparametrizable subclasses to choose from for the subbrick.
+    choices: Dict[str, Type[Hyperparametrizable]]
+    """Mapping of labelled Hyperparametrizable subclasses to choose from for the subbrick.
 
     NB: for now, it is not possible to pick the metasolver itself as a choice for its subbrick,
     in order to avoid infinite recursivity issues.
 
     """
 
+    include_module_in_labels: bool
+    """Flag to include module path in Hyperparametrizable labels used by optuna to select the value.
+
+    This is useful if 2 hypermarametrizable classes share the same name but come from different modules.
+
+    """
+
     def __init__(
         self,
         name: str,
-        choices: List[Type[Hyperparametrizable]],
+        choices: Union[
+            Dict[str, Type[Hyperparametrizable]], Iterable[Type[Hyperparametrizable]]
+        ],
         default: Optional[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        include_module_in_labels: bool = False,
     ):
+        if not isinstance(choices, Mapping):
+            if include_module_in_labels:
+                choices = {c.__module__ + c.__name__: c for c in choices}
+            else:
+                choices = {c.__name__: c for c in choices}
+
         super().__init__(name, choices=choices, default=default, depends_on=depends_on)
-        # map by their names or (module + name)'s?
-        if len(set([c.__name__ for c in choices])) == len(choices):
-            # names are unique between all choices
-            self.choices_str2cls = {c.__name__: c for c in choices}
-            self.choices_cls2str = {c: c.__name__ for c in choices}
-        else:
-            # we need to disambiguate with module path
-            self.choices_str2cls = {c.__module__ + c.__name__: c for c in choices}
-            self.choices_cls2str = {c: c.__module__ + c.__name__ for c in choices}
+        self.include_module_in_labels = include_module_in_labels
 
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        choices: Optional[Iterable[Type[Hyperparametrizable]]] = None,
+        choices: Optional[
+            Union[
+                Dict[str, Type[Hyperparametrizable]],
+                Iterable[Type[Hyperparametrizable]],
+            ]
+        ] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Type[Hyperparametrizable]:
@@ -389,11 +402,14 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
         """
         if choices is None:
             choices = self.choices
-        choices_str = [self.choices_cls2str[c] for c in choices]
-        choice_str = trial.suggest_categorical(
-            name=prefix + self.name, choices=choices_str, **kwargs  # type: ignore
+        elif not isinstance(choices, Mapping):
+            if self.include_module_in_labels:
+                choices = {c.__module__ + c.__name__: c for c in choices}
+            else:
+                choices = {c.__name__: c for c in choices}
+        return super().suggest_with_optuna(
+            trial=trial, choices=choices, prefix=prefix, **kwargs
         )
-        return self.choices_str2cls[choice_str]
 
 
 class SubBrickKwargsHyperparameter(Hyperparameter):

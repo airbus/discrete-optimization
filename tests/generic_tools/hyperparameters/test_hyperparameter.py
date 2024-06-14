@@ -44,6 +44,35 @@ class DummySolver(SolverDO):
         return ResultStorage([])
 
 
+def bee1_impl(x):
+    return x + 1
+
+
+def bee2_impl(x):
+    return x + 2
+
+
+class DummySolverWithCallableHyperparameter(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=2, default=1),
+        FloatHyperparameter("coeff", low=-1.0, high=1.0, default=1.0),
+        CategoricalHyperparameter(
+            "heuristic",
+            choices={
+                "bee1": bee1_impl,
+                "bee2": bee2_impl,
+            },
+            default=bee1_impl,
+        ),
+        EnumHyperparameter("method", enum=Method, default=Method.GREEDY),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
 class DummySolverWithEnumSubset(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=0, high=2, default=1),
@@ -224,6 +253,37 @@ def test_suggest_with_optuna():
     study.optimize(objective)
 
     assert len(study.trials) == 2 * 2 * 5 * 1
+
+
+def test_suggest_with_optuna_with_choices_dict():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithCallableHyperparameter.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "coeff": dict(step=0.5),
+                    "nb": dict(high=1),
+                },
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 4
+        assert isinstance(suggested_hyperparameters_kwargs["method"], Method)
+        assert 0 <= suggested_hyperparameters_kwargs["nb"]
+        assert 1 >= suggested_hyperparameters_kwargs["nb"]
+        assert -1.0 <= suggested_hyperparameters_kwargs["coeff"]
+        assert 1.0 >= suggested_hyperparameters_kwargs["coeff"]
+        assert callable(suggested_hyperparameters_kwargs["heuristic"])
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * 2 * 5 * 2
+    assert study.best_trial.params["heuristic"] in ["bee1", "bee2"]
 
 
 def test_suggest_with_optuna_with_enum_subset():
