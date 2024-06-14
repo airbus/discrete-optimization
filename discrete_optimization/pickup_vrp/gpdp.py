@@ -249,7 +249,19 @@ class GPDP(Problem):
                     raise RuntimeError(
                         "self.graph must not be None after self.compute_graph()."
                     )
-            return self.graph.get_edges()
+            if self.node_vehicle is not None:
+                return [
+                    e
+                    for e in self.graph.get_edges()
+                    if (
+                        vehicle in self.node_vehicle.get(e[0], set())
+                        and vehicle in self.node_vehicle.get(e[1], set())
+                    )
+                    or (e[0] == self.origin_vehicle[vehicle])
+                    or (e[1] == self.target_vehicle[vehicle])
+                ]
+            else:
+                return self.graph.get_edges()
 
         self.get_edges_for_vehicle = get_edges_for_vehicle
         if group_identical_vehicles is None:
