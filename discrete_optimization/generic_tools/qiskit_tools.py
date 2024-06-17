@@ -175,7 +175,9 @@ def execute_ansatz_with_Hamiltonian(
 
         optimizer = kwargs["optimizer"]
         res = optimizer.minimize(
-            fun, validate_initial_point(point=None, circuit=ansatz), bounds=validate_bounds(ansatz)
+            fun,
+            validate_initial_point(point=None, circuit=ansatz),
+            bounds=validate_bounds(ansatz),
         )
 
     else:

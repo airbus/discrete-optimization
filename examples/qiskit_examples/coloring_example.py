@@ -2,7 +2,7 @@ from qiskit_aer import AerSimulator
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
 from discrete_optimization.coloring.solvers.coloring_quantum import (
-    QAOAColoringSolver_MinimizeNbColor,
+    QAOAColoringSolver_FeasibleNbColor,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
 
@@ -19,13 +19,13 @@ def quantum_coloring():
     edges = [(1, 2, {}), (1, 3, {}), (2, 4, {})]
 
     # can make the problem unsat + the number of variable depend on this parameter
-    nb_max_color = 2
+    nb_color = 2
 
     # we create an instance of ColoringProblem
     coloringProblem = ColoringProblem(Graph(nodes=nodes, edges=edges))
     # we create an instance of a QAOAMisSolver
-    coloringSolver = QAOAColoringSolver_MinimizeNbColor(
-        coloringProblem, nb_max_color=nb_max_color
+    coloringSolver = QAOAColoringSolver_FeasibleNbColor(
+        coloringProblem, nb_color=nb_color
     )
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     coloringSolver.init_model()

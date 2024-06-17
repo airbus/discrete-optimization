@@ -1,9 +1,13 @@
+#  Copyright (c) 2024 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
+import logging
 from typing import Optional, Union
 
 import numpy as np
 from qiskit_optimization import QuadraticProgram
 from qiskit_optimization.algorithms import OptimizationResult
-from qiskit_optimization.applications import OptimizationApplication
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -17,7 +21,25 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.qiskit_tools import (
     QiskitQAOASolver,
     QiskitVQESolver,
+    qiskit_available,
 )
+
+logger = logging.getLogger(__name__)
+
+if qiskit_available:
+    from qiskit_optimization import QuadraticProgram
+    from qiskit_optimization.algorithms import OptimizationResult
+    from qiskit_optimization.applications import OptimizationApplication
+else:
+    msg = (
+        "ColoringQiskit_MinimizeNbColor, QAOAColoringSolver_MinimizeNbColor, VQEColoringSolver_MinimizeNbColor, "
+        "ColoringQiskit_FeasibleNbColor, QAOAColoringSolver_FeasibleNbColor and VQEColoringSolver_FeasibleNbColor, "
+        "need qiskit, qiskit_aer, qiskit_algorithms, qiskit_ibm_runtime, "
+        "and qiskit_optimization to be installed."
+        "You can use the command `pip install discrete-optimization[quantum]` to install them."
+    )
+    logger.warning(msg)
+    OptimizationApplication = object
 
 
 class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
