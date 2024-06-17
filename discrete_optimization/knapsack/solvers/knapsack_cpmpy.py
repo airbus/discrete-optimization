@@ -61,5 +61,6 @@ class CPMPYKnapsackSolver(SolverKnapsack):
         sol = KnapsackSolution(problem=self.problem, list_taken=list_taken)
         fit = self.aggreg_from_sol(sol)
         return ResultStorage(
-            [(sol, fit)], mode_optim=self.params_objective_function.sense_function
+            mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, fit)],
         )

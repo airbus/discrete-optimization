@@ -25,4 +25,5 @@ class PickleBestSolutionBackup(Callback):
     ) -> Optional[bool]:
         if step % self.save_nb_steps == 0:
             logger.debug(f"Pickling best solution")
-            pickle.dump(res.best_solution, open(self.backup_path, "wb"))
+            sol, fit = res.get_best_solution_fit()
+            pickle.dump(sol, open(self.backup_path, "wb"))

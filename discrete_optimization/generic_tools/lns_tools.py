@@ -347,7 +347,7 @@ class BaseLNS(SolverDO):
                         logger.info(f"iteration n° {iteration} Solved !!!")
                         if hasattr(self.subsolver, "status_solver"):
                             logger.info(self.subsolver.status_solver)
-                        if len(result_store.list_solution_fits) > 0:
+                        if len(result_store) > 0:
                             logger.debug("Solved !!!")
                             bsol, fit = result_store.get_best_solution_fit()
                             logger.debug(f"Fitness Before = {fit}")
@@ -395,8 +395,8 @@ class BaseLNS(SolverDO):
                             if skip_first_iteration and iteration == 0:
                                 store_lns = result_store
                             else:
-                                for s, f in list(result_store.list_solution_fits):
-                                    store_lns.add_solution(solution=s, fitness=f)
+                                for s, f in list(result_store):
+                                    store_lns.append((s, f))
                         else:
                             current_nb_iteration_no_improvement += 1
                         if (

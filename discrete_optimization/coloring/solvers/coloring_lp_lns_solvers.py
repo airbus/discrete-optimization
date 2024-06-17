@@ -65,9 +65,8 @@ class InitialColoring(InitialSolution):
             sol = self.problem.get_dummy_solution()
             fit = self.aggreg_from_sol(sol)
             return ResultStorage(
-                list_solution_fits=[(sol, fit)],
-                best_solution=sol,
                 mode_optim=self.params_objective_function.sense_function,
+                list_solution_fits=[(sol, fit)],
             )
         else:
             solver = GreedyColoring(

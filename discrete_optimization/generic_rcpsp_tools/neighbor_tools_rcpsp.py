@@ -1413,20 +1413,18 @@ class ConstraintHandlerScheduling(MznConstraintHandler):
         if last_result_store is not None:
             current_solution, fit = next(
                 (
-                    last_result_store.list_solution_fits[j]
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
+                    last_result_store[j]
+                    for j in range(len(last_result_store))
+                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
         else:
             current_solution, fit = next(
                 (
-                    result_storage.list_solution_fits[j]
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
+                    result_storage[j]
+                    for j in range(len(result_storage))
+                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
@@ -1554,20 +1552,18 @@ class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
         if last_result_store is not None:
             current_solution, fit = next(
                 (
-                    last_result_store.list_solution_fits[j]
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
+                    last_result_store[j]
+                    for j in range(len(last_result_store))
+                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
         else:
             current_solution, fit = next(
                 (
-                    result_storage.list_solution_fits[j]
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
+                    result_storage[j]
+                    for j in range(len(result_storage))
+                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
@@ -1646,20 +1642,18 @@ class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
         if last_result_store is not None:
             current_solution, fit = next(
                 (
-                    last_result_store.list_solution_fits[j]
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
+                    last_result_store[j]
+                    for j in range(len(last_result_store))
+                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
         else:
             current_solution, fit = next(
                 (
-                    result_storage.list_solution_fits[j]
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
+                    result_storage[j]
+                    for j in range(len(result_storage))
+                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
@@ -1742,20 +1736,18 @@ class EquilibrateMultiskillAllocation(MznConstraintHandler):
         if last_result_store is not None:
             current_solution, fit = next(
                 (
-                    last_result_store.list_solution_fits[j]
-                    for j in range(len(last_result_store.list_solution_fits))
-                    if "opti_from_cp"
-                    in last_result_store.list_solution_fits[j][0].__dict__.keys()
+                    last_result_store[j]
+                    for j in range(len(last_result_store))
+                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
                 ),
                 (None, None),
             )
         else:
             current_solution, fit = next(
                 (
-                    result_storage.list_solution_fits[j]
-                    for j in range(len(result_storage.list_solution_fits))
-                    if "opti_from_cp"
-                    in result_storage.list_solution_fits[j][0].__dict__.keys()
+                    result_storage[j]
+                    for j in range(len(result_storage))
+                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
                 ),
                 (None, None),
             )

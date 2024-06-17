@@ -484,8 +484,7 @@ class Ga(SolverDO):
         problem_sol = self.problem.get_solution_type()(**kwargs)
 
         result_storage = ResultStorage(
-            list_solution_fits=[(problem_sol, self.aggreg_from_sol(problem_sol))],
-            best_solution=problem_sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(problem_sol, self.aggreg_from_sol(problem_sol))],
         )
         return result_storage

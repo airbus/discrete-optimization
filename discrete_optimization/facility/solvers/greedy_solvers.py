@@ -39,9 +39,8 @@ class GreedySolverFacility(SolverFacility):
         sol = FacilitySolution(problem=self.problem, facility_for_customers=solution)
         fit = self.aggreg_from_sol(sol)
         return ResultStorage(
-            list_solution_fits=[(sol, fit)],
-            best_solution=sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, fit)],
         )
 
 
@@ -94,7 +93,6 @@ class GreedySolverDistanceBased(SolverFacility):
         sol = FacilitySolution(problem=self.problem, facility_for_customers=solution)
         fit = self.aggreg_from_sol(sol)
         return ResultStorage(
-            list_solution_fits=[(sol, fit)],
-            best_solution=sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, fit)],
         )

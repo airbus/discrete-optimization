@@ -2,9 +2,11 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import random
-from heapq import heapify, heappush, heappushpop, nlargest, nsmallest
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from collections.abc import MutableSequence
+from typing import Any, List, Optional, Tuple, Union, cast
 
 import matplotlib.pyplot as plt
 
@@ -21,100 +23,47 @@ from discrete_optimization.generic_tools.do_problem import (
 fitness_class = Union[float, TupleFitness]
 
 
-class ResultStorage:
+class ResultStorage(MutableSequence):
+    """Storage for solver results.
+
+    ResultStorage inherits from MutableSequence so you can
+    - iterate over it (will iterate over tuples (sol, fit)
+    - append directly to it (a tuple (sol, fit))
+    - pop, extend, ...
+
+    """
+
     list_solution_fits: List[Tuple[Solution, fitness_class]]
-    best_solution: Optional[Solution]
-    map_solutions: Dict[Solution, fitness_class]
 
     def __init__(
         self,
-        list_solution_fits: List[Tuple[Solution, fitness_class]],
-        best_solution: Optional[Solution] = None,
-        mode_optim: ModeOptim = ModeOptim.MAXIMIZATION,
-        limit_store: bool = True,
-        nb_best_store: int = 1000,
+        mode_optim: ModeOptim,
+        list_solution_fits: Optional[List[Tuple[Solution, fitness_class]]] = None,
     ):
-        self.list_solution_fits = list_solution_fits
-        self.best_solution = best_solution
+        if list_solution_fits is None:
+            self.list_solution_fits = []
+        else:
+            self.list_solution_fits = list_solution_fits
         self.mode_optim = mode_optim
         self.maximize = mode_optim == ModeOptim.MAXIMIZATION
-        self.size_heap = 0
-        self.heap: List[fitness_class] = []
-        self.limit_store = limit_store
-        self.nb_best_score = nb_best_store
-        self.map_solutions = {}
-        for i in range(len(self.list_solution_fits)):
-            if self.list_solution_fits[i][0] not in self.map_solutions:
-                self.map_solutions[
-                    self.list_solution_fits[i][0]
-                ] = self.list_solution_fits[i][1]
-                heappush(self.heap, self.list_solution_fits[i][1])
-                self.size_heap += 1
-        if self.size_heap >= self.nb_best_score and self.limit_store:
-            self.heap = (
-                nsmallest(self.nb_best_score, self.heap)
-                if not self.maximize
-                else nlargest(self.nb_best_score, self.heap)
-            )
-            heapify(self.heap)
-            self.size_heap = self.nb_best_score
-        if len(self.heap) > 0:
-            self.min = min(self.heap)
-            self.max = max(self.heap)
-            if self.best_solution is None:
-                f = min if not self.maximize else max
-                self.best_solution = f(self.list_solution_fits, key=lambda x: x[1])[0]
-        else:
-            self.min = None
-            self.max = None
 
-    @property
-    def best_fit(self):
-        if self.maximize:
-            return self.max
-        else:
-            return self.min
+    def __add__(self, other: ResultStorage) -> ResultStorage:
+        return merge_results_storage(self, other)
 
-    def add_solution(self, solution: Solution, fitness: fitness_class) -> None:
-        self.list_solution_fits += [(solution, fitness)]
-        if solution not in self.map_solutions:
-            self.map_solutions[solution] = fitness
+    def __getitem__(self, index) -> Tuple[Solution, fitness_class]:
+        return self.list_solution_fits[index]
 
-        if self.max is None or self.min is None:
-            # first solution ever added
-            self.max = fitness
-            self.min = fitness
-            self.best_solution = solution
-            if self.size_heap >= self.nb_best_score and self.limit_store:
-                heappushpop(self.heap, fitness)
-            else:
-                heappush(self.heap, fitness)
-                self.size_heap += 1
-        else:
-            # solutions already existed
-            if (
-                self.maximize
-                and fitness > self.max
-                or (not self.maximize and fitness < self.min)
-            ):
-                self.best_solution = solution
-            if (
-                self.maximize
-                and fitness >= self.min
-                or (not self.maximize and fitness <= self.max)
-            ):
-                if self.size_heap >= self.nb_best_score and self.limit_store:
-                    heappushpop(self.heap, fitness)
-                    self.min = min(fitness, self.min)
-                    self.max = max(fitness, self.max)
-                else:
-                    heappush(self.heap, fitness)
-                    self.size_heap += 1
-                    self.min = min(fitness, self.min)
-                    self.max = max(fitness, self.max)
+    def __len__(self) -> int:
+        return len(self.list_solution_fits)
 
-    def finalize(self) -> None:
-        self.heap = sorted(self.heap, reverse=self.maximize)
+    def __setitem__(self, index: int, value: Tuple[Solution, fitness_class]):
+        self.list_solution_fits[index] = value
+
+    def __delitem__(self, index: int) -> None:
+        del self.list_solution_fits[index]
+
+    def insert(self, index, value: Tuple[Solution, fitness_class]) -> None:
+        self.list_solution_fits.insert(index, value)
 
     def get_best_solution_fit(
         self, satisfying: Optional[Problem] = None
@@ -207,9 +156,11 @@ class ResultStorage:
 def merge_results_storage(
     result_1: ResultStorage, result_2: ResultStorage
 ) -> ResultStorage:
+    if result_1.mode_optim != result_2.mode_optim:
+        raise ValueError("Cannot merge result_storages with different mode_optim")
     return ResultStorage(
-        result_1.list_solution_fits + result_2.list_solution_fits,
         mode_optim=result_1.mode_optim,
+        list_solution_fits=result_1.list_solution_fits + result_2.list_solution_fits,
     )
 
 
@@ -231,10 +182,7 @@ def from_solutions_to_result_storage(
     list_solution_fit: List[Tuple[Solution, fitness_class]] = []
     for s in list_solution:
         list_solution_fit += [(s, aggreg_from_sol(s))]
-    return ResultStorage(
-        list_solution_fits=list_solution_fit,
-        mode_optim=mode_optim,
-    )
+    return ResultStorage(mode_optim=mode_optim, list_solution_fits=list_solution_fit)
 
 
 def result_storage_to_pareto_front(
@@ -248,10 +196,7 @@ def result_storage_to_pareto_front(
         ]
     pf = ParetoFront(
         list_solution_fits=list_solution_fits,
-        best_solution=None,
         mode_optim=result_storage.mode_optim,
-        limit_store=result_storage.limit_store,
-        nb_best_store=result_storage.nb_best_score,
     )
     pf.finalize()
     return pf
@@ -261,18 +206,9 @@ class ParetoFront(ResultStorage):
     def __init__(
         self,
         list_solution_fits: List[Tuple[Solution, fitness_class]],
-        best_solution: Optional[Solution],
         mode_optim: ModeOptim = ModeOptim.MAXIMIZATION,
-        limit_store: bool = True,
-        nb_best_store: int = 1000,
     ):
-        super().__init__(
-            list_solution_fits=list_solution_fits,
-            best_solution=best_solution,
-            mode_optim=mode_optim,
-            limit_store=limit_store,
-            nb_best_store=nb_best_store,
-        )
+        super().__init__(mode_optim=mode_optim, list_solution_fits=list_solution_fits)
         self.paretos: List[Tuple[Solution, TupleFitness]] = []
 
     def add_point(self, solution: Solution, tuple_fitness: TupleFitness) -> None:
@@ -301,7 +237,6 @@ class ParetoFront(ResultStorage):
         return len(self.paretos)
 
     def finalize(self) -> None:
-        super().finalize()
         self.paretos = []
         for s, t in self.list_solution_fits:
             if not isinstance(t, TupleFitness):

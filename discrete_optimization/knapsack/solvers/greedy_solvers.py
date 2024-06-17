@@ -76,9 +76,8 @@ class GreedyBest(SolverKnapsack):
         res = best_of_greedy(self.problem)
         fit = self.aggreg_from_sol(res)
         return ResultStorage(
-            list_solution_fits=[(res, fit)],
-            best_solution=res,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(res, fit)],
         )
 
 
@@ -92,7 +91,6 @@ class GreedyDummy(SolverKnapsack):
         )
         fit = self.aggreg_from_sol(sol)
         return ResultStorage(
-            list_solution_fits=[(sol, fit)],
-            best_solution=sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, fit)],
         )

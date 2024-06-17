@@ -68,9 +68,8 @@ class InitialKnapsackSolution(InitialSolution):
             solution = self.problem.get_dummy_solution()
             fit = self.aggreg_from_sol(solution)
             return ResultStorage(
-                list_solution_fits=[(solution, fit)],
-                best_solution=solution,
                 mode_optim=self.params_objective_function.sense_function,
+                list_solution_fits=[(solution, fit)],
             )
 
 

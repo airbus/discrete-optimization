@@ -407,8 +407,8 @@ class LP_Facility_Solver_CBC(SolverFacility):
         facility_solution = FacilitySolution(self.problem, solution)
         fit = self.aggreg_from_sol(facility_solution)
         return ResultStorage(
-            [(facility_solution, fit)],
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(facility_solution, fit)],
         )
 
     def solve(

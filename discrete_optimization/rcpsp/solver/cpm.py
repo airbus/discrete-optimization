@@ -548,8 +548,8 @@ class CPM(SolverRCPSP):
         )
         fit_1 = self.aggreg_from_sol(solution_1)
         res = ResultStorage(
-            list_solution_fits=[(solution_sgs_0, fit_0), (solution_1, fit_1)],
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(solution_sgs_0, fit_0), (solution_1, fit_1)],
         )
         return res
 

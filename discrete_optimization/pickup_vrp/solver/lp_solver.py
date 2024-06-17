@@ -838,11 +838,8 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         reevaluate_result(temporaryresult, problem=self.problem)
         return temporaryresult
 
-    def retrieve_solutions(
-        self, parameters_milp: ParametersMilp, **kwargs: Any
-    ) -> ResultStorage:
-        kwargs["limit_store"] = False
-        return super().retrieve_solutions(parameters_milp=parameters_milp, **kwargs)
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        return super().retrieve_solutions(parameters_milp=parameters_milp)
 
     def retrieve_current_solution(
         self,
@@ -942,8 +939,8 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         self.model.update()
         nb_iteration = 0
         res = ResultStorage(
-            list_solution_fits=self.convert_temporaryresults(solutions),
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=self.convert_temporaryresults(solutions),
         )
 
         if (
@@ -1027,7 +1024,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                 finished = True
             else:
                 nb_iteration += 1
-                res.list_solution_fits += self.convert_temporaryresults(solutions)
+                res.extend(self.convert_temporaryresults(solutions))
                 stopping = callbacks_list.on_step_end(
                     step=nb_iteration, res=res, solver=self
                 )
@@ -1400,8 +1397,8 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         self.model.update()
         nb_iteration = 0
         res = ResultStorage(
-            list_solution_fits=self.convert_temporaryresults(solutions),
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=self.convert_temporaryresults(solutions),
         )
 
         while not finished:
@@ -1435,7 +1432,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                 parameters_milp=parameters_milp, no_warm_start=True, **kwargs
             )
             nb_iteration += 1
-            res.list_solution_fits += self.convert_temporaryresults(solutions)
+            res.extend(self.convert_temporaryresults(solutions))
             stopping = callbacks_list.on_step_end(
                 step=nb_iteration, res=res, solver=self
             )

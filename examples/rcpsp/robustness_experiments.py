@@ -171,9 +171,8 @@ def run_cp_multiscenario():
     params_cp.time_limit = 50
     params_cp.free_search = True
     result = solver.solve(parameters_cp=params_cp)
-    solution_fit = result.list_solution_fits
-    objectives_cp = [sol.minizinc_obj for sol, fit in solution_fit]
-    real_objective = [fit for sol, fit in solution_fit]
+    objectives_cp = [sol.minizinc_obj for sol, fit in result]
+    real_objective = [fit for sol, fit in result]
 
     plt.scatter(objectives_cp, real_objective)
     plt.show()
@@ -238,9 +237,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             nb_iteration_max=5000,
             update_iteration_pareto=10000,
         )
-    result_ls.list_solution_fits = [
-        l for l in result_ls.list_solution_fits if l[0].rcpsp_schedule_feasible
-    ]
+    result_ls = [l for l in result_ls if l[0].rcpsp_schedule_feasible]
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_ls, problem=rcpsp_model
     )

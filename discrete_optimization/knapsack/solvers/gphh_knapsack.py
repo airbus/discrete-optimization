@@ -283,8 +283,8 @@ class GPHH(SolverDO):
             domain=self.problem, func_heuristic=self.func_heuristic
         )
         return ResultStorage(
-            list_solution_fits=[(solution, self.aggreg_from_sol(solution))],
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(solution, self.aggreg_from_sol(solution))],
         )
 
     def build_result_storage_for_domain(
@@ -294,10 +294,10 @@ class GPHH(SolverDO):
             domain=domain, func_heuristic=self.func_heuristic
         )
         return ResultStorage(
+            mode_optim=self.params_objective_function.sense_function,
             list_solution_fits=[
                 (solution, self.aggreg_from_dict(domain.evaluate(solution)))
             ],
-            mode_optim=self.params_objective_function.sense_function,
         )
 
     def init_primitives(self, pset: PrimitiveSetTyped) -> PrimitiveSetTyped:

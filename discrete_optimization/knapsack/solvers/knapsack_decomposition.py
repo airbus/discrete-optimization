@@ -140,8 +140,8 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             method=initial_solver, problem=self.problem, **initial_solver_kwargs
         )
         results_storage = ResultStorage(
-            list_solution_fits=initial_results.list_solution_fits,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=initial_results.list_solution_fits,
         )
         logger.info(
             f"Initial solution fitness : {results_storage.get_best_solution_fit()[1]}"
@@ -170,7 +170,7 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             )
             fit = self.aggreg_from_sol(reb_sol)
             logger.info(f"Iteration {j}/{nb_iteration} : --- Current fitness {fit}")
-            results_storage.list_solution_fits += [(reb_sol, fit)]
+            results_storage.append((reb_sol, fit))
 
             stopping = callbacks_list.on_step_end(
                 step=j, res=results_storage, solver=self

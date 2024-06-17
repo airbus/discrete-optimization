@@ -260,11 +260,11 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
             )
             fit = self.aggreg_from_sol(rcpsp_sol)
             return ResultStorage(
-                list_solution_fits=[(rcpsp_sol, fit)],
                 mode_optim=self.params_objective_function.sense_function,
+                list_solution_fits=[(rcpsp_sol, fit)],
             )
         else:
             return ResultStorage(
-                list_solution_fits=[],
                 mode_optim=self.params_objective_function.sense_function,
+                list_solution_fits=[],
             )

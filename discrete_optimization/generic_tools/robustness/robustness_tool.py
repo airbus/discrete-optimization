@@ -127,7 +127,7 @@ class RobustnessTool:
         models = self.get_models(apriori, aposteriori)
         p = Pool(min(8, len(models)))
         l = p.map(solve_models_function, models)
-        solutions: List[RCPSPSolution] = [li.best_solution for li in l]  # type: ignore
+        solutions: List[RCPSPSolution] = [li.get_best_solution_fit()[0] for li in l]  # type: ignore
         results = np.zeros((len(solutions), len(self.test_instance), 3))
         for index_instance in range(len(self.test_instance)):
             logger.debug(f"Evaluating in instance #{index_instance}")
