@@ -40,6 +40,8 @@ else:
     )
     logger.warning(msg)
     OptimizationApplication = object
+    OptimizationResult = object
+    QuadraticProgram = object
 
 
 class MisQiskit(OptimizationApplication):

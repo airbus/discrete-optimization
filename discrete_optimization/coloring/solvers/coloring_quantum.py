@@ -6,8 +6,6 @@ import logging
 from typing import Optional, Union
 
 import numpy as np
-from qiskit_optimization import QuadraticProgram
-from qiskit_optimization.algorithms import OptimizationResult
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -40,6 +38,8 @@ else:
     )
     logger.warning(msg)
     OptimizationApplication = object
+    OptimizationResult = object
+    QuadraticProgram = object
 
 
 class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
