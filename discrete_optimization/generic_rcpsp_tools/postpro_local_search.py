@@ -52,7 +52,5 @@ class PostProLocalSearch(PostProcessSolution):
             init_solution=s,
         )
         solution, f = result_store.get_last_best_solution()
-        result_storage.list_solution_fits += [
-            (solution, self.aggreg_from_sol(solution))
-        ]
+        result_storage += [(solution, self.aggreg_from_sol(solution))]
         return result_storage

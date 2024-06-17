@@ -41,7 +41,7 @@ class Solver_RCPSP_Based(SolverDO):
             method=self.method, problem=self.problem_rcpsp, **self.args_solve
         )
         list_solution_fits = []
-        for s, fit in res_storage.list_solution_fits:
+        for s, fit in res_storage:
             sol: RCPSPSolution = s
             mode = sol.rcpsp_modes
             modes = {i + 2: mode[i] for i in range(len(mode))}
@@ -59,7 +59,6 @@ class Solver_RCPSP_Based(SolverDO):
             list_solution_fits += [
                 (ms_rcpsp_solution, self.aggreg_from_sol(ms_rcpsp_solution))
             ]
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            list_solution_fits,
         )

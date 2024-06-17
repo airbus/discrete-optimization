@@ -100,11 +100,7 @@ class ASPCallback:
         self.dump_model_in_folders = dump_model_in_folders
         self.do_solver = do_solver
         self.callback = callback
-        self.res = ResultStorage(
-            [],
-            mode_optim=self.do_solver.params_objective_function.sense_function,
-            limit_store=False,
-        )
+        self.res = do_solver.create_result_storage()
         self.nb_solutions = 0
 
     def on_model(self, model: clingo.Model) -> bool:
@@ -121,7 +117,7 @@ class ASPCallback:
         # translate into do solution
         sol = self.do_solver.retrieve_solution(model=model)
         fit = self.do_solver.aggreg_from_sol(sol)
-        self.res.add_solution(solution=sol, fitness=fit)
+        self.res.append((sol, fit))
         self.nb_solutions += 1
         # end of step callback: stopping?
         try:

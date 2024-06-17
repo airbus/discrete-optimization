@@ -61,7 +61,7 @@ class InitialSolutionMS_RCPSP(InitialSolution):
         class_solution = self.problem.get_solution_type()
         if class_solution is None:
             class_solution = self.problem.to_variant_model().get_solution_type()
-        for sol, fit in s.list_solution_fits:
+        for sol, fit in s:
             sol: RCPSPSolution = sol
             mode = sol.rcpsp_modes
             modes = {
@@ -81,8 +81,8 @@ class InitialSolutionMS_RCPSP(InitialSolution):
             )
             list_solution_fits += [(ms_rcpsp_solution, self.aggreg(ms_rcpsp_solution))]
         return ResultStorage(
-            list_solution_fits=list_solution_fits,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=list_solution_fits,
         )
 
 

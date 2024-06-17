@@ -41,7 +41,7 @@ class DummySolver(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class DummySolverWithFloatSuggestingBound(SolverDO):
@@ -57,7 +57,7 @@ class DummySolverWithFloatSuggestingBound(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 def bee1_impl(x):
@@ -86,7 +86,7 @@ class DummySolverWithCallableHyperparameter(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class DummySolverWithEnumSubset(SolverDO):
@@ -105,7 +105,7 @@ class DummySolverWithEnumSubset(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class DummySolverWithDependencies(SolverDO):
@@ -127,7 +127,7 @@ class DummySolverWithDependencies(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class DummySolverWithNameInKwargs(SolverDO):
@@ -158,7 +158,7 @@ class DummySolverWithNameInKwargs(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class DummySolver2(SolverDO):
@@ -171,7 +171,7 @@ class DummySolver2(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class BaseMetaSolver(SolverDO):
@@ -186,7 +186,7 @@ class BaseMetaSolver(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class MetaSolver(BaseMetaSolver):
@@ -207,7 +207,7 @@ class MetaSolverFixedSubsolver(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 class MetaMetaSolver(SolverDO):
@@ -222,7 +222,7 @@ class MetaMetaSolver(SolverDO):
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
-        return ResultStorage([])
+        return self.create_result_storage()
 
 
 def test_get_hyperparameters_and_co():

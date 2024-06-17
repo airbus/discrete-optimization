@@ -67,7 +67,7 @@ def test_knapsack_lns():
     assert model.satisfy(solution)
     model.evaluate(solution)
 
-    fitness = [f for s, f in result_store.list_solution_fits]
+    fitness = [f for s, f in result_store]
 
 
 def test_knapsack_lns_timer():

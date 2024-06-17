@@ -219,9 +219,8 @@ class LPKnapsackCBC(SolverKnapsack):
             list_taken=[xs[e] for e in sorted(xs)],
         )
         fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            list_solution_fits=[(sol, fit)],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(sol, fit)],
         )
 
 
@@ -323,7 +322,6 @@ class KnapsackORTools(SolverKnapsack):
             list_taken=[xs[e] for e in sorted(xs)],
         )
         fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            list_solution_fits=[(sol, fit)],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(sol, fit)],
         )

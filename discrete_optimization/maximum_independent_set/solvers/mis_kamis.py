@@ -118,8 +118,8 @@ class MisKamisSolver(MisSolver):
             os.remove(self.current_file)
             sol = MisSolution(problem=self.problem, chosen=chosen)
             fit = self.aggreg_from_sol(sol)
-            return ResultStorage(
-                [(sol, fit)], mode_optim=self.params_objective_function.sense_function
+            return self.create_result_storage(
+                [(sol, fit)],
             )
         except:
             print(
@@ -127,6 +127,6 @@ class MisKamisSolver(MisSolver):
             )
             sol = MisSolution(problem=self.problem, chosen=[])
             fit = self.aggreg_from_sol(sol)
-            return ResultStorage(
-                [(sol, fit)], mode_optim=self.params_objective_function.sense_function
+            return self.create_result_storage(
+                [(sol, fit)],
             )

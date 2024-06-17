@@ -106,11 +106,7 @@ class OrtoolsCallback(CpSolverSolutionCallback):
         super().__init__()
         self.do_solver = do_solver
         self.callback = callback
-        self.res = ResultStorage(
-            [],
-            mode_optim=self.do_solver.params_objective_function.sense_function,
-            limit_store=False,
-        )
+        self.res = do_solver.create_result_storage()
         self.nb_solutions = 0
 
     def on_solution_callback(self) -> None:
@@ -135,7 +131,7 @@ class OrtoolsCallback(CpSolverSolutionCallback):
     def store_current_solution(self):
         sol = self.do_solver.retrieve_solution(cpsolvercb=self)
         fit = self.do_solver.aggreg_from_sol(sol)
-        self.res.add_solution(solution=sol, fitness=fit)
+        self.res.append((sol, fit))
 
 
 def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:

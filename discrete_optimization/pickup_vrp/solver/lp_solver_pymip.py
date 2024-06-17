@@ -709,11 +709,8 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         self.solver_name = solver_name
         self.clusters_version = one_visit_per_cluster
 
-    def retrieve_solutions(
-        self, parameters_milp: ParametersMilp, **kwargs: Any
-    ) -> ResultStorage:
-        kwargs["limit_store"] = False
-        return super().retrieve_solutions(parameters_milp=parameters_milp, **kwargs)
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
+        return super().retrieve_solutions(parameters_milp=parameters_milp)
 
     def retrieve_current_solution(
         self,
@@ -824,9 +821,8 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             )
         else:
             subtour = SubtourAddingConstraint(problem=self.problem, linear_solver=self)
-        res = ResultStorage(
-            list_solution_fits=self.convert_temporaryresults(solutions),
-            mode_optim=self.params_objective_function.sense_function,
+        res = self.create_result_storage(
+            self.convert_temporaryresults(solutions),
         )
         list_constraints_tuples: List[Any] = []
         list_constraints_tuples += subtour.adding_component_constraints(
@@ -897,7 +893,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
                 finished = True
             else:
                 nb_iteration += 1
-                res.list_solution_fits += self.convert_temporaryresults(solutions)
+                res.extend(self.convert_temporaryresults(solutions))
                 stopping = callbacks_list.on_step_end(
                     step=nb_iteration, res=res, solver=self
                 )

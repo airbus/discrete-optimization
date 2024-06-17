@@ -66,7 +66,7 @@ class PostProcessLeftShift(PostProcessSolution):
         self.check_sol = check_solution
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        for sol in list(result_storage.list_solution_fits):
+        for sol in list(result_storage):
             if "satisfy" not in sol[0].__dict__.keys():
                 s: RCPSPSolution = sol[0]
                 sol[0].satisfy = self.check_sol(
@@ -82,23 +82,21 @@ class PostProcessLeftShift(PostProcessSolution):
                 solution.satisfy = self.check_sol(
                     problem=self.rcpsp_problem, solution=solution
                 ) and self.rcpsp_problem.satisfy(solution)
-                result_storage.list_solution_fits += [
+                result_storage.append(
                     (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
-                ]
+                )
         if self.partial_solution is None:
             solver = LS_RCPSP_Solver(problem=self.rcpsp_problem, ls_solver=LS_SOLVER.SA)
-            satisfiable = [
-                (s, f) for s, f in result_storage.list_solution_fits if s.satisfy
-            ]
+            satisfiable = [(s, f) for s, f in result_storage if s.satisfy]
             if len(satisfiable) > 0:
                 s: RCPSPSolution = max(satisfiable, key=lambda x: x[1])[0].copy()
             else:
                 s = result_storage.get_best_solution().copy()
             s.change_problem(self.rcpsp_problem)
             result_store = solver.solve(nb_iteration_max=50, init_solution=s)
-            for solution, f in result_store.list_solution_fits:
+            for solution, f in result_store:
                 solution.satisfy = self.check_sol(self.rcpsp_problem, solution)
-                result_storage.list_solution_fits += [
+                result_storage.append(
                     (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
-                ]
+                )
         return result_storage

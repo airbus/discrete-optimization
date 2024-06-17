@@ -60,6 +60,6 @@ class CPMPYKnapsackSolver(SolverKnapsack):
         list_taken = self.variables["x"].value()
         sol = KnapsackSolution(problem=self.problem, list_taken=list_taken)
         fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            [(sol, fit)], mode_optim=self.params_objective_function.sense_function
+        return self.create_result_storage(
+            [(sol, fit)],
         )

@@ -301,8 +301,8 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
 
         sol = self.retrieve_current_solution(result)
         fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            [(sol, fit)], mode_optim=self.params_objective_function.sense_function
+        return self.create_result_storage(
+            [(sol, fit)],
         )
 
     @abstractmethod
@@ -384,8 +384,8 @@ class QiskitVQESolver(QiskitSolver):
 
         sol = self.retrieve_current_solution(result)
         fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            [(sol, fit)], mode_optim=self.params_objective_function.sense_function
+        return self.create_result_storage(
+            [(sol, fit)],
         )
 
     @abstractmethod

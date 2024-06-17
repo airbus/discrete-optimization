@@ -40,7 +40,7 @@ def run_time_windows():
         time_limit=45,
     )
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
@@ -66,7 +66,7 @@ def run_pickup():
         time_limit=15,
     )
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     assert best_sol.check_pickup_deliverable()
     plot_gpdp_solution(best_sol, gpdp)
     plt.show()
@@ -102,7 +102,7 @@ def run_demand():
         parameters_cost=list_parameters_cost,
     )
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 

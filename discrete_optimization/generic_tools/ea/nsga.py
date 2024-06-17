@@ -394,9 +394,4 @@ class Nsga(SolverDO):
             problem_sol = self.problem.get_solution_type()(**kwargs)
             fits = self.aggreg_from_sol(problem_sol)
             sols.append((problem_sol, fits))
-        rs = ResultStorage(
-            list_solution_fits=sols,
-            best_solution=None,
-            mode_optim=self.params_objective_function.sense_function,
-        )
-        return rs
+        return self.create_result_storage(sols)

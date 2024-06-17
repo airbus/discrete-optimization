@@ -38,10 +38,9 @@ logger = logging.getLogger(__name__)
 def last_opti_solution(last_result_store: ResultStorage):
     current_solution, fit = next(
         (
-            last_result_store.list_solution_fits[j]
-            for j in range(len(last_result_store.list_solution_fits))
-            if "opti_from_cp"
-            in last_result_store.list_solution_fits[j][0].__dict__.keys()
+            last_result_store[j]
+            for j in range(len(last_result_store))
+            if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
         ),
         (None, None),
     )
@@ -96,7 +95,7 @@ class PostProLeftShift(PostProcessSolution):
             predecessors_dict=self.immediate_predecessors,
         )
         fit = self.aggreg_from_sol(new_solution)
-        result_storage.add_solution(new_solution, fit)
+        result_storage.append((new_solution, fit))
         if self.do_ls:
             solver = LS_RCPSP_Solver(problem=self.problem, ls_solver=LS_SOLVER.SA)
             s = result_storage.get_best_solution().copy()
@@ -107,9 +106,7 @@ class PostProLeftShift(PostProcessSolution):
                 init_solution=s,
             )
             solution, f = result_store.get_last_best_solution()
-            result_storage.list_solution_fits += [
-                (solution, self.aggreg_from_sol(solution))
-            ]
+            result_storage.append((solution, self.aggreg_from_sol(solution)))
         return result_storage
 
 

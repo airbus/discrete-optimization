@@ -567,9 +567,8 @@ class LP_TSP_Iterative(SolverTSP):
             length=None,
         )
         fit = self.aggreg_from_sol(var_tsp)
-        return ResultStorage(
-            list_solution_fits=[(var_tsp, fit)],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(var_tsp, fit)],
         )
 
     def plot_solve(

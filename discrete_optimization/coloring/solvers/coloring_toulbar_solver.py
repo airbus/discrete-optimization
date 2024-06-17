@@ -259,12 +259,8 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
                 colors=solution[0][1 : 1 + self.problem.number_of_nodes],
             )
             fit = self.aggreg_from_sol(rcpsp_sol)
-            return ResultStorage(
-                list_solution_fits=[(rcpsp_sol, fit)],
-                mode_optim=self.params_objective_function.sense_function,
+            return self.create_result_storage(
+                [(rcpsp_sol, fit)],
             )
         else:
-            return ResultStorage(
-                list_solution_fits=[],
-                mode_optim=self.params_objective_function.sense_function,
-            )
+            return self.create_result_storage()

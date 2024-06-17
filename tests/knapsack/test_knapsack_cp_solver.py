@@ -23,8 +23,8 @@ def test_cp_knapsack_1():
     parameters_cp.time_limit = 10
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     sol, fit = result_storage.get_best_solution_fit()
-    assert isinstance(result_storage.list_solution_fits[0][0], KnapsackSolution)
-    assert len(result_storage.list_solution_fits) == 3
+    assert isinstance(result_storage[0][0], KnapsackSolution)
+    assert len(result_storage) == 3
 
 
 def test_cp_knapsack_2():
@@ -36,8 +36,8 @@ def test_cp_knapsack_2():
     parameters_cp.time_limit = 10
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     sol, fit = result_storage.get_best_solution_fit()
-    assert isinstance(result_storage.list_solution_fits[0][0], KnapsackSolution)
-    assert len(result_storage.list_solution_fits) == 3
+    assert isinstance(result_storage[0][0], KnapsackSolution)
+    assert len(result_storage) == 3
 
 
 if __name__ == "__main__":

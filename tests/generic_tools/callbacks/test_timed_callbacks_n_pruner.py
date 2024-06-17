@@ -59,10 +59,7 @@ class FakeSolver(SolverDO):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         param = kwargs["param"]
 
-        res = ResultStorage(
-            list_solution_fits=[],
-            mode_optim=self.params_objective_function.sense_function,
-        )
+        res = self.create_result_storage()
         callbacks_list = CallbackList(callbacks=callbacks)
         callbacks_list.on_solve_start(solver=self)
         for step, nb_colors in enumerate(self.nb_colors_series):
@@ -70,7 +67,7 @@ class FakeSolver(SolverDO):
                 problem=self.problem, nb_color=nb_colors, nb_violations=0
             )
             fit = self.aggreg_from_dict(self.problem.evaluate(solution))
-            res.list_solution_fits.append((solution, fit))
+            res.append((solution, fit))
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=step, res=res, solver=self)
             if stopping:

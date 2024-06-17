@@ -90,14 +90,11 @@ class MilpSolver(SolverDO):
     def init_model(self, **kwargs: Any) -> None:
         ...
 
-    def retrieve_solutions(
-        self, parameters_milp: ParametersMilp, **kwargs
-    ) -> ResultStorage:
+    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         """Retrieve solutions found by internal solver.
 
         Args:
             parameters_milp:
-            **kwargs: passed to ResultStorage.__init__()
 
         Returns:
 
@@ -111,11 +108,8 @@ class MilpSolver(SolverDO):
             solution = self.retrieve_ith_solution(i=i)
             fit = self.aggreg_from_sol(solution)
             list_solution_fits.append((solution, fit))
-        return ResultStorage(
-            list_solution_fits=list_solution_fits,
-            mode_optim=self.params_objective_function.sense_function,
-            best_solution=min(list_solution_fits, key=lambda x: x[1])[0],
-            **kwargs,
+        return self.create_result_storage(
+            list_solution_fits,
         )
 
     @abstractmethod
@@ -375,11 +369,7 @@ class GurobiCallback:
     def __init__(self, do_solver: GurobiMilpSolver, callback: Callback):
         self.do_solver = do_solver
         self.callback = callback
-        self.res = ResultStorage(
-            [],
-            mode_optim=self.do_solver.params_objective_function.sense_function,
-            limit_store=False,
-        )
+        self.res = do_solver.create_result_storage()
         self.nb_solutions = 0
 
     def __call__(self, model, where) -> None:
@@ -393,7 +383,7 @@ class GurobiCallback:
                     ),
                 )
                 fit = self.do_solver.aggreg_from_sol(sol)
-                self.res.add_solution(solution=sol, fitness=fit)
+                self.res.append((sol, fit))
                 self.nb_solutions += 1
                 # end of step callback: stopping?
                 stopping = self.callback.on_step_end(

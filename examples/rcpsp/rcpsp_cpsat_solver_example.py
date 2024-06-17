@@ -62,7 +62,7 @@ def solve_resource_with_cp_sat(problem: RCPSPModel):
         parameters_cp=parameters_cp,
     )
     # solution, fit = result_storage.get_best_solution_fit()
-    solution, fit = result_storage.list_solution_fits[-1]
+    solution, fit = result_storage[-1]
     plot_task_gantt(rcpsp_model=problem, rcpsp_sol=solution, title="Resource optim")
     plot_ressource_view(
         rcpsp_model=problem, rcpsp_sol=solution, title_figure="Resource optim"
