@@ -13,7 +13,6 @@ class GreedyVRPSolver(SolverVrp):
     def solve(self, **kwargs: Any) -> ResultStorage:
         sol, _ = trivial_solution(self.problem)
         fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            list_solution_fits=[(sol, fit)],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(sol, fit)],
         )

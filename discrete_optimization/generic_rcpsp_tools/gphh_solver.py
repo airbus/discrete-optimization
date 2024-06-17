@@ -607,9 +607,8 @@ class GPHH(SolverGenericRCPSP):
         solution = self.build_solution(
             domain=self.problem, func_heuristic=self.func_heuristic
         )
-        return ResultStorage(
-            list_solution_fits=[(solution, self.aggreg_from_sol(solution))],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(solution, self.aggreg_from_sol(solution))],
         )
 
     def init_primitives(self, pset) -> PrimitiveSet:

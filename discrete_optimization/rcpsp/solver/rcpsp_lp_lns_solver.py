@@ -107,9 +107,8 @@ class InitialSolutionRCPSP(InitialSolution):
             solution = self.problem.get_dummy_solution()
             fit = self.aggreg(solution)
             store_solution = ResultStorage(
-                list_solution_fits=[(solution, fit)],
-                best_solution=solution,
                 mode_optim=self.params_objective_function.sense_function,
+                list_solution_fits=[(solution, fit)],
             )
         elif self.initial_method == InitialMethodRCPSP.CP:
             solver = CP_MRCPSP_MZN(

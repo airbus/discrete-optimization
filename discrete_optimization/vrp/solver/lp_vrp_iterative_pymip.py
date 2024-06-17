@@ -466,9 +466,8 @@ class VRPIterativeLP_Pymip(SolverVrp):
         )
         _ = self.problem.evaluate(solution)
         fit = self.aggreg_from_sol(solution)
-        return ResultStorage(
-            list_solution_fits=[(solution, fit)],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(solution, fit)],
         )
 
 

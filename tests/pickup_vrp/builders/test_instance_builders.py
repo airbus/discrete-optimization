@@ -51,7 +51,7 @@ def test_pickup_and_delivery():
     )
     result_storage: ResultStorage = solver.solve()
     assert isinstance(result_storage, ResultStorage)
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     assert isinstance(best_sol, GPDPSolution)
     assert best_sol.check_pickup_deliverable()
     plot_gpdp_solution(best_sol, model)

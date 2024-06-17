@@ -322,7 +322,7 @@ class MinizincCPSolver(CPSolver):
                 optimisation_level=parameters_cp.optimisation_level,
             )
         except Exception as e:
-            if len(output_type.res.list_solution_fits) > 0:
+            if len(output_type.res) > 0:
                 self.status_solver = StatusSolver.SATISFIED
             else:
                 self.status_solver = StatusSolver.UNKNOWN
@@ -394,7 +394,7 @@ class MinizincCPSolution:
         fit = self.solver.aggreg_from_sol(self.solution)
 
         # update class attributes to remember step number and global resultstorage
-        self.__class__.res.add_solution(solution=self.solution, fitness=fit)
+        self.__class__.res.append((self.solution, fit))
         self.__class__.step += 1
 
         # callback: step end
@@ -427,10 +427,6 @@ class MinizincCPSolution:
                 solver=solver,
                 callback=callback,
                 step=0,
-                res=ResultStorage(
-                    [],
-                    mode_optim=solver.params_objective_function.sense_function,
-                    limit_store=False,
-                ),
+                res=solver.create_result_storage(),
             ),
         )

@@ -83,9 +83,8 @@ class InitialColoring(InitialSolution):
             sol = self.problem.get_dummy_solution()
             fit = self.aggreg_from_sol(sol)
             return ResultStorage(
-                list_solution_fits=[(sol, fit)],
-                best_solution=sol,
                 mode_optim=self.params_objective_function.sense_function,
+                list_solution_fits=[(sol, fit)],
             )
         else:
             solver = GreedyColoring(
@@ -238,5 +237,5 @@ class PostProcessSolutionColoring(PostProcessSolution):
             colors=[new_color_dict[colors[i]] for i in range(len(colors))],
         )
         fit = self.aggreg_from_sol(new_solution)
-        result_storage.add_solution(new_solution, fit)
+        result_storage.append((new_solution, fit))
         return result_storage

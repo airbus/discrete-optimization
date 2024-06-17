@@ -199,7 +199,6 @@ class VrpORToolsSolver(SolverVrp):
         )
         variable_vrp = self.retrieve(solution)
         fit = self.aggreg_from_sol(variable_vrp)
-        return ResultStorage(
-            list_solution_fits=[(variable_vrp, fit)],
-            mode_optim=self.params_objective_function.sense_function,
+        return self.create_result_storage(
+            [(variable_vrp, fit)],
         )

@@ -13,6 +13,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
     Problem,
     Solution,
     TupleFitness,
@@ -105,7 +106,7 @@ class ResultComparator:
                 ).vector_fitness[  # indicate to mypy that we are in multiobjective case
                     obj_index
                 ]
-                for solution, fitness in self.list_result_storage[i].list_solution_fits
+                for solution, fitness in self.list_result_storage[i]
             ]  # create fit array
             if self.list_result_storage[i].maximize:
                 best_fit = max(fit_array)
@@ -113,16 +114,20 @@ class ResultComparator:
                 best_fit = min(fit_array)
 
             best_index = fit_array.index(best_fit)
-            best_sol = self.list_result_storage[i].list_solution_fits[best_index]
+            best_sol = self.list_result_storage[i][best_index]
             val[self.result_storage_names[i]] = best_sol
         return val
 
     def generate_super_pareto(self) -> ParetoFront:
         sols = []
         for rs in self.list_result_storage:
-            for s in rs.list_solution_fits:
+            for s in rs:
                 sols.append(s)
-        rs = ResultStorage(list_solution_fits=sols, best_solution=None)
+        if len(self.list_result_storage) == 0:
+            mode_optim = ModeOptim.MAXIMIZATION
+        else:
+            mode_optim = self.list_result_storage[0].mode_optim
+        rs = ResultStorage(mode_optim=mode_optim, list_solution_fits=sols)
         pareto_store = result_storage_to_pareto_front(result_storage=rs, problem=None)
         return pareto_store
 
@@ -150,11 +155,11 @@ class ResultComparator:
             ax.scatter(
                 x=[
                     p[1].vector_fitness[objectives_index[0]]  # type: ignore
-                    for p in self.list_result_storage[i].list_solution_fits
+                    for p in self.list_result_storage[i]
                 ],
                 y=[
                     p[1].vector_fitness[objectives_index[1]]  # type: ignore
-                    for p in self.list_result_storage[i].list_solution_fits
+                    for p in self.list_result_storage[i]
                 ],
                 color=colors[i],
             )
@@ -189,11 +194,11 @@ class ResultComparator:
         ):
             x = [
                 p[1].vector_fitness[objectives_index[0]]  # type: ignore
-                for p in self.list_result_storage[i].list_solution_fits
+                for p in self.list_result_storage[i]
             ]
             y = [
                 p[1].vector_fitness[objectives_index[1]]  # type: ignore
-                for p in self.list_result_storage[i].list_solution_fits
+                for p in self.list_result_storage[i]
             ]
             ax.scatter(x=x, y=y, color=colors[i])
             ax.set_title(self.result_storage_names[i])

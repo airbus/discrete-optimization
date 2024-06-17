@@ -6,12 +6,13 @@
 from __future__ import annotations  # see annotations as str
 
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
+    Solution,
     build_aggreg_function_and_params_objective,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
@@ -19,6 +20,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable imp
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+    fitness_class,
 )
 
 
@@ -60,6 +62,24 @@ class SolverDO(Hyperparametrizable):
         to a discrete-optimization problem
         """
         ...
+
+    def create_result_storage(
+        self, list_solution_fits: Optional[List[Tuple[Solution, fitness_class]]] = None
+    ) -> ResultStorage:
+        """Create a result storage with the proper mode_optim.
+
+        Args:
+            list_solution_fits:
+
+        Returns:
+
+        """
+        if list_solution_fits is None:
+            list_solution_fits = []
+        return ResultStorage(
+            list_solution_fits=list_solution_fits,
+            mode_optim=self.params_objective_function.sense_function,
+        )
 
     def init_model(self, **kwargs: Any) -> None:
         """Initialize intern model used to solve.

@@ -87,22 +87,9 @@ class SimulatedAnnealing(SolverDO):
         cur_variable = initial_variable.copy()
         cur_objective = objective
         cur_best_objective = objective
-        if self.store_solution:
-            store = ResultStorage(
-                list_solution_fits=[(initial_variable, objective)],
-                best_solution=initial_variable.copy(),
-                limit_store=True,
-                mode_optim=self.params_objective_function.sense_function,
-                nb_best_store=1000,
-            )
-        else:
-            store = ResultStorage(
-                list_solution_fits=[(initial_variable, objective)],
-                best_solution=initial_variable.copy(),
-                limit_store=True,
-                mode_optim=self.params_objective_function.sense_function,
-                nb_best_store=1,
-            )
+        store = self.create_result_storage(
+            [(initial_variable, objective)],
+        )
         self.restart_handler.best_fitness = objective
         self.restart_handler.solution_best = initial_variable.copy()
         iteration = 0
@@ -150,13 +137,13 @@ class SimulatedAnnealing(SolverDO):
             else:
                 cur_variable = move.backtrack_local_move(nv)
             if self.store_solution:
-                store.add_solution(nv.copy(), objective)
+                store.append((nv.copy(), objective))
             if global_improvement:
                 logger.info(f"iter {iteration}")
                 logger.info(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
                 if not self.store_solution:
-                    store.add_solution(cur_variable.copy(), objective)
+                    store.append((cur_variable.copy(), objective))
             self.temperature_handler.next_temperature()
             # Update the temperature
             self.restart_handler.update(
@@ -176,7 +163,6 @@ class SimulatedAnnealing(SolverDO):
             if stopping:
                 break
 
-        store.finalize()
         # end of solve callback
         callbacks_list.on_solve_end(res=store, solver=self)
         return store

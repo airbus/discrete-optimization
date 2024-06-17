@@ -142,7 +142,7 @@ def run_ortools_solver():
         time_limit=10,
     )
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
@@ -170,7 +170,7 @@ def run_ortools_solver_selective():
         time_limit=200,
     )
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     plot_gpdp_solution(best_sol, gpdp)
     plt.show()
 
@@ -233,7 +233,7 @@ def run_ortools_pickup_delivery():
     )
     logging.basicConfig(level=logging.DEBUG)
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     assert best_sol.check_pickup_deliverable()
     plot_gpdp_solution(best_sol, model)
     plt.show()
@@ -258,7 +258,7 @@ def run_ortools_pickup_delivery_cluster():
         time_limit=30,
     )
     result_storage = solver.solve()
-    best_sol = result_storage.best_solution
+    best_sol, _ = result_storage.get_best_solution_fit()
     assert best_sol.check_pickup_deliverable()
     plot_gpdp_solution(best_sol, gpdp)
     plt.show()

@@ -406,9 +406,8 @@ class LP_Facility_Solver_CBC(SolverFacility):
                 solution[c] = f
         facility_solution = FacilitySolution(self.problem, solution)
         fit = self.aggreg_from_sol(facility_solution)
-        return ResultStorage(
+        return self.create_result_storage(
             [(facility_solution, fit)],
-            mode_optim=self.params_objective_function.sense_function,
         )
 
     def solve(

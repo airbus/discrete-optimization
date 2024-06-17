@@ -63,20 +63,9 @@ class HillClimber(SolverDO):
 
         objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         cur_variable = initial_variable.copy()
-        if self.store_solution:
-            store = ResultStorage(
-                list_solution_fits=[(initial_variable, objective)],
-                best_solution=initial_variable.copy(),
-                limit_store=True,
-                nb_best_store=1000,
-            )
-        else:
-            store = ResultStorage(
-                list_solution_fits=[(initial_variable, objective)],
-                best_solution=initial_variable.copy(),
-                limit_store=True,
-                nb_best_store=1,
-            )
+        store = self.create_result_storage(
+            [(initial_variable, objective)],
+        )
         cur_objective = objective
         cur_best_objective = objective
         self.restart_handler.best_fitness = objective
@@ -113,13 +102,13 @@ class HillClimber(SolverDO):
             else:
                 cur_variable = move.backtrack_local_move(nv)
             if self.store_solution:
-                store.add_solution(nv.copy(), objective)
+                store.append((nv.copy(), objective))
             if global_improvement:
                 logger.debug(f"iter {iteration}")
                 logger.debug(f"new obj {objective} better than {cur_best_objective}")
                 cur_best_objective = objective
                 if not self.store_solution:
-                    store.add_solution(cur_variable.copy(), objective)
+                    store.append((cur_variable.copy(), objective))
             # Update the temperature
             self.restart_handler.update(
                 nv, objective, global_improvement, local_improvement
@@ -138,7 +127,6 @@ class HillClimber(SolverDO):
             if stopping:
                 break
 
-        store.finalize()
         # end of solve callback
         callbacks_list.on_solve_end(res=store, solver=self)
         return store
@@ -176,9 +164,7 @@ class HillClimberPareto(HillClimber):
         objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         pareto_front = ParetoFront(
             list_solution_fits=[(initial_variable, objective)],
-            best_solution=initial_variable.copy(),
-            limit_store=True,
-            nb_best_store=1000,
+            mode_optim=self.params_objective_function.sense_function,
         )
         cur_variable = initial_variable.copy()
         cur_objective = objective
@@ -207,28 +193,28 @@ class HillClimberPareto(HillClimber):
                 accept = True
                 local_improvement = True
                 global_improvement = objective < cur_best_objective
-                pareto_front.add_solution(nv.copy(), objective)
+                pareto_front.append((nv.copy(), objective))
             elif (
                 self.mode_optim == ModeOptim.MINIMIZATION and objective == cur_objective
             ):
                 accept = True
                 local_improvement = True
                 global_improvement = objective == cur_best_objective
-                pareto_front.add_solution(nv.copy(), objective)
+                pareto_front.append((nv.copy(), objective))
             elif (
                 self.mode_optim == ModeOptim.MAXIMIZATION and objective > cur_objective
             ):
                 accept = True
                 local_improvement = True
                 global_improvement = objective > cur_best_objective
-                pareto_front.add_solution(nv.copy(), objective)
+                pareto_front.append((nv.copy(), objective))
             elif (
                 self.mode_optim == ModeOptim.MAXIMIZATION and objective == cur_objective
             ):
                 accept = True
                 local_improvement = True
                 global_improvement = objective == cur_best_objective
-                pareto_front.add_solution(nv.copy(), objective)
+                pareto_front.append((nv.copy(), objective))
             if accept:
                 logger.debug(f"Accept : {objective}")
                 cur_objective = objective

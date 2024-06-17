@@ -125,9 +125,7 @@ class AlternatingGa(SolverDO):
                 "ga_solver.solve().get_best_solution() should not be None!"
             )
         problem_sol = tmp_sol
-        result_storage = ResultStorage(
-            list_solution_fits=[(problem_sol, self.aggreg_from_sol(problem_sol))],
-            best_solution=problem_sol,
-            mode_optim=self.params_objective_function.sense_function,
+        result_storage = self.create_result_storage(
+            [(problem_sol, self.aggreg_from_sol(problem_sol))],
         )
         return result_storage
