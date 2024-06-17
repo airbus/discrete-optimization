@@ -44,7 +44,7 @@ def baseline_in_order(
 
 def build_matrice_distance(
     nodeCount: int, method: Callable[[int, int], float]
-) -> npt.NDArray[np.float_]:
+) -> npt.NDArray[np.float64]:
     if method is None:
         method = length
     matrix = np.zeros((nodeCount, nodeCount))

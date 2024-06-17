@@ -63,7 +63,7 @@ class GreedySolverDistanceBased(SolverFacility):
                     facility=self.problem.facilities[j],
                     customer=self.problem.customers[k],
                 )
-        self.min_distance: npt.NDArray[np.float_] = np.min(self.matrix_cost, axis=1)
+        self.min_distance: npt.NDArray[np.float64] = np.min(self.matrix_cost, axis=1)
         self.sorted_distance: npt.NDArray[np.int_] = np.argsort(
             self.matrix_cost, axis=1
         )

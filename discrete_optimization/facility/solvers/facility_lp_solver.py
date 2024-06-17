@@ -57,7 +57,7 @@ else:
 
 def compute_length_matrix(
     facility_problem: FacilityProblem,
-) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.int_], npt.NDArray[np.float_]]:
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.float64]]:
     """Precompute all the cost of allocation in a matrix form.
 
     A matrix "closest" is also computed, sorting for each customers the facility by distance.

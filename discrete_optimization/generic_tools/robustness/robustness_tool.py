@@ -123,7 +123,7 @@ class RobustnessTool:
         solve_models_function: Callable[[RCPSPModel], ResultStorage],
         apriori: bool = True,
         aposteriori: bool = True,
-    ) -> npt.NDArray[np.float_]:
+    ) -> npt.NDArray[np.float64]:
         models = self.get_models(apriori, aposteriori)
         p = Pool(min(8, len(models)))
         l = p.map(solve_models_function, models)
@@ -146,7 +146,7 @@ class RobustnessTool:
                 results[index_pareto, index_instance, 2] = fit["mean_resource_reserve"]
         return results
 
-    def plot(self, results: npt.NDArray[np.float_], image_tag: str = "") -> None:
+    def plot(self, results: npt.NDArray[np.float64], image_tag: str = "") -> None:
         mean_makespan = np.mean(results[:, :, 1], axis=1)
         max_makespan = np.max(results[:, :, 1], axis=1)
         logger.debug(f"Mean makespan over test instances : {mean_makespan}")
