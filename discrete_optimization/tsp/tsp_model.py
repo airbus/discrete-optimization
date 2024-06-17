@@ -398,7 +398,7 @@ def compute_length_np(
     np_points: np.ndarray,
     node_count: int,
     length_permutation: int,
-) -> Tuple[npt.NDArray[np.float_], float]:
+) -> Tuple[npt.NDArray[np.float64], float]:
     obj = np.sqrt(
         (np_points[start_index, 0] - np_points[solution[0], 0]) ** 2
         + (np_points[start_index, 1] - np_points[solution[0], 1]) ** 2
@@ -456,7 +456,7 @@ def build_evaluate_function(
 
 def build_evaluate_function_np(
     tsp_model: TSPModel,
-) -> Callable[[List[int]], Tuple[npt.NDArray[np.float_], float]]:
+) -> Callable[[List[int]], Tuple[npt.NDArray[np.float64], float]]:
     return partial(
         compute_length_np,
         start_index=tsp_model.start_index,

@@ -487,9 +487,9 @@ def max_time(problem: GPDP) -> float:
     )
 
 
-def build_matrix_distance(problem: GPDP) -> npt.NDArray[np.float_]:
+def build_matrix_distance(problem: GPDP) -> npt.NDArray[np.float64]:
     matrix_distance = 100000 * np.ones(
-        (len(problem.all_nodes_dict), len(problem.all_nodes_dict)), dtype=np.float_
+        (len(problem.all_nodes_dict), len(problem.all_nodes_dict)), dtype=np.float64
     )
     for j in problem.distance_delta:
         for k in problem.distance_delta[j]:
@@ -499,9 +499,9 @@ def build_matrix_distance(problem: GPDP) -> npt.NDArray[np.float_]:
     return matrix_distance
 
 
-def build_matrix_time(problem: GPDP) -> npt.NDArray[np.float_]:
+def build_matrix_time(problem: GPDP) -> npt.NDArray[np.float64]:
     matrix_time = 10000 * np.ones(
-        (len(problem.all_nodes_dict), len(problem.all_nodes_dict)), dtype=np.float_
+        (len(problem.all_nodes_dict), len(problem.all_nodes_dict)), dtype=np.float64
     )
     for j in problem.time_delta:
         for k in problem.time_delta[j]:
