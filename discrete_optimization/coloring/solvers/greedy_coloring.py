@@ -116,7 +116,4 @@ class GreedyColoring(SolverColoring):
         solution = solution.to_reformated_solution()
         fit = self.aggreg_from_sol(solution)
         logger.debug(f"Solution found : {solution, fit}")
-        return ResultStorage(
-            mode_optim=self.params_objective_function.sense_function,
-            list_solution_fits=[(solution, fit)],
-        )
+        return self.create_result_storage([(solution, fit)])
