@@ -244,6 +244,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
         CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
         # TODO rajouter initial_point et initial_bound dans les hyperparams ?
+        # TODO add mixer_operator comme hyperparam
     ]
 
     def __init__(
@@ -330,7 +331,7 @@ class QiskitVQESolver(QiskitSolver):
         IntegerHyperparameter(
             name="nb_shots", low=10000, high=100000, step=10000, default=10000
         ),
-        IntegerHyperparameter(name="maxiter", low=100, high=1000, step=50, default=300),
+        IntegerHyperparameter(name="maxiter", low=100, high=2000, step=50, default=300),
         FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
         CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
         # TODO rajouter initial_point et initial_bound dans les hyperparams ?

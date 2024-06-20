@@ -92,15 +92,16 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
         # si une couleur j est attribué à un noeud, la contrainte C_j doit valoir 1
         for i in range(0, self.problem.number_of_nodes):
             for j in range(0, self.nb_max_color):
-                # quadratic[var_names[(i, j)], var_names[(i, j)]] = p
+                quadratic[var_names[(i, j)], var_names[(i, j)]] = p
                 quadratic[var_names[(i, j)], var_names[j]] = -p
 
         # chaque noeud doit avoir une unique couleur
         for i in range(0, self.problem.number_of_nodes):
             for j in range(0, self.nb_max_color):
-                # quadratic[var_names[(i, j)], var_names[(i, j)]] = -p
+                quadratic[var_names[(i, j)], var_names[(i, j)]] += -p
                 for k in range(j + 1, self.nb_max_color):
                     quadratic[var_names[(i, j)], var_names[(i, k)]] = 2 * p
+            constant += p
 
         # deux noeuds adjacents ne peuvent avoir la même couleur
         for edge in self.problem.graph.graph_nx.edges():
@@ -152,8 +153,8 @@ class QAOAColoringSolver_MinimizeNbColor(SolverColoring, QiskitQAOASolver):
     def __init__(
         self,
         problem: ColoringProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         nb_max_color=None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(
@@ -171,8 +172,8 @@ class VQEColoringSolver_MinimizeNbColor(SolverColoring, QiskitVQESolver):
     def __init__(
         self,
         problem: ColoringProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         nb_max_color=None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(
@@ -273,8 +274,8 @@ class QAOAColoringSolver_FeasibleNbColor(SolverColoring, QiskitQAOASolver):
     def __init__(
         self,
         problem: ColoringProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         nb_color=None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(
@@ -292,8 +293,8 @@ class VQEColoringSolver_FeasibleNbColor(SolverColoring, QiskitVQESolver):
     def __init__(
         self,
         problem: ColoringProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
         nb_color=None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(
