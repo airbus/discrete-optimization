@@ -94,8 +94,12 @@ class IntegerHyperparameter(Hyperparameter):
     If None, the hyperparameter value has no upper bound.
 
     """
+
     step: int = 1
     """step to discretize."""
+
+    log: bool = False
+    """Whether to sample the value in a logarithmic scale."""
 
     default: Optional[int] = None
     """Default value for the hyperparameter.
@@ -129,6 +133,7 @@ class IntegerHyperparameter(Hyperparameter):
         low: Optional[int] = None,
         high: Optional[int] = None,
         step: Optional[int] = None,
+        log: Optional[bool] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Any:
@@ -139,6 +144,7 @@ class IntegerHyperparameter(Hyperparameter):
             low: can be used to restrict lower bound
             high: can be used to restrict upper bound
             step: can be used to discretize by a given step
+            log: whether to sample the value in a logarithmic scale
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_int()`
@@ -152,7 +158,9 @@ class IntegerHyperparameter(Hyperparameter):
             high = self.high
         if step is None:
             step = self.step
-        return trial.suggest_int(name=prefix + self.name, low=low, high=high, step=step, **kwargs)  # type: ignore
+        if log is None:
+            log = self.log
+        return trial.suggest_int(name=prefix + self.name, low=low, high=high, step=step, log=log, **kwargs)  # type: ignore
 
 
 @dataclass
@@ -172,6 +180,9 @@ class FloatHyperparameter(Hyperparameter):
     If None, the hyperparameter value has no upper bound.
 
     """
+
+    log: bool = False
+    """Whether to sample the value in a logarithmic scale."""
 
     default: Optional[float] = None
     """Default value for the hyperparameter.
@@ -204,6 +215,7 @@ class FloatHyperparameter(Hyperparameter):
         trial: optuna.trial.Trial,
         low: Optional[float] = None,
         high: Optional[float] = None,
+        log: Optional[bool] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Any:
@@ -213,6 +225,7 @@ class FloatHyperparameter(Hyperparameter):
             trial: optuna Trial used for choosing the hyperparameter value
             low: can be used to restrict lower bound
             high: can be used to restrict upper bound
+            log: whether to sample the value in a logarithmic scale
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_float()`
@@ -224,8 +237,10 @@ class FloatHyperparameter(Hyperparameter):
             low = self.low
         if high is None:
             high = self.high
+        if log is None:
+            log = self.log
         return trial.suggest_float(
-            name=prefix + self.name, low=low, high=high, **kwargs
+            name=prefix + self.name, low=low, high=high, log=log, **kwargs
         )
 
 
