@@ -181,7 +181,9 @@ class Hyperparametrizable:
 
 
         Returns:
-            mapping between the hyperparameter name and its suggested value
+            mapping between the hyperparameter name and its suggested value.
+            If the hyperparameter has an attribute `name_in_kwargs`, this is used as the key in the mapping
+            instead of the actual hyperparameter name.
 
         kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_with_optuna(name=some_name)
 
@@ -268,8 +270,12 @@ class Hyperparametrizable:
             # NB: we filter the name only now in order to have the skip decision taken before
             # as it could have consequences on hyperparameters further in the dependency graph
             if name in names:
+                if hyperparameter.name_in_kwargs is None:
+                    key = name
+                else:
+                    key = hyperparameter.name_in_kwargs
                 suggested_and_fixed_hyperparameters[
-                    name
+                    key
                 ] = cls.suggest_hyperparameter_with_optuna(
                     trial=trial, name=name, **kwargs_for_optuna_suggestion
                 )

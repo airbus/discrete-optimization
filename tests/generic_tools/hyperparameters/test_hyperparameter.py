@@ -114,6 +114,37 @@ class DummySolverWithDependencies(SolverDO):
         return ResultStorage([])
 
 
+class DummySolverWithNameInKwargs(SolverDO):
+    hyperparameters = [
+        IntegerHyperparameter("nb", low=0, high=2, default=1),
+        FloatHyperparameter(
+            "coeff_greedy",
+            name_in_kwargs="coeff",
+            low=2.0,
+            high=3.0,
+            default=2.0,
+            depends_on=("method", [Method.GREEDY]),
+        ),
+        FloatHyperparameter(
+            "coeff_dummy",
+            name_in_kwargs="coeff",
+            low=-1.0,
+            high=1.0,
+            default=1.0,
+            depends_on=("method", [Method.DUMMY]),
+        ),
+        CategoricalHyperparameter("use_it", choices=[True, False], default=True),
+        EnumHyperparameter(
+            "method", enum=Method, default=Method.GREEDY, depends_on=("use_it", [True])
+        ),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
 class DummySolver2(SolverDO):
     hyperparameters = [
         CategoricalHyperparameter("nb", choices=[0, 1, 2, 3], default=1),
@@ -375,6 +406,39 @@ def test_suggest_with_optuna_with_dependencies():
     study.optimize(objective)
 
     assert len(study.trials) == 2 * (1 + (1 + 5))
+
+
+def test_suggest_with_optuna_with_name_in_kwargs():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithNameInKwargs.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "coeff_greedy": dict(step=0.5),
+                    "coeff_dummy": dict(step=1.0),
+                    "nb": dict(high=1),
+                },
+            )
+        )
+        if suggested_hyperparameters_kwargs["use_it"]:
+            assert len(suggested_hyperparameters_kwargs) == 4
+            assert "coeff" in suggested_hyperparameters_kwargs
+            if suggested_hyperparameters_kwargs["method"] == Method.GREEDY:
+                assert suggested_hyperparameters_kwargs["coeff"] >= 2.0
+            else:
+                assert suggested_hyperparameters_kwargs["coeff"] <= 1.0
+        else:
+            assert len(suggested_hyperparameters_kwargs) == 2
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * (1 + (3 + 3))
 
 
 def test_suggest_with_optuna_with_dependencies_and_fixed_hyperparameters():

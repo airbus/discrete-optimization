@@ -60,6 +60,13 @@ class Hyperparameter:
 
     """
 
+    name_in_kwargs: Optional[str] = None
+    """Corresponding key in kwargs when suggested via `solver.suggest_hyperparameters_with_optuna().`
+
+    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types
+    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.
+    """
+
     def suggest_with_optuna(
         self, trial: optuna.trial.Trial, prefix: str = "", **kwargs: Any
     ) -> Any:
@@ -125,6 +132,13 @@ class IntegerHyperparameter(Hyperparameter):
         - For now, only simple dependency on a single hyperparameter, and a "set" of values is possible.
           The api could evolve to emcompass dependency on several other hyperparameters and more complex condition.
 
+    """
+
+    name_in_kwargs: Optional[str] = None
+    """Corresponding key in kwargs when suggested via `solver.suggest_hyperparameters_with_optuna().`
+
+    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types
+    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.
     """
 
     def suggest_with_optuna(
@@ -213,6 +227,13 @@ class FloatHyperparameter(Hyperparameter):
 
     """
 
+    name_in_kwargs: Optional[str] = None
+    """Corresponding key in kwargs when suggested via `solver.suggest_hyperparameters_with_optuna().`
+
+    Default to hyperparemeter name. Can be used to have several hyperparameter with different limits/types
+    depending on other hyperparameters value but supposed to share the same name in kwargs for solver initialization.
+    """
+
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
@@ -270,8 +291,14 @@ class CategoricalHyperparameter(Hyperparameter):
         choices: Union[Iterable[LabelType], MappingType[LabelType, Any]],
         default: Optional[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        name_in_kwargs: Optional[str] = None,
     ):
-        super().__init__(name=name, default=default, depends_on=depends_on)
+        super().__init__(
+            name=name,
+            default=default,
+            depends_on=depends_on,
+            name_in_kwargs=name_in_kwargs,
+        )
         if isinstance(choices, Mapping):
             self.choices = choices
         else:
@@ -324,12 +351,19 @@ class EnumHyperparameter(CategoricalHyperparameter):
         choices: Optional[Union[Iterable[Enum], Dict[str, Enum]]] = None,
         default: Optional[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        name_in_kwargs: Optional[str] = None,
     ):
         if choices is None:
             choices = {c.name: c for c in enum}
         elif not isinstance(choices, Mapping):
             choices = {c.name: c for c in choices}
-        super().__init__(name, choices=choices, default=default, depends_on=depends_on)
+        super().__init__(
+            name,
+            choices=choices,
+            default=default,
+            depends_on=depends_on,
+            name_in_kwargs=name_in_kwargs,
+        )
         self.enum = enum
 
     def suggest_with_optuna(
@@ -390,6 +424,7 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
         ],
         default: Optional[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        name_in_kwargs: Optional[str] = None,
         include_module_in_labels: bool = False,
     ):
         if not isinstance(choices, Mapping):
@@ -398,7 +433,13 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
             else:
                 choices = {c.__name__: c for c in choices}
 
-        super().__init__(name, choices=choices, default=default, depends_on=depends_on)
+        super().__init__(
+            name,
+            choices=choices,
+            default=default,
+            depends_on=depends_on,
+            name_in_kwargs=name_in_kwargs,
+        )
         self.include_module_in_labels = include_module_in_labels
 
     def suggest_with_optuna(
@@ -458,8 +499,14 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
         subbrick_cls: Optional[Type[Hyperparametrizable]] = None,
         default: Optional[Dict[str, Any]] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        name_in_kwargs: Optional[str] = None,
     ):
-        super().__init__(name=name, default=default, depends_on=depends_on)
+        super().__init__(
+            name=name,
+            default=default,
+            depends_on=depends_on,
+            name_in_kwargs=name_in_kwargs,
+        )
         self.subbrick_cls = subbrick_cls
         self.subbrick_hyperparameter = subbrick_hyperparameter
         if subbrick_cls is None and subbrick_hyperparameter is None:
