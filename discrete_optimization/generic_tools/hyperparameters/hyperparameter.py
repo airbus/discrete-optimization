@@ -181,6 +181,9 @@ class FloatHyperparameter(Hyperparameter):
 
     """
 
+    step: Optional[float] = None
+    """step to discretize if not None."""
+
     log: bool = False
     """Whether to sample the value in a logarithmic scale."""
 
@@ -226,6 +229,9 @@ class FloatHyperparameter(Hyperparameter):
             low: can be used to restrict lower bound
             high: can be used to restrict upper bound
             log: whether to sample the value in a logarithmic scale
+            step: step of discretization if specified.
+                If explicitely set to None, no discretization performed.
+                By default, use self.step (and thus default discretization only if self.step not None)
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_float()`
@@ -239,8 +245,12 @@ class FloatHyperparameter(Hyperparameter):
             high = self.high
         if log is None:
             log = self.log
+        if "step" in kwargs:
+            step = kwargs.pop("step")
+        else:
+            step = self.step
         return trial.suggest_float(
-            name=prefix + self.name, low=low, high=high, log=log, **kwargs
+            name=prefix + self.name, low=low, high=high, log=log, step=step, **kwargs  # type: ignore
         )
 
 
