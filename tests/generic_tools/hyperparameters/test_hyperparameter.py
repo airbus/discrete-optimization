@@ -44,6 +44,22 @@ class DummySolver(SolverDO):
         return ResultStorage([])
 
 
+class DummySolverWithFloatSuggestingBound(SolverDO):
+    hyperparameters = [
+        FloatHyperparameter("coeff_no", low=0.0, high=1.0),
+        FloatHyperparameter("coeff_low", low=0.0, high=1.0, suggest_low=True),
+        FloatHyperparameter("coeff_high", low=0.0, high=1.0, suggest_high=True),
+        FloatHyperparameter(
+            "coeff_both", low=0.0, high=1.0, suggest_low=True, suggest_high=True
+        ),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return ResultStorage([])
+
+
 def bee1_impl(x):
     return x + 1
 
@@ -284,6 +300,37 @@ def test_suggest_with_optuna():
     study.optimize(objective)
 
     assert len(study.trials) == 2 * 2 * 5 * 1
+
+
+def test_suggest_with_optuna_with_float_bound_suggestion():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithFloatSuggestingBound.suggest_hyperparameters_with_optuna(
+                trial=trial
+            )
+        )
+        assert 0.0 < suggested_hyperparameters_kwargs["coeff_no"]
+        assert 0.0 < suggested_hyperparameters_kwargs["coeff_high"]
+        assert 1.0 > suggested_hyperparameters_kwargs["coeff_no"]
+        assert 1.0 > suggested_hyperparameters_kwargs["coeff_low"]
+
+        return 0.0
+
+    study = optuna.create_study(sampler=optuna.samplers.TPESampler(seed=42))
+    study.optimize(objective, n_trials=10)
+
+    coeff_high_values = [trial.params["coeff_high"] for trial in study.trials]
+    coeff_low_values = [trial.params["coeff_low"] for trial in study.trials]
+    coeff_both_values = [trial.params["coeff_both"] for trial in study.trials]
+    assert 1.0 in coeff_high_values
+    assert 1.0 in coeff_both_values
+    assert 0.0 in coeff_low_values
+    assert 0.0 in coeff_both_values
+    assert len([v for v in coeff_high_values if v == 1.0]) < len(coeff_high_values)
+    assert len([v for v in coeff_both_values if v == 1.0]) < len(coeff_both_values)
+    assert len([v for v in coeff_both_values if v == 0.0]) < len(coeff_both_values)
+    assert len([v for v in coeff_low_values if v == 0.0]) < len(coeff_low_values)
 
 
 def test_suggest_with_optuna_default_float_step():
