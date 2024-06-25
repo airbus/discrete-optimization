@@ -195,6 +195,30 @@ class FloatHyperparameter(Hyperparameter):
 
     """
 
+    suggest_low: bool = False
+    """Whether to potentially suggest the lower bound.
+
+    If step is None, optuna will suggest a float inside the range (low, high),
+    but will never suggest exactly the lower bound by default.
+    To force the behaviour, we will introduce a derived categorical hyperparameter
+    whose name will be the hyperparameter name suffixed with ".suggest_bound".
+
+    If step is not None, this attribute should probably be let to False.
+
+    """
+
+    suggest_high: bool = False
+    """Whether to potentially suggest the upper bound.
+
+    If step is None, optuna will suggest a float inside the range (low, high),
+    but will never suggest exactly the upper bound by default.
+    To force the behaviour, we will introduce a derived categorical hyperparameter
+    whose name will be the hyperparameter name suffixed with ".suggest_bound".
+
+    If step is not None, this attribute should probably be let to False.
+
+    """
+
     step: Optional[float] = None
     """step to discretize if not None."""
 
@@ -240,6 +264,8 @@ class FloatHyperparameter(Hyperparameter):
         low: Optional[float] = None,
         high: Optional[float] = None,
         log: Optional[bool] = None,
+        suggest_low: Optional[bool] = None,
+        suggest_high: Optional[bool] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Any:
@@ -253,6 +279,8 @@ class FloatHyperparameter(Hyperparameter):
             step: step of discretization if specified.
                 If explicitely set to None, no discretization performed.
                 By default, use self.step (and thus default discretization only if self.step not None)
+            suggest_low: if set, will override `suggest_low` attribute. See its documentation.
+            suggest_high: if set, will override `suggest_high` attribute. See its documentation.
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_float()`
@@ -270,6 +298,25 @@ class FloatHyperparameter(Hyperparameter):
             step = kwargs.pop("step")
         else:
             step = self.step
+        if suggest_low is None:
+            suggest_low = self.suggest_low
+        if suggest_high is None:
+            suggest_high = self.suggest_high
+
+        if suggest_low or suggest_high:
+            choices = [""]
+            if suggest_low:
+                choices.append("low")
+            if suggest_high:
+                choices.append("high")
+            suggest_bound = trial.suggest_categorical(
+                name=prefix + self.name + ".suggest_bound", choices=choices
+            )
+            if suggest_bound == "low":
+                high = low  # restrict range to a singleton {low}
+            elif suggest_bound == "high":
+                low = high  # restrict range to a singleton {high}
+
         return trial.suggest_float(
             name=prefix + self.name, low=low, high=high, log=log, step=step, **kwargs  # type: ignore
         )
