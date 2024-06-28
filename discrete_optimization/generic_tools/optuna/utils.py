@@ -18,6 +18,9 @@ from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogge
 from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    Hyperparameter,
+)
 from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
     TimedPercentilePruner,
 )
@@ -42,6 +45,9 @@ def generic_optuna_experiment_monoproblem(
     kwargs_fixed_by_solver: Optional[Dict[Type[SolverDO], Dict[str, Any]]] = None,
     suggest_optuna_kwargs_by_name_by_solver: Optional[
         Dict[Type[SolverDO], Dict[str, Dict[str, Any]]]
+    ] = None,
+    additional_hyperparameters_by_solver: Optional[
+        Dict[Type[SolverDO], List[Hyperparameter]]
     ] = None,
     n_trials: int = 150,
     check_satisfy: bool = True,
@@ -80,6 +86,7 @@ def generic_optuna_experiment_monoproblem(
             Can also be other parameters needed by solvers' __init__(), init_model(), and solve() methods
         suggest_optuna_kwargs_by_name_by_solver: kwargs_by_name passed to solvers' suggest_with_optuna().
             Useful to restrict or specify choices, step, high, ...
+        additional_hyperparameters_by_solver: additional user-defined hyperparameters by solver, to be suggested by optuna
         n_trials: Number of trials to be run in the optuna study
         check_satisfy: Decide wether checking if solution found satisfies the problem. If not satisfying,
             we consider the trial as failed and prune it without reporting the value.
@@ -115,6 +122,8 @@ def generic_optuna_experiment_monoproblem(
         kwargs_fixed_by_solver = defaultdict(dict)
     if suggest_optuna_kwargs_by_name_by_solver is None:
         suggest_optuna_kwargs_by_name_by_solver = defaultdict(dict)
+    if additional_hyperparameters_by_solver is None:
+        additional_hyperparameters_by_solver = defaultdict(list)
     if sampler is None:
         sampler = optuna.samplers.TPESampler(seed=seed)
     if pruner is None:
@@ -147,6 +156,15 @@ def generic_optuna_experiment_monoproblem(
 
     # sense of optimization
     direction = problem.get_optuna_study_direction()
+
+    # add new user-defined hyperparameters to the solvers
+    for (
+        solver_cls,
+        additional_hyperparameters,
+    ) in additional_hyperparameters_by_solver.items():
+        solver_cls.hyperparameters = (
+            list(solver_cls.hyperparameters) + additional_hyperparameters
+        )
 
     # objective definition
     def objective(trial: Trial):
@@ -287,6 +305,9 @@ def generic_optuna_experiment_multiproblem(
     suggest_optuna_kwargs_by_name_by_solver: Optional[
         Dict[Type[SolverDO], Dict[str, Dict[str, Any]]]
     ] = None,
+    additional_hyperparameters_by_solver: Optional[
+        Dict[Type[SolverDO], List[Hyperparameter]]
+    ] = None,
     n_trials: int = 150,
     check_satisfy: bool = True,
     study_basename: str = "study",
@@ -322,6 +343,7 @@ def generic_optuna_experiment_multiproblem(
             Can also be other parameters needed by solvers' __init__(), init_model(), and solve() methods
         suggest_optuna_kwargs_by_name_by_solver: kwargs_by_name passed to solvers' suggest_with_optuna().
             Useful to restrict or specify choices, step, high, ...
+        additional_hyperparameters_by_solver: additional user-defined hyperparameters by solver, to be suggested by optuna
         n_trials: Number of trials to be run in the optuna study
         check_satisfy: Decide wether checking if solution found satisfies the problem. If not satisfying,
             we consider the trial as failed and prune it without reporting the value.
@@ -353,6 +375,8 @@ def generic_optuna_experiment_multiproblem(
         kwargs_fixed_by_solver = defaultdict(dict)
     if suggest_optuna_kwargs_by_name_by_solver is None:
         suggest_optuna_kwargs_by_name_by_solver = defaultdict(dict)
+    if additional_hyperparameters_by_solver is None:
+        additional_hyperparameters_by_solver = defaultdict(list)
     if sampler is None:
         sampler = optuna.samplers.TPESampler(seed=seed)
     if pruner is None:
@@ -386,6 +410,15 @@ def generic_optuna_experiment_multiproblem(
 
     # sense of optimization
     direction = problems[0].get_optuna_study_direction()
+
+    # add new user-defined hyperparameters to the solvers
+    for (
+        solver_cls,
+        additional_hyperparameters,
+    ) in additional_hyperparameters_by_solver.items():
+        solver_cls.hyperparameters = (
+            list(solver_cls.hyperparameters) + additional_hyperparameters
+        )
 
     # objective definition
     def objective(trial: Trial):
