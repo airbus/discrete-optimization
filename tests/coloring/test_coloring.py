@@ -218,6 +218,37 @@ def test_cpsat_solver(modeling):
     assert color_problem.satisfy(solution)
 
 
+def test_cpsat_solver_finetuned():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = ColoringCPSatSolver(color_problem)
+    solver.init_model(nb_colors=20)
+    p = ParametersCP.default()
+
+    # must use existing attribute name for ortools CPSolver
+    with pytest.raises(AttributeError):
+        result_store = solver.solve(
+            parameters_cp=p, ortools_cpsat_solver_kwargs=dict(toto=4)
+        )
+    # must use correct value
+    with pytest.raises(ValueError):
+        result_store = solver.solve(
+            parameters_cp=p, ortools_cpsat_solver_kwargs=dict(search_branching=-4)
+        )
+    # works
+    from ortools.sat.sat_parameters_pb2 import SatParameters
+
+    result_store = solver.solve(
+        parameters_cp=p,
+        ortools_cpsat_solver_kwargs=dict(
+            search_branching=SatParameters.PSEUDO_COST_SEARCH
+        ),
+    )
+
+    solution, fit = result_store.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
+
+
 def test_asp_solver():
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     color_problem = parse_file(small_example)
