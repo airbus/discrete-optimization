@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ortools.sat.python.cp_model import (
     FEASIBLE,
@@ -59,6 +59,7 @@ class OrtoolsCPSatSolver(CPSolver):
         self,
         callbacks: Optional[List[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
+        ortools_cpsat_solver_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with a CPSat solver drom ortools library.
@@ -67,6 +68,8 @@ class OrtoolsCPSatSolver(CPSolver):
             callbacks: list of callbacks used to hook into the various stage of the solve
             parameters_cp: parameters specific to cp solvers.
                 We use here only `parameters_cp.time_limit` and `parameters_cp.nb_process`.
+            ortools_cpsat_solver_kwargs: used to customize the underlying ortools solver.
+                Each key/value will update the corresponding attribute from the ortools.sat.python.cp_model.CPSolver
             **kwargs: keyword arguments passed to `self.init_model()`
 
         Returns:
@@ -88,6 +91,10 @@ class OrtoolsCPSatSolver(CPSolver):
         solver = CpSolver()
         solver.parameters.max_time_in_seconds = parameters_cp.time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
+        if ortools_cpsat_solver_kwargs is not None:
+            # customize solver
+            for k, v in ortools_cpsat_solver_kwargs.items():
+                setattr(solver.parameters, k, v)
         ortools_callback = OrtoolsCallback(do_solver=self, callback=callbacks_list)
         status = solver.Solve(self.cp_model, ortools_callback)
         self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
