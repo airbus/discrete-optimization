@@ -213,6 +213,9 @@ class ObjectiveRegister:
         self.objective_handling = objective_handling
         self.dict_objective_to_doc = dict_objective_to_doc
 
+    def get_objective_names(self) -> List[str]:
+        return sorted(self.dict_objective_to_doc)
+
     def get_list_objective_and_default_weight(self) -> Tuple[List[str], List[float]]:
         """Flatten the list of kpi names and default weight.
 
@@ -220,7 +223,7 @@ class ObjectiveRegister:
         """
         d = [
             (k, self.dict_objective_to_doc[k].default_weight)
-            for k in self.dict_objective_to_doc
+            for k in self.get_objective_names()
         ]
         return [s[0] for s in d], [s[1] for s in d]
 
@@ -313,8 +316,7 @@ class Problem:
         Returns (TupleFitness): a flattened tuple fitness object representing the multi-objective criteria.
 
         """
-        obj_register = self.get_objective_register()
-        keys = sorted(obj_register.dict_objective_to_doc.keys())
+        keys = self.get_objective_names()
         dict_values = self.evaluate(variable)
         return TupleFitness(np.array([dict_values[k] for k in keys]), len(keys))
 
@@ -331,7 +333,7 @@ class Problem:
 
         """
         # output of evaluate(solution) typically
-        keys = sorted(self.get_objective_register().dict_objective_to_doc.keys())
+        keys = self.get_objective_names()
         return TupleFitness(np.array([dict_values[k] for k in keys]), len(keys))
 
     @abstractmethod
@@ -379,6 +381,9 @@ class Problem:
         else:
             direction = "maximize"
         return direction
+
+    def get_objective_names(self) -> List[str]:
+        return self.get_objective_register().get_objective_names()
 
 
 class BaseMethodAggregating(Enum):

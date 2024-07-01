@@ -6,7 +6,7 @@
 from __future__ import annotations  # see annotations as str
 
 from abc import abstractmethod
-from typing import Any, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -17,6 +17,9 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
+)
+from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
+    TupleFitness,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -99,3 +102,101 @@ class SolverDO(Hyperparametrizable):
 
         """
         return None
+
+    def get_model_objectives_available(self) -> List[str]:
+        """List objectives available for lexico optimization
+
+        It corresponds to the labels accepted for obj argument for
+        - `set_model_objective()`
+        - `add_model_constraint()`
+        - `get_model_objective_value()`
+
+        Default to `self.problem.get_objective_names()`.
+
+        Returns:
+
+        """
+        return self.problem.get_objective_names()
+
+    def set_model_objective(self, obj: str) -> None:
+        """Update intern model objective.
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of `self.get_model_objectives_available()`.
+
+        Returns:
+
+        """
+        ...
+
+    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+        """Get best intern model objective value found by last call to `solve()`.
+
+        The default implementation consists in using the fit of the last solution in result_storage.
+        This assumes:
+        - that the last solution is the best one for the objective considered
+        - that no aggregation was performed but rather that the fitness is a TupleFitness
+          with values in the same order as `self.problem.get_objective_names()`.
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of `self.get_model_objectives_available()`.
+            res: result storage returned by last call to solve().
+
+        Returns:
+
+        """
+        _, fit = res.get_best_solution_fit()
+        if not isinstance(fit, TupleFitness):
+            raise RuntimeError(
+                "The fitness should be a TupleFitness of the same size as `self.problem.get_objective_names()`."
+            )
+        objectives = self.problem.get_objective_names()
+        idx = objectives.index(obj)
+        return float(fit.vector_fitness[idx])
+
+    def add_model_constraint(self, obj: str, value: float) -> Iterable[Any]:
+        """Add a constraint on a computed sub-objective
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of `self.get_model_objectives_available()`.
+            value: the limiting value.
+                If the optimization direction is maximizing, this is a lower bound,
+                else this is an upper bound.
+
+        Returns:
+            the created constraints.
+
+        """
+        ...
+
+    def remove_model_constraint(self, constraints: Iterable[Any]) -> None:
+        """Remove the intern model constraints.
+
+        Args:
+            constraints: constraints created with `add_model_constraint()`
+
+        Returns:
+
+        """
+        ...
+
+    @staticmethod
+    def implements_lexico_api() -> bool:
+        """Tell whether this solver is implementing the api for lexicographic optimization.
+
+        Should return True only if
+
+        - `set_model_objective()`
+        - `add_model_constraint()`
+        - `get_model_objective_value()`
+
+        have been really implemented, i.e.
+        - calling `set_model_objective()` and `add_model_constraint()`
+          should actually change the next call to `solve()`,
+        - `get_model_objective_value()` should correspond to the intern model objective
+
+        """
+        return False
