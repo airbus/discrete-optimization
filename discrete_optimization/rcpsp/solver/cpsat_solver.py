@@ -5,14 +5,17 @@
 #  Note : Model could most likely be improved with
 #  https://github.com/google/or-tools/blob/stable/examples/python/rcpsp_sat.py
 import logging
-from typing import Any, Dict, Hashable, List, Optional, Set, Tuple
+from typing import Any, Dict, Hashable, Iterable, List, Optional, Set, Tuple
 
 from ortools.sat.python.cp_model import (
+    Constraint,
     CpModel,
     CpSolver,
     CpSolverSolutionCallback,
     IntervalVar,
     IntVar,
+    LinearExpr,
+    ObjLinearExprT,
 )
 
 from discrete_optimization.generic_tools.cp_tools import StatusSolver
@@ -21,6 +24,9 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel, RCPSPSolution
 from discrete_optimization.rcpsp.rcpsp_utils import (
     create_fake_tasks,
@@ -439,6 +445,69 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
             "is_used_resource": is_used_resource,
         }
 
+    def _intern_makespan(self) -> IntVar:
+        return self.variables["start"][self.problem.sink_task]
+
+    def _intern_used_resource(self) -> LinearExpr:
+        return sum(self.variables["is_used_resource"].values())
+
+    def _intern_objective(self, obj: str) -> ObjLinearExprT:
+        intern_objective_mapping = {
+            "makespan": self._intern_makespan,
+            "used_resource": self._intern_used_resource,
+        }
+        if obj in intern_objective_mapping:
+            return intern_objective_mapping[obj]()
+        else:
+            raise ValueError(f"Unknown objective '{obj}'.")
+
+    def set_model_objective(self, obj: str) -> None:
+        """Update intern model objective.
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of "makespan" or "used_resource".
+
+        Returns:
+
+        """
+        self.cp_model.Minimize(self._intern_objective(obj))
+
+    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+        """
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of `self.problem.get_objective_names()`.
+            value: the limiting value.
+                If the optimization direction is maximizing, this is a lower bound,
+                else this is an upper bound.
+
+        Returns:
+            the created constraints.
+
+        """
+        return [self.cp_model.Add(self._intern_objective(obj) <= int(value))]
+
+    @staticmethod
+    def implements_lexico_api() -> bool:
+        return True
+
+    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> RCPSPSolution:
+        sol = super().retrieve_solution(cpsolvercb)
+        sol._intern_objectives = {
+            obj: cpsolvercb.value(self._intern_objective(obj))
+            for obj in self.get_model_objectives_available()
+        }
+        return sol
+
+    def get_model_objectives_available(self) -> List[str]:
+        return ["makespan", "used_resource"]
+
+    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+        values = [sol._intern_objectives[obj] for sol, fit in res.list_solution_fits]
+        return min(values)
+
 
 class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
     """
@@ -603,3 +672,66 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
             "is_present": is_present_var,
             "resource_capacity": resource_capacity_var,
         }
+
+    def _intern_makespan(self) -> IntVar:
+        return self.variables["start"][self.problem.sink_task]
+
+    def _intern_used_resource(self) -> LinearExpr:
+        return sum(self.variables["resource_capacity"].values())
+
+    def _intern_objective(self, obj: str) -> ObjLinearExprT:
+        intern_objective_mapping = {
+            "makespan": self._intern_makespan,
+            "used_resource": self._intern_used_resource,
+        }
+        if obj in intern_objective_mapping:
+            return intern_objective_mapping[obj]()
+        else:
+            raise ValueError(f"Unknown objective '{obj}'.")
+
+    def set_model_objective(self, obj: str) -> None:
+        """Update intern model objective.
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of "makespan" or "used_resource".
+
+        Returns:
+
+        """
+        self.cp_model.Minimize(self._intern_objective(obj))
+
+    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+        """
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of "makespan" or "used_resource".
+            value: the limiting value.
+                If the optimization direction is maximizing, this is a lower bound,
+                else this is an upper bound.
+
+        Returns:
+            the created constraints.
+
+        """
+        return [self.cp_model.Add(self._intern_objective(obj) <= int(value))]
+
+    @staticmethod
+    def implements_lexico_api() -> bool:
+        return True
+
+    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> RCPSPSolution:
+        sol = super().retrieve_solution(cpsolvercb)
+        sol._intern_objectives = {
+            obj: cpsolvercb.value(self._intern_objective(obj))
+            for obj in self.get_model_objectives_available()
+        }
+        return sol
+
+    def get_model_objectives_available(self) -> List[str]:
+        return ["makespan", "used_resource"]
+
+    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+        values = [sol._intern_objectives[obj] for sol, fit in res.list_solution_fits]
+        return min(values)

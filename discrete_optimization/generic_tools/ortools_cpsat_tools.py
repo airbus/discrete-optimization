@@ -3,13 +3,14 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from ortools.sat.python.cp_model import (
     FEASIBLE,
     INFEASIBLE,
     OPTIMAL,
     UNKNOWN,
+    Constraint,
     CpModel,
     CpSolver,
     CpSolverSolutionCallback,
@@ -106,6 +107,20 @@ class OrtoolsCPSatSolver(CPSolver):
         res = ortools_callback.res
         callbacks_list.on_solve_end(res=res, solver=self)
         return res
+
+    def remove_model_constraint(self, constraints: Iterable[Any]) -> None:
+        """Remove the intern model constraints.
+
+        Args:
+            constraints: constraints created with `add_model_constraint()`
+
+        Returns:
+
+        """
+        for cstr in constraints:
+            if not isinstance(cstr, Constraint):
+                raise RuntimeError()
+            cstr.proto.Clear()
 
 
 class OrtoolsCallback(CpSolverSolutionCallback):

@@ -46,6 +46,7 @@ from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import CP_MULTI
 from discrete_optimization.rcpsp.solver.cpsat_solver import (
     CPSatRCPSPSolver,
     CPSatRCPSPSolverCumulativeResource,
+    CPSatRCPSPSolverResource,
 )
 
 
@@ -147,11 +148,27 @@ def test_ortools(model):
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-def test_ortools_resource_optim(model):
+def test_ortools_cumulativeresource_optim(model):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CPSatRCPSPSolverCumulativeResource(problem=rcpsp_problem)
+    parameters_cp = ParametersCP.default()
+    parameters_cp.time_limit = 50
+    result_storage = solver.solve(parameters_cp=parameters_cp)
+    solution, fit = result_storage.get_best_solution_fit()
+    assert rcpsp_problem.satisfy(solution)
+
+
+@pytest.mark.parametrize(
+    "model",
+    ["j301_1.sm", "j1010_1.mm"],
+)
+def test_ortools_resource_optim(model):
+    files_available = get_data_available()
+    file = [f for f in files_available if model in f][0]
+    rcpsp_problem = parse_file(file)
+    solver = CPSatRCPSPSolverResource(problem=rcpsp_problem)
     parameters_cp = ParametersCP.default()
     parameters_cp.time_limit = 50
     result_storage = solver.solve(parameters_cp=parameters_cp)

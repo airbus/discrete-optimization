@@ -2,9 +2,16 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, IntVar
+from ortools.sat.python.cp_model import (
+    Constraint,
+    CpModel,
+    CpSolverSolutionCallback,
+    IntVar,
+    LinearExpr,
+    ObjLinearExprT,
+)
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
@@ -34,25 +41,97 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack):
         variables = [
             model.NewBoolVar(name=f"x_{i}") for i in range(self.problem.nb_items)
         ]
-        model.Add(
-            sum(
-                [
-                    variables[i] * self.problem.list_items[i].weight
-                    for i in range(self.problem.nb_items)
-                ]
-            )
-            <= self.problem.max_capacity
-        )
-        model.Maximize(
-            sum(
-                [
-                    variables[i] * self.problem.list_items[i].value
-                    for i in range(self.problem.nb_items)
-                ]
-            )
-        )
-        self.cp_model = model
         self.variables["taken"] = variables
+        self.cp_model = model
+
+        model.Add(-self._intern_weight() <= self.problem.max_capacity)
+
+        self.set_model_objective("value")
+
+    def _intern_value(self) -> LinearExpr:
+        return sum(
+            [
+                self.variables["taken"][i] * self.problem.list_items[i].value
+                for i in range(self.problem.nb_items)
+            ]
+        )
+
+    def _intern_weight(self) -> LinearExpr:
+        return sum(
+            [
+                -self.variables["taken"][i] * self.problem.list_items[i].weight
+                for i in range(self.problem.nb_items)
+            ]
+        )
+
+    def _intern_heaviest_item(self) -> IntVar:
+        if "heaviest_item" not in self.variables:
+            heaviest_item_var = self.cp_model.new_int_var(
+                name="heaviest_item",
+                lb=0,
+                ub=int(
+                    max(
+                        [
+                            self.problem.list_items[i].weight
+                            for i in range(self.problem.nb_items)
+                        ]
+                    )
+                ),
+            )
+            self.variables["heaviest_item"] = [heaviest_item_var]
+            self.cp_model.add_max_equality(
+                target=heaviest_item_var,
+                exprs=[
+                    self.variables["taken"][i] * self.problem.list_items[i].weight
+                    for i in range(self.problem.nb_items)
+                ],
+            )
+        else:
+            heaviest_item_var = self.variables["heaviest_item"][0]
+        return heaviest_item_var
+
+    def _intern_objective(self, obj: str) -> ObjLinearExprT:
+        intern_objective_mapping = {
+            "value": self._intern_value,
+            "weight": self._intern_weight,
+            "heaviest_item": self._intern_heaviest_item,
+        }
+        if obj in intern_objective_mapping:
+            return intern_objective_mapping[obj]()
+        else:
+            if obj == "weight_violation":
+                raise ValueError(
+                    "weight_violation cannot be used as objective. "
+                    "Indeed, no violation is allowed with this solver."
+                )
+            else:
+                raise ValueError(f"Unknown objective '{obj}'.")
+
+    def set_model_objective(self, obj: str) -> None:
+        self.cp_model.Maximize(self._intern_objective(obj))
+
+    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+        """
+
+        Args:
+            obj: a string representing the desired objective.
+                Should be one of `self.problem.get_objective_names()`.
+            value: the limiting value.
+                If the optimization direction is maximizing, this is a lower bound,
+                else this is an upper bound.
+
+        Returns:
+            the created constraints.
+
+        """
+        return [self.cp_model.Add(self._intern_objective(obj) >= int(value))]
+
+    @staticmethod
+    def implements_lexico_api() -> bool:
+        return True
+
+    def get_model_objectives_available(self) -> List[str]:
+        return ["value", "weight", "heaviest_item"]
 
     def retrieve_solution(
         self, cpsolvercb: CpSolverSolutionCallback
