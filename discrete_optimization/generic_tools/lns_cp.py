@@ -10,9 +10,14 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np
 from minizinc import Instance
+from ortools.sat.python.cp_model import Constraint
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.cp_tools import MinizincCPSolver, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import (
+    CPSolver,
+    MinizincCPSolver,
+    ParametersCP,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
@@ -24,6 +29,7 @@ from discrete_optimization.generic_tools.lns_tools import (
     InitialSolution,
     PostProcessSolution,
 )
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     fitness_class,
@@ -38,46 +44,18 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class MznConstraintHandler(ConstraintHandler):
-    @abstractmethod
-    def adding_constraint_from_results_store(
-        self,
-        solver: MinizincCPSolver,
-        child_instance: Instance,
-        result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
-        **kwargs: Any,
-    ) -> Iterable[Any]:
-        ...
+class BaseLNS_CP(BaseLNS):
+    """Large Neighborhood Search solver using a cp solver at each iteration."""
 
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: SolverDO,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        """Remove previous constraints.
-
-        Nothing to do for minizinc solvers as the constraints were added only to the child instance.
-
-        """
-        pass
-
-
-class LNS_CP(BaseLNS):
-    """Large Neighborhood Search solver using a minzinc cp solver at each iteration."""
-
-    subsolver: MinizincCPSolver
+    subsolver: CPSolver
     """Sub-solver used by this lns solver at each iteration."""
-
-    constraint_handler: MznConstraintHandler
 
     def __init__(
         self,
         problem: Problem,
-        subsolver: Optional[MinizincCPSolver] = None,
+        subsolver: Optional[CPSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
-        constraint_handler: Optional[MznConstraintHandler] = None,
+        constraint_handler: Optional[ConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
@@ -91,18 +69,6 @@ class LNS_CP(BaseLNS):
             params_objective_function=params_objective_function,
             **kwargs,
         )
-
-    def init_model(self, **kwargs: Any) -> None:
-        if self.subsolver.instance is None:
-            self.subsolver.init_model(**kwargs)
-            if self.subsolver.instance is None:  # for mypy
-                raise RuntimeError(
-                    "CP model instance must not be None after calling init_model()!"
-                )
-
-    def create_submodel(self) -> contextlib.AbstractContextManager:
-        """Create a branch of the current instance, wrapped in a context manager."""
-        return self.subsolver.instance.branch()
 
     def solve_with_subsolver(
         self,
@@ -144,6 +110,129 @@ class LNS_CP(BaseLNS):
             callbacks=callbacks,
             **kwargs,
         )
+
+
+class LNS_OrtoolsCPSat(BaseLNS_CP):
+    subsolver: OrtoolsCPSatSolver
+    """Sub-solver used by this lns solver at each iteration."""
+
+    def __init__(
+        self,
+        problem: Problem,
+        subsolver: Optional[OrtoolsCPSatSolver] = None,
+        initial_solution_provider: Optional[InitialSolution] = None,
+        constraint_handler: Optional[ConstraintHandler] = None,
+        post_process_solution: Optional[PostProcessSolution] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            problem=problem,
+            subsolver=subsolver,
+            initial_solution_provider=initial_solution_provider,
+            constraint_handler=constraint_handler,
+            post_process_solution=post_process_solution,
+            params_objective_function=params_objective_function,
+            **kwargs,
+        )
+
+    def init_model(self, **kwargs: Any) -> None:
+        if self.subsolver.cp_model is None:
+            self.subsolver.init_model(**kwargs)
+            if self.subsolver.cp_model is None:  # for mypy
+                raise RuntimeError(
+                    "subsolver cp_model must not be None after calling init_model()!"
+                )
+
+
+class OrtoolsCPSatConstraintHandler(ConstraintHandler):
+    """Base class for constraint handler for solvers based on ortools"""
+
+    @abstractmethod
+    def adding_constraint_from_results_store(
+        self, solver: OrtoolsCPSatSolver, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Constraint]:
+        ...
+
+    def remove_constraints_from_previous_iteration(
+        self,
+        solver: OrtoolsCPSatSolver,
+        previous_constraints: Iterable[Constraint],
+        **kwargs: Any,
+    ) -> None:
+        """Clear specified cpsat constraints."""
+        for cstr in previous_constraints:
+            cstr.proto.Clear()
+
+
+class MznConstraintHandler(ConstraintHandler):
+    @abstractmethod
+    def adding_constraint_from_results_store(
+        self,
+        solver: MinizincCPSolver,
+        child_instance: Instance,
+        result_storage: ResultStorage,
+        last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any,
+    ) -> Iterable[Any]:
+        ...
+
+    def remove_constraints_from_previous_iteration(
+        self,
+        solver: SolverDO,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
+    ) -> None:
+        """Remove previous constraints.
+
+        Nothing to do for minizinc solvers as the constraints were added only to the child instance.
+
+        """
+        pass
+
+
+class LNS_MinizincCP(BaseLNS_CP):
+
+    subsolver: MinizincCPSolver
+    """Sub-solver used by this lns solver at each iteration."""
+
+    constraint_handler: MznConstraintHandler
+
+    def __init__(
+        self,
+        problem: Problem,
+        subsolver: Optional[MinizincCPSolver] = None,
+        initial_solution_provider: Optional[InitialSolution] = None,
+        constraint_handler: Optional[MznConstraintHandler] = None,
+        post_process_solution: Optional[PostProcessSolution] = None,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            problem=problem,
+            subsolver=subsolver,
+            initial_solution_provider=initial_solution_provider,
+            constraint_handler=constraint_handler,
+            post_process_solution=post_process_solution,
+            params_objective_function=params_objective_function,
+            **kwargs,
+        )
+
+    def init_model(self, **kwargs: Any) -> None:
+        if self.subsolver.instance is None:
+            self.subsolver.init_model(**kwargs)
+            if self.subsolver.instance is None:  # for mypy
+                raise RuntimeError(
+                    "CP model instance must not be None after calling init_model()!"
+                )
+
+    def create_submodel(self) -> contextlib.AbstractContextManager:
+        """Create a branch of the current instance, wrapped in a context manager."""
+        return self.subsolver.instance.branch()
+
+
+# Alias for backward compatibility
+LNS_CP = LNS_MinizincCP
 
 
 class ConstraintStatus(TypedDict):
