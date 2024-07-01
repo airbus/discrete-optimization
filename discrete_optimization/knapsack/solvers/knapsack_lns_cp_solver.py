@@ -3,21 +3,26 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Iterable, Optional
+from typing import Any, Dict, Hashable, Iterable, Mapping, Optional
 
 from minizinc import Instance
 
 from discrete_optimization.generic_tools.cp_tools import MinizincCPSolver
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
 )
 from discrete_optimization.knapsack.solvers.cp_solvers import CPKnapsackMZN2
 from discrete_optimization.knapsack.solvers.greedy_solvers import ResultStorage
+from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
+    CPSatKnapsackSolver,
+)
 
 
 class ConstraintHandlerKnapsack(MznConstraintHandler):
@@ -76,3 +81,48 @@ class ConstraintHandlerKnapsack(MznConstraintHandler):
     ) -> None:
         if not isinstance(solver, CPKnapsackMZN2):
             raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
+
+
+class OrtoolsCPSatConstraintHandlerKnapsack(ConstraintHandler):
+    hyperparameters = [
+        FloatHyperparameter(name="fraction_to_fix", default=0.9, low=0.0, high=1.0),
+    ]
+
+    def __init__(self, problem: KnapsackModel, fraction_to_fix: float = 0.9):
+        self.problem = problem
+        self.fraction_to_fix = fraction_to_fix
+        self.iter = 0
+
+    def adding_constraint_from_results_store(
+        self,
+        solver: SolverDO,
+        result_storage: ResultStorage,
+        last_result_store: Optional[ResultStorage] = None,
+        **kwargs: Any
+    ) -> Mapping[Hashable, Any]:
+        if not isinstance(solver, CPSatKnapsackSolver):
+            raise ValueError(
+                "cp_solver must a CPSatKnapsackSolver for this constraint."
+            )
+        lns_constraint: Dict[Hashable, Any] = {}
+        subpart_item = set(
+            random.sample(
+                range(self.problem.nb_items),
+                int(self.fraction_to_fix * self.problem.nb_items),
+            )
+        )
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, KnapsackSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a KnapsackSolution."
+            )
+        variables = solver.variables["taken"]
+        for item in subpart_item:
+            lns_constraint[item] = solver.cp_model.Add(
+                variables[item] == current_solution.list_taken[item]
+            )
+        return lns_constraint
