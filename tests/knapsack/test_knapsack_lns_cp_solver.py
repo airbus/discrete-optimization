@@ -10,7 +10,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerSt
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.generic_tools.lns_cp import LNS_CP
+from discrete_optimization.generic_tools.lns_cp import LNS_CP, LNS_OrtoolsCPSat
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -19,8 +19,12 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
     CPKnapsackMZN2,
     KnapsackModel,
 )
+from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
+    CPSatKnapsackSolver,
+)
 from discrete_optimization.knapsack.solvers.knapsack_lns_cp_solver import (
     ConstraintHandlerKnapsack,
+    OrtoolsCPSatConstraintHandlerKnapsack,
 )
 from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
     InitialKnapsackMethod,
@@ -68,6 +72,45 @@ def test_knapsack_lns():
     model.evaluate(solution)
 
     fitness = [f for s, f in result_store.list_solution_fits]
+
+
+def test_knapsack_lns_ortools():
+    model_file = [f for f in get_data_available() if "ks_30_0" in f][
+        0
+    ]  # optim result "54939"
+    model: KnapsackModel = parse_file(model_file)
+    params_objective_function = get_default_objective_setup(problem=model)
+    params_cp = ParametersCP.default()
+    params_cp.time_limit = 10
+    params_cp.time_limit_iter0 = 1
+    solver = CPSatKnapsackSolver(
+        model,
+        params_objective_function=params_objective_function,
+    )
+    solver.init_model()
+    initial_solution_provider = InitialKnapsackSolution(
+        problem=model,
+        initial_method=InitialKnapsackMethod.DUMMY,
+        params_objective_function=params_objective_function,
+    )
+    constraint_handler = OrtoolsCPSatConstraintHandlerKnapsack(
+        problem=model, fraction_to_fix=0.83
+    )
+    lns_solver = LNS_OrtoolsCPSat(
+        problem=model,
+        subsolver=solver,
+        initial_solution_provider=initial_solution_provider,
+        constraint_handler=constraint_handler,
+        params_objective_function=params_objective_function,
+    )
+    result_store = lns_solver.solve(
+        parameters_cp=params_cp,
+        nb_iteration_lns=200,
+        callbacks=[TimerStopper(total_seconds=30)],
+    )
+    solution = result_store.get_best_solution_fit()[0]
+    assert model.satisfy(solution)
+    model.evaluate(solution)
 
 
 def test_knapsack_lns_timer():
