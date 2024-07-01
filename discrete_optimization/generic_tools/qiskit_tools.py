@@ -12,6 +12,14 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+    FloatHyperparameter,
+    IntegerHyperparameter,
+)
+from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+    Hyperparametrizable,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -102,23 +110,27 @@ def cost_func(params, ansatz, hamiltonian, estimator, callback_dict):
 
 
 def execute_ansatz_with_Hamiltonian(
-    backend, ansatz, hamiltonian, **kwargs
+    backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
 ) -> np.ndarray:
     """
     @param backend: the backend use to run the circuit (simulator or real device)
     @param ansatz: the quantum circuit
     @param hamiltonian: the hamiltonian corresponding to the problem
-    @param kwargs: a list of parameters who can be specified
+    @param use_session: boolean to set to True for use a session
+    @param kwargs: a list of hyperparameters who can be specified
     @return: the qubit's value the must often chose
     """
 
     if backend is None:
         backend = AerSimulator()
-    with_session = kwargs.get("with_session", False)
-    optimization_level = kwargs.get("optimization_level", 3)
-    nb_shots = kwargs.get("nb_shot", 10000)
-    maxiter = kwargs.get("maxiter", None)
-    disp = kwargs.get("disp", False)
+        """
+        if use_session:
+            print("To use a session you need to use a real device not a simulator")
+            use_session = False
+        """
+
+    optimization_level = kwargs["optimization_level"]
+    nb_shots = kwargs["nb_shots"]
 
     # transpile and optimize the quantum circuit depending on the device who are going to use
     # there are four level_optimization, to 0 to 3, 3 is the better but also the longest
@@ -126,11 +138,11 @@ def execute_ansatz_with_Hamiltonian(
     pm = generate_preset_pass_manager(
         target=target, optimization_level=optimization_level
     )
-    ansatz = pm.run(ansatz)
-    hamiltonian = hamiltonian.apply_layout(ansatz.layout)
+    new_ansatz = pm.run(ansatz)
+    hamiltonian = hamiltonian.apply_layout(new_ansatz.layout)
 
-    # open a session
-    if with_session:
+    # open a session if desired
+    if use_session:
         session = Session(backend=backend, max_time="2h")
     else:
         session = None
@@ -149,17 +161,51 @@ def execute_ansatz_with_Hamiltonian(
         "cost_history": [],
     }
     # step of minimization
-    res = minimize(
-        cost_func,
-        validate_initial_point(point=None, circuit=ansatz),
-        args=(ansatz, hamiltonian, estimator, callback_dict),
-        method="COBYLA",
-        bounds=validate_bounds(ansatz),
-        options={"maxiter": maxiter, "disp": disp},
-    )
+    if kwargs.get("optimizer"):
+
+        def fun(x):
+            pub = (new_ansatz, [hamiltonian], [x])
+            result = estimator.run(pubs=[pub]).result()
+            cost = result[0].data.evs[0]
+            callback_dict["iters"] += 1
+            callback_dict["prev_vector"] = x
+            callback_dict["cost_history"].append(cost)
+            print(f"Iters. done: {callback_dict['iters']} [Current cost: {cost}]")
+            return cost
+
+        optimizer = kwargs["optimizer"]
+        res = optimizer.minimize(
+            fun,
+            validate_initial_point(point=None, circuit=ansatz),
+            bounds=validate_bounds(ansatz),
+        )
+
+    else:
+
+        method = kwargs["method"]
+        if kwargs.get("options"):
+            options = kwargs["options"]
+        else:
+            if method == "COBYLA":
+                options = {
+                    "maxiter": kwargs["maxiter"],
+                    "rhobeg": kwargs["rhobeg"],
+                    "tol": kwargs["tol"],
+                }
+            else:
+                options = {}
+
+        res = minimize(
+            cost_func,
+            validate_initial_point(point=None, circuit=ansatz),
+            args=(new_ansatz, hamiltonian, estimator, callback_dict),
+            method=method,
+            bounds=validate_bounds(ansatz),
+            options=options,
+        )
 
     # Assign solution parameters to our ansatz
-    qc = ansatz.assign_parameters(res.x)
+    qc = new_ansatz.assign_parameters(res.x)
     # Add measurements to our circuit
     qc.measure_all()
     # transpile our circuit
@@ -167,22 +213,45 @@ def execute_ansatz_with_Hamiltonian(
     # run our circuit with optimal parameters find at the minimization step
     results = sampler.run([qc]).result()
     # extract a dictionnary of results, key is binary values of variable and value is number of time of these values has been found
-    result = get_result_from_dict_result(results[0].data.meas.get_counts())
+    best_result = get_result_from_dict_result(results[0].data.meas.get_counts())
 
     # Close the session since we are now done with it
-    if with_session:
+    if use_session:  # with_session:
         session.close()
 
-    return result
+    return best_result
 
 
-class QiskitQAOASolver(SolverDO):
+class QiskitSolver(SolverDO):
+    def __init__(
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
+        super().__init__(problem, params_objective_function)
+
+
+class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
+
+    hyperparameters = [
+        IntegerHyperparameter(name="reps", low=1, high=6, default=2),
+        IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
+        CategoricalHyperparameter(name="method", choices=["COBYLA"], default="COBYLA"),
+        IntegerHyperparameter(
+            name="nb_shots", low=10000, high=100000, step=10000, default=10000
+        ),
+        IntegerHyperparameter(name="maxiter", low=100, high=1000, step=50, default=300),
+        FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
+        CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
+        # TODO rajouter initial_point et initial_bound dans les hyperparams ?
+        # TODO add mixer_operator comme hyperparam
+    ]
+
     def __init__(
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         backend: Optional = None,
-        **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
@@ -192,10 +261,13 @@ class QiskitQAOASolver(SolverDO):
         self,
         callbacks: Optional[List[Callback]] = None,
         backend: Optional = None,
+        use_session: Optional[bool] = False,
         **kwargs: Any,
     ) -> ResultStorage:
 
-        reps = kwargs.get("reps", 2)
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+
+        reps = kwargs["reps"]
 
         if backend is not None:
             self.backend = backend
@@ -211,9 +283,19 @@ class QiskitQAOASolver(SolverDO):
         qubo = conv.convert(self.quadratic_programm)
         hamiltonian, offset = qubo.to_ising()
         ansatz = QAOAAnsatz(hamiltonian, reps=reps)
+        """
+        by default only hyperparameters of the mixer operator are initialized
+        but for some optimizer we need to initialize also hyperparameters of the cost operator
+        """
+        bounds = []
+        for hp in ansatz.parameter_bounds:
+            if hp == (None, None):
+                hp = (0, np.pi)
+            bounds.append(hp)
+        ansatz.parameter_bounds = bounds
 
         result = execute_ansatz_with_Hamiltonian(
-            self.backend, ansatz, hamiltonian, **kwargs
+            self.backend, ansatz, hamiltonian, use_session, **kwargs
         )
         result = conv.interpret(result)
 
@@ -241,13 +323,25 @@ class QiskitQAOASolver(SolverDO):
         ...
 
 
-class QiskitVQESolver(SolverDO):
+class QiskitVQESolver(QiskitSolver):
+
+    hyperparameters = [
+        IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
+        CategoricalHyperparameter(name="method", choices=["COBYLA"], default="COBYLA"),
+        IntegerHyperparameter(
+            name="nb_shots", low=10000, high=100000, step=10000, default=10000
+        ),
+        IntegerHyperparameter(name="maxiter", low=100, high=2000, step=50, default=300),
+        FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
+        CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
+        # TODO rajouter initial_point et initial_bound dans les hyperparams ?
+    ]
+
     def __init__(
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         backend: Optional = None,
-        **kwargs: Any,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
@@ -258,8 +352,11 @@ class QiskitVQESolver(SolverDO):
         self,
         callbacks: Optional[List[Callback]] = None,
         backend: Optional = None,
+        use_session: Optional[bool] = False,
         **kwargs: Any,
     ) -> ResultStorage:
+
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         if backend is not None:
             self.backend = backend
@@ -281,7 +378,7 @@ class QiskitVQESolver(SolverDO):
         ansatz = EfficientSU2(hamiltonian.num_qubits)
 
         result = execute_ansatz_with_Hamiltonian(
-            self.backend, ansatz, hamiltonian, **kwargs
+            self.backend, ansatz, hamiltonian, use_session, **kwargs
         )
         result = conv.interpret(result)
 
