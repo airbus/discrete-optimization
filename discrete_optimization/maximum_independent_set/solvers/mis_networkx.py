@@ -22,5 +22,6 @@ class MisNetworkXSolver(MisSolver):
         solution = MisSolution(problem=self.problem, chosen=chosen)
         fit = self.aggreg_from_sol(solution)
         return ResultStorage(
-            [(solution, fit)], mode_optim=self.params_objective_function.sense_function
+            mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(solution, fit)],
         )

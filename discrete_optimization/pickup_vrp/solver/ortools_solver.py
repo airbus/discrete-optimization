@@ -861,9 +861,8 @@ class RoutingMonitor(pywrapcp.SearchMonitor):
         self._counter_limit = 10000000
         self.nb_solutions = 0
         self.res = ResultStorage(
-            [],
             mode_optim=self.do_solver.params_objective_function.sense_function,
-            limit_store=False,
+            list_solution_fits=[],
         )
 
     def AtSolution(self) -> bool:
@@ -985,7 +984,7 @@ class RoutingMonitor(pywrapcp.SearchMonitor):
         )
         gpdp_sol = convert_to_gpdpsolution(self.problem, sol)
         fit = self.do_solver.aggreg_from_sol(gpdp_sol)
-        self.res.add_solution(solution=gpdp_sol, fitness=fit)
+        self.res.append((gpdp_sol, fit))
 
 
 def convert_to_gpdpsolution(

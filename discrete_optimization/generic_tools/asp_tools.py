@@ -101,9 +101,8 @@ class ASPCallback:
         self.do_solver = do_solver
         self.callback = callback
         self.res = ResultStorage(
-            [],
             mode_optim=self.do_solver.params_objective_function.sense_function,
-            limit_store=False,
+            list_solution_fits=[],
         )
         self.nb_solutions = 0
 
@@ -121,7 +120,7 @@ class ASPCallback:
         # translate into do solution
         sol = self.do_solver.retrieve_solution(model=model)
         fit = self.do_solver.aggreg_from_sol(sol)
-        self.res.add_solution(solution=sol, fitness=fit)
+        self.res.append((sol, fit))
         self.nb_solutions += 1
         # end of step callback: stopping?
         try:

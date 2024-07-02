@@ -160,7 +160,9 @@ def run_single_mode_robustness_benchmark():
     problem_sol = rcpsp_model.get_solution_type()(**kwargs)
     fits = evaluate_sol(problem_sol)
     sols.append((problem_sol, fits))
-    rs_1 = ResultStorage(list_solution_fits=sols, best_solution=None)
+    rs_1 = ResultStorage(
+        mode_optim=params_objective_function.sense_function, list_solution_fits=sols
+    )
 
     sols = []
     s_pure_int = [i for i in sol_2.rcpsp_permutation]
@@ -168,7 +170,9 @@ def run_single_mode_robustness_benchmark():
     problem_sol = rcpsp_model.get_solution_type()(**kwargs)
     fits = evaluate_sol(problem_sol)
     sols.append((problem_sol, fits))
-    rs_2 = ResultStorage(list_solution_fits=sols, best_solution=None)
+    rs_2 = ResultStorage(
+        mode_optim=params_objective_function.sense_function, list_solution_fits=sols
+    )
 
     sols = []
     s_pure_int = [i for i in sol_3.rcpsp_permutation]
@@ -176,7 +180,9 @@ def run_single_mode_robustness_benchmark():
     problem_sol = rcpsp_model.get_solution_type()(**kwargs)
     fits = evaluate_sol(problem_sol)
     sols.append((problem_sol, fits))
-    rs_3 = ResultStorage(list_solution_fits=sols, best_solution=None)
+    rs_3 = ResultStorage(
+        mode_optim=params_objective_function.sense_function, list_solution_fits=sols
+    )
 
     # Setting up test scenarios
     poisson_laws = create_poisson_laws(

@@ -61,11 +61,11 @@ class PostProMSRCPSP(PostProcessSolution):
             predecessors_dict=self.immediate_predecessors,
         )
         fit = self.aggreg_from_sol(new_solution)
-        result_storage.add_solution(new_solution, fit)
+        result_storage.append((new_solution, fit))
 
         for s in random.sample(
-            result_storage.list_solution_fits,
-            min(len(result_storage.list_solution_fits), 1000),
+            result_storage,
+            min(len(result_storage), 1000),
         ):
             new_solution = sgs_variant(
                 solution=s[0],
@@ -73,7 +73,7 @@ class PostProMSRCPSP(PostProcessSolution):
                 predecessors_dict=self.immediate_predecessors,
             )
             fit = self.aggreg_from_sol(new_solution)
-            result_storage.add_solution(new_solution, fit)
+            result_storage.append((new_solution, fit))
         return result_storage
 
 
@@ -105,11 +105,11 @@ class PostProMSRCPSPPreemptive(PostProcessSolution):
             predecessors_dict=self.immediate_predecessors,
         )
         fit = self.aggreg_from_sol(new_solution)
-        result_storage.list_solution_fits += [(new_solution, fit)]
+        result_storage.append((new_solution, fit))
 
         for s in random.sample(
-            result_storage.list_solution_fits,
-            min(len(result_storage.list_solution_fits), 10),
+            result_storage,
+            min(len(result_storage), 10),
         ):
             if len(s[0].schedule) == self.problem.nb_tasks:
                 new_solution = shift_left_method(
@@ -118,7 +118,7 @@ class PostProMSRCPSPPreemptive(PostProcessSolution):
                     predecessors_dict=self.immediate_predecessors,
                 )
                 fit = self.aggreg_from_sol(new_solution)
-                result_storage.list_solution_fits += [(new_solution, fit)]
+                result_storage.append((new_solution, fit))
         return result_storage
 
 

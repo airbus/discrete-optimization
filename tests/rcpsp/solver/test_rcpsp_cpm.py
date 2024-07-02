@@ -207,7 +207,7 @@ def test_cpm_sm():
         results += [(solution, -fit["makespan"])]
         theoric = cpm.map_node[cpm.sink]
     result_storage = ResultStorage(
-        list_solution_fits=results, mode_optim=ModeOptim.MAXIMIZATION
+        mode_optim=ModeOptim.MAXIMIZATION, list_solution_fits=results
     )
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)

@@ -180,7 +180,7 @@ def objective(trial: Trial):
     elapsed_time = time.perf_counter() - starting_time
     trial.set_user_attr(elapsed_time_attr, elapsed_time)
 
-    if len(res.list_solution_fits) != 0:
+    if len(res) != 0:
         _, fit = res.get_best_solution_fit()
         return fit
     else:

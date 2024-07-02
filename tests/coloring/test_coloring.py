@@ -167,10 +167,8 @@ def test_mzn_solver_cb(caplog):
     with caplog.at_level(logging.INFO):
         res = solver.solve(callbacks=callbacks, **kwargs)
 
-    assert len(res.list_solution_fits) == min(stopper.nb_iteration_max, 3)
-    assert (
-        f"Solve finished after {len(res.list_solution_fits)} iterations" in caplog.text
-    )
+    assert len(res) == min(stopper.nb_iteration_max, 3)
+    assert f"Solve finished after {len(res)} iterations" in caplog.text
 
 
 @pytest.mark.skipif(
@@ -200,10 +198,8 @@ def test_mzn_solver_ortools_parallel_cb(caplog):
 
     caploglines = caplog.text.splitlines()
     nb_callbacks_steps = len([line for line in caploglines if "Iteration #" in line])
-    assert len(res.list_solution_fits) == nb_callbacks_steps
-    assert (
-        f"Solve finished after {len(res.list_solution_fits)} iterations" in caplog.text
-    )
+    assert len(res) == nb_callbacks_steps
+    assert f"Solve finished after {len(res)} iterations" in caplog.text
 
 
 @pytest.mark.parametrize("modeling", [ModelingCPSat.BINARY, ModelingCPSat.INTEGER])
@@ -406,7 +402,7 @@ def test_color_lp_gurobi():
     result_store = solver.solve(parameters_milp=ParametersMilp.default())
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
-    assert len(result_store.list_solution_fits) > 1
+    assert len(result_store) > 1
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -423,9 +419,9 @@ def test_color_lp_gurobi_cb_log():
         parameters_milp=ParametersMilp.default(), callbacks=callbacks
     )
     solution = result_store.get_best_solution_fit()[0]
-    assert len(result_store.list_solution_fits) > 1
+    assert len(result_store) > 1
     # check tracker called at each solution found
-    assert tracker.nb_iteration == len(result_store.list_solution_fits)
+    assert tracker.nb_iteration == len(result_store)
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -442,7 +438,7 @@ def test_color_lp_gurobi_cb_stop():
         parameters_milp=ParametersMilp.default(), callbacks=callbacks
     )
     # check stop after 1st iteration
-    assert len(result_store.list_solution_fits) == 1
+    assert len(result_store) == 1
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

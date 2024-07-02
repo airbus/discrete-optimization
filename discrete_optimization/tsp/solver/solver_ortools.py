@@ -115,6 +115,6 @@ class TSP_ORtools(SolverTSP):
         )
         fitness = self.aggreg_from_sol(variableTSP)
         return ResultStorage(
-            list_solution_fits=[(variableTSP, fitness)],
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(variableTSP, fitness)],
         )

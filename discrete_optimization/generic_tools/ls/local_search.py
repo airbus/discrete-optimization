@@ -72,23 +72,3 @@ class RestartHandlerLimit(RestartHandler):
             return self.solution_best.copy(), self.best_fitness
         else:
             return cur_solution, cur_objective
-
-
-class ResultLS(ResultStorage):
-    def __init__(
-        self,
-        result_storage: ResultStorage,
-        best_solution: Solution,
-        best_objective: fitness_class,
-    ):
-        self.result_storage = result_storage
-        self.list_solution_fits = result_storage.list_solution_fits
-        self.maximize = result_storage.maximize
-        self.limit_store = result_storage.limit_store
-        self.nb_best_score = result_storage.nb_best_score
-        self.map_solutions = result_storage.map_solutions
-        self.heap = result_storage.heap
-        self.min = result_storage.min
-        self.max = result_storage.max
-        self.best_solution = best_solution
-        self.best_objective = best_objective

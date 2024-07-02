@@ -52,13 +52,13 @@ def test_rank_solutions_by_permutation_distance(random_seed):
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
 
     # Pick one solution from the ResultStorage
-    selected_index = len(result_storage.list_solution_fits) - 1
-    selected_sol = result_storage.list_solution_fits[selected_index][0]
+    selected_index = len(result_storage) - 1
+    selected_sol = result_storage[selected_index][0]
 
     # Calculate distance between selected solution and all solutions in resultStorage
     pop_ktds = {}
-    for i in range(len(result_storage.list_solution_fits)):
-        tmp_sol = result_storage.list_solution_fits[i][0]
+    for i in range(len(result_storage)):
+        tmp_sol = result_storage[i][0]
         pop_ktds[i] = kendall_tau_similarity((selected_sol, tmp_sol))
     sorted_pop_ktds = {
         k: v
@@ -69,9 +69,9 @@ def test_rank_solutions_by_permutation_distance(random_seed):
     y_l1 = []
     y_l2 = []
 
-    for i in range(len(result_storage.list_solution_fits)):
+    for i in range(len(result_storage)):
         key = list(sorted_pop_ktds.keys())[i]
-        tmp_sol = result_storage.list_solution_fits[key][0]
+        tmp_sol = result_storage[key][0]
 
         diffs = all_diff_start_time((selected_sol, tmp_sol))
         mean_diffs = np.mean([abs(diffs[key2]) for key2 in diffs.keys()])
@@ -81,16 +81,12 @@ def test_rank_solutions_by_permutation_distance(random_seed):
         y_l1.append(l1_dist)
 
         start_times_val_1 = [
-            result_storage.list_solution_fits[selected_index][0].rcpsp_schedule[key2][
-                "start_time"
-            ]
-            for key2 in result_storage.list_solution_fits[selected_index][
-                0
-            ].rcpsp_schedule.keys()
+            result_storage[selected_index][0].rcpsp_schedule[key2]["start_time"]
+            for key2 in result_storage[selected_index][0].rcpsp_schedule.keys()
         ]
         start_times_val_2 = [
-            result_storage.list_solution_fits[key][0].rcpsp_schedule[key2]["start_time"]
-            for key2 in result_storage.list_solution_fits[key][0].rcpsp_schedule.keys()
+            result_storage[key][0].rcpsp_schedule[key2]["start_time"]
+            for key2 in result_storage[key][0].rcpsp_schedule.keys()
         ]
 
         l2_dist = distance.euclidean(start_times_val_1, start_times_val_2)

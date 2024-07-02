@@ -240,9 +240,8 @@ class PileSolverRCPSP(SolverRCPSP):
             rcpsp_schedule_feasible=True,
         )
         result_storage = ResultStorage(
-            list_solution_fits=[(sol, self.aggreg_from_sol(sol))],
-            best_solution=sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, self.aggreg_from_sol(sol))],
         )
         return result_storage
 
@@ -472,9 +471,8 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
             rcpsp_schedule_feasible=True,
         )
         result_storage = ResultStorage(
-            list_solution_fits=[(sol, self.aggreg_from_sol(sol))],
-            best_solution=sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, self.aggreg_from_sol(sol))],
         )
         return result_storage
 
@@ -597,8 +595,7 @@ class Executor(PileSolverRCPSP):
             rcpsp_schedule_feasible=True,
         )
         result_storage = ResultStorage(
-            list_solution_fits=[(sol, self.aggreg_from_sol(sol))],
-            best_solution=sol,
             mode_optim=self.params_objective_function.sense_function,
+            list_solution_fits=[(sol, self.aggreg_from_sol(sol))],
         )
         return result_storage
