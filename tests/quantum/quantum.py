@@ -2,10 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import os
-
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
-
 import logging
 
 import networkx as nx
@@ -19,8 +15,10 @@ from discrete_optimization.generic_tools.quantum_solvers import (
     solve_coloring,
     solvers_map_coloring,
     solvers_map_mis,
+    solvers_map_tsp,
 )
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
+from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +59,26 @@ def test_solvers_mis(solver_class):
     mis_model: MisProblem = MisProblem(graph)
     results = solve(
         method=solver_class, problem=mis_model, **solvers_map_mis[solver_class][1]
+    )
+    sol, fit = results.get_best_solution_fit()
+
+
+@pytest.mark.skipif(
+    not qiskit_available, reason="You need Qiskit modules to this test."
+)
+@pytest.mark.parametrize("solver_class", solvers_map_tsp)
+def test_solver_TSP(solver_class):
+
+    p1 = Point2D(0, 0)
+    p2 = Point2D(-1, 1)
+    p3 = Point2D(1, -1)
+    p4 = Point2D(1, 1)
+    p5 = Point2D(1, -2)
+    tspProblem: TSPModel2D = TSPModel2D(
+        [p1, p2, p3, p4, p5], 5, start_index=0, end_index=4
+    )
+    results = solve(
+        method=solver_class, problem=tspProblem, **solvers_map_mis[solver_class][1]
     )
     sol, fit = results.get_best_solution_fit()
 
