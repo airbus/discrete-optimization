@@ -4,7 +4,7 @@
 
 import random
 from enum import Enum
-from typing import Any, Dict, Hashable, Mapping
+from typing import Any, Iterable
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -14,10 +14,10 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_mip import (
-    ConstraintHandler,
     InitialSolution,
+    PymipConstraintHandler,
 )
-from discrete_optimization.generic_tools.lp_tools import MilpSolver, MilpSolverName
+from discrete_optimization.generic_tools.lp_tools import MilpSolverName, PymipMilpSolver
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
@@ -73,15 +73,15 @@ class InitialKnapsackSolution(InitialSolution):
             )
 
 
-class ConstraintHandlerKnapsack(ConstraintHandler):
+class ConstraintHandlerKnapsack(PymipConstraintHandler):
     def __init__(self, problem: KnapsackModel, fraction_to_fix: float = 0.9):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix
         self.iter = 0
 
     def adding_constraint_from_results_store(
-        self, solver: MilpSolver, result_storage: ResultStorage, **kwargs: Any
-    ) -> Mapping[Hashable, Any]:
+        self, solver: PymipMilpSolver, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
         if not isinstance(solver, LPKnapsack):
             raise ValueError("milp_solver must a LPKnapsack for this constraint.")
         if solver.model is None:
@@ -113,32 +113,16 @@ class ConstraintHandlerKnapsack(ConstraintHandler):
             if c in subpart_item:
                 dict_f_fixed[c] = dict_f_start[c]
         x_var = solver.variable_decision["x"]
-        lns_constraint: Dict[Hashable, Any] = {}
+        lns_constraint = []
         for key in x_var:
             start += [(x_var[key], dict_f_start[key])]
             if key in subpart_item:
-                lns_constraint[key] = solver.model.add_constr(
-                    x_var[key] == dict_f_start[key], name=str(key)
+                lns_constraint.append(
+                    solver.model.add_constr(
+                        x_var[key] == dict_f_start[key], name=str(key)
+                    )
                 )
         if solver.milp_solver_name == MilpSolverName.GRB:
             solver.model.solver.update()
         solver.model.start = start
         return lns_constraint
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: MilpSolver,
-        previous_constraints: Mapping[Hashable, Any],
-        **kwargs: Any
-    ) -> None:
-        if not isinstance(solver, LPKnapsack):
-            raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if solver.model is None:
-            solver.init_model()
-            if solver.model is None:
-                raise RuntimeError(
-                    "milp_solver.model must be not None after calling milp_solver.init_model()"
-                )
-        solver.model.remove(list(previous_constraints.values()))
-        if solver.milp_solver_name == MilpSolverName.GRB:
-            solver.model.solver.update()

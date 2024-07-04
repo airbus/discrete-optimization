@@ -352,15 +352,3 @@ class KnapConstraintHandler(MznConstraintHandler):
                 ]
                 child_instance.add_string(strings[-1])
         return strings
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: MinizincCPSolver,
-        child_instance: Instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        if not isinstance(solver, CPMultidimensionalMultiScenarioSolver):
-            raise ValueError(
-                "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
-            )

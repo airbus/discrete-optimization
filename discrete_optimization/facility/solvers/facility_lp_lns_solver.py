@@ -5,7 +5,7 @@
 import logging
 import random
 from enum import Enum
-from typing import Any, Dict, Hashable, Mapping
+from typing import Any, Iterable
 
 import mip
 
@@ -15,7 +15,6 @@ from discrete_optimization.facility.facility_model import (
 )
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver_PyMip,
-    MilpSolver,
     MilpSolverName,
 )
 from discrete_optimization.facility.solvers.greedy_solvers import (
@@ -30,9 +29,10 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_mip import (
-    ConstraintHandler,
     InitialSolution,
+    PymipConstraintHandler,
 )
+from discrete_optimization.generic_tools.lp_tools import PymipMilpSolver
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class InitialFacilitySolution(InitialSolution):
             )
 
 
-class ConstraintHandlerFacility(ConstraintHandler):
+class ConstraintHandlerFacility(PymipConstraintHandler):
     """Constraint builder used in LNS+LP for coloring problem.
 
     This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of allocation of customer to
@@ -111,8 +111,8 @@ class ConstraintHandlerFacility(ConstraintHandler):
         self.skip_first_iter = skip_first_iter
 
     def adding_constraint_from_results_store(
-        self, solver: MilpSolver, result_storage: ResultStorage, **kwargs: Any
-    ) -> Mapping[Hashable, Any]:
+        self, solver: PymipMilpSolver, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
         if not isinstance(solver, LP_Facility_Solver_PyMip):
             raise ValueError(
                 "milp_solver must a LP_Facility_Solver_PyMip for this constraint."
@@ -152,7 +152,7 @@ class ConstraintHandlerFacility(ConstraintHandler):
             if c in subpart_customer:
                 dict_f_fixed[c] = dict_f_start[c]
         x_var = solver.variable_decision["x"]
-        lns_constraint: Dict[Hashable, Any] = {}
+        lns_constraint = []
         for key in x_var:
             f, c = key
             if f == dict_f_start[c]:
@@ -164,35 +164,15 @@ class ConstraintHandlerFacility(ConstraintHandler):
             if c in dict_f_fixed:
                 if f == dict_f_fixed[c]:
                     if isinstance(x_var[f, c], mip.Var):
-                        lns_constraint[(f, c)] = solver.model.add_constr(
-                            x_var[key] == 1, name=str((f, c))
+                        lns_constraint.append(
+                            solver.model.add_constr(x_var[key] == 1, name=str((f, c)))
                         )
                 else:
                     if isinstance(x_var[f, c], mip.Var):
-                        lns_constraint[(f, c)] = solver.model.add_constr(
-                            x_var[key] == 0, name=str((f, c))
+                        lns_constraint.append(
+                            solver.model.add_constr(x_var[key] == 0, name=str((f, c)))
                         )
         if solver.milp_solver_name == MilpSolverName.GRB:
             solver.model.solver.update()
         solver.model.start = start
         return lns_constraint
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: MilpSolver,
-        previous_constraints: Mapping[Hashable, Any],
-        **kwargs: Any,
-    ) -> None:
-        if not isinstance(solver, LP_Facility_Solver_PyMip):
-            raise ValueError(
-                "milp_solver must a LP_Facility_Solver_PyMip for this constraint."
-            )
-        if solver.model is None:  # for mypy
-            solver.init_model()
-            if solver.model is None:
-                raise RuntimeError(
-                    "milp_solver.model must be not None after calling milp_solver.init_model()."
-                )
-        solver.model.remove(list(previous_constraints.values()))
-        if solver.milp_solver_name == MilpSolverName.GRB:
-            solver.model.solver.update()

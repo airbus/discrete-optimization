@@ -13,7 +13,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Problem,
+    Solution,
+)
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
@@ -183,6 +187,26 @@ class PymipMilpSolver(MilpSolver):
     """Milp solver wrapping a solver from pymip library."""
 
     model: Optional[mip.Model] = None
+    milp_solver_name: MilpSolverName
+    solver_name: str
+
+    def __init__(
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            problem=problem,
+            params_objective_function=params_objective_function,
+            **kwargs,
+        )
+        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
+
+    def set_milp_solver_name(self, milp_solver_name: MilpSolverName):
+        self.milp_solver_name = milp_solver_name
+        self.solver_name = map_solver[milp_solver_name]
 
     def solve(
         self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any

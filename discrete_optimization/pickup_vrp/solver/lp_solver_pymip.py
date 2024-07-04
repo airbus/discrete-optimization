@@ -29,7 +29,11 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp, PymipMilpSolver
+from discrete_optimization.generic_tools.lp_tools import (
+    MilpSolverName,
+    ParametersMilp,
+    PymipMilpSolver,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
@@ -112,12 +116,15 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         self,
         problem: GPDP,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         **kwargs: Any,
     ):
         super().__init__(
-            problem=problem, params_objective_function=params_objective_function
+            problem=problem,
+            params_objective_function=params_objective_function,
+            milp_solver_name=milp_solver_name,
+            **kwargs,
         )
-        self.model: Optional[mip.Model] = None
         self.constraint_on_edge: Dict[int, Any] = {}
         self.variable_order: Dict[Node, Any] = {}
 
@@ -334,7 +341,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         return {"time_coming": time_coming, "time_leaving": time_leaving}
 
     def init_model(self, **kwargs: Any) -> None:
-        solver_name = kwargs.get("solver_name", mip.CBC)
+        solver_name = kwargs.get("solver_name", self.solver_name)
         model: mip.Model = mip.Model(
             "GPDP-flow", sense=mip.MINIMIZE, solver_name=solver_name
         )

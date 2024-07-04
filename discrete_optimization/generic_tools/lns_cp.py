@@ -17,6 +17,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
 )
+from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lns_tools import (
     BaseLNS,
     ConstraintHandler,
@@ -49,15 +50,18 @@ class MznConstraintHandler(ConstraintHandler):
     ) -> Iterable[Any]:
         ...
 
-    @abstractmethod
     def remove_constraints_from_previous_iteration(
         self,
-        solver: MinizincCPSolver,
-        child_instance: Instance,
+        solver: SolverDO,
         previous_constraints: Iterable[Any],
         **kwargs: Any,
     ) -> None:
-        ...
+        """Remove previous constraints.
+
+        Nothing to do for minizinc solvers as the constraints were added only to the child instance.
+
+        """
+        pass
 
 
 class LNS_CP(BaseLNS):
@@ -240,12 +244,3 @@ class ConstraintHandlerMix(MznConstraintHandler):
         return ch.adding_constraint_from_results_store(
             solver, child_instance, result_storage, last_result_store
         )
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: MinizincCPSolver,
-        child_instance: Instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        pass

@@ -112,15 +112,6 @@ class ConstraintHandlerFixColorsCP(MznConstraintHandler):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix
 
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: MinizincCPSolver,
-        child_instance: Instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any
-    ) -> None:
-        pass
-
     def adding_constraint_from_results_store(
         self,
         solver: MinizincCPSolver,

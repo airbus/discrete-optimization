@@ -537,16 +537,3 @@ class NeighborRepairProblems(MznConstraintHandler):
             child_instance.add_string(s)
             list_strings += [s]
         return list_strings
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: Union[
-            CP_RCPSP_MZN_PREEMPTIVE,
-            CP_MS_MRCPSP_MZN_PREEMPTIVE,
-            CP_MRCPSP_MZN_PREEMPTIVE,
-        ],
-        child_instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ):
-        pass

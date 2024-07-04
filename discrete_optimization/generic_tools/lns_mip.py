@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -16,12 +16,41 @@ from discrete_optimization.generic_tools.lns_tools import (
     InitialSolution,
     PostProcessSolution,
 )
-from discrete_optimization.generic_tools.lp_tools import MilpSolver, ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import (
+    GurobiMilpSolver,
+    MilpSolver,
+    MilpSolverName,
+    ParametersMilp,
+    PymipMilpSolver,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class GurobiConstraintHandler(ConstraintHandler):
+    def remove_constraints_from_previous_iteration(
+        self,
+        solver: GurobiMilpSolver,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
+    ) -> None:
+        solver.model.remove(list(previous_constraints))
+        solver.model.update()
+
+
+class PymipConstraintHandler(ConstraintHandler):
+    def remove_constraints_from_previous_iteration(
+        self,
+        solver: PymipMilpSolver,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
+    ) -> None:
+        solver.model.remove(list(previous_constraints))
+        if solver.milp_solver_name == MilpSolverName.GRB:
+            solver.model.solver.update()
 
 
 class LNS_MILP(BaseLNS):

@@ -20,7 +20,6 @@ from discrete_optimization.generic_tools.lp_tools import (
     MilpSolverName,
     ParametersMilp,
     PymipMilpSolver,
-    map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -69,19 +68,25 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
     def __init__(
         self,
         problem: RCPSPModel,
-        lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
+        **kwargs: Any,
     ):
         if problem.is_rcpsp_multimode():
             raise ValueError("this solver is meant for single mode problems")
+
+        # backward compatibility: lp_solver -> milp_solver_name
+        if "lp_solver" in kwargs:
+            milp_solver_name = kwargs["lp_solver"]
+
         super().__init__(
-            problem=problem, params_objective_function=params_objective_function
+            problem=problem,
+            params_objective_function=params_objective_function,
+            milp_solver_name=milp_solver_name,
+            **kwargs,
         )
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
-        self.lp_solver = lp_solver
-        self.solver_name = map_solver[lp_solver]
         self.start_solution: Optional[RCPSPSolution] = None
 
     def init_model(self, **args):
@@ -341,20 +346,25 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
 class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
     hyperparameters = LP_RCPSP.hyperparameters
 
+    problem: RCPSPModel
+
     def __init__(
         self,
         problem: RCPSPModel,
-        lp_solver: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
+        **kwargs: Any,
     ):
-        super().__init__(
+        _BaseLP_MRCPSP.__init__(
+            self,
             problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.lp_solver = lp_solver
-        self.solver_name = map_solver[lp_solver]
+        # backward compatibility: lp_solver -> milp_solver_name
+        if "lp_solver" in kwargs:
+            milp_solver_name = kwargs["lp_solver"]
+        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
 
     def init_model(self, **args):
         args = self.complete_with_default_hyperparameters(args)

@@ -66,13 +66,3 @@ class ConstraintHandlerKnapsack(MznConstraintHandler):
             ]
             child_instance.add_string(list_strings[-1])
         return list_strings
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: MinizincCPSolver,
-        child_instance: Instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any
-    ) -> None:
-        if not isinstance(solver, CPKnapsackMZN2):
-            raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")

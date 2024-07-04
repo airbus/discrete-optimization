@@ -1522,15 +1522,6 @@ class ConstraintHandlerScheduling(MznConstraintHandler):
             list_strings += [s]
         return list_strings
 
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ANY_CP_SOLVER,
-        child_instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ):
-        pass
-
 
 class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
     def __init__(
@@ -1603,26 +1594,8 @@ class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
         child_instance.add_string("constraint sec_objective==max(res_load);\n")
         return list_strings
 
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ANY_CP_SOLVER,
-        child_instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ):
-        pass
-
 
 class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ANY_CP_SOLVER,
-        child_instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ):
-        pass
-
     def __init__(
         self,
         problem: ANY_MSRCPSP,
@@ -1708,15 +1681,6 @@ class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
 
 
 class EquilibrateMultiskillAllocation(MznConstraintHandler):
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ANY_CP_SOLVER,
-        child_instance,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ):
-        pass
-
     def __init__(
         self,
         problem: ANY_MSRCPSP,

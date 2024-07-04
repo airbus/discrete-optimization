@@ -4,7 +4,7 @@
 import contextlib
 import logging
 from abc import abstractmethod
-from typing import Any, Hashable, List, Mapping, Optional
+from typing import Any, Iterable, List, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -35,14 +35,14 @@ class ConstraintHandler(Hyperparametrizable):
     @abstractmethod
     def adding_constraint_from_results_store(
         self, solver: SolverDO, result_storage: ResultStorage, **kwargs: Any
-    ) -> Mapping[Hashable, Any]:
+    ) -> Iterable[Any]:
         ...
 
     @abstractmethod
     def remove_constraints_from_previous_iteration(
         self,
         solver: SolverDO,
-        previous_constraints: Mapping[Hashable, Any],
+        previous_constraints: Iterable[Any],
         **kwargs: Any,
     ) -> None:
         ...
@@ -325,6 +325,7 @@ class BaseLNS(SolverDO):
             stopping = False
 
         result_store: ResultStorage
+        lsn_contraints: Optional[Iterable[Any]] = None
         if not stopping:
             for iteration in range(nb_iteration_lns):
                 logger.info(
@@ -332,7 +333,7 @@ class BaseLNS(SolverDO):
                 )
                 with self.create_submodel() as child:
                     if iteration == 0 and not skip_first_iteration or iteration >= 1:
-                        constraint_iterable = self.constraint_handler.adding_constraint_from_results_store(
+                        lsn_contraints = self.constraint_handler.adding_constraint_from_results_store(
                             solver=self.subsolver,
                             child_instance=child,
                             result_storage=store_lns,
@@ -420,6 +421,10 @@ class BaseLNS(SolverDO):
                     ):
                         logger.info("Finish LNS with maximum no improvement iteration ")
                         break
+                if lsn_contraints is not None:
+                    self.constraint_handler.remove_constraints_from_previous_iteration(
+                        solver=self.subsolver, previous_constraints=lsn_contraints
+                    )
                 # end of step callback: stopping?
                 if skip_first_iteration:
                     step = iteration
