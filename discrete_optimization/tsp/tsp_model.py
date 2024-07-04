@@ -210,12 +210,16 @@ class TSPModel(Problem):
         return objectives
 
     def evaluate(self, var_tsp: SolutionTSP) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+        if None in var_tsp.permutation:
+            return {"length": -1}
         lengths, obj = self.evaluate_function(var_tsp)
         var_tsp.length = obj
         var_tsp.lengths = list(lengths)
         return {"length": obj}
 
     def satisfy(self, var_tsp: SolutionTSP) -> bool:  # type: ignore # avoid isinstance checks for efficiency
+        if None in var_tsp.permutation:
+            return False
         b = (
             var_tsp.start_index == self.start_index
             and var_tsp.end_index == self.end_index
@@ -262,13 +266,21 @@ class TSPModel(Problem):
     def convert_perm_from0_to_original_perm(
         self, perm_from0: Iterable[int]
     ) -> List[int]:
-        perm = [self.original_indices_to_permutation_indices[x] for x in perm_from0]
+        perm = []
+        for i in perm_from0:
+            if i is not None:
+                perm.append(self.original_indices_to_permutation_indices[i])
+            else:
+                perm.append(None)
         return perm
 
     def convert_original_perm_to_perm_from0(self, perm: Iterable[int]) -> List[int]:
-        perm_from0 = [
-            self.original_indices_to_permutation_indices_dict[i] for i in perm
-        ]
+        perm_from0 = []
+        for i in perm:
+            if i is not None:
+                perm_from0.append(self.original_indices_to_permutation_indices_dict[i])
+            else:
+                perm_from0.append(None)
         return perm_from0
 
     def get_solution_type(self) -> Type[Solution]:

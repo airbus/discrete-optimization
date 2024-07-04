@@ -295,6 +295,8 @@ class ColoringProblem(Problem):
 
         Returns: boolean indicating if the solution fulfills the constraint.
         """
+        if None in variable.colors:
+            return False
         if len(self.graph.edges) > 0:
             if variable.colors is None:
                 raise ValueError("variable.colors must not be None")
@@ -374,6 +376,9 @@ class ColoringProblem(Problem):
 
         """
         val = 0
+        for color in variable.colors:
+            if color is None:
+                val += 1
         if len(self.graph.edges) > 0:
             if variable.colors is None:
                 raise ValueError("variable.colors must not be None.")

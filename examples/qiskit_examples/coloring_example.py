@@ -44,6 +44,6 @@ def quantum_coloring():
     sol, fit = res.get_best_solution_fit()
     print(sol)
     print(
-        "Two nodes connected by an edge have never the same color : ",
+        "Two nodes connected by an edge have never the same color and all nodes have a color: ",
         coloringProblem.satisfy(sol),
     )

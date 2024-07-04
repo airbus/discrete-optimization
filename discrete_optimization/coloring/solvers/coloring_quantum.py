@@ -119,7 +119,7 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
 
         x = self._result_to_x(result)
 
-        colors = [0] * self.problem.number_of_nodes
+        colors = [None] * self.problem.number_of_nodes
         nb_color = 0
 
         for node in range(0, self.problem.number_of_nodes):
@@ -130,8 +130,6 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
                     colors[node] = color
                     color_find = True
                 color += 1
-
-            # TODO think about what we want to do when a node has no color
 
         for color in range(0, self.nb_max_color):
             if (
@@ -203,7 +201,7 @@ class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
 
-        # C_j == 1 si la couleur j est choisit au moins une fois
+        # X_i,j == 1 si le noeud i prend la couleur j
 
         var_names = {}
         for i in range(0, self.nb_color):
@@ -249,7 +247,7 @@ class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
 
         x = self._result_to_x(result)
 
-        colors = [0] * self.problem.number_of_nodes
+        colors = [None] * self.problem.number_of_nodes
 
         color_used = set()
 
@@ -262,8 +260,6 @@ class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
                     color_find = True
                     color_used.add(color)
                 color += 1
-
-            # TODO think about what we want to do when a node has no color
 
         sol = ColoringSolution(self.problem, colors=colors, nb_color=len(color_used))
 
