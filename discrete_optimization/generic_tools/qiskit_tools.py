@@ -345,7 +345,6 @@ class QiskitVQESolver(QiskitSolver):
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
-        self.nb_variable = 0
         self.backend = backend
 
     def solve(
@@ -361,15 +360,11 @@ class QiskitVQESolver(QiskitSolver):
         if backend is not None:
             self.backend = backend
 
-        if self.quadratic_programm is None or self.nb_variable == 0:
+        if self.quadratic_programm is None:
             self.init_model()
             if self.quadratic_programm is None:
                 raise RuntimeError(
                     "self.quadratic_programm must not be None after self.init_model()."
-                )
-            if self.nb_variable == 0:
-                raise RuntimeError(
-                    "self.variable must not be 0 after self.init_model()."
                 )
 
         conv = QuadraticProgramToQubo()

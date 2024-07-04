@@ -47,7 +47,6 @@ else:
 class MisQiskit(OptimizationApplication):
     def __init__(self, problem: MisProblem) -> None:
         self.problem = problem
-        self.nb_variable = self.problem.number_nodes
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]) -> MisSolution:
         return MisSolution(problem=self.problem, chosen=self._result_to_x(result))
@@ -105,7 +104,6 @@ class VQEMisSolver(MisSolver, QiskitVQESolver):
 
     def init_model(self):
         self.quadratic_programm = self.mis_qiskit.to_quadratic_program()
-        self.nb_variable = self.mis_qiskit.nb_variable
 
     def retrieve_current_solution(self, result) -> Solution:
         return self.mis_qiskit.interpret(result)

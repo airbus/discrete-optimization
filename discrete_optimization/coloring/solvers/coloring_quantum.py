@@ -52,9 +52,6 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
         if nb_max_color is None:
             nb_max_color = self.problem.number_of_nodes
         self.nb_max_color = nb_max_color
-        self.nb_variable = (
-            self.problem.number_of_nodes * self.nb_max_color + self.nb_max_color
-        )
 
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
@@ -180,7 +177,6 @@ class VQEColoringSolver_MinimizeNbColor(SolverColoring, QiskitVQESolver):
 
     def init_model(self):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
-        self.nb_variable = self.coloring_qiskit.nb_variable
 
     def retrieve_current_solution(self, result) -> Solution:
         return self.coloring_qiskit.interpret(result)
@@ -196,7 +192,6 @@ class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
         if nb_color is None:
             nb_color = self.problem.number_of_nodes
         self.nb_color = nb_color
-        self.nb_variable = self.problem.number_of_nodes * self.nb_color
 
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
@@ -299,7 +294,6 @@ class VQEColoringSolver_FeasibleNbColor(SolverColoring, QiskitVQESolver):
 
     def init_model(self):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
-        self.nb_variable = self.coloring_qiskit.nb_variable
 
     def retrieve_current_solution(self, result) -> Solution:
         return self.coloring_qiskit.interpret(result)
