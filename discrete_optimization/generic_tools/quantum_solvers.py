@@ -22,6 +22,8 @@ from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
     QAOAMisSolver,
     VQEMisSolver,
 )
+from discrete_optimization.tsp.solver.tsp_quantum import QAOATSPSolver, VQETSPSolver
+from discrete_optimization.tsp.tsp_model import TSPModel2D
 
 solvers_coloring: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
@@ -67,6 +69,22 @@ solvers_mis: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     ],
 }
 
+
+solvers_tsp: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+    "qaoa": [
+        (
+            QAOATSPSolver,
+            {},
+        ),
+    ],
+    "vqe": [
+        (
+            VQETSPSolver,
+            {},
+        ),
+    ],
+}
+
 solvers_map_mis = {}
 for key in solvers_mis:
     for solver, param in solvers_mis[key]:
@@ -74,7 +92,7 @@ for key in solvers_mis:
 
 
 def solve(
-    method: Type[QiskitSolver], problem: MisProblem, **kwargs: Any
+    method: Type[QiskitSolver], problem: Union[MisProblem, TSPModel2D], **kwargs: Any
 ) -> ResultStorage:
     """Solve a problem instance with a given class of solver.
 
