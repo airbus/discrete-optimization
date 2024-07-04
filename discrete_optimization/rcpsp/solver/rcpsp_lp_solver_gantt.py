@@ -153,20 +153,24 @@ class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
         self,
         problem: RCPSPModel,
         rcpsp_solution: RCPSPSolution,
-        lp_solver=MilpSolverName.CBC,
+        milp_solver_name=MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        super().__init__(
+        _Base_LP_MRCPSP_GANTT.__init__(
+            self,
             problem=problem,
             rcpsp_solution=rcpsp_solution,
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.lp_solver = lp_solver
+        # backward compatibility: lp_solver -> milp_solver_name
+        if "lp_solver" in kwargs:
+            milp_solver_name = kwargs["lp_solver"]
+        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
 
     def init_model(self, **args):
-        self.model = Model(sense=MINIMIZE, solver_name=map_solver[self.lp_solver])
+        self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
         self.ressource_id_usage = {
             k: {i: {} for i in range(len(self.problem.calendar_details[k]))}
             for k in self.problem.calendar_details.keys()

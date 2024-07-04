@@ -17,7 +17,10 @@ from discrete_optimization.facility.facility_model import (
     FacilitySolution,
 )
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Problem,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
@@ -28,7 +31,6 @@ from discrete_optimization.generic_tools.lp_tools import (
     MilpSolverName,
     ParametersMilp,
     PymipMilpSolver,
-    map_solver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -448,20 +450,22 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
 
     """
 
+    problem: FacilityProblem
+
     def __init__(
         self,
         problem: FacilityProblem,
-        milp_solver_name: MilpSolverName,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         **kwargs: Any,
     ):
-        super().__init__(
+        _LPFacilitySolverBase.__init__(
+            self,
             problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.milp_solver_name = milp_solver_name
-        self.solver_name = map_solver[milp_solver_name]
+        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
 
     def init_model(self, **kwargs: Any) -> None:
         nb_facilities = self.problem.facility_count

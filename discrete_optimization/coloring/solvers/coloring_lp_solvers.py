@@ -21,7 +21,10 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Problem,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
@@ -30,7 +33,6 @@ from discrete_optimization.generic_tools.lp_tools import (
     MilpSolver,
     MilpSolverName,
     PymipMilpSolver,
-    map_solver,
 )
 
 try:
@@ -149,7 +151,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
     """Coloring LP solver based on gurobipy library.
 
     Attributes:
-        coloring_model (ColoringProblem): coloring problem instance to solve
+        problem (ColoringProblem): coloring problem instance to solve
         params_objective_function (ParamsObjectiveFunction): objective function parameters
                 (however this is just used for the ResultStorage creation, not in the optimisation)
 
@@ -321,6 +323,8 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
 
     hyperparameters = _BaseColoringLP.hyperparameters
 
+    problem: ColoringProblem
+
     def __init__(
         self,
         problem: ColoringProblem,
@@ -328,13 +332,13 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
         milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         **kwargs: Any,
     ):
-        super().__init__(
+        _BaseColoringLP.__init__(
+            self,
             problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.milp_solver_name = milp_solver_name
-        self.solver_name = map_solver[milp_solver_name]
+        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)

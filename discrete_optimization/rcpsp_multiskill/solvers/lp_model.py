@@ -34,21 +34,25 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
     def __init__(
         self,
         problem: MS_RCPSPModel,
-        lp_solver: MilpSolverName = MilpSolverName.CBC,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: ParamsObjectiveFunction = None,
         **kwargs,
     ):
+        # backward compatibility: lp_solver -> milp_solver_name
+        if "lp_solver" in kwargs:
+            milp_solver_name = kwargs["lp_solver"]
+
         super().__init__(
-            problem=problem, params_objective_function=params_objective_function
+            problem=problem,
+            params_objective_function=params_objective_function,
+            milp_solver_name=milp_solver_name,
+            **kwargs,
         )
-        self.lp_solver = lp_solver
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
 
     def init_model(self, **args):
-        self.model = Model(
-            name="mrcpsp", sense=MINIMIZE, solver_name=map_solver[self.lp_solver]
-        )
+        self.model = Model(name="mrcpsp", sense=MINIMIZE, solver_name=self.solver_name)
         sorted_tasks = self.problem.tasks_list
         max_time = args.get("max_time", self.problem.horizon)
         max_duration = max_time

@@ -17,7 +17,6 @@ from discrete_optimization.generic_tools.lp_tools import (
     MilpSolver,
     MilpSolverName,
     PymipMilpSolver,
-    map_solver,
 )
 from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.knapsack.knapsack_model import (
@@ -227,20 +226,22 @@ class LPKnapsackCBC(SolverKnapsack):
 
 # Can use GRB or CBC
 class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
+    problem: KnapsackModel
+
     def __init__(
         self,
         problem: KnapsackModel,
-        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
         **kwargs: Any,
     ):
-        super().__init__(
+        _BaseLPKnapsack.__init__(
+            self,
             problem=problem,
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.milp_solver_name = milp_solver_name
-        self.solver_name = map_solver[milp_solver_name]
+        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
 
     def init_model(self, **kwargs: Any) -> None:
         warm_start = kwargs.get("warm_start", {})
