@@ -130,7 +130,7 @@ def test_lns_mm():
     result_store = lns_solver.solve(
         parameters_milp=parameters_milp,
         nb_iteration_lns=10,
-        skip_first_iteration=False,
+        skip_initial_solution_provider=False,
     )
     solution, fit = result_store.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)

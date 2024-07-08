@@ -28,7 +28,7 @@ def example_lns_solver():
     parameters_cp.time_limit = 2
     results = solver.solve(
         nb_iteration_lns=100,
-        skip_first_iteration=False,
+        skip_initial_solution_provider=False,
         stop_first_iteration_if_optimal=False,
         parameters_cp=parameters_cp,
         nb_iteration_no_improvement=200,
@@ -66,7 +66,7 @@ def example_lns_solver_rg300():
     parameters_cp.multiprocess = True
     results = solver.solve(
         nb_iteration_lns=10000,
-        skip_first_iteration=False,
+        skip_initial_solution_provider=False,
         stop_first_iteration_if_optimal=False,
         parameters_cp=parameters_cp,
         nb_iteration_no_improvement=10000,

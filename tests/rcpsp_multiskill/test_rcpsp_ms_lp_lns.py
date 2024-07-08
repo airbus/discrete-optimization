@@ -89,7 +89,7 @@ def test_multiskill_imopse():
         nb_iteration_lns=10,
         nb_iteration_no_improvement=10,
         callbacks=[TimerStopper(total_seconds=200)],
-        skip_first_iteration=False,
+        skip_initial_solution_provider=False,
     )
     solution, fit = result_store.get_best_solution_fit()
     model.evaluate(solution)
