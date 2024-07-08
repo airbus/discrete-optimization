@@ -92,7 +92,7 @@ class LNS_MILP(BaseLNS):
         nb_iteration_lns: int,
         parameters_milp: Optional[ParametersMilp] = None,
         nb_iteration_no_improvement: Optional[int] = None,
-        skip_first_iteration: Optional[bool] = False,
+        skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
@@ -104,7 +104,7 @@ class LNS_MILP(BaseLNS):
             nb_iteration_lns=nb_iteration_lns,
             nb_iteration_no_improvement=nb_iteration_no_improvement,
             stop_first_iteration_if_optimal=stop_first_iteration_if_optimal,
-            skip_first_iteration=skip_first_iteration,
+            skip_initial_solution_provider=skip_initial_solution_provider,
             callbacks=callbacks,
             **kwargs,
         )

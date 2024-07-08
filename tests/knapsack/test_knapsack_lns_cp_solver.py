@@ -115,7 +115,7 @@ def test_knapsack_lns_timer():
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
         nb_iteration_lns=200,
-        skip_first_iteration=False,
+        skip_initial_solution_provider=False,
         callbacks=callbacks,
     )
     assert nb_iteration_tracker.nb_iteration <= 6
@@ -136,8 +136,8 @@ class NbIterationTrackerWithAssert(Callback):
         self.nb_iteration += 1
 
 
-@pytest.mark.parametrize("skip_first_iteration", [False, True])
-def test_knapsack_lns_cb_nbiter(skip_first_iteration):
+@pytest.mark.parametrize("skip_initial_solution_provider", [False, True])
+def test_knapsack_lns_cb_nbiter(skip_initial_solution_provider):
     model_file = [f for f in get_data_available() if "ks_30_0" in f][
         0
     ]  # optim result "54939"
@@ -175,7 +175,7 @@ def test_knapsack_lns_cb_nbiter(skip_first_iteration):
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
         nb_iteration_lns=2,
-        skip_first_iteration=skip_first_iteration,
+        skip_initial_solution_provider=skip_initial_solution_provider,
         callbacks=callbacks,
     )
 

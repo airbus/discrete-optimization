@@ -106,12 +106,12 @@ class LNS_CP(BaseLNS):
 
     def solve_with_subsolver(
         self,
-        iteration: int,
+        no_previous_solution: bool,
         instance: Instance,
         parameters_cp: ParametersCP,
         **kwargs: Any,
     ) -> ResultStorage:
-        if iteration == 0:
+        if no_previous_solution:
             parameters_cp0 = parameters_cp.copy()
             parameters_cp0.time_limit = parameters_cp.time_limit_iter0
             result_store = self.subsolver.solve(
@@ -128,7 +128,7 @@ class LNS_CP(BaseLNS):
         nb_iteration_lns: int,
         parameters_cp: Optional[ParametersCP] = None,
         nb_iteration_no_improvement: Optional[int] = None,
-        skip_first_iteration: bool = False,
+        skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
@@ -139,7 +139,7 @@ class LNS_CP(BaseLNS):
             parameters_cp=parameters_cp,
             nb_iteration_lns=nb_iteration_lns,
             nb_iteration_no_improvement=nb_iteration_no_improvement,
-            skip_first_iteration=skip_first_iteration,
+            skip_initial_solution_provider=skip_initial_solution_provider,
             stop_first_iteration_if_optimal=stop_first_iteration_if_optimal,
             callbacks=callbacks,
             **kwargs,

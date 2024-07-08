@@ -112,7 +112,7 @@ class BaseLNS(SolverDO):
             "initial_solution_provider_cls",
             choices=[],
             default=None,
-            depends_on=("skip_first_iteration", [False]),
+            depends_on=("skip_initial_solution_provider", [False]),
         ),
         SubBrickKwargsHyperparameter(
             "initial_solution_provider_kwargs",
@@ -137,7 +137,7 @@ class BaseLNS(SolverDO):
             subbrick_hyperparameter="post_process_solution_cls",
         ),
         CategoricalHyperparameter(
-            name="skip_first_iteration", choices=[True, False], default=False
+            name="skip_initial_solution_provider", choices=[True, False], default=False
         ),
     ]
 
@@ -255,12 +255,12 @@ class BaseLNS(SolverDO):
         return _dummy_contextmanager()
 
     def solve_with_subsolver(
-        self, iteration: int, instance: Any, **kwargs: Any
+        self, no_previous_solution: bool, instance: Any, **kwargs: Any
     ) -> ResultStorage:
         """Solve with the subsolver.
 
         Args:
-            iteration: current iteration number
+            no_previous_solution: do not start from a previously found solution
             instance: current instance of the model (only for minizinc)
             **kwargs: kwargs passed to this lns solver `solve()`
 
@@ -273,7 +273,7 @@ class BaseLNS(SolverDO):
         self,
         nb_iteration_lns: int,
         nb_iteration_no_improvement: Optional[int] = None,
-        skip_first_iteration: bool = False,
+        skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
@@ -294,11 +294,10 @@ class BaseLNS(SolverDO):
 
         self.init_model(**kwargs)
 
-        if not skip_first_iteration:
-            if self.initial_solution_provider is None:
-                raise ValueError(
-                    "self.initial_solution_provider cannot be None if not skip_first_iteration."
-                )
+        if (
+            not skip_initial_solution_provider
+            and self.initial_solution_provider is not None
+        ):
             store_lns = self.initial_solution_provider.get_starting_solution()
             store_lns = self.post_process_solution.build_other_solution(store_lns)
             init_solution, objective = store_lns.get_best_solution_fit()
@@ -332,7 +331,11 @@ class BaseLNS(SolverDO):
                     f"Starting iteration n° {iteration} current objective {best_objective}"
                 )
                 with self.create_submodel() as child:
-                    if iteration == 0 and not skip_first_iteration or iteration >= 1:
+                    if (
+                        iteration == 0
+                        and not skip_initial_solution_provider
+                        or iteration >= 1
+                    ):
                         lsn_contraints = self.constraint_handler.adding_constraint_from_results_store(
                             solver=self.subsolver,
                             child_instance=child,
@@ -342,8 +345,13 @@ class BaseLNS(SolverDO):
                             else result_store,
                         )
                     try:
+                        no_previous_solution = (
+                            skip_initial_solution_provider and iteration == 0
+                        )
                         result_store = self.solve_with_subsolver(
-                            iteration=0, instance=child, **kwargs
+                            no_previous_solution=no_previous_solution,
+                            instance=child,
+                            **kwargs,
                         )
                         logger.info(f"iteration n° {iteration} Solved !!!")
                         if hasattr(self.subsolver, "status_solver"):
@@ -393,7 +401,7 @@ class BaseLNS(SolverDO):
                                 best_objective = fit
                             elif sense == ModeOptim.MINIMIZATION:
                                 current_nb_iteration_no_improvement += 1
-                            if skip_first_iteration and iteration == 0:
+                            if skip_initial_solution_provider and iteration == 0:
                                 store_lns = result_store
                             else:
                                 for s, f in list(result_store):
@@ -401,7 +409,7 @@ class BaseLNS(SolverDO):
                         else:
                             current_nb_iteration_no_improvement += 1
                         if (
-                            skip_first_iteration
+                            skip_initial_solution_provider
                             and self.subsolver.is_optimal()
                             and iteration == 0
                             and self.problem.satisfy(bsol)
@@ -426,7 +434,7 @@ class BaseLNS(SolverDO):
                         solver=self.subsolver, previous_constraints=lsn_contraints
                     )
                 # end of step callback: stopping?
-                if skip_first_iteration:
+                if skip_initial_solution_provider:
                     step = iteration
                 else:
                     step = iteration + 1
