@@ -9,7 +9,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import OrtoolsCPSatConstraintHandler
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -121,6 +120,10 @@ class MisOrtoolsCPSatConstraintHandlerDestroy(OrtoolsCPSatConstraintHandler):
 
 
 class MisOrtoolsCPSatConstraintHandlerAllVars(OrtoolsCPSatConstraintHandler):
+    """
+    Fix fraction of all variables, not only the ones already chosen.
+    """
+
     hyperparameters = [
         FloatHyperparameter(name="fraction_to_fix", default=0.9, low=0.0, high=1.0),
     ]
