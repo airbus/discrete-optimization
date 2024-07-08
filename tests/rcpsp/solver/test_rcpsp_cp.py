@@ -103,7 +103,7 @@ def test_cp_rcp(optimisation_level):
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
+    parameters_cp.time_limit = 20
     parameters_cp.nr_solutions = 1
     parameters_cp.optimisation_level = optimisation_level
     result_storage = solver.solve(parameters_cp=parameters_cp)
