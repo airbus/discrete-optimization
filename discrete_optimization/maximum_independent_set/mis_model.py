@@ -103,6 +103,10 @@ class MisProblem(Problem):
                 v += 1
         return v
 
+    def get_dummy_solution(self) -> MisSolution:
+        chosen = [0] * self.number_nodes
+        return MisSolution(problem=self, chosen=chosen)
+
     def get_attribute_register(self) -> EncodingRegister:
         return EncodingRegister(
             dict_attribute_to_type={
