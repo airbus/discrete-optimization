@@ -196,7 +196,7 @@ class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
 
-        # X_i,j == 1 si le noeud i prend la couleur j
+        # X_i,j == 1 if node i take color j
 
         var_names = {}
         for i in range(0, self.nb_color):
@@ -204,29 +204,20 @@ class ColoringQiskit_FeasibleNbColor(OptimizationApplication):
                 x_new = quadratic_program.binary_var("x" + str(j) + str(i))
                 var_names[(j, i)] = x_new.name
 
-        # on cherche à savoir si il est possible de satisfaire le problème de coloring avec ce nombre de couleur
-
         constant = 0
         linear = {}
         quadratic = {}
 
-        """
-        On va ici intégrer sous forme de pénalité les différentes contraintes afin d'avoir directement une formulation QUBO
-        x1 + ... + xi = 1 devient P(-x1 + ... + -xi + 2x1x2 + ... + 2x1xi + 2x2x3 + .... + 2x2xi + ... + 2x(i-1)xi)
-        x + y <= 1 devient P(xy)
-        où P est un scalaire qui doit idéalement être ni trop petit, ni trop grand (ici on prend le nombre de couleur max autorisé)
-        """
-
         p = self.nb_color
 
-        # chaque noeud doit avoir une unique couleur
+        # each node has a unique color
         for i in range(0, self.problem.number_of_nodes):
             for j in range(0, self.nb_color):
                 quadratic[var_names[(i, j)], var_names[(i, j)]] = -p
                 for k in range(j + 1, self.nb_color):
                     quadratic[var_names[(i, j)], var_names[(i, k)]] = 2 * p
 
-        # deux noeuds adjacents ne peuvent avoir la même couleur
+        # two nodes of an edge can't have the same color
         for edge in self.problem.graph.graph_nx.edges():
             for j in range(0, self.nb_color):
                 quadratic[

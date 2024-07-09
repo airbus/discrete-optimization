@@ -49,7 +49,7 @@ class TSP2dQiskit(OptimizationApplication):
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
 
-        # X_i,j == 1 si le point i est emprunté en j_ième position
+        # X_i,j == 1 if the point i is take in j_ième position
 
         var_names = {}
         for i in range(0, self.problem.length_permutation):
@@ -96,8 +96,8 @@ class TSP2dQiskit(OptimizationApplication):
                         )
                         quadratic[var1, var2] = coeff
 
-        # chaque point doit être pris une fois exactement
-        # chaque position doit être emprunté une fois exactement
+        # each point must be taken exactly one times ( indice i )
+        # each position must be chosen exactly one times ( indice j )
 
         p = 6
 
