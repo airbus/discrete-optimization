@@ -24,10 +24,8 @@ from discrete_optimization.generic_rcpsp_tools.neighbor_tools_rcpsp import (
     ParamsConstraintBuilder,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_RCPSP
-from discrete_optimization.generic_tools.lns_cp import (
-    ConstraintHandlerMix,
-    MznConstraintHandler,
-)
+from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     MS_RCPSPModel,
     MS_RCPSPModel_Variant,
