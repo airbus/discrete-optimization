@@ -5,7 +5,10 @@ import pytest
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.lns_cp import LNS_OrtoolsCPSat
-from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
+from discrete_optimization.generic_tools.lns_tools import (
+    ConstraintHandlerMix,
+    TrivialInitialSolution,
+)
 from discrete_optimization.maximum_independent_set.mis_model import (
     MisProblem,
     MisSolution,
@@ -74,6 +77,47 @@ def test_lns_allvars():
     )
     constraint_handler = MisOrtoolsCPSatConstraintHandlerAllVars(
         problem=mis_model, fraction_to_fix=0.1
+    )
+
+    lns_solver = LNS_OrtoolsCPSat(
+        problem=mis_model,
+        subsolver=solver,
+        initial_solution_provider=initial_solution_provider,
+        constraint_handler=constraint_handler,
+    )
+    result_store = lns_solver.solve(
+        parameters_cp=params_cp,
+        nb_iteration_lns=200,
+        callbacks=[TimerStopper(total_seconds=30)],
+    )
+    solution, fit = result_store.get_best_solution_fit()
+    assert mis_model.satisfy(solution)
+
+
+def test_lns_mix():
+    small_example = [f for f in get_data_available() if "1dc.64" in f][0]
+    mis_model: MisProblem = dimacs_parser_nx(small_example)
+
+    params_cp = ParametersCP.default()
+    params_cp.time_limit = 10
+    params_cp.time_limit_iter0 = 1
+    solver = MisOrtoolsSolver(mis_model)
+    solver.init_model()
+
+    initial_solution_provider = TrivialInitialSolution(
+        solver.create_result_storage(
+            list_solution_fits=[(mis_model.get_dummy_solution(), 0.0)]
+        )
+    )
+    list_constraints_handler = [
+        MisOrtoolsCPSatConstraintHandlerAllVars(problem=mis_model, fraction_to_fix=0.1),
+        MisOrtoolsCPSatConstraintHandler(problem=mis_model, fraction_to_fix=0.1),
+    ]
+    constraint_handler = ConstraintHandlerMix(
+        problem=mis_model,
+        list_constraints_handler=list_constraints_handler,
+        list_proba=[1 / len(list_constraints_handler)] * len(list_constraints_handler),
+        update_proba=False,
     )
 
     lns_solver = LNS_OrtoolsCPSat(
