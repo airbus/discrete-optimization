@@ -1,10 +1,10 @@
 import logging
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
-from scipy.optimize import minimize
 from gurobipy import Model
+from scipy.optimize import minimize
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -21,10 +21,10 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
+from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 
 logger = logging.getLogger(__name__)
 
@@ -46,25 +46,23 @@ except ImportError:
     )
     logger.warning(msg)
 
-
     class QiskitQAOASolver(SolverDO):
         def __init__(
-                self,
-                problem: Problem,
-                params_objective_function: Optional[ParamsObjectiveFunction] = None,
-                backend: Optional = None,
-                **kwargs: Any,
+            self,
+            problem: Problem,
+            params_objective_function: Optional[ParamsObjectiveFunction] = None,
+            backend: Optional = None,
+            **kwargs: Any,
         ):
             raise RuntimeError(msg)
 
-
     class QiskitVQESolver(SolverDO):
         def __init__(
-                self,
-                problem: Problem,
-                params_objective_function: Optional[ParamsObjectiveFunction] = None,
-                backend: Optional = None,
-                **kwargs: Any,
+            self,
+            problem: Problem,
+            params_objective_function: Optional[ParamsObjectiveFunction] = None,
+            backend: Optional = None,
+            **kwargs: Any,
         ):
             raise RuntimeError(msg)
 
@@ -115,7 +113,7 @@ def cost_func(params, ansatz, hamiltonian, estimator, callback_dict):
 
 
 def execute_ansatz_with_Hamiltonian(
-        backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
+    backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
 ) -> np.ndarray:
     """
     @param backend: the backend use to run the circuit (simulator or real device)
@@ -229,9 +227,9 @@ def execute_ansatz_with_Hamiltonian(
 
 class QiskitSolver(SolverDO):
     def __init__(
-            self,
-            problem: Problem,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         super().__init__(problem, params_objective_function)
 
@@ -253,21 +251,21 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
     ]
 
     def __init__(
-            self,
-            problem: Problem,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
-            backend: Optional = None,
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
         self.backend = backend
 
     def solve(
-            self,
-            callbacks: Optional[List[Callback]] = None,
-            backend: Optional = None,
-            use_session: Optional[bool] = False,
-            **kwargs: Any,
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        backend: Optional = None,
+        use_session: Optional[bool] = False,
+        **kwargs: Any,
     ) -> ResultStorage:
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -344,21 +342,21 @@ class QiskitVQESolver(QiskitSolver):
     ]
 
     def __init__(
-            self,
-            problem: Problem,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
-            backend: Optional = None,
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
     ):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
         self.backend = backend
 
     def solve(
-            self,
-            callbacks: Optional[List[Callback]] = None,
-            backend: Optional = None,
-            use_session: Optional[bool] = False,
-            **kwargs: Any,
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        backend: Optional = None,
+        use_session: Optional[bool] = False,
+        **kwargs: Any,
     ) -> ResultStorage:
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -414,14 +412,13 @@ def gurobi_to_qubo(model):
 
 
 class GeneralQAOASolver(QiskitQAOASolver):
-
     def __init__(
-            self,
-            problem: Problem,
-            model: Union[Model, GurobiMilpSolver],
-            retrieve_solution: Callable,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
-            backend: Optional = None,
+        self,
+        problem: Problem,
+        model: Union[Model, GurobiMilpSolver],
+        retrieve_solution: Callable,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
     ):
         super().__init__(problem, params_objective_function, backend=backend)
         self.quadratic_programm = None
@@ -440,14 +437,13 @@ class GeneralQAOASolver(QiskitQAOASolver):
 
 
 class GeneralVQESolver(QiskitVQESolver):
-
     def __init__(
-            self,
-            problem: Problem,
-            model: Union[Model, GurobiMilpSolver],
-            retrieve_solution: Callable,
-            params_objective_function: Optional[ParamsObjectiveFunction] = None,
-            backend: Optional = None,
+        self,
+        problem: Problem,
+        model: Union[Model, GurobiMilpSolver],
+        retrieve_solution: Callable,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        backend: Optional = None,
     ):
         super().__init__(problem, params_objective_function, backend=backend)
         self.quadratic_programm = None

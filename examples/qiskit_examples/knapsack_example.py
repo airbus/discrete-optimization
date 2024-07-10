@@ -19,7 +19,7 @@ def knapsack_example():
     i5 = Item(4, 5, 3)
     i6 = Item(5, 2, 1)
 
-    # solving the knapsack problem using the QAOA algorithm
+    # solving the knapsack problem using the VQE algorithm
     knapsackProblem = KnapsackModel([i1, i2, i3, i4, i5, i6], max_capacity)
     knapsackSolver = VQEKnapsackSolver(knapsackProblem)
     knapsackSolver.init_model()

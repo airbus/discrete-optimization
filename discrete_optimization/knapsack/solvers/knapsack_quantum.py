@@ -7,23 +7,33 @@ from typing import Optional, Union
 
 import numpy as np
 
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+)
 from discrete_optimization.generic_tools.qiskit_tools import (
     QiskitQAOASolver,
     QiskitVQESolver,
     qiskit_available,
 )
-from discrete_optimization.knapsack.knapsack_model import KnapsackModel, KnapsackSolution
+from discrete_optimization.knapsack.knapsack_model import (
+    KnapsackModel,
+    KnapsackSolution,
+)
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
-
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction, Solution
 
 logger = logging.getLogger(__name__)
 
 if qiskit_available:
     from qiskit_optimization import QuadraticProgram
-    from qiskit_optimization.converters import QuadraticProgramToQubo, InequalityToEquality, MaximizeToMinimize, IntegerToBinary
     from qiskit_optimization.algorithms import OptimizationResult
     from qiskit_optimization.applications import OptimizationApplication
+    from qiskit_optimization.converters import (
+        InequalityToEquality,
+        IntegerToBinary,
+        MaximizeToMinimize,
+        QuadraticProgramToQubo,
+    )
 else:
     msg = (
         "KnapsackQiskit, QAOAKnapsackSolver, VQEKnapsackSolver, "
@@ -38,7 +48,6 @@ else:
 
 
 class KnapsackQiskit(OptimizationApplication):
-
     def __init__(self, problem: KnapsackModel) -> None:
         """
         Args:
@@ -88,14 +97,27 @@ class KnapsackQiskit(OptimizationApplication):
 
             weight = 2 * row[i] * self.problem.max_capacity - row[i] ** 2
             if i < self.problem.nb_items:
-                quadratic[quadratic_program.get_variable(i).name, quadratic_program.get_variable(i).name] += p * weight
+                quadratic[
+                    quadratic_program.get_variable(i).name,
+                    quadratic_program.get_variable(i).name,
+                ] += (
+                    p * weight
+                )
             else:
                 # we give less importance to slack variables, to avoid that it will be more interisting to chose one.
-                quadratic[quadratic_program.get_variable(i).name, quadratic_program.get_variable(i).name] = p
+                quadratic[
+                    quadratic_program.get_variable(i).name,
+                    quadratic_program.get_variable(i).name,
+                ] = p
 
-            for j in range(i+1, (quadratic_program.get_num_vars())):
-                weight = row[i]*row[j]
-                quadratic[quadratic_program.get_variable(i).name, quadratic_program.get_variable(j).name] = -2 * p * weight
+            for j in range(i + 1, (quadratic_program.get_num_vars())):
+                weight = row[i] * row[j]
+                quadratic[
+                    quadratic_program.get_variable(i).name,
+                    quadratic_program.get_variable(j).name,
+                ] = (
+                    -2 * p * weight
+                )
 
         quadratic_program.remove_linear_constraint(0)
 
@@ -108,7 +130,7 @@ class KnapsackQiskit(OptimizationApplication):
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
 
         print(result)
-        list_taken = list(self._result_to_x(result))[:self.problem.nb_items]
+        list_taken = list(self._result_to_x(result))[: self.problem.nb_items]
 
         objective = 0
         weight = 0
@@ -129,8 +151,11 @@ class KnapsackQiskit(OptimizationApplication):
 
 
 class QAOAKnapsackSolver(SolverKnapsack, QiskitQAOASolver):
-
-    def __init__(self, problem: KnapsackModel, params_objective_function: Optional[ParamsObjectiveFunction] = None):
+    def __init__(
+        self,
+        problem: KnapsackModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         super().__init__(problem, params_objective_function)
         self.knapsack_qiskit = KnapsackQiskit(problem)
 
@@ -142,17 +167,16 @@ class QAOAKnapsackSolver(SolverKnapsack, QiskitQAOASolver):
 
 
 class VQEKnapsackSolver(SolverKnapsack, QiskitVQESolver):
-
-    def __init__(self, problem: KnapsackModel, params_objective_function: Optional[ParamsObjectiveFunction] = None):
+    def __init__(
+        self,
+        problem: KnapsackModel,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         super().__init__(problem, params_objective_function)
         self.knapsack_qiskit = KnapsackQiskit(problem)
 
     def init_model(self):
         self.quadratic_programm = self.knapsack_qiskit.to_quadratic_program()
-        self.nb_variable = self.knapsack_qiskit.nb_variable
 
     def retrieve_current_solution(self, result) -> Solution:
         return self.knapsack_qiskit.interpret(result)
-
-
-

@@ -17,6 +17,11 @@ from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.knapsack.knapsack_model import KnapsackModel
+from discrete_optimization.knapsack.solvers.knapsack_quantum import (
+    QAOAKnapsackSolver,
+    VQEKnapsackSolver,
+)
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
     QAOAMisSolver,
@@ -69,6 +74,11 @@ solvers_mis: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     ],
 }
 
+solvers_map_mis = {}
+for key in solvers_mis:
+    for solver, param in solvers_mis[key]:
+        solvers_map_mis[solver] = (key, param)
+
 
 solvers_tsp: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
@@ -85,14 +95,36 @@ solvers_tsp: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     ],
 }
 
-solvers_map_mis = {}
+solvers_map_tsp = {}
 for key in solvers_mis:
-    for solver, param in solvers_mis[key]:
+    for solver, param in solvers_tsp[key]:
+        solvers_map_mis[solver] = (key, param)
+
+solvers_knapsack: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+    "qaoa": [
+        (
+            QAOAKnapsackSolver,
+            {},
+        ),
+    ],
+    "vqe": [
+        (
+            VQEKnapsackSolver,
+            {},
+        ),
+    ],
+}
+
+solvers_map_knapsack = {}
+for key in solvers_mis:
+    for solver, param in solvers_knapsack[key]:
         solvers_map_mis[solver] = (key, param)
 
 
 def solve(
-    method: Type[QiskitSolver], problem: Union[MisProblem, TSPModel2D], **kwargs: Any
+    method: Type[QiskitSolver],
+    problem: Union[MisProblem, TSPModel2D, KnapsackModel],
+    **kwargs: Any
 ) -> ResultStorage:
     """Solve a problem instance with a given class of solver.
 
