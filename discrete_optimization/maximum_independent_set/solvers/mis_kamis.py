@@ -81,9 +81,10 @@ class MisKamisSolver(MisSolver):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         if folder_ is None:
-            warnings.warn(
+            logger.warning(
                 'The environment variable "KAMIS_DEPLOY" is not define, you need to define it as the path to the folder where are Kamis executable'
             )
+            raise Exception("Need to define KAMIS_DEPLOY environment variable")
 
         time_limit = kwargs.get("time_limit", 60)
         method = kwargs["method"]
@@ -102,7 +103,7 @@ class MisKamisSolver(MisSolver):
         )
 
         # Launch the command and wait for it to finish
-        print("Launching command")
+        logger.info("Launching command line of kamis solver")
         try:
             result = subprocess.run(
                 command, shell=True, check=True, timeout=time_limit + 50
@@ -122,8 +123,8 @@ class MisKamisSolver(MisSolver):
                 [(sol, fit)],
             )
         except:
-            print(
-                "A problem has been encountered, exceptionally Kamis ignored time-out"
+            logger.error(
+                "A problem has been encountered calling kamis, exceptionally Kamis ignored time-out"
             )
             sol = MisSolution(problem=self.problem, chosen=[])
             fit = self.aggreg_from_sol(sol)
