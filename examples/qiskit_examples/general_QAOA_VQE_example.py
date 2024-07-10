@@ -1,8 +1,16 @@
 import networkx as nx
 
-from discrete_optimization.generic_tools.qiskit_tools import GeneralQAOASolver, GeneralVQESolver
-from discrete_optimization.maximum_independent_set.mis_model import MisProblem, MisSolution
-from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import MisMilpSolver
+from discrete_optimization.generic_tools.qiskit_tools import (
+    GeneralQAOASolver,
+    GeneralVQESolver,
+)
+from discrete_optimization.maximum_independent_set.mis_model import (
+    MisProblem,
+    MisSolution,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
+    MisMilpSolver,
+)
 
 
 def quantum_generalQAOA():
@@ -31,7 +39,9 @@ def quantum_generalQAOA():
         return MisSolution(problem=misProblem, chosen=x)
 
     # we create an instance of a GeneralQAOASolver
-    misSolver = GeneralQAOASolver(problem=misProblem, model=milpSolver, retrieve_solution=fun)
+    misSolver = GeneralQAOASolver(
+        problem=misProblem, model=milpSolver, retrieve_solution=fun
+    )
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     misSolver.init_model()
     # we solve the mis problem
@@ -68,7 +78,9 @@ def quantum_generalVQE():
         return MisSolution(problem=misProblem, chosen=x)
 
     # we create an instance of a GeneralQAOASolver
-    misSolver = GeneralVQESolver(problem=misProblem, model=milpSolver, retrieve_solution=fun)
+    misSolver = GeneralVQESolver(
+        problem=misProblem, model=milpSolver, retrieve_solution=fun
+    )
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     misSolver.init_model()
     # we solve the mis problem

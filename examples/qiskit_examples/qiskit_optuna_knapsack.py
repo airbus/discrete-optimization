@@ -30,8 +30,11 @@ from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
     TimedPercentilePruner,
 )
 from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
-from discrete_optimization.knapsack.solvers.knapsack_quantum import QAOAKnapsackSolver, VQEKnapsackSolver
 from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
+from discrete_optimization.knapsack.solvers.knapsack_quantum import (
+    QAOAKnapsackSolver,
+    VQEKnapsackSolver,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")

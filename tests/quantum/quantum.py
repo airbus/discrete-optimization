@@ -14,9 +14,11 @@ from discrete_optimization.generic_tools.quantum_solvers import (
     solve,
     solve_coloring,
     solvers_map_coloring,
+    solvers_map_knapsack,
     solvers_map_mis,
     solvers_map_tsp,
 )
+from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
 
@@ -83,6 +85,29 @@ def test_solver_TSP(solver_class):
     sol, fit = results.get_best_solution_fit()
 
 
+@pytest.mark.skipif(
+    not qiskit_available, reason="You need Qiskit modules to this test."
+)
+@pytest.mark.parametrize("solver_class", solvers_map_knapsack)
+def test_solver_Knapsack(solver_class):
+
+    max_capacity = 10
+
+    i1 = Item(0, 4, 2)
+    i2 = Item(1, 5, 2)
+    i3 = Item(2, 4, 3)
+    i4 = Item(3, 2, 1)
+    i5 = Item(4, 5, 3)
+    i6 = Item(5, 2, 1)
+    knapsackProblem = KnapsackModel([i1, i2, i3, i4, i5, i6], max_capacity)
+    results = solve(
+        method=solver_class, problem=knapsackProblem, **solvers_map_mis[solver_class][1]
+    )
+    sol, fit = results.get_best_solution_fit()
+
+
 if __name__ == "__main__":
     test_solvers_coloring()
     test_solvers_mis()
+    test_solver_TSP()
+    test_solver_Knapsack()
