@@ -249,6 +249,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
         # TODO rajouter initial_point et initial_bound dans les hyperparams ?
         # TODO add mixer_operator comme hyperparam
+        # TODO QAOA using Cobyla optimizer seems stop to soon, no respect of maxiter or tol, no problem with VQE
     ]
 
     def __init__(
