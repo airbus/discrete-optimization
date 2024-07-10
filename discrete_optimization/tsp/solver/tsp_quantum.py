@@ -99,7 +99,7 @@ class TSP2dQiskit(OptimizationApplication):
         # each point must be taken exactly one times ( indice i )
         # each position must be chosen exactly one times ( indice j )
 
-        p = 6
+        p = self.problem.evaluate(self.problem.get_dummy_solution())["length"]
 
         for i in range(0, self.problem.length_permutation):
             for j in range(0, self.problem.length_permutation):

@@ -283,8 +283,10 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
                     "self.quadratic_programm must not be None after self.init_model()."
                 )
 
+        # if needed, in the most case the self.quadratic_programm is already in a QUBO form
         conv = QuadraticProgramToQubo()
         qubo = conv.convert(self.quadratic_programm)
+
         hamiltonian, offset = qubo.to_ising()
         ansatz = QAOAAnsatz(hamiltonian, reps=reps)
         """
@@ -370,8 +372,10 @@ class QiskitVQESolver(QiskitSolver):
                     "self.quadratic_programm must not be None after self.init_model()."
                 )
 
+        # if needed, in the most case the self.quadratic_programm is already in a QUBO form
         conv = QuadraticProgramToQubo()
         qubo = conv.convert(self.quadratic_programm)
+
         hamiltonian, offset = qubo.to_ising()
         ansatz = EfficientSU2(hamiltonian.num_qubits)
 
