@@ -143,7 +143,7 @@ class MisOrtoolsCPSatConstraintHandlerAllVars(OrtoolsCPSatConstraintHandler):
         if not isinstance(solver, MisOrtoolsSolver):
             raise ValueError("solver must a MisOrtoolsSolver for this constraint.")
         lns_constraints = []
-        current_solution = result_storage.get_best_solution()
+        current_solution, _ = result_storage.list_solution_fits[-1]
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -152,17 +152,17 @@ class MisOrtoolsCPSatConstraintHandlerAllVars(OrtoolsCPSatConstraintHandler):
             raise ValueError(
                 "result_storage.get_best_solution() " "should be a MisSolution."
             )
-        nb_chosen = sum(current_solution.chosen)
-        idx_chosen = list(np.where(current_solution.chosen)[0])
         subpart_chosen = set(
             random.sample(
-                idx_chosen,
-                int(self.fraction_to_fix * nb_chosen),
+                range(self.problem.number_nodes),
+                int(self.fraction_to_fix * self.problem.number_nodes),
             )
         )
         in_set = solver.variables["in_set"]
         for idx in subpart_chosen:
-            lns_constraints.append(solver.cp_model.Add(in_set[idx] == 0))
+            lns_constraints.append(
+                solver.cp_model.Add(in_set[idx] == current_solution.chosen[idx])
+            )
         return lns_constraints
 
 
