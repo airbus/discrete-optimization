@@ -3,7 +3,16 @@ from abc import abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
-from gurobipy import Model
+
+try:
+    import gurobipy
+except ImportError:
+    gurobi_available = False
+    Model = object
+else:
+    gurobi_available = True
+    from gurobipy import Model
+
 from scipy.optimize import minimize
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
