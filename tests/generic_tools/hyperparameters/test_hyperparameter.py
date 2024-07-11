@@ -245,6 +245,12 @@ def test_get_default_hyperparameters():
     assert kwargs["use_it"]
     assert kwargs["method"] == Method.GREEDY
 
+    kwargs = DummySolverWithNameInKwargs.get_default_hyperparameters()
+    assert kwargs["coeff"] == 1.0
+    assert kwargs["nb"] == 1
+    assert kwargs["use_it"]
+    assert kwargs["method"] == Method.GREEDY
+
 
 def test_complete_with_default_hyperparameters():
     kwargs = {"coeff": 0.5, "toto": "youpi"}
