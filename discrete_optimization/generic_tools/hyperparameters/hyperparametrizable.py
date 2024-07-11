@@ -95,13 +95,18 @@ class Hyperparametrizable:
                 By default, all available hyperparameters will be suggested.
 
         Returns:
-            a mapping between hyperparameter name and its default value (None if not specified)
+            a mapping between hyperparameter's name_in_kwargs and its default value (None if not specified)
 
         """
         if names is None:
             names = cls.get_hyperparameters_names()
         hyperparameters_by_names = cls.get_hyperparameters_by_name()
-        return {name: hyperparameters_by_names[name].default for name in names}
+        return {
+            hyperparameters_by_names[name]
+            .name_in_kwargs: hyperparameters_by_names[name]
+            .default
+            for name in names
+        }
 
     @classmethod
     def complete_with_default_hyperparameters(
@@ -110,7 +115,7 @@ class Hyperparametrizable:
         """Add missing hyperparameters to kwargs by using default values
 
         Args:
-            kwargs: keyword arguments to complete (for `__init__`, `init_model`, or `solve`)
+            kwargs: keyword arguments to complete (e.g. for `__init__`, `init_model`, or `solve`)
             names: names of the hyperparameters to add if missing.
                 By default, all available hyperparameters.
 
