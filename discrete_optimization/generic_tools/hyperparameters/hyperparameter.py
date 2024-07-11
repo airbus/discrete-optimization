@@ -411,6 +411,7 @@ class EnumHyperparameter(CategoricalHyperparameter):
             depends_on=depends_on,
             name_in_kwargs=name_in_kwargs,
         )
+        # `Hyperparametrizable.copy_and_update_hyperparameters()` need that __init__ args are also attributes:
         self.enum = enum
 
     def suggest_with_optuna(
@@ -441,7 +442,7 @@ class EnumHyperparameter(CategoricalHyperparameter):
         )
 
 
-class SubBrickHyperparameter(CategoricalHyperparameter):
+class SubBrickClsHyperparameter(CategoricalHyperparameter):
     """Hyperparameter whose values are Hyperparametrizable subclasses themselves.
 
     For instance subsolvers for meta-solvers.
@@ -469,7 +470,7 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
         choices: Union[
             Dict[str, Type[Hyperparametrizable]], Iterable[Type[Hyperparametrizable]]
         ],
-        default: Optional[Any] = None,
+        default: Optional[Type[Hyperparametrizable]] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
         include_module_in_labels: bool = False,
@@ -487,6 +488,7 @@ class SubBrickHyperparameter(CategoricalHyperparameter):
             depends_on=depends_on,
             name_in_kwargs=name_in_kwargs,
         )
+        # `Hyperparametrizable.copy_and_update_hyperparameters()` need that __init__ args are also attributes:
         self.include_module_in_labels = include_module_in_labels
 
     def suggest_with_optuna(
@@ -604,6 +606,10 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
         subbrick_hyperparameter_names = subbrick.get_hyperparameters_names()
         if names is not None:
             names = [name for name in names if name in subbrick_hyperparameter_names]
+        if self.subbrick_hyperparameter is None:
+            prefix = f"{prefix}{self.name}."
+        else:
+            prefix = f"{prefix}{self.subbrick_hyperparameter}.{subbrick.__name__}."
         return subbrick.suggest_hyperparameters_with_optuna(
             trial=trial,
             names=names,
@@ -612,3 +618,116 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
             prefix=prefix,
             **kwargs,  # type: ignore
         )
+
+
+class SubBrickHyperparameter(Hyperparameter):
+    """Hyperparameter whose values are SubBrick instances.
+
+    That is to say
+        - a hyperparametrizable class
+        - a kwargs dict to be used for it in __init_(), init_model(), solve(), ...
+
+
+    This is useful to suggest subsolvers for meta-solvers.
+
+    Under the hood, this hyperparameter will generate the corresponding SubBrickClsHyperparameter and
+    SubBrickKwargsHyperparameter.
+
+    """
+
+    def __init__(
+        self,
+        name: str,
+        choices: Union[
+            Dict[str, Type[Hyperparametrizable]], Iterable[Type[Hyperparametrizable]]
+        ],
+        default: Optional[SubBrick] = None,
+        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        name_in_kwargs: Optional[str] = None,
+        include_module_in_labels: bool = False,
+    ):
+        """
+
+        Args:
+            name: see Hyperparameter doc.
+            choices: see SubBrickClsHyperparameter doc.
+            default: see Hyperparameter doc.
+            depends_on: see Hyperparameter doc.
+            name_in_kwargs: see Hyperparameter doc.
+            include_module_in_labels: See SubBrickClsHyperparameter doc.
+
+        """
+        super().__init__(
+            name=name,
+            default=default,
+            depends_on=depends_on,
+            name_in_kwargs=name_in_kwargs,
+        )
+        self.subbrick_cls_hp = SubBrickClsHyperparameter(
+            name=f"{name}.cls",
+            choices=choices,
+            include_module_in_labels=include_module_in_labels,
+        )
+        self.subbrick_kwargs_hp = SubBrickKwargsHyperparameter(
+            name=f"{name}.kwargs",
+            subbrick_hyperparameter=name,
+        )
+        # `Hyperparametrizable.copy_and_update_hyperparameters()` need that __init__ args are also attributes:
+        self.choices = self.subbrick_cls_hp.choices
+        self.include_module_in_labels = self.subbrick_cls_hp.include_module_in_labels
+
+    def suggest_with_optuna(
+        self,
+        trial: optuna.trial.Trial,
+        choices: Optional[
+            Union[
+                Dict[str, Type[Hyperparametrizable]],
+                Iterable[Type[Hyperparametrizable]],
+            ]
+        ] = None,
+        names: Optional[List[str]] = None,
+        kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        prefix: str = "",
+        **kwargs: Any,
+    ) -> SubBrick:
+        """
+
+        Args:
+            trial: see Hyperparameter doc
+            choices: used by underlying SubBrickClsHyperparameter.suggest_with_optuna
+            names: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
+            kwargs_by_name: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
+            fixed_hyperparameters: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
+            prefix: see Hyperparameter doc.
+            **kwargs: passed to SubBrickClsHyperparameter.suggest_with_optuna
+                and SubBrickKwargsHyperparameter.suggest_with_optuna
+
+        Returns:
+
+        """
+        subbrick_cls = self.subbrick_cls_hp.suggest_with_optuna(
+            trial=trial, choices=choices, prefix=prefix, **kwargs
+        )
+        subbrick_kwargs = self.subbrick_kwargs_hp.suggest_with_optuna(
+            trial=trial,
+            subbrick=subbrick_cls,
+            names=names,
+            kwargs_by_name=kwargs_by_name,
+            fixed_hyperparameters=fixed_hyperparameters,
+            prefix=prefix,
+            **kwargs,
+        )
+        return SubBrick(cls=subbrick_cls, kwargs=subbrick_kwargs)
+
+
+@dataclass
+class SubBrick:
+    """Wrapper class for a hyperparametrizable class and its kwargs.
+
+    Meant to be used as output by `SubBrickHyperparameter.suggest_with_optuna()`.
+
+    """
+
+    cls: Type[Hyperparametrizable]
+    kwargs: Dict[str, Any]

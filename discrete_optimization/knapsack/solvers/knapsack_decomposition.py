@@ -13,7 +13,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
     IntegerHyperparameter,
-    SubBrickHyperparameter,
+    SubBrickClsHyperparameter,
     SubBrickKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -72,13 +72,13 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             name="proportion_to_remove", low=0.0, high=1.0, default=0.7
         ),
         IntegerHyperparameter(name="nb_iteration", low=0, high=int(10e6), default=100),
-        SubBrickHyperparameter(
+        SubBrickClsHyperparameter(
             name="initial_solver", choices=subsolvers, default=GreedyBest
         ),
         SubBrickKwargsHyperparameter(
             name="initial_solver_kwargs", subbrick_hyperparameter="initial_solver"
         ),
-        SubBrickHyperparameter(
+        SubBrickClsHyperparameter(
             name="root_solver", choices=subsolvers, default=GreedyBest
         ),
         SubBrickKwargsHyperparameter(

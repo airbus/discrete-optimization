@@ -21,7 +21,7 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
-    SubBrickHyperparameter,
+    SubBrickClsHyperparameter,
     SubBrickKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
@@ -108,11 +108,11 @@ class BaseLNS(SolverDO):
     post_process_solution: Optional[PostProcessSolution]
 
     hyperparameters = [
-        SubBrickHyperparameter("subsolver_cls", choices=[], default=None),
+        SubBrickClsHyperparameter("subsolver_cls", choices=[], default=None),
         SubBrickKwargsHyperparameter(
             "subsolver_kwargs", subbrick_hyperparameter="subsolver_cls"
         ),
-        SubBrickHyperparameter(
+        SubBrickClsHyperparameter(
             "initial_solution_provider_cls",
             choices=[],
             default=None,
@@ -122,7 +122,7 @@ class BaseLNS(SolverDO):
             "initial_solution_provider_kwargs",
             subbrick_hyperparameter="initial_solution_provider_cls",
         ),
-        SubBrickHyperparameter(
+        SubBrickClsHyperparameter(
             "constraint_handler_cls",
             choices=[],
             default=None,
@@ -131,7 +131,7 @@ class BaseLNS(SolverDO):
             "constraint_handler_kwargs",
             subbrick_hyperparameter="constraint_handler_cls",
         ),
-        SubBrickHyperparameter(
+        SubBrickClsHyperparameter(
             "post_process_solution_cls",
             choices=[],
             default=TrivialPostProcessSolution,
