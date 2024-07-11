@@ -21,7 +21,9 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
+    SubBrick,
     SubBrickClsHyperparameter,
+    SubBrickHyperparameter,
     SubBrickKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
@@ -108,37 +110,24 @@ class BaseLNS(SolverDO):
     post_process_solution: Optional[PostProcessSolution]
 
     hyperparameters = [
-        SubBrickClsHyperparameter("subsolver_cls", choices=[], default=None),
-        SubBrickKwargsHyperparameter(
-            "subsolver_kwargs", subbrick_hyperparameter="subsolver_cls"
+        SubBrickHyperparameter(
+            name="subsolver", name_in_kwargs="subsolver_subbrick", choices=[]
         ),
-        SubBrickClsHyperparameter(
-            "initial_solution_provider_cls",
+        SubBrickHyperparameter(
+            name="initial_solution_provider",
+            name_in_kwargs="initial_solution_provider_subbrick",
             choices=[],
-            default=None,
             depends_on=("skip_initial_solution_provider", [False]),
         ),
-        SubBrickKwargsHyperparameter(
-            "initial_solution_provider_kwargs",
-            subbrick_hyperparameter="initial_solution_provider_cls",
-        ),
-        SubBrickClsHyperparameter(
-            "constraint_handler_cls",
+        SubBrickHyperparameter(
+            name="constraint_handler",
+            name_in_kwargs="constraint_handler_subbrick",
             choices=[],
-            default=None,
         ),
-        SubBrickKwargsHyperparameter(
-            "constraint_handler_kwargs",
-            subbrick_hyperparameter="constraint_handler_cls",
-        ),
-        SubBrickClsHyperparameter(
-            "post_process_solution_cls",
+        SubBrickHyperparameter(
+            name="post_process_solution",
+            name_in_kwargs="post_process_solution_subbrick",
             choices=[],
-            default=TrivialPostProcessSolution,
-        ),
-        SubBrickKwargsHyperparameter(
-            "post_process_solution_kwargs",
-            subbrick_hyperparameter="post_process_solution_cls",
         ),
         CategoricalHyperparameter(
             name="skip_initial_solution_provider", choices=[True, False], default=False
@@ -161,64 +150,76 @@ class BaseLNS(SolverDO):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         if subsolver is None:
-            if kwargs["subsolver_kwargs"] is None:
-                subsolver_kwargs = kwargs
-            else:
-                subsolver_kwargs = kwargs["subsolver_kwargs"]
-            if kwargs["subsolver_cls"] is None:
+            if kwargs["subsolver_subbrick"] is None:
                 if "build_default_subsolver" in kwargs:
                     subsolver = kwargs["build_default_subsolver"](
-                        self.problem, **subsolver_kwargs
+                        self.problem, **kwargs
                     )
                 else:
                     raise ValueError(
-                        "`subsolver_cls` cannot be None if `subsolver` is not specified."
+                        "`subsolver_subbrick` cannot be None if "
+                        "neither `subsolver` nor `build_default_subsolver` are specified."
                     )
             else:
-                subsolver_cls = kwargs["subsolver_cls"]
+                subsolver_subbrick: SubBrick = kwargs["subsolver_subbrick"]
+                subsolver_cls = subsolver_subbrick.cls
+                subsolver_kwargs = subsolver_subbrick.kwargs
+                if not issubclass(subsolver_cls, SolverDO):
+                    raise ValueError(
+                        "subsolver_subbrick.cls must a subclass of SolverDO"
+                    )
                 subsolver = subsolver_cls(problem=self.problem, **subsolver_kwargs)
                 subsolver.init_model(**subsolver_kwargs)
         self.subsolver = subsolver
 
         if constraint_handler is None:
-            if kwargs["constraint_handler_kwargs"] is None:
-                constraint_handler_kwargs = kwargs
-            else:
-                constraint_handler_kwargs = kwargs["constraint_handler_kwargs"]
-            if kwargs["constraint_handler_cls"] is None:
+            if kwargs["constraint_handler_subbrick"] is None:
                 if "build_default_contraint_handler" in kwargs:
                     constraint_handler = kwargs["build_default_contraint_handler"](
-                        self.problem, **constraint_handler_kwargs
+                        self.problem, **kwargs
                     )
                 else:
                     raise ValueError(
-                        "`constraint_handler_cls` cannot be None if `constraint_handler` is not specified."
+                        "`constraint_handler_cls` cannot be None if "
+                        "neither `constraint_handler` nor `build_default_contraint_handler` are specified."
                     )
             else:
-                constraint_handler_cls = kwargs["constraint_handler_cls"]
+                constraint_handler_subbrick: SubBrick = kwargs[
+                    "constraint_handler_subbrick"
+                ]
+                constraint_handler_cls = constraint_handler_subbrick.cls
+                constraint_handler_kwargs = constraint_handler_subbrick.kwargs
+                if not issubclass(constraint_handler_cls, ConstraintHandler):
+                    raise ValueError(
+                        "constraint_handler_subbrick.cls must a subclass of ConstraintHandler"
+                    )
                 constraint_handler = constraint_handler_cls(
                     problem=self.problem, **constraint_handler_kwargs
                 )
         self.constraint_handler = constraint_handler
 
         if post_process_solution is None:
-            if kwargs["post_process_solution_kwargs"] is None:
-                post_process_solution_kwargs = kwargs
-            else:
-                post_process_solution_kwargs = kwargs["post_process_solution_kwargs"]
-            if kwargs["post_process_solution_cls"] is None:
+            if kwargs["post_process_solution_subbrick"] is None:
                 if "build_default_post_process_solution" in kwargs:
                     post_process_solution = kwargs[
                         "build_default_post_process_solution"
                     ](
                         self.problem,
                         self.params_objective_function,
-                        **post_process_solution_kwargs,
+                        **kwargs,
                     )
                 else:
-                    post_process_solution = None
+                    post_process_solution = None  # will be interpreted as a TrivialPostProcessSolution in solve()
             else:
-                post_process_solution_cls = kwargs["post_process_solution_cls"]
+                post_process_solution_subbrick: SubBrick = kwargs[
+                    "post_process_solution_subbrick"
+                ]
+                post_process_solution_cls = post_process_solution_subbrick.cls
+                post_process_solution_kwargs = post_process_solution_subbrick.kwargs
+                if not issubclass(post_process_solution_cls, PostProcessSolution):
+                    raise ValueError(
+                        "post_process_solution_subbrick.cls must a subclass of PostProcessSolution"
+                    )
                 post_process_solution = post_process_solution_cls(
                     problem=self.problem,
                     params_objective_function=self.params_objective_function,
@@ -227,27 +228,28 @@ class BaseLNS(SolverDO):
         self.post_process_solution = post_process_solution
 
         if initial_solution_provider is None:
-            if kwargs["initial_solution_provider_kwargs"] is None:
-                initial_solution_provider_kwargs = kwargs
-            else:
-                initial_solution_provider_kwargs = kwargs[
-                    "initial_solution_provider_kwargs"
-                ]
-            if kwargs["initial_solution_provider_cls"] is None:
+            # initial_solution_provider_subbrick: Optional[SubBrick] = kwargs.get("initial_solution_provider_subbrick", None)
+            if kwargs["initial_solution_provider_subbrick"] is None:
                 if "build_default_initial_solution_provider" in kwargs:
                     initial_solution_provider = kwargs[
                         "build_default_initial_solution_provider"
                     ](
                         self.problem,
                         self.params_objective_function,
-                        **initial_solution_provider_kwargs,
+                        **kwargs,
                     )
                 else:
                     initial_solution_provider = (
                         None  # ok if solve_lns with skip_first_iteration
                     )
             else:
-                initial_solution_provider_cls = kwargs["initial_solution_provider_cls"]
+                initial_solution_provider_subbrick: SubBrick = kwargs[
+                    "initial_solution_provider_subbrick"
+                ]
+                initial_solution_provider_cls = initial_solution_provider_subbrick.cls
+                initial_solution_provider_kwargs = (
+                    initial_solution_provider_subbrick.kwargs
+                )
                 initial_solution_provider = initial_solution_provider_cls(
                     problem=self.problem,
                     params_objective_function=self.params_objective_function,

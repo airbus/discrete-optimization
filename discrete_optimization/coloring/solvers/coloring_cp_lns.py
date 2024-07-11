@@ -47,6 +47,7 @@ def build_default_constraint_handler(coloring_model: ColoringProblem, **kwargs):
 def build_default_postprocess(
     coloring_model: ColoringProblem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    **kwargs,
 ):
     if coloring_model.has_constraints_coloring:
         return TrivialPostProcessSolution()
@@ -59,6 +60,7 @@ def build_default_postprocess(
 def build_default_initial_solution(
     coloring_model: ColoringProblem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    **kwargs,
 ):
     return InitialColoring(
         problem=coloring_model,
@@ -73,10 +75,10 @@ class LnsCpColoring(LNS_CP, SolverColoring):
     """
 
     hyperparameters = LNS_CP.copy_and_update_hyperparameters(
-        subsolver_cls=dict(choices=[ColoringCP]),
-        initial_solution_provider_cls=dict(choices=[InitialColoring]),
-        constraint_handler_cls=dict(choices=[ConstraintHandlerFixColorsCP]),
-        post_process_solution_cls=dict(
+        subsolver=dict(choices=[ColoringCP]),
+        initial_solution_provider=dict(choices=[InitialColoring]),
+        constraint_handler=dict(choices=[ConstraintHandlerFixColorsCP]),
+        post_process_solution=dict(
             choices=[TrivialPostProcessSolution, PostProcessSolutionColoring]
         ),
     )
@@ -89,7 +91,7 @@ class LnsCpColoring(LNS_CP, SolverColoring):
         constraint_handler: Optional[MznConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem,
