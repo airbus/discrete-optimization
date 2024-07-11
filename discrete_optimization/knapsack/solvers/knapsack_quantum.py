@@ -108,7 +108,9 @@ class KnapsackQiskit(OptimizationApplication):
                 quadratic[
                     quadratic_program.get_variable(i).name,
                     quadratic_program.get_variable(i).name,
-                ] = p
+                ] = (
+                    p * weight
+                )
 
             for j in range(i + 1, (quadratic_program.get_num_vars())):
                 weight = row[i] * row[j]
