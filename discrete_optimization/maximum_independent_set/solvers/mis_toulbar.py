@@ -20,7 +20,7 @@ from discrete_optimization.maximum_independent_set.mis_model import (
     MisProblem,
     MisSolution,
 )
-from discrete_optimization.maximum_independent_set.mis_solvers import MisSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 this_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)

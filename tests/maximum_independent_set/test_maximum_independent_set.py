@@ -1,3 +1,6 @@
+#  Copyright (c) 2024 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
 import logging
 
 import pytest
@@ -7,13 +10,20 @@ from discrete_optimization.maximum_independent_set.mis_parser import (
     dimacs_parser_nx,
     get_data_available,
 )
-from discrete_optimization.maximum_independent_set.mis_solvers import solve, solvers_map
+from discrete_optimization.maximum_independent_set.mis_solvers import (
+    solve,
+    solvers_map,
+    toulbar_available,
+)
 from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
     MisMilpSolver,
     MisQuadraticSolver,
 )
 from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
     MisKamisSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_toulbar import (
+    MisToulbarSolver,
 )
 
 try:
@@ -35,6 +45,8 @@ def test_solvers(solver_class):
         solver_class == MisMilpSolver or solver_class == MisQuadraticSolver
     ) and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
+    if solver_class == MisToulbarSolver and not toulbar_available:
+        pytest.skip("You need Toulbar2 to test this solver.")
     if solver_class == MisKamisSolver and not kamis_available:
         pytest.skip("You need Kamis to test this solver.")
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]

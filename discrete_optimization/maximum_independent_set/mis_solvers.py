@@ -13,6 +13,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
+from discrete_optimization.maximum_independent_set.solvers.mis_asp import MisASPSolver
 from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
     MisMilpSolver,
     MisQuadraticSolver,
@@ -27,6 +28,10 @@ from discrete_optimization.maximum_independent_set.solvers.mis_ortools import (
     MisOrtoolsSolver,
 )
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
+from discrete_optimization.maximum_independent_set.solvers.mis_toulbar import (
+    MisToulbarSolver,
+    toulbar_available,
+)
 
 solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
     "lp": [
@@ -51,6 +56,8 @@ solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
     ],
     "networkX": [(MisNetworkXSolver, {})],
     "kamis": [(MisKamisSolver, {})],
+    "asp": [(MisASPSolver, {"timeout_seconds": 20})],
+    "toulbar": [(MisToulbarSolver, {"time_limit": 20})],
 }
 
 solvers_map = {}
