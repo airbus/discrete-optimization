@@ -92,7 +92,7 @@ def run_decomposition_toulbar():
 
 
 def run_decomposition_gurobi():
-    small_example = [f for f in get_data_available() if "1zc.1024" in f][0]
+    small_example = [f for f in get_data_available() if "1dc.2048" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
