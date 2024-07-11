@@ -59,18 +59,20 @@ for key in solvers:
         solvers_map[solver] = (key, param)
 
 
-def solve(method: Type[MisSolver], problem: MisProblem, **kwargs: Any) -> ResultStorage:
+def solve(
+    method_solver: Type[MisSolver], problem: MisProblem, **kwargs: Any
+) -> ResultStorage:
     """Solve a mis instance with a given class of solver.
 
     Args:
-        method: class of the solver to use
+        method_solver: class of the solver to use
         problem: mis problem instance
         **args: specific options of the solver
 
     Returns: a ResultsStorage objecting obtained by the solver.
 
     """
-    solver_ = method(problem, **kwargs)
+    solver_ = method_solver(problem, **kwargs)
     try:
         solver_.init_model(**kwargs)
     except AttributeError:

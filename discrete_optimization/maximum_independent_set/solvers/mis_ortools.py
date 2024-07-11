@@ -39,6 +39,18 @@ class MisOrtoolsSolver(MisSolver, OrtoolsCPSatSolver):
                     in_set[self.problem.nodes_to_index[edge[1]]].Not(),
                 ]
             )
+            model.AddAtMostOne(
+                [
+                    in_set[self.problem.nodes_to_index[edge[0]]],
+                    in_set[self.problem.nodes_to_index[edge[1]]],
+                ]
+            )
+
+            model.Add(
+                in_set[self.problem.nodes_to_index[edge[0]]]
+                + in_set[self.problem.nodes_to_index[edge[1]]]
+                <= 1
+            )
         # Maximize the sum of weights of the independent set.
         if self.problem.attribute_aggregate == "size":
             objective = model.NewIntVar(0, self.problem.number_nodes, "objective")
