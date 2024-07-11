@@ -203,4 +203,4 @@ def run_constraint_handler():
 
 
 if __name__ == "__main__":
-    run_lns_mix()
+    run_lns()
