@@ -11,6 +11,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,
     IntegerHyperparameter,
+    SubBrickClsHyperparameter,
     SubBrickHyperparameter,
     SubBrickKwargsHyperparameter,
 )
@@ -178,9 +179,6 @@ class BaseMetaSolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=0, high=1, default=1),
         SubBrickHyperparameter("subsolver", choices=[DummySolver]),
-        SubBrickKwargsHyperparameter(
-            "kwargs_subsolver", subbrick_hyperparameter="subsolver"
-        ),
     ]
 
     def solve(
@@ -213,7 +211,7 @@ class MetaSolverFixedSubsolver(SolverDO):
 class MetaMetaSolver(SolverDO):
     hyperparameters = [
         IntegerHyperparameter("nb", low=1, high=1, default=1),
-        SubBrickHyperparameter("subsolver", choices=[MetaSolver]),
+        SubBrickClsHyperparameter("subsolver", choices=[MetaSolver]),
         SubBrickKwargsHyperparameter(
             "kwargs_subsolver", subbrick_hyperparameter="subsolver"
         ),
@@ -523,7 +521,7 @@ def test_suggest_with_optuna_meta_solver():
             MetaSolver.suggest_hyperparameters_with_optuna(
                 trial=trial,
                 kwargs_by_name=dict(
-                    kwargs_subsolver=dict(
+                    subsolver=dict(
                         names=["nb", "coeff", "coeff2"],
                         kwargs_by_name=dict(
                             coeff=dict(step=0.5), coeff2=dict(step=0.5)
@@ -532,10 +530,10 @@ def test_suggest_with_optuna_meta_solver():
                 ),
             )
         )
-        assert len(suggested_hyperparameters_kwargs) == 3
+        assert len(suggested_hyperparameters_kwargs) == 2
         print(suggested_hyperparameters_kwargs)
         assert "nb" in suggested_hyperparameters_kwargs
-        assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
+        assert "nb" in suggested_hyperparameters_kwargs["subsolver"].kwargs
         assert "nb" in trial.params
         assert (
             "subsolver.DummySolver.nb" in trial.params
@@ -548,7 +546,7 @@ def test_suggest_with_optuna_meta_solver():
 
         assert (
             trial.params[param_name]
-            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["nb"]
+            == suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"]
         )
 
         return 0.0
@@ -570,7 +568,7 @@ def test_suggest_with_optuna_meta_solver_level2():
                 kwargs_by_name=dict(
                     kwargs_subsolver=dict(
                         kwargs_by_name=dict(
-                            kwargs_subsolver=dict(
+                            subsolver=dict(
                                 names=["nb", "coeff", "coeff2"],
                                 kwargs_by_name=dict(
                                     coeff=dict(step=0.5), coeff2=dict(step=0.5)
@@ -587,7 +585,7 @@ def test_suggest_with_optuna_meta_solver_level2():
         assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
         assert (
             "nb"
-            in suggested_hyperparameters_kwargs["kwargs_subsolver"]["kwargs_subsolver"]
+            in suggested_hyperparameters_kwargs["kwargs_subsolver"]["subsolver"].kwargs
         )
         assert "nb" in trial.params
         assert "subsolver.MetaSolver.nb" in trial.params
@@ -604,7 +602,7 @@ def test_suggest_with_optuna_meta_solver_level2():
             param_name = "subsolver.MetaSolver.subsolver.DummySolver2.nb"
         assert (
             trial.params[param_name]
-            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["kwargs_subsolver"][
+            == suggested_hyperparameters_kwargs["kwargs_subsolver"]["subsolver"].kwargs[
                 "nb"
             ]
         )
@@ -621,7 +619,7 @@ def test_suggest_with_optuna_meta_solver_level2():
 
 def test_suggest_with_optuna_meta_solver_nok_fixed_subsolver_not_given():
     def objective(trial: optuna.Trial) -> float:
-        MetaSolver.suggest_hyperparameters_with_optuna(
+        MetaMetaSolver.suggest_hyperparameters_with_optuna(
             trial=trial,
             names=["nb", "kwargs_subsolver"],
             kwargs_by_name=dict(
@@ -643,7 +641,7 @@ def test_suggest_with_optuna_meta_solver_fixed_subsolver():
     def objective(trial: optuna.Trial) -> float:
         # hyperparameters for the chosen solver
         suggested_hyperparameters_kwargs = (
-            MetaSolver.suggest_hyperparameters_with_optuna(
+            MetaMetaSolver.suggest_hyperparameters_with_optuna(
                 trial=trial,
                 fixed_hyperparameters={"subsolver": DummySolver},
                 names=["nb", "kwargs_subsolver"],
@@ -673,7 +671,7 @@ def test_suggest_with_optuna_meta_solver_fixed_subsolver():
     )
     study.optimize(objective)
 
-    assert len(study.trials) == 2 * (3 * 5)
+    assert len(study.trials) == 1 * (3 * 5)
 
 
 def test_suggest_with_optuna_meta_solver_subsolver_kwargs_only():

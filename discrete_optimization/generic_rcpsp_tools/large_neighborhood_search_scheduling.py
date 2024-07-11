@@ -43,7 +43,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,
     IntegerHyperparameter,
-    SubBrickHyperparameter,
+    SubBrickClsHyperparameter,
     SubBrickKwargsHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import LNS_CP, MznConstraintHandler
