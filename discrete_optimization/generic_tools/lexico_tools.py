@@ -91,11 +91,13 @@ class LexicoSolver(SolverDO):
         if objectives is None:
             objectives = self.subsolver.get_model_objectives_available()
 
+        self._objectives = objectives
         res = ResultStorage(
             mode_optim=self.params_objective_function.sense_function,
             list_solution_fits=[],
         )
-
+        if "subsolver_callbacks" not in kwargs:
+            kwargs["subsolver_callbacks"] = None
         for i_obj, obj in enumerate(objectives):
 
             # log
@@ -103,8 +105,9 @@ class LexicoSolver(SolverDO):
 
             # optimize next objective
             self.subsolver.set_model_objective(obj)
-            res.extend(self.subsolver.solve(callbacks=callbacks_list, **kwargs))
-
+            res.extend(
+                self.subsolver.solve(callbacks=kwargs["subsolver_callbacks"], **kwargs)
+            )
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=i_obj, res=res, solver=self)
             if stopping:
