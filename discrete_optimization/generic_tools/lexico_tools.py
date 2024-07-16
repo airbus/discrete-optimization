@@ -103,7 +103,7 @@ class LexicoSolver(SolverDO):
 
             # optimize next objective
             self.subsolver.set_model_objective(obj)
-            res.extend(self.subsolver.solve(**kwargs))
+            res.extend(self.subsolver.solve(callbacks=callbacks_list, **kwargs))
 
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=i_obj, res=res, solver=self)
@@ -112,6 +112,7 @@ class LexicoSolver(SolverDO):
 
             # add constraint on current objective for next one
             fit = self.subsolver.get_model_objective_value(obj, res)
+            logger.debug(f"Found {fit} when optimizing {obj}")
             self.subsolver.add_model_constraint(obj, fit)
 
         # end of solve callback
