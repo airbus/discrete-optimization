@@ -35,7 +35,7 @@ def run_ortools_resource_optim(objectives):
     parameters_cp.time_limit = 5
 
     result_storage = solver.solve(
-        callbacks=[
+        subsolver_callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
             )
