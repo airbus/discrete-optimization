@@ -15,6 +15,7 @@ from discrete_optimization.tsp.solver.solver_lp_iterative import (
 )
 from discrete_optimization.tsp.solver.solver_ortools import TSP_ORtools
 from discrete_optimization.tsp.solver.tsp_cp_solver import TSP_CP_Solver, TSP_CPModel
+from discrete_optimization.tsp.solver.tsp_cpsat_solver import CpSatTspSolver
 from discrete_optimization.tsp.solver.tsp_solver import SolverTSP
 from discrete_optimization.tsp.tsp_model import (
     TSPModel,
@@ -29,7 +30,7 @@ solvers: Dict[str, List[Tuple[Type[SolverTSP], Dict[str, Any]]]] = {
             {"method": MILPSolver.CBC, "nb_iteration_max": 20, "plot": False},
         )
     ],
-    "ortools": [(TSP_ORtools, {})],
+    "ortools": [(TSP_ORtools, {}), (CpSatTspSolver, {})],
     "cp": [
         (
             TSP_CP_Solver,
