@@ -5,6 +5,8 @@
 import logging
 import os
 
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+
 os.environ["DO_SKIP_MZN_CHECK"] = "1"
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.knapsack.knapsack_parser import (
@@ -30,9 +32,8 @@ def run_decomposed_knapsack_asp():
         problem=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
-        initial_solver=GreedyBest,
-        root_solver=KnapsackASPSolver,
-        root_solver_kwargs=dict(timeout_seconds=2),
+        initial_solver=SubBrick(cls=GreedyBest, kwargs={}),
+        root_solver=SubBrick(cls=KnapsackASPSolver, kwargs=dict(timeout_seconds=2)),
         nb_iteration=1000,
         proportion_to_remove=0.9,
     )
@@ -48,8 +49,8 @@ def run_decomposed_knapsack_greedy():
         problem=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
-        initial_solver=GreedyBest,
-        root_solver=GreedyBest,
+        initial_solver=SubBrick(cls=GreedyBest, kwargs={}),
+        root_solver=SubBrick(cls=GreedyBest, kwargs={}),
         nb_iteration=100,
         proportion_to_remove=0.9,
     )
@@ -68,8 +69,7 @@ def run_decomposed_knapsack_cp():
     params_cp = ParametersCP.default()
     params_cp.time_limit = 5
     result_store = solver.solve(
-        root_solver=CPKnapsackMZN2,
-        root_solver_kwargs=dict(parameters_cp=params_cp),
+        root_solver=SubBrick(cls=CPKnapsackMZN2, kwargs=dict(parameters_cp=params_cp)),
         nb_iteration=100,
         proportion_to_remove=0.9,
     )
@@ -88,8 +88,9 @@ def run_decomposed_knapsack_cpsat():
     params_cp = ParametersCP.default()
     params_cp.time_limit = 5
     result_store = solver.solve(
-        root_solver=CPSatKnapsackSolver,
-        root_solver_kwargs=dict(parameters_cp=params_cp),
+        root_solver=SubBrick(
+            cls=CPSatKnapsackSolver, kwargs=dict(parameters_cp=params_cp)
+        ),
         nb_iteration=200,
         proportion_to_remove=0.85,
     )

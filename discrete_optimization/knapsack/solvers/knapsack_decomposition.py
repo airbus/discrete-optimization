@@ -4,7 +4,7 @@
 import logging
 import os
 import random
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, List, Optional, Set, Type
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -13,8 +13,8 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
     IntegerHyperparameter,
-    SubBrickClsHyperparameter,
-    SubBrickKwargsHyperparameter,
+    SubBrick,
+    SubBrickHyperparameter,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -72,17 +72,15 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             name="proportion_to_remove", low=0.0, high=1.0, default=0.7
         ),
         IntegerHyperparameter(name="nb_iteration", low=0, high=int(10e6), default=100),
-        SubBrickClsHyperparameter(
-            name="initial_solver", choices=subsolvers, default=GreedyBest
+        SubBrickHyperparameter(
+            name="initial_solver",
+            choices=subsolvers,
+            default=SubBrick(cls=GreedyBest, kwargs={}),
         ),
-        SubBrickKwargsHyperparameter(
-            name="initial_solver_kwargs", subbrick_hyperparameter="initial_solver"
-        ),
-        SubBrickClsHyperparameter(
-            name="root_solver", choices=subsolvers, default=GreedyBest
-        ),
-        SubBrickKwargsHyperparameter(
-            name="root_solver_kwargs", subbrick_hyperparameter="root_solver"
+        SubBrickHyperparameter(
+            name="root_solver",
+            choices=subsolvers,
+            default=SubBrick(cls=GreedyBest, kwargs={}),
         ),
     ]
 
@@ -123,21 +121,20 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         callbacks_list.on_solve_start(solver=self)
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        initial_solver: Type[SolverKnapsack] = kwargs["initial_solver"]
-        if kwargs["initial_solver_kwargs"] is None:
-            initial_solver_kwargs: Dict[str, Any] = {}
-        else:
-            initial_solver_kwargs = kwargs["initial_solver_kwargs"]
-        sub_solver: Type[SolverKnapsack] = kwargs["root_solver"]
-        if kwargs["root_solver_kwargs"] is None:
-            sub_solver_kwargs: Dict[str, Any] = {}
-        else:
-            sub_solver_kwargs = kwargs["root_solver_kwargs"]
+
+        initial_solver: SubBrick = kwargs["initial_solver"]
+        initial_solver_cls: Type[SolverKnapsack] = initial_solver.cls
+        initial_solver_kwargs = initial_solver.kwargs
+
+        root_solver: SubBrick = kwargs["root_solver"]
+        root_solver_cls: Type[SolverKnapsack] = root_solver.cls
+        root_solver_kwargs = root_solver.kwargs
+
         nb_iteration = kwargs["nb_iteration"]
         proportion_to_remove = kwargs["proportion_to_remove"]
 
         initial_results = solve(
-            method=initial_solver, problem=self.problem, **initial_solver_kwargs
+            method=initial_solver_cls, problem=self.problem, **initial_solver_kwargs
         )
         results_storage = self.create_result_storage(
             initial_results.list_solution_fits,
@@ -159,7 +156,7 @@ class KnapsackDecomposedSolver(SolverKnapsack):
                 solution=sol,
                 indexes_to_remove=indexes_to_remove,
             )
-            res = solve(method=sub_solver, problem=sub_model, **sub_solver_kwargs)
+            res = solve(method=root_solver_cls, problem=sub_model, **root_solver_kwargs)
             best_sol, fit = res.get_best_solution_fit()
             reb_sol = self.rebuild_sol(
                 sol=best_sol,

@@ -1,5 +1,6 @@
 import logging
 
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.maximum_independent_set.mis_parser import (
     dimacs_parser_nx,
@@ -34,10 +35,10 @@ def run_decomposition():
     p = ParametersCP.default_cpsat()
     p.time_limit = 10
     res = solver.solve(
-        initial_solver=MisOrtoolsSolver,
-        initial_solver_kwargs={"parameters_cp": p},
-        root_solver_kwargs={"method": "redumis", "time_limit": 3},
-        root_solver=MisKamisSolver,
+        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(
+            cls=MisKamisSolver, kwargs={"method": "redumis", "time_limit": 3}
+        ),
         proportion_to_remove=0.5,
         nb_iteration=10000,
     )
@@ -50,10 +51,8 @@ def run_decomposition_ortools():
     p = ParametersCP.default_cpsat()
     p.time_limit = 5
     res = solver.solve(
-        initial_solver=MisOrtoolsSolver,
-        initial_solver_kwargs={"parameters_cp": p},
-        root_solver_kwargs={"parameters_cp": p},
-        root_solver=MisOrtoolsSolver,
+        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
         proportion_to_remove=0.6,
         nb_iteration=10000,
     )
@@ -66,10 +65,8 @@ def run_decomposition_asp():
     p = ParametersCP.default_cpsat()
     p.time_limit = 5
     res = solver.solve(
-        initial_solver=MisOrtoolsSolver,
-        initial_solver_kwargs={"parameters_cp": p},
-        root_solver_kwargs={"timeout_seconds": 10},
-        root_solver=MisASPSolver,
+        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(cls=MisASPSolver, kwargs={"timeout_seconds": 10}),
         proportion_to_remove=0.5,
         nb_iteration=10000,
     )
@@ -82,10 +79,11 @@ def run_decomposition_toulbar():
     p = ParametersCP.default_cpsat()
     p.time_limit = 5
     res = solver.solve(
-        initial_solver=MisOrtoolsSolver,
-        initial_solver_kwargs={"parameters_cp": p},
-        root_solver_kwargs={"time_limit": 10},
-        root_solver=MisToulbarSolver,
+        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(
+            cls=MisToulbarSolver,
+            kwargs={"time_limit": 10},
+        ),
         proportion_to_remove=0.5,
         nb_iteration=10000,
     )
@@ -100,10 +98,11 @@ def run_decomposition_gurobi():
     p_milp = ParametersMilp.default()
     p_milp.time_limit = 5
     res = solver.solve(
-        initial_solver=MisOrtoolsSolver,
-        initial_solver_kwargs={"parameters_cp": p},
-        root_solver_kwargs={"parameters_milp": p_milp},
-        root_solver=MisQuadraticSolver,
+        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(
+            cls=MisQuadraticSolver,
+            kwargs={"parameters_milp": p_milp},
+        ),
         proportion_to_remove=0.2,
         nb_iteration=10000,
     )

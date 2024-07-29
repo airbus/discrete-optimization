@@ -3,6 +3,7 @@ import logging
 import pytest
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 from discrete_optimization.maximum_independent_set.mis_parser import (
     dimacs_parser_nx,
@@ -23,10 +24,8 @@ def test_decomposition_ortools():
     p = ParametersCP.default_cpsat()
     p.time_limit = 5
     res = solver.solve(
-        initial_solver=MisOrtoolsSolver,
-        initial_solver_kwargs={"parameters_cp": p},
-        root_solver_kwargs={"parameters_cp": p},
-        root_solver=MisOrtoolsSolver,
+        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
         proportion_to_remove=0.6,
         nb_iteration=10,
     )
