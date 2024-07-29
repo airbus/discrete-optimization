@@ -15,13 +15,15 @@ from discrete_optimization.tsp.solver.tsp_cpsat_lns import (
     ConstraintHandlerTSP,
 )
 from discrete_optimization.tsp.solver.tsp_cpsat_solver import CpSatTspSolver
+from discrete_optimization.tsp.tsp_model import SolutionTSP
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
 
-def test_cpsat_solver():
+@pytest.mark.parametrize("end_index", [0, 10])
+def test_cpsat_solver(end_index):
     files = get_data_available()
     files = [f for f in files if "tsp_100_1" in f]
-    model = parse_file(files[0], start_index=0, end_index=10)
+    model = parse_file(files[0], start_index=0, end_index=end_index)
     params_objective_function = get_default_objective_setup(problem=model)
     solver = CpSatTspSolver(model, params_objective_function=params_objective_function)
     solver.init_model()
@@ -34,7 +36,9 @@ def test_cpsat_solver():
         parameters_cp=ParametersCP.default_cpsat(),
     )
     sol, fitness = res.get_best_solution_fit()
+    sol: SolutionTSP
     assert model.satisfy(sol)
+    assert sol.end_index == end_index
 
 
 def test_lns_cpsat_solver():
