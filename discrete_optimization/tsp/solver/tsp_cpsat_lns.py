@@ -9,8 +9,6 @@ from ortools.sat.python.cp_model import Constraint
 from discrete_optimization.tsp.solver.tsp_cpsat_solver import CpSatTspSolver
 from discrete_optimization.tsp.tsp_model import TSPModel, SolutionTSP
 from discrete_optimization.generic_tools.lns_cp import OrtoolsCPSatConstraintHandler
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import FloatHyperparameter
 import random
 from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
 
