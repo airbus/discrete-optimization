@@ -154,7 +154,7 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                     self.problem.start_indexes[vehicle],
                 ]
                 == False
-            ).OnlyEnforceIf(visited)
+            ).OnlyEnforceIf(visited.Not())
             if self.problem.start_indexes[vehicle] != self.problem.end_indexes[vehicle]:
                 model.Add(
                     arc_literals_per_vehicles[vehicle][
@@ -162,7 +162,7 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                         self.problem.start_indexes[vehicle],
                     ]
                     == True
-                )
+                ).OnlyEnforceIf(visited)
             dist_path_per_vehicle[vehicle] = sum(
                 obj_vars[i] * obj_coeffs[i] for i in range(len(obj_vars))
             )
