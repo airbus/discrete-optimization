@@ -77,7 +77,7 @@ class CpSatTspSolver(OrtoolsCPSatSolver, SolverTSP):
             for j in all_nodes:
                 if i == j:
                     continue
-                lit = model.new_bool_var("%i follows %i" % (j, i))
+                lit = model.new_bool_var(f"{j} follows {i}")
                 arcs.append((i, j, lit))
                 arc_literals[i, j] = lit
                 obj_vars.append(lit)
