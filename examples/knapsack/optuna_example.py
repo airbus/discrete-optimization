@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -56,8 +57,9 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 # Solvers to test
 kwargs_fixed: Dict[str, Any] = dict(
-    initial_solver=GreedyDummy,  # Start from empty solution : make the experiment more interesting :)
-    initial_solver_kwargs={},
+    initial_solver=SubBrick(
+        cls=GreedyDummy, kwargs={}
+    ),  # Start from empty solution : make the experiment more interesting :)
 )
 params_cp = ParametersCP.default()
 params_cp.time_limit = 5
@@ -71,15 +73,15 @@ kwargs_fixed_by_root_subsolver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdi
 )
 suggest_optuna_kwargs_by_name: Dict[str, Any] = {
     "root_solver": dict(
-        choices=[KnapsackDynProg, CPKnapsackMZN, CPKnapsackMZN2, KnapsackASPSolver]
-    ),  # limit choices to some solvers
-    "nb_iteration": dict(low=5, high=20),  # limit number of iterations
-    "proportion_to_remove": dict(low=0.85),
-    "root_solver_kwargs": dict(
+        # limit choices to some solvers
+        choices=[KnapsackDynProg, CPKnapsackMZN, CPKnapsackMZN2, KnapsackASPSolver],
+        # avoid not installed solvers
         kwargs_by_name={
             "cp_solver_name": dict(choices=[CPSolverName.CHUFFED, CPSolverName.ORTOOLS])
-        }
-    ),  # avoid not installed solvers
+        },
+    ),
+    "nb_iteration": dict(low=5, high=20),  # limit number of iterations
+    "proportion_to_remove": dict(low=0.85),
 }
 suggest_optuna_names = [
     name
@@ -114,10 +116,10 @@ def objective(trial: Trial):
     )
 
     # complete root_solver_kwargs with fixed parameters
-    root_solver = suggested_hyperparameters_kwargs["root_solver"]
-    root_solver_kwargs = dict(kwargs_fixed_by_root_subsolver[root_solver])
-    root_solver_kwargs.update(suggested_hyperparameters_kwargs["root_solver_kwargs"])
-    suggested_hyperparameters_kwargs["root_solver_kwargs"] = root_solver_kwargs
+    root_solver: SubBrick = suggested_hyperparameters_kwargs["root_solver"]
+    root_solver_kwargs = dict(kwargs_fixed_by_root_subsolver[root_solver.cls])
+    root_solver_kwargs.update(root_solver.kwargs)
+    root_solver.kwargs = root_solver_kwargs
 
     # use existing value if corresponding to a previous complete trial
     states_to_consider = (TrialState.COMPLETE,)

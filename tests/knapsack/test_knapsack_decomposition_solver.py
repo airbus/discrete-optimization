@@ -8,6 +8,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -28,8 +29,7 @@ def test_decomposed_knapsack_asp():
         problem=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
-        root_solver=KnapsackASPSolver,
-        root_solver_kwargs=dict(timeout_seconds=2),
+        root_solver=SubBrick(cls=KnapsackASPSolver, kwargs=dict(timeout_seconds=2)),
         nb_iteration=50,
         proportion_to_remove=0.9,
     )
@@ -45,7 +45,7 @@ def test_decomposed_knapsack_greedy():
         problem=knapsack_model, params_objective_function=None
     )
     result_store = solver.solve(
-        root_solver=GreedyBest,
+        root_solver=SubBrick(cls=GreedyBest, kwargs={}),
         nb_iteration=5,
         proportion_to_remove=0.9,
     )
@@ -62,7 +62,7 @@ def test_decomposed_knapsack_cb():
     )
     iteration_stopper = NbIterationStopper(nb_iteration_max=2)
     result_store = solver.solve(
-        root_solver=GreedyBest,
+        root_solver=SubBrick(cls=GreedyBest, kwargs={}),
         nb_iteration=5,
         proportion_to_remove=0.9,
         callbacks=[iteration_stopper],
@@ -82,8 +82,7 @@ def test_decomposed_knapsack_cp():
     params_cp = ParametersCP.default()
     params_cp.time_limit = 5
     result_store = solver.solve(
-        root_solver=CPKnapsackMZN2,
-        root_solver_kwargs=dict(parameters_cp=params_cp),
+        root_solver=SubBrick(cls=CPKnapsackMZN2, kwargs=dict(parameters_cp=params_cp)),
         nb_iteration=5,
         proportion_to_remove=0.9,
     )

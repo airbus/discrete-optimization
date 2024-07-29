@@ -15,6 +15,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
     IntegerHyperparameter,
+    SubBrick,
     SubBrickHyperparameter,
     SubBrickKwargsHyperparameter,
 )
@@ -53,16 +54,14 @@ class MisDecomposedSolver(MisSolver):
         ),
         IntegerHyperparameter(name="nb_iteration", low=0, high=int(10e6), default=100),
         SubBrickHyperparameter(
-            name="initial_solver", choices=subsolvers, default=MisNetworkXSolver
-        ),
-        SubBrickKwargsHyperparameter(
-            name="initial_solver_kwargs", subbrick_hyperparameter="initial_solver"
+            name="initial_solver",
+            choices=subsolvers,
+            default=SubBrick(cls=MisNetworkXSolver, kwargs={}),
         ),
         SubBrickHyperparameter(
-            name="root_solver", choices=subsolvers, default=MisNetworkXSolver
-        ),
-        SubBrickKwargsHyperparameter(
-            name="root_solver_kwargs", subbrick_hyperparameter="root_solver"
+            name="root_solver",
+            choices=subsolvers,
+            default=SubBrick(cls=MisNetworkXSolver, kwargs={}),
         ),
     ]
 
@@ -101,20 +100,20 @@ class MisDecomposedSolver(MisSolver):
         callbacks_list.on_solve_start(solver=self)
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        initial_solver: Type[MisSolver] = kwargs["initial_solver"]
-        if kwargs["initial_solver_kwargs"] is None:
-            initial_solver_kwargs: Dict[str, Any] = {}
-        else:
-            initial_solver_kwargs = kwargs["initial_solver_kwargs"]
-        sub_solver: Type[MisSolver] = kwargs["root_solver"]
-        if kwargs["root_solver_kwargs"] is None:
-            sub_solver_kwargs: Dict[str, Any] = {}
-        else:
-            sub_solver_kwargs = kwargs["root_solver_kwargs"]
+        initial_solver: SubBrick = kwargs["initial_solver"]
+        initial_solver_cls: Type[MisSolver] = initial_solver.cls
+        initial_solver_kwargs = initial_solver.kwargs
+
+        root_solver: SubBrick = kwargs["root_solver"]
+        root_solver_cls: Type[MisSolver] = root_solver.cls
+        root_solver_kwargs = root_solver.kwargs
+
         nb_iteration = kwargs["nb_iteration"]
         proportion_to_remove = kwargs["proportion_to_remove"]
         initial_results = solve(
-            method_solver=initial_solver, problem=self.problem, **initial_solver_kwargs
+            method_solver=initial_solver_cls,
+            problem=self.problem,
+            **initial_solver_kwargs,
         )
         results_storage = self.create_result_storage(
             initial_results.list_solution_fits,
@@ -149,7 +148,7 @@ class MisDecomposedSolver(MisSolver):
                 graph=subgraph, attribute_aggregate=self.problem.attribute_aggregate
             )
             res = solve(
-                method_solver=sub_solver, problem=new_problem, **sub_solver_kwargs
+                method_solver=root_solver_cls, problem=new_problem, **root_solver_kwargs
             )
             best_sol, fit = res.get_best_solution_fit()
             if best_sol is not None:
