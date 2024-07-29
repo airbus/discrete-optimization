@@ -9,11 +9,14 @@ import pytest
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
-from discrete_optimization.tsp.plots.plot_tsp import plot_tsp_solution
-from discrete_optimization.tsp.solver.tsp_cpsat_solver import CpSatTspSolver
-from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
-from discrete_optimization.tsp.solver.tsp_cpsat_lns import ConstraintHandlerTSP, ConstraintHandlerSubpathTSP
 from discrete_optimization.generic_tools.lns_cp import LNS_OrtoolsCPSat
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
+from discrete_optimization.tsp.plots.plot_tsp import plot_tsp_solution
+from discrete_optimization.tsp.solver.tsp_cpsat_lns import (
+    ConstraintHandlerSubpathTSP,
+    ConstraintHandlerTSP,
+)
+from discrete_optimization.tsp.solver.tsp_cpsat_solver import CpSatTspSolver
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
 logging.basicConfig(level=logging.INFO)
@@ -29,17 +32,18 @@ def run_cpsat_lns_solver():
     p = ParametersCP.default_cpsat()
     p.time_limit = 10
     p.time_limit_iter0 = 10
-    lns_solver = LNS_OrtoolsCPSat(problem=model,
-                                  subsolver=solver,
-                                  constraint_handler=
-                                  ConstraintHandlerMix(problem=model,
-                                                       list_constraints_handler=[
-                                                           ConstraintHandlerSubpathTSP(problem=model,
-                                                                                       fraction_segment_to_fix=0.7),
-                                                           ConstraintHandlerTSP(problem=model,
-                                                                                fraction_segment_to_fix=0.7)
-                                                       ],
-                                                       list_proba=[0.5, 0.5]))
+    lns_solver = LNS_OrtoolsCPSat(
+        problem=model,
+        subsolver=solver,
+        constraint_handler=ConstraintHandlerMix(
+            problem=model,
+            list_constraints_handler=[
+                ConstraintHandlerSubpathTSP(problem=model, fraction_segment_to_fix=0.7),
+                ConstraintHandlerTSP(problem=model, fraction_segment_to_fix=0.7),
+            ],
+            list_proba=[0.5, 0.5],
+        ),
+    )
     res = lns_solver.solve(
         skip_initial_solution_provider=True,
         nb_iteration_lns=1000,

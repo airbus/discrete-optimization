@@ -39,7 +39,7 @@ def run_cpsat_solver():
         ax.clear()
         plot_tsp_solution(tsp_model=model, solution=sol, ax=ax)
         ax.set_title(f"Length ={fit}")
-        plt.pause(1.)
+        plt.pause(1.0)
     plt.show()
 
 
