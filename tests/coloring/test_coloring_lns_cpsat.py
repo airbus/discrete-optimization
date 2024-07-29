@@ -34,7 +34,7 @@ logging.basicConfig(level=logging.INFO)
 
 def test_lns_cpsat_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_250_7" in f][0]
+    file = [f for f in get_data_available() if "gc_20_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
     solver.init_model(
