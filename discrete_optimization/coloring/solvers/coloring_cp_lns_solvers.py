@@ -14,6 +14,9 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
     ColoringSolution,
 )
+from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
+    ColoringCPSatSolver,
+)
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -28,10 +31,13 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
 )
 from discrete_optimization.generic_tools.lns_cp import (
+    Constraint,
     InitialSolution,
     MznConstraintHandler,
+    OrtoolsCPSatConstraintHandler,
     PostProcessSolution,
 )
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -62,7 +68,7 @@ class InitialColoring(InitialSolution):
         self,
         problem: ColoringProblem,
         initial_method: InitialColoringMethod,
-        params_objective_function: ParamsObjectiveFunction,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
         self.initial_method = initial_method
@@ -179,6 +185,73 @@ class ConstraintHandlerFixColorsCP(MznConstraintHandler):
         return list_strings
 
 
+class ConstraintHandlerFixColorsCPSat(OrtoolsCPSatConstraintHandler):
+    """Constraint builder for LNS coloring problem.
+
+    This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
+    """
+
+    hyperparameters = [
+        FloatHyperparameter("fraction_to_fix", low=0.0, high=1.0, default=0.9),
+    ]
+
+    def __init__(self, problem: ColoringProblem, fraction_to_fix: float = 0.9):
+        self.problem = problem
+        self.fraction_to_fix = fraction_to_fix
+
+    def adding_constraint_from_results_store(
+        self, solver: ColoringCPSatSolver, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Constraint]:
+        """Include constraint that fix decision on a subset of nodes, according to current solutions found.
+
+        Args:
+            solver: a coloring CPSolver
+            child_instance: minizinc instance where to include the constraint
+            result_storage: current pool of solutions
+            last_result_store: pool of solutions found in previous LNS iteration (optional)
+
+        Returns: an empty list, unused.
+
+        """
+        range_node = range(self.problem.number_of_nodes)
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, ColoringSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a ColoringSolution."
+            )
+        if current_solution.colors is None:
+            raise ValueError(
+                "result_storage.get_best_solution().colors " "should not be None."
+            )
+        subpart_color = set(
+            random.sample(
+                range_node, int(self.fraction_to_fix * self.problem.number_of_nodes)
+            )
+        )
+        dict_color = {
+            i: current_solution.colors[i] for i in range(self.problem.number_of_nodes)
+        }
+        current_nb_color = max(dict_color.values())
+        constraints = []
+        for i in range_node:
+            if i in subpart_color and dict_color[i] < current_nb_color:
+                constraints.append(
+                    solver.cp_model.Add(solver.variables["colors"][i] == dict_color[i])
+                )
+            constraints.append(
+                solver.cp_model.Add(solver.variables["colors"][i] <= current_nb_color)
+            )
+        return constraints
+
+
 class PostProcessSolutionColoring(PostProcessSolution):
     """Post process class for coloring problem.
 
@@ -192,7 +265,7 @@ class PostProcessSolutionColoring(PostProcessSolution):
     def __init__(
         self,
         problem: ColoringProblem,
-        params_objective_function: ParamsObjectiveFunction,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
     ):
         self.problem = problem
         self.params_objective_function = params_objective_function
