@@ -26,7 +26,12 @@ class ConstraintHandlerTSP(OrtoolsCPSatConstraintHandler):
     ) -> Iterable[Constraint]:
         sol, _ = result_storage.get_best_solution_fit()
         sol: SolutionTSP
-        path = [sol.start_index] + sol.permutation + [sol.end_index, sol.start_index]
+        if sol.end_index != sol.start_index:
+            path = (
+                [sol.start_index] + sol.permutation + [sol.end_index, sol.start_index]
+            )
+        else:
+            path = [sol.start_index] + sol.permutation + [sol.end_index]
         constraints = []
         arcs = [(x, y) for x, y in zip(path[:-1], path[1:])]
         subpart = random.sample(arcs, k=int(self.fraction_segment_to_fix * len(arcs)))
@@ -47,7 +52,12 @@ class ConstraintHandlerSubpathTSP(OrtoolsCPSatConstraintHandler):
     ) -> Iterable[Constraint]:
         sol, _ = result_storage.get_best_solution_fit()
         sol: SolutionTSP
-        path = [sol.start_index] + sol.permutation + [sol.end_index, sol.start_index]
+        if sol.end_index != sol.start_index:
+            path = (
+                [sol.start_index] + sol.permutation + [sol.end_index, sol.start_index]
+            )
+        else:
+            path = [sol.start_index] + sol.permutation + [sol.end_index]
         constraints = []
         arcs = [(x, y) for x, y in zip(path[:-1], path[1:])]
         start_index = random.randint(0, len(arcs) - 1)

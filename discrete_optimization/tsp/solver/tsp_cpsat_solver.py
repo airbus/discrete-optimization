@@ -62,7 +62,9 @@ class CpSatTspSolver(OrtoolsCPSatSolver, SolverTSP):
             problem=self.problem,
             start_index=self.problem.start_index,
             end_index=self.problem.end_index,
-            permutation=path[:-1],
+            permutation=path
+            if self.problem.start_index == self.problem.end_index
+            else path[:-1],
         )
 
     def init_model(self, **args: Any) -> None:
