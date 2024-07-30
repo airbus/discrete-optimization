@@ -206,7 +206,7 @@ def solve_model(
             params_objective_function=params_objective_function,
             store_solution=True,
         )
-        result_ls = sa.solve(dummy, nb_iteration_max=nb_iteration)
+        result_ls = sa.solve(initial_variable=dummy, nb_iteration_max=nb_iteration)
     else:
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.MULTI_OBJ,
@@ -228,7 +228,7 @@ def solve_model(
             store_solution=True,
         )
         result_ls = sa_mo.solve(
-            dummy,
+            initial_variable=dummy,
             nb_iteration_max=nb_iteration,
             update_iteration_pareto=10000,
         )

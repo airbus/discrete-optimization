@@ -4,11 +4,16 @@
 import logging
 import os
 import random
-from typing import Any, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional, Set, Type
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
+)
+from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import (
+    TrivialSolverFromSolution,
+    WarmstartMixin,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
@@ -56,7 +61,7 @@ subsolvers = [
 ]
 
 
-class KnapsackDecomposedSolver(SolverKnapsack):
+class KnapsackDecomposedSolver(SolverKnapsack, WarmstartMixin):
     """
     This solver is based on the current observation. From a given knapsack model and one current solution,
     if we decide to freeze the decision variable for a subset of items, the remaining problem to solve is also a
@@ -83,6 +88,9 @@ class KnapsackDecomposedSolver(SolverKnapsack):
             default=SubBrick(cls=GreedyBest, kwargs={}),
         ),
     ]
+
+    initial_solution: Optional[KnapsackSolution] = None
+    """Initial solution used for warm start."""
 
     def rebuild_sol(
         self,
@@ -112,6 +120,14 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         )
         return solution
 
+    def set_warm_start(self, solution: KnapsackSolution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_solver` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
@@ -119,6 +135,13 @@ class KnapsackDecomposedSolver(SolverKnapsack):
         callbacks_list = CallbackList(callbacks=callbacks)
         # start of solve callback
         callbacks_list.on_solve_start(solver=self)
+
+        # manage warm start if self.initial_solution is set
+        if self.initial_solution is not None:
+            kwargs["initial_solver"] = SubBrick(
+                cls=TrivialSolverFromSolution,
+                kwargs=dict(solution=self.initial_solution),
+            )
 
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 

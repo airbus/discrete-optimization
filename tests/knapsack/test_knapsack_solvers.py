@@ -18,6 +18,7 @@ from discrete_optimization.knapsack.knapsack_parser import (
     parse_file,
 )
 from discrete_optimization.knapsack.knapsack_solvers import solve, solvers_map
+from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 from discrete_optimization.knapsack.solvers.lp_solvers import LPKnapsackGurobi
 
 try:
@@ -59,3 +60,23 @@ def test_solvers(solver_class):
     )
     s, f = results.get_best_solution_fit()
     logging.info(f"fitness={f}")
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_gurobi_warm_start():
+    small_example = [f for f in get_data_available() if "ks_40_0" in f][0]
+    knapsack_model: KnapsackModel = parse_file(small_example)
+
+    solver = LPKnapsackGurobi(knapsack_model)
+
+    result_storage = solver.solve()
+
+    start_solution = GreedyBest(problem=knapsack_model).solve().get_best_solution()
+
+    # first solution is not start_solution
+    assert result_storage[0][0].list_taken != start_solution.list_taken
+
+    # warm start => first solution is start_solution
+    solver.set_warm_start(start_solution)
+    result_storage = solver.solve()
+    assert result_storage[0][0].list_taken == start_solution.list_taken

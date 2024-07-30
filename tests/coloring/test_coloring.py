@@ -52,7 +52,9 @@ from discrete_optimization.generic_tools.cp_tools import (
     find_right_minizinc_solver_name,
 )
 from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
     ObjectiveHandling,
+    ParamsObjectiveFunction,
     TypeAttribute,
     get_default_objective_setup,
 )
@@ -213,6 +215,21 @@ def test_cpsat_solver(modeling):
     solution, fit = result_store.get_best_solution_fit()
     assert color_problem.satisfy(solution)
 
+    # test warm start
+    start_solution = solver.get_starting_solution()
+
+    # first solution is not start_solution
+    assert result_store[0][0].colors != start_solution.colors
+
+    # warm start at first solution
+    solver.set_warm_start(start_solution)
+    # force first solution to be the hinted one
+    result_store = solver.solve(
+        parameters_cp=p,
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+    )
+    assert result_store[0][0].colors == start_solution.colors
+
 
 def test_cpsat_solver_finetuned():
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
@@ -338,8 +355,8 @@ def test_ga_coloring_1(random_seed):
 def test_ga_coloring_2(random_seed):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
-    ga_solver = Ga(
-        color_problem,
+    kwargs = dict(
+        problem=color_problem,
         encoding="colors",
         objective_handling=ObjectiveHandling.AGGREGATE,
         objectives=["nb_colors", "nb_violations"],
@@ -347,9 +364,30 @@ def test_ga_coloring_2(random_seed):
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=5000,
     )
-    color_sol = ga_solver.solve().get_best_solution()
+    ga_solver = Ga(**kwargs)
+    color_sol, fit = ga_solver.solve().get_best_solution_fit()
     color_problem.evaluate(color_sol)
     assert color_problem.satisfy(color_sol)
+
+    # test warm start
+    start_solution, start_fit = (
+        GreedyColoring(color_problem, params_objective_function=None)
+        .solve()
+        .get_best_solution_fit()
+    )
+
+    ga_solver = Ga(**kwargs)
+    ga_solver.set_warm_start(start_solution)
+    result_store = ga_solver.solve()
+    color_sol, fit2 = result_store.get_best_solution_fit()
+    color_problem.evaluate(color_sol)
+    assert color_problem.satisfy(color_sol)
+
+    # previous solution was worse than the start fit used now
+    assert fit < start_fit
+
+    # new solution can only improve the fitness
+    assert fit2 >= start_fit
 
 
 def test_ga_coloring_3(random_seed):
@@ -383,17 +421,49 @@ def test_coloring_nsga_1():
     color_problem: ColoringProblem = parse_file(file)
 
     objectives = ["nb_colors", "nb_violations"]
-    ga_solver = Nsga(
-        color_problem,
+    objectives_weights = [-1, -1]
+    params_objective_function = ParamsObjectiveFunction(
+        objectives=objectives,
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        weights=objectives_weights,
+        sense_function=ModeOptim.MAXIMIZATION,
+    )
+    kwargs = dict(
+        problem=color_problem,
         encoding="colors",
         objectives=objectives,
-        objective_weights=[-1, -1],
+        objective_weights=objectives_weights,
         mutation=DeapMutation.MUT_UNIFORM_INT,
         max_evals=3000,
     )
+    ga_solver = Nsga(**kwargs)
 
     result_storage = ga_solver.solve()
     plot_storage_2d(result_storage=result_storage, name_axis=objectives)
+    color_sol, fit = result_storage.get_best_solution_fit()
+
+    # test warm start
+    start_solution, start_fit = (
+        GreedyColoring(
+            color_problem, params_objective_function=params_objective_function
+        )
+        .solve()
+        .get_best_solution_fit()
+    )
+    start_fit = ga_solver.aggreg_from_sol(start_solution)
+
+    ga_solver = Nsga(**kwargs)
+    ga_solver.set_warm_start(start_solution)
+    result_store = ga_solver.solve()
+    color_sol, fit2 = result_store.get_best_solution_fit()
+
+    print(start_fit.vector_fitness, fit.vector_fitness, fit2.vector_fitness)
+
+    # previous solution was worse than the start fit used now
+    assert fit < start_fit
+
+    # new solution can only improve the fitness
+    assert fit2 >= start_fit
 
 
 def test_coloring_nsga_2():
@@ -434,6 +504,14 @@ def test_color_lp_gurobi():
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
     assert len(result_store) > 1
+
+    # first solution is not start_solution
+    assert result_store[0][0].colors != solver.start_solution.colors
+
+    # warm start => first solution is start_solution
+    solver.set_warm_start(solver.start_solution)
+    result_store = solver.solve(parameters_milp=ParametersMilp.default())
+    assert result_store[0][0].colors == solver.start_solution.colors
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

@@ -209,3 +209,59 @@ class WarmstartMixin(ABC):
     def set_warm_start(self, solution: Solution) -> None:
         """Make the solver warm start from the given solution."""
         ...
+
+
+class TrivialSolverFromResultStorage(SolverDO, WarmstartMixin):
+    """Trivial solver created from an already computed result storage."""
+
+    def __init__(
+        self,
+        problem: Problem,
+        result_storage: ResultStorage,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            problem=problem,
+            params_objective_function=params_objective_function,
+            **kwargs,
+        )
+        self.result_storage = result_storage
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return self.result_storage
+
+    def set_warm_start(self, solution: Solution) -> None:
+        """Add solution add result_storage's start."""
+        fit = self.aggreg_from_sol(solution)
+        self.result_storage.insert(0, (solution, fit))
+
+
+class TrivialSolverFromSolution(SolverDO):
+    """Trivial solver created from an already computed solution."""
+
+    def __init__(
+        self,
+        problem: Problem,
+        solution: Solution,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            problem=problem,
+            params_objective_function=params_objective_function,
+            **kwargs,
+        )
+        self.set_warm_start(solution)
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return self.result_storage
+
+    def set_warm_start(self, solution: Solution) -> None:
+        """Replace the stored solution."""
+        fit = self.aggreg_from_sol(solution)
+        self.result_storage = self.create_result_storage([(solution, fit)])

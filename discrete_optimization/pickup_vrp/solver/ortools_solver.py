@@ -21,7 +21,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+)
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -151,7 +155,7 @@ https://developers.google.com/optimization/routing/routing_options#search_status
 """
 
 
-class ORToolsGPDP(SolverPickupVrp):
+class ORToolsGPDP(SolverPickupVrp, WarmstartMixin):
     problem: GPDP
     hyperparameters = [
         EnumHyperparameter(
@@ -170,6 +174,9 @@ class ORToolsGPDP(SolverPickupVrp):
             name="use_cp_sat", choices=[True, False], default=False
         ),
     ]
+
+    initial_solution: Optional[GPDPSolution] = None
+    """Initial solution used for warm start."""
 
     def __init__(
         self,
@@ -830,6 +837,12 @@ class ORToolsGPDP(SolverPickupVrp):
             search_parameters = self.search_parameters
         monitor = RoutingMonitor(self, callback=callbacks_list)
         self.routing.AddSearchMonitor(monitor)
+        # warm start?
+        if (
+            kwargs.get("initial_solution", None) is None
+            and self.initial_solution is not None
+        ):
+            kwargs["initial_solution"] = self._solution2routes(self.initial_solution)
         try:
             if (
                 "initial_solution" in kwargs
@@ -838,7 +851,7 @@ class ORToolsGPDP(SolverPickupVrp):
                 initial_sol = self.routing.ReadAssignmentFromRoutes(
                     kwargs["initial_solution"], True
                 )
-                print("laucnhing with assignment")
+                logger.debug("launching with assignment")
                 self.routing.SolveFromAssignmentWithParameters(
                     initial_sol, search_parameters
                 )
@@ -847,6 +860,28 @@ class ORToolsGPDP(SolverPickupVrp):
         except SolveEarlyStop as e:
             logger.info(e)
         return monitor.res
+
+    def set_warm_start(self, solution: GPDPSolution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `init_solution,` is not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
+    def _solution2routes(self, solution: GPDPSolution) -> List[List[int]]:
+        return [
+            [
+                self.manager.NodeToIndex(self.problem.index_nodes[node])
+                for node in solution.trajectories[vehicle_id]
+                if node
+                not in [
+                    self.problem.origin_vehicle[vehicle_id],
+                    self.problem.target_vehicle[vehicle_id],
+                ]
+            ]
+            for vehicle_id in range(self.problem.number_vehicle)
+        ]
 
 
 class RoutingMonitor(pywrapcp.SearchMonitor):

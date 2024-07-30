@@ -124,7 +124,7 @@ def test_sa_with_callbacks(caplog, random_seed):
 
     with caplog.at_level(logging.DEBUG):
         sa.solve(
-            dummy,
+            initial_variable=dummy,
             nb_iteration_max=nb_iteration_max,
             callbacks=callbacks,
         ).get_best_solution_fit()
@@ -196,7 +196,7 @@ def test_sa_with_optuna_callback(random_seed):
         )
 
         _, fit = sa.solve(
-            dummy,
+            initial_variable=dummy,
             nb_iteration_max=nb_iteration_max,
             callbacks=[OptunaCallback(trial=trial, optuna_report_nb_steps=10)],
         ).get_best_solution_fit()

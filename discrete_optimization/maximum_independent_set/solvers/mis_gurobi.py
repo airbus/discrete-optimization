@@ -1,9 +1,15 @@
-from typing import Any, Callable, Optional
+from __future__ import annotations
+
+from typing import Any, Callable, Optional, Sequence
 
 import networkx as nx
 import numpy as np
 
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.graph_api import get_node_attributes
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 
 try:
     import gurobipy
@@ -11,7 +17,7 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, LinExpr, Model
+    from gurobipy import GRB, LinExpr, Model, Var
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
@@ -22,16 +28,30 @@ from discrete_optimization.maximum_independent_set.mis_model import (
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 
 
-class MisMilpSolver(MisSolver, GurobiMilpSolver):
-    def __init__(
-        self,
-        problem: MisProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any
-    ):
-        super().__init__(problem, params_objective_function, **kwargs)
-        self.vars_node = None
+class BaseGurobiMisSolver(MisSolver, GurobiMilpSolver, WarmstartMixin):
+    vars_node: Sequence[Var]
 
+    def retrieve_current_solution(
+        self,
+        get_var_value_for_current_solution: Callable[[Any], float],
+        get_obj_value_for_current_solution: Callable[[], float],
+    ) -> MisSolution:
+
+        chosen = [0] * self.problem.number_nodes
+
+        for i in range(0, self.problem.number_nodes):
+            if get_var_value_for_current_solution(self.vars_node[i]) > 0.5:
+                chosen[i] = 1
+
+        return MisSolution(self.problem, chosen)
+
+    def set_warm_start(self, solution: MisSolution) -> None:
+        """Make the solver warm start from the given solution."""
+        for i in range(0, self.problem.number_nodes):
+            self.vars_node[i].Start = solution.chosen[i]
+
+
+class MisMilpSolver(BaseGurobiMisSolver):
     def init_model(self, **kwargs: Any) -> None:
 
         # Create a new model
@@ -57,35 +77,12 @@ class MisMilpSolver(MisSolver, GurobiMilpSolver):
                 <= 1 - self.vars_node[self.problem.nodes_to_index[edge[1]]]
             )
 
-    def retrieve_current_solution(
-        self,
-        get_var_value_for_current_solution: Callable[[Any], float],
-        get_obj_value_for_current_solution: Callable[[], float],
-    ) -> MisSolution:
 
-        chosen = [0] * self.problem.number_nodes
-
-        for i in range(0, self.problem.number_nodes):
-            if get_var_value_for_current_solution(self.vars_node[i]) > 0.5:
-                chosen[i] = 1
-
-        return MisSolution(self.problem, chosen)
-
-
-class MisQuadraticSolver(MisSolver, GurobiMilpSolver):
+class MisQuadraticSolver(BaseGurobiMisSolver):
     """
     The quadratic gurobi solver work only for graph without weight on nodes,
     if there is weight, it's going to ignore them
     """
-
-    def __init__(
-        self,
-        problem: MisProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any
-    ):
-        super().__init__(problem, params_objective_function, **kwargs)
-        self.vars_node = None
 
     def init_model(self, **kwargs: Any) -> None:
 
@@ -102,17 +99,3 @@ class MisQuadraticSolver(MisSolver, GurobiMilpSolver):
         J = np.identity(self.problem.number_nodes)
         A = J - adj
         self.model.setObjective(self.vars_node @ A @ self.vars_node, GRB.MAXIMIZE)
-
-    def retrieve_current_solution(
-        self,
-        get_var_value_for_current_solution: Callable[[Any], float],
-        get_obj_value_for_current_solution: Callable[[], float],
-    ) -> MisSolution:
-
-        chosen = [0] * self.problem.number_nodes
-
-        for i in range(0, self.problem.number_nodes):
-            if get_var_value_for_current_solution(self.vars_node[i]) > 0.5:
-                chosen[i] = 1
-
-        return MisSolution(self.problem, chosen)

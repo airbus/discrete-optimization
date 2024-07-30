@@ -22,3 +22,17 @@ def test_cp_knapsack():
     result_storage = cp_model.solve(parameters_cp=parameters_cp)
     sol, fit = result_storage.get_best_solution_fit()
     assert knapsack_model.satisfy(sol)
+
+    start_solution = knapsack_model.get_dummy_solution()
+
+    # first solution is not start_solution
+    assert result_storage[0][0].list_taken != start_solution.list_taken
+
+    # warm start at first solution
+    cp_model.set_warm_start(start_solution)
+    # force first solution to be the hinted one
+    result_storage = cp_model.solve(
+        parameters_cp=parameters_cp,
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+    )
+    assert result_storage[0][0].list_taken == start_solution.list_taken

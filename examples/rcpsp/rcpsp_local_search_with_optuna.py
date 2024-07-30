@@ -115,7 +115,7 @@ def objective(trial: Trial):
         store_solution=False,
     )
     sol, fit = sa.solve(
-        dummy,
+        initial_variable=dummy,
         nb_iteration_max=nb_iteration_max,
     ).get_best_solution_fit()
     return fit

@@ -6,6 +6,7 @@ import logging
 import pytest
 
 from discrete_optimization.coloring.coloring_model import (
+    ColoringSolution,
     ConstraintsColoring,
     transform_coloring_problem,
 )
@@ -16,10 +17,16 @@ from discrete_optimization.coloring.coloring_parser import (
 from discrete_optimization.coloring.coloring_plot import plot_coloring_solution, plt
 from discrete_optimization.coloring.solvers.coloring_cp_lns_solvers import (
     ConstraintHandlerFixColorsCPSat,
+    InitialColoring,
+    InitialColoringMethod,
 )
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
     ModelingCPSat,
+)
+from discrete_optimization.coloring.solvers.greedy_coloring import (
+    GreedyColoring,
+    NXGreedyColoringMethod,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.callbacks.loggers import (
@@ -131,3 +138,63 @@ def test_lns_cpsat_coloring_with_constraints():
     print("Evaluation : ", color_problem.evaluate(solution))
     print("Satisfy : ", color_problem.satisfy(solution))
     assert color_problem.satisfy(solution)
+
+
+def test_lns_cpsat_coloring_warm_start():
+    """Test `set_warm_start()` api."""
+    file = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(file)
+
+    def solver_lns_factory():
+        solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
+        solver.init_model(
+            modeling=ModelingCPSat.INTEGER,
+            warmstart=False,
+            value_sequence_chain=False,
+            used_variable=True,
+            symmetry_on_used=True,
+            nb_colors=60,
+        )
+
+        return LNS_OrtoolsCPSat(
+            problem=color_problem,
+            subsolver=solver,
+            initial_solution_provider=InitialColoring(
+                problem=color_problem, initial_method=InitialColoringMethod.DUMMY
+            ),
+            constraint_handler=ConstraintHandlerFixColorsCPSat(
+                problem=color_problem, fraction_to_fix=0.3
+            ),
+            post_process_solution=None,
+        )
+
+    p = ParametersCP.default_cpsat()
+    p.time_limit = 10
+    p.time_limit_iter0 = 10
+
+    # w/o warm start
+    solver_lns = solver_lns_factory()
+    result_store = solver_lns.solve(
+        nb_iteration_lns=3,
+        parameters_cp=p,
+    )
+
+    # start solution
+    start_solution: ColoringSolution = (
+        GreedyColoring(
+            problem=color_problem,
+        )
+        .solve(strategy=NXGreedyColoringMethod.largest_first)
+        .get_best_solution()
+    )
+
+    # with warm start
+    solver_lns = solver_lns_factory()
+    solver_lns.set_warm_start(start_solution)
+    result_store2 = solver_lns.solve(
+        nb_iteration_lns=3,
+        parameters_cp=p,
+    )
+
+    assert result_store[0][0].colors != start_solution.colors
+    assert result_store2[0][0].colors == start_solution.colors
