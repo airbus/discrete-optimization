@@ -106,3 +106,80 @@ def test_ortools_with_cb(random_seed):
     assert isinstance(sol, GPDPSolution)
     assert nb_iteration_tracker.nb_iteration > 0
     assert (end_time - start_time).total_seconds() < 5
+
+
+def test_ortools_with_warm_start(random_seed):
+    gpdp: GPDP = create_selective_tsp(
+        nb_nodes=nb_nodes, nb_vehicles=nb_vehicles, nb_clusters=nb_clusters
+    )
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.AGGREGATE,
+        objectives=["distance_max"],
+        weights=[1],
+        sense_function=ModeOptim.MINIMIZATION,
+    )
+    #  hyperparameters
+    first_solution_strategy_name = "AUTOMATIC"
+    first_solution_strategy = FirstSolutionStrategy[first_solution_strategy_name]
+    use_lns = False
+    use_cp = True
+    use_cp_sat = True
+
+    #  solver init
+    solver = ORToolsGPDP(
+        problem=gpdp,
+        factor_multiplier_distance=1,
+        factor_multiplier_time=1,
+        params_objective_function=params_objective_function,
+    )
+    solver.init_model(
+        one_visit_per_cluster=True,
+        one_visit_per_node=False,
+        include_time_dimension=True,
+        include_demand=True,
+        include_mandatory=True,
+        include_pickup_and_delivery=False,
+        parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=first_solution_strategy,
+        time_limit=5,
+        use_cp=use_cp,
+        use_lns=use_lns,
+        use_cp_sat=use_cp_sat,
+    )
+
+    # solve
+    result_storage = solver.solve()
+    print(len(result_storage))
+    print([(fit, sol.trajectories) for sol, fit in result_storage])
+
+    # warm start
+    start_solution = result_storage[1][0]
+    assert result_storage[0][0].trajectories != start_solution.trajectories
+
+    solver = ORToolsGPDP(
+        problem=gpdp,
+        factor_multiplier_distance=1,
+        factor_multiplier_time=1,
+        params_objective_function=params_objective_function,
+    )
+    solver.init_model(
+        one_visit_per_cluster=True,
+        one_visit_per_node=False,
+        include_time_dimension=True,
+        include_demand=True,
+        include_mandatory=True,
+        include_pickup_and_delivery=False,
+        parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
+        local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        first_solution_strategy=first_solution_strategy,
+        time_limit=5,
+        use_cp=use_cp,
+        use_lns=use_lns,
+        use_cp_sat=use_cp_sat,
+    )
+    solver.set_warm_start(start_solution)
+    result_storage2 = solver.solve()
+    print(len(result_storage2))
+    print([(fit, sol.trajectories) for sol, fit in result_storage2])
+    assert result_storage2[0][0].trajectories == start_solution.trajectories

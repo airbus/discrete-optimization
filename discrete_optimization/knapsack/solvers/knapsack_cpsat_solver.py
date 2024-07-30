@@ -13,7 +13,11 @@ from ortools.sat.python.cp_model import (
     ObjLinearExprT,
 )
 
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+)
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
@@ -24,11 +28,12 @@ from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsac
 logger = logging.getLogger(__name__)
 
 
-class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack):
+class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
     def __init__(
         self,
         problem: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
@@ -47,6 +52,12 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack):
         model.Add(-self._intern_weight() <= self.problem.max_capacity)
 
         self.set_model_objective("value")
+
+    def set_warm_start(self, solution: KnapsackSolution) -> None:
+        """Make the solver warm start from the given solution."""
+        self.cp_model.clear_hints()
+        for i in range(len(solution.list_taken)):
+            self.cp_model.AddHint(self.variables["taken"][i], solution.list_taken[i])
 
     def _intern_value(self) -> LinearExpr:
         return sum(

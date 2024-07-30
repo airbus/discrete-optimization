@@ -9,8 +9,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
+    Solution,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
     DeapMutation,
@@ -22,7 +23,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 
-class AlternatingGa(SolverDO):
+class AlternatingGa(SolverDO, WarmstartMixin):
     """Multi-encoding single objective GA
 
     Args:
@@ -35,6 +36,9 @@ class AlternatingGa(SolverDO):
             by default, the first encoding in the problem register_solution will be used.
 
     """
+
+    initial_solution: Optional[Solution] = None
+    """Initial solution used for warm start."""
 
     def __init__(
         self,
@@ -73,14 +77,28 @@ class AlternatingGa(SolverDO):
         self.tournament_size = tournament_size
         self.deap_verbose = deap_verbose
 
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
     def solve(self, **kwargs: Any) -> ResultStorage:
         # Initialise the population (here at random)
         count_evals = 0
         current_encoding_index = 0
+
+        if self.initial_solution is None:
+            start_solution = self.problem.get_dummy_solution()
+        else:
+            start_solution = self.initial_solution
+
         if self.encodings is not None:
             for i in range(len(self.encodings)):
                 self.problem.set_fixed_attributes(  # type: ignore
-                    self.encodings[i], self.problem.get_dummy_solution()  # type: ignore
+                    self.encodings[i], start_solution  # type: ignore
                 )
         while count_evals < self.max_evals:
             kwargs_ga: Dict[str, Any] = {}
@@ -112,6 +130,10 @@ class AlternatingGa(SolverDO):
                 deap_verbose=self.deap_verbose,
                 **kwargs_ga
             )
+            # manage warm_start for first step
+            if count_evals == 0 and self.initial_solution is not None:
+                ga_solver.set_warm_start(self.initial_solution)
+
             tmp_sol = ga_solver.solve().get_best_solution()
             count_evals += self.sub_evals[current_encoding_index]  # type: ignore
             if self.encodings is not None:

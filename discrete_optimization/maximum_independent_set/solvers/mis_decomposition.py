@@ -12,6 +12,10 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
+from discrete_optimization.generic_tools.do_solver import (
+    TrivialSolverFromSolution,
+    WarmstartMixin,
+)
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     FloatHyperparameter,
     IntegerHyperparameter,
@@ -39,7 +43,7 @@ logger = logging.getLogger(__name__)
 subsolvers = [s for s in solvers_map]
 
 
-class MisDecomposedSolver(MisSolver):
+class MisDecomposedSolver(MisSolver, WarmstartMixin):
     """
     This solver is based on the current observation. From a given mis model and one current solution,
     if we decide to freeze the decision variable for a subset of items, the remaining problem to solve is also a
@@ -64,6 +68,9 @@ class MisDecomposedSolver(MisSolver):
             default=SubBrick(cls=MisNetworkXSolver, kwargs={}),
         ),
     ]
+
+    initial_solution: Optional[MisSolution] = None
+    """Initial solution used for warm start."""
 
     def rebuild_sol(
         self,
@@ -91,6 +98,14 @@ class MisDecomposedSolver(MisSolver):
         solution = MisSolution(problem=original_mis_model, chosen=list_taken)
         return solution
 
+    def set_warm_start(self, solution: MisSolution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_solver` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
@@ -99,7 +114,14 @@ class MisDecomposedSolver(MisSolver):
         # start of solve callback
         callbacks_list.on_solve_start(solver=self)
 
+        # manage warm start if self.initial_solution is set
+        if self.initial_solution is not None:
+            kwargs["initial_solver"] = SubBrick(
+                cls=TrivialSolverFromSolution,
+                kwargs=dict(solution=self.initial_solution),
+            )
         kwargs = self.complete_with_default_hyperparameters(kwargs)
+
         initial_solver: SubBrick = kwargs["initial_solver"]
         initial_solver_cls: Type[MisSolver] = initial_solver.cls
         initial_solver_kwargs = initial_solver.kwargs

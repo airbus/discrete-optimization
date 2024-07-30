@@ -24,7 +24,9 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
+    Solution,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
@@ -147,7 +149,7 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
             return range_color_all
 
 
-class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
+class ColoringLP(GurobiMilpSolver, _BaseColoringLP, WarmstartMixin):
     """Coloring LP solver based on gurobipy library.
 
     Attributes:
@@ -304,6 +306,17 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
         self.description_constraint["constraints_neighbors"] = {
             "descr": "no neighbors can have same color"
         }
+
+    def set_warm_start(self, solution: ColoringSolution) -> None:
+        """Make the solver warm start from the given solution."""
+        # Init all variables to 0
+        for var in self.variable_decision["colors_var"].values():
+            var.Start = 0
+        # Set var(node, color) to 1 according to the solution
+        for i, color in enumerate(solution.colors):
+            node = self.index_to_nodes_name[i]
+            variable_decision_key = (node, color)
+            self.variable_decision["colors_var"][variable_decision_key].Start = 1
 
 
 class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):

@@ -176,6 +176,7 @@ class GPHH(SolverDO):
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

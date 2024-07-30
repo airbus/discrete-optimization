@@ -16,11 +16,12 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
     Problem,
+    Solution,
     TypeAttribute,
     lower_bound_vector_encoding_from_dict,
     upper_bound_vector_encoding_from_dict,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
@@ -73,7 +74,7 @@ _default_mutations = {
 }
 
 
-class Ga(SolverDO):
+class Ga(SolverDO, WarmstartMixin):
     """Single objective GA
 
     Args:
@@ -97,6 +98,9 @@ class Ga(SolverDO):
         FloatHyperparameter(name="crossover_rate", low=0, high=1, default=0.9),
         FloatHyperparameter(name="tournament_size", low=0, high=1, default=0.2),
     ]
+
+    initial_solution: Optional[Solution] = None
+    """Initial solution used for warm start."""
 
     def __init__(
         self,
@@ -445,6 +449,21 @@ class Ga(SolverDO):
             pop.append(newind)
         return pop
 
+    def create_individual_from_solution(self, solution: Solution) -> Any:
+        ind = getattr(solution, self._encoding_variable_name)
+        newind = self._toolbox.individual()
+        for j in range(len(ind)):
+            newind[j] = ind[j]
+        return newind
+
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
     def solve(self, **kwargs: Any) -> ResultStorage:
         if self.initial_population is None:
             # Initialise the population (here at random)
@@ -452,6 +471,10 @@ class Ga(SolverDO):
         else:
             population = self.generate_custom_population()
             self._pop_size = len(population)
+
+        # manage warm start: set 1 element of the population to the initial_solution
+        if self.initial_solution is not None:
+            population[0] = self.create_individual_from_solution(self.initial_solution)
 
         fits = self._toolbox.map(self._toolbox.evaluate, population)
         for fit, ind in zip(fits, population):

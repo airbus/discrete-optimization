@@ -134,7 +134,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
                 store_solution=True,
             )
         result_sa = ls.solve(
-            dummy,
+            initial_variable=dummy,
             callbacks=callbacks,
             nb_iteration_max=kwargs.get("nb_iteration_max", 2000),
         )

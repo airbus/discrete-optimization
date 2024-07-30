@@ -21,6 +21,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
@@ -183,7 +184,7 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
         return FacilitySolution(self.problem, facility_for_customer)
 
 
-class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
+class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin):
     """Milp solver using gurobi library
 
     Attributes:
@@ -285,6 +286,16 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
             }
         }
         logger.info("Initialized")
+
+    def set_warm_start(self, solution: FacilitySolution) -> None:
+        """Make the solver warm start from the given solution."""
+        # Init all variables to 0
+        for var in self.variable_decision["x"].values():
+            var.Start = 0
+        # Set var(facility, customer) to 1 according to the solution
+        for c, f in enumerate(solution.facility_for_customers):
+            variable_decision_key = (f, c)
+            self.variable_decision["x"][variable_decision_key].Start = 1
 
 
 class LP_Facility_Solver_CBC(SolverFacility):

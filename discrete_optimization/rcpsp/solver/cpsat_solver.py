@@ -20,6 +20,7 @@ from ortools.sat.python.cp_model import (
 
 from discrete_optimization.generic_tools.cp_tools import StatusSolver
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
@@ -39,7 +40,7 @@ from discrete_optimization.rcpsp.special_constraints import PairModeConstraint
 logger = logging.getLogger(__name__)
 
 
-class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP):
+class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
     def __init__(
         self,
         problem: RCPSPModel,
@@ -283,6 +284,20 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP):
             "end": ends_var,
             "is_present": is_present_var,
         }
+
+    def set_warm_start(self, solution: RCPSPSolution) -> None:
+        """Make the solver warm start from the given solution."""
+        self.cp_model.clear_hints()
+        for task in self.variables["start"]:
+            self.cp_model.AddHint(
+                self.variables["start"][task],
+                solution.rcpsp_schedule[task]["start_time"],
+            )
+            self.cp_model.AddHint(
+                self.variables["end"][task], solution.rcpsp_schedule[task]["end_time"]
+            )
+        for task, mode in zip(self.problem.tasks_list_non_dummy, solution.rcpsp_modes):
+            self.cp_model.AddHint(self.variables["is_present"][task, mode], 1)
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> RCPSPSolution:
         """Construct a do solution from the cpsat solver internal solution.

@@ -88,6 +88,6 @@ def look_for_solver_class(
 def solve(
     method: Type[SolverKnapsack], problem: KnapsackModel, **args: Any
 ) -> ResultStorage:
-    solver = method(problem)
+    solver = method(problem, **args)
     solver.init_model(**args)
     return solver.solve(**args)

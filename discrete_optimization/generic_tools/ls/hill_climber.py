@@ -16,7 +16,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandler,
@@ -29,7 +29,11 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class HillClimber(SolverDO):
+class HillClimber(SolverDO, WarmstartMixin):
+
+    initial_solution: Optional[Solution] = None
+    """Initial solution used for warm start."""
+
     def __init__(
         self,
         problem: Problem,
@@ -52,14 +56,31 @@ class HillClimber(SolverDO):
             self.mode_optim = ModeOptim.MAXIMIZATION
         self.store_solution = store_solution
 
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
     def solve(
         self,
-        initial_variable: Solution,
         nb_iteration_max: int,
+        initial_variable: Optional[Solution] = None,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
+
+        if initial_variable is None:
+            if self.initial_solution is None:
+                raise ValueError(
+                    "initial_variable cannot be None if self.initial_solution is None.\n"
+                    "Use set_warm_start() to define it."
+                )
+            else:
+                initial_variable = self.initial_solution
 
         objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         cur_variable = initial_variable.copy()
@@ -153,13 +174,22 @@ class HillClimberPareto(HillClimber):
 
     def solve(
         self,
-        initial_variable: Solution,
         nb_iteration_max: int,
+        initial_variable: Optional[Solution] = None,
         update_iteration_pareto: int = 1000,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ParetoFront:
         callbacks_list = CallbackList(callbacks=callbacks)
+
+        if initial_variable is None:
+            if self.initial_solution is None:
+                raise ValueError(
+                    "initial_variable cannot be None if self.initial_solution is None.\n"
+                    "Use set_warm_start() to define it."
+                )
+            else:
+                initial_variable = self.initial_solution
 
         objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         pareto_front = ParetoFront(

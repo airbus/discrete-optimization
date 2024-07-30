@@ -138,7 +138,7 @@ class InitialSolutionRCPSP(InitialSolution):
                 params_objective_function=self.params_objective_function,
                 store_solution=True,
             )
-            store_solution = sa.solve(dummy, nb_iteration_max=10000)
+            store_solution = sa.solve(initial_variable=dummy, nb_iteration_max=10000)
         return store_solution
 
 

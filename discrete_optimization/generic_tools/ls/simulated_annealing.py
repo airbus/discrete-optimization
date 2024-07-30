@@ -21,7 +21,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandler,
@@ -43,9 +43,12 @@ class TemperatureScheduling:
         ...
 
 
-class SimulatedAnnealing(SolverDO):
+class SimulatedAnnealing(SolverDO, WarmstartMixin):
     aggreg_from_sol: Callable[[Solution], float]
     aggreg_from_dict: Callable[[Dict[str, float]], float]
+
+    initial_solution: Optional[Solution] = None
+    """Initial solution used for warm start."""
 
     def __init__(
         self,
@@ -74,14 +77,31 @@ class SimulatedAnnealing(SolverDO):
         self.mode_optim = self.params_objective_function.sense_function
         self.store_solution = store_solution
 
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
     def solve(
         self,
-        initial_variable: Solution,
         nb_iteration_max: int,
+        initial_variable: Optional[Solution] = None,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
+
+        if initial_variable is None:
+            if self.initial_solution is None:
+                raise ValueError(
+                    "initial_variable cannot be None if self.initial_solution is None.\n"
+                    "Use set_warm_start() to define it."
+                )
+            else:
+                initial_variable = self.initial_solution
 
         objective = self.aggreg_from_dict(self.problem.evaluate(initial_variable))
         cur_variable = initial_variable.copy()
