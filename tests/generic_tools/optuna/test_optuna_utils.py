@@ -126,6 +126,8 @@ def test_generic_optuna_experiment_monoproblem(random_seed):
         n_trials=10,
         seed=random_seed,
         check_satisfy=False,
+        overwrite_study=True,
+        create_another_study=False,
     )
     assert study.best_value == -2.0
 
@@ -147,6 +149,8 @@ def test_generic_optuna_experiment_multiproblem(random_seed):
         n_trials=10,
         seed=random_seed,
         check_satisfy=False,
+        overwrite_study=True,
+        create_another_study=False,
     )
     assert study.best_value == -2.0
 
@@ -168,6 +172,8 @@ def test_generic_optuna_experiment_multiproblem_cumulative_wilcoxon_nok(random_s
             solvers_to_test=solvers_to_test,
             n_trials=10,
             report_cumulated_fitness=True,
+            overwrite_study=True,
+            create_another_study=False,
         )
 
 
@@ -191,6 +197,8 @@ def test_generic_optuna_experiment_multiproblem_cumulative(random_seed):
         randomize_instances=False,
         seed=random_seed,
         check_satisfy=False,
+        overwrite_study=True,
+        create_another_study=False,
     )
     assert study.best_value == -2.0
 
@@ -212,6 +220,8 @@ def test_generic_optuna_experiment_multiproblem_check_satisfy(random_seed):
         n_trials=10,
         seed=random_seed,
         check_satisfy=True,
+        overwrite_study=True,
+        create_another_study=False,
     )
     assert (
         len(study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]))
@@ -237,6 +247,8 @@ def test_generic_optuna_experiment_monoproblem_check_satisfy(random_seed):
         n_trials=10,
         seed=random_seed,
         check_satisfy=True,
+        overwrite_study=True,
+        create_another_study=False,
     )
     assert (
         len(study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]))

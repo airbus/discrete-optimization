@@ -88,14 +88,14 @@ def generic_optuna_experiment_monoproblem(
             Useful to restrict or specify choices, step, high, ...
         additional_hyperparameters_by_solver: additional user-defined hyperparameters by solver, to be suggested by optuna
         n_trials: Number of trials to be run in the optuna study
-        check_satisfy: Decide wether checking if solution found satisfies the problem. If not satisfying,
+        check_satisfy: Decide whether checking if solution found satisfies the problem. If not satisfying,
             we consider the trial as failed and prune it without reporting the value.
         computation_time_in_study: if `True` the intermediate reporting and pruning will be labelled according to elapsed time
             instead of solver internal iteration number.
         study_basename: Base name of the study generated.
             If `create_another_study` is True, a timestamp will be added to this base name.
         create_another_study: if `True` a timestamp prefix will be added to the study base name in order to avoid
-            overwritting or continuing a previously created study.
+            overwriting or continuing a previously created study.
             Should be False, if one wants to add trials to an existing study.
         overwrite_study: if True, any study with the same name as the one generated here will be deleted before starting the optuna study.
             Should be False, if one wants to add trials to an existing study.
@@ -179,10 +179,10 @@ def generic_optuna_experiment_monoproblem(
             solver_class.suggest_hyperparameters_with_optuna(
                 trial=trial,
                 prefix=solver_name + ".",
-                kwargs_by_name=suggest_optuna_kwargs_by_name_by_solver[
-                    solver_class
-                ],  # options to restrict the choices of some hyperparameter
-                fixed_hyperparameters=kwargs_fixed_by_solver[solver_class],
+                kwargs_by_name=suggest_optuna_kwargs_by_name_by_solver.get(
+                    solver_class, None
+                ),
+                fixed_hyperparameters=kwargs_fixed_by_solver.get(solver_class, None),
             )
         )
 
@@ -212,10 +212,9 @@ def generic_optuna_experiment_monoproblem(
         logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
         # construct kwargs for __init__, init_model, and solve
-        kwargs = dict(
-            kwargs_fixed_by_solver[solver_class]
-        )  # copy the frozen kwargs dict
-        kwargs.update(suggested_hyperparameters_kwargs)
+        kwargs = dict(suggested_hyperparameters_kwargs)  # copy
+        if solver_class in kwargs_fixed_by_solver:
+            kwargs.update(kwargs_fixed_by_solver[solver_class])
 
         try:
             # solver init
@@ -233,7 +232,9 @@ def generic_optuna_experiment_monoproblem(
                 report_time=computation_time_in_study,
                 # report intermediate values according to elapsed time instead of iteration number?
             )
-            callbacks_for_optuna = callbacks + [optuna_callback]
+            callbacks_for_optuna = (
+                callbacks + [optuna_callback] + kwargs.pop("callbacks", [])
+            )
 
             # solve
             res = solver.solve(
@@ -345,12 +346,12 @@ def generic_optuna_experiment_multiproblem(
             Useful to restrict or specify choices, step, high, ...
         additional_hyperparameters_by_solver: additional user-defined hyperparameters by solver, to be suggested by optuna
         n_trials: Number of trials to be run in the optuna study
-        check_satisfy: Decide wether checking if solution found satisfies the problem. If not satisfying,
+        check_satisfy: Decide whether checking if solution found satisfies the problem. If not satisfying,
             we consider the trial as failed and prune it without reporting the value.
         study_basename: Base name of the study generated.
             If `create_another_study` is True, a timestamp will be added to this base name.
         create_another_study: if `True` a timestamp prefix will be added to the study base name in order to avoid
-            overwritting or continuing a previously created study.
+            overwriting or continuing a previously created study.
             Should be False, if one wants to add trials to an existing study.
         overwrite_study: if True, any study with the same name as the one generated here will be deleted before starting the optuna study.
             Should be False, if one wants to add trials to an existing study.
@@ -433,10 +434,10 @@ def generic_optuna_experiment_multiproblem(
             solver_class.suggest_hyperparameters_with_optuna(
                 trial=trial,
                 prefix=solver_name + ".",
-                kwargs_by_name=suggest_optuna_kwargs_by_name_by_solver[
-                    solver_class
-                ],  # options to restrict the choices of some hyperparameter
-                fixed_hyperparameters=kwargs_fixed_by_solver[solver_class],
+                kwargs_by_name=suggest_optuna_kwargs_by_name_by_solver.get(
+                    solver_class, None
+                ),  # options to restrict the choices of some hyperparameter
+                fixed_hyperparameters=kwargs_fixed_by_solver.get(solver_class, None),
             )
         )
 
@@ -468,10 +469,9 @@ def generic_optuna_experiment_multiproblem(
         logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
         # construct kwargs for __init__, init_model, and solve
-        kwargs = dict(
-            kwargs_fixed_by_solver[solver_class]
-        )  # copy the frozen kwargs dict
-        kwargs.update(suggested_hyperparameters_kwargs)
+        kwargs = dict(suggested_hyperparameters_kwargs)  # copy
+        if solver_class in kwargs_fixed_by_solver:
+            kwargs.update(kwargs_fixed_by_solver[solver_class])
 
         # loop on problem instances
         fitnesses = []
@@ -491,9 +491,11 @@ def generic_optuna_experiment_multiproblem(
                 solver = solver_class(problem=problem, **kwargs)
                 solver.init_model(**kwargs)
 
+                callbacks_for_trial = callbacks + kwargs.pop("callbacks", [])
+
                 # solve
                 res = solver.solve(
-                    callbacks=callbacks,
+                    callbacks=callbacks_for_trial,
                     **kwargs,
                 )
             except Exception as e:
