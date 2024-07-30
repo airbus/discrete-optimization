@@ -11,6 +11,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
     FloatHyperparameter,
     IntegerHyperparameter,
+    ListHyperparameter,
     SubBrickClsHyperparameter,
     SubBrickHyperparameter,
     SubBrickKwargsHyperparameter,
@@ -37,6 +38,22 @@ class DummySolver(SolverDO):
         FloatHyperparameter("coeff", low=-1.0, high=1.0, default=1.0, step=0.25),
         CategoricalHyperparameter("use_it", choices=[True, False], default=True),
         EnumHyperparameter("method", enum=Method, default=Method.GREEDY),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return self.create_result_storage()
+
+
+class DummySolverWithList(SolverDO):
+    hyperparameters = [
+        ListHyperparameter(
+            name="list_nb",
+            hyperparameter_template=IntegerHyperparameter("nb", low=0, high=2),
+            length_low=2,
+            length_high=3,
+        )
     ]
 
     def solve(
@@ -731,3 +748,32 @@ def test_copy_and_update_hyperparameters():
         elif h.name == "use_it":
             assert len(h.choices) == 1
             assert len(ho.choices) == 2
+
+
+def test_suggest_with_optuna_with_list():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            DummySolverWithList.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "list_nb": dict(high=1),
+                },
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 1
+        assert len(suggested_hyperparameters_kwargs["list_nb"]) >= 2
+        assert len(suggested_hyperparameters_kwargs["list_nb"]) <= 3
+        for nb in suggested_hyperparameters_kwargs["list_nb"]:
+            assert nb in [0, 1]
+
+        assert trial.params["nb_1"] == suggested_hyperparameters_kwargs["list_nb"][1]
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2**2 + 2**3

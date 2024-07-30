@@ -4,7 +4,6 @@
 
 from __future__ import annotations  # see annotations as str
 
-import inspect
 from collections import ChainMap, defaultdict
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Set
 
@@ -79,7 +78,7 @@ class Hyperparametrizable:
             names = cls.get_hyperparameters_names()
         kwargs_by_name = defaultdict(dict, kwargs_by_name)  # add missing names
         return [
-            _copy_and_update_attributes(h, **kwargs_by_name[h.name])
+            h.copy_and_update_attributes(**kwargs_by_name[h.name])
             for h in cls.hyperparameters
             if h.name in names
         ]
@@ -300,13 +299,3 @@ class Hyperparametrizable:
         return nx.algorithms.dag.topological_sort(
             cls._get_hyperparameters_dependency_graph()
         )
-
-
-def _copy_and_update_attributes(h: Hyperparameter, **kwargs) -> Hyperparameter:
-    hyperparameter_cls = h.__class__
-    init_args_names = list(inspect.signature(h.__init__).parameters)
-    for name in init_args_names:
-        if name not in kwargs:
-            kwargs[name] = getattr(h, name)
-    h_new = hyperparameter_cls(**kwargs)
-    return h_new
