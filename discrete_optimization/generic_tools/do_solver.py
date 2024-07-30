@@ -5,7 +5,7 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations  # see annotations as str
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, Iterable, List, Optional, Tuple
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
@@ -27,7 +27,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 
-class SolverDO(Hyperparametrizable):
+class SolverDO(Hyperparametrizable, ABC):
     """Base class for a discrete-optimization solver."""
 
     problem: Problem
@@ -200,3 +200,12 @@ class SolverDO(Hyperparametrizable):
 
         """
         return False
+
+
+class WarmstartMixin(ABC):
+    """Mixin class for warmstart-ready solvers."""
+
+    @abstractmethod
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution."""
+        ...
