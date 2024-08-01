@@ -61,7 +61,7 @@ file_dict = {
 
 
 class ColoringCP(MinizincCPSolver, SolverColoring):
-    hyperparameters = [
+    hyperparameters = MinizincCPSolver.hyperparameters + [
         EnumHyperparameter(
             name="cp_model", enum=ColoringCPModel, default=ColoringCPModel.DEFAULT
         ),
