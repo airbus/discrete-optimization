@@ -539,97 +539,34 @@ class LargeNeighborhoodSearchScheduling(LNS_CP, SolverGenericRCPSP):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         if subsolver is None:
-            if "subsolver_kwargs" not in kwargs or kwargs["subsolver_kwargs"] is None:
-                subsolver_kwargs = kwargs
-            else:
-                subsolver_kwargs = kwargs["subsolver_kwargs"]
-            if "subsolver_cls" not in kwargs or kwargs["subsolver_cls"] is None:
-                subsolver = build_default_cp_model(
-                    rcpsp_problem=problem,
-                    partial_solution=partial_solution,
-                    **subsolver_kwargs,
-                )
-            else:
-                subsolver_cls = kwargs["subsolver_cls"]
-                subsolver = subsolver_cls(problem=self.problem, **subsolver_kwargs)
-                subsolver.init_model(**subsolver_kwargs)
+            subsolver = build_default_cp_model(
+                rcpsp_problem=problem,
+                partial_solution=partial_solution,
+                **kwargs,
+            )
         self.subsolver = subsolver
 
         if constraint_handler is None:
-            if (
-                "constraint_handler_kwargs" not in kwargs
-                or kwargs["constraint_handler_kwargs"] is None
-            ):
-                constraint_handler_kwargs = kwargs
-            else:
-                constraint_handler_kwargs = kwargs["constraint_handler_kwargs"]
-            if (
-                "constraint_handler_cls" not in kwargs
-                or kwargs["constraint_handler_cls"] is None
-            ):
-                constraint_handler = build_constraint_handler(
-                    rcpsp_problem=self.problem,
-                    graph=graph,
-                    multiskill=self.problem.is_multiskill(),
-                    preemptive=self.problem.is_preemptive(),
-                    **constraint_handler_kwargs,
-                )
-            else:
-                constraint_handler_cls = kwargs["constraint_handler_cls"]
-                constraint_handler = constraint_handler_cls(
-                    problem=self.problem, **constraint_handler_kwargs
-                )
+            constraint_handler = build_constraint_handler(
+                rcpsp_problem=self.problem,
+                graph=graph,
+                multiskill=self.problem.is_multiskill(),
+                preemptive=self.problem.is_preemptive(),
+                **kwargs,
+            )
         self.constraint_handler = constraint_handler
 
         if post_process_solution is None:
-            if (
-                "post_process_solution_kwargs" not in kwargs
-                or kwargs["post_process_solution_kwargs"] is None
-            ):
-                post_process_solution_kwargs = kwargs
-            else:
-                post_process_solution_kwargs = kwargs["post_process_solution_kwargs"]
-            if (
-                "post_process_solution_cls" not in kwargs
-                or kwargs["post_process_solution_cls"] is None
-            ):
-                post_process_solution = build_default_postpro(
-                    rcpsp_problem=self.problem,
-                    partial_solution=partial_solution,
-                    **post_process_solution_kwargs,
-                )
-            else:
-                post_process_solution_cls = kwargs["post_process_solution_cls"]
-                post_process_solution = post_process_solution_cls(
-                    problem=self.problem,
-                    params_objective_function=self.params_objective_function,
-                    **post_process_solution_kwargs,
-                )
+            post_process_solution = build_default_postpro(
+                rcpsp_problem=self.problem,
+                partial_solution=partial_solution,
+                **kwargs,
+            )
         self.post_process_solution = post_process_solution
 
         if initial_solution_provider is None:
-            if (
-                "initial_solution_provider_kwargs" not in kwargs
-                or kwargs["initial_solution_provider_kwargs"] is None
-            ):
-                initial_solution_provider_kwargs = kwargs
-            else:
-                initial_solution_provider_kwargs = kwargs[
-                    "initial_solution_provider_kwargs"
-                ]
-            if (
-                "initial_solution_provider_cls" not in kwargs
-                or kwargs["initial_solution_provider_cls"] is None
-            ):
-                initial_solution_provider = build_default_initial_solution(
-                    rcpsp_problem=self.problem,
-                    **initial_solution_provider_kwargs,
-                )
-            else:
-                initial_solution_provider_cls = kwargs["initial_solution_provider_cls"]
-                initial_solution_provider = initial_solution_provider_cls(
-                    problem=self.problem,
-                    params_objective_function=self.params_objective_function,
-                    **initial_solution_provider_kwargs,
-                )
+            initial_solution_provider = build_default_initial_solution(
+                rcpsp_problem=self.problem,
+                **kwargs,
+            )
         self.initial_solution_provider = initial_solution_provider
