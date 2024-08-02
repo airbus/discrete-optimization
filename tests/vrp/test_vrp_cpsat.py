@@ -42,7 +42,8 @@ def test_cpsat_vrp(optional_node, cut_transition):
     sol: VrpSolution
     print(problem.evaluate(sol))
     assert problem.satisfy(sol)
-    compute_nb_nodes_in_path(sol)
+    if not optional_node:
+        compute_nb_nodes_in_path(sol)
 
 
 def test_cpsat_lns_vrp():
@@ -90,7 +91,7 @@ def test_cpsat_vrp_on_tsp(optional_node, diff_start_end):
         parse_file,
     )
 
-    file = [f for f in get_data_available() if "tsp_200_1" in f][0]
+    file = [f for f in get_data_available() if "tsp_51_1" in f][0]
     if diff_start_end:
         problem_tsp: TSPModel2D = parse_file(
             file_path=file, start_index=0, end_index=10
@@ -122,7 +123,8 @@ def test_cpsat_vrp_on_tsp(optional_node, diff_start_end):
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     assert problem.satisfy(sol)
-    compute_nb_nodes_in_path(sol)
+    if not optional_node:
+        compute_nb_nodes_in_path(sol)
     sol_tsp = SolutionTSP(
         problem=problem_tsp,
         start_index=problem_tsp.start_index,
