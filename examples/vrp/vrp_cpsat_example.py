@@ -25,7 +25,7 @@ def run_cpsat_vrp():
     solver.init_model(optional_node=False, cut_transition=False)
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    p.time_limit = 100
+    p.time_limit = 20
     res = solver.solve(parameters_cp=p)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
@@ -46,7 +46,7 @@ def run_cpsat_vrp_on_tsp():
     from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem2D
 
     file = [f for f in get_data_available() if "tsp_200_1" in f][0]
-    problem_tsp: TSPModel2D = parse_file(file_path=file, start_index=0, end_index=10)
+    problem_tsp: TSPModel2D = parse_file(file_path=file, start_index=0, end_index=0)
     problem = VrpProblem2D(
         vehicle_count=1,
         vehicle_capacities=[100000],

@@ -64,6 +64,9 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                 route_is_finished = False
                 path = []
                 route_distance = 0
+                # for arc in self.variables["arc_literals_per_vehicles"][vehicle]:
+                #    if cpsolvercb.boolean_value(self.variables["arc_literals_per_vehicles"][vehicle][arc]):
+                #        print("Vehicle ", vehicle, " from ", arc[0], " to ", arc[1])
                 while not route_is_finished:
                     for i in range(self.problem.customer_count):
                         if i == current_node:
@@ -137,7 +140,11 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                             if j not in ingoing_arc_per_node:
                                 ingoing_arc_per_node[j] = []
                             ingoing_arc_per_node[j].append(lit)
-                        arc_non_loop.append(lit)
+                        if not (
+                            i == self.problem.end_indexes[vehicle]
+                            and j == self.problem.start_indexes[vehicle]
+                        ):
+                            arc_non_loop.append(lit)
                     obj_vars.append(lit)
                     obj_coeffs.append(int(self.distance_matrix[i, j]))
                     if i != j:
@@ -150,19 +157,19 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                 model.Add(visited >= lit)
             model.Add(
                 arc_literals_per_vehicles[vehicle][
-                    self.problem.end_indexes[vehicle],
                     self.problem.start_indexes[vehicle],
+                    self.problem.end_indexes[vehicle],
                 ]
-                == False
-            ).OnlyEnforceIf(visited.Not())
-            if self.problem.start_indexes[vehicle] != self.problem.end_indexes[vehicle]:
+                == visited.Not()
+            )
+            if self.problem.end_indexes[vehicle] != self.problem.start_indexes[vehicle]:
                 model.Add(
                     arc_literals_per_vehicles[vehicle][
                         self.problem.end_indexes[vehicle],
                         self.problem.start_indexes[vehicle],
                     ]
                     == True
-                ).OnlyEnforceIf(visited)
+                )
             dist_path_per_vehicle[vehicle] = sum(
                 obj_vars[i] * obj_coeffs[i] for i in range(len(obj_vars))
             )
