@@ -64,9 +64,11 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                 route_is_finished = False
                 path = []
                 route_distance = 0
-                # for arc in self.variables["arc_literals_per_vehicles"][vehicle]:
-                #    if cpsolvercb.boolean_value(self.variables["arc_literals_per_vehicles"][vehicle][arc]):
-                #        print("Vehicle ", vehicle, " from ", arc[0], " to ", arc[1])
+                for arc in self.variables["arc_literals_per_vehicles"][vehicle]:
+                    if cpsolvercb.boolean_value(
+                        self.variables["arc_literals_per_vehicles"][vehicle][arc]
+                    ):
+                        logger.debug(f"Vehicle {vehicle} from {arc[0]} to {arc[1]}")
                 while not route_is_finished:
                     for i in range(self.problem.customer_count):
                         if i == current_node:
@@ -141,8 +143,17 @@ class CpSatVrpSolver(OrtoolsCPSatSolver, SolverVrp):
                                 ingoing_arc_per_node[j] = []
                             ingoing_arc_per_node[j].append(lit)
                         if not (
-                            i == self.problem.end_indexes[vehicle]
-                            and j == self.problem.start_indexes[vehicle]
+                            (i, j)
+                            in {
+                                (
+                                    self.problem.end_indexes[vehicle],
+                                    self.problem.start_indexes[vehicle],
+                                ),
+                                (
+                                    self.problem.start_indexes[vehicle],
+                                    self.problem.end_indexes[vehicle],
+                                ),
+                            }
                         ):
                             arc_non_loop.append(lit)
                     obj_vars.append(lit)

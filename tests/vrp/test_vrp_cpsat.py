@@ -8,13 +8,22 @@ import pytest
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.lns_cp import LNS_OrtoolsCPSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
+from discrete_optimization.tsp.tsp_model import SolutionTSP
 from discrete_optimization.vrp.solver.vrp_cpsat_lns import (
     ConstraintHandlerSubpathVRP,
     ConstraintHandlerVRP,
 )
 from discrete_optimization.vrp.solver.vrp_cpsat_solver import CpSatVrpSolver
-from discrete_optimization.vrp.vrp_model import VrpSolution
+from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem2D, VrpSolution
 from discrete_optimization.vrp.vrp_parser import get_data_available, parse_file
+
+
+def compute_nb_nodes_in_path(solution: VrpSolution):
+    expected_nodes = solution.problem.customer_count - len(
+        set(solution.problem.start_indexes + solution.problem.end_indexes)
+    )
+    actual_nb_nodes = sum(len(x) for x in solution.list_paths)
+    assert expected_nodes == actual_nb_nodes
 
 
 @pytest.mark.parametrize(
@@ -23,10 +32,6 @@ from discrete_optimization.vrp.vrp_parser import get_data_available, parse_file
 def test_cpsat_vrp(optional_node, cut_transition):
     file = [f for f in get_data_available() if "vrp_26_8_1" in f][0]
     problem = parse_file(file_path=file)
-    problem.vehicle_capacities = [
-        problem.vehicle_capacities[i] for i in range(problem.vehicle_count)
-    ]
-    print(problem)
     solver = CpSatVrpSolver(problem=problem)
     solver.init_model(optional_node=optional_node, cut_transition=cut_transition)
     p = ParametersCP.default_cpsat()
@@ -37,6 +42,7 @@ def test_cpsat_vrp(optional_node, cut_transition):
     sol: VrpSolution
     print(problem.evaluate(sol))
     assert problem.satisfy(sol)
+    compute_nb_nodes_in_path(sol)
 
 
 def test_cpsat_lns_vrp():
@@ -71,3 +77,56 @@ def test_cpsat_lns_vrp():
     sol: VrpSolution
     print(problem.evaluate(sol))
     assert problem.satisfy(sol)
+    compute_nb_nodes_in_path(sol)
+
+
+@pytest.mark.parametrize(
+    "optional_node,diff_start_end", list(product([True, False], repeat=2))
+)
+def test_cpsat_vrp_on_tsp(optional_node, diff_start_end):
+    from discrete_optimization.tsp.tsp_parser import (
+        TSPModel2D,
+        get_data_available,
+        parse_file,
+    )
+
+    file = [f for f in get_data_available() if "tsp_200_1" in f][0]
+    if diff_start_end:
+        problem_tsp: TSPModel2D = parse_file(
+            file_path=file, start_index=0, end_index=10
+        )
+    else:
+        problem_tsp: TSPModel2D = parse_file(file_path=file, start_index=0, end_index=0)
+    problem = VrpProblem2D(
+        vehicle_count=1,
+        vehicle_capacities=[100000],
+        customer_count=problem_tsp.node_count,
+        customers=[
+            Customer2D(
+                name=str(i),
+                demand=0,
+                x=problem_tsp.list_points[i].x,
+                y=problem_tsp.list_points[i].y,
+            )
+            for i in range(len(problem_tsp.list_points))
+        ],
+        start_indexes=[problem_tsp.start_index],
+        end_indexes=[problem_tsp.end_index],
+    )
+    solver = CpSatVrpSolver(problem=problem)
+    solver.init_model(optional_node=optional_node, cut_transition=False)
+    p = ParametersCP.default_cpsat()
+    p.nb_process = 10
+    p.time_limit = 10
+    res = solver.solve(parameters_cp=p)
+    sol, fit = res.get_best_solution_fit()
+    sol: VrpSolution
+    assert problem.satisfy(sol)
+    compute_nb_nodes_in_path(sol)
+    sol_tsp = SolutionTSP(
+        problem=problem_tsp,
+        start_index=problem_tsp.start_index,
+        end_index=problem_tsp.end_index,
+        permutation=sol.list_paths[0],
+    )
+    assert problem_tsp.satisfy(sol_tsp)

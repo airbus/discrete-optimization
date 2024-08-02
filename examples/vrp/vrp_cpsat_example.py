@@ -11,12 +11,12 @@ from discrete_optimization.vrp.solver.vrp_cpsat_solver import CpSatVrpSolver
 from discrete_optimization.vrp.vrp_model import VrpSolution
 from discrete_optimization.vrp.vrp_parser import get_data_available, parse_file
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def run_cpsat_vrp():
     file = [f for f in get_data_available() if "vrp_26_8_1" in f][0]
-    problem = parse_file(file_path=file)
+    problem = parse_file(file_path=file, start_index=0, end_index=0)
     problem.vehicle_capacities = [
         problem.vehicle_capacities[i] for i in range(problem.vehicle_count)
     ]
@@ -27,6 +27,7 @@ def run_cpsat_vrp():
     p.nb_process = 10
     p.time_limit = 20
     res = solver.solve(parameters_cp=p)
+    print(solver.get_status_solver())
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
@@ -73,7 +74,6 @@ def run_cpsat_vrp_on_tsp():
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
-    assert problem.satisfy(sol)
     plot_vrp_solution(vrp_model=problem, solution=sol)
     sol_tsp = SolutionTSP(
         problem=problem_tsp,
@@ -86,4 +86,4 @@ def run_cpsat_vrp_on_tsp():
 
 
 if __name__ == "__main__":
-    run_cpsat_vrp_on_tsp()
+    run_cpsat_vrp()
