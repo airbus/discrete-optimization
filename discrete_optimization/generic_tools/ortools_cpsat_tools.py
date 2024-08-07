@@ -38,6 +38,7 @@ class OrtoolsCPSatSolver(CPSolver):
     """Generic ortools cp-sat solver."""
 
     cp_model: Optional[CpModel] = None
+    solver: Optional[CpSolver] = None
     early_stopping_exception: Optional[Exception] = None
 
     @abstractmethod
@@ -90,6 +91,7 @@ class OrtoolsCPSatSolver(CPSolver):
         if parameters_cp is None:
             parameters_cp = ParametersCP.default_cpsat()
         solver = CpSolver()
+        self.solver = solver
         solver.parameters.max_time_in_seconds = parameters_cp.time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
         if ortools_cpsat_solver_kwargs is not None:
