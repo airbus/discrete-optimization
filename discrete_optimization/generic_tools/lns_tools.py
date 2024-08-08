@@ -17,8 +17,9 @@ from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
     Problem,
+    Solution,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     SubBrick,
@@ -32,6 +33,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable imp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     fitness_class,
+    from_solutions_to_result_storage,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,7 +101,7 @@ class TrivialPostProcessSolution(PostProcessSolution):
         return result_storage
 
 
-class BaseLNS(SolverDO):
+class BaseLNS(SolverDO, WarmstartMixin):
     """Base class for Large Neighborhood Search solvers."""
 
     subsolver: SolverDO
@@ -256,6 +258,20 @@ class BaseLNS(SolverDO):
                     **initial_solution_provider_kwargs,
                 )
         self.initial_solution_provider = initial_solution_provider
+
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Be careful, if you set in `skip_initial_solution_provider=True` in `self.solve()`,
+        the initial solution will be ignored.
+
+        """
+        result_storage = from_solutions_to_result_storage(
+            list_solution=[solution],
+            problem=self.problem,
+            params_objective_function=self.params_objective_function,
+        )
+        self.initial_solution_provider = TrivialInitialSolution(solution=result_storage)
 
     def create_submodel(self) -> contextlib.AbstractContextManager:
         return _dummy_contextmanager()

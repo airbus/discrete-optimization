@@ -5,7 +5,11 @@ import tqdm
 from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+)
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
 from discrete_optimization.maximum_independent_set.mis_model import (
     MisProblem,
@@ -16,7 +20,7 @@ from discrete_optimization.maximum_independent_set.solvers.mis_solver import Mis
 logger = logging.getLogger(__file__)
 
 
-class MisOrtoolsSolver(MisSolver, OrtoolsCPSatSolver):
+class MisOrtoolsSolver(MisSolver, OrtoolsCPSatSolver, WarmstartMixin):
     def __init__(
         self,
         problem: MisProblem,
@@ -71,6 +75,12 @@ class MisOrtoolsSolver(MisSolver, OrtoolsCPSatSolver):
         model.Maximize(objective)
         self.cp_model = model
         self.variables = {"in_set": in_set, "objective": objective}
+
+    def set_warm_start(self, solution: MisSolution) -> None:
+        """Make the solver warm start from the given solution."""
+        self.cp_model.clear_hints()
+        for i in range(len(solution.chosen)):
+            self.cp_model.AddHint(self.variables["in_set"][i], solution.chosen[i])
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> MisSolution:
 

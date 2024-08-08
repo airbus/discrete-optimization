@@ -118,7 +118,7 @@ def objective(trial: Trial):
         store_solution=False,
     )
     sol, fit = sa.solve(
-        dummy,
+        initial_variable=dummy,
         nb_iteration_max=nb_iteration_max,
         callbacks=[OptunaCallback(trial=trial, optuna_report_nb_steps=100)],
     ).get_best_solution_fit()

@@ -85,5 +85,38 @@ def run_cpsat_vrp_on_tsp():
     plt.show()
 
 
+def warm_starting():
+    file = [f for f in get_data_available() if "vrp_26_8_1" in f][0]
+    problem = parse_file(file_path=file)
+    solver = CpSatVrpSolver(problem=problem)
+    solver.init_model(optional_node=False, cut_transition=False)
+    p = ParametersCP.default_cpsat()
+    p.nb_process = 10
+    p.time_limit = 10
+    res = solver.solve(parameters_cp=p)
+    sol, fit = res.get_best_solution_fit()
+    sol: VrpSolution
+    print(problem.evaluate(sol))
+
+    # test warm start
+    # start_solution = GreedyVRPSolver(problem=vrp_model).solve(limit_time_s=20).get_best_solution_fit()[0]
+    start_solution = res[1][0]
+    print(start_solution.list_paths)
+    # warm start at first solution
+    solver = CpSatVrpSolver(problem=problem)
+    solver.init_model(optional_node=False, cut_transition=False)
+    hints = solver.set_warm_start(start_solution)
+    print(hints)
+    # force first solution to be the hinted one
+    res = solver.solve(
+        parameters_cp=p,
+        ortools_cpsat_solver_kwargs=dict(
+            fix_variables_to_their_hinted_value=False, log_search_progress=True
+        ),
+    )
+    print(solver.get_status_solver())
+    # assert res[0][0].list_paths == start_solution.list_paths
+
+
 if __name__ == "__main__":
-    run_cpsat_vrp()
+    warm_starting()

@@ -50,8 +50,8 @@ def test_sa_knapsack():
         mode_mutation=ModeMutation.MUTATE,
     )
     sa.solve(
-        solution,
-        1000000,
+        initial_variable=solution,
+        nb_iteration_max=1000000,
         callbacks=[TimerStopper(total_seconds=20, check_nb_steps=1000)],
     )
 
@@ -88,6 +88,24 @@ def test_hc_knapsack_multiobj():
     )
     pareto = result_sa
     pareto.len_pareto_front()
+
+    # test warm start
+    start_solution = result_sa[-1][0]
+    sa = HillClimberPareto(
+        problem=model,
+        mutator=mixed_mutation,
+        restart_handler=res,
+        mode_mutation=ModeMutation.MUTATE,
+        params_objective_function=params_objective_function,
+        store_solution=True,
+    )
+    sa.set_warm_start(start_solution)
+    result_sa2 = sa.solve(
+        nb_iteration_max=5,
+        update_iteration_pareto=1000,
+    )
+    assert result_sa[0][0].list_taken != start_solution.list_taken
+    assert result_sa2[0][0].list_taken == start_solution.list_taken
 
 
 if __name__ == "__main__":
