@@ -8,7 +8,7 @@ import inspect
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Container, Dict, Iterable, List
+from typing import TYPE_CHECKING, Any, Callable, Container, Dict, Iterable, List
 from typing import Mapping as MappingType
 from typing import Optional, Tuple, Type, Union
 
@@ -750,6 +750,7 @@ class SubBrick:
 
     cls: Type[Hyperparametrizable]
     kwargs: Dict[str, Any]
+    kwargs_from_solution: Optional[Dict[str, Callable[..., Any]]] = None
 
 
 class ListHyperparameter(Hyperparameter):
