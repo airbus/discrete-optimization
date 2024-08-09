@@ -154,6 +154,7 @@ class QAOATSPSolver(SolverTSP, QiskitQAOASolver):
         self,
         problem: TSPModel2D,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.tsp_qiskit = TSP2dQiskit(problem)
@@ -170,6 +171,7 @@ class VQETSPSolver(SolverTSP, QiskitVQESolver):
         self,
         problem: TSPModel2D,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.tsp_qiskit = TSP2dQiskit(problem)
