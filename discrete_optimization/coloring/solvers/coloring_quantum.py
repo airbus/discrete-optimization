@@ -150,6 +150,7 @@ class QAOAColoringSolver_MinimizeNbColor(SolverColoring, QiskitQAOASolver):
         problem: ColoringProblem,
         nb_max_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(
@@ -169,6 +170,7 @@ class VQEColoringSolver_MinimizeNbColor(SolverColoring, QiskitVQESolver):
         problem: ColoringProblem,
         nb_max_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(
@@ -258,6 +260,7 @@ class QAOAColoringSolver_FeasibleNbColor(SolverColoring, QiskitQAOASolver):
         problem: ColoringProblem,
         nb_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(
@@ -277,6 +280,7 @@ class VQEColoringSolver_FeasibleNbColor(SolverColoring, QiskitVQESolver):
         problem: ColoringProblem,
         nb_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(
