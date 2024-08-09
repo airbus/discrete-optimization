@@ -239,6 +239,7 @@ class QiskitSolver(SolverDO):
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function)
 

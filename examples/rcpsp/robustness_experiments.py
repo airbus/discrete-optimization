@@ -216,7 +216,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             params_objective_function=params_objective_function,
             store_solution=True,
         )
-        result_ls = sa.solve(dummy, nb_iteration_max=2000)
+        result_ls = sa.solve(initial_variable=dummy, nb_iteration_max=2000)
     else:
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.MULTI_OBJ,
@@ -233,7 +233,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             store_solution=True,
         )
         result_ls = sa.solve(
-            dummy,
+            initial_variable=dummy,
             nb_iteration_max=5000,
             update_iteration_pareto=10000,
         )
@@ -346,7 +346,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
             params_objective_function=params_objective_function,
             store_solution=True,
         )
-        result_ls = sa.solve(dummy, nb_iteration_max=nb_iteration)
+        result_ls = sa.solve(initial_variable=dummy, nb_iteration_max=nb_iteration)
     else:
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.MULTI_OBJ,
@@ -363,7 +363,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
             store_solution=True,
         )
         result_ls = sa.solve(
-            dummy,
+            initial_variable=dummy,
             nb_iteration_max=nb_iteration,
             update_iteration_pareto=10000,
         )

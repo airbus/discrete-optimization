@@ -10,6 +10,7 @@ from discrete_optimization.coloring.coloring_model import (
     ColoringSolution,
 )
 from discrete_optimization.generic_tools.do_problem import ModeOptim
+from discrete_optimization.generic_tools.do_solver import TrivialSolverFromResultStorage
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -45,6 +46,21 @@ def test_get_best_solution_fit(problem):
     )
     assert res.get_best_solution_fit(satisfying=problem)[1] == -2
     assert res.get_best_solution_fit()[1] == -1
+
+
+def test_solver_from_result_storage(problem):
+    list_solution_fits = [
+        (ColoringSolution(colors=[0, 0, 0, 0], problem=problem), 1),
+        (ColoringSolution(colors=[0, 1, 2, 3, 4], problem=problem), 5),
+        (ColoringSolution(colors=[0, 1, 1, 0, 0], problem=problem), 2),
+    ]
+    res = ResultStorage(
+        mode_optim=ModeOptim.MINIMIZATION, list_solution_fits=list_solution_fits
+    )
+    solver = TrivialSolverFromResultStorage(problem=problem, result_storage=res)
+    res2 = solver.solve()
+
+    assert res == res2
 
 
 def test_mutablesequence_behaviour(problem):

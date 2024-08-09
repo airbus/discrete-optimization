@@ -82,6 +82,7 @@ class QAOAMisSolver(MisSolver, QiskitQAOASolver):
         self,
         problem: MisProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function)
         self.mis_qiskit = MisQiskit(problem)
@@ -98,6 +99,7 @@ class VQEMisSolver(MisSolver, QiskitVQESolver):
         self,
         problem: MisProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function)
         self.mis_qiskit = MisQiskit(problem)

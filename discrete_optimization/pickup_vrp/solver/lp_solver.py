@@ -31,6 +31,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
@@ -155,8 +156,9 @@ def retrieve_current_solution(
     return results, obj
 
 
-class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
+class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
     problem: GPDP
+    warm_start: Optional[GPDPSolution] = None
 
     def __init__(
         self,
@@ -170,6 +172,14 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         self.model: Optional["grb.Model"] = None
         self.constraint_on_edge: Dict[int, Any] = {}
         self.variable_order: Dict[Node, Any] = {}
+
+    def set_warm_start(self, solution: GPDPSolution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `warm_start` is not None in call to `solve()`.
+
+        """
+        self.warm_start = solution
 
     def one_visit_per_node(
         self,
@@ -866,7 +876,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
 
         self.optimize_model(parameters_milp=parameters_milp, **kwargs)
         list_temporary_results: List[TemporaryResult] = []
-        for i in range(self.nb_solutions):
+        for i in range(self.nb_solutions - 1, -1, -1):
             list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
 
         return list_temporary_results
@@ -910,6 +920,8 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         finished = False
         if json_dump_folder is not None:
             os.makedirs(json_dump_folder, exist_ok=True)
+        if warm_start is None and self.warm_start is not None:
+            warm_start = self.warm_start.trajectories
         if warm_start is not None:
             c = ConstraintHandlerOrWarmStart(
                 linear_solver=self, problem=self.problem, do_lns=do_lns
@@ -918,7 +930,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, **kwargs
         )
-        first_solution: TemporaryResult = solutions[0]
+        first_solution: TemporaryResult = solutions[-1]
         if (
             (first_solution.rebuilt_dict is None)
             or (first_solution.connected_components_per_vehicle is None)
@@ -990,7 +1002,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             solutions = self.solve_one_iteration(
                 parameters_milp=parameters_milp, **kwargs
             )
-            first_solution = solutions[0]
+            first_solution = solutions[-1]
             if (
                 (first_solution.rebuilt_dict is None)
                 or (first_solution.connected_components_per_vehicle is None)
@@ -1331,7 +1343,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         logger.info(f"Objective : {self.model.getObjective().getValue()}")
 
         list_temporary_results: List[TemporaryResult] = []
-        for i in range(self.nb_solutions):
+        for i in range(self.nb_solutions - 1, -1, -1):
             list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
 
         return list_temporary_results
@@ -1378,12 +1390,14 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
         c = ConstraintHandlerOrWarmStart(
             linear_solver=self, problem=self.problem, do_lns=do_lns
         )
+        if warm_start is None and self.warm_start is not None:
+            warm_start = self.warm_start.trajectories
         if warm_start is not None:
             c.adding_constraint(warm_start)
         solutions: List[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, no_warm_start=True, **kwargs
         )
-        first_solution: TemporaryResult = solutions[0]
+        first_solution: TemporaryResult = solutions[-1]
         if (
             (first_solution.rebuilt_dict is None)
             or (first_solution.connected_components_per_vehicle is None)

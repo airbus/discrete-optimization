@@ -10,6 +10,7 @@ from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_cp import LNS_OrtoolsCPSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
+from discrete_optimization.tsp.common_tools_tsp import closest_greedy
 from discrete_optimization.tsp.solver.tsp_cpsat_lns import (
     ConstraintHandlerSubpathTSP,
     ConstraintHandlerTSP,
@@ -39,6 +40,23 @@ def test_cpsat_solver(end_index):
     sol: SolutionTSP
     assert model.satisfy(sol)
     assert sol.end_index == end_index
+
+    assert len(res) > 2
+
+    # test warm start
+    start_solution = res[1][0]
+
+    # first solution is not start_solution
+    assert res[0][0].permutation != start_solution.permutation
+
+    # warm start at first solution
+    solver.set_warm_start(start_solution)
+    # force first solution to be the hinted one
+    res = solver.solve(
+        parameters_cp=ParametersCP.default_cpsat(),
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+    )
+    assert res[0][0].permutation == start_solution.permutation
 
 
 def test_lns_cpsat_solver():

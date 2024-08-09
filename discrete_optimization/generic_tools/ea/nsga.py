@@ -20,7 +20,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeAttribute,
     build_evaluate_function_aggregated,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.ea.deap_wrappers import generic_mutate_wrapper
 from discrete_optimization.generic_tools.ea.ga import DeapCrossover, DeapMutation
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -45,7 +45,7 @@ _default_mutations = {
 }
 
 
-class Nsga(SolverDO):
+class Nsga(SolverDO, WarmstartMixin):
     """NSGA
 
     Args:
@@ -58,6 +58,9 @@ class Nsga(SolverDO):
             by default, the first encoding in the problem register_solution will be used.
 
     """
+
+    initial_solution: Optional[Solution] = None
+    """Initial solution used for warm start."""
 
     def __init__(
         self,
@@ -340,6 +343,21 @@ class Nsga(SolverDO):
 
         return val
 
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        Will be ignored if arg `initial_variable` is set and not None in call to `solve()`.
+
+        """
+        self.initial_solution = solution
+
+    def create_individual_from_solution(self, solution: Solution) -> Any:
+        ind = getattr(solution, self._encoding_variable_name)
+        newind = self._toolbox.individual()
+        for j in range(len(ind)):
+            newind[j] = ind[j]
+        return newind
+
     def solve(self, **kwargs: Any) -> ResultStorage:
 
         #  Define the statistics to collect at each generation
@@ -354,6 +372,10 @@ class Nsga(SolverDO):
 
         # Initialise the population (here at random)
         pop = self._toolbox.population()
+
+        # manage warm start: set 1 element of the population to the initial_solution
+        if self.initial_solution is not None:
+            pop[0] = self.create_individual_from_solution(self.initial_solution)
 
         invalid_ind = [ind for ind in pop if not ind.fitness.valid]
         fitnesses = self._toolbox.map(self._toolbox.evaluate, invalid_ind)

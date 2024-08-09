@@ -1,9 +1,10 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import random
 
+import numpy as np
 import pytest
-from matplotlib import pyplot as plt
 
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
@@ -37,6 +38,14 @@ else:
 epsilon = 0.000001
 
 
+@pytest.fixture
+def random_seed():
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    return seed
+
+
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_tsp_new_api():
     files_available = tsp_parser.get_data_available()
@@ -67,7 +76,7 @@ def test_tsp_new_api():
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_tsp_cb():
+def test_tsp_cb(random_seed):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
@@ -76,6 +85,7 @@ def test_tsp_cb():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
+    linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
     p = ParametersMilp.default()
 
     p.time_limit = 100
@@ -210,22 +220,45 @@ def test_vrp_simplified():
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_selective_tsp():
+def test_selective_tsp(random_seed):
     gpdp = create_selective_tsp(nb_nodes=20, nb_vehicles=1, nb_clusters=4)
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    linear_flow_solver.init_model(
+    kwargs_init_model = dict(
         one_visit_per_node=False,
         one_visit_per_cluster=True,
         include_capacity=False,
         include_time_evolution=False,
     )
+    linear_flow_solver.init_model(**kwargs_init_model)
+    linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
     p = ParametersMilp.default()
     p.time_limit = 100
-    res = linear_flow_solver.solve_iterative(
+    kwargs_solve = dict(
         parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
     )
-    sol: GPDPSolution = res.get_best_solution()
+    result_storage = linear_flow_solver.solve_iterative(**kwargs_solve)
+    sol: GPDPSolution = result_storage.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
+
+    # test warm start
+    start_solution: GPDPSolution = result_storage[1][0]
+
+    # first solution is not start_solution
+    assert result_storage[0][0].trajectories != start_solution.trajectories
+
+    # warm start at first solution
+    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver.init_model(**kwargs_init_model)
+    linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
+    linear_flow_solver.set_warm_start(start_solution)
+
+    # force first solution to be the hinted one
+    result_storage2 = linear_flow_solver.solve(**kwargs_solve)
+
+    print([sol.trajectories for sol, fit in result_storage])
+    print([sol.trajectories for sol, fit in result_storage2])
+
+    assert result_storage2[0][0].trajectories == start_solution.trajectories
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

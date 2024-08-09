@@ -25,6 +25,7 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
     Mutation2Opt,
     MutationSwapTSP,
 )
+from discrete_optimization.tsp.tsp_model import SolutionTSP
 from discrete_optimization.tsp.tsp_parser import get_data_available, parse_file
 
 
@@ -173,10 +174,23 @@ def test_hc():
         mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
         params_objective_function=params_objective_function,
     )
-    sol = sa.solve(
-        initial_variable=solution, nb_iteration_max=10000
-    ).get_best_solution()
+    result_storage = sa.solve(initial_variable=solution, nb_iteration_max=10000)
+    sol: SolutionTSP = result_storage.get_best_solution()
     assert model.satisfy(sol)
+
+    # test warm start
+    start_solution = sol
+    assert result_storage[0][0].permutation != sol.permutation
+    sa = HillClimber(
+        problem=model,
+        mutator=mutate_portfolio,
+        restart_handler=res,
+        mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
+        params_objective_function=params_objective_function,
+    )
+    sa.set_warm_start(start_solution)
+    result_storage2 = sa.solve(nb_iteration_max=10000)
+    assert result_storage2[0][0].permutation == sol.permutation
 
 
 if __name__ == "__main__":

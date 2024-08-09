@@ -15,6 +15,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
@@ -27,7 +28,9 @@ class ModelingCPSat(Enum):
     INTEGER = 1
 
 
-class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution):
+class ColoringCPSatSolver(
+    OrtoolsCPSatSolver, SolverColoringWithStartingSolution, WarmstartMixin
+):
     hyperparameters = [
         EnumHyperparameter(
             name="modeling", enum=ModelingCPSat, default=ModelingCPSat.INTEGER
@@ -196,11 +199,13 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
         self.variables["colors"] = variables
         self.variables["used"] = used
 
-    def set_warmstart(self, solution: ColoringSolution):
+    def set_warm_start(self, solution: ColoringSolution) -> None:
+        """Make the solver warm start from the given solution."""
+        self.cp_model.clear_hints()
         if self.modeling == ModelingCPSat.INTEGER:
-            self.set_warmstart_integer(solution)
+            self.set_warm_start_integer(solution)
         if self.modeling == ModelingCPSat.BINARY:
-            self.set_warmstart_integer()
+            self.set_warm_start_binary(solution)
 
     def set_warm_start_integer(self, solution: ColoringSolution):
         for i in range(len(solution.colors)):
@@ -226,5 +231,5 @@ class ColoringCPSatSolver(OrtoolsCPSatSolver, SolverColoringWithStartingSolution
         if modeling == ModelingCPSat.INTEGER:
             self.init_model_integer(**args)
         if do_warmstart:
-            self.set_warmstart(solution=solution)
+            self.set_warm_start(solution=solution)
         self.modeling = modeling
