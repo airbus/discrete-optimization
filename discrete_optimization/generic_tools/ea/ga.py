@@ -120,6 +120,7 @@ class Ga(SolverDO, WarmstartMixin):
         deap_verbose: bool = True,
         initial_population: Optional[List[List[Any]]] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

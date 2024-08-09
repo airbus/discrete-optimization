@@ -492,6 +492,7 @@ class GPHH(SolverGenericRCPSP):
         weight: int = 1,
         params_gphh: ParametersGPHH = None,
         params_objective_function: ParamsObjectiveFunction = None,
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

@@ -59,6 +59,7 @@ class SimulatedAnnealing(SolverDO, WarmstartMixin):
         mode_mutation: ModeMutation,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         store_solution: bool = False,
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

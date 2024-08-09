@@ -58,6 +58,7 @@ class AlternatingGa(SolverDO, WarmstartMixin):
         tournament_size: Optional[float] = None,
         deap_verbose: bool = False,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
