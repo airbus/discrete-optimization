@@ -35,6 +35,7 @@ class KnapsackDynProg(SolverKnapsack):
         self,
         problem: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

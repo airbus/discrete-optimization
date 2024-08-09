@@ -12,6 +12,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import (
     CpSolverSolutionCallback,
     OrtoolsCPSatSolver,
@@ -23,7 +24,7 @@ from discrete_optimization.tsp.tsp_model import SolutionTSP, TSPModel
 logger = logging.getLogger(__name__)
 
 
-class CpSatTspSolver(OrtoolsCPSatSolver, SolverTSP):
+class CpSatTspSolver(OrtoolsCPSatSolver, SolverTSP, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
@@ -37,6 +38,38 @@ class CpSatTspSolver(OrtoolsCPSatSolver, SolverTSP):
             method=self.problem.evaluate_function_indexes,
         )
         self.distance_matrix[self.problem.end_index, self.problem.start_index] = 0
+
+    def set_warm_start(self, solution: SolutionTSP) -> None:
+        """Make the solver warm start from the given solution."""
+        self.cp_model.clear_hints()
+        hints = {}
+        num_nodes = self.problem.node_count
+        all_nodes = range(num_nodes)
+        for i in all_nodes:
+            for j in all_nodes:
+                if i == j:
+                    continue
+                hints[i, j] = 0
+
+        current_node = self.problem.start_index
+        for next_node in solution.permutation:
+            hints[current_node, next_node] = 1
+            current_node = next_node
+        # end the loop
+        last_node = solution.permutation[-1]
+        if self.problem.end_index not in solution.permutation:
+            # end node not in last 2 nodes of permutation
+            hints[last_node, self.problem.end_index] = 1
+            last_node = self.problem.end_index
+            if self.problem.start_index not in solution.permutation:
+                # close the cycle
+                hints[last_node, self.problem.start_index] = 1
+
+        for i in all_nodes:
+            for j in all_nodes:
+                if i == j:
+                    continue
+                self.cp_model.AddHint(self.variables["arc_literals"][i, j], hints[i, j])
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
         current_node = self.problem.start_index

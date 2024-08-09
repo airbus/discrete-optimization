@@ -37,6 +37,7 @@ from discrete_optimization.rcpsp.robust_rcpsp import (
     UncertainRCPSPModel,
     create_poisson_laws_duration,
 )
+from discrete_optimization.rcpsp.solver import PileSolverRCPSP
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_NOBOOL,
@@ -142,6 +143,23 @@ def test_ortools(model):
     assert rcpsp_problem.satisfy(solution)
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
+
+    # test warm start
+    start_solution = (
+        PileSolverRCPSP(problem=rcpsp_problem).solve().get_best_solution_fit()[0]
+    )
+
+    # first solution is not start_solution
+    assert result_storage[0][0].rcpsp_schedule != start_solution.rcpsp_schedule
+
+    # warm start at first solution
+    solver.set_warm_start(start_solution)
+    # force first solution to be the hinted one
+    result_storage = solver.solve(
+        parameters_cp=parameters_cp,
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+    )
+    assert result_storage[0][0].rcpsp_schedule == start_solution.rcpsp_schedule
 
 
 @pytest.mark.parametrize(

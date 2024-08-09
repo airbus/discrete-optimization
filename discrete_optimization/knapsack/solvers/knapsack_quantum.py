@@ -157,6 +157,7 @@ class QAOAKnapsackSolver(SolverKnapsack, QiskitQAOASolver):
         self,
         problem: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.knapsack_qiskit = KnapsackQiskit(problem)
@@ -173,6 +174,7 @@ class VQEKnapsackSolver(SolverKnapsack, QiskitVQESolver):
         self,
         problem: KnapsackModel,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs
     ):
         super().__init__(problem, params_objective_function)
         self.knapsack_qiskit = KnapsackQiskit(problem)

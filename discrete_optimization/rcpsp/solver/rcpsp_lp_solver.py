@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 from mip import BINARY, INTEGER, MINIMIZE, Model, Var, xsum
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
@@ -579,14 +580,18 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         return super().solve(parameters_milp=parameters_milp, **kwargs)
 
 
-class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
+class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
     hyperparameters = _BaseLP_MRCPSP.hyperparameters
+
+    max_horizon: Optional[int] = None
+    partial_solution: Optional[PartialSolution] = None
 
     def init_model(self, **args):
         args = self.complete_with_default_hyperparameters(args)
         greedy_start = args["greedy_start"]
         start_solution = args.get("start_solution", None)
         max_horizon = args.get("max_horizon", None)
+        self.max_horizon = max_horizon
         if start_solution is None:
             if greedy_start:
                 logger.info("Computing greedy solution")
@@ -763,6 +768,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
                     self.x[k].start = 0
 
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
+        self.partial_solution = p_s
         self.constraints_partial_solutions = []
         self.model.update()
         if p_s is not None:
@@ -844,6 +850,13 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
                 f"Partial solution constraints : {self.constraints_partial_solutions}"
             )
             self.model.update()
+
+    def set_warm_start(self, solution: RCPSPSolution) -> None:
+        self.init_model(
+            max_horizon=self.max_horizon,
+            partial_solution=self.partial_solution,
+            start_solution=solution,
+        )
 
 
 class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):

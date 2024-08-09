@@ -51,6 +51,7 @@ class CPM(SolverRCPSP):
         self,
         problem: RCPSPModel,
         params_objective_function: ParamsObjectiveFunction = None,
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

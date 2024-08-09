@@ -53,6 +53,30 @@ def test_decomposed_knapsack_greedy():
     assert knapsack_model.satisfy(solution)
 
 
+def test_decomposed_knapsack_warm_start():
+    logging.basicConfig(level=logging.INFO)
+    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    knapsack_model = parse_file(file)
+    start_solution = knapsack_model.get_dummy_solution()
+
+    solver = KnapsackDecomposedSolver(
+        problem=knapsack_model, params_objective_function=None
+    )
+    result_store = solver.solve(
+        root_solver=SubBrick(cls=GreedyBest, kwargs={}),
+        nb_iteration=5,
+        proportion_to_remove=0.9,
+    )
+    assert result_store[0][0].list_taken != start_solution.list_taken
+    solver.set_warm_start(start_solution)
+    result_store = solver.solve(
+        root_solver=SubBrick(cls=GreedyBest, kwargs={}),
+        nb_iteration=5,
+        proportion_to_remove=0.9,
+    )
+    assert result_store[0][0].list_taken == start_solution.list_taken
+
+
 def test_decomposed_knapsack_cb():
     logging.basicConfig(level=logging.INFO)
     file = [f for f in get_data_available() if "ks_1000_0" in f][0]
