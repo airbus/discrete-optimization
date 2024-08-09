@@ -67,11 +67,29 @@ class SequentialMetasolver(SolverDO):
         # iterate over next solvers
         res_tot = self.create_result_storage()
         for i_subbrick, subbrick in enumerate(self.list_subbricks):
-            subsolver: SolverDO = subbrick.cls(problem=self.problem, **subbrick.kwargs)
-            subsolver.init_model(**subbrick.kwargs)
+            # get previous best solution
             if i_subbrick > 0:
-                subsolver.set_warm_start(res.get_best_solution())
-            res = subsolver.solve(**subbrick.kwargs)
+                start_solution = res.get_best_solution()
+            else:
+                start_solution = None
+            # update subbrick kwargs with functions of previous solutions
+            kwargs_updated = dict(subbrick.kwargs)
+            if subbrick.kwargs_from_solution is not None:
+                kwargs_updated.update(
+                    {
+                        k: fun(start_solution)
+                        for k, fun in subbrick.kwargs_from_solution.items()
+                    }
+                )
+            # init subsolver
+            subsolver: SolverDO = subbrick.cls(problem=self.problem, **kwargs_updated)
+            subsolver.init_model(**kwargs_updated)
+            # warm start
+            if start_solution is not None:
+                subsolver.set_warm_start(start_solution)
+            # solve
+            res = subsolver.solve(**kwargs_updated)
+            # store results
             res_tot.extend(res)
 
             # end of step callback: stopping?
