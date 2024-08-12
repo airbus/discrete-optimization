@@ -39,6 +39,29 @@ else:
     from optuna.trial import Trial, TrialState
 
 
+class TrialDropped(Exception):
+    ...
+
+
+def drop_already_tried_hyperparameters(trial: Trial) -> None:
+    """Fail the trial if using same hyperparameters as a previous one."""
+    states_to_consider = (
+        TrialState.FAIL,
+        TrialState.COMPLETE,
+        TrialState.WAITING,
+        TrialState.PRUNED,
+    )
+    trials_to_consider = trial.study.get_trials(
+        deepcopy=False,
+        states=states_to_consider,
+    )
+    for t in reversed(trials_to_consider):
+        if trial.params == t.params and trial:
+            msg = "Trial with same hyperparameters as a previous trial: dropping it."
+            trial.set_user_attr("Error", msg)
+            raise TrialDropped(msg)
+
+
 def generic_optuna_experiment_monoproblem(
     problem: Problem,
     solvers_to_test: List[Type[SolverDO]],
@@ -186,28 +209,8 @@ def generic_optuna_experiment_monoproblem(
             )
         )
 
-        # use existing value if corresponding to a previous complete trial (it may happen that the sampler repropose same params)
-        states_to_consider = (TrialState.COMPLETE,)
-        trials_to_consider = trial.study.get_trials(
-            deepcopy=False, states=states_to_consider
-        )
-        for t in reversed(trials_to_consider):
-            if trial.params == t.params:
-                msg = "Trial with same hyperparameters as a previous complete trial: returning previous fit."
-                logger.warning(msg)
-                trial.set_user_attr("Error", msg)
-                return t.value
-
-        # prune if corresponding to a previous failed trial
-        states_to_consider = (TrialState.FAIL,)
-        trials_to_consider = trial.study.get_trials(
-            deepcopy=False, states=states_to_consider
-        )
-        for t in reversed(trials_to_consider):
-            if trial.params == t.params:
-                msg = "Pruning trial identical to a previous failed trial."
-                trial.set_user_attr("Error", msg)
-                raise optuna.TrialPruned(msg)
+        # drop trial if corresponding to a previous trial (it may happen that the sampler repropose same params)
+        drop_already_tried_hyperparameters(trial)
 
         logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
@@ -295,7 +298,7 @@ def generic_optuna_experiment_monoproblem(
         storage=storage,
         load_if_exists=not overwrite_study,
     )
-    study.optimize(objective, n_trials=n_trials)
+    study.optimize(objective, n_trials=n_trials, catch=TrialDropped)
     return study
 
 
@@ -441,30 +444,8 @@ def generic_optuna_experiment_multiproblem(
             )
         )
 
-        # use existing value if corresponding to a previous complete trial (it may happen that the sampler repropose same params)
-        states_to_consider = (TrialState.COMPLETE,)
-        trials_to_consider = trial.study.get_trials(
-            deepcopy=False, states=states_to_consider
-        )
-        for t in reversed(trials_to_consider):
-            if trial.params == t.params:
-                msg = "Trial with same hyperparameters as a previous complete trial: returning previous fit."
-                logger.warning(msg)
-                trial.set_user_attr("Error", msg)
-                trial.set_user_attr("pruned", True)
-                return t.value
-
-        # prune if corresponding to a previous failed trial
-        states_to_consider = (TrialState.FAIL,)
-        trials_to_consider = trial.study.get_trials(
-            deepcopy=False, states=states_to_consider
-        )
-        for t in reversed(trials_to_consider):
-            if trial.params == t.params:
-                msg = "Pruning trial identical to a previous failed trial."
-                trial.set_user_attr("Error", msg)
-                trial.set_user_attr("pruned", True)
-                raise optuna.TrialPruned(msg)
+        # drop trial if corresponding to a previous trial (it may happen that the sampler repropose same params)
+        drop_already_tried_hyperparameters(trial)
 
         logger.info(f"Launching trial {trial.number} with parameters: {trial.params}")
 
@@ -566,6 +547,6 @@ def generic_optuna_experiment_multiproblem(
         storage=storage,
         load_if_exists=not overwrite_study,
     )
-    study.optimize(objective, n_trials=n_trials)
+    study.optimize(objective, n_trials=n_trials, catch=TrialDropped)
 
     return study
