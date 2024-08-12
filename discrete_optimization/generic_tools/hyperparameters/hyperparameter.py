@@ -454,7 +454,7 @@ class EnumHyperparameter(CategoricalHyperparameter):
         """
         if choices is None:
             choices = self.choices
-        else:
+        elif not isinstance(choices, Mapping):
             choices = {c.name: c for c in choices}
         return super().suggest_with_optuna(
             trial=trial, choices=choices, prefix=prefix, **kwargs
