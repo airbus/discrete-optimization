@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     Hyperparameter,
+    TrialDropped,
 )
 from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
     TimedPercentilePruner,
@@ -37,10 +38,6 @@ else:
     from optuna.samplers import BaseSampler
     from optuna.storages import JournalFileStorage, JournalStorage
     from optuna.trial import Trial, TrialState
-
-
-class TrialDropped(Exception):
-    ...
 
 
 def drop_already_tried_hyperparameters(trial: Trial) -> None:
