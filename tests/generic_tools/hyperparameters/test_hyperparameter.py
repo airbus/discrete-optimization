@@ -8,13 +8,17 @@ from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
+    CategoricalListWithoutReplacementHyperparameter,
     EnumHyperparameter,
     FloatHyperparameter,
     IntegerHyperparameter,
     ListHyperparameter,
+    SubBrick,
     SubBrickClsHyperparameter,
     SubBrickHyperparameter,
     SubBrickKwargsHyperparameter,
+    SubBrickListWithoutReplacementHyperparameter,
+    TrialDropped,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -53,13 +57,14 @@ class DummySolverWithList(SolverDO):
             hyperparameter_template=IntegerHyperparameter("nb", low=0, high=2),
             length_low=2,
             length_high=3,
-        )
+        ),
+        CategoricalListWithoutReplacementHyperparameter(
+            name="list_method",
+            hyperparameter_template=EnumHyperparameter("method", enum=Method),
+            length_low=1,
+            length_high=5,
+        ),
     ]
-
-    def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
-    ) -> ResultStorage:
-        return self.create_result_storage()
 
 
 class DummySolverWithFloatSuggestingBound(SolverDO):
@@ -212,6 +217,14 @@ class MetaSolver(BaseMetaSolver):
     )
 
 
+class MetaSolverBis(SolverDO):
+    # we check that copy_and_update_hyperparameters create a hyperparameter subsolver
+    # whose attribute choices_str2cls is working properly
+    hyperparameters = [
+        SubBrickHyperparameter("subsolver", choices=[DummySolver, DummySolver2]),
+    ]
+
+
 class MetaSolverFixedSubsolver(SolverDO):
     # subbrickkwargs with fixed subbrick class
     hyperparameters = [
@@ -231,6 +244,25 @@ class MetaMetaSolver(SolverDO):
         SubBrickClsHyperparameter("subsolver", choices=[MetaSolver]),
         SubBrickKwargsHyperparameter(
             "kwargs_subsolver", subbrick_hyperparameter="subsolver"
+        ),
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        return self.create_result_storage()
+
+
+class MetaSolverWithListWithoutReplacement(SolverDO):
+    hyperparameters = [
+        SubBrickListWithoutReplacementHyperparameter(
+            "subsolvers",
+            length_low=1,
+            length_high=2,
+            hyperparameter_template=SubBrickHyperparameter(
+                name="subsolver",
+                choices=[DummySolver, DummySolver2, MetaSolverBis],
+            ),
         ),
     ]
 
@@ -761,19 +793,83 @@ def test_suggest_with_optuna_with_list():
                 },
             )
         )
-        assert len(suggested_hyperparameters_kwargs) == 1
+        assert len(suggested_hyperparameters_kwargs) == 2
         assert len(suggested_hyperparameters_kwargs["list_nb"]) >= 2
         assert len(suggested_hyperparameters_kwargs["list_nb"]) <= 3
         for nb in suggested_hyperparameters_kwargs["list_nb"]:
             assert nb in [0, 1]
-
         assert trial.params["nb_1"] == suggested_hyperparameters_kwargs["list_nb"][1]
+        assert len(suggested_hyperparameters_kwargs["list_method"]) >= 1
+        assert len(suggested_hyperparameters_kwargs["list_method"]) <= 2
+        for method in suggested_hyperparameters_kwargs["list_method"]:
+            assert isinstance(method, Method)
+        assert len(set(suggested_hyperparameters_kwargs["list_method"])) == len(
+            suggested_hyperparameters_kwargs["list_method"]
+        )
 
         return 0.0
 
     study = optuna.create_study(
         sampler=optuna.samplers.BruteForceSampler(),
     )
-    study.optimize(objective)
+    study.optimize(objective, catch=TrialDropped)
 
-    assert len(study.trials) == 2**2 + 2**3
+    completed_trials = study.get_trials(
+        deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]
+    )
+    assert len(completed_trials) == (2**2 + 2**3) * (2 + 2)
+
+
+def test_suggest_with_optuna_with_list_subsolvers_wo_replacement():
+    def objective(trial: optuna.Trial) -> float:
+
+        # restrict some hyperparameters
+        kwargs_by_name_dummysolver = {
+            "coeff": dict(low=1),
+            "use_it": dict(choices=[True]),
+            "method": dict(choices=[Method.GREEDY]),
+        }
+        kwargs_by_name_dummysolver2 = {
+            "coeff2": dict(step=1, low=1),
+            "coeff3": dict(step=1, low=1),
+        }
+        kwargs_by_name_both_dummysolvers = dict(kwargs_by_name_dummysolver)
+        kwargs_by_name_both_dummysolvers.update(kwargs_by_name_dummysolver2)
+        kwargs_by_name_metasolver = {
+            "subsolver": dict(kwargs_by_name=kwargs_by_name_both_dummysolvers)
+        }
+        kwargs_by_name_all_subsolvers = dict(kwargs_by_name_metasolver)
+        kwargs_by_name_all_subsolvers.update(kwargs_by_name_both_dummysolvers)
+
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            MetaSolverWithListWithoutReplacement.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name={
+                    "subsolvers": dict(kwargs_by_name=kwargs_by_name_all_subsolvers)
+                },
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 1
+        assert len(suggested_hyperparameters_kwargs["subsolvers"]) <= 2
+        assert len(suggested_hyperparameters_kwargs["subsolvers"]) >= 1
+        for subsolver in suggested_hyperparameters_kwargs["subsolvers"]:
+            assert isinstance(subsolver, SubBrick)
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective, catch=TrialDropped)
+
+    completed_trials = study.get_trials(
+        deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]
+    )
+    n_dummysolver = 3
+    n_dummysolver2 = 4
+    n_metasolver = n_dummysolver + n_dummysolver2
+    n_list_of_size_1 = n_dummysolver + n_dummysolver2 + n_metasolver
+    n_list_of_size_2_wo_duplicates = n_list_of_size_1**2 - n_list_of_size_1
+    expected_n_trials = n_list_of_size_1 + n_list_of_size_2_wo_duplicates
+    assert len(completed_trials) == expected_n_trials
