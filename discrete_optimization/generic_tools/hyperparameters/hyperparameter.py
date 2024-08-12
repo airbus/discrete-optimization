@@ -828,7 +828,12 @@ class ListHyperparameter(Hyperparameter):
         self.length_high = length_high
 
     def suggest_with_optuna(
-        self, trial: optuna.trial.Trial, prefix: str = "", **kwargs: Any
+        self,
+        trial: optuna.trial.Trial,
+        length_low: Optional[int] = None,
+        length_high: Optional[int] = None,
+        prefix: str = "",
+        **kwargs: Any,
     ) -> List[Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
@@ -836,14 +841,20 @@ class ListHyperparameter(Hyperparameter):
             trial: optuna Trial used for choosing the hyperparameter value
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
+            length_low: overrides `self.length_low`
+            length_high: overrides `self.length_high`
             **kwargs: passed to `trial.suggest_xxx()`
 
         Returns:
 
         """
+        if length_low is None:
+            length_low = self.length_low
+        if length_high is None:
+            length_high = self.length_high
         list_length_name = prefix + self.name + ".length"
         list_length = trial.suggest_int(
-            name=list_length_name, low=self.length_low, high=self.length_high
+            name=list_length_name, low=length_low, high=length_high
         )
         list_hp = []
         for i in range(list_length):
