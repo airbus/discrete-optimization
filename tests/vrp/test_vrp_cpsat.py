@@ -143,10 +143,10 @@ def test_cpsat_vrp_on_tsp(optional_node, diff_start_end):
     assert problem.satisfy(sol)
     if not optional_node:
         compute_nb_nodes_in_path(sol)
-    sol_tsp = SolutionTSP(
-        problem=problem_tsp,
-        start_index=problem_tsp.start_index,
-        end_index=problem_tsp.end_index,
-        permutation=sol.list_paths[0],
-    )
-    assert problem_tsp.satisfy(sol_tsp)
+        sol_tsp = SolutionTSP(
+            problem=problem_tsp,
+            start_index=problem_tsp.start_index,
+            end_index=problem_tsp.end_index,
+            permutation=sol.list_paths[0],
+        )
+        assert problem_tsp.satisfy(sol_tsp)
