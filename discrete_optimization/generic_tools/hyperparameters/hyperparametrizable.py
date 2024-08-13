@@ -180,6 +180,7 @@ class Hyperparametrizable:
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name
             fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,
                 if the subbrick class is not suggested by this method, but already fixed.
+                Will be added to the suggested hyperparameters.
             prefix: prefix to add to optuna corresponding parameters
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
 
@@ -188,6 +189,7 @@ class Hyperparametrizable:
             mapping between the hyperparameter name and its suggested value.
             If the hyperparameter has an attribute `name_in_kwargs`, this is used as the key in the mapping
             instead of the actual hyperparameter name.
+            the mapping is updated with `fixed_hyperparameters`.
 
         kwargs_by_name[some_name] will be passed as **kwargs to suggest_hyperparameter_with_optuna(name=some_name)
 
@@ -277,7 +279,7 @@ class Hyperparametrizable:
                     trial=trial, name=name, **kwargs_for_optuna_suggestion
                 )
 
-        return suggested_hyperparameters
+        return dict(suggested_and_fixed_hyperparameters)
 
     @classmethod
     def _get_hyperparameters_dependency_graph(cls) -> nx.DiGraph:

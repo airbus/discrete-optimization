@@ -555,9 +555,9 @@ def test_suggest_with_optuna_with_dependencies_and_fixed_hyperparameters():
             )
         )
         if suggested_hyperparameters_kwargs["use_it"]:
-            assert len(suggested_hyperparameters_kwargs) == 3
+            assert len(suggested_hyperparameters_kwargs) == 3 + 1
         else:
-            assert len(suggested_hyperparameters_kwargs) == 2
+            assert len(suggested_hyperparameters_kwargs) == 2 + 1
 
         return 0.0
 
@@ -634,11 +634,16 @@ def test_suggest_with_optuna_meta_solver_customized_by_subsolver():
                             DummySolver: dict(nb=dict(high=1)),
                             DummySolver2: dict(nb=dict(choices=[2, 3])),
                         },
+                        fixed_hyperparameters_by_subbrick={
+                            DummySolver: dict(use_it=False)
+                        },
                     )
                 ),
             )
         )
+
         assert len(suggested_hyperparameters_kwargs) == 2
+
         print(suggested_hyperparameters_kwargs)
         assert "nb" in suggested_hyperparameters_kwargs
         assert "nb" in suggested_hyperparameters_kwargs["subsolver"].kwargs
@@ -649,10 +654,17 @@ def test_suggest_with_optuna_meta_solver_customized_by_subsolver():
         )
         if "subsolver.DummySolver.nb" in trial.params:
             param_name = "subsolver.DummySolver.nb"
-            suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"] <= 1
+            assert suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"] <= 1
+            assert (
+                suggested_hyperparameters_kwargs["subsolver"].kwargs["use_it"] is False
+            )
+            assert "coeff" in suggested_hyperparameters_kwargs["subsolver"].kwargs
+            assert len(suggested_hyperparameters_kwargs["subsolver"].kwargs) == 3
         else:
             param_name = "subsolver.DummySolver2.nb"
-            suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"] >= 2
+            assert suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"] >= 2
+            assert "coeff2" in suggested_hyperparameters_kwargs["subsolver"].kwargs
+            assert len(suggested_hyperparameters_kwargs["subsolver"].kwargs) == 2
 
         assert (
             trial.params[param_name]
@@ -763,7 +775,7 @@ def test_suggest_with_optuna_meta_solver_fixed_subsolver():
                 ),
             )
         )
-        assert len(suggested_hyperparameters_kwargs) == 2
+        assert len(suggested_hyperparameters_kwargs) == 2 + 1
         print(suggested_hyperparameters_kwargs)
         assert "nb" in suggested_hyperparameters_kwargs
         assert "nb" in suggested_hyperparameters_kwargs["kwargs_subsolver"]
