@@ -20,6 +20,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
+    SubBrickHyperparameter,
 )
 from discrete_optimization.generic_tools.optuna.utils import (
     generic_optuna_experiment_monoproblem,
@@ -109,7 +110,8 @@ class FakeSolver2(SolverDO):
 
 
 @pytest.mark.skipif(
-    not optuna_available, reason="You need Optuna to test this callback."
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_monoproblem.",
 )
 def test_generic_optuna_experiment_monoproblem(random_seed):
     # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
@@ -133,7 +135,8 @@ def test_generic_optuna_experiment_monoproblem(random_seed):
 
 
 @pytest.mark.skipif(
-    not optuna_available, reason="You need Optuna to test this callback."
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_multiproblem.",
 )
 def test_generic_optuna_experiment_multiproblem(random_seed):
     # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
@@ -156,7 +159,8 @@ def test_generic_optuna_experiment_multiproblem(random_seed):
 
 
 @pytest.mark.skipif(
-    not optuna_available, reason="You need Optuna to test this callback."
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_multiproblem.",
 )
 def test_generic_optuna_experiment_multiproblem_cumulative_wilcoxon_nok(random_seed):
     # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
@@ -178,7 +182,8 @@ def test_generic_optuna_experiment_multiproblem_cumulative_wilcoxon_nok(random_s
 
 
 @pytest.mark.skipif(
-    not optuna_available, reason="You need Optuna to test this callback."
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_multiproblem.",
 )
 def test_generic_optuna_experiment_multiproblem_cumulative(random_seed):
     # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
@@ -204,7 +209,8 @@ def test_generic_optuna_experiment_multiproblem_cumulative(random_seed):
 
 
 @pytest.mark.skipif(
-    not optuna_available, reason="You need Optuna to test this callback."
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_multiproblem.",
 )
 def test_generic_optuna_experiment_multiproblem_check_satisfy(random_seed):
     # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
@@ -230,7 +236,8 @@ def test_generic_optuna_experiment_multiproblem_check_satisfy(random_seed):
 
 
 @pytest.mark.skipif(
-    not optuna_available, reason="You need Optuna to test this callback."
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_monoproblem.",
 )
 def test_generic_optuna_experiment_monoproblem_check_satisfy(random_seed):
     # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
@@ -254,3 +261,57 @@ def test_generic_optuna_experiment_monoproblem_check_satisfy(random_seed):
         len(study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE]))
         == 0
     )
+
+
+class FakeMetaSolver(SolverDO):
+    hyperparameters = [
+        SubBrickHyperparameter("subsolver", choices=[FakeSolver, FakeSolver2])
+    ]
+
+    def solve(
+        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
+        subbrick = kwargs["subsolver"]
+        subsolver_kwargs = dict(subbrick.kwargs)
+        subsolver_kwargs.update(kwargs)
+        subsolver = subbrick.cls(problem=self.problem, **subsolver_kwargs)
+        subsolver.init_model(**subsolver_kwargs)
+        return subsolver.solve(callbacks=callbacks, **subsolver_kwargs)
+
+
+@pytest.mark.skipif(
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_monoproblem.",
+)
+def test_generic_optuna_experiment_monoproblem_metasolver_with_fixed_param_by_subsolver(
+    random_seed,
+):
+    # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
+    files = get_data_available()
+    files = [f for f in files if "gc_70_9" in f]  # Multi mode RCPSP
+    file_path = files[0]
+    problem = parse_file(file_path)
+
+    solvers_to_test = [FakeMetaSolver]
+
+    suggest_optuna_kwargs_by_name_by_solver = {
+        FakeMetaSolver: dict(
+            subsolver=dict(
+                fixed_hyperparameters_by_subbrick={
+                    FakeSolver2: dict(param2=4),
+                }
+            )
+        )
+    }
+
+    study = generic_optuna_experiment_monoproblem(
+        problem=problem,
+        solvers_to_test=solvers_to_test,
+        n_trials=10,
+        seed=random_seed,
+        check_satisfy=False,
+        overwrite_study=True,
+        create_another_study=False,
+        suggest_optuna_kwargs_by_name_by_solver=suggest_optuna_kwargs_by_name_by_solver,
+    )
+    assert study.best_value == -1.0
