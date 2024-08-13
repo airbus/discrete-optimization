@@ -614,6 +614,61 @@ def test_suggest_with_optuna_meta_solver():
     assert len(study.trials) == 2 * (4 * 5 + 3 * 5)
 
 
+def test_suggest_with_optuna_meta_solver_customized_by_subsolver():
+    def objective(trial: optuna.Trial) -> float:
+        # hyperparameters for the chosen solver
+        suggested_hyperparameters_kwargs = (
+            MetaSolver.suggest_hyperparameters_with_optuna(
+                trial=trial,
+                kwargs_by_name=dict(
+                    subsolver=dict(
+                        names=["nb"],
+                        names_by_subbrick={
+                            DummySolver: ["coeff"],
+                            DummySolver2: ["coeff2"],
+                        },
+                        kwargs_by_name=dict(
+                            coeff=dict(step=0.5), coeff2=dict(step=0.5)
+                        ),
+                        kwargs_by_name_by_subbrick={
+                            DummySolver: dict(nb=dict(high=1)),
+                            DummySolver2: dict(nb=dict(choices=[2, 3])),
+                        },
+                    )
+                ),
+            )
+        )
+        assert len(suggested_hyperparameters_kwargs) == 2
+        print(suggested_hyperparameters_kwargs)
+        assert "nb" in suggested_hyperparameters_kwargs
+        assert "nb" in suggested_hyperparameters_kwargs["subsolver"].kwargs
+        assert "nb" in trial.params
+        assert (
+            "subsolver.DummySolver.nb" in trial.params
+            or "subsolver.DummySolver2.nb" in trial.params
+        )
+        if "subsolver.DummySolver.nb" in trial.params:
+            param_name = "subsolver.DummySolver.nb"
+            suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"] <= 1
+        else:
+            param_name = "subsolver.DummySolver2.nb"
+            suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"] >= 2
+
+        assert (
+            trial.params[param_name]
+            == suggested_hyperparameters_kwargs["subsolver"].kwargs["nb"]
+        )
+
+        return 0.0
+
+    study = optuna.create_study(
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    study.optimize(objective)
+
+    assert len(study.trials) == 2 * 2 * 2 * 5
+
+
 def test_suggest_with_optuna_meta_solver_level2():
     def objective(trial: optuna.Trial) -> float:
         # hyperparameters for the chosen solver

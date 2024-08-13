@@ -588,8 +588,15 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
         trial: optuna.trial.Trial,
         subbrick: Optional[Type[Hyperparametrizable]] = None,
         names: Optional[List[str]] = None,
+        names_by_subbrick: Optional[Dict[Type[Hyperparametrizable], List[str]]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        kwargs_by_name_by_subbrick: Optional[
+            Dict[Type[Hyperparametrizable], Dict[str, Dict[str, Any]]]
+        ] = None,
         fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        fixed_hyperparameters_by_subbrick: Optional[
+            Dict[Type[Hyperparametrizable], Dict[str, Any]]
+        ] = None,
         prefix: str = "",
         **kwargs,
     ) -> Dict[str, Any]:
@@ -605,10 +612,19 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
                 the other will be discarded (potentially, being meaningful for other subbricks).
                 By default, all available hyperparameters will be suggested.
                 Passed to `subbrick.suggest_hyperparameters_with_optuna()`.
+            names_by_subbrick: similar to `names` but depending on type of subbrick chosen.
+                `names` will be extended by `names_by_subbrick[subbrick]` (if the key exists)
+                where `subbrick` is either the argument of this function, or (if None) `self.subbrick_cls`.
             kwargs_by_name: options for optuna hyperparameter suggestions, by hyperparameter name.
                 Passed to `subbrick.suggest_hyperparameters_with_optuna()`.
+            kwargs_by_name_by_subbrick: same as `kwargs_by_name` but depending on type of subbrick chosen.
+                `kwargs_by_name` will be updated by `kwargs_by_name_by_subbrick[subbrick]` (if the key exists)
+                where `subbrick` is either the argument of this function, or (if None) `self.subbrick_cls`.
             fixed_hyperparameters: values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,
                 if the subbrick class is not suggested by this method, but already fixed.
+            fixed_hyperparameters_by_subbrick: same as `fixed_hyperparameters` but depending on type of subbrick chosen.
+                `fixed_hyperparameters` will be updated by `fixed_hyperparameters_by_subbrick[subbrick]` (if the key exists)
+                where `subbrick` is either the argument of this function, or (if None) `self.subbrick_cls`.
             prefix: prefix to add to optuna corresponding parameter name
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             **kwargs: passed to `trial.suggest_categorical()`
@@ -623,18 +639,48 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
                 )
             else:
                 subbrick = self.subbrick_cls
+
+        # kwargs_by_name updated according to subbrick
+        if kwargs_by_name is None:
+            kwargs_by_name_updated = {}
+        else:
+            kwargs_by_name_updated = dict(kwargs_by_name)
+        if kwargs_by_name_by_subbrick is not None:
+            kwargs_by_name_updated.update(kwargs_by_name_by_subbrick.get(subbrick, {}))
+
+        # fixed_hyperparameters updated according to subbrick
+        if fixed_hyperparameters is None:
+            fixed_hyperparameters_updated = {}
+        else:
+            fixed_hyperparameters_updated = dict(fixed_hyperparameters)
+        if fixed_hyperparameters_by_subbrick is not None:
+            fixed_hyperparameters_updated.update(
+                fixed_hyperparameters_by_subbrick.get(subbrick, {})
+            )
+
+        # names updated according to subbrick
         subbrick_hyperparameter_names = subbrick.get_hyperparameters_names()
-        if names is not None:
-            names = [name for name in names if name in subbrick_hyperparameter_names]
+        if names is None:
+            names_updated = list(subbrick_hyperparameter_names)
+        else:
+            names_updated = [
+                name for name in names if name in subbrick_hyperparameter_names
+            ]
+        if names_by_subbrick is not None:
+            names_updated.extend(names_by_subbrick.get(subbrick, []))
+
+        # update prefix with subbrick name and class (if not fixed class)
         if self.subbrick_hyperparameter is None:
             prefix = f"{prefix}{self.name}."
         else:
             prefix = f"{prefix}{self.subbrick_hyperparameter}.{subbrick.__name__}."
+
+        # use subbrick suggest method
         return subbrick.suggest_hyperparameters_with_optuna(
             trial=trial,
-            names=names,
-            kwargs_by_name=kwargs_by_name,
-            fixed_hyperparameters=fixed_hyperparameters,
+            names=names_updated,
+            kwargs_by_name=kwargs_by_name_updated,
+            fixed_hyperparameters=fixed_hyperparameters_updated,
             prefix=prefix,
             **kwargs,  # type: ignore
         )
@@ -706,8 +752,15 @@ class SubBrickHyperparameter(Hyperparameter):
             ]
         ] = None,
         names: Optional[List[str]] = None,
+        names_by_subbrick: Optional[Dict[Type[Hyperparametrizable], List[str]]] = None,
         kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        kwargs_by_name_by_subbrick: Optional[
+            Dict[Type[Hyperparametrizable], Dict[str, Dict[str, Any]]]
+        ] = None,
         fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        fixed_hyperparameters_by_subbrick: Optional[
+            Dict[Type[Hyperparametrizable], Dict[str, Any]]
+        ] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> SubBrick:
@@ -717,8 +770,11 @@ class SubBrickHyperparameter(Hyperparameter):
             trial: see Hyperparameter doc
             choices: used by underlying SubBrickClsHyperparameter.suggest_with_optuna
             names: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
+            names_by_subbrick: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
             kwargs_by_name: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
+            kwargs_by_name_by_subbrick: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
             fixed_hyperparameters: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
+            fixed_hyperparameters_by_subbrick: used by underlying SubBrickKwargsHyperparameter.suggest_with_optuna
             prefix: see Hyperparameter doc.
             **kwargs: passed to SubBrickClsHyperparameter.suggest_with_optuna
                 and SubBrickKwargsHyperparameter.suggest_with_optuna
@@ -733,8 +789,11 @@ class SubBrickHyperparameter(Hyperparameter):
             trial=trial,
             subbrick=subbrick_cls,
             names=names,
+            names_by_subbrick=names_by_subbrick,
             kwargs_by_name=kwargs_by_name,
+            kwargs_by_name_by_subbrick=kwargs_by_name_by_subbrick,
             fixed_hyperparameters=fixed_hyperparameters,
+            fixed_hyperparameters_by_subbrick=fixed_hyperparameters_by_subbrick,
             prefix=prefix,
             **kwargs,
         )
