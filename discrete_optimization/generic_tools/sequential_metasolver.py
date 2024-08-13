@@ -10,7 +10,11 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    ListHyperparameter,
+    SubBrick,
+    SubBrickHyperparameter,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -25,6 +29,18 @@ class SequentialMetasolver(SolverDO):
     Therefore each subsolver must inherit from WarmstartMixin, except the first one.
 
     """
+
+    hyperparameters = [
+        ListHyperparameter(
+            name="list_subbricks",
+            hyperparameter_template=SubBrickHyperparameter(
+                "subsolver",
+                choices=[],  # to update in an optuna study via suggest_optuna_kwargs_by_name_by_solver
+            ),
+            length_high=5,  # to update in optuna study via suggest_optuna_kwargs_by_name_by_solver
+            length_low=1,
+        )
+    ]
 
     def __init__(
         self,
