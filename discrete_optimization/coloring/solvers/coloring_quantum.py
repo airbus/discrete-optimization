@@ -56,8 +56,8 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
     def to_quadratic_program(self) -> QuadraticProgram:
         quadratic_program = QuadraticProgram()
 
-        # X_i,j == 1 si le noeud i prend la couleur j
-        # C_j == 1 si la couleur j est choisit au moins une fois
+        # X_i,j == 1 if node i take color j
+        # C_j == 1 if color j is choosen at least one time
 
         p = self.nb_max_color
 
@@ -69,7 +69,7 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
             color_new = quadratic_program.binary_var("color" + str(i))
             var_names[i] = color_new.name
 
-        # on cherche à minimiser le nombre de couleurs utilisées
+        # We are looking to minimize the number of color used
 
         constant = 0
         linear = {}
@@ -86,13 +86,13 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
         où P est un scalaire qui doit idéalement être ni trop petit, ni trop grand (ici on prend le nombre de couleur max autorisé)
         """
 
-        # si une couleur j est attribué à un noeud, la contrainte C_j doit valoir 1
+        # if color j is given to a node, C_j must be 1
         for i in range(0, self.problem.number_of_nodes):
             for j in range(0, self.nb_max_color):
                 quadratic[var_names[(i, j)], var_names[(i, j)]] = p
                 quadratic[var_names[(i, j)], var_names[j]] = -p
 
-        # chaque noeud doit avoir une unique couleur
+        # each node have only one color
         for i in range(0, self.problem.number_of_nodes):
             for j in range(0, self.nb_max_color):
                 quadratic[var_names[(i, j)], var_names[(i, j)]] += -p
@@ -100,7 +100,7 @@ class ColoringQiskit_MinimizeNbColor(OptimizationApplication):
                     quadratic[var_names[(i, j)], var_names[(i, k)]] = 2 * p
             constant += p
 
-        # deux noeuds adjacents ne peuvent avoir la même couleur
+        # two adjacent nodes can't have the same color
         for edge in self.problem.graph.graph_nx.edges():
             for j in range(0, self.nb_max_color):
                 quadratic[
