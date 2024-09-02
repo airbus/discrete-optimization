@@ -109,14 +109,12 @@ class TSP2dQiskit(OptimizationApplication):
                     quadratic[var_names[(i, j)], var_names[(i, j)]] += -p
                 for k in range(j + 1, self.problem.length_permutation):
                     quadratic[var_names[(i, j)], var_names[(i, k)]] = 2 * p
-            constant += p
 
         for j in range(0, self.problem.length_permutation):
             for i in range(0, self.problem.length_permutation):
                 quadratic[var_names[(i, j)], var_names[(i, j)]] += -p
                 for k in range(i + 1, self.problem.length_permutation):
                     quadratic[var_names[(i, j)], var_names[(k, j)]] = 2 * p
-            constant += p
 
         quadratic_program.minimize(constant, linear, quadratic)
 
@@ -125,8 +123,6 @@ class TSP2dQiskit(OptimizationApplication):
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
 
         x = self._result_to_x(result)
-
-        print(x)
 
         start_index = self.problem.start_index
         end_index = self.problem.end_index
@@ -156,7 +152,7 @@ class QAOATSPSolver(SolverTSP, QiskitQAOASolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, kwargs)
         self.tsp_qiskit = TSP2dQiskit(problem)
 
     def init_model(self):
@@ -173,7 +169,7 @@ class VQETSPSolver(SolverTSP, QiskitVQESolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, kwargs)
         self.tsp_qiskit = TSP2dQiskit(problem)
 
     def init_model(self):
