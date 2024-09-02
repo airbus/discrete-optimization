@@ -54,7 +54,6 @@ class KnapsackQiskit(OptimizationApplication):
             problem : the knapsack problem instance
         """
         self.problem = problem
-        self.nb_variable = self.problem.nb_items
 
     def to_quadratic_program(self) -> QuadraticProgram:
 
@@ -84,6 +83,8 @@ class KnapsackQiskit(OptimizationApplication):
         conv = InequalityToEquality()
         quadratic_program = conv.convert(quadratic_program)
 
+        # TODO optimize bounds of integer variable
+
         # transform the integer variable into binary variables
         conv = IntegerToBinary()
         quadratic_program = conv.convert(quadratic_program)
@@ -104,7 +105,6 @@ class KnapsackQiskit(OptimizationApplication):
                     p * weight
                 )
             else:
-                # we give less importance to slack variables, to avoid that it will be more interisting to chose one.
                 quadratic[
                     quadratic_program.get_variable(i).name,
                     quadratic_program.get_variable(i).name,
@@ -131,7 +131,6 @@ class KnapsackQiskit(OptimizationApplication):
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
 
-        print(result)
         list_taken = list(self._result_to_x(result))[: self.problem.nb_items]
 
         objective = 0

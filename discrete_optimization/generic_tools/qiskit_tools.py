@@ -134,13 +134,9 @@ def execute_ansatz_with_Hamiltonian(
     @return: the qubit's value the must often chose
     """
 
+    # If no backend is given we use a quantum simulator
     if backend is None:
         backend = AerSimulator()
-        """
-        if use_session:
-            print("To use a session you need to use a real device not a simulator")
-            use_session = False
-        """
 
     optimization_level = kwargs["optimization_level"]
     nb_shots = kwargs["nb_shots"]
@@ -155,9 +151,10 @@ def execute_ansatz_with_Hamiltonian(
     solver.set_executed_ansatz(new_ansatz)
     hamiltonian = hamiltonian.apply_layout(new_ansatz.layout)
 
-    # open a session if desired
+    # open a session if desired, only useful for real device
     if use_session:
-        session = Session(backend=backend, max_time="2h")
+        max_time = kwargs.get("session_time", "2h")
+        session = Session(backend=backend, max_time=max_time)
     else:
         session = None
 
@@ -230,7 +227,7 @@ def execute_ansatz_with_Hamiltonian(
     best_result = get_result_from_dict_result(results[0].data.meas.get_counts())
 
     # Close the session since we are now done with it
-    if use_session:  # with_session:
+    if use_session:
         session.close()
 
     return best_result
