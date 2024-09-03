@@ -35,8 +35,10 @@ PSPLIB_DATASETS = {
     "j60.sm": "j601_",
 }
 
-IMOPSE_DATASET_URL = "http://imopse.ii.pwr.wroc.pl/files/imopse_validator_pack.zip"
-IMOPSE_DATASET_RELATIVE_PATH = "IMOPSE/dataset_def.zip"
+
+IMOPSE_REPO_URL = "https://github.com/imopse/iMOPSE"
+IMOPSE_REPO_URL_SHA1 = "e58ace53202ec29aa548dd0678ae3164d8349f4e"
+IMOPSE_DATASET_RELATIVE_PATH = "configurations/problems/MSRCPSP/Regular"
 
 MSPSPLIB_REPO_URL = "https://github.com/youngkd/MSPSP-InstLib"
 MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
@@ -206,34 +208,42 @@ def fetch_data_from_psplib(data_home: Optional[str] = None):
 
 
 def fetch_data_from_imopse(data_home: Optional[str] = None):
-    """Fetch data from iMOPSE for rcpsp_multiskill examples.
+    """Fetch data from iMOPSE repo for rcpsp_multiskill examples.
 
-    cf http://imopse.ii.pwr.wroc.pl/download.html
+    https://github.com/imopse/iMOPSE
 
     Params:
         data_home: Specify the cache folder for the datasets. By default
             all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
 
     """
-    #  get the proper data directory
+    # get the proper data directory
     data_home = get_data_home(data_home=data_home)
 
     # get rcpsp_multiskill data directory
     rcpsp_multiskill_dir = f"{data_home}/rcpsp_multiskill"
     os.makedirs(rcpsp_multiskill_dir, exist_ok=True)
+    dataset_dir = rcpsp_multiskill_dir
+
+    # download in a temporary file the repo data
+    url = f"{IMOPSE_REPO_URL}/archive/{IMOPSE_REPO_URL_SHA1}.zip"
 
     try:
-        # download dataset
-        local_file_path, headers = urlretrieve(IMOPSE_DATASET_URL)
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # extract only data
-            with zipfile.ZipFile(local_file_path) as zipf:
-                zipf.extract(IMOPSE_DATASET_RELATIVE_PATH, tmpdir)
-            with zipfile.ZipFile(f"{tmpdir}/{IMOPSE_DATASET_RELATIVE_PATH}") as zipf:
-                zipf.extractall(path=rcpsp_multiskill_dir)
-
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_prefix_in_zip = f"{rootdir}/{IMOPSE_DATASET_RELATIVE_PATH}/"
+            for name in namelist:
+                if name.startswith(dataset_prefix_in_zip):
+                    zipf.extract(name, path=dataset_dir)
+            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
+                os.replace(
+                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
+                )
+            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
     finally:
-        # remove temporary files
         urlcleanup()
 
 
