@@ -728,10 +728,8 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
             for j in variable_per_task
         )
         self.model.addConstrs(
-            gurobi.quicksum(
-                [key[2] * self.x[key] for key in variable_per_task[s]]
-                + [-key[2] * self.x[key] for key in variable_per_task[j]]
-            )
+            gurobi.quicksum(key[2] * self.x[key] for key in variable_per_task[s])
+            - gurobi.quicksum(key[2] * self.x[key] for key in variable_per_task[j])
             >= durations[j]
             for (j, s) in S
         )
@@ -781,11 +779,9 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
             if p_s.start_times is not None:
                 constraints = self.model.addConstrs(
                     gurobi.quicksum(
-                        [
-                            self.x[k]
-                            for k in self.variable_per_task[task]
-                            if k[2] == p_s.start_times[task]
-                        ]
+                        self.x[k]
+                        for k in self.variable_per_task[task]
+                        if k[2] == p_s.start_times[task]
                     )
                     == 1
                     for task in p_s.start_times
