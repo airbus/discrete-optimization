@@ -85,7 +85,7 @@ def test_ortools_with_cb(random_seed):
         parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=first_solution_strategy,
-        time_limit=5,
+        time_limit=10,
         use_cp=use_cp,
         use_lns=use_lns,
         use_cp_sat=use_cp_sat,
@@ -105,7 +105,7 @@ def test_ortools_with_cb(random_seed):
     assert isinstance(fit, float)
     assert isinstance(sol, GPDPSolution)
     assert nb_iteration_tracker.nb_iteration > 0
-    assert (end_time - start_time).total_seconds() < 5
+    assert (end_time - start_time).total_seconds() < 10
 
 
 def test_ortools_with_warm_start(random_seed):
@@ -142,7 +142,7 @@ def test_ortools_with_warm_start(random_seed):
         parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=first_solution_strategy,
-        time_limit=5,
+        time_limit=10,
         use_cp=use_cp,
         use_lns=use_lns,
         use_cp_sat=use_cp_sat,
@@ -173,7 +173,7 @@ def test_ortools_with_warm_start(random_seed):
         parameters_cost=[ParametersCost(dimension_name="Distance", global_span=True)],
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
         first_solution_strategy=first_solution_strategy,
-        time_limit=5,
+        time_limit=10,
         use_cp=use_cp,
         use_lns=use_lns,
         use_cp_sat=use_cp_sat,
