@@ -46,6 +46,9 @@ class OptunaCallback(Callback):
             Useful to be on par with a clock set outside the callback.
         elapsed_time_attr: key of trial user attribute used to store the elapsed time at each step
         report_time: if True, report to optuna intermediate fitness with elapsed time instead of step
+        report_time_unit: fraction of second used as unit when reporting time.
+            Second is represented by 1, millisecond by 0.001, etc.
+            This may be useful starting from optuna 4.0 as report steps are converted to integers.
         pruning: if True, use the optuna pruner to decide if we the trial should be pruned. Else never try to prune.
 
     """
@@ -57,11 +60,13 @@ class OptunaCallback(Callback):
         starting_time: Optional[float] = None,
         elapsed_time_attr: str = "elapsed_time",
         report_time: bool = False,
+        report_time_unit: float = 1.0,
         pruning: bool = True,
         **kwargs,
     ) -> None:
         self.pruning = pruning
         self.report_time = report_time
+        self.report_time_unit = report_time_unit
         self.elapsed_time_attr = elapsed_time_attr
         self.report_nb_steps = optuna_report_nb_steps
         self.trial = trial
@@ -88,12 +93,14 @@ class OptunaCallback(Callback):
         if step % self.report_nb_steps == 0:
             _, fit = res.get_best_solution_fit()
 
-            step_time = time.perf_counter() - self.starting_time
+            step_time = (
+                time.perf_counter() - self.starting_time
+            ) / self.report_time_unit
             self.trial.set_user_attr(self.elapsed_time_attr, step_time)
 
             # Report current score and step to Optuna's trial.
             if self.report_time:
-                self.trial.report(float(fit), step=float(step_time))
+                self.trial.report(float(fit), step=step_time)
             else:
                 self.trial.report(float(fit), step=step)
 

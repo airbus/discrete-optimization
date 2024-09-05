@@ -98,6 +98,7 @@ def test_optuna_timed_callback_timed_pruner(random_seed):
                     trial=trial,
                     optuna_report_nb_steps=10,
                     report_time=True,
+                    report_time_unit=0.001,
                 )
             ],
             **kwargs
