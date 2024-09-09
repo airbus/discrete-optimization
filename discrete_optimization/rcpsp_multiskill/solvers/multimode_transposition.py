@@ -243,7 +243,5 @@ def rebuild_multiskill_solution_cp_based(
         strings = stick_to_solution_preemptive(solution_rcpsp, model)
         for s in strings:
             model.instance.add_string(s)
-    params_cp = ParametersCP.default()
-    params_cp.time_limit = 3600
-    result_store = model.solve(parameters_cp=params_cp)
+    result_store = model.solve(time_limit=3600)
     return result_store

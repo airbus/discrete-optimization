@@ -30,7 +30,6 @@ def solve_makespan_with_cp_sat(problem: RCPSPModel):
     solver = CPSatRCPSPSolver(problem)
     solver.init_model()
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     parameters_cp.nr_solutions = 1
     parameters_cp.nb_process = 8
     result_storage = solver.solve(
@@ -39,6 +38,7 @@ def solve_makespan_with_cp_sat(problem: RCPSPModel):
             NbIterationTracker(step_verbosity_level=logging.INFO),
         ],
         parameters_cp=parameters_cp,
+        time_limit=10,
     )
     solution, fit = result_storage.get_best_solution_fit()
     plot_task_gantt(rcpsp_model=problem, rcpsp_sol=solution, title="Makespan optim")
@@ -51,7 +51,6 @@ def solve_resource_with_cp_sat(problem: RCPSPModel):
     solver = CPSatRCPSPSolverCumulativeResource(problem)
     solver.init_model(weight_on_used_resource=100, weight_on_makespan=1)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     parameters_cp.nr_solutions = 1
     parameters_cp.nb_process = 8
     result_storage = solver.solve(
@@ -60,6 +59,7 @@ def solve_resource_with_cp_sat(problem: RCPSPModel):
             NbIterationTracker(step_verbosity_level=logging.INFO),
         ],
         parameters_cp=parameters_cp,
+        time_limit=10,
     )
     # solution, fit = result_storage.get_best_solution_fit()
     solution, fit = result_storage[-1]

@@ -70,39 +70,47 @@ class BaseLNS_CP(BaseLNS):
             **kwargs,
         )
 
-    def solve_with_subsolver(
-        self,
-        no_previous_solution: bool,
-        instance: Instance,
-        parameters_cp: ParametersCP,
-        **kwargs: Any,
-    ) -> ResultStorage:
-        if no_previous_solution:
-            parameters_cp0 = parameters_cp.copy()
-            parameters_cp0.time_limit = parameters_cp.time_limit_iter0
-            result_store = self.subsolver.solve(
-                parameters_cp=parameters_cp0, instance=instance
-            )
-        else:
-            result_store = self.subsolver.solve(
-                parameters_cp=parameters_cp, instance=instance
-            )
-        return result_store
-
     def solve(
         self,
         nb_iteration_lns: int,
         parameters_cp: Optional[ParametersCP] = None,
+        time_limit_subsolver: Optional[float] = 100.0,
+        time_limit_subsolver_iter0: Optional[float] = None,
         nb_iteration_no_improvement: Optional[int] = None,
         skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        """Solve the problem with an LNS loop
+
+        Args:
+            nb_iteration_lns: number of lns iteration
+            parameters_cp: parameters needed by the cp solver
+            time_limit_subsolver: time limit (in seconds) for a subsolver `solve()` call
+                If None, no time limit is applied.
+            time_limit_subsolver_iter0: time limit (in seconds) for the first subsolver `solve()` call,
+                in the case we are skipping the initial solution provider (`skip_initial_solution_provider is True`)
+                If None, we use the regular `time_limit` parameter even for this first solve.
+            nb_iteration_no_improvement: maximal number of consecutive iteration without improvement allowed
+                before stopping the solve process.
+            skip_initial_solution_provider: if True, we do not use `self.initial_solution_provider`
+                but instead launch a first `self.subsolver.solve()`
+            stop_first_iteration_if_optimal: if True, if `skip_initial_solution_provider, and if subsolver tells
+                its result is optimal after the first `self.subsolver.solve()` (so before any constraint tempering),
+                we stop the solve process.
+            callbacks: list of callbacks used to hook into the various stage of the solve
+            **kwargs: passed to the subsolver
+
+        Returns:
+
+        """
         if parameters_cp is None:
             parameters_cp = ParametersCP.default()
         return super().solve(
             parameters_cp=parameters_cp,
+            time_limit_subsolver=time_limit_subsolver,
+            time_limit_subsolver_iter0=time_limit_subsolver_iter0,
             nb_iteration_lns=nb_iteration_lns,
             nb_iteration_no_improvement=nb_iteration_no_improvement,
             skip_initial_solution_provider=skip_initial_solution_provider,

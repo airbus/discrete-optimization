@@ -29,10 +29,9 @@ def test_cp_sm(optimisation_level):
         max_time=rcpsp_problem.horizon,
     )
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
     params_cp.free_search = True
     params_cp.optimisation_level = optimisation_level
-    solver.solve(parameters_cp=params_cp)
+    solver.solve(parameters_cp=params_cp, time_limit=10)
 
 
 @pytest.mark.parametrize(
@@ -58,7 +57,6 @@ def test_cp_single_mode_model(optimisation_level):
         max_time=rcpsp_problem.horizon,
     )
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
     params_cp.free_search = True
     params_cp.optimisation_level = optimisation_level
-    solver.solve(parameters_cp=params_cp)
+    solver.solve(parameters_cp=params_cp, time_limit=10)

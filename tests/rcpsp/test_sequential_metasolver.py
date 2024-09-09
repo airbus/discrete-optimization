@@ -75,8 +75,6 @@ def test_sequential_metasolver_rcpsp(random_seed):
 
     # kwargs cpsat
     parameters_cp = ParametersCP.default_cpsat()
-    parameters_cp.time_limit = 20
-    parameters_cp.time_limit_iter0 = 20
 
     list_subbricks = [
         SubBrick(cls=PileSolverRCPSP, kwargs=dict()),
@@ -90,7 +88,10 @@ def test_sequential_metasolver_rcpsp(random_seed):
                 nb_iteration_max=5000,
             ),
         ),
-        SubBrick(cls=CPSatRCPSPSolver, kwargs=dict(parameters_cp=parameters_cp)),
+        SubBrick(
+            cls=CPSatRCPSPSolver,
+            kwargs=dict(parameters_cp=parameters_cp, time_limit=20),
+        ),
     ]
 
     solver = SequentialMetasolver(problem=rcpsp_problem, list_subbricks=list_subbricks)
@@ -128,11 +129,6 @@ def test_sequential_metasolver_rcpsp_with_dynamic_kwargs(random_seed):
     )
     restart_handler = RestartHandlerLimit(3000)
     temperature_handler = TemperatureSchedulingFactor(1000, restart_handler, 0.99)
-
-    # kwargs cpsat
-    parameters_cp = ParametersCP.default_cpsat()
-    parameters_cp.time_limit = 20
-    parameters_cp.time_limit_iter0 = 20
 
     list_subbricks = [
         SubBrick(cls=PileSolverRCPSP, kwargs=dict()),

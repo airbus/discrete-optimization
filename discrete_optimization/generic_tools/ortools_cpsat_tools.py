@@ -61,6 +61,7 @@ class OrtoolsCPSatSolver(CPSolver):
         self,
         callbacks: Optional[List[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
+        time_limit: Optional[float] = 100.0,
         ortools_cpsat_solver_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
@@ -68,8 +69,10 @@ class OrtoolsCPSatSolver(CPSolver):
 
         Args:
             callbacks: list of callbacks used to hook into the various stage of the solve
+            time_limit: the solve process stops after this time limit (in seconds).
+                If None, no time limit is applied.
             parameters_cp: parameters specific to cp solvers.
-                We use here only `parameters_cp.time_limit` and `parameters_cp.nb_process`.
+                We use here only `parameters_cp.nb_process`.
             ortools_cpsat_solver_kwargs: used to customize the underlying ortools solver.
                 Each key/value will update the corresponding attribute from the ortools.sat.python.cp_model.CPSolver
             **kwargs: keyword arguments passed to `self.init_model()`
@@ -92,7 +95,8 @@ class OrtoolsCPSatSolver(CPSolver):
             parameters_cp = ParametersCP.default_cpsat()
         solver = CpSolver()
         self.solver = solver
-        solver.parameters.max_time_in_seconds = parameters_cp.time_limit
+        if time_limit is not None:
+            solver.parameters.max_time_in_seconds = time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
         if ortools_cpsat_solver_kwargs is not None:
             # customize solver

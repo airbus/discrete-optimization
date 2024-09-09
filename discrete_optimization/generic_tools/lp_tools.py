@@ -59,7 +59,6 @@ map_solver = {MilpSolverName.GRB: mip.GRB, MilpSolverName.CBC: mip.CBC}
 class ParametersMilp:
     def __init__(
         self,
-        time_limit: int,
         pool_solutions: int,
         mip_gap_abs: float,
         mip_gap: float,
@@ -67,7 +66,6 @@ class ParametersMilp:
         n_solutions_max: int,
         pool_search_mode: int = 0,
     ):
-        self.time_limit = time_limit
         self.pool_solutions = pool_solutions
         self.mip_gap_abs = mip_gap_abs
         self.mip_gap = mip_gap
@@ -78,7 +76,6 @@ class ParametersMilp:
     @staticmethod
     def default() -> "ParametersMilp":
         return ParametersMilp(
-            time_limit=30,
             pool_solutions=10000,
             mip_gap_abs=0.0000001,
             mip_gap=0.000001,
@@ -209,15 +206,23 @@ class PymipMilpSolver(MilpSolver):
         self.solver_name = map_solver[milp_solver_name]
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> ResultStorage:
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        self.optimize_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
         return self.retrieve_solutions(parameters_milp=parameters_milp)
 
     def prepare_model(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> None:
         """Set Gurobi Model parameters according to parameters_milp"""
         if parameters_milp is None:
@@ -231,11 +236,15 @@ class PymipMilpSolver(MilpSolver):
         self.model.max_mip_gap = parameters_milp.mip_gap
         self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
         self.model.sol_pool_size = parameters_milp.pool_solutions
-        self.model.max_seconds = parameters_milp.time_limit
+        if time_limit is not None:
+            self.model.max_seconds = time_limit
         self.model.max_solutions = parameters_milp.n_solutions_max
 
     def optimize_model(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> None:
         """Optimize the mip Model.
 
@@ -248,7 +257,9 @@ class PymipMilpSolver(MilpSolver):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+        self.prepare_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
         self.model.optimize()
 
         logger.info(f"Solver found {self.model.num_solutions} solutions")
@@ -285,6 +296,7 @@ class GurobiMilpSolver(MilpSolver):
         self,
         callbacks: Optional[List[Callback]] = None,
         parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
         **kwargs: Any,
     ) -> ResultStorage:
         self.early_stopping_exception = None
@@ -301,7 +313,9 @@ class GurobiMilpSolver(MilpSolver):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+        self.prepare_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
 
         # wrap user callback in a gurobi callback
         gurobi_callback = GurobiCallback(do_solver=self, callback=callbacks_list)
@@ -321,7 +335,10 @@ class GurobiMilpSolver(MilpSolver):
         return res
 
     def prepare_model(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> None:
         """Set Gurobi Model parameters according to parameters_milp"""
         if self.model is None:
@@ -332,7 +349,8 @@ class GurobiMilpSolver(MilpSolver):
                 )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.setParam(gurobipy.GRB.Param.TimeLimit, parameters_milp.time_limit)
+        if time_limit is not None:
+            self.model.setParam(gurobipy.GRB.Param.TimeLimit, time_limit)
         self.model.setParam(gurobipy.GRB.Param.MIPGapAbs, parameters_milp.mip_gap_abs)
         self.model.setParam(gurobipy.GRB.Param.MIPGap, parameters_milp.mip_gap)
         self.model.setParam(
@@ -341,7 +359,10 @@ class GurobiMilpSolver(MilpSolver):
         self.model.setParam("PoolSearchMode", parameters_milp.pool_search_mode)
 
     def optimize_model(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> None:
         """Optimize the Gurobi Model.
 
@@ -355,7 +376,9 @@ class GurobiMilpSolver(MilpSolver):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+        self.prepare_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
         self.model.optimize()
 
         logger.info(f"Problem has {self.model.NumObj} objectives")
@@ -431,7 +454,10 @@ class CplexMilpSolver(MilpSolver):
     results_solve: Optional[List["SolveSolution"]]
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> ResultStorage:
         if not cplex_available:
             logger.debug(
@@ -445,7 +471,8 @@ class CplexMilpSolver(MilpSolver):
                 )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        self.model.time_limit = parameters_milp.time_limit
+        if time_limit is not None:
+            self.model.time_limit = time_limit
         self.model.parameters.mip.tolerances.mipgap = parameters_milp.mip_gap
         listener = None
         if parameters_milp.retrieve_all_solution or parameters_milp.n_solutions_max > 1:

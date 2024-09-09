@@ -61,14 +61,12 @@ kwargs_fixed: Dict[str, Any] = dict(
         cls=GreedyDummy, kwargs={}
     ),  # Start from empty solution : make the experiment more interesting :)
 )
-params_cp = ParametersCP.default()
-params_cp.time_limit = 5
 kwargs_fixed_by_root_subsolver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs factory for unspecified solvers
     {
-        CPKnapsackMZN2: dict(parameters_cp=params_cp),
-        CPKnapsackMZN: dict(parameters_cp=params_cp),
-        KnapsackASPSolver: {"timeout_seconds": 5},
+        CPKnapsackMZN2: dict(time_limit=5),
+        CPKnapsackMZN: dict(time_limit=5),
+        KnapsackASPSolver: dict(time_limit=5),
     },
 )
 suggest_optuna_kwargs_by_name: Dict[str, Any] = {

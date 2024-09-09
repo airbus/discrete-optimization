@@ -32,7 +32,6 @@ def run_ortools_resource_optim(objectives):
     )
     solver.init_model()
     parameters_cp = ParametersCP.default_cpsat()
-    parameters_cp.time_limit = 5
 
     result_storage = solver.solve(
         subsolver_callbacks=[
@@ -41,6 +40,7 @@ def run_ortools_resource_optim(objectives):
             )
         ],
         parameters_cp=parameters_cp,
+        time_limit=5,
         objectives=objectives,
     )
     print([sol._intern_objectives for sol, fit in result_storage.list_solution_fits])

@@ -50,9 +50,7 @@ def test_multiskill_imopse():
     graph = model_rcpsp.compute_graph()
     cycles = graph.check_loop()
     solver = PileSolverRCPSP_Calendar(problem=model_rcpsp)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 200
-    store_solution = solver.solve(parameters_cp=parameters_cp)
+    store_solution = solver.solve(time_limit=200)
     best_mrcpsp, fit = store_solution.get_best_solution_fit()
     solver = LP_Solver_MRSCPSP(
         problem=model,
@@ -62,7 +60,6 @@ def test_multiskill_imopse():
     )
     solver.init_model(max_time=600)
     parameters_milp = ParametersMilp(
-        time_limit=30,
         pool_solutions=1000,
         mip_gap_abs=0.001,
         mip_gap=0.001,
@@ -86,6 +83,7 @@ def test_multiskill_imopse():
     )
     result_store = lns_solver.solve(
         parameters_milp=parameters_milp,
+        time_limit_subsolver=30,
         nb_iteration_lns=10,
         nb_iteration_no_improvement=10,
         callbacks=[TimerStopper(total_seconds=200)],

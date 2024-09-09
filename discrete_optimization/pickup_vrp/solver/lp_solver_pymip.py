@@ -772,9 +772,14 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         return temporaryresult
 
     def solve_one_iteration(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> List[TemporaryResult]:
-        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        self.optimize_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
         list_temporary_results: List[TemporaryResult] = []
         for i in range(self.nb_solutions):
             list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
@@ -785,6 +790,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         self,
         parameters_milp: Optional[ParametersMilp] = None,
         callbacks: Optional[List[Callback]] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
         **kwargs: Any,
     ) -> ResultStorage:
         # wrap all callbacks in a single one
@@ -806,7 +812,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         )
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
         solutions: List[TemporaryResult] = self.solve_one_iteration(
-            parameters_milp=parameters_milp, **kwargs
+            parameters_milp=parameters_milp, time_limit=time_limit_subsolver, **kwargs
         )
         first_solution: TemporaryResult = solutions[0]
         if (
@@ -859,7 +865,9 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             )
             c.adding_constraint(rebuilt_dict)
             solutions = self.solve_one_iteration(
-                parameters_milp=parameters_milp, **kwargs
+                parameters_milp=parameters_milp,
+                time_limit=time_limit_subsolver,
+                **kwargs,
             )
             first_solution = solutions[0]
             if (
@@ -913,11 +921,13 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
     def solve(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         return self.solve_iterative(
             parameters_milp=parameters_milp,
+            time_limit_subsolver=time_limit_subsolver,
             callbacks=callbacks,
             **kwargs,
         )

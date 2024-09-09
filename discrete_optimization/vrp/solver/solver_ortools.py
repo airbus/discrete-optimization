@@ -182,15 +182,15 @@ class VrpORToolsSolver(SolverVrp):
         )
         return variable_vrp
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(self, time_limit: Optional[int] = 100, **kwargs: Any) -> ResultStorage:
         if self.manager is None:
             self.init_model(**kwargs)
             if self.manager is None:
                 raise RuntimeError(
                     "self.manager should be not None after self.init_model() being called."
                 )
-        limit_time_s = kwargs.get("time_limit_seconds", 100)
-        self.search_parameters.time_limit.seconds = limit_time_s
+        if time_limit is not None:
+            self.search_parameters.time_limit.seconds = time_limit
         if kwargs.get("verbose", False):
             callback = BasicRoutingMonitor(do_solver=self)
             self.routing.AddAtSolutionCallback(callback)

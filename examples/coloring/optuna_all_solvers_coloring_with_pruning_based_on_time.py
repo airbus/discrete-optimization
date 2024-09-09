@@ -76,16 +76,13 @@ solvers_to_test: List[Type[SolverDO]] = [
 # solvers_to_test = [ColoringLP]
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-p.time_limit = max_time_per_solver
-p_m = ParametersMilp.default()
-p_m.time_limit = max_time_per_solver
 kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
-        ColoringCPSatSolver: dict(parameters_cp=p),
-        ColoringCP: dict(parameters_cp=p),
-        ColoringLP: dict(parameters_milp=p_m),
-        ColoringASPSolver: dict(timeout_seconds=max_time_per_solver),
+        ColoringCPSatSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
+        ColoringCP: dict(parameters_cp=p, time_limit=max_time_per_solver),
+        ColoringLP: dict(time_limit=max_time_per_solver),
+        ColoringASPSolver: dict(time_limit=max_time_per_solver),
         ToulbarColoringSolver: dict(time_limit=max_time_per_solver),
     },
 )

@@ -56,7 +56,7 @@ solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
     ],
     "networkX": [(MisNetworkXSolver, {})],
     "kamis": [(MisKamisSolver, {})],
-    "asp": [(MisASPSolver, {"timeout_seconds": 20})],
+    "asp": [(MisASPSolver, {"time_limit": 20})],
     "toulbar": [(MisToulbarSolver, {"time_limit": 20})],
 }
 

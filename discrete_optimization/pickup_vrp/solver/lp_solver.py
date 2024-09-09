@@ -871,10 +871,15 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
         )
 
     def solve_one_iteration(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> List[TemporaryResult]:
 
-        self.optimize_model(parameters_milp=parameters_milp, **kwargs)
+        self.optimize_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
         list_temporary_results: List[TemporaryResult] = []
         for i in range(self.nb_solutions - 1, -1, -1):
             list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
@@ -884,6 +889,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
     def solve_iterative(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
         do_lns: bool = True,
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
@@ -895,6 +901,8 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
 
         Args:
             parameters_milp:
+            time_limit_subsolver: the solve process of the LP subsolver stops after this time limit (in seconds).
+                If None, no time limit is applied.
             do_lns:
             nb_iteration_max:
             json_dump_folder: if not None, solution will be dumped in this folder at each iteration
@@ -928,7 +936,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
             )
             c.adding_constraint(warm_start)
         solutions: List[TemporaryResult] = self.solve_one_iteration(
-            parameters_milp=parameters_milp, **kwargs
+            parameters_milp=parameters_milp, time_limit=time_limit_subsolver, **kwargs
         )
         first_solution: TemporaryResult = solutions[-1]
         if (
@@ -1000,7 +1008,9 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
                 c.adding_constraint(warm_start)
             self.model.update()
             solutions = self.solve_one_iteration(
-                parameters_milp=parameters_milp, **kwargs
+                parameters_milp=parameters_milp,
+                time_limit=time_limit_subsolver,
+                **kwargs,
             )
             first_solution = solutions[-1]
             if (
@@ -1048,6 +1058,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
     def solve(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
         do_lns: bool = True,
         nb_iteration_max: int = 10,
         json_dump_folder: Optional[str] = None,
@@ -1057,6 +1068,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
     ) -> ResultStorage:
         return self.solve_iterative(
             parameters_milp=parameters_milp,
+            time_limit_subsolver=time_limit_subsolver,
             do_lns=do_lns,
             nb_iteration_max=nb_iteration_max,
             json_dump_folder=json_dump_folder,
@@ -1196,9 +1208,14 @@ def build_path_from_vehicle_type_flow(
 
 class LinearFlowSolverLazyConstraint(LinearFlowSolver):
     def solve_one_iteration(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
     ) -> List[TemporaryResult]:
-        self.prepare_model(parameters_milp=parameters_milp, **kwargs)
+        self.prepare_model(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
         if self.model is None:  # for mypy
             raise RuntimeError(
                 "self.model must not be None after self.prepare_model()."

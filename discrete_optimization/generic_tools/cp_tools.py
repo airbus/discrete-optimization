@@ -86,8 +86,6 @@ class ParametersCP:
     Parameters that can be used by any cp - solver
     """
 
-    time_limit: int
-    time_limit_iter0: int
     intermediate_solution: bool
     all_solutions: bool
     nr_solutions: int
@@ -98,11 +96,9 @@ class ParametersCP:
 
     def __init__(
         self,
-        time_limit: int,
         intermediate_solution: bool,
         all_solutions: bool,
         nr_solutions: int,
-        time_limit_iter0: Optional[int] = None,
         free_search: bool = False,
         multiprocess: bool = False,
         nb_process: int = 1,
@@ -110,16 +106,10 @@ class ParametersCP:
     ):
         """
 
-        :param time_limit: in seconds, the time limit of solving the cp model
         :param intermediate_solution: retrieve intermediate solutions
         :param all_solutions: returns all solutions found by the cp solver
         :param nr_solutions: the requested number of solutions
         """
-        self.time_limit = time_limit
-        if time_limit_iter0 is None:
-            self.time_limit_iter0 = time_limit
-        else:
-            self.time_limit_iter0 = time_limit_iter0
         self.intermediate_solution = intermediate_solution
         self.all_solutions = all_solutions
         self.nr_solutions = nr_solutions
@@ -131,7 +121,6 @@ class ParametersCP:
     @staticmethod
     def default() -> "ParametersCP":
         return ParametersCP(
-            time_limit=100,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -142,7 +131,6 @@ class ParametersCP:
     @staticmethod
     def default_cpsat() -> "ParametersCP":
         return ParametersCP(
-            time_limit=100,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -155,7 +143,6 @@ class ParametersCP:
     @staticmethod
     def default_fast_lns() -> "ParametersCP":
         return ParametersCP(
-            time_limit=10,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -165,7 +152,6 @@ class ParametersCP:
     @staticmethod
     def default_free() -> "ParametersCP":
         return ParametersCP(
-            time_limit=100,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=1000,
@@ -174,8 +160,6 @@ class ParametersCP:
 
     def copy(self) -> "ParametersCP":
         return ParametersCP(
-            time_limit=self.time_limit,
-            time_limit_iter0=self.time_limit_iter0,
             intermediate_solution=self.intermediate_solution,
             all_solutions=self.all_solutions,
             nr_solutions=self.nr_solutions,
@@ -270,6 +254,7 @@ class MinizincCPSolver(CPSolver):
         callbacks: Optional[List[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
         instance: Optional[Instance] = None,
+        time_limit: Optional[float] = 100.0,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the CP problem with minizinc
@@ -279,6 +264,8 @@ class MinizincCPSolver(CPSolver):
             parameters_cp: parameters specific to CP solvers
             instance: if specified, use this minizinc instance (and underlying model) rather than `self.instance`
                Useful in iterative solvers like LNS_CP.
+            time_limit: the solve process stops after this time limit (in seconds).
+                If None, no time limit is applied.
             **kwargs: any argument specific to the solver
 
         Returns:
@@ -302,7 +289,6 @@ class MinizincCPSolver(CPSolver):
                     )
             instance = self.instance
 
-        limit_time_s = parameters_cp.time_limit
         intermediate_solutions = parameters_cp.intermediate_solution
 
         # set model output type to use
@@ -310,10 +296,13 @@ class MinizincCPSolver(CPSolver):
             solver=self, callback=callbacks_list
         )
         instance.output_type = output_type
-
+        if time_limit is None:
+            timeout = None
+        else:
+            timeout = timedelta(seconds=time_limit)
         try:
             result = instance.solve(
-                timeout=timedelta(seconds=limit_time_s),
+                timeout=timeout,
                 intermediate_solutions=intermediate_solutions,
                 processes=parameters_cp.nb_process
                 if parameters_cp.multiprocess

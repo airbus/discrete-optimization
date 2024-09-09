@@ -241,7 +241,17 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
                 for val2 in range_map[index2]
             ]
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
+        """
+
+        Args:
+            time_limit: the solve process stops after this time limit (in seconds).
+                If None, no time limit is applied.
+            **kwargs:
+
+        Returns:
+
+        """
         if self.model is None:
             self.init_model()
             if self.model is None:
@@ -249,8 +259,8 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
                     "self.model must not be None after self.init_model()."
                 )
         logger.info("CFN Model init.")
-        time_limit = kwargs.get("time_limit", 20)
-        self.model.CFN.timer(time_limit)
+        if time_limit is not None:
+            self.model.CFN.timer(time_limit)
         solution = self.model.Solve(showSolutions=1)
         logger.info(f"=== Solution === \n {solution}")
         if solution is not None:

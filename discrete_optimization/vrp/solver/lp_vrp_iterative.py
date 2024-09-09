@@ -559,7 +559,7 @@ class VRPIterativeLP(SolverVrp):
                     "model, x_var and constraint_on_edge attributes "
                     "should not be None after init_model()"
                 )
-        limit_time_s = kwargs.get("limit_time_s", 10)
+        limit_time_s = kwargs.get("time_limit", 10)
         self.model.setParam("TimeLimit", limit_time_s)
         self.model.optimize()
         objective = self.model.getObjective().getValue()

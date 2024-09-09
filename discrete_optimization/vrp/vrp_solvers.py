@@ -14,7 +14,7 @@ from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpProblem2D
 
 solvers: Dict[str, List[Tuple[Type[SolverVrp], Dict[str, Any]]]] = {
-    "ortools": [(VrpORToolsSolver, {"limit_time_s": 100})],
+    "ortools": [(VrpORToolsSolver, {"time_limit": 100})],
     "lp": [(VRPIterativeLP, {}), (VRPIterativeLP_Pymip, {})],
 }
 

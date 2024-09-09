@@ -24,8 +24,6 @@ def example_lns_solver():
     rcpsp_problem: RCPSPModel = parse_file(file)
     solver = LargeNeighborhoodSearchScheduling(problem=rcpsp_problem)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit_iter0 = 5
-    parameters_cp.time_limit = 2
     results = solver.solve(
         nb_iteration_lns=100,
         skip_initial_solution_provider=False,
@@ -33,6 +31,8 @@ def example_lns_solver():
         parameters_cp=parameters_cp,
         nb_iteration_no_improvement=200,
         callbacks=[TimerStopper(total_seconds=100)],
+        time_limit_subsolver_iter0=5,
+        time_limit_subsolver=2,
     )
     sol, fit = results.get_best_solution_fit()
     assert rcpsp_problem.satisfy(sol)
@@ -59,8 +59,6 @@ def example_lns_solver_rg300():
         params_list=params_list,
     )
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit_iter0 = 5
-    parameters_cp.time_limit = 10
     parameters_cp.free_search = True
     parameters_cp.nb_process = 6
     parameters_cp.multiprocess = True
@@ -71,6 +69,8 @@ def example_lns_solver_rg300():
         parameters_cp=parameters_cp,
         nb_iteration_no_improvement=10000,
         callbacks=[TimerStopper(total_seconds=10000)],
+        time_limit_subsolver_iter0=5,
+        time_limit_subsolver=10,
     )
     sol, fit = results.get_best_solution_fit()
     assert rcpsp_problem.satisfy(sol)

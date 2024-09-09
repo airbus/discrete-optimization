@@ -17,9 +17,7 @@ def test_cp_knapsack():
     knapsack_model = parse_file(file)
     cp_model = CPSatKnapsackSolver(knapsack_model)
     cp_model.init_model()
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
-    result_storage = cp_model.solve(parameters_cp=parameters_cp)
+    result_storage = cp_model.solve(time_limit=10)
     sol, fit = result_storage.get_best_solution_fit()
     assert knapsack_model.satisfy(sol)
 
@@ -32,7 +30,7 @@ def test_cp_knapsack():
     cp_model.set_warm_start(start_solution)
     # force first solution to be the hinted one
     result_storage = cp_model.solve(
-        parameters_cp=parameters_cp,
+        time_limit=10,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
     assert result_storage[0][0].list_taken == start_solution.list_taken

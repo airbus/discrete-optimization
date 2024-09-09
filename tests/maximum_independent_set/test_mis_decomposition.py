@@ -22,10 +22,13 @@ def test_decomposition_ortools():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 5
     res = solver.solve(
-        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
-        root_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        initial_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
+        root_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
         proportion_to_remove=0.6,
         nb_iteration=10,
     )
@@ -39,9 +42,10 @@ def test_decomposition_warm_start():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 5
     res = solver.solve(
-        root_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        root_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
         proportion_to_remove=0.6,
         nb_iteration=2,
     )

@@ -36,8 +36,7 @@ def test_cpsat_vrp(optional_node, cut_transition):
     solver.init_model(optional_node=optional_node, cut_transition=cut_transition)
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    p.time_limit = 10
-    res = solver.solve(parameters_cp=p)
+    res = solver.solve(parameters_cp=p, time_limit=10)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
@@ -46,7 +45,7 @@ def test_cpsat_vrp(optional_node, cut_transition):
         compute_nb_nodes_in_path(sol)
 
     # test warm start
-    # start_solution = GreedyVRPSolver(problem=vrp_model).solve(limit_time_s=20).get_best_solution_fit()[0]
+    # start_solution = GreedyVRPSolver(problem=vrp_model).solve(time_limit=20).get_best_solution_fit()[0]
     start_solution = res[1][0]
 
     # first solution is not start_solution
@@ -59,6 +58,7 @@ def test_cpsat_vrp(optional_node, cut_transition):
     # force first solution to be the hinted one
     res = solver.solve(
         parameters_cp=p,
+        time_limit=10,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
     assert res[0][0].list_paths == start_solution.list_paths
@@ -87,10 +87,11 @@ def test_cpsat_lns_vrp():
         ),
     )
     p = ParametersCP.default_cpsat()
-    p.time_limit = 10
-    p.time_limit_iter0 = 10
     res = solver_lns.solve(
-        skip_initial_solution_provider=True, nb_iteration_lns=30, parameters_cp=p
+        skip_initial_solution_provider=True,
+        nb_iteration_lns=30,
+        parameters_cp=p,
+        time_limit_subsolver=10,
     )
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
@@ -136,8 +137,7 @@ def test_cpsat_vrp_on_tsp(optional_node, diff_start_end):
     solver.init_model(optional_node=optional_node, cut_transition=False)
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    p.time_limit = 20
-    res = solver.solve(parameters_cp=p)
+    res = solver.solve(parameters_cp=p, time_limit=20)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     assert problem.satisfy(sol)

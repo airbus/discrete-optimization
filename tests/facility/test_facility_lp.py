@@ -34,10 +34,8 @@ def test_facility_lp_gurobi():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
-    parameters_lp = ParametersMilp.default()
-    parameters_lp.time_limit = 20
     kwargs = dict(
-        parameters_milp=parameters_lp,
+        time_limit=20,
         use_matrix_indicator_heuristic=False,
     )
     result_storage = solver.solve(**kwargs)
@@ -68,10 +66,8 @@ def test_facility_lp_cbc():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_CBC(color_problem)
-    parameters_lp = ParametersMilp.default()
-    parameters_lp.time_limit = 20
     solution, fit = solver.solve(
-        parameters_milp=parameters_lp,
+        time_limit=20,
         use_matrix_indicator_heuristic=False,
     ).get_best_solution_fit()
     assert color_problem.satisfy(solution)
@@ -89,15 +85,13 @@ def test_facility_lp_pymip():
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_100_7"][0]
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
-    parameters_lp = ParametersMilp.default()
-    parameters_lp.time_limit = 20
     solver = LP_Facility_Solver_PyMip(
         facility_problem,
         milp_solver_name=MilpSolverName.CBC,
         params_objective_function=params_objective_function,
     )
     result_store = solver.solve(
-        parameters_milp=parameters_lp,
+        time_limit=20,
         use_matrix_indicator_heuristic=False,
     )
     solution = result_store.get_best_solution_fit()[0]

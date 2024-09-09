@@ -56,11 +56,11 @@ def test_tsp_new_api():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     res = linear_flow_solver.solve(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
@@ -86,12 +86,9 @@ def test_tsp_cb(random_seed):
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
     linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     iteration_stopper = NbIterationStopper(nb_iteration_max=2)
     res = linear_flow_solver.solve(
-        parameters_milp=p,
+        time_limit_subsolver=100,
         do_lns=False,
         nb_iteration_max=20,
         include_subtour=False,
@@ -113,11 +110,11 @@ def test_tsp_new_api_with_time():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=True
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     res = linear_flow_solver.solve(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
@@ -147,11 +144,11 @@ def test_tsp():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -168,11 +165,11 @@ def test_tsp_simplified():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -188,11 +185,11 @@ def test_vrp():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -210,10 +207,11 @@ def test_vrp_simplified():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -231,10 +229,11 @@ def test_selective_tsp(random_seed):
     )
     linear_flow_solver.init_model(**kwargs_init_model)
     linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
-    p = ParametersMilp.default()
-    p.time_limit = 100
     kwargs_solve = dict(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     result_storage = linear_flow_solver.solve_iterative(**kwargs_solve)
     sol: GPDPSolution = result_storage.get_best_solution()
@@ -271,10 +270,11 @@ def test_selective_vrp():
         include_capacity=False,
         include_time_evolution=False,
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -295,10 +295,8 @@ def test_selective_vrp_new_api_with_time():
         include_capacity=False,
         include_time_evolution=True,
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
     res = linear_flow_solver.solve(
-        parameters_milp=p,
+        time_limit_subsolver=100,
         do_lns=False,
         nb_iteration_max=20,
     )

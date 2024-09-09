@@ -73,10 +73,11 @@ def debug_lp():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    p = ParametersMilp.default()
-    p.time_limit = 2000
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=4, include_subtour=False
+        time_limit_subsolver=2000,
+        do_lns=False,
+        nb_iteration_max=4,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -86,13 +87,11 @@ def debug_lp():
 def selective_tsp():
     gpdp = create_selective_tsp()
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    p = ParametersMilp.default()
-    p.time_limit = 30
     linear_flow_solver.init_model(
         one_visit_per_cluster=True, one_visit_per_node=False, include_subtour=False
     )
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=True, nb_iteration_max=4, include_subtour=False
+        time_limit_subsolver=30, do_lns=True, nb_iteration_max=4, include_subtour=False
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
@@ -112,8 +111,6 @@ def vrp_capacity():
     print(gpdp.graph.get_nodes())
     print(len(gpdp.graph.get_nodes()))
     linear_flow_solver = LinearFlowSolver(problem=gpdp)
-    p = ParametersMilp.default()
-    p.time_limit = 30
     linear_flow_solver.init_model(
         include_capacity=True,
         include_resources=False,
@@ -121,7 +118,7 @@ def vrp_capacity():
         include_time_evolution=False,
     )
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=True, nb_iteration_max=4
+        time_limit_subsolver=30, do_lns=True, nb_iteration_max=4
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)

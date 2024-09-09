@@ -55,7 +55,7 @@ class KnapsackDynProg(SolverKnapsack):
         start_by_most_promising = kwargs["greedy_start"]
         max_items = kwargs.get("max_items", self.problem.nb_items + 1)
         max_items = min(self.problem.nb_items + 1, max_items)
-        max_time_seconds = kwargs.get("max_time_seconds", None)
+        max_time_seconds = kwargs.get("time_limit", None)
         if max_time_seconds is None:
             do_time = False
         else:

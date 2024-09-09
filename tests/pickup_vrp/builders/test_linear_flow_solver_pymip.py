@@ -57,11 +57,8 @@ def test_tsp():
         include_capacity=False,
         include_time_evolution=False,
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
     res = linear_flow_solver.solve(
-        parameters_milp=p,
+        time_limit_subsolver=100,
         do_lns=True,
         nb_iteration_max=20,
     )
@@ -89,10 +86,8 @@ def test_tsp_cb():
         include_capacity=False,
         include_time_evolution=False,
     )
-    p = ParametersMilp.default()
     iteration_stopper = NbIterationStopper(nb_iteration_max=2)
     res = linear_flow_solver.solve(
-        parameters_milp=p,
         do_lns=True,
         nb_iteration_max=20,
         callbacks=[iteration_stopper],
@@ -109,10 +104,9 @@ def test_tsp_with_time():
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=True
     )
-    p = ParametersMilp.default()
-
-    p.time_limit = 100
-    res = linear_flow_solver.solve(parameters_milp=p, do_lns=False, nb_iteration_max=20)
+    res = linear_flow_solver.solve(
+        time_limit_subsolver=100, do_lns=False, nb_iteration_max=20
+    )
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
     assert isinstance(sol, GPDPSolution)
@@ -145,9 +139,9 @@ def test_selective_tsp_with_time():
         include_capacity=False,
         include_time_evolution=True,
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
-    res = linear_flow_solver.solve(parameters_milp=p, do_lns=False, nb_iteration_max=20)
+    res = linear_flow_solver.solve(
+        time_limit_subsolver=100, do_lns=False, nb_iteration_max=20
+    )
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
     assert isinstance(sol, GPDPSolution)
@@ -187,10 +181,8 @@ def test_selective_vrp():
         include_capacity=False,
         include_time_evolution=False,
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
     res = linear_flow_solver.solve(
-        parameters_milp=p,
+        time_limit_subsolver=100,
         do_lns=False,
         nb_iteration_max=20,
     )
@@ -228,10 +220,8 @@ def test_selective_vrp_with_time():
         include_capacity=False,
         include_time_evolution=True,
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
     res = linear_flow_solver.solve(
-        parameters_milp=p,
+        time_limit_subsolver=100,
         do_lns=False,
         nb_iteration_max=20,
     )

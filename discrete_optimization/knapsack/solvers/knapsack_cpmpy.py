@@ -45,19 +45,26 @@ class CPMPYKnapsackSolver(SolverKnapsack):
         self.variables["x"] = x
 
     def solve(
-        self, parameters_cp: Optional[ParametersCP] = None, **kwargs: Any
+        self, time_limit: Optional[float] = 100.0, **kwargs: Any
     ) -> ResultStorage:
-        if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
+        """
+
+        time_limit: the solve process stops after this time limit (in seconds).
+                If None, no time limit is applied.
+        Args:
+            time_limit:
+            **kwargs:
+
+        Returns:
+
+        """
         if self.model is None:
             self.init_model()
             if self.model is None:  # for mypy
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-        self.model.solve(
-            kwargs.get("solver", "ortools"), time_limit=parameters_cp.time_limit
-        )
+        self.model.solve(kwargs.get("solver", "ortools"), time_limit=time_limit)
         list_taken = self.variables["x"].value()
         sol = KnapsackSolution(problem=self.problem, list_taken=list_taken)
         fit = self.aggreg_from_sol(sol)

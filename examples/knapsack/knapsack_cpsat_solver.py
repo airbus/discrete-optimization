@@ -17,9 +17,8 @@ def run_cpsat_knapsack():
     knapsack_model = parse_file(file)
     cp_model = CPSatKnapsackSolver(knapsack_model)
     cp_model.init_model()
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
-    result_storage = cp_model.solve(parameters_cp=parameters_cp)
+    params_cp = ParametersCP.default()
+    result_storage = cp_model.solve(parameters_cp=params_cp, time_limit=10)
     sol, fit = result_storage.get_best_solution_fit()
     print("Status solver :", cp_model.get_status_solver())
     assert knapsack_model.satisfy(sol)

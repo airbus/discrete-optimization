@@ -309,6 +309,8 @@ class LP_Facility_Solver_CBC(SolverFacility):
         IntegerHyperparameter(name="n_cheapest", default=10, low=0, high=100),
     ]
 
+    model: Optional[pywraplp.Solver]
+
     def __init__(
         self,
         problem: FacilityProblem,
@@ -424,7 +426,10 @@ class LP_Facility_Solver_CBC(SolverFacility):
         )
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs: Any
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[int] = 30,
+        **kwargs: Any,
     ) -> ResultStorage:
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
@@ -434,8 +439,8 @@ class LP_Facility_Solver_CBC(SolverFacility):
                 raise RuntimeError(
                     "self.model must be not None after calling self.init_model()."
                 )
-        limit_time_s = parameters_milp.time_limit
-        self.model.SetTimeLimit(limit_time_s * 1000)
+        if time_limit is not None:
+            self.model.SetTimeLimit(time_limit * 1000)
         res = self.model.Solve()
         resdict = {
             0: "OPTIMAL",

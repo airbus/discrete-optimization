@@ -369,11 +369,16 @@ class LP_Solver_MRSCPSP(PymipMilpSolver):
         )
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **args
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **args,
     ) -> ResultStorage:
         if self.model is None:
             logger.info("Init LP model ")
             t = time.time()
             self.init_model(greedy_start=False, **args)
             logger.info(f"LP model initialized...in {time.time() - t} seconds")
-        return super().solve(parameters_milp=parameters_milp, **args)
+        return super().solve(
+            parameters_milp=parameters_milp, time_limit=time_limit, **args
+        )

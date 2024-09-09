@@ -64,17 +64,16 @@ solvers_to_test = look_for_solver(problems[0])
 # Fixed parameters
 parameters_cp = ParametersCP.default_cpsat()
 parameters_cp.nb_process = 6
-parameters_cp.time_limit = max_time_per_solver
-parameters_milp = ParametersMilp.default()
-parameters_milp.time_limit = max_time_per_solver
 kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
         LargeNeighborhoodSearchScheduling: dict(
-            nb_iteration_lns=10, parameters_cp=parameters_cp
+            nb_iteration_lns=10,
+            parameters_cp=parameters_cp,
+            time_limit=max_time_per_solver,
         ),
-        LP_RCPSP: dict(parameters_milp=parameters_milp),
-        LP_MRCPSP: dict(parameters_milp=parameters_milp),
+        LP_RCPSP: dict(time_limit=max_time_per_solver),
+        LP_MRCPSP: dict(time_limit=max_time_per_solver),
     },
 )
 

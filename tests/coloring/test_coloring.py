@@ -152,11 +152,11 @@ def test_mzn_solver_cb(caplog):
     small_example = [f for f in get_data_available() if "gc_50_9" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     kwargs = {
         "cp_solver_name": CPSolverName.CHUFFED,
         "cp_model": ColoringCPModel.DEFAULT,
         "parameters_cp": parameters_cp,
+        "time_limit": 10,
         "greedy_start": False,
     }
     stopper = NbIterationStopper(nb_iteration_max=2)
@@ -181,13 +181,13 @@ def test_mzn_solver_ortools_parallel_cb(caplog):
     small_example = [f for f in get_data_available() if "gc_50_9" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     parameters_cp.multiprocess = True
     parameters_cp.nb_process = 4
     kwargs = {
         "cp_solver_name": CPSolverName.ORTOOLS,
         "cp_model": ColoringCPModel.DEFAULT,
         "parameters_cp": parameters_cp,
+        "time_limit": 10,
         "greedy_start": False,
     }
     callbacks = [
@@ -267,7 +267,7 @@ def test_asp_solver():
     color_problem = parse_file(small_example)
     solver = ColoringASPSolver(color_problem, params_objective_function=None)
     solver.init_model(max_models=50, nb_colors=20)
-    result_store = solver.solve(timeout_seconds=5)
+    result_store = solver.solve(time_limit=5)
     solution, fit = result_store.get_best_solution_fit()
     assert color_problem.satisfy(solution)
 
@@ -279,7 +279,7 @@ def test_asp_solver_cb_log():
     solver.init_model(max_models=50, nb_colors=20)
     tracker = NbIterationTracker()
     callbacks = [tracker]
-    result_store = solver.solve(timeout_seconds=5, callbacks=callbacks)
+    result_store = solver.solve(time_limit=5, callbacks=callbacks)
     solution, fit = result_store.get_best_solution_fit()
     assert color_problem.satisfy(solution)
     assert tracker.nb_iteration > 1
@@ -292,7 +292,7 @@ def test_asp_solver_cb_stop():
     solver.init_model(max_models=50, nb_colors=20)
     stopper = NbIterationStopper(nb_iteration_max=1)
     callbacks = [stopper]
-    result_store = solver.solve(timeout_seconds=5, callbacks=callbacks)
+    result_store = solver.solve(time_limit=5, callbacks=callbacks)
     solution, fit = result_store.get_best_solution_fit()
     assert color_problem.satisfy(solution)
     assert stopper.nb_iteration == 1
@@ -304,7 +304,7 @@ def test_asp_solver_cb_exception():
     solver = ColoringASPSolver(color_problem, params_objective_function=None)
     solver.init_model(max_models=50, nb_colors=20)
     with pytest.raises(RuntimeError, match="Explicit crash"):
-        solver.solve(timeout_seconds=5, callbacks=[MyCallbackNok()])
+        solver.solve(time_limit=5, callbacks=[MyCallbackNok()])
 
 
 def test_model_satisfy():
