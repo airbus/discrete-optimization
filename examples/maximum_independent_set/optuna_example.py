@@ -86,17 +86,13 @@ solvers_to_test: List[Type[SolverDO]] = [
 
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-p.time_limit = max_time_per_solver
-
-p_m = ParametersMilp.default()
-p_m.time_limit = max_time_per_solver
 
 kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
-        MisMilpSolver: dict(parameters_milp=p_m),
-        MisQuadraticSolver: dict(parameters_milp=p_m),
-        MisOrtoolsSolver: dict(parameters_cp=p),
+        MisMilpSolver: dict(time_limit=max_time_per_solver),
+        MisQuadraticSolver: dict(time_limit=max_time_per_solver),
+        MisOrtoolsSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
         # MisNetworkXSolver: dict(),
     },
 )

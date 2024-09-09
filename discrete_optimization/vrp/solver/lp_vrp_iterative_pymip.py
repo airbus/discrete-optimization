@@ -272,7 +272,7 @@ class VRPIterativeLP_Pymip(SolverVrp):
                     "should not be None after init_model()"
                 )
         logger.info("optimizing...")
-        limit_time_s = kwargs.get("limit_time_s", 10)
+        limit_time_s = kwargs.get("time_limit", 10)
         self.model.optimize(max_seconds=limit_time_s)
         objective = self.model.objective_value
         # Query number of multiple objectives, and number of solutions

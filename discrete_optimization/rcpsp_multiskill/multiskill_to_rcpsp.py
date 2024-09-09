@@ -45,7 +45,6 @@ class MultiSkillToRCPSP:
         one_worker_type_per_task: bool = False,
     ):
         params_cp = ParametersCP(
-            time_limit=30,
             intermediate_solution=True,
             all_solutions=False,
             nr_solutions=100,
@@ -94,7 +93,10 @@ class MultiSkillToRCPSP:
                 one_ressource_per_task=self.multiskill_model.one_unit_per_task_max,
                 one_worker_type_per_task=one_worker_type_per_task,
             )
-            results = solver.solve(parameters_cp=params_cp)
+            results = solver.solve(
+                parameters_cp=params_cp,
+                time_limit=30,
+            )
             best_overskill_results = min(
                 results, key=lambda x: x.overskill_type
             ).overskill_type

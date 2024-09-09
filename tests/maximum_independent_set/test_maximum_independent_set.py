@@ -66,12 +66,9 @@ def test_solver_cpsat():
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
 
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
-
     solver = MisOrtoolsSolver(mis_model)
     result_storage = solver.solve(
-        parameters_cp=parameters_cp,
+        time_limit=10,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
 
@@ -85,7 +82,7 @@ def test_solver_cpsat():
     solver.set_warm_start(start_solution)
     # force first solution to be the hinted one
     result_storage = solver.solve(
-        parameters_cp=parameters_cp,
+        time_limit=10,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
     assert result_storage[0][0].chosen == start_solution.chosen

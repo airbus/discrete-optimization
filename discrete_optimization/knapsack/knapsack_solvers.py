@@ -45,7 +45,7 @@ solvers: Dict[str, List[Tuple[Type[SolverKnapsack], Dict[str, Any]]]] = {
         (CPKnapsackMZN, {"cp_solver_name": CPSolverName.CHUFFED}),
         (CPKnapsackMZN2, {"cp_solver_name": CPSolverName.CHUFFED}),
     ],
-    "asp": [(KnapsackASPSolver, {"timeout_seconds": 100})],
+    "asp": [(KnapsackASPSolver, {"time_limit": 100})],
     "dyn_prog": [
         (
             KnapsackDynProg,
@@ -53,7 +53,7 @@ solvers: Dict[str, List[Tuple[Type[SolverKnapsack], Dict[str, Any]]]] = {
                 "greedy_start": True,
                 "stop_after_n_item": True,
                 "max_items": 100,
-                "max_time_seconds": 100,
+                "time_limit": 100,
             },
         )
     ],

@@ -36,10 +36,11 @@ def example_ortools_example():
         include_capacity=True,
         include_time_evolution=False,
     )
-    p = ParametersMilp.default()
-    p.time_limit = 100
     res = linear_flow_solver.solve_iterative(
-        parameters_milp=p, do_lns=False, nb_iteration_max=20, include_subtour=False
+        time_limit_subsolver=100,
+        do_lns=False,
+        nb_iteration_max=20,
+        include_subtour=False,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)

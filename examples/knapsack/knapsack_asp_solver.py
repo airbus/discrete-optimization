@@ -19,7 +19,7 @@ def run_asp_coloring():
     knapsack_model = parse_file(file)
     solver = KnapsackASPSolver(knapsack_model, params_objective_function=None)
     solver.init_model(max_models=50)
-    result_store = solver.solve(timeout_seconds=20)
+    result_store = solver.solve(time_limit=20)
     solution, fit = result_store.get_best_solution_fit()
     print(solution, fit)
 

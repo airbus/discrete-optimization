@@ -34,8 +34,6 @@ def test_lns():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
 
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = MisOrtoolsSolver(mis_model)
     solver.init_model()
 
@@ -56,6 +54,8 @@ def test_lns():
     )
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=200,
         callbacks=[TimerStopper(total_seconds=30)],
     )
@@ -68,8 +68,6 @@ def test_lns_allvars():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
 
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = MisOrtoolsSolver(mis_model)
     solver.init_model()
 
@@ -90,6 +88,8 @@ def test_lns_allvars():
     )
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=200,
         callbacks=[TimerStopper(total_seconds=30)],
     )
@@ -102,8 +102,6 @@ def test_lns_mix():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
 
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = MisOrtoolsSolver(mis_model)
     solver.init_model()
 
@@ -131,6 +129,8 @@ def test_lns_mix():
     )
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=200,
         callbacks=[TimerStopper(total_seconds=30)],
     )
@@ -143,14 +143,15 @@ def test_constraint_handler():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
 
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
 
     # look best solution found by solver unconstrained => find a node not taken
     solver = MisOrtoolsSolver(mis_model)
     solver.init_model()
     sol: MisSolution
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     idx = sol.chosen.index(0)
 
@@ -173,7 +174,10 @@ def test_constraint_handler():
 
     # solve => should take forced node
     sol: MisSolution
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     assert sol.chosen[idx] == 1
 
@@ -181,7 +185,10 @@ def test_constraint_handler():
     solver = MisOrtoolsSolver(mis_model)
     solver.init_model()
     sol: MisSolution
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     assert sol.chosen[idx] == 0
 
@@ -191,8 +198,6 @@ def test_constraint_handler_all_vars():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
 
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
 
     solver = MisOrtoolsSolver(mis_model)
     solver.init_model()
@@ -213,7 +218,10 @@ def test_constraint_handler_all_vars():
 
     # solve => should find dummy solution
     sol: MisSolution
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     assert all(c == 0 for c in sol.chosen)
 
@@ -221,6 +229,9 @@ def test_constraint_handler_all_vars():
     constraint_handler.remove_constraints_from_previous_iteration(
         solver=solver, previous_constraints=constraints
     )
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     assert not all(c == 0 for c in sol.chosen)

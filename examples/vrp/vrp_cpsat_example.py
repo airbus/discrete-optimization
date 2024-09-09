@@ -25,8 +25,7 @@ def run_cpsat_vrp():
     solver.init_model(optional_node=False, cut_transition=False)
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    p.time_limit = 20
-    res = solver.solve(parameters_cp=p)
+    res = solver.solve(parameters_cp=p, time_limit=20)
     print(solver.get_status_solver())
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
@@ -69,8 +68,7 @@ def run_cpsat_vrp_on_tsp():
     solver.init_model(optional_node=False, cut_transition=False)
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    p.time_limit = 10
-    res = solver.solve(parameters_cp=p)
+    res = solver.solve(parameters_cp=p, time_limit=10)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
@@ -92,14 +90,13 @@ def warm_starting():
     solver.init_model(optional_node=False, cut_transition=False)
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    p.time_limit = 10
-    res = solver.solve(parameters_cp=p)
+    res = solver.solve(parameters_cp=p, time_limit=10)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
 
     # test warm start
-    # start_solution = GreedyVRPSolver(problem=vrp_model).solve(limit_time_s=20).get_best_solution_fit()[0]
+    # start_solution = GreedyVRPSolver(problem=vrp_model).solve(time_limit=20).get_best_solution_fit()[0]
     start_solution = res[1][0]
     print(start_solution.list_paths)
     # warm start at first solution

@@ -33,7 +33,7 @@ def run_decomposed_knapsack_asp():
     )
     result_store = solver.solve(
         initial_solver=SubBrick(cls=GreedyBest, kwargs={}),
-        root_solver=SubBrick(cls=KnapsackASPSolver, kwargs=dict(timeout_seconds=2)),
+        root_solver=SubBrick(cls=KnapsackASPSolver, kwargs=dict(time_limit=2)),
         nb_iteration=1000,
         proportion_to_remove=0.9,
     )
@@ -66,10 +66,8 @@ def run_decomposed_knapsack_cp():
         problem=knapsack_model,
         params_objective_function=None,
     )
-    params_cp = ParametersCP.default()
-    params_cp.time_limit = 5
     result_store = solver.solve(
-        root_solver=SubBrick(cls=CPKnapsackMZN2, kwargs=dict(parameters_cp=params_cp)),
+        root_solver=SubBrick(cls=CPKnapsackMZN2, kwargs=dict(time_limit=5)),
         nb_iteration=100,
         proportion_to_remove=0.9,
     )
@@ -85,12 +83,8 @@ def run_decomposed_knapsack_cpsat():
         problem=knapsack_model,
         params_objective_function=None,
     )
-    params_cp = ParametersCP.default()
-    params_cp.time_limit = 5
     result_store = solver.solve(
-        root_solver=SubBrick(
-            cls=CPSatKnapsackSolver, kwargs=dict(parameters_cp=params_cp)
-        ),
+        root_solver=SubBrick(cls=CPSatKnapsackSolver, kwargs=dict(time_limit=5)),
         nb_iteration=200,
         proportion_to_remove=0.85,
     )

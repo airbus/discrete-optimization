@@ -16,9 +16,7 @@ def test_knapsack_cpmyp():
     knapsack_model = parse_file(file)
     solver = CPMPYKnapsackSolver(problem=knapsack_model)
     solver.init_model()
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 20
-    res = solver.solve(solver="ortools", parameters_cp=parameters_cp)
+    res = solver.solve(solver="ortools", time_limit=20)
     sol = res.get_best_solution()
     assert isinstance(sol, KnapsackSolution)
     assert knapsack_model.satisfy(sol)

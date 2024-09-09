@@ -62,8 +62,6 @@ def test_lns_cpsat_coloring():
         post_process_solution=None,
     )
     p = ParametersCP.default_cpsat()
-    p.time_limit = 20
-    p.time_limit_iter0 = 20
     logging.info("Starting solve")
     result_store = solver_lns.solve(
         skip_initial_solution_provider=True,
@@ -76,6 +74,7 @@ def test_lns_cpsat_coloring():
             TimerStopper(total_seconds=30),
         ],
         parameters_cp=p,
+        time_limit_subsolver=20,
     )
     print("Status solver : ", solver.get_status_solver())
     solution, fit = result_store.get_best_solution_fit()
@@ -115,12 +114,11 @@ def test_lns_cpsat_coloring_with_constraints():
         post_process_solution=None,
     )
     p = ParametersCP.default_cpsat()
-    p.time_limit = 20
-    p.time_limit_iter0 = 20
     logging.info("Starting solve")
     result_store = solver_lns.solve(
         skip_initial_solution_provider=True,
         nb_iteration_lns=100,
+        time_limit_subsolver=20,
         callbacks=[
             NbIterationTracker(step_verbosity_level=logging.INFO),
             ObjectiveLogger(
@@ -169,14 +167,11 @@ def test_lns_cpsat_coloring_warm_start():
         )
 
     p = ParametersCP.default_cpsat()
-    p.time_limit = 10
-    p.time_limit_iter0 = 10
 
     # w/o warm start
     solver_lns = solver_lns_factory()
     result_store = solver_lns.solve(
-        nb_iteration_lns=3,
-        parameters_cp=p,
+        nb_iteration_lns=3, parameters_cp=p, time_limit_subsolver=10
     )
 
     # start solution

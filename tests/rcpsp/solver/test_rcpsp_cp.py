@@ -73,10 +73,9 @@ def test_cp_sm(optimisation_level):
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 100
     parameters_cp.nr_solutions = 1
     parameters_cp.optimisation_level = optimisation_level
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(parameters_cp=parameters_cp, time_limit=100)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
@@ -105,10 +104,9 @@ def test_cp_rcp(optimisation_level):
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 20
     parameters_cp.nr_solutions = 1
     parameters_cp.optimisation_level = optimisation_level
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(parameters_cp=parameters_cp, time_limit=20)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
@@ -129,9 +127,7 @@ def test_ortools(model):
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CPSatRCPSPSolver(problem=rcpsp_problem)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 100
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(time_limit=100)
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
         problem=rcpsp_problem,
@@ -156,7 +152,7 @@ def test_ortools(model):
     solver.set_warm_start(start_solution)
     # force first solution to be the hinted one
     result_storage = solver.solve(
-        parameters_cp=parameters_cp,
+        time_limit=100,
         ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
     assert result_storage[0][0].rcpsp_schedule == start_solution.rcpsp_schedule
@@ -171,9 +167,7 @@ def test_ortools_cumulativeresource_optim(model):
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CPSatRCPSPSolverCumulativeResource(problem=rcpsp_problem)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 50
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(time_limit=50)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
 
@@ -187,9 +181,7 @@ def test_ortools_resource_optim(model):
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CPSatRCPSPSolverResource(problem=rcpsp_problem)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 50
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(time_limit=50)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
 
@@ -201,7 +193,6 @@ def test_ortools_with_cb(caplog, random_seed):
     rcpsp_problem = parse_file(file)
     solver = CPSatRCPSPSolver(problem=rcpsp_problem)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     parameters_cp.nr_solutions = 1
 
     class VariablePrinterCallback(Callback):
@@ -220,7 +211,9 @@ def test_ortools_with_cb(caplog, random_seed):
     callbacks = [VariablePrinterCallback(), TimerStopper(2)]
 
     with caplog.at_level(logging.DEBUG):
-        result_storage = solver.solve(callbacks=callbacks, parameters_cp=parameters_cp)
+        result_storage = solver.solve(
+            callbacks=callbacks, parameters_cp=parameters_cp, time_limit=10
+        )
 
     assert "Solution #1" in caplog.text
     assert (
@@ -235,9 +228,7 @@ def test_cp_sm_intermediate_solution():
     rcpsp_problem = parse_file(file)
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 5
-    result_storage = solver.solve(parameters_cp=parameters_cp, output_type=True)
+    result_storage = solver.solve(time_limit=5, output_type=True)
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_storage, problem=rcpsp_problem
     )
@@ -288,16 +279,12 @@ def test_cp_sm_robust():
     solver_worst = CP_RCPSP_MZN(problem=worst)
     solver_average = CP_RCPSP_MZN(problem=average)
     solver_original = CP_RCPSP_MZN(problem=rcpsp_model)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 5
     sol_original, fit_original = solver_original.solve(
-        parameters_cp=parameters_cp
+        time_limit=5
     ).get_best_solution_fit()
-    sol_worst, fit_worst = solver_worst.solve(
-        parameters_cp=parameters_cp
-    ).get_best_solution_fit()
+    sol_worst, fit_worst = solver_worst.solve(time_limit=5).get_best_solution_fit()
     sol_average, fit_average = solver_average.solve(
-        parameters_cp=parameters_cp
+        time_limit=5
     ).get_best_solution_fit()
     assert fit_worst < fit_average and fit_worst < fit_original
     permutation_worst = sol_worst.rcpsp_permutation
@@ -349,10 +336,11 @@ def test_cp_multiscenario(random_seed):
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
     )
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 30
     params_cp.free_search = True
     result = solver.solve(
-        parameters_cp=params_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+        parameters_cp=params_cp,
+        time_limit=30,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     solution_fit = result.list_solution_fits
     objectives_cp = [sol.minizinc_obj for sol, fit in solution_fit]
@@ -369,9 +357,7 @@ def test_cp_mm_integer_vs_bool():
         for solver_name in [CP_MRCPSP_MZN, CP_MRCPSP_MZN_NOBOOL]:
             solver = solver_name(rcpsp_problem)
             solver.init_model()
-            parameters_cp = ParametersCP.default()
-            parameters_cp.time_limit = 5
-            result_storage = solver.solve(parameters_cp=parameters_cp)
+            result_storage = solver.solve(time_limit=5)
             solution = result_storage.get_best_solution()
             makespans.append(rcpsp_problem.evaluate(solution)["makespan"])
         assert makespans[0] == makespans[1]
@@ -382,9 +368,7 @@ def test_cp_mm_intermediate_solution():
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_MRCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 5
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(time_limit=5)
     pareto_store = result_storage_to_pareto_front(
         result_storage=result_storage, problem=rcpsp_problem
     )
@@ -402,9 +386,7 @@ def test_cp_sm_partial_solution():
     }
     partial_solution = PartialSolution(task_mode=None, start_times=some_constraints)
     solver.init_model(partial_solution=partial_solution)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 5
-    result_storage = solver.solve(parameters_cp=parameters_cp)
+    result_storage = solver.solve(time_limit=5)
     solution, fit = result_storage.get_best_solution_fit()
     assert partial_solution.start_times == {
         j: solution.rcpsp_schedule[j]["start_time"] for j in some_constraints

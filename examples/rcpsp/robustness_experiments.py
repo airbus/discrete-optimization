@@ -168,9 +168,8 @@ def run_cp_multiscenario():
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
     )
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 50
     params_cp.free_search = True
-    result = solver.solve(parameters_cp=params_cp)
+    result = solver.solve(parameters_cp=params_cp, time_limit=50)
     objectives_cp = [sol.minizinc_obj for sol, fit in result]
     real_objective = [fit for sol, fit in result]
 

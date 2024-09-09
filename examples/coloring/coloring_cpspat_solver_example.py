@@ -42,7 +42,6 @@ def run_cpsat_coloring():
         symmetry_on_used=True,
     )
     p = ParametersCP.default_cpsat()
-    p.time_limit = 100
     logging.info("Starting solve")
     result_store = solver.solve(
         callbacks=[NbIterationTracker(step_verbosity_level=logging.INFO)],
@@ -69,8 +68,7 @@ def run_cpsat_coloring_with_constraints():
     solver = ColoringCPSatSolver(color_problem)
     solver.init_model(nb_colors=20)
     p = ParametersCP.default()
-    p.time_limit = 20
-    result_store = solver.solve(parameters_cp=p)
+    result_store = solver.solve(parameters_cp=p, time_limit=20)
     solution, fit = result_store.get_best_solution_fit()
     print("Status solver : ", solver.get_status_solver())
     plot_coloring_solution(solution)

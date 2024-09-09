@@ -45,12 +45,15 @@ class ASPClingoSolver(SolverDO):
     def solve(
         self,
         callbacks: Optional[List[Callback]] = None,
+        time_limit: Optional[float] = 100.0,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with a CPSat solver drom ortools library.
 
         Args:
             callbacks: list of callbacks used to hook into the various stage of the solve
+            time_limit: the solve process stops after this time limit (in seconds).
+                If None, no time limit is applied.
             **kwargs: keyword arguments passed to `self.init_model()`
 
         Returns:
@@ -75,9 +78,8 @@ class ASPClingoSolver(SolverDO):
             callback=callbacks_list,
             dump_model_in_folders=kwargs.get("dump_model_in_folders", False),
         )
-        timeout_seconds = kwargs.get("timeout_seconds", 100)
         with self.ctl.solve(on_model=asp_callback.on_model, async_=True) as handle:
-            handle.wait(timeout_seconds)
+            handle.wait(time_limit)
             handle.cancel()
         if self.early_stopping_exception:
             if isinstance(self.early_stopping_exception, SolveEarlyStop):

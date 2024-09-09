@@ -81,12 +81,8 @@ def test_ortools_cumulativeresource_optim(objectives):
         subsolver=subsolver,
     )
     solver.init_model()
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     clb = RetrieveSubRes()
-    result_storage = solver.solve(
-        parameters_cp=parameters_cp, objectives=objectives, callbacks=[clb]
-    )
+    result_storage = solver.solve(time_limit=10, objectives=objectives, callbacks=[clb])
 
     print([sol._intern_objectives for sol, fit in result_storage.list_solution_fits])
     check_lexico_order_on_result_storage(callback_subres=clb, solver=solver)
@@ -111,12 +107,10 @@ def test_ortools_resource_optim(objectives):
         subsolver=subsolver,
     )
     solver.init_model()
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     clb = RetrieveSubRes()
     result_storage = solver.solve(
         callbacks=[clb],
-        parameters_cp=parameters_cp,
+        time_limit=10,
         objectives=objectives,
     )
     print([sol._intern_objectives for sol, fit in result_storage.list_solution_fits])

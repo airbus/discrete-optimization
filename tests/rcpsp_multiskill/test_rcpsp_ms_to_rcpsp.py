@@ -46,15 +46,10 @@ def test_solve_rcpsp_imopse2(random_seed):
         max_number_of_mode=5,
         one_worker_type_per_task=True,
     )
-    params_cp = ParametersCP.default()
-    params_cp.time_limit = 200
-    params_cp.time_limit_iter0 = 300
-
     solver = CP_MRCPSP_MZN(problem=rcpsp_model, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 100
     params_cp.free_search = True
-    result_storage = solver.solve(parameters_cp=params_cp)
+    result_storage = solver.solve(parameters_cp=params_cp, time_limit=100)
     best_solution = result_storage.get_best_solution()
     assert rcpsp_model.satisfy(best_solution)

@@ -82,10 +82,10 @@ def test_knapsack_ortools_lexico(objectives):
         subsolver=subsolver,
     )
     solver.init_model()
-    parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit = 10
     mycb = MyCallback()
+    parameters_cp = ParametersCP.default()
     result_storage = solver.solve(
+        time_limit=10,
         parameters_cp=parameters_cp,
         objectives=objectives,
         callbacks=[mycb],

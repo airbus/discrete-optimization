@@ -46,8 +46,6 @@ def test_knapsack_lns():
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = CPKnapsackMZN2(
         model,
         cp_solver_name=CPSolverName.CHUFFED,
@@ -71,6 +69,8 @@ def test_knapsack_lns():
     solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=200,
         callbacks=[TimerStopper(total_seconds=30)],
     )
@@ -88,8 +88,6 @@ def test_knapsack_lns_ortools():
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = CPSatKnapsackSolver(
         model,
         params_objective_function=params_objective_function,
@@ -112,6 +110,8 @@ def test_knapsack_lns_ortools():
     )
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=200,
         callbacks=[TimerStopper(total_seconds=30)],
     )
@@ -127,8 +127,6 @@ def test_knapsack_ortools_constraint_handler():
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = CPSatKnapsackSolver(
         model,
         params_objective_function=params_objective_function,
@@ -145,7 +143,10 @@ def test_knapsack_ortools_constraint_handler():
     )
     # solve => should find dummy solution
     sol: KnapsackSolution
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     assert all(taken == 0.0 for taken in sol.list_taken)
     assert fit == 0.0
@@ -154,7 +155,10 @@ def test_knapsack_ortools_constraint_handler():
     constraint_handler.remove_constraints_from_previous_iteration(
         solver=solver, previous_constraints=constraints
     )
-    res = solver.solve(parameters_cp=params_cp)
+    res = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     sol, fit = res.get_best_solution_fit()
     assert not all(taken == 0.0 for taken in sol.list_taken)
     assert fit > 0.0
@@ -167,8 +171,6 @@ def test_knapsack_lns_timer():
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = CPKnapsackMZN2(
         model,
         cp_solver_name=CPSolverName.CHUFFED,
@@ -188,7 +190,11 @@ def test_knapsack_lns_timer():
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
-    result_store_pure_cp = solver.solve(parameters_cp=params_cp)
+    result_store_pure_cp = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+        time_limit_iter0=1,
+    )
     solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
 
     class SleepCallback(Callback):
@@ -204,6 +210,8 @@ def test_knapsack_lns_timer():
     ]
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=200,
         skip_initial_solution_provider=False,
         callbacks=callbacks,
@@ -234,8 +242,6 @@ def test_knapsack_lns_cb_nbiter(skip_initial_solution_provider):
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
     solver = CPKnapsackMZN2(
         model,
         cp_solver_name=CPSolverName.CHUFFED,
@@ -255,7 +261,10 @@ def test_knapsack_lns_cb_nbiter(skip_initial_solution_provider):
         constraint_handler=constraint_handler,
         params_objective_function=params_objective_function,
     )
-    result_store_pure_cp = solver.solve(parameters_cp=params_cp)
+    result_store_pure_cp = solver.solve(
+        parameters_cp=params_cp,
+        time_limit=10,
+    )
     solution_pure_cp = result_store_pure_cp.get_best_solution_fit()
 
     nb_iteration_tracker = NbIterationTrackerWithAssert()
@@ -264,6 +273,8 @@ def test_knapsack_lns_cb_nbiter(skip_initial_solution_provider):
     ]
     result_store = lns_solver.solve(
         parameters_cp=params_cp,
+        time_limit_subsolver=10,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=2,
         skip_initial_solution_provider=skip_initial_solution_provider,
         callbacks=callbacks,

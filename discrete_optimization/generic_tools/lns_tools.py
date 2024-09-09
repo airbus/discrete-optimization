@@ -276,30 +276,39 @@ class BaseLNS(SolverDO, WarmstartMixin):
     def create_submodel(self) -> contextlib.AbstractContextManager:
         return _dummy_contextmanager()
 
-    def solve_with_subsolver(
-        self, no_previous_solution: bool, instance: Any, **kwargs: Any
-    ) -> ResultStorage:
-        """Solve with the subsolver.
-
-        Args:
-            no_previous_solution: do not start from a previously found solution
-            instance: current instance of the model (only for minizinc)
-            **kwargs: kwargs passed to this lns solver `solve()`
-
-        Returns:
-
-        """
-        return self.subsolver.solve(**kwargs)
-
     def solve(
         self,
         nb_iteration_lns: int,
+        time_limit_subsolver: Optional[float] = 100.0,
+        time_limit_subsolver_iter0: Optional[float] = None,
         nb_iteration_no_improvement: Optional[int] = None,
         skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
         callbacks: Optional[List[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
+        """Solve the problem with an LNS loop
+
+        Args:
+            nb_iteration_lns: number of lns iteration
+            time_limit_subsolver: time limit (in seconds) for a subsolver `solve()` call
+                If None, no time limit is applied.
+            time_limit_subsolver_iter0: time limit (in seconds) for the first subsolver `solve()` call,
+                in the case we are skipping the initial solution provider (`skip_initial_solution_provider is True`)
+                If None, we use the regular `time_limit` parameter even for this first solve.
+            nb_iteration_no_improvement: maximal number of consecutive iteration without improvement allowed
+                before stopping the solve process.
+            skip_initial_solution_provider: if True, we do not use `self.initial_solution_provider`
+                but instead launch a first `self.subsolver.solve()`
+            stop_first_iteration_if_optimal: if True, if `skip_initial_solution_provider, and if subsolver tells
+                its result is optimal after the first `self.subsolver.solve()` (so before any constraint tempering),
+                we stop the solve process.
+            callbacks: list of callbacks used to hook into the various stage of the solve
+            **kwargs: passed to the subsolver
+
+        Returns:
+
+        """
         # wrap all callbacks in a single one
         callbacks_list = CallbackList(callbacks=callbacks)
         # start of solve callback
@@ -367,14 +376,21 @@ class BaseLNS(SolverDO, WarmstartMixin):
                             else result_store,
                         )
                     try:
-                        no_previous_solution = (
-                            skip_initial_solution_provider and iteration == 0
-                        )
-                        result_store = self.solve_with_subsolver(
-                            no_previous_solution=no_previous_solution,
-                            instance=child,
-                            **kwargs,
-                        )
+                        if "time_limit" in kwargs:
+                            logger.warning(
+                                "`time_limit` arg will be overriden by "
+                                "`time_limit_subsolver` and `time_limit_subsolver_iter0`."
+                            )
+                        if (
+                            skip_initial_solution_provider
+                            and iteration == 0
+                            and time_limit_subsolver_iter0 is not None
+                        ):
+                            kwargs["time_limit"] = time_limit_subsolver_iter0
+                        else:
+                            kwargs["time_limit"] = time_limit_subsolver
+
+                        result_store = self.subsolver.solve(instance=child, **kwargs)
                         logger.info(f"iteration n° {iteration} Solved !!!")
                         if hasattr(self.subsolver, "status_solver"):
                             logger.info(self.subsolver.status_solver)

@@ -426,7 +426,6 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
         solver = LP_MRCPSP(problem=problem, **kwargs)
         solver.init_model(greedy_start=False)
         self.parameters_milp = ParametersMilp(
-            time_limit=100,
             pool_solutions=1000,
             mip_gap_abs=0.001,
             mip_gap=0.001,
@@ -450,10 +449,30 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
         )
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs
+        self,
+        callbacks: Optional[List[Callback]] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
+        time_limit_subsolver_iter0: Optional[float] = None,
+        **kwargs
     ) -> ResultStorage:
+        """
+
+        Args:
+            callbacks:
+            time_limit_subsolver: time limit (in seconds) for a subsolver `solve()` call
+                If None, no time limit is applied.
+            time_limit_subsolver_iter0: time limit (in seconds) for the first subsolver `solve()` call,
+                in the case we are skipping the initial solution provider (`skip_initial_solution_provider is True`)
+                If None, we use the regular `time_limit` parameter even for this first solve.
+            **kwargs:
+
+        Returns:
+
+        """
         return self.lns_solver.solve(
             parameters_milp=self.parameters_milp,
+            time_limit_subsolver=time_limit_subsolver,
+            time_limit_subsolver_iter0=time_limit_subsolver_iter0,
             nb_iteration_lns=kwargs.get("nb_iteration_lns", 100),
             callbacks=callbacks,
         )

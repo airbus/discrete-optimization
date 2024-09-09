@@ -84,10 +84,9 @@ class PileSolverRCPSP(SolverRCPSP):
         if problem.is_rcpsp_multimode() or problem.is_varying_resource():
             solver = CP_MRCPSP_MZN_MODES(problem, cp_solver_name=CPSolverName.CHUFFED)
             params_cp = ParametersCP.default()
-            params_cp.time_limit = 1
             params_cp.nr_solutions = 1
             params_cp.all_solutions = False
-            result_storage = solver.solve(parameters_cp=params_cp)
+            result_storage = solver.solve(parameters_cp=params_cp, time_limit=1)
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):
@@ -287,10 +286,9 @@ class PileSolverRCPSP_Calendar(SolverRCPSP):
         if problem.is_rcpsp_multimode() or problem.is_varying_resource():
             solver = CP_MRCPSP_MZN_MODES(problem, cp_solver_name=CPSolverName.CHUFFED)
             params_cp = ParametersCP.default()
-            params_cp.time_limit = 1
             params_cp.nr_solutions = 1
             params_cp.all_solutions = False
-            result_storage = solver.solve(parameters_cp=params_cp)
+            result_storage = solver.solve(parameters_cp=params_cp, time_limit=1)
             one_mode_setting = result_storage[0]
             self.modes_dict = {}
             for i in range(len(one_mode_setting)):

@@ -57,9 +57,7 @@ def run_cp_multidimensional():
     multidimensional_knapsack = from_kp_to_multi(knapsack_model)
     cp_solver = CPMultidimensionalSolver(problem=multidimensional_knapsack)
     cp_solver.init_model(output_type=True)
-    params_cp = ParametersCP.default()
-    params_cp.time_limit = 5
-    cp_solver.solve(parameters_cp=params_cp)
+    cp_solver.solve(time_limit=5)
 
 
 def run_ls(multiscenario_model):
@@ -112,10 +110,8 @@ def run_cp_multidimensional_multiscenario():
         initial_solution_provider=TrivialInitialSolution(res_storage),
         constraint_handler=KnapConstraintHandler(fraction_fix=0.93),
     )
-    p = ParametersCP.default()
-    p.time_limit = 5
     r_lns = lns.solve(
-        parameters_cp=p,
+        time_limit_subsolver=5,
         nb_iteration_lns=100,
         nb_iteration_no_improvement=1000,
         callbacks=[

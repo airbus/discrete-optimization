@@ -30,8 +30,6 @@ def run_cpsat_lns_solver():
     solver = CpSatTspSolver(model, params_objective_function=params_objective_function)
     solver.init_model()
     p = ParametersCP.default_cpsat()
-    p.time_limit = 10
-    p.time_limit_iter0 = 10
     lns_solver = LNS_OrtoolsCPSat(
         problem=model,
         subsolver=solver,
@@ -53,6 +51,8 @@ def run_cpsat_lns_solver():
             )
         ],
         parameters_cp=p,
+        time_limit_subsolver_iter0=10,
+        time_limit_subsolver=10,
     )
     sol, fitness = res.get_best_solution_fit()
     assert model.satisfy(sol)

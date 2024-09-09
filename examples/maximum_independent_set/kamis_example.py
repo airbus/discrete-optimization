@@ -42,9 +42,6 @@ def run_kamis_solver():
 
     params_cp = ParametersCP.default_cpsat()
     params_cp.nb_process = 6
-    params_cp.time_limit = 2
-    params_cp.time_limit_iter0 = 1
-
     initial_solution_provider = TrivialInitialSolution(
         solver.create_result_storage(list_solution_fits=[(sol, fit)])
     )
@@ -76,6 +73,8 @@ def run_kamis_solver():
     result_store = lns_solver.solve(
         skip_initial_solution_provider=False,
         parameters_cp=params_cp,
+        time_limit_subsolver=2,
+        time_limit_subsolver_iter0=1,
         nb_iteration_lns=5000,
         callbacks=[
             TimerStopper(total_seconds=10000),
@@ -89,4 +88,4 @@ def run_kamis_solver():
 
 
 if __name__ == "__main__":
-    run_kamis()
+    run_kamis_solver()

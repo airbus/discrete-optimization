@@ -67,8 +67,6 @@ def test_lns_cpsat_solver():
     solver = CpSatTspSolver(model, params_objective_function=params_objective_function)
     solver.init_model()
     p = ParametersCP.default_cpsat()
-    p.time_limit = 10
-    p.time_limit_iter0 = 10
     lns_solver = LNS_OrtoolsCPSat(
         problem=model,
         subsolver=solver,
@@ -84,6 +82,7 @@ def test_lns_cpsat_solver():
     res = lns_solver.solve(
         skip_initial_solution_provider=True,
         nb_iteration_lns=20,
+        time_limit_subsolver=10,
         callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO

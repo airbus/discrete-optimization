@@ -33,7 +33,6 @@ def test_knapsack_lns():
     model: KnapsackModel = parse_file(model_file)
     params_objective_function = get_default_objective_setup(problem=model)
     params_milp = ParametersMilp(
-        time_limit=10,
         pool_solutions=1000,
         mip_gap=0.0001,
         mip_gap_abs=0.001,
@@ -63,6 +62,7 @@ def test_knapsack_lns():
 
     result_store = lns_solver.solve(
         parameters_milp=params_milp,
+        time_limit_subsolver=10,
         nb_iteration_lns=10000,
         callbacks=[TimerStopper(total_seconds=30)],
     )

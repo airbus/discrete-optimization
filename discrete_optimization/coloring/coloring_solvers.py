@@ -82,7 +82,7 @@ solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
         ),
     ],
     "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
-    "asp": [(ColoringASPSolver, {"timeout_seconds": 5})],
+    "asp": [(ColoringASPSolver, {"time_limit": 5})],
 }
 if toulbar2_available:
     solvers["toulbar2"] = [(ToulbarColoringSolver, {"time_limit": 5})]

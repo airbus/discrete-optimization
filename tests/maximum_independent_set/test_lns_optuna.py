@@ -155,8 +155,6 @@ def test_lns_mix(random_seed):
 
     # fixed parameters
     params_cp = ParametersCP.default()
-    params_cp.time_limit = 10
-    params_cp.time_limit_iter0 = 1
 
     subsolver = MisOrtoolsSolver(problem)
     subsolver.init_model()
@@ -174,6 +172,8 @@ def test_lns_mix(random_seed):
             initial_solution_provider=initial_solution_provider,
             post_process_solution=None,
             parameters_cp=params_cp,
+            time_limit=10,
+            time_limit_iter0=1,
             nb_iteration_lns=5,
         )
     }

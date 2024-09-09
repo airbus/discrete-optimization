@@ -45,7 +45,6 @@ def test_lns_sm():
     solver = LP_RCPSP(problem=rcpsp_problem, lp_solver=MilpSolverName.CBC)
     solver.init_model(greedy_start=False)
     parameters_milp = ParametersMilp(
-        time_limit=10,
         pool_solutions=1000,
         mip_gap_abs=0.001,
         mip_gap=0.001,
@@ -69,7 +68,7 @@ def test_lns_sm():
         params_objective_function=params_objective_function,
     )
     result_store = lns_solver.solve(
-        parameters_milp=parameters_milp, nb_iteration_lns=10
+        time_limit_subsolver=10, parameters_milp=parameters_milp, nb_iteration_lns=10
     )
     solution, fit = result_store.get_best_solution_fit()
     solution_rebuilt = RCPSPSolution(
@@ -102,7 +101,6 @@ def test_lns_mm():
     )
     solver.init_model(greedy_start=False)
     parameters_milp = ParametersMilp(
-        time_limit=10,
         pool_solutions=1000,
         mip_gap_abs=0.001,
         mip_gap=0.001,
@@ -129,6 +127,7 @@ def test_lns_mm():
     )
     result_store = lns_solver.solve(
         parameters_milp=parameters_milp,
+        time_limit_subsolver=10,
         nb_iteration_lns=10,
         skip_initial_solution_provider=False,
     )

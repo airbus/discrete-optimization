@@ -573,11 +573,16 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
             )
 
     def solve(
-        self, parameters_milp: Optional[ParametersMilp] = None, **kwargs
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs,
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(greedy_start=False, **kwargs)
-        return super().solve(parameters_milp=parameters_milp, **kwargs)
+        return super().solve(
+            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
+        )
 
 
 class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):

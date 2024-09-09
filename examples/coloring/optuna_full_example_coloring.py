@@ -46,10 +46,9 @@ solvers_to_test: List[Type[SolverDO]] = [ColoringCPSatSolver]
 
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-p.time_limit = 10
 kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
-    {ColoringCPSatSolver: dict(parameters_cp=p)},
+    {ColoringCPSatSolver: dict(parameters_cp=p, time_limit=10)},
 )
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna

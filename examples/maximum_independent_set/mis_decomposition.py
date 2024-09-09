@@ -33,9 +33,10 @@ def run_decomposition():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 10
     res = solver.solve(
-        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        initial_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 10}
+        ),
         root_solver=SubBrick(
             cls=MisKamisSolver, kwargs={"method": "redumis", "time_limit": 3}
         ),
@@ -49,10 +50,13 @@ def run_decomposition_ortools():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 5
     res = solver.solve(
-        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
-        root_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        initial_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
+        root_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
         proportion_to_remove=0.6,
         nb_iteration=10000,
     )
@@ -63,10 +67,11 @@ def run_decomposition_asp():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 5
     res = solver.solve(
-        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
-        root_solver=SubBrick(cls=MisASPSolver, kwargs={"timeout_seconds": 10}),
+        initial_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
+        root_solver=SubBrick(cls=MisASPSolver, kwargs={"time_limit": 10}),
         proportion_to_remove=0.5,
         nb_iteration=10000,
     )
@@ -77,9 +82,10 @@ def run_decomposition_toulbar():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 5
     res = solver.solve(
-        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        initial_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
         root_solver=SubBrick(
             cls=MisToulbarSolver,
             kwargs={"time_limit": 10},
@@ -94,14 +100,14 @@ def run_decomposition_gurobi():
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = MisDecomposedSolver(problem=mis_model)
     p = ParametersCP.default_cpsat()
-    p.time_limit = 5
     p_milp = ParametersMilp.default()
-    p_milp.time_limit = 5
     res = solver.solve(
-        initial_solver=SubBrick(cls=MisOrtoolsSolver, kwargs={"parameters_cp": p}),
+        initial_solver=SubBrick(
+            cls=MisOrtoolsSolver, kwargs={"parameters_cp": p, "time_limit": 5}
+        ),
         root_solver=SubBrick(
             cls=MisQuadraticSolver,
-            kwargs={"parameters_milp": p_milp},
+            kwargs={"parameters_milp": p_milp, "time_limit": 5},
         ),
         proportion_to_remove=0.2,
         nb_iteration=10000,

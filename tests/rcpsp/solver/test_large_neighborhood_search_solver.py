@@ -22,13 +22,13 @@ def test_lns_solver(file_name):
     rcpsp_problem: RCPSPModel = parse_file(file)
     solver = LargeNeighborhoodSearchScheduling(problem=rcpsp_problem)
     parameters_cp = ParametersCP.default()
-    parameters_cp.time_limit_iter0 = 5
-    parameters_cp.time_limit = 2
     results = solver.solve(
         nb_iteration_lns=100,
         skip_initial_solution_provider=False,
         stop_first_iteration_if_optimal=False,
         parameters_cp=parameters_cp,
+        time_limit_subsolver_iter0=5,
+        time_limit_subsolver=2,
         nb_iteration_no_improvement=50,
         callbacks=[TimerStopper(total_seconds=20)],
     )
