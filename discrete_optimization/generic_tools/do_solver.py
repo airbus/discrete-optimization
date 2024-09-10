@@ -147,7 +147,7 @@ class SolverDO(Hyperparametrizable, ABC):
         Returns:
 
         """
-        _, fit = res.get_best_solution_fit()
+        _, fit = res[-1]
         if not isinstance(fit, TupleFitness):
             raise RuntimeError(
                 "The fitness should be a TupleFitness of the same size as `self.problem.get_objective_names()`."
