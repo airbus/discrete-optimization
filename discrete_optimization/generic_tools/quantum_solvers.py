@@ -13,6 +13,8 @@ from discrete_optimization.coloring.solvers.coloring_quantum import (
     VQEColoringSolver_MinimizeNbColor,
 )
 from discrete_optimization.coloring.solvers.greedy_coloring import ColoringProblem
+from discrete_optimization.facility.facility_model import FacilityProblem2DPoints
+from discrete_optimization.facility.solvers.facility_quantum import QAOAFacilitySolver, VQEFacilitySolver
 from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -79,6 +81,26 @@ for key in solvers_mis:
     for solver, param in solvers_mis[key]:
         solvers_map_mis[solver] = (key, param)
 
+solvers_facility: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+    "qaoa": [
+        (
+            QAOAFacilitySolver,
+            {},
+        ),
+    ],
+    "vqe": [
+        (
+            VQEFacilitySolver,
+            {},
+        ),
+    ],
+}
+
+solvers_map_facility = {}
+for key in solvers_facility:
+    for solver, param in solvers_facility[key]:
+        solvers_map_facility[solver] = (key, param)
+
 
 solvers_tsp: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
@@ -123,7 +145,7 @@ for key in solvers_mis:
 
 def solve(
     method: Type[QiskitSolver],
-    problem: Union[MisProblem, TSPModel2D, KnapsackModel],
+    problem: Union[MisProblem, TSPModel2D, KnapsackModel, FacilityProblem2DPoints],
     **kwargs: Any
 ) -> ResultStorage:
     """Solve a problem instance with a given class of solver.

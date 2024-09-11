@@ -100,11 +100,11 @@ class FacilityQiskit(OptimizationApplication):
         conv = IntegerToBinary()
         quadratic_program = conv.convert(quadratic_program)
 
-        row = quadratic_program.get_linear_constraint(0).linear.to_dict()
-
         for j in range(0, self.problem.facility_count):
 
-            for i in range(0, quadratic_program.get_num_vars()):
+            row = quadratic_program.get_linear_constraint(0).linear.to_dict()
+
+            for i in row.keys():
 
                 weight = 2 * row[i] * self.problem.facilities[j].capacity - row[i] ** 2
                 if i < self.problem.customer_count:
@@ -112,26 +112,27 @@ class FacilityQiskit(OptimizationApplication):
                         quadratic_program.get_variable(i).name,
                         quadratic_program.get_variable(i).name,
                     ] += (
-                        p * weight
+                        -p * weight
                     )
                 else:
                     quadratic[
                         quadratic_program.get_variable(i).name,
                         quadratic_program.get_variable(i).name,
                     ] = (
-                        p * weight
+                        -p * weight
                     )
 
-                for j in range(i + 1, (quadratic_program.get_num_vars())):
-                    weight = row[i] * row[j]
-                    quadratic[
-                        quadratic_program.get_variable(i).name,
-                        quadratic_program.get_variable(j).name,
-                    ] = (
-                        -2 * p * weight
-                    )
+                for k in row.keys():
+                    if k > i:
+                        weight = row[i] * row[k]
+                        quadratic[
+                            quadratic_program.get_variable(i).name,
+                            quadratic_program.get_variable(k).name,
+                        ] = (
+                            2 * p * weight
+                        )
 
-            quadratic_program.remove_linear_constraint(j)  # TODO vérifier is ok ???
+            quadratic_program.remove_linear_constraint(0)
 
         # only one facility by customer
         # sum i X_i_j == 1
@@ -140,16 +141,18 @@ class FacilityQiskit(OptimizationApplication):
             for j in range(0, self.problem.facility_count):
                 quadratic[var_names[(i, j)], var_names[(i, j)]] += -p
                 for k in range(j + 1, self.problem.facility_count):
-                    quadratic[var_names[(i, j)], var_names[(i, k)]] = 2 * p
+                    quadratic[var_names[(i, j)], var_names[(i, k)]] += 2 * p
             constant += p
 
         quadratic_program.minimize(constant, linear, quadratic)
+        print(quadratic_program)
 
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
 
         x = self._result_to_x(result)
+        print(x)
 
         facility_for_customers = [-1] * self.problem.customer_count
 
