@@ -17,7 +17,8 @@ def facility_example():
     facilityProblem = FacilityProblem2DPoints(2, 2, [f1, f2], [c1, c2])
     facilitySolver = VQEFacilitySolver(facilityProblem)
     facilitySolver.init_model()
-    kwargs = {"maxiter": 100}
+    kwargs = {"maxiter": 500}
     res = facilitySolver.solve(**kwargs)
     sol, _ = res.get_best_solution_fit()
     print(sol.facility_for_customers)
+    print(facilityProblem.satisfy(sol))
