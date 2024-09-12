@@ -122,9 +122,10 @@ def cost_func(params, ansatz, hamiltonian, estimator, callback_dict):
 
 
 def execute_ansatz_with_Hamiltonian(
-    backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
+    solver, backend, ansatz, hamiltonian, use_session: Optional[bool] = False, **kwargs
 ) -> np.ndarray:
     """
+    @param solver: the solver who solve the problem, must be a QiskitSolver
     @param backend: the backend use to run the circuit (simulator or real device)
     @param ansatz: the quantum circuit
     @param hamiltonian: the hamiltonian corresponding to the problem
@@ -151,6 +152,7 @@ def execute_ansatz_with_Hamiltonian(
         target=target, optimization_level=optimization_level
     )
     new_ansatz = pm.run(ansatz)
+    solver.set_executed_ansatz(new_ansatz)
     hamiltonian = hamiltonian.apply_layout(new_ansatz.layout)
 
     # open a session if desired
@@ -242,6 +244,10 @@ class QiskitSolver(SolverDO):
         **kwargs,
     ):
         super().__init__(problem, params_objective_function)
+        self.executed_ansatz = None
+
+    def set_executed_ansatz(self, ansatz):
+        self.executed_ansatz = ansatz
 
 
 class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
@@ -311,7 +317,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         self.ansatz.parameter_bounds = bounds
 
         result = execute_ansatz_with_Hamiltonian(
-            self.backend, self.ansatz, hamiltonian, use_session, **kwargs
+            self, self.backend, self.ansatz, hamiltonian, use_session, **kwargs
         )
         result = conv.interpret(result)
 
@@ -391,7 +397,7 @@ class QiskitVQESolver(QiskitSolver):
         self.ansatz = EfficientSU2(hamiltonian.num_qubits)
 
         result = execute_ansatz_with_Hamiltonian(
-            self.backend, self.ansatz, hamiltonian, use_session, **kwargs
+            self, self.backend, self.ansatz, hamiltonian, use_session, **kwargs
         )
         result = conv.interpret(result)
 
