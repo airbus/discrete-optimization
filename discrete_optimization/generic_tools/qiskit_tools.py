@@ -269,6 +269,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
         self.backend = backend
+        self.ansatz = None
 
     def solve(
         self,
@@ -297,20 +298,20 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         qubo = conv.convert(self.quadratic_programm)
 
         hamiltonian, offset = qubo.to_ising()
-        ansatz = QAOAAnsatz(hamiltonian, reps=reps)
+        self.ansatz = QAOAAnsatz(hamiltonian, reps=reps)
         """
         by default only hyperparameters of the mixer operator are initialized
         but for some optimizer we need to initialize also hyperparameters of the cost operator
         """
         bounds = []
-        for hp in ansatz.parameter_bounds:
+        for hp in self.ansatz.parameter_bounds:
             if hp == (None, None):
                 hp = (0, np.pi)
             bounds.append(hp)
-        ansatz.parameter_bounds = bounds
+        self.ansatz.parameter_bounds = bounds
 
         result = execute_ansatz_with_Hamiltonian(
-            self.backend, ansatz, hamiltonian, use_session, **kwargs
+            self.backend, self.ansatz, hamiltonian, use_session, **kwargs
         )
         result = conv.interpret(result)
 
@@ -360,6 +361,7 @@ class QiskitVQESolver(QiskitSolver):
         super().__init__(problem, params_objective_function)
         self.quadratic_programm = None
         self.backend = backend
+        self.ansatz = None
 
     def solve(
         self,
@@ -386,10 +388,10 @@ class QiskitVQESolver(QiskitSolver):
         qubo = conv.convert(self.quadratic_programm)
 
         hamiltonian, offset = qubo.to_ising()
-        ansatz = EfficientSU2(hamiltonian.num_qubits)
+        self.ansatz = EfficientSU2(hamiltonian.num_qubits)
 
         result = execute_ansatz_with_Hamiltonian(
-            self.backend, ansatz, hamiltonian, use_session, **kwargs
+            self.backend, self.ansatz, hamiltonian, use_session, **kwargs
         )
         result = conv.interpret(result)
 
