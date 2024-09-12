@@ -13,7 +13,7 @@ from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
 
 
 def run_cpsat_knapsack():
-    file = [f for f in get_data_available() if "ks_1000_0" in f][0]
+    file = [f for f in get_data_available() if "ks_10000_0" in f][0]
     knapsack_model = parse_file(file)
     cp_model = CPSatKnapsackSolver(knapsack_model)
     cp_model.init_model()
