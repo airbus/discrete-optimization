@@ -31,15 +31,21 @@ class SequentialMetasolver(SolverDO):
     """
 
     hyperparameters = [
+        SubBrickHyperparameter(  # first subsolver: can be non-warmstartable
+            name="subsolver_0",
+            choices=[],  # to update in an optuna study via suggest_optuna_kwargs_by_name_by_solver
+        ),
         ListHyperparameter(
-            name="list_subbricks",
+            name="next_subsolvers",
             hyperparameter_template=SubBrickHyperparameter(
                 "subsolver",
                 choices=[],  # to update in an optuna study via suggest_optuna_kwargs_by_name_by_solver
             ),
-            length_high=5,  # to update in optuna study via suggest_optuna_kwargs_by_name_by_solver
-            length_low=1,
-        )
+            length_high=4,  # to update in optuna study via suggest_optuna_kwargs_by_name_by_solver
+            length_low=0,
+            numbering_start=1,  # the first subsolver of this list will be named "subsolver_1"
+            # to avoid overriding "subsolver_0" defined by the first hyperparameter.
+        ),
     ]
 
     def __init__(
@@ -58,6 +64,12 @@ class SequentialMetasolver(SolverDO):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
+        if list_subbricks is None:
+            list_subbricks = []
+        if "subsolver_0" in kwargs:  # optuna first subsolver choice
+            list_subbricks = [kwargs["subsolver_0"]] + list_subbricks
+        if "next_subsolvers" in kwargs:  # optuna last subsolvers choice
+            list_subbricks = list_subbricks + kwargs["next_subsolvers"]
         self.list_subbricks = list_subbricks
         self.nb_solvers = len(list_subbricks)
 

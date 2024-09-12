@@ -159,9 +159,13 @@ def test_generic_optuna_experiment_monoproblem_sequential_metasolver():
 
     suggest_optuna_kwargs_by_name_by_solver = {
         SequentialMetasolver: dict(
-            list_subbricks=dict(
+            subsolver_0=dict(
                 choices=[FakeSolver, FakeSolver2],
-                length_high=3,
+                fixed_hyperparameters={"param": 1, "param2": 1},
+            ),
+            next_subsolvers=dict(
+                choices=[FakeSolver, FakeSolver2],
+                length_high=2,
                 fixed_hyperparameters={"param": 1, "param2": 1},
             ),
         )
@@ -179,7 +183,7 @@ def test_generic_optuna_experiment_monoproblem_sequential_metasolver():
     # best trial: FakeSolver2 -> FakeSolver -> FakeSolver
     assert study.best_value == -2.0
     best_trial_params = study.best_trial.params
-    assert best_trial_params["SequentialMetasolver.list_subbricks.length"] == 3
+    assert best_trial_params["SequentialMetasolver.next_subsolvers.length"] == 2
     assert best_trial_params["SequentialMetasolver.subsolver_0.cls"] == "FakeSolver2"
     assert best_trial_params["SequentialMetasolver.subsolver_1.cls"] == "FakeSolver"
     assert best_trial_params["SequentialMetasolver.subsolver_2.cls"] == "FakeSolver"

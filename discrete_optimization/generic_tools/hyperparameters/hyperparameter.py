@@ -829,6 +829,9 @@ class ListHyperparameter(Hyperparameter):
     length_low: int = 0
     "Lower bound for list length."
 
+    numbering_start: int = 0
+    """The numbering of the generated hyperparameters will start from this number."""
+
     default: Optional[Any] = None
     """Default value for the hyperparameter.
 
@@ -873,6 +876,7 @@ class ListHyperparameter(Hyperparameter):
         hyperparameter_template: Hyperparameter,
         length_high: int,
         length_low: int = 0,
+        numbering_start: int = 0,
         default: List[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
@@ -886,12 +890,14 @@ class ListHyperparameter(Hyperparameter):
         self.hyperparameter_template = hyperparameter_template
         self.length_low = length_low
         self.length_high = length_high
+        self.numbering_start = numbering_start
 
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
         length_low: Optional[int] = None,
         length_high: Optional[int] = None,
+        numbering_start: Optional[int] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> List[Any]:
@@ -903,6 +909,7 @@ class ListHyperparameter(Hyperparameter):
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             length_low: overrides `self.length_low`
             length_high: overrides `self.length_high`
+            numbering_start: overrides `self.numbering_start`
             **kwargs: passed to `trial.suggest_xxx()`
 
         Returns:
@@ -912,6 +919,8 @@ class ListHyperparameter(Hyperparameter):
             length_low = self.length_low
         if length_high is None:
             length_high = self.length_high
+        if numbering_start is None:
+            numbering_start = self.numbering_start
         list_length_name = prefix + self.name + ".length"
         list_length = trial.suggest_int(
             name=list_length_name, low=length_low, high=length_high
@@ -919,7 +928,7 @@ class ListHyperparameter(Hyperparameter):
         list_hp = []
         for i in range(list_length):
             hp = self.hyperparameter_template.copy_and_update_attributes(
-                name=f"{self.hyperparameter_template.name}_{i}"
+                name=f"{self.hyperparameter_template.name}_{i+numbering_start}"
             )
             list_hp.append(hp.suggest_with_optuna(trial=trial, prefix=prefix, **kwargs))
         return list_hp
@@ -960,6 +969,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
         ],
         length_high: Optional[int] = None,
         length_low: int = 0,
+        numbering_start: int = 0,
         default: List[Any] = None,
         depends_on: Optional[Tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
@@ -971,6 +981,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
             hyperparameter_template=hyperparameter_template,
             length_high=length_high,
             length_low=length_low,
+            numbering_start=numbering_start,
             default=default,
             depends_on=depends_on,
             name_in_kwargs=name_in_kwargs,
@@ -981,6 +992,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
         trial: optuna.trial.Trial,
         length_low: Optional[int] = None,
         length_high: Optional[int] = None,
+        numbering_start: Optional[int] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> List[Any]:
@@ -992,6 +1004,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
               (useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)
             length_low: overrides `self.length_low`
             length_high: overrides `self.length_high`
+            numbering_start: overrides `self.numbering_start`
             **kwargs: passed to `trial.suggest_xxx()`
 
         Returns:
@@ -1006,6 +1019,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
             trial=trial,
             length_low=length_low,
             length_high=length_high,
+            numbering_start=numbering_start,
             prefix=prefix,
             **kwargs,
         )
