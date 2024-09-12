@@ -17,7 +17,8 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
     SubBrickHyperparameter,
@@ -28,6 +29,9 @@ from discrete_optimization.generic_tools.optuna.utils import (
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
+)
+from discrete_optimization.generic_tools.sequential_metasolver import (
+    SequentialMetasolver,
 )
 
 try:
@@ -50,10 +54,14 @@ def random_seed():
     return SEED
 
 
-class FakeSolver(SolverDO):
+class FakeSolver(SolverDO, WarmstartMixin):
     hyperparameters = [IntegerHyperparameter("param", low=1, high=4, default=1)]
 
     nb_colors_series = [100 - i for i in range(96)]
+    nb_colors_warm_start = 6
+
+    def set_warm_start(self, solution: ColoringSolution) -> None:
+        self.nb_colors_warm_start = solution.nb_color
 
     def solve(
         self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
@@ -67,7 +75,9 @@ class FakeSolver(SolverDO):
         callbacks_list.on_solve_start(solver=self)
         for step, nb_colors in enumerate(self.nb_colors_series):
             solution = ColoringSolution(
-                problem=self.problem, nb_color=nb_colors, nb_violations=0
+                problem=self.problem,
+                nb_color=nb_colors - 6 + self.nb_colors_warm_start,
+                nb_violations=0,
             )
             fit = self.aggreg_from_dict(self.problem.evaluate(solution))
             res.append((solution, fit))
@@ -132,6 +142,62 @@ def test_generic_optuna_experiment_monoproblem(random_seed):
         create_another_study=False,
     )
     assert study.best_value == -2.0
+
+
+@pytest.mark.skipif(
+    not optuna_available,
+    reason="You need Optuna to test generic_optuna_experiment_monoproblem.",
+)
+def test_generic_optuna_experiment_monoproblem_sequential_metasolver():
+    # classic pruner on steps => no pruning (as solver always return same fitnesses sequence)
+    files = get_data_available()
+    files = [f for f in files if "gc_70_9" in f]  # Multi mode RCPSP
+    file_path = files[0]
+    problem = parse_file(file_path)
+
+    solvers_to_test = [SequentialMetasolver]
+
+    suggest_optuna_kwargs_by_name_by_solver = {
+        SequentialMetasolver: dict(
+            list_subbricks=dict(
+                choices=[FakeSolver, FakeSolver2],
+                length_high=3,
+                fixed_hyperparameters={"param": 1, "param2": 1},
+            ),
+        )
+    }
+
+    study = generic_optuna_experiment_monoproblem(
+        problem=problem,
+        solvers_to_test=solvers_to_test,
+        check_satisfy=False,
+        overwrite_study=True,
+        create_another_study=False,
+        suggest_optuna_kwargs_by_name_by_solver=suggest_optuna_kwargs_by_name_by_solver,
+        sampler=optuna.samplers.BruteForceSampler(),
+    )
+    # best trial: FakeSolver2 -> FakeSolver -> FakeSolver
+    assert study.best_value == -2.0
+    best_trial_params = study.best_trial.params
+    assert best_trial_params["SequentialMetasolver.list_subbricks.length"] == 3
+    assert best_trial_params["SequentialMetasolver.subsolver_0.cls"] == "FakeSolver2"
+    assert best_trial_params["SequentialMetasolver.subsolver_1.cls"] == "FakeSolver"
+    assert best_trial_params["SequentialMetasolver.subsolver_2.cls"] == "FakeSolver"
+
+    # Should have at least 1 error due to FakeSolver2 not being a warmstartable solver
+    pruned_trials = study.get_trials(
+        deepcopy=False, states=[optuna.trial.TrialState.PRUNED]
+    )
+    assert len(pruned_trials) > 0
+    trial = pruned_trials[0]
+    assert (
+        "Each subsolver except the first one must inherit WarmstartMixin."
+        in trial.user_attrs["Error"]
+    )
+    assert (
+        trial.params["SequentialMetasolver.subsolver_1.cls"] == "FakeSolver2"
+        or trial.params["SequentialMetasolver.subsolver_2.cls"] == "FakeSolver2"
+    )
 
 
 @pytest.mark.skipif(

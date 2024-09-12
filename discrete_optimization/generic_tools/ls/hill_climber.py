@@ -50,11 +50,7 @@ class HillClimber(SolverDO, WarmstartMixin):
         self.mutator = mutator
         self.restart_handler = restart_handler
         self.mode_mutation = mode_mutation
-        self.params_objective_function = params_objective_function
-        if params_objective_function is not None:
-            self.mode_optim = params_objective_function.sense_function
-        else:
-            self.mode_optim = ModeOptim.MAXIMIZATION
+        self.mode_optim = self.params_objective_function.sense_function
         self.store_solution = store_solution
 
     def set_warm_start(self, solution: Solution) -> None:
