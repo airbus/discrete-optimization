@@ -7,6 +7,7 @@ import random
 
 import numpy as np
 import pytest
+from ortools.math_opt.python import mathopt
 
 from discrete_optimization.generic_tools.lp_tools import PymipMilpSolver
 from discrete_optimization.knapsack.knapsack_model import (
@@ -19,7 +20,10 @@ from discrete_optimization.knapsack.knapsack_parser import (
 )
 from discrete_optimization.knapsack.knapsack_solvers import solve, solvers_map
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
-from discrete_optimization.knapsack.solvers.lp_solvers import LPKnapsackGurobi
+from discrete_optimization.knapsack.solvers.lp_solvers import (
+    LPKnapsackGurobi,
+    LPKnapsackMathOpt,
+)
 
 try:
     import gurobipy
@@ -79,4 +83,25 @@ def test_gurobi_warm_start():
     # warm start => first solution is start_solution
     solver.set_warm_start(start_solution)
     result_storage = solver.solve()
+    assert result_storage[0][0].list_taken == start_solution.list_taken
+
+
+def test_mathopt_warm_start():
+    small_example = [f for f in get_data_available() if "ks_40_0" in f][0]
+    knapsack_model: KnapsackModel = parse_file(small_example)
+
+    solver = LPKnapsackMathOpt(knapsack_model)
+    kwargs = dict(
+        mathopt_enable_output=True, mathopt_solver_type=mathopt.SolverType.GSCIP
+    )
+    result_storage = solver.solve(**kwargs)
+
+    start_solution = GreedyBest(problem=knapsack_model).solve().get_best_solution()
+
+    # first solution is not start_solution
+    assert result_storage[0][0].list_taken != start_solution.list_taken
+
+    # warm start => first solution is start_solution
+    solver.set_warm_start(start_solution)
+    result_storage = solver.solve(**kwargs)
     assert result_storage[0][0].list_taken == start_solution.list_taken

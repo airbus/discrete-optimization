@@ -6,7 +6,9 @@ import os
 import platform
 
 import pytest
+from ortools.math_opt.python import mathopt
 
+from discrete_optimization.facility.facility_model import FacilitySolution
 from discrete_optimization.facility.facility_parser import (
     get_data_available,
     parse_file,
@@ -14,6 +16,7 @@ from discrete_optimization.facility.facility_parser import (
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver,
     LP_Facility_Solver_CBC,
+    LP_Facility_Solver_MathOpt,
     LP_Facility_Solver_PyMip,
     MilpSolverName,
     ParametersMilp,
@@ -56,6 +59,43 @@ def test_facility_lp_gurobi():
     # warm start => first solution is start_solution
     solver.set_warm_start(start_solution)
     result_storage = solver.solve(**kwargs)
+    assert (
+        result_storage[0][0].facility_for_customers
+        == start_solution.facility_for_customers
+    )
+
+
+def test_facility_lp_ortools_mathopt():
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
+    color_problem = parse_file(file)
+    solver = LP_Facility_Solver_MathOpt(color_problem)
+    kwargs = dict(
+        time_limit=20,
+        use_matrix_indicator_heuristic=False,
+    )
+    result_storage = solver.solve(**kwargs)
+    solution, fit = result_storage.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
+
+    # test warm start
+    start_solution = (
+        GreedySolverFacility(problem=color_problem)
+        .solve()
+        .get_best_solution()
+        # FacilitySolution(problem=color_problem, facility_for_customers=[1,1,2,0])
+    )
+
+    # first solution is not start_solution
+    assert (
+        result_storage[0][0].facility_for_customers
+        != start_solution.facility_for_customers
+    )
+
+    # warm start => first solution is start_solution
+    solver = LP_Facility_Solver_MathOpt(color_problem)
+    solver.init_model(**kwargs)
+    solver.set_warm_start(start_solution)
+    result_storage = solver.solve(mathopt_enable_output=True, **kwargs)
     assert (
         result_storage[0][0].facility_for_customers
         == start_solution.facility_for_customers

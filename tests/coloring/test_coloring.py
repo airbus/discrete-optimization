@@ -34,6 +34,7 @@ from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
     ModelingCPSat,
 )
+from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLPMathOpt
 from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
@@ -555,6 +556,79 @@ def test_color_lp_gurobi_cb_exception():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringLP(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    with pytest.raises(RuntimeError, match="Explicit crash"):
+        solver.solve(
+            parameters_milp=ParametersMilp.default(), callbacks=[MyCallbackNok()]
+        )
+
+
+def test_color_lp_ortools_mathopt():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLPMathOpt(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    result_store = solver.solve(parameters_milp=ParametersMilp.default())
+    solution = result_store.get_best_solution_fit()[0]
+    assert color_problem.satisfy(solution)
+    assert len(result_store) > 1
+
+    # first solution is not start_solution
+    assert result_store[0][0].colors != solver.start_solution.colors
+
+    # warm start => first solution is start_solution
+    solver2 = ColoringLPMathOpt(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    solver2.init_model()
+    solver2.set_warm_start(solver.start_solution)
+    result_store = solver2.solve(parameters_milp=ParametersMilp.default())
+    assert result_store[0][0].colors == solver.start_solution.colors
+
+
+def test_color_lp_ortools_mathopt_cb_log():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLPMathOpt(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    tracker = NbIterationTracker()
+    callbacks = [tracker]
+    result_store = solver.solve(
+        parameters_milp=ParametersMilp.default(), callbacks=callbacks
+    )
+    solution = result_store.get_best_solution_fit()[0]
+    assert len(result_store) > 1
+    # check tracker called at each solution found
+    assert tracker.nb_iteration == len(result_store)
+
+
+def test_color_lp_ortools_mathopt_stop():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLPMathOpt(
+        color_problem,
+        params_objective_function=get_default_objective_setup(color_problem),
+    )
+    stopper = NbIterationStopper(nb_iteration_max=1)
+    callbacks = [stopper]
+    result_store = solver.solve(
+        parameters_milp=ParametersMilp.default(), callbacks=callbacks
+    )
+    # check stop after 1st iteration
+    assert len(result_store) == 1
+
+
+def test_color_lp_ortools_mathopt_cb_exception():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = ColoringLPMathOpt(
         color_problem,
         params_objective_function=get_default_objective_setup(color_problem),
     )

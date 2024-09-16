@@ -11,6 +11,7 @@ from typing import Any, Optional, TypedDict, Union
 import mip
 import networkx as nx
 from mip import BINARY, INTEGER, xsum
+from ortools.math_opt.python import mathopt
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -34,6 +35,7 @@ from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
+    OrtoolsMathOptMilpSolver,
     PymipMilpSolver,
 )
 
@@ -109,6 +111,31 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
         self.description_constraint: dict[str, dict[str, str]] = {}
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution: Optional[ColoringSolution] = None
+
+    def convert_to_variable_values(
+        self, solution: ColoringSolution
+    ) -> dict[Any, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        # Init all variables to 0
+        hinted_variables = {
+            var: 0 for var in self.variable_decision["colors_var"].values()
+        }
+
+        # Set var(node, color) to 1 according to the solution
+        for i, color in enumerate(solution.colors):
+            node = self.index_to_nodes_name[i]
+            variable_decision_key = (node, color)
+            hinted_variables[
+                self.variable_decision["colors_var"][variable_decision_key]
+            ] = 1
+
+        hinted_variables[self.variable_decision["nb_colors"]] = solution.nb_color
+
+        return hinted_variables
 
     def retrieve_current_solution(
         self,
@@ -461,6 +488,165 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
             )
         self.model = color_model
         self.variable_decision = {"colors_var": colors_var}
+        self.constraints_dict = {
+            "one_color_constraints": one_color_constraints,
+            "constraints_neighbors": constraints_neighbors,
+        }
+        self.description_variable_description = {
+            "colors_var": {
+                "shape": (self.number_of_nodes, nb_colors),
+                "type": bool,
+                "descr": "for each node and each color," " a binary indicator",
+            }
+        }
+        self.description_constraint["one_color_constraints"] = {
+            "descr": "one and only one color " "should be assignated to a node"
+        }
+        self.description_constraint["constraints_neighbors"] = {
+            "descr": "no neighbors can have same color"
+        }
+
+
+class ColoringLPMathOpt(OrtoolsMathOptMilpSolver, _BaseColoringLP):
+    """Coloring LP solver based on pymip library.
+
+    Note:
+        Gurobi and CBC are available as backend solvers.
+
+
+    Attributes:
+        problem (ColoringProblem): coloring problem instance to solve
+        params_objective_function (ParamsObjectiveFunction): objective function parameters
+                    (however this is just used for the ResultStorage creation, not in the optimisation)
+
+    """
+
+    hyperparameters = _BaseColoringLP.hyperparameters
+
+    problem: ColoringProblem
+    solution_hint: Optional[dict[mathopt.Variable, float]] = None
+
+    def convert_to_variable_values(
+        self, solution: ColoringSolution
+    ) -> dict[mathopt.Variable, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint
+        for more information.
+
+        """
+        return _BaseColoringLP.convert_to_variable_values(self, solution)
+
+    def init_model(self, **kwargs: Any) -> None:
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_start = kwargs["greedy_start"]
+        use_cliques = kwargs["use_cliques"]
+        if greedy_start:
+            logger.info("Computing greedy solution")
+            greedy_solver = GreedyColoring(
+                self.problem,
+                params_objective_function=self.params_objective_function,
+            )
+            sol = greedy_solver.solve(
+                strategy=NXGreedyColoringMethod.best
+            ).get_best_solution()
+            if sol is None:
+                raise RuntimeError(
+                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
+                    "should not be None."
+                )
+            if not isinstance(sol, ColoringSolution):
+                raise RuntimeError(
+                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
+                    "should be a ColoringSolution."
+                )
+            self.start_solution = sol
+        else:
+            logger.info("Get dummy solution")
+            self.start_solution = self.problem.get_dummy_solution()
+        nb_colors = self.start_solution.nb_color
+        nb_colors_subset = nb_colors
+        if self.problem.use_subset:
+            nb_colors_subset = self.problem.count_colors(self.start_solution.colors)
+            nb_colors = self.problem.count_colors_all_index(self.start_solution.colors)
+
+        if nb_colors is None:
+            raise RuntimeError("self.start_solution.nb_color should not be None.")
+        color_model = mathopt.Model(name="color")
+        colors_var = {}
+        range_node = self.nodes_name
+        range_color = range(nb_colors)
+        range_color_subset = range(nb_colors_subset)
+        range_color_per_node = {}
+        for node in self.nodes_name:
+            rng = self.get_range_color(
+                node_name=node,
+                range_color_subset=range_color_subset,
+                range_color_all=range_color,
+            )
+            for color in rng:
+                colors_var[node, color] = color_model.add_binary_variable(
+                    name="x_" + str((node, color))
+                )
+            range_color_per_node[node] = set(rng)
+        one_color_constraints = {}
+        for n in range_node:
+            one_color_constraints[n] = color_model.add_linear_constraint(
+                mathopt.LinearSum(colors_var[n, c] for c in range_color_per_node[n])
+                == 1
+            )
+        cliques = []
+        g = self.graph.to_networkx()
+        if use_cliques:
+            for c in nx.algorithms.clique.find_cliques(g):
+                cliques += [c]
+            cliques = sorted(cliques, key=lambda x: len(x), reverse=True)
+        else:
+            cliques = [[e[0], e[1]] for e in g.edges()]
+        cliques_constraint: dict[Union[int, tuple[int, int]], Any] = {}
+        index_c = 0
+        opt = color_model.add_integer_variable(lb=0, ub=nb_colors, name="nb_colors")
+        color_model.minimize(opt)
+        if use_cliques:
+            for c in cliques[:100]:
+                cliques_constraint[index_c] = color_model.add_linear_constraint(
+                    mathopt.LinearSum(
+                        (color_i + 1) * colors_var[node, color_i]
+                        for node in c
+                        for color_i in range_color_per_node[node]
+                    )
+                    >= sum([i + 1 for i in range(len(c))])
+                )
+                cliques_constraint[(index_c, 1)] = color_model.add_linear_constraint(
+                    mathopt.LinearSum(
+                        colors_var[node, color_i]
+                        for node in c
+                        for color_i in range_color_per_node[node]
+                    )
+                    <= opt
+                )
+                index_c += 1
+        edges = g.edges()
+        constraints_neighbors = {}
+        for e in edges:
+            for c in range_color_per_node[e[0]]:
+                if c in range_color_per_node[e[1]]:
+                    constraints_neighbors[
+                        (e[0], e[1], c)
+                    ] = color_model.add_linear_constraint(
+                        colors_var[e[0], c] + colors_var[e[1], c] <= 1
+                    )
+        for n in range_node:
+            color_model.add_linear_constraint(
+                mathopt.LinearSum(
+                    (color_i + 1) * colors_var[n, color_i]
+                    for color_i in range_color_per_node[n]
+                )
+                <= opt
+            )
+        self.model = color_model
+        self.variable_decision = {"colors_var": colors_var, "nb_colors": opt}
         self.constraints_dict = {
             "one_color_constraints": one_color_constraints,
             "constraints_neighbors": constraints_neighbors,

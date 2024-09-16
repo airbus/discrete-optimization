@@ -10,13 +10,18 @@ import mip
 from mip import BINARY, MAXIMIZE, xsum
 from ortools.algorithms.python import knapsack_solver
 from ortools.linear_solver import pywraplp
+from ortools.math_opt.python import mathopt
 
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+)
 from discrete_optimization.generic_tools.do_solver import ResultStorage, WarmstartMixin
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
+    OrtoolsMathOptMilpSolver,
     PymipMilpSolver,
 )
 from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
@@ -52,10 +57,33 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         )
         self.variable_decision: dict[str, dict[int, Union["Var", mip.Var]]] = {}
         self.constraints_dict: dict[
-            str, Union["Constr", "QConstr", "MConstr", "GenConstr", "mip.Constr"]
+            str,
+            Union[
+                "Constr",
+                "QConstr",
+                "MConstr",
+                "GenConstr",
+                "mip.Constr",
+                "mathopt.LinearConstraint",
+            ],
         ] = {}
         self.description_variable_description: dict[str, dict[str, Any]] = {}
         self.description_constraint: dict[str, dict[str, str]] = {}
+
+    def convert_to_variable_values(
+        self, solution: KnapsackSolution
+    ) -> dict[Any, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return {
+            self.variable_decision["x"][variable_decision_key]: solution.list_taken[i]
+            for i, variable_decision_key in enumerate(
+                sorted(self.variable_decision["x"])
+            )
+        }
 
     def retrieve_current_solution(
         self,
@@ -133,6 +161,51 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack, WarmstartMixin):
             self.variable_decision["x"][
                 variable_decision_key
             ].Start = solution.list_taken[i]
+
+
+class LPKnapsackMathOpt(OrtoolsMathOptMilpSolver, _BaseLPKnapsack):
+    def init_model(self, **kwargs: Any) -> None:
+        self.model = mathopt.Model(name="Knapsack")
+        self.variable_decision = {"x": {}}
+        self.description_variable_description = {
+            "x": {
+                "shape": self.problem.nb_items,
+                "type": bool,
+                "descr": "dictionary with key the item index \
+                                                                 and value the boolean value corresponding \
+                                                                 to taking the item or not",
+            }
+        }
+        self.description_constraint["weight"] = {
+            "descr": "sum of weight of used items doesn't exceed max capacity"
+        }
+        weight = {}
+        list_item = self.problem.list_items
+        max_capacity = self.problem.max_capacity
+        x = {}
+        for item in list_item:
+            i = item.index
+            x[i] = self.model.add_binary_variable(name="x_" + str(i))
+            weight[i] = item.weight
+        self.model.maximize(
+            mathopt.LinearSum(item.value * x[item.index] for item in list_item)
+        )
+        self.variable_decision["x"] = x
+        self.constraints_dict["weight"] = self.model.add_linear_constraint(
+            mathopt.LinearSum(weight[i] * x[i] for i in x) <= max_capacity
+        )
+
+    def convert_to_variable_values(
+        self, solution: KnapsackSolution
+    ) -> dict[mathopt.Variable, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint
+        for more information.
+
+        """
+        return _BaseLPKnapsack.convert_to_variable_values(self, solution)
 
 
 class LPKnapsackCBC(SolverKnapsack):

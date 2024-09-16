@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
 from typing import Any
 
 import networkx as nx
@@ -8,9 +7,7 @@ import numpy as np
 
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.graph_api import get_node_attributes
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
+from discrete_optimization.maximum_independent_set.solvers.mis_lp import BaseLPMisSolver
 
 try:
     import gurobipy
@@ -18,33 +15,14 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, LinExpr, Model, Var
+    from gurobipy import GRB, LinExpr, Model, Var, quicksum
 
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
-from discrete_optimization.maximum_independent_set.mis_model import (
-    MisProblem,
-    MisSolution,
-)
-from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
+from discrete_optimization.maximum_independent_set.mis_model import MisSolution
 
 
-class BaseGurobiMisSolver(MisSolver, GurobiMilpSolver, WarmstartMixin):
-    vars_node: Sequence[Var]
-
-    def retrieve_current_solution(
-        self,
-        get_var_value_for_current_solution: Callable[[Any], float],
-        get_obj_value_for_current_solution: Callable[[], float],
-    ) -> MisSolution:
-
-        chosen = [0] * self.problem.number_nodes
-
-        for i in range(0, self.problem.number_nodes):
-            if get_var_value_for_current_solution(self.vars_node[i]) > 0.5:
-                chosen[i] = 1
-
-        return MisSolution(self.problem, chosen)
+class BaseGurobiMisSolver(GurobiMilpSolver, BaseLPMisSolver, WarmstartMixin):
+    vars_node: dict[int, Var]
 
     def set_warm_start(self, solution: MisSolution) -> None:
         """Make the solver warm start from the given solution."""
@@ -66,8 +44,11 @@ class MisMilpSolver(BaseGurobiMisSolver):
         value = get_node_attributes(self.problem.graph_nx, "value", default=1)
 
         # Set objective
-        obj_exp = LinExpr()
-        obj_exp.addTerms(value.values(), self.vars_node.select())
+        obj_exp = LinExpr(0.0)
+        obj_exp += quicksum(
+            value[self.problem.index_to_nodes[i]] * self.vars_node[i]
+            for i in range(0, self.problem.number_nodes)
+        )
         self.model.setObjective(obj_exp, GRB.MAXIMIZE)
 
         # for each edge it's impossible to choose the two nodes of this edges in our solution
@@ -96,7 +77,7 @@ class MisQuadraticSolver(BaseGurobiMisSolver):
         )
 
         # Set objective
-        adj = nx.to_numpy_array(self.problem.graph_nx)
+        adj = nx.to_numpy_array(self.problem.graph_nx, nodelist=self.problem.nodes)
         J = np.identity(self.problem.number_nodes)
         A = J - adj
         self.model.setObjective(self.vars_node @ A @ self.vars_node, GRB.MAXIMIZE)
