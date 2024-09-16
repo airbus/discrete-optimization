@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import matplotlib.pyplot as plt
+
 from discrete_optimization.pickup_vrp.builders.instance_builders import (
     create_ortools_example,
 )
@@ -10,7 +12,6 @@ from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_sol
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
     ParametersMilp,
-    plt,
 )
 
 try:
