@@ -4,9 +4,13 @@
 import logging
 
 import pytest
+from ortools.math_opt.python import mathopt
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
-from discrete_optimization.maximum_independent_set.mis_model import MisProblem
+from discrete_optimization.maximum_independent_set.mis_model import (
+    MisProblem,
+    MisSolution,
+)
 from discrete_optimization.maximum_independent_set.mis_parser import (
     dimacs_parser_nx,
     get_data_available,
@@ -22,6 +26,10 @@ from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
 )
 from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
     MisKamisSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_mathopt import (
+    MisMathOptMilpSolver,
+    MisMathOptQuadraticSolver,
 )
 from discrete_optimization.maximum_independent_set.solvers.mis_ortools import (
     MisOrtoolsSolver,
@@ -107,3 +115,31 @@ def test_solver_gurobi():
     # force first solution to be the hinted one
     result_storage = solver.solve()
     assert result_storage[0][0].chosen == start_solution.chosen
+
+
+def test_solver_mathopt():
+    small_example = [f for f in get_data_available() if "1dc.64" in f][0]
+    mis_model: MisProblem = dimacs_parser_nx(small_example)
+
+    solver = MisMathOptMilpSolver(mis_model)
+    kwargs = dict(
+        mathopt_solver_type=mathopt.SolverType.CP_SAT, mathopt_enable_output=True
+    )
+    result_storage = solver.solve(**kwargs)
+
+    sol, fit = result_storage.get_best_solution_fit(satisfying=mis_model)
+    assert isinstance(sol, MisSolution)
+
+
+def test_solver_quad_mathopt():
+    small_example = [f for f in get_data_available() if "1dc.64" in f][0]
+    mis_model: MisProblem = dimacs_parser_nx(small_example)
+
+    solver = MisMathOptQuadraticSolver(mis_model)
+    kwargs = dict(
+        mathopt_solver_type=mathopt.SolverType.GSCIP, mathopt_enable_output=True
+    )
+    result_storage = solver.solve(**kwargs)
+
+    sol, fit = result_storage.get_best_solution_fit(satisfying=mis_model)
+    assert isinstance(sol, MisSolution)

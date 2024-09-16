@@ -12,6 +12,7 @@ import mip
 import numpy as np
 import numpy.typing as npt
 from ortools.linear_solver import pywraplp
+from ortools.math_opt.python import mathopt
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
@@ -31,6 +32,7 @@ from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
+    OrtoolsMathOptMilpSolver,
     ParametersMilp,
     PymipMilpSolver,
 )
@@ -151,7 +153,9 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
             problem=problem, params_objective_function=params_objective_function
         )
         self.model = None
-        self.variable_decision: dict[str, dict[tuple[int, int], Union[int, Any]]] = {}
+        self.variable_decision: dict[
+            str, dict[Union[int, tuple[int, int]], Union[int, Any]]
+        ] = {}
         self.constraints_dict: dict[str, dict[int, Any]] = {}
         self.description_variable_description = {
             "x": {
@@ -163,6 +167,24 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
             }
         }
         self.description_constraint: dict[str, dict[str, str]] = {}
+
+    def convert_to_variable_values(
+        self, solution: FacilitySolution
+    ) -> dict[Any, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        # Init all variables to 0
+        hinted_variables = {var: 0 for var in self.variable_decision["x"].values()}
+        # Set var(facility, customer) to 1 according to the solution
+        for c, f in enumerate(solution.facility_for_customers):
+            variable_decision_key = (f, c)
+            hinted_variables[self.variable_decision["x"][variable_decision_key]] = 1
+            hinted_variables[self.variable_decision["y"][f]] = 1
+
+        return hinted_variables
 
     def retrieve_current_solution(
         self,
@@ -297,6 +319,111 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin
         for c, f in enumerate(solution.facility_for_customers):
             variable_decision_key = (f, c)
             self.variable_decision["x"][variable_decision_key].Start = 1
+
+
+class LP_Facility_Solver_MathOpt(OrtoolsMathOptMilpSolver, _LPFacilitySolverBase):
+    """Milp solver using gurobi library
+
+    Attributes:
+        coloring_model (FacilityProblem): facility problem instance to solve
+        params_objective_function (ParamsObjectiveFunction): objective function parameters
+                        (however this is just used for the ResultStorage creation, not in the optimisation)
+    """
+
+    def init_model(self, **kwargs: Any) -> None:
+        """
+
+        Keyword Args:
+            use_matrix_indicator_heuristic (bool): use the prune search method to reduce number of variable.
+            n_shortest (int): parameter for the prune search method
+            n_cheapest (int): parameter for the prune search method
+
+        Returns: None
+
+        """
+        nb_facilities = self.problem.facility_count
+        nb_customers = self.problem.customer_count
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        use_matrix_indicator_heuristic = kwargs["use_matrix_indicator_heuristic"]
+        if use_matrix_indicator_heuristic:
+            n_shortest = kwargs["n_shortest"]
+            n_cheapest = kwargs["n_cheapest"]
+            matrix_fc_indicator, matrix_length = prune_search_space(
+                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
+            )
+        else:
+            matrix_fc_indicator, matrix_length = prune_search_space(
+                self.problem,
+                n_cheapest=nb_facilities,
+                n_shortest=nb_facilities,
+            )
+        s = mathopt.Model(name="facilities")
+        x: dict[tuple[int, int], Union[int, Any]] = {}
+        for f in range(nb_facilities):
+            for c in range(nb_customers):
+                if matrix_fc_indicator[f, c] == 0:
+                    x[f, c] = 0
+                elif matrix_fc_indicator[f, c] == 1:
+                    x[f, c] = 1
+                elif matrix_fc_indicator[f, c] == 2:
+                    x[f, c] = s.add_binary_variable(name="x_" + str((f, c)))
+        facilities = self.problem.facilities
+        customers = self.problem.customers
+        used = [s.add_binary_variable(name=f"y_{i}") for i in range(nb_facilities)]
+        constraints_customer: dict[int, mathopt.LinearConstraint] = {}
+        for c in range(nb_customers):
+            constraints_customer[c] = s.add_linear_constraint(
+                mathopt.LinearSum(x[f, c] for f in range(nb_facilities)) == 1
+            )
+            # one facility
+        constraint_capacity: dict[int, mathopt.LinearConstraint] = {}
+        for f in range(nb_facilities):
+            for c in range(nb_customers):
+                s.add_linear_constraint(used[f] >= x[f, c])
+            constraint_capacity[f] = s.add_linear_constraint(
+                mathopt.LinearSum(
+                    x[f, c] * customers[c].demand for c in range(nb_customers)
+                )
+                <= facilities[f].capacity
+            )
+        new_obj_f = 0.0
+        new_obj_f += mathopt.LinearSum(
+            facilities[f].setup_cost * used[f] for f in range(nb_facilities)
+        )
+        new_obj_f += mathopt.LinearSum(
+            matrix_length[f, c] * x[f, c]
+            for f in range(nb_facilities)
+            for c in range(nb_customers)
+        )
+        s.minimize(new_obj_f)
+        self.model = s
+        self.variable_decision = {"x": x, "y": used}
+        self.constraints_dict = {
+            "constraint_customer": constraints_customer,
+            "constraint_capacity": constraint_capacity,
+        }
+        self.description_variable_description = {
+            "x": {
+                "shape": (nb_facilities, nb_customers),
+                "type": bool,
+                "descr": "for each facility/customer indicate"
+                " if the pair is active, meaning "
+                "that the customer c is dealt with facility f",
+            }
+        }
+        logger.info("Initialized")
+
+    def convert_to_variable_values(
+        self, solution: FacilitySolution
+    ) -> dict[mathopt.Variable, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+        See https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint
+        for more information.
+
+        """
+        return _LPFacilitySolverBase.convert_to_variable_values(self, solution)
 
 
 class LP_Facility_Solver_CBC(SolverFacility):
