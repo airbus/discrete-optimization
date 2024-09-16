@@ -13,7 +13,7 @@ from discrete_optimization.generic_tools.do_problem import (
     MethodAggregating,
 )
 from discrete_optimization.generic_tools.lns_cp import LNS_CP
-from discrete_optimization.generic_tools.lns_mip import TrivialInitialSolution
+from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
     RestartHandlerLimit,
