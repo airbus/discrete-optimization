@@ -1842,6 +1842,8 @@ class CP_MRCPSP_MZN_MODES:
         self,
         parameters_cp: Optional[ParametersCP] = None,
         time_limit: Optional[float] = 100.0,
+        nr_solutions: int = 1,
+        all_solutions: bool = False,
         **args,
     ):
         """Solve the CP problem with minizinc
@@ -1850,6 +1852,8 @@ class CP_MRCPSP_MZN_MODES:
             parameters_cp: parameters specific to CP solvers
             time_limit: the solve process stops after this time limit (in seconds).
                 If None, no time limit is applied.
+            nr_solutions: of not `all_solutions`, the solve stops after finding `nr_solutions`
+            all_solutions: if True, do not stop when reaching `nr_solutions`
             **args: passed to init_model()
 
         Returns:
@@ -1866,10 +1870,8 @@ class CP_MRCPSP_MZN_MODES:
             timeout = timedelta(seconds=time_limit)
         result = self.instance.solve(
             timeout=timeout,
-            nr_solutions=parameters_cp.nr_solutions
-            if not parameters_cp.all_solutions
-            else None,
-            all_solutions=parameters_cp.all_solutions,
+            nr_solutions=nr_solutions if not all_solutions else None,
+            all_solutions=all_solutions,
             intermediate_solutions=intermediate_solutions,
         )
         logger.debug(result.status)

@@ -430,7 +430,6 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
             mip_gap_abs=0.001,
             mip_gap=0.001,
             retrieve_all_solution=True,
-            n_solutions_max=100,
         )
         self.constraint_handler = ConstraintHandlerStartTimeIntervalMRCPSP(
             problem=problem, fraction_to_fix=0.6, minus_delta=5, plus_delta=5

@@ -73,7 +73,6 @@ def test_cp_sm(optimisation_level):
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.nr_solutions = 1
     parameters_cp.optimisation_level = optimisation_level
     result_storage = solver.solve(parameters_cp=parameters_cp, time_limit=100)
     solution, fit = result_storage.get_best_solution_fit()
@@ -104,7 +103,6 @@ def test_cp_rcp(optimisation_level):
     solver = CP_RCPSP_MZN(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
     solver.init_model(output_type=True)
     parameters_cp = ParametersCP.default()
-    parameters_cp.nr_solutions = 1
     parameters_cp.optimisation_level = optimisation_level
     result_storage = solver.solve(parameters_cp=parameters_cp, time_limit=20)
     solution, fit = result_storage.get_best_solution_fit()
@@ -192,8 +190,6 @@ def test_ortools_with_cb(caplog, random_seed):
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CPSatRCPSPSolver(problem=rcpsp_problem)
-    parameters_cp = ParametersCP.default()
-    parameters_cp.nr_solutions = 1
 
     class VariablePrinterCallback(Callback):
         def __init__(self) -> None:
@@ -211,9 +207,7 @@ def test_ortools_with_cb(caplog, random_seed):
     callbacks = [VariablePrinterCallback(), TimerStopper(2)]
 
     with caplog.at_level(logging.DEBUG):
-        result_storage = solver.solve(
-            callbacks=callbacks, parameters_cp=parameters_cp, time_limit=10
-        )
+        result_storage = solver.solve(callbacks=callbacks, time_limit=10)
 
     assert "Solution #1" in caplog.text
     assert (
