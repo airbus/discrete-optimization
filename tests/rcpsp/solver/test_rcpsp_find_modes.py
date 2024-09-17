@@ -12,10 +12,7 @@ def test_find_modes():
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem = parse_file(file)
     solver = CP_MRCPSP_MZN_MODES(rcpsp_problem, cp_solver_name=CPSolverName.CHUFFED)
-    params_cp = ParametersCP.default()
-    params_cp.nr_solutions = float("inf")
-    params_cp.all_solutions = True
-    result_storage = solver.solve(parameters_cp=params_cp)
+    result_storage = solver.solve(all_solutions=True)
     assert len(result_storage) == 12744
 
 

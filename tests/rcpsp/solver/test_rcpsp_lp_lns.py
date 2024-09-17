@@ -49,7 +49,6 @@ def test_lns_sm():
         mip_gap_abs=0.001,
         mip_gap=0.001,
         retrieve_all_solution=True,
-        n_solutions_max=100,
     )
     params_objective_function = get_default_objective_setup(problem=rcpsp_problem)
     constraint_handler = ConstraintHandlerStartTimeInterval(
@@ -105,7 +104,6 @@ def test_lns_mm():
         mip_gap_abs=0.001,
         mip_gap=0.001,
         retrieve_all_solution=True,
-        n_solutions_max=100,
     )
     constraint_handler = ConstraintHandlerFixStartTime(
         problem=rcpsp_problem, fraction_fix_start_time=0.3

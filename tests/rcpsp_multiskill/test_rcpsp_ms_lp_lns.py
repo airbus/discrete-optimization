@@ -64,7 +64,6 @@ def test_multiskill_imopse():
         mip_gap_abs=0.001,
         mip_gap=0.001,
         retrieve_all_solution=True,
-        n_solutions_max=100,
     )
     constraint_handler = ConstraintHandlerStartTimeIntervalMRCPSP(
         problem=model, fraction_to_fix=0.95, minus_delta=5, plus_delta=5

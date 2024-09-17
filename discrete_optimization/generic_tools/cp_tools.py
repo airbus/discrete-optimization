@@ -87,8 +87,6 @@ class ParametersCP:
     """
 
     intermediate_solution: bool
-    all_solutions: bool
-    nr_solutions: int
     free_search: bool
     multiprocess: bool
     nb_process: int
@@ -97,8 +95,6 @@ class ParametersCP:
     def __init__(
         self,
         intermediate_solution: bool,
-        all_solutions: bool,
-        nr_solutions: int,
         free_search: bool = False,
         multiprocess: bool = False,
         nb_process: int = 1,
@@ -107,12 +103,8 @@ class ParametersCP:
         """
 
         :param intermediate_solution: retrieve intermediate solutions
-        :param all_solutions: returns all solutions found by the cp solver
-        :param nr_solutions: the requested number of solutions
         """
         self.intermediate_solution = intermediate_solution
-        self.all_solutions = all_solutions
-        self.nr_solutions = nr_solutions
         self.free_search = free_search
         self.multiprocess = multiprocess
         self.nb_process = nb_process
@@ -122,8 +114,6 @@ class ParametersCP:
     def default() -> "ParametersCP":
         return ParametersCP(
             intermediate_solution=True,
-            all_solutions=False,
-            nr_solutions=1000,
             free_search=False,
             optimisation_level=1,
         )
@@ -132,8 +122,6 @@ class ParametersCP:
     def default_cpsat() -> "ParametersCP":
         return ParametersCP(
             intermediate_solution=True,
-            all_solutions=False,
-            nr_solutions=1000,
             free_search=False,
             multiprocess=True,
             nb_process=6,
@@ -144,8 +132,6 @@ class ParametersCP:
     def default_fast_lns() -> "ParametersCP":
         return ParametersCP(
             intermediate_solution=True,
-            all_solutions=False,
-            nr_solutions=1000,
             free_search=False,
         )
 
@@ -153,16 +139,12 @@ class ParametersCP:
     def default_free() -> "ParametersCP":
         return ParametersCP(
             intermediate_solution=True,
-            all_solutions=False,
-            nr_solutions=1000,
             free_search=True,
         )
 
     def copy(self) -> "ParametersCP":
         return ParametersCP(
             intermediate_solution=self.intermediate_solution,
-            all_solutions=self.all_solutions,
-            nr_solutions=self.nr_solutions,
             free_search=self.free_search,
             multiprocess=self.multiprocess,
             nb_process=self.nb_process,

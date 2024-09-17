@@ -63,14 +63,12 @@ class ParametersMilp:
         mip_gap_abs: float,
         mip_gap: float,
         retrieve_all_solution: bool,
-        n_solutions_max: int,
         pool_search_mode: int = 0,
     ):
         self.pool_solutions = pool_solutions
         self.mip_gap_abs = mip_gap_abs
         self.mip_gap = mip_gap
         self.retrieve_all_solution = retrieve_all_solution
-        self.n_solutions_max = n_solutions_max
         self.pool_search_mode = pool_search_mode
 
     @staticmethod
@@ -80,7 +78,6 @@ class ParametersMilp:
             mip_gap_abs=0.0000001,
             mip_gap=0.000001,
             retrieve_all_solution=True,
-            n_solutions_max=10000,
         )
 
 
@@ -101,7 +98,7 @@ class MilpSolver(SolverDO):
 
         """
         if parameters_milp.retrieve_all_solution:
-            n_solutions = min(parameters_milp.n_solutions_max, self.nb_solutions)
+            n_solutions = self.nb_solutions
         else:
             n_solutions = 1
         list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
@@ -238,7 +235,6 @@ class PymipMilpSolver(MilpSolver):
         self.model.sol_pool_size = parameters_milp.pool_solutions
         if time_limit is not None:
             self.model.max_seconds = time_limit
-        self.model.max_solutions = parameters_milp.n_solutions_max
 
     def optimize_model(
         self,
@@ -475,7 +471,7 @@ class CplexMilpSolver(MilpSolver):
             self.model.time_limit = time_limit
         self.model.parameters.mip.tolerances.mipgap = parameters_milp.mip_gap
         listener = None
-        if parameters_milp.retrieve_all_solution or parameters_milp.n_solutions_max > 1:
+        if parameters_milp.retrieve_all_solution:
 
             class SolutionStorage(SolutionListener):
                 def __init__(self):

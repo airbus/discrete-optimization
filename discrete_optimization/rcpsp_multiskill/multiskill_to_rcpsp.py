@@ -44,11 +44,8 @@ class MultiSkillToRCPSP:
         check_resource_compliance: bool = True,
         one_worker_type_per_task: bool = False,
     ):
-        params_cp = ParametersCP(
-            intermediate_solution=True,
-            all_solutions=False,
-            nr_solutions=100,
-        )
+        params_cp = ParametersCP.default()
+        params_cp.intermediate_solution = True
         solver = PrecomputeEmployeesForTasks(
             ms_rcpsp_model=self.multiskill_model, cp_solver_name=CPSolverName.CHUFFED
         )
@@ -96,6 +93,8 @@ class MultiSkillToRCPSP:
             results = solver.solve(
                 parameters_cp=params_cp,
                 time_limit=30,
+                all_solutions=False,
+                nr_solutions=100,
             )
             best_overskill_results = min(
                 results, key=lambda x: x.overskill_type

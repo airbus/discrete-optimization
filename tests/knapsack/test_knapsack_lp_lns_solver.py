@@ -37,7 +37,6 @@ def test_knapsack_lns():
         mip_gap=0.0001,
         mip_gap_abs=0.001,
         retrieve_all_solution=True,
-        n_solutions_max=1000,
     )
     solver = LPKnapsack(
         model,
