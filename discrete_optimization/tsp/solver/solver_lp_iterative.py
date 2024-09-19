@@ -4,20 +4,9 @@
 
 import logging
 import os
+from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Optional, Union, cast
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -56,16 +45,16 @@ else:
 logger = logging.getLogger(__name__)
 
 Node = int
-Edge = Tuple[Node, Node]
+Edge = tuple[Node, Node]
 
 
 def build_graph_pruned(
     tsp_model: TSPModel2D,
-) -> Tuple[
+) -> tuple[
     nx.DiGraph,
     nx.DiGraph,
-    Dict[int, Set[Tuple[int, int]]],
-    Dict[int, Set[Tuple[int, int]]],
+    dict[int, set[tuple[int, int]]],
+    dict[int, set[tuple[int, int]]],
 ]:
     nodeCount = tsp_model.node_count
     points = tsp_model.list_points
@@ -73,8 +62,8 @@ def build_graph_pruned(
     g = nx.DiGraph()
     g.add_nodes_from([i for i in range(nodeCount)])
     shape = sd.shape[0]
-    edges_in: Dict[int, Set[Tuple[int, int]]] = {i: set() for i in range(nodeCount)}
-    edges_out: Dict[int, Set[Tuple[int, int]]] = {i: set() for i in range(nodeCount)}
+    edges_in: dict[int, set[tuple[int, int]]] = {i: set() for i in range(nodeCount)}
+    edges_out: dict[int, set[tuple[int, int]]] = {i: set() for i in range(nodeCount)}
 
     def length_ij(i: int, j: int) -> float:
         return tsp_model.evaluate_function_indexes(i, j)
@@ -117,15 +106,15 @@ def build_graph_pruned(
 
 def build_graph_complete(
     tsp_model: TSPModel,
-) -> Tuple[nx.DiGraph, nx.DiGraph, Dict[int, Set[Edge]], Dict[int, Set[Edge]],]:
+) -> tuple[nx.DiGraph, nx.DiGraph, dict[int, set[Edge]], dict[int, set[Edge]],]:
     nodeCount = tsp_model.node_count
     mat = build_matrice_distance(nodeCount, tsp_model.evaluate_function_indexes)
     sd: npt.NDArray[np.int_] = np.argsort(mat, axis=1)
     g = nx.DiGraph()
     g.add_nodes_from([i for i in range(nodeCount)])
     shape = sd.shape[0]
-    edges_in: Dict[int, Set[Edge]] = {i: set() for i in range(nodeCount)}
-    edges_out: Dict[int, Set[Edge]] = {i: set() for i in range(nodeCount)}
+    edges_in: dict[int, set[Edge]] = {i: set() for i in range(nodeCount)}
+    edges_out: dict[int, set[Edge]] = {i: set() for i in range(nodeCount)}
 
     def length_ij(i: int, j: int) -> float:
         return mat[i, j]
@@ -167,11 +156,11 @@ class LP_TSP_Iterative(SolverTSP):
         problem: TSPModel,
         graph_builder: Callable[
             [TSPModel],
-            Tuple[
+            tuple[
                 nx.DiGraph,
                 nx.DiGraph,
-                Dict[int, Set[Edge]],
-                Dict[int, Set[Edge]],
+                dict[int, set[Edge]],
+                dict[int, set[Edge]],
             ],
         ],
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
@@ -186,11 +175,11 @@ class LP_TSP_Iterative(SolverTSP):
         self.end_index = self.problem.end_index
         self.graph_builder = graph_builder
         self.g: nx.DiGraph
-        self.edges: Set[Edge]
+        self.edges: set[Edge]
         self.method: MILPSolver
-        self.variables: Dict[str, Dict[Edge, Any]]
+        self.variables: dict[str, dict[Edge, Any]]
         self.aggreg_from_sol: Callable[[Solution], float]
-        self.aggreg_from_dict: Callable[[Dict[str, float]], float]
+        self.aggreg_from_dict: Callable[[dict[str, float]], float]
         if (
             self.params_objective_function.objective_handling
             == ObjectiveHandling.MULTI_OBJ
@@ -210,21 +199,21 @@ class LP_TSP_Iterative(SolverTSP):
     def init_model_gurobi(self, **kwargs: Any) -> None:
         g, g_empty, edges_in, edges_out = self.graph_builder(self.problem)
         tsp_model = Model("TSP-master")
-        edges: Set[Edge] = set(g.edges())
+        edges: set[Edge] = set(g.edges())
         self.edges = edges
         self.g = g
-        x_var: Dict[Edge, Any] = {}  # decision variables on edges
+        x_var: dict[Edge, Any] = {}  # decision variables on edges
         dummy_sol = self.problem.get_dummy_solution()
-        path: List[Node] = (
+        path: list[Node] = (
             [self.problem.start_index]
             + dummy_sol.permutation
             + [self.problem.end_index]
         )
-        edges_to_add: Set[Edge] = {
+        edges_to_add: set[Edge] = {
             (node0, node1) for node0, node1 in zip(path[:-1], path[1:])
         }
-        flow_in: Dict[Node, Set[Edge]] = {}
-        flow_out: Dict[Node, Set[Edge]] = {}
+        flow_in: dict[Node, set[Edge]] = {}
+        flow_out: dict[Node, set[Edge]] = {}
         for e in edges:
             x_var[e] = tsp_model.addVar(
                 vtype=GRB.BINARY, obj=g[e[0]][e[1]]["weight"], name="x_" + str(e)
@@ -253,7 +242,7 @@ class LP_TSP_Iterative(SolverTSP):
                 )
                 cnt_tour += 1
         tsp_model.update()
-        constraint_flow: Dict[Union[Node, Tuple[Node, str], Tuple[Node, int]], Any] = {}
+        constraint_flow: dict[Union[Node, tuple[Node, str], tuple[Node, int]], Any] = {}
         for n in flow_in:
             if n != self.problem.start_index and n != self.problem.end_index:
                 constraint_flow[n] = tsp_model.addLConstr(
@@ -317,8 +306,8 @@ class LP_TSP_Iterative(SolverTSP):
             + [self.problem.end_index]
         )
         edges_to_add = {(e0, e1) for e0, e1 in zip(path[:-1], path[1:])}
-        flow_in: Dict[Node, Set[Edge]] = {}
-        flow_out: Dict[Node, Set[Edge]] = {}
+        flow_in: dict[Node, set[Edge]] = {}
+        flow_out: dict[Node, set[Edge]] = {}
         for e in edges:
             x_var[e] = tsp_model.BoolVar("x_" + str(e))
             if e[0] not in flow_out:
@@ -341,7 +330,7 @@ class LP_TSP_Iterative(SolverTSP):
                     x_var[edge] + x_var[(edge[1], edge[0])] <= 1
                 )
                 cnt_tour += 1
-        constraint_flow: Dict[Union[Node, Tuple[Node, str], Tuple[Node, int]], Any] = {}
+        constraint_flow: dict[Union[Node, tuple[Node, str], tuple[Node, int]], Any] = {}
         for n in flow_in:
             if n != self.problem.start_index and n != self.problem.end_index:
                 constraint_flow[n] = tsp_model.Add(
@@ -377,10 +366,10 @@ class LP_TSP_Iterative(SolverTSP):
         self.variables = {"x": x_var}
         self.model.SetTimeLimit(60000)
 
-    def retrieve_results_cbc(self) -> Tuple[nx.DiGraph, Set[Edge]]:
+    def retrieve_results_cbc(self) -> tuple[nx.DiGraph, set[Edge]]:
         g_empty = nx.DiGraph()
         g_empty.add_nodes_from([i for i in range(self.node_count)])
-        x_solution: Set[Edge] = set()
+        x_solution: set[Edge] = set()
         x_var = self.variables["x"]
         for e in x_var:
             value = x_var[e].solution_value()
@@ -389,10 +378,10 @@ class LP_TSP_Iterative(SolverTSP):
                 g_empty.add_edge(e[0], e[1], weight=1)
         return g_empty, x_solution
 
-    def retrieve_results_gurobi(self) -> Tuple[nx.DiGraph, Set[Edge]]:
+    def retrieve_results_gurobi(self) -> tuple[nx.DiGraph, set[Edge]]:
         g_empty = nx.DiGraph()
         g_empty.add_nodes_from([i for i in range(self.node_count)])
-        x_solution: Set[Edge] = set()
+        x_solution: set[Edge] = set()
         x_var = self.variables["x"]
         for e in x_var:
             value = x_var[e].getAttr("X")
@@ -433,12 +422,12 @@ class LP_TSP_Iterative(SolverTSP):
             logger.debug(f"Result : {resdict[res]}")
             objective = self.model.Objective().Value()
         finished = False
-        solutions: List[Set[Edge]] = []
-        cost: List[float] = []
-        nb_components: List[int] = []
+        solutions: list[set[Edge]] = []
+        cost: list[float] = []
+        nb_components: list[int] = []
         iteration = 0
-        rebuilt_solution: List[List[int]] = []
-        rebuilt_obj: List[float] = []
+        rebuilt_solution: list[list[int]] = []
+        rebuilt_obj: list[float] = []
         best_solution_rebuilt_index = 0
         best_solution_rebuilt = float("inf")
         while not finished:
@@ -446,19 +435,19 @@ class LP_TSP_Iterative(SolverTSP):
                 g_empty, x_solution = self.retrieve_results_gurobi()
             if self.method == MILPSolver.CBC:
                 g_empty, x_solution = self.retrieve_results_cbc()
-            connected_components: List[Tuple[Set[Node], int]] = [
+            connected_components: list[tuple[set[Node], int]] = [
                 (set(e), len(e)) for e in nx.weakly_connected_components(g_empty)
             ]
             logger.debug(f"Connected component : {len(connected_components)}")
-            sorted_connected_component: List[Tuple[Set[Node], int]] = sorted(
+            sorted_connected_component: list[tuple[set[Node], int]] = sorted(
                 connected_components, key=lambda x: x[1], reverse=True
             )
             nb_components += [len(sorted_connected_component)]
             cost += [objective]
             solutions += [x_solution.copy()]
-            paths_component: Dict[int, List[int]] = {}
-            indexes_component: Dict[int, Dict[int, int]] = {}
-            node_to_component: Dict[int, int] = {}
+            paths_component: dict[int, list[int]] = {}
+            indexes_component: dict[int, dict[int, int]] = {}
+            node_to_component: dict[int, int] = {}
             nb_component = len(sorted_connected_component)
             x_var = self.variables["x"]
             for i in range(nb_component):
@@ -573,11 +562,11 @@ class LP_TSP_Iterative(SolverTSP):
 
     def plot_solve(
         self,
-        solutions: List[Set[Edge]],
-        rebuilt_solution: List[List[int]],
-        cost: List[float],
-        nb_components: List[int],
-        rebuilt_obj: List[float],
+        solutions: list[set[Edge]],
+        rebuilt_solution: list[list[int]],
+        cost: list[float],
+        nb_components: list[int],
+        rebuilt_obj: list[float],
         show: bool = True,
         plot_folder: Optional[str] = None,
     ) -> None:
@@ -626,25 +615,25 @@ class LP_TSP_Iterative(SolverTSP):
 
 
 def build_the_cycles(
-    x_solution: Set[Edge],
-    component: Set[Node],
+    x_solution: set[Edge],
+    component: set[Node],
     graph: nx.DiGraph,
     start_index: Node,
     end_index: Node,
-) -> Tuple[List[Node], Dict[Node, int]]:
+) -> tuple[list[Node], dict[Node, int]]:
     edge_of_interest = {
         e for e in x_solution if e[1] in component and e[0] in component
     }
-    innn: Dict[Node, Edge] = {e[1]: e for e in edge_of_interest}
-    outt: Dict[Node, Edge] = {e[0]: e for e in edge_of_interest}
+    innn: dict[Node, Edge] = {e[1]: e for e in edge_of_interest}
+    outt: dict[Node, Edge] = {e[0]: e for e in edge_of_interest}
     if start_index in outt:
         some_node = start_index
     else:
         some_node = next(e[0] for e in edge_of_interest)
     end_node = some_node if end_index not in innn else end_index
-    path: List[Node] = [some_node]
+    path: list[Node] = [some_node]
     cur_edge = outt[some_node]
-    indexes: Dict[Node, int] = {some_node: 0}
+    indexes: dict[Node, int] = {some_node: 0}
     cur_index = 1
     while cur_edge[1] != end_node:
         path += [cur_edge[1]]
@@ -658,20 +647,20 @@ def build_the_cycles(
 
 
 def rebuild_tsp_routine(
-    sorted_connected_component: Sequence[Tuple[Set[Node], int]],
-    paths_component: Dict[int, List[Node]],
-    node_to_component: Dict[Node, int],
-    indexes: Dict[int, Dict[Node, int]],
+    sorted_connected_component: Sequence[tuple[set[Node], int]],
+    paths_component: dict[int, list[Node]],
+    node_to_component: dict[Node, int],
+    indexes: dict[int, dict[Node, int]],
     graph: nx.DiGraph,
-    edges: Set[Edge],
+    edges: set[Edge],
     nodeCount: int,
     list_points: Sequence[Point],
     evaluate_function_indexes: Callable[[int, int], float],
     tsp_model: TSPModel,
     start_index: Node = 0,
     end_index: Node = 0,
-) -> Tuple[List[Node], Dict[str, float]]:
-    rebuilded_path: List[Node] = list(paths_component[node_to_component[start_index]])
+) -> tuple[list[Node], dict[str, float]]:
+    rebuilded_path: list[Node] = list(paths_component[node_to_component[start_index]])
     component_end = node_to_component[end_index]
     component_reconnected = {node_to_component[start_index]}
     path_set = set(rebuilded_path)

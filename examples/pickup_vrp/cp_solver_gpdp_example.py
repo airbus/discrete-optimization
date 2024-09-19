@@ -8,7 +8,7 @@ import os
 import random
 from datetime import timedelta
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -67,16 +67,16 @@ class GPDPOutput:
         return True
 
 
-def ccw(A: Tuple[float, float], B: Tuple[float, float], C: Tuple[float, float]):
+def ccw(A: tuple[float, float], B: tuple[float, float], C: tuple[float, float]):
     return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
 
 
 # Return true if line segments AB and CD intersect
 def intersect(
-    A: Tuple[float, float],
-    B: Tuple[float, float],
-    C: Tuple[float, float],
-    D: Tuple[float, float],
+    A: tuple[float, float],
+    B: tuple[float, float],
+    C: tuple[float, float],
+    D: tuple[float, float],
 ):
     return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
 

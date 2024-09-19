@@ -4,7 +4,8 @@
 
 import logging
 import random
-from typing import Any, Dict, Hashable, Iterable, List, Optional, Union
+from collections.abc import Hashable, Iterable
+from typing import Any, Optional, Union
 
 import numpy as np
 from minizinc import Instance
@@ -149,7 +150,7 @@ def find_possible_problems_preemptive(
 
 def problem_constraints(
     current_solution: Union[RCPSPSolutionPreemptive, MS_RCPSPSolution_Preemptive],
-    problems_output: Dict[Hashable, List],
+    problems_output: dict[Hashable, list],
     minus_delta: int,
     plus_delta: int,
     cp_solver: Union[
@@ -409,7 +410,7 @@ class NeighborRepairProblems(MznConstraintHandler):
             RCPSPModelSpecialConstraintsPreemptive,
             MS_RCPSPModel,
         ],
-        params_list: List[ParamsConstraintBuilder] = None,
+        params_list: list[ParamsConstraintBuilder] = None,
     ):
         self.problem = problem
         if isinstance(self.problem, RCPSPModelSpecialConstraintsPreemptive,) or (

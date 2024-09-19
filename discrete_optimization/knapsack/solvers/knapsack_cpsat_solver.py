@@ -2,7 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from ortools.sat.python.cp_model import (
     Constraint,
@@ -38,7 +39,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.variables: Dict[str, List[IntVar]] = {}
+        self.variables: dict[str, list[IntVar]] = {}
 
     def init_model(self, **args: Any) -> None:
         """Init CP model."""
@@ -141,7 +142,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
     def implements_lexico_api() -> bool:
         return True
 
-    def get_model_objectives_available(self) -> List[str]:
+    def get_model_objectives_available(self) -> list[str]:
         return ["value", "weight", "heaviest_item"]
 
     def retrieve_solution(

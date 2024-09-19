@@ -13,7 +13,7 @@ import logging
 from abc import abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Union
 
 import minizinc
 from minizinc import Instance, Status
@@ -167,7 +167,7 @@ class StatusSolver(Enum):
     UNKNOWN = "UNKNOWN"
 
 
-map_mzn_status_to_do_status: Dict[Status, StatusSolver] = {
+map_mzn_status_to_do_status: dict[Status, StatusSolver] = {
     Status.SATISFIED: StatusSolver.SATISFIED,
     Status.UNSATISFIABLE: StatusSolver.UNSATISFIABLE,
     Status.OPTIMAL_SOLUTION: StatusSolver.OPTIMAL,
@@ -209,7 +209,7 @@ class CPSolver(SolverDO):
     @abstractmethod
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
         **args: Any,
     ) -> ResultStorage:
@@ -233,7 +233,7 @@ class MinizincCPSolver(CPSolver):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
         instance: Optional[Instance] = None,
         time_limit: Optional[float] = 100.0,
@@ -381,7 +381,7 @@ class MinizincCPSolution:
     @staticmethod
     def generate_subclass_for_solve(
         solver: MinizincCPSolver, callback: Callback
-    ) -> Type[MinizincCPSolution]:
+    ) -> type[MinizincCPSolution]:
         """Generate dynamically a subclass with initialized class attributes.
 
         Args:

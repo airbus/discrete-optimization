@@ -2,7 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import string
-from typing import Any, Dict, Hashable, KeysView, List, Optional, Set, Tuple, Union
+from collections.abc import Hashable, KeysView
+from typing import Any, Optional, Union
 
 import networkx as nx
 
@@ -10,24 +11,24 @@ import networkx as nx
 class Graph:
     def __init__(
         self,
-        nodes: List[Tuple[Hashable, Dict[str, Any]]],
-        edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]],
+        nodes: list[tuple[Hashable, dict[str, Any]]],
+        edges: list[tuple[Hashable, Hashable, dict[str, Any]]],
         undirected: bool = True,
         compute_predecessors: bool = True,
     ):
         self.nodes = nodes
         self.edges = edges
         self.undirected = undirected
-        self.neighbors_dict: Dict[Hashable, Set[Hashable]] = {}
-        self.predecessors_dict: Dict[Hashable, Set[Hashable]] = {}
-        self.edges_infos_dict: Dict[Tuple[Hashable, Hashable], Dict[str, Any]] = {}
-        self.nodes_infos_dict: Dict[Hashable, Dict[str, Any]] = {}
+        self.neighbors_dict: dict[Hashable, set[Hashable]] = {}
+        self.predecessors_dict: dict[Hashable, set[Hashable]] = {}
+        self.edges_infos_dict: dict[tuple[Hashable, Hashable], dict[str, Any]] = {}
+        self.nodes_infos_dict: dict[Hashable, dict[str, Any]] = {}
         self.build_nodes_infos_dict()
         self.build_edges()
         self.nodes_name = list(self.nodes_infos_dict)
         self.graph_nx = self.to_networkx()
-        self.full_predecessors: Optional[Dict[Hashable, Set[Hashable]]]
-        self.full_successors: Optional[Dict[Hashable, Set[Hashable]]]
+        self.full_predecessors: Optional[dict[Hashable, set[Hashable]]]
+        self.full_successors: Optional[dict[Hashable, set[Hashable]]]
         if compute_predecessors:
             self.full_predecessors = self.ancestors_map()
             self.full_successors = self.descendants_map()
@@ -35,10 +36,10 @@ class Graph:
             self.full_predecessors = None
             self.full_successors = None
 
-    def get_edges(self) -> KeysView[Tuple[Hashable, Hashable]]:
+    def get_edges(self) -> KeysView[tuple[Hashable, Hashable]]:
         return self.edges_infos_dict.keys()
 
-    def get_nodes(self) -> List[Hashable]:
+    def get_nodes(self) -> list[Hashable]:
         return self.nodes_name
 
     def build_nodes_infos_dict(self) -> None:
@@ -63,10 +64,10 @@ class Graph:
                 self.neighbors_dict[n2].add(n1)
                 self.edges_infos_dict[(n2, n1)] = d
 
-    def get_neighbors(self, node: Hashable) -> Set[Hashable]:
+    def get_neighbors(self, node: Hashable) -> set[Hashable]:
         return self.neighbors_dict.get(node, set())
 
-    def get_predecessors(self, node: Hashable) -> Set[Hashable]:
+    def get_predecessors(self, node: Hashable) -> set[Hashable]:
         return self.predecessors_dict.get(node, set())
 
     def get_attr_node(self, node: Hashable, attr: str) -> Any:
@@ -81,35 +82,35 @@ class Graph:
         graph_nx.add_edges_from(self.edges)
         return graph_nx
 
-    def check_loop(self) -> Optional[List[Tuple[Hashable, Hashable, str]]]:
+    def check_loop(self) -> Optional[list[tuple[Hashable, Hashable, str]]]:
         try:
             cycles = nx.find_cycle(self.graph_nx, orientation="original")
         except:
             cycles = None
         return cycles
 
-    def precedessors_nodes(self, n: Hashable) -> Set[Hashable]:
+    def precedessors_nodes(self, n: Hashable) -> set[Hashable]:
         return nx.algorithms.ancestors(self.graph_nx, n)
 
-    def ancestors_map(self) -> Dict[Hashable, Set[Hashable]]:
+    def ancestors_map(self) -> dict[Hashable, set[Hashable]]:
         return {
             n: nx.algorithms.ancestors(self.graph_nx, n) for n in self.graph_nx.nodes()
         }
 
-    def descendants_map(self) -> Dict[Hashable, Set[Hashable]]:
+    def descendants_map(self) -> dict[Hashable, set[Hashable]]:
         return {
             n: nx.algorithms.descendants(self.graph_nx, n)
             for n in self.graph_nx.nodes()
         }
 
-    def successors_map(self) -> Dict[Hashable, List[Hashable]]:
+    def successors_map(self) -> dict[Hashable, list[Hashable]]:
         return {n: list(nx.neighbors(self.graph_nx, n)) for n in self.graph_nx.nodes()}
 
-    def predecessors_map(self) -> Dict[Hashable, List[Hashable]]:
+    def predecessors_map(self) -> dict[Hashable, list[Hashable]]:
         return {n: list(self.graph_nx.predecessors(n)) for n in self.graph_nx.nodes()}
 
     def compute_length(
-        self, path: List[Hashable], attribute_name: Optional[str] = None
+        self, path: list[Hashable], attribute_name: Optional[str] = None
     ):
         if attribute_name is None:
             length = len(path) - 1
@@ -133,7 +134,7 @@ class Graph:
 
     def compute_all_shortest_path(
         self, attribute_name: Optional[str] = None
-    ) -> Dict[Hashable, Dict[Hashable, Tuple[List[Hashable], float]]]:
+    ) -> dict[Hashable, dict[Hashable, tuple[list[Hashable], float]]]:
         all_path = nx.all_pairs_dijkstra_path(G=self.graph_nx, weight=attribute_name)
         dict_path_and_distance = {}
         for source, dict_path in all_path:

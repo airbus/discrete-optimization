@@ -4,7 +4,6 @@
 
 import random
 import time
-from typing import Dict, List, Set
 
 import matplotlib.pyplot as plt
 
@@ -32,11 +31,11 @@ from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
 
 
 def run_lp_debug():
-    skills_set: Set[str] = {"S1", "S2", "S3"}
-    resources_set: Set[str] = {"R1", "R2", "R3"}
+    skills_set: set[str] = {"S1", "S2", "S3"}
+    resources_set: set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
     resources_availability = {"R1": [2] * 100, "R2": [4] * 100, "R3": [3] * 100}
-    employee: Dict[int, Employee] = {
+    employee: dict[int, Employee] = {
         1: Employee(
             dict_skill={"S1": SkillDetail(1.0, 1.0, 1.0)},
             calendar_employee=[True] * 1000,
@@ -50,15 +49,15 @@ def run_lp_debug():
             calendar_employee=[True] * 1000,
         ),
     }
-    employees_availability: List[int] = [3] * 1000
-    mode_details: Dict[int, Dict[int, Dict[str, int]]] = {
+    employees_availability: list[int] = [3] * 1000
+    mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
         2: {1: {"S1": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 2}},
         3: {1: {"S2": 1, "R1": 1, "R2": 2, "R3": 0, "duration": 4}},
         4: {1: {"S3": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 5}},
         5: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
     }
-    successors: Dict[int, List[int]] = {1: [2, 3], 2: [5], 3: [4], 4: [5], 5: []}
+    successors: dict[int, list[int]] = {1: [2, 3], 2: [5], 3: [4], 4: [5], 5: []}
 
     model = MS_RCPSPModel(
         skills_set=skills_set,
@@ -78,11 +77,11 @@ def run_lp_debug():
 
 
 def run_lp_debug_bis():
-    skills_set: Set[str] = {"S1", "S2", "S3"}
-    resources_set: Set[str] = {"R1", "R2", "R3"}
+    skills_set: set[str] = {"S1", "S2", "S3"}
+    resources_set: set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
     resources_availability = {"R1": [2] * 100, "R2": [4] * 100, "R3": [3] * 100}
-    employee: Dict[int, Employee] = {
+    employee: dict[int, Employee] = {
         1: Employee(
             dict_skill={"S1": SkillDetail(1.0, 1.0, 1.0)},
             calendar_employee=[True] * 100,
@@ -105,8 +104,8 @@ def run_lp_debug_bis():
             employee[emp].calendar_employee[i] = False
         index += 1
 
-    employees_availability: List[int] = [3] * 1000
-    mode_details: Dict[int, Dict[int, Dict[str, int]]] = {
+    employees_availability: list[int] = [3] * 1000
+    mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
         2: {
             1: {"S1": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 2},
@@ -122,7 +121,7 @@ def run_lp_debug_bis():
         },
         8: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
     }
-    successors: Dict[int, List[int]] = {
+    successors: dict[int, list[int]] = {
         1: [2, 3],
         2: [5],
         3: [4],
@@ -154,11 +153,11 @@ def run_lp_debug_bis():
 
 
 def create_toy_msrcpsp():
-    skills_set: Set[str] = {"S1", "S2", "S3"}
-    resources_set: Set[str] = {"R1", "R2", "R3"}
+    skills_set: set[str] = {"S1", "S2", "S3"}
+    resources_set: set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
     resources_availability = {"R1": [2] * 100, "R2": [4] * 100, "R3": [3] * 100}
-    employee: Dict[int, Employee] = {
+    employee: dict[int, Employee] = {
         1: Employee(
             dict_skill={"S1": SkillDetail(1.0, 1.0, 1.0)},
             calendar_employee=[True] * 100,
@@ -181,8 +180,8 @@ def create_toy_msrcpsp():
             employee[emp].calendar_employee[i] = False
         index += 1
 
-    employees_availability: List[int] = [3] * 1000
-    mode_details: Dict[int, Dict[int, Dict[str, int]]] = {
+    employees_availability: list[int] = [3] * 1000
+    mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
         2: {
             1: {"S1": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 2},
@@ -198,7 +197,7 @@ def create_toy_msrcpsp():
         },
         8: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
     }
-    successors: Dict[int, List[int]] = {
+    successors: dict[int, list[int]] = {
         1: [2, 3],
         2: [5],
         3: [4],
@@ -225,11 +224,11 @@ def create_toy_msrcpsp():
 
 
 def create_toy_msrcpsp_variant():
-    skills_set: Set[str] = {"S1", "S2", "S3"}
-    resources_set: Set[str] = {"R1", "R2", "R3"}
+    skills_set: set[str] = {"S1", "S2", "S3"}
+    resources_set: set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
     resources_availability = {"R1": [2] * 100, "R2": [4] * 100, "R3": [3] * 100}
-    employee: Dict[int, Employee] = {
+    employee: dict[int, Employee] = {
         1: Employee(
             dict_skill={"S1": SkillDetail(1.0, 1.0, 1.0)},
             calendar_employee=[True] * 100,
@@ -252,8 +251,8 @@ def create_toy_msrcpsp_variant():
             employee[emp].calendar_employee[i] = False
         index += 1
 
-    employees_availability: List[int] = [3] * 1000
-    mode_details: Dict[int, Dict[int, Dict[str, int]]] = {
+    employees_availability: list[int] = [3] * 1000
+    mode_details: dict[int, dict[int, dict[str, int]]] = {
         1: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
         2: {
             1: {"S1": 1, "R1": 2, "R2": 0, "R3": 0, "duration": 2},
@@ -269,7 +268,7 @@ def create_toy_msrcpsp_variant():
         },
         8: {1: {"R1": 0, "R2": 0, "R3": 0, "duration": 0}},
     }
-    successors: Dict[int, List[int]] = {
+    successors: dict[int, list[int]] = {
         1: [2, 3],
         2: [5],
         3: [4],

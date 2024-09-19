@@ -5,10 +5,11 @@
 import logging
 import math
 from collections import defaultdict
+from collections.abc import Hashable, Iterable
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,12 +49,12 @@ class ScheduleGenerationScheme(Enum):
 
 
 class RCPSPSolutionPreemptive(Solution):
-    rcpsp_permutation: Union[List[int], np.array]
-    rcpsp_schedule: Dict[Hashable, Dict[str, List[int]]]
+    rcpsp_permutation: Union[list[int], np.array]
+    rcpsp_schedule: dict[Hashable, dict[str, list[int]]]
     #  {task_id: {'starts': [start_times], 'ends':  [end_times], 'resources': list_of_resource_ids}
     #   for task_id in self.problem.tasks_list}
-    rcpsp_modes: List[int]  # [mode_id[i] for i in range(self.problem.n_jobs_non_dummy)]
-    standardised_permutation: Union[List[int], np.array]
+    rcpsp_modes: list[int]  # [mode_id[i] for i in range(self.problem.n_jobs_non_dummy)]
+    standardised_permutation: Union[list[int], np.array]
 
     def __init__(
         self,
@@ -274,8 +275,8 @@ class RCPSPSolutionPreemptive(Solution):
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
         current_t=0,
-        completed_tasks: Optional[Set[Hashable]] = None,
-        partial_schedule: Optional[Dict[Hashable, Dict[str, List[int]]]] = None,
+        completed_tasks: Optional[set[Hashable]] = None,
+        partial_schedule: Optional[dict[Hashable, dict[str, list[int]]]] = None,
         do_fast=True,
     ):
         if completed_tasks is None:
@@ -376,18 +377,18 @@ class RCPSPSolutionPreemptive(Solution):
 class PartialSolutionPreemptive:
     def __init__(
         self,
-        task_mode: Dict[int, int] = None,
-        start_times: Dict[int, int] = None,
-        end_times: Dict[int, int] = None,
-        partial_permutation: List[int] = None,
-        list_partial_order: List[List[int]] = None,
-        start_together: List[Tuple[int, int]] = None,
-        start_at_end: List[Tuple[int, int]] = None,
-        start_at_end_plus_offset: List[Tuple[int, int, int]] = None,
-        start_after_nunit: List[Tuple[int, int, int]] = None,
-        disjunctive_tasks: List[Tuple[int, int]] = None,
-        start_times_window: Dict[Hashable, Tuple[int, int]] = None,
-        end_times_window: Dict[Hashable, Tuple[int, int]] = None,
+        task_mode: dict[int, int] = None,
+        start_times: dict[int, int] = None,
+        end_times: dict[int, int] = None,
+        partial_permutation: list[int] = None,
+        list_partial_order: list[list[int]] = None,
+        start_together: list[tuple[int, int]] = None,
+        start_at_end: list[tuple[int, int]] = None,
+        start_at_end_plus_offset: list[tuple[int, int, int]] = None,
+        start_after_nunit: list[tuple[int, int, int]] = None,
+        disjunctive_tasks: list[tuple[int, int]] = None,
+        start_times_window: dict[Hashable, tuple[int, int]] = None,
+        end_times_window: dict[Hashable, tuple[int, int]] = None,
     ):
         self.task_mode = task_mode
         self.start_times = start_times
@@ -408,29 +409,29 @@ class PartialSolutionPreemptive:
 class RCPSPModelPreemptive(Problem):
     sgs: ScheduleGenerationScheme
     resources: Union[
-        Dict[str, int], Dict[str, List[int]]
+        dict[str, int], dict[str, list[int]]
     ]  # {resource_name: number_of_resource}
-    non_renewable_resources: List[str]  # e.g. [resource_name3, resource_name4]
+    non_renewable_resources: list[str]  # e.g. [resource_name3, resource_name4]
     n_jobs: int  # excluding dummy activities Start (0) and End (n)
-    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
+    mode_details: dict[Hashable, dict[int, dict[str, int]]]
     # e.g. {job_id: {mode_id: {resource_name1: number_of_resources_needed, resource_name2: ...}}
     # one key being "duration"
-    successors: Dict[int, List[int]]  # {task_id: list of successor task ids}
+    successors: dict[int, list[int]]  # {task_id: list of successor task ids}
 
     def __init__(
         self,
-        resources: Union[Dict[str, int], Dict[str, List[int]]],
-        non_renewable_resources: List[str],
-        mode_details: Dict[Hashable, Dict[Union[str, int], Dict[str, int]]],
-        successors: Dict[Union[int, str], List[Union[str, int]]],
+        resources: Union[dict[str, int], dict[str, list[int]]],
+        non_renewable_resources: list[str],
+        mode_details: dict[Hashable, dict[Union[str, int], dict[str, int]]],
+        successors: dict[Union[int, str], list[Union[str, int]]],
         horizon,
         horizon_multiplier=1,
-        tasks_list: List[Union[int, str]] = None,
+        tasks_list: list[Union[int, str]] = None,
         source_task=None,
         sink_task=None,
-        preemptive_indicator: Dict[Hashable, bool] = None,
-        duration_subtask: Dict[Hashable, Tuple[bool, int]] = None,
-        name_task: Dict[int, str] = None,
+        preemptive_indicator: dict[Hashable, bool] = None,
+        duration_subtask: dict[Hashable, tuple[bool, int]] = None,
+        name_task: dict[int, str] = None,
     ):
         self.resources = resources
         self.resources_list = list(self.resources.keys())
@@ -574,7 +575,7 @@ class RCPSPModelPreemptive(Problem):
             return objectives
         return None
 
-    def evaluate(self, rcpsp_sol: RCPSPSolutionPreemptive) -> Dict[str, float]:
+    def evaluate(self, rcpsp_sol: RCPSPSolutionPreemptive) -> dict[str, float]:
         obj_makespan, obj_mean_resource_reserve = self.evaluate_function(rcpsp_sol)
         return {
             "makespan": obj_makespan,
@@ -584,7 +585,7 @@ class RCPSPModelPreemptive(Problem):
     def evaluate_mobj(self, rcpsp_sol: RCPSPSolutionPreemptive):
         return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
+    def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(
             np.array([-dict_values["makespan"], dict_values["mean_resource_reserve"]]),
             2,
@@ -654,7 +655,7 @@ class RCPSPModelPreemptive(Problem):
 
             return True
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return RCPSPSolutionPreemptive
 
     def get_attribute_register(self) -> EncodingRegister:
@@ -948,10 +949,10 @@ def generate_schedule_from_permutation_serial_sgs(
 def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     solution: RCPSPSolutionPreemptive,
     rcpsp_problem: RCPSPModelPreemptive,
-    partial_schedule: Dict[Hashable, Dict[str, List[int]]],
+    partial_schedule: dict[Hashable, dict[str, list[int]]],
     current_t: int,
-    completed_tasks: Set[Hashable],
-) -> Tuple[Dict[int, Dict[str, List[int]]], bool]:
+    completed_tasks: set[Hashable],
+) -> tuple[dict[int, dict[str, list[int]]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon

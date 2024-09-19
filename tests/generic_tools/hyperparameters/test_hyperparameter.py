@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import optuna
 import pytest
@@ -45,7 +45,7 @@ class DummySolver(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -78,7 +78,7 @@ class DummySolverWithFloatSuggestingBound(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -107,7 +107,7 @@ class DummySolverWithCallableHyperparameter(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -126,7 +126,7 @@ class DummySolverWithEnumSubset(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -148,7 +148,7 @@ class DummySolverWithDependencies(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -179,7 +179,7 @@ class DummySolverWithNameInKwargs(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -192,7 +192,7 @@ class DummySolver2(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -204,7 +204,7 @@ class BaseMetaSolver(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -233,7 +233,7 @@ class MetaSolverFixedSubsolver(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -248,7 +248,7 @@ class MetaMetaSolver(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 
@@ -267,7 +267,7 @@ class MetaSolverWithListWithoutReplacement(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.create_result_storage()
 

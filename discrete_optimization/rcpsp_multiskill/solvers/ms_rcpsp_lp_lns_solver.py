@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,

@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 from abc import abstractmethod
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from ortools.sat.python.cp_model import (
     FEASIBLE,
@@ -59,10 +60,10 @@ class OrtoolsCPSatSolver(CPSolver):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCP] = None,
         time_limit: Optional[float] = 100.0,
-        ortools_cpsat_solver_kwargs: Optional[Dict[str, Any]] = None,
+        ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with a CPSat solver drom ortools library.

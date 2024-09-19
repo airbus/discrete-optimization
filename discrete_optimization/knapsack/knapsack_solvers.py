@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import Problem
@@ -27,7 +27,7 @@ from discrete_optimization.knapsack.solvers.lp_solvers import (
     MilpSolverName,
 )
 
-solvers: Dict[str, List[Tuple[Type[SolverKnapsack], Dict[str, Any]]]] = {
+solvers: dict[str, list[tuple[type[SolverKnapsack], dict[str, Any]]]] = {
     "lp": [
         (KnapsackORTools, {}),
         (LPKnapsackCBC, {}),
@@ -64,20 +64,20 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility: Dict[Type[SolverKnapsack], List[Type[Problem]]] = {}
+solvers_compatibility: dict[type[SolverKnapsack], list[type[Problem]]] = {}
 for x in solvers:
     for y in solvers[x]:
         solvers_compatibility[y[0]] = [KnapsackModel]
 
 
-def look_for_solver(domain: KnapsackModel) -> List[Type[SolverKnapsack]]:
+def look_for_solver(domain: KnapsackModel) -> list[type[SolverKnapsack]]:
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
 
 def look_for_solver_class(
-    class_domain: Type[KnapsackModel],
-) -> List[Type[SolverKnapsack]]:
+    class_domain: type[KnapsackModel],
+) -> list[type[SolverKnapsack]]:
     available = []
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
@@ -86,7 +86,7 @@ def look_for_solver_class(
 
 
 def solve(
-    method: Type[SolverKnapsack], problem: KnapsackModel, **args: Any
+    method: type[SolverKnapsack], problem: KnapsackModel, **args: Any
 ) -> ResultStorage:
     solver = method(problem, **args)
     solver.init_model(**args)

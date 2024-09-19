@@ -6,8 +6,9 @@ import logging
 import math
 import random
 from abc import abstractmethod
+from collections.abc import Hashable, Iterable
 from enum import Enum
-from typing import Any, Hashable, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 from minizinc import Instance
@@ -162,8 +163,8 @@ class ParamsConstraintBuilder(Hyperparametrizable):
 def constraints_strings(
     current_solution: Union[RCPSPSolution, MS_RCPSPSolution],
     cp_solver: ANY_CP_SOLVER,
-    tasks_primary: Set[Hashable],
-    tasks_secondary: Set[Hashable],
+    tasks_primary: set[Hashable],
+    tasks_secondary: set[Hashable],
     params_constraints: ParamsConstraintBuilder,
 ):
     max_time = get_max_time_solution(solution=current_solution)
@@ -226,8 +227,8 @@ def constraints_strings(
 def constraints_strings_preemptive(
     current_solution: ANY_SOLUTION_PREEMPTIVE,
     cp_solver: ANY_CP_SOLVER,
-    tasks_primary: Set[Hashable],
-    tasks_secondary: Set[Hashable],
+    tasks_primary: set[Hashable],
+    tasks_secondary: set[Hashable],
     params_constraints: ParamsConstraintBuilder,
 ):
     max_time = get_max_time_solution(solution=current_solution)
@@ -414,8 +415,8 @@ def constraints_strings_preemptive(
 def constraints_strings_multiskill(
     current_solution: MS_RCPSPSolution,
     cp_solver: ANY_CP_SOLVER,
-    tasks_primary: Set[Hashable],
-    tasks_secondary: Set[Hashable],
+    tasks_primary: set[Hashable],
+    tasks_secondary: set[Hashable],
     params_constraints: ParamsConstraintBuilder,
 ):
     list_strings = constraints_strings(
@@ -774,8 +775,8 @@ def constraints_start_on_end_preemptive(
 def constraints_strings_multiskill_preemptive(
     current_solution: ANY_SOLUTION,
     cp_solver: ANY_CP_SOLVER,
-    tasks_primary: Set[Hashable],
-    tasks_secondary: Set[Hashable],
+    tasks_primary: set[Hashable],
+    tasks_secondary: set[Hashable],
     params_constraints: ParamsConstraintBuilder,
 ):
     list_strings = constraints_strings_preemptive(
@@ -843,7 +844,7 @@ def constraints_strings_multiskill_preemptive(
 
 
 def constraint_unit_used_to_tasks(
-    tasks_set: Set[Hashable],
+    tasks_set: set[Hashable],
     current_solution: MS_RCPSPSolution,
     cp_solver: Union[CP_MS_MRCPSP_MZN],
 ):
@@ -871,7 +872,7 @@ def constraint_unit_used_to_tasks(
 
 
 def constraint_unit_used_subset_employees(
-    employees_set: Set[Hashable],
+    employees_set: set[Hashable],
     current_solution: MS_RCPSPSolution,
     cp_solver: Union[CP_MS_MRCPSP_MZN],
     employees_usage_dict=None,
@@ -895,7 +896,7 @@ def constraint_unit_used_subset_employees(
 
 
 def constraint_unit_used_to_tasks_preemptive(
-    tasks_set: Set[Hashable],
+    tasks_set: set[Hashable],
     current_solution: MS_RCPSPSolution_Preemptive,
     cp_solver: Union[CP_MS_MRCPSP_MZN_PREEMPTIVE],
     exceptions=None,
@@ -936,7 +937,7 @@ def constraint_unit_used_to_tasks_preemptive(
 
 
 def constraint_unit_used_subset_employees_preemptive(
-    employees_set: Set[Hashable],
+    employees_set: set[Hashable],
     current_solution: MS_RCPSPSolution_Preemptive,
     cp_solver: Union[CP_MS_MRCPSP_MZN_PREEMPTIVE],
     employees_usage_dict=None,
@@ -970,8 +971,8 @@ def constraint_unit_used_subset_employees_preemptive(
 class NeighborBuilder:
     @abstractmethod
     def find_subtasks(
-        self, current_solution: ANY_SOLUTION, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: ANY_SOLUTION, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         """
         Split the scheduling task set in 2 part, it can then be used by constraint handler to introduce different
         constraints in those two subsets. Usually the first returned set will be considered
@@ -1010,8 +1011,8 @@ class NeighborBuilderSubPart(NeighborBuilder):
         self.set_tasks = set(self.problem.tasks_list)
 
     def find_subtasks(
-        self, current_solution: RCPSPSolution, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: RCPSPSolution, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         nb_job_sub = math.ceil(self.problem.n_jobs / self.nb_cut_part)
         task_of_interest = sorted(
             self.problem.tasks_list, key=lambda x: current_solution.get_end_time(x)
@@ -1054,8 +1055,8 @@ class NeighborRandom(NeighborBuilder):
         self.set_tasks = set(self.problem.tasks_list)
 
     def find_subtasks(
-        self, current_solution: ANY_SOLUTION, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: ANY_SOLUTION, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         if subtasks is None:
             subtasks = set()
         max_time = current_solution.get_end_time(self.problem.sink_task)
@@ -1100,8 +1101,8 @@ class NeighborRandomAndNeighborGraph(NeighborBuilder):
         self.set_tasks = set(self.problem.tasks_list)
 
     def find_subtasks(
-        self, current_solution: RCPSPSolution, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: RCPSPSolution, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         if subtasks is None:
             subtasks = set()
             len_subtask = 0
@@ -1172,8 +1173,8 @@ class NeighborConstraintBreaks(NeighborBuilder):
         self.set_tasks = set(self.problem.tasks_list)
 
     def find_subtasks(
-        self, current_solution: RCPSPSolution, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: RCPSPSolution, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         if "special_constraints" in self.problem.__dict__.keys():
             details_constraints = compute_constraints_details(
                 solution=current_solution, constraints=self.problem.special_constraints
@@ -1245,8 +1246,8 @@ class NeighborConstraintBreaks(NeighborBuilder):
 class NeighborBuilderMix(NeighborBuilder):
     def __init__(
         self,
-        list_neighbor: List[NeighborBuilder],
-        weight_neighbor: Union[List[float], np.array],
+        list_neighbor: list[NeighborBuilder],
+        weight_neighbor: Union[list[float], np.array],
         verbose: bool = False,
     ):
         self.list_neighbor = list_neighbor
@@ -1258,8 +1259,8 @@ class NeighborBuilderMix(NeighborBuilder):
         self.verbose = verbose
 
     def find_subtasks(
-        self, current_solution: RCPSPSolution, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: RCPSPSolution, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         choice = np.random.choice(self.index_np, size=1, p=self.weight_neighbor)[0]
         return self.list_neighbor[choice].find_subtasks(
             current_solution=current_solution, subtasks=subtasks
@@ -1268,8 +1269,8 @@ class NeighborBuilderMix(NeighborBuilder):
 
 class NeighborBuilderTimeWindow(NeighborBuilder):
     def find_subtasks(
-        self, current_solution: ANY_SOLUTION, subtasks: Optional[Set[Hashable]] = None
-    ) -> Tuple[Set[Hashable], Set[Hashable]]:
+        self, current_solution: ANY_SOLUTION, subtasks: Optional[set[Hashable]] = None
+    ) -> tuple[set[Hashable], set[Hashable]]:
         last_time = current_solution.get_end_time(self.problem.sink_task)
         if self.current_time_window[0] >= last_time:
             self.current_time_window = [0, self.time_window_length]
@@ -1361,7 +1362,7 @@ class ConstraintHandlerScheduling(MznConstraintHandler):
         self,
         problem: ANY_RCPSP,
         basic_constraint_builder: BasicConstraintBuilder,
-        params_list: List[ParamsConstraintBuilder] = None,
+        params_list: list[ParamsConstraintBuilder] = None,
         use_makespan_of_subtasks: bool = True,
         objective_subproblem: ObjectiveSubproblem = ObjectiveSubproblem.GLOBAL_MAKESPAN,
         verbose: bool = True,
@@ -1527,7 +1528,7 @@ class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
-        params_list: List[ParamsConstraintBuilder] = None,
+        params_list: list[ParamsConstraintBuilder] = None,
         verbose: bool = False,
     ):
         self.problem = problem
@@ -1599,7 +1600,7 @@ class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
-        params_list: List[ParamsConstraintBuilder] = None,
+        params_list: list[ParamsConstraintBuilder] = None,
         verbose: bool = False,
     ):
         self.problem = problem
@@ -1684,7 +1685,7 @@ class EquilibrateMultiskillAllocation(MznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
-        params_list: List[ParamsConstraintBuilder] = None,
+        params_list: list[ParamsConstraintBuilder] = None,
         verbose: bool = False,
     ):
         self.problem = problem

@@ -14,7 +14,7 @@ Results can be viewed on optuna-dashboard with:
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Type
+from typing import Any
 
 import optuna
 from optuna.storages import JournalFileStorage, JournalStorage
@@ -69,13 +69,13 @@ if not gurobi_available or not gurobi_full_license_available:
     solvers_to_remove.add(ColoringLP)
 if not toulbar2_available:
     solvers_to_remove.add(ToulbarColoringSolver)
-solvers_to_test: List[Type[SolverDO]] = [
+solvers_to_test: list[type[SolverDO]] = [
     s for s in solvers_map if s not in solvers_to_remove
 ]
 # solvers_to_test = [ColoringLP]
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
         ColoringCPSatSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
@@ -88,7 +88,7 @@ kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
-solvers_by_name: Dict[str, Type[SolverDO]] = {
+solvers_by_name: dict[str, type[SolverDO]] = {
     cls.__name__: cls for cls in solvers_to_test
 }
 

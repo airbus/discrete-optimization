@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import List, Optional
+from typing import Optional
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem2D
@@ -11,7 +11,7 @@ from discrete_optimization.vrp.vrp_model import Customer2D, VrpProblem2D
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """Get datasets available for vrp.
 
     Params:
@@ -55,7 +55,7 @@ def parse_input(
         customers.append(
             Customer2D(i - 1, int(parts[0]), float(parts[1]), float(parts[2]))
         )
-    vehicle_capacities: List[float] = [vehicle_capacity] * vehicle_count
+    vehicle_capacities: list[float] = [vehicle_capacity] * vehicle_count
     start_indexes = [start_index] * vehicle_count
     end_indexes = [end_index] * vehicle_count
     return VrpProblem2D(

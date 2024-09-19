@@ -3,21 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+from collections.abc import Callable, Hashable, Iterable
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Hashable,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,8 +65,8 @@ class RCPSPModel(Problem):
         special_constraints:
         do_special_constraints (bool):
         relax_the_start_at_end (bool): relax some conditions only if do_special_constraints
-        fixed_permutation (Optional[List[int]]):
-        fixed_modes (Optional[List[int]]):
+        fixed_permutation (Optional[list[int]]):
+        fixed_modes (Optional[list[int]]):
 
     Args:
         resources: {resource_name: number_of_resource}
@@ -101,21 +91,21 @@ class RCPSPModel(Problem):
 
     def __init__(
         self,
-        resources: Dict[str, Union[int, List[int]]],
-        non_renewable_resources: List[str],
-        mode_details: Dict[Hashable, Dict[int, Dict[str, int]]],
-        successors: Dict[Hashable, List[Hashable]],
+        resources: dict[str, Union[int, list[int]]],
+        non_renewable_resources: list[str],
+        mode_details: dict[Hashable, dict[int, dict[str, int]]],
+        successors: dict[Hashable, list[Hashable]],
         horizon: int,
         horizon_multiplier: int = 1,
-        tasks_list: Optional[List[Hashable]] = None,
+        tasks_list: Optional[list[Hashable]] = None,
         source_task: Optional[Hashable] = None,
         sink_task: Optional[Hashable] = None,
-        name_task: Optional[Dict[Hashable, str]] = None,
-        calendar_details: Optional[Dict[str, List[List[int]]]] = None,
+        name_task: Optional[dict[Hashable, str]] = None,
+        calendar_details: Optional[dict[str, list[list[int]]]] = None,
         special_constraints: Optional[SpecialConstraintsDescription] = None,
         relax_the_start_at_end: bool = True,
-        fixed_permutation: Optional[List[int]] = None,
-        fixed_modes: Optional[List[int]] = None,
+        fixed_permutation: Optional[list[int]] = None,
+        fixed_modes: Optional[list[int]] = None,
         **kwargs: Any,
     ):
         self.resources = resources
@@ -193,7 +183,7 @@ class RCPSPModel(Problem):
             self.func_sgs_2,
             self.compute_mean_resource,
         ) = create_np_data_and_jit_functions(self)
-        self.costs: Dict[str, bool] = {
+        self.costs: dict[str, bool] = {
             "makespan": True,
             "mean_resource_reserve": kwargs.get("mean_resource_reserve", False),
         }
@@ -204,7 +194,7 @@ class RCPSPModel(Problem):
         else:
             self.do_special_constraints = True
             self.special_constraints = special_constraints
-            predecessors_dict: Dict[Hashable, List[Hashable]] = {
+            predecessors_dict: dict[Hashable, list[Hashable]] = {
                 task: [] for task in self.successors
             }
             for task in self.successors:
@@ -254,20 +244,20 @@ class RCPSPModel(Problem):
     def includes_special_constraint(self) -> bool:
         return self.do_special_constraints
 
-    def get_resource_names(self) -> List[str]:
+    def get_resource_names(self) -> list[str]:
         return self.resources_list
 
-    def get_tasks_list(self) -> List[Hashable]:
+    def get_tasks_list(self) -> list[Hashable]:
         return self.tasks_list
 
-    def get_resource_availability_array(self, res: str) -> List[int]:
+    def get_resource_availability_array(self, res: str) -> list[int]:
         if self.is_varying_resource() and not isinstance(self.resources[res], int):
             return self.resources[res]  # type: ignore
         else:
             return self.horizon * [self.resources[res]]  # type: ignore
 
     def compute_graph(self, compute_predecessors: bool = False) -> Graph:
-        nodes: List[Tuple[Hashable, Dict[str, Any]]] = [
+        nodes: list[tuple[Hashable, dict[str, Any]]] = [
             (
                 n,
                 {
@@ -277,7 +267,7 @@ class RCPSPModel(Problem):
             )
             for n in self.tasks_list
         ]
-        edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]] = []
+        edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
         for n in self.successors:
             for succ in self.successors[n]:
                 edges += [(n, succ, {})]
@@ -285,7 +275,7 @@ class RCPSPModel(Problem):
             nodes, edges, compute_predecessors=compute_predecessors, undirected=False
         )
 
-    def evaluate_function(self, rcpsp_sol: RCPSPSolution) -> Tuple[int, float, int]:
+    def evaluate_function(self, rcpsp_sol: RCPSPSolution) -> tuple[int, float, int]:
         if rcpsp_sol._schedule_to_recompute:
             rcpsp_sol.generate_schedule_from_permutation_serial_sgs()
         makespan = rcpsp_sol.rcpsp_schedule[self.sink_task]["end_time"]
@@ -303,8 +293,8 @@ class RCPSPModel(Problem):
         return makespan, obj_mean_resource_reserve, penalty
 
     def evaluate_from_encoding(
-        self, int_vector: List[int], encoding_name: str
-    ) -> Dict[str, float]:
+        self, int_vector: list[int], encoding_name: str
+    ) -> dict[str, float]:
         if encoding_name == "rcpsp_permutation":
             if self.fixed_modes is None:
                 rcpsp_modes = [1 for i in range(self.n_jobs_non_dummy)]
@@ -330,7 +320,7 @@ class RCPSPModel(Problem):
         objectives = self.evaluate(rcpsp_sol)
         return objectives
 
-    def evaluate(self, rcpsp_sol: RCPSPSolution) -> Dict[str, float]:  # type: ignore
+    def evaluate(self, rcpsp_sol: RCPSPSolution) -> dict[str, float]:  # type: ignore
         obj_makespan, obj_mean_resource_reserve, penalty = self.evaluate_function(
             rcpsp_sol
         )
@@ -343,15 +333,15 @@ class RCPSPModel(Problem):
     def evaluate_mobj(self, rcpsp_sol: RCPSPSolution) -> TupleFitness:  # type: ignore
         return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
+    def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(
             np.array([-dict_values["makespan"], dict_values["mean_resource_reserve"]]),
             2,
         )
 
     def build_mode_dict(
-        self, rcpsp_modes_from_solution: List[int]
-    ) -> Dict[Hashable, int]:
+        self, rcpsp_modes_from_solution: list[int]
+    ) -> dict[Hashable, int]:
         modes_dict = {
             self.tasks_list_non_dummy[i]: rcpsp_modes_from_solution[i]
             for i in range(self.n_jobs_non_dummy)
@@ -360,7 +350,7 @@ class RCPSPModel(Problem):
         modes_dict[self.sink_task] = 1
         return modes_dict
 
-    def build_mode_array(self, rcpsp_modes_from_solution: List[int]) -> List[int]:
+    def build_mode_array(self, rcpsp_modes_from_solution: list[int]) -> list[int]:
         modes_dict = self.build_mode_dict(
             rcpsp_modes_from_solution=rcpsp_modes_from_solution
         )
@@ -456,7 +446,7 @@ class RCPSPModel(Problem):
         )
         return val
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return RCPSPSolution
 
     def get_attribute_register(self) -> EncodingRegister:
@@ -580,23 +570,23 @@ class RCPSPModel(Problem):
         elif att == "rcpsp_permutation":
             self.set_fixed_permutation(sol.rcpsp_permutation)
 
-    def set_fixed_modes(self, fixed_modes: List[int]) -> None:
+    def set_fixed_modes(self, fixed_modes: list[int]) -> None:
         self.fixed_modes = fixed_modes
 
-    def set_fixed_permutation(self, fixed_permutation: List[int]) -> None:
+    def set_fixed_permutation(self, fixed_permutation: list[int]) -> None:
         self.fixed_permutation = fixed_permutation
 
 
 def create_np_data_and_jit_functions(
     rcpsp_problem: RCPSPModel,
-) -> Tuple[
+) -> tuple[
     Callable[
         ...,
-        Tuple[Dict[int, Tuple[int, int]], bool],
+        tuple[dict[int, tuple[int, int]], bool],
     ],
     Callable[
         ...,
-        Tuple[Dict[int, Tuple[int, int]], bool],
+        tuple[dict[int, tuple[int, int]], bool],
     ],
     Callable[
         ...,
@@ -708,7 +698,7 @@ def evaluate_constraints(
 def compute_constraints_details(
     solution: RCPSPSolution,
     constraints: SpecialConstraintsDescription,
-) -> List[Tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]]:
+) -> list[tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]]:
     if not solution.rcpsp_schedule_feasible:
         return []
     start_together = constraints.start_together
@@ -716,8 +706,8 @@ def compute_constraints_details(
     start_at_end_plus_offset = constraints.start_at_end_plus_offset
     start_after_nunit = constraints.start_after_nunit
     disjunctive = constraints.disjunctive_tasks
-    list_constraints_not_respected: List[
-        Tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
+    list_constraints_not_respected: list[
+        tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
     ] = []
     for (t1, t2) in start_together:
         time1 = solution.get_start_time(t1)
@@ -966,8 +956,8 @@ def check_pair_mode_constraint(
 def compute_details_mode_constraint(
     solution: RCPSPSolution, pair_mode_constraint: PairModeConstraint
 ):
-    list_constraints_not_respected: List[
-        Tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
+    list_constraints_not_respected: list[
+        tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
     ] = []
     if pair_mode_constraint.allowed_mode_assignment is not None:
         for ac1, ac2 in pair_mode_constraint.allowed_mode_assignment:

@@ -5,8 +5,9 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 from minizinc import Instance
 

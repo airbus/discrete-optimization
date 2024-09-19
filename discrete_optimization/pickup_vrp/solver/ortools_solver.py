@@ -7,7 +7,7 @@ from __future__ import print_function
 import logging
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 from ortools.constraint_solver import (
@@ -65,7 +65,7 @@ class ParametersCost:
         dimension_name: str,
         global_span: bool = True,
         sum_over_vehicles: bool = False,
-        coefficient_vehicles: Union[float, List[float]] = 100,
+        coefficient_vehicles: Union[float, list[float]] = 100,
     ):
         self.dimension_name = dimension_name
         self.global_span = global_span
@@ -87,7 +87,7 @@ class ParametersCost:
 
 
 def apply_cost(
-    list_parameters_cost: List[ParametersCost], routing: pywrapcp.RoutingModel
+    list_parameters_cost: list[ParametersCost], routing: pywrapcp.RoutingModel
 ) -> None:
     dimension_names = set([p.dimension_name for p in list_parameters_cost])
     dimension_dict = {d: routing.GetDimensionOrDie(d) for d in dimension_names}
@@ -189,7 +189,7 @@ class ORToolsGPDP(SolverPickupVrp, WarmstartMixin):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.dimension_names: List[str] = []
+        self.dimension_names: list[str] = []
         self.factor_multiplier_distance = factor_multiplier_distance  # 10**3
         self.factor_multiplier_time = factor_multiplier_time  # 10**3
 
@@ -245,7 +245,7 @@ class ORToolsGPDP(SolverPickupVrp, WarmstartMixin):
         }
         # Neg Capacity version :
         neg_capacity_version = kwargs.get("neg_capacity_version", True)
-        demands: Dict[str, List[float]]
+        demands: dict[str, list[float]]
         if neg_capacity_version:
             demands = {
                 r: [
@@ -829,7 +829,7 @@ class ORToolsGPDP(SolverPickupVrp, WarmstartMixin):
         search_parameters: Optional[
             routing_parameters_pb2.RoutingSearchParameters
         ] = None,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
@@ -869,7 +869,7 @@ class ORToolsGPDP(SolverPickupVrp, WarmstartMixin):
         """
         self.initial_solution = solution
 
-    def _solution2routes(self, solution: GPDPSolution) -> List[List[int]]:
+    def _solution2routes(self, solution: GPDPSolution) -> list[list[int]]:
         return [
             [
                 self.manager.NodeToIndex(self.problem.index_nodes[node])
@@ -931,19 +931,19 @@ class RoutingMonitor(pywrapcp.SearchMonitor):
 
     def retrieve_current_solution(self) -> None:
         vehicle_count = self.problem.number_vehicle
-        vehicle_tours: Dict[int, List[int]] = {i: [] for i in range(vehicle_count)}
-        dimension_output: Dict[
-            Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]
+        vehicle_tours: dict[int, list[int]] = {i: [] for i in range(vehicle_count)}
+        dimension_output: dict[
+            tuple[int, int, NodePosition], dict[str, tuple[float, float, float]]
         ] = {}
         dimensions_names = self.do_solver.dimension_names
-        dimensions: Dict[str, pywrapcp.RoutingDimension] = {
+        dimensions: dict[str, pywrapcp.RoutingDimension] = {
             r: self.model.GetDimensionOrDie(r) for r in dimensions_names
         }
         objective = 0.0
         route_distance = 0.0
         for vehicle_id in range(vehicle_count):
             index = self.model.Start(vehicle_id)
-            route_load: Dict[str, float] = {r: 0.0 for r in self.problem.resources_set}
+            route_load: dict[str, float] = {r: 0.0 for r in self.problem.resources_set}
             cnt = 0
             while not self.model.IsEnd(index) or cnt > 10000:
                 node_index = self.do_solver.manager.IndexToNode(index)
@@ -998,11 +998,11 @@ class RoutingMonitor(pywrapcp.SearchMonitor):
                     except Exception as e:
                         logger.warning(("2,", e))
                         break
-        sol: Tuple[
-            Dict[int, List[int]],
-            Dict[
-                Tuple[int, int, NodePosition],
-                Dict[str, Tuple[float, float, float]],
+        sol: tuple[
+            dict[int, list[int]],
+            dict[
+                tuple[int, int, NodePosition],
+                dict[str, tuple[float, float, float]],
             ],
             float,
             float,
@@ -1021,9 +1021,9 @@ class RoutingMonitor(pywrapcp.SearchMonitor):
 
 def convert_to_gpdpsolution(
     problem: GPDP,
-    sol: Tuple[
-        Dict[int, List[int]],
-        Dict[Tuple[int, int, NodePosition], Dict[str, Tuple[float, float, float]]],
+    sol: tuple[
+        dict[int, list[int]],
+        dict[tuple[int, int, NodePosition], dict[str, tuple[float, float, float]]],
         float,
         float,
         float,
@@ -1036,7 +1036,7 @@ def convert_to_gpdpsolution(
         objective,
         cost,
     ) = sol
-    times: Dict[Node, float] = {}
+    times: dict[Node, float] = {}
     trajectories = {
         v: [problem.list_nodes[nodeindex] for nodeindex in traj]
         for v, traj in vehicle_tours.items()
@@ -1046,7 +1046,7 @@ def convert_to_gpdpsolution(
         if (node not in times) or (node_position != NodePosition.START):
             if "Time" in output:
                 times[node] = output["Time"][1]
-    resource_evolution: Dict[Node, Dict[Node, List[int]]] = {}
+    resource_evolution: dict[Node, dict[Node, list[int]]] = {}
     return GPDPSolution(
         problem=problem,
         trajectories=trajectories,

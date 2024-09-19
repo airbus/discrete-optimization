@@ -4,7 +4,7 @@
 
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from minizinc import Instance, Model, Solver
 
@@ -92,7 +92,7 @@ class TSP_CP_Solver(MinizincCPSolver, SolverTSP):
         circuit = kwargs["x"]
         return self._retrieve_solution_from_circuit(circuit)
 
-    def _retrieve_solution_from_circuit(self, circuit: List[int]) -> SolutionTSP:
+    def _retrieve_solution_from_circuit(self, circuit: list[int]) -> SolutionTSP:
         path = []
         cur_pos = self.start_index
         init = False

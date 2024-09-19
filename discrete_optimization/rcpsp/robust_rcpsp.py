@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 
 from collections import defaultdict
+from collections.abc import Hashable, Sequence
 from enum import Enum
-from typing import Any, Dict, Hashable, List, Sequence, Tuple
+from typing import Any
 
 import numpy as np
 from scipy.stats import poisson, randint, rv_discrete
@@ -17,7 +18,7 @@ from discrete_optimization.rcpsp import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 
 
-def tree() -> Dict[Any, Any]:
+def tree() -> dict[Any, Any]:
     return defaultdict(tree)
 
 
@@ -73,8 +74,8 @@ class AggregRCPSPModel(RobustProblem, RCPSPModel):
         return model
 
     def evaluate_from_encoding(
-        self, int_vector: List[int], encoding_name: str
-    ) -> Dict[str, float]:
+        self, int_vector: list[int], encoding_name: str
+    ) -> dict[str, float]:
         fits = [
             self.list_problem[i].evaluate_from_encoding(int_vector, encoding_name)
             for i in range(self.nb_problem)
@@ -86,7 +87,7 @@ class AggregRCPSPModel(RobustProblem, RCPSPModel):
             aggreg[k] = self.agg_vec(vals)
         return aggreg
 
-    def evaluate(self, variable: RCPSPSolution) -> Dict[str, float]:  # type: ignore
+    def evaluate(self, variable: RCPSPSolution) -> dict[str, float]:  # type: ignore
         fits = []
         for i in range(self.nb_problem):
             var: RCPSPSolution = variable.lazy_copy()
@@ -122,8 +123,8 @@ class MethodRobustification:
 
 def create_poisson_laws_duration(
     rcpsp_model: RCPSPModel, range_around_mean: int = 3
-) -> Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]]:
-    poisson_dict: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]] = {}
+) -> dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]]:
+    poisson_dict: dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]] = {}
     source = rcpsp_model.source_task
     sink = rcpsp_model.sink_task
     for job in rcpsp_model.mode_details:
@@ -146,8 +147,8 @@ def create_poisson_laws_duration(
 
 def create_poisson_laws_resource(
     rcpsp_model: RCPSPModel, range_around_mean: int = 1
-) -> Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]]:
-    poisson_dict: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]] = {}
+) -> dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]]:
+    poisson_dict: dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]] = {}
     source = rcpsp_model.source_task
     sink = rcpsp_model.sink_task
     limit_resource = rcpsp_model.resources
@@ -188,8 +189,8 @@ def create_poisson_laws(
     range_around_mean_duration: int = 3,
     do_uncertain_resource: bool = True,
     do_uncertain_duration: bool = True,
-) -> Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]]:
-    poisson_laws: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]] = tree()
+) -> dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]]:
+    poisson_laws: dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]] = tree()
     if do_uncertain_duration:
         poisson_laws_duration = create_poisson_laws_duration(
             base_rcpsp_model, range_around_mean=range_around_mean_duration
@@ -213,12 +214,12 @@ class UncertainRCPSPModel:
     def __init__(
         self,
         base_rcpsp_model: RCPSPModel,
-        poisson_laws: Dict[Hashable, Dict[int, Dict[str, Tuple[int, int, int]]]],
+        poisson_laws: dict[Hashable, dict[int, dict[str, tuple[int, int, int]]]],
         uniform_law: bool = True,
     ):
         self.base_rcpsp_model = base_rcpsp_model
         self.poisson_laws = poisson_laws
-        self.probas: Dict[Hashable, Dict[int, Dict[str, Dict[str, Any]]]] = {}
+        self.probas: dict[Hashable, dict[int, dict[str, dict[str, Any]]]] = {}
         for activity in poisson_laws:
             self.probas[activity] = {}
             for mode in poisson_laws[activity]:

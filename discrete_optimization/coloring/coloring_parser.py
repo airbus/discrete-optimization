@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, Dict, Hashable, List, Optional, Tuple
+from collections.abc import Hashable
+from typing import Any, Optional
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
 from discrete_optimization.datasets import get_data_home
@@ -12,7 +13,7 @@ from discrete_optimization.generic_tools.graph_api import Graph
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """Get datasets available for coloring.
 
     Params:
@@ -49,8 +50,8 @@ def parse(input_data: str) -> ColoringProblem:
     first_line = lines[0].split()
     node_count = int(first_line[0])
     edge_count = int(first_line[1])
-    edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]] = []
-    nodes: List[Tuple[Hashable, Dict[str, Any]]] = [(i, {}) for i in range(node_count)]
+    edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
+    nodes: list[tuple[Hashable, dict[str, Any]]] = [(i, {}) for i in range(node_count)]
     for i in range(1, edge_count + 1):
         line = lines[i]
         parts = line.split()

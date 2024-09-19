@@ -5,7 +5,7 @@
 import logging
 import random
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 from deap import algorithms, base, creator, tools
@@ -105,20 +105,20 @@ class Ga(SolverDO, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
-        objectives: Union[str, List[str]],
+        objectives: Union[str, list[str]],
         mutation: Optional[Union[Mutation, DeapMutation]] = None,
         crossover: Optional[DeapCrossover] = None,
         selection: DeapSelection = DeapSelection.SEL_TOURNAMENT,
-        encoding: Optional[Union[str, Dict[str, Any]]] = None,
+        encoding: Optional[Union[str, dict[str, Any]]] = None,
         objective_handling: ObjectiveHandling = ObjectiveHandling.SINGLE,
-        objective_weights: Optional[List[float]] = None,
+        objective_weights: Optional[list[float]] = None,
         pop_size: int = 100,
         max_evals: Optional[int] = None,
         mut_rate: float = 0.1,
         crossover_rate: float = 0.9,
         tournament_size: float = 0.2,  # as a percentage of the population
         deap_verbose: bool = True,
-        initial_population: Optional[List[List[Any]]] = None,
+        initial_population: Optional[list[list[Any]]] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
@@ -127,7 +127,7 @@ class Ga(SolverDO, WarmstartMixin):
         )
         if not hasattr(self.problem, "evaluate_from_encoding"):
             raise ValueError("self.problem shoud define an evaluate_from_encoding()")
-            # self.problem.evaluate_from_encoding: Callable[[List[int], str], Dict[str, float]]
+            # self.problem.evaluate_from_encoding: Callable[[list[int], str], dict[str, float]]
 
         self._pop_size = pop_size
         if max_evals is not None:
@@ -169,7 +169,7 @@ class Ga(SolverDO, WarmstartMixin):
                         register_solution.dict_attribute_to_type[encoding_name]
                     )
 
-        elif encoding is not None and isinstance(encoding, Dict):
+        elif encoding is not None and isinstance(encoding, dict):
             # check there is a type key and a n key
             if (
                 "name" in encoding.keys()
@@ -248,7 +248,7 @@ class Ga(SolverDO, WarmstartMixin):
                 "Many objectives specified but single objective handling, using the first objective in the dictionary"
             )
 
-        self._objective_weights: List[float]
+        self._objective_weights: list[float]
         if (objective_weights is None) or (
             objective_weights is not None
             and (
@@ -418,8 +418,8 @@ class Ga(SolverDO, WarmstartMixin):
         elif self._selection_type == DeapSelection.SEL_STOCHASTIC_UNIVERSAL_SAMPLING:
             self._toolbox.register("select", tools.selStochasticUniversalSampling)
 
-    def evaluate_problem(self, int_vector: List[int]) -> Tuple[float]:
-        objective_values: Dict[str, float] = self.problem.evaluate_from_encoding(  # type: ignore
+    def evaluate_problem(self, int_vector: list[int]) -> tuple[float]:
+        objective_values: dict[str, float] = self.problem.evaluate_from_encoding(  # type: ignore
             int_vector, self._encoding_variable_name
         )
         if self._objective_handling == ObjectiveHandling.SINGLE:
@@ -437,7 +437,7 @@ class Ga(SolverDO, WarmstartMixin):
             )
         return (val,)
 
-    def generate_custom_population(self) -> List[Any]:
+    def generate_custom_population(self) -> list[Any]:
         if self.initial_population is None:
             raise RuntimeError(
                 "self.initial_population cannot be None when calling generate_custom_population()."

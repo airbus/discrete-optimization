@@ -4,7 +4,7 @@
 import logging
 import os
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import clingo
 
@@ -44,7 +44,7 @@ class ASPClingoSolver(SolverDO):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         time_limit: Optional[float] = 100.0,
         **kwargs: Any,
     ) -> ResultStorage:

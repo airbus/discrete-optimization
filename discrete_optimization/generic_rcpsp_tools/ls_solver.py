@@ -4,7 +4,7 @@
 
 import logging
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -82,7 +82,7 @@ class LS_RCPSP_Solver(SolverGenericRCPSP):
         )
         self.ls_solver = ls_solver
 
-    def solve(self, callbacks: Optional[List[Callback]] = None, **kwargs):
+    def solve(self, callbacks: Optional[list[Callback]] = None, **kwargs):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         model = self.problem
         dummy = kwargs.get("starting_point", model.get_dummy_solution())

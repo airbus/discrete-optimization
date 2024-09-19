@@ -6,7 +6,7 @@ import logging
 import operator
 import random
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 import numpy as np
 from deap import algorithms, creator, gp, tools
@@ -251,7 +251,7 @@ class PermutationDistance(Enum):
 
 
 class ParametersGPHH:
-    set_feature: Set[FeatureEnum] = None
+    set_feature: set[FeatureEnum] = None
     set_primitves: PrimitiveSet = None
     tournament_ratio: float = None
     pop_size: int = None
@@ -450,7 +450,7 @@ class ParametersGPHH:
         )
 
     @staticmethod
-    def default_for_set_features(set_feature: Set[FeatureEnum]):
+    def default_for_set_features(set_feature: set[FeatureEnum]):
         pset = PrimitiveSet("main", len(set_feature))
         pset.addPrimitive(operator.add, 2)
         pset.addPrimitive(operator.sub, 2)
@@ -476,19 +476,19 @@ class ParametersGPHH:
 
 
 class GPHH(SolverGenericRCPSP):
-    training_domains: List[Problem]
+    training_domains: list[Problem]
     weight: int
     pset: PrimitiveSet
     toolbox: Toolbox
     params_gphh: ParametersGPHH
     evaluation_method: EvaluationGPHH
-    reference_permutations: Dict
+    reference_permutations: dict
     permutation_distance: PermutationDistance
 
     def __init__(
         self,
         problem: Problem,
-        training_domains: Optional[List[Problem]] = None,
+        training_domains: Optional[list[Problem]] = None,
         weight: int = 1,
         params_gphh: ParametersGPHH = None,
         params_objective_function: ParamsObjectiveFunction = None,

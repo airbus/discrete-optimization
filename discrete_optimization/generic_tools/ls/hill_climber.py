@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -65,7 +65,7 @@ class HillClimber(SolverDO, WarmstartMixin):
         self,
         nb_iteration_max: int,
         initial_variable: Optional[Solution] = None,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)
@@ -174,7 +174,7 @@ class HillClimberPareto(HillClimber):
         nb_iteration_max: int,
         initial_variable: Optional[Solution] = None,
         update_iteration_pareto: int = 1000,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ParetoFront:
         callbacks_list = CallbackList(callbacks=callbacks)

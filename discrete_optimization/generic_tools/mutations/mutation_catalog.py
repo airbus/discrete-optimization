@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
@@ -37,8 +37,8 @@ from discrete_optimization.tsp.mutation.mutation_tsp import (
 
 logger = logging.getLogger(__name__)
 
-dictionnary_mutation: Dict[
-    TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]
+dictionnary_mutation: dict[
+    TypeAttribute, dict[str, tuple[type[Mutation], dict[str, Any]]]
 ] = {
     TypeAttribute.PERMUTATION: {
         "total_shuffle": (PermutationShuffleMutation, {}),
@@ -95,16 +95,16 @@ dictionnary_mutation: Dict[
 
 def get_available_mutations(
     problem: Problem, solution: Optional[Solution] = None
-) -> Tuple[
-    Dict[TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]],
-    List[Tuple[Type[Mutation], Dict[str, Any]]],
+) -> tuple[
+    dict[TypeAttribute, dict[str, tuple[type[Mutation], dict[str, Any]]]],
+    list[tuple[type[Mutation], dict[str, Any]]],
 ]:
     register = problem.get_attribute_register()
     present_types = set(register.get_types())
-    mutations: Dict[
-        TypeAttribute, Dict[str, Tuple[Type[Mutation], Dict[str, Any]]]
+    mutations: dict[
+        TypeAttribute, dict[str, tuple[type[Mutation], dict[str, Any]]]
     ] = {}
-    mutations_list: List[Tuple[Type[Mutation], Dict[str, Any]]] = []
+    mutations_list: list[tuple[type[Mutation], dict[str, Any]]] = []
     nb_mutations = 0
     for pr_type in present_types:
         if pr_type in dictionnary_mutation:

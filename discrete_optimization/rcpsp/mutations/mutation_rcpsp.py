@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Optional
 
 import numpy as np
 
@@ -34,7 +34,7 @@ class PermutationMutationRCPSP(Mutation):
     def build(
         problem: Problem,
         solution: Solution,
-        other_mutation: Type[Mutation] = PermutationShuffleMutation,
+        other_mutation: type[Mutation] = PermutationShuffleMutation,
         **kwargs: Any
     ) -> "PermutationMutationRCPSP":
         built_other_mutation = other_mutation.build(problem, solution, **kwargs)
@@ -47,7 +47,7 @@ class PermutationMutationRCPSP(Mutation):
         self.solution = solution
         self.other_mutation = other_mutation
 
-    def mutate(self, solution: RCPSPSolution) -> Tuple[Solution, LocalMove]:  # type: ignore
+    def mutate(self, solution: RCPSPSolution) -> tuple[Solution, LocalMove]:  # type: ignore
         s: RCPSPSolution
         s, lm = self.other_mutation.mutate(solution)  # type: ignore
         try:
@@ -59,7 +59,7 @@ class PermutationMutationRCPSP(Mutation):
 
     def mutate_and_compute_obj(  # type: ignore
         self, solution: RCPSPSolution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         s: RCPSPSolution
         s, lm, fit = self.other_mutation.mutate_and_compute_obj(solution)  # type: ignore
         try:
@@ -91,7 +91,7 @@ class DeadlineMutationRCPSP(Mutation):
         except:
             pass
 
-    def mutate(self, solution: ANY_SOLUTION) -> Tuple[ANY_SOLUTION, LocalMove]:  # type: ignore
+    def mutate(self, solution: ANY_SOLUTION) -> tuple[ANY_SOLUTION, LocalMove]:  # type: ignore
         if not is_instance_any_rcpsp_solution(solution):
             raise ValueError("solution must be an rcsp solution (of any kind)")
         if "special_constraints" in self.problem.__dict__.keys():
@@ -138,7 +138,7 @@ class DeadlineMutationRCPSP(Mutation):
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         if not is_instance_any_rcpsp_solution(solution):
             raise ValueError("solution must be an rcsp solution (of any kind)")
         sol: ANY_SOLUTION

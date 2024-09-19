@@ -8,7 +8,8 @@ The only constraint is that adjacent vertices should be colored by different col
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict, Hashable, List, Optional, Set, Type, Union
+from collections.abc import Hashable
+from typing import Optional, Union
 
 import numpy as np
 
@@ -36,7 +37,7 @@ class ColoringSolution(Solution):
 
     Attributes:
         problem (ColoringProblem): instance of the graph coloring problem
-        colors (Union[List[int], np.array]): list/array of the same size of problem.number_of_nodes number.
+        colors (Union[list[int], np.array]): list/array of the same size of problem.number_of_nodes number.
                                              It should contain integer values representing discrete colors.
         nb_color (Optional[int]): number of different colors present in colors attributes. can be used directly
                                   by the problem.evaluate function if this attribute is provided
@@ -47,7 +48,7 @@ class ColoringSolution(Solution):
     def __init__(
         self,
         problem: Problem,
-        colors: Optional[Union[List[int], np.ndarray]] = None,
+        colors: Optional[Union[list[int], np.ndarray]] = None,
         nb_color: Optional[int] = None,
         nb_violations: Optional[int] = None,
     ):
@@ -66,7 +67,7 @@ class ColoringSolution(Solution):
         Returns: A copy that can be considered as a deep copy of the current object.
 
         """
-        colors: Optional[Union[List[int], np.ndarray]]
+        colors: Optional[Union[list[int], np.ndarray]]
         if self.colors is None:
             colors = None
         elif isinstance(self.colors, np.ndarray):
@@ -109,7 +110,7 @@ class ColoringSolution(Solution):
         Returns: New ColoringSolution object with value precede chain property.
 
         """
-        colors: List[int]
+        colors: list[int]
         if self.colors is None:
             raise ValueError(
                 "self.colors should not be None when calling to_reformated_solution()"
@@ -154,7 +155,7 @@ class ColoringSolution(Solution):
             raise ValueError(
                 "new_problem must a ColoringProblem for a ColoringSolution."
             )
-        colors: Optional[Union[List[int], np.ndarray]]
+        colors: Optional[Union[list[int], np.ndarray]]
         if self.colors is None:
             self.colors = None
         elif isinstance(self.colors, np.ndarray):
@@ -164,11 +165,11 @@ class ColoringSolution(Solution):
         self.problem = new_problem
 
 
-def transform_color_values_to_value_precede(color_vector: List[int]) -> List[int]:
+def transform_color_values_to_value_precede(color_vector: list[int]) -> list[int]:
     """See method ColoringSolution.to_reformated_solution().
 
     Args:
-        color_vector (List[int]): vector representing colors of vertices
+        color_vector (list[int]): vector representing colors of vertices
 
     Returns: A vector with value precede chain property
 
@@ -187,13 +188,13 @@ def transform_color_values_to_value_precede(color_vector: List[int]) -> List[int
 class ConstraintsColoring:
     """Data structure to store additional constraints. Attributes will grow
     Attributes:
-        color_constraint (Dict[Hashable, int]): dictionary filled with color constraint.
+        color_constraint (dict[Hashable, int]): dictionary filled with color constraint.
     """
 
-    def __init__(self, color_constraint: Dict[Hashable, int]):
+    def __init__(self, color_constraint: dict[Hashable, int]):
         self.color_constraint = color_constraint
 
-    def nodes_fixed(self) -> Set[Hashable]:
+    def nodes_fixed(self) -> set[Hashable]:
         if self.color_constraint is not None:
             return set(self.color_constraint.keys())
         else:
@@ -206,17 +207,17 @@ class ColoringProblem(Problem):
     Attributes:
         graph (Graph): a graph object representing vertices and edges.
         number_of_nodes (int): number of nodes in the graph
-        subset_nodes (Set[Hashable]): subset of nodes id to take into account in the optimisation.
-        nodes_name (List[Hashable]): list of id of the graph vertices.
-        index_nodes_name (Dict[Hashable, int]): dictionary node_name->index
-        index_to_nodes_name (Dict[int, Hashable]): index->node_name
+        subset_nodes (set[Hashable]): subset of nodes id to take into account in the optimisation.
+        nodes_name (list[Hashable]): list of id of the graph vertices.
+        index_nodes_name (dict[Hashable, int]): dictionary node_name->index
+        index_to_nodes_name (dict[int, Hashable]): index->node_name
 
     """
 
     def __init__(
         self,
         graph: Graph,
-        subset_nodes: Set[Hashable] = None,
+        subset_nodes: set[Hashable] = None,
         constraints_coloring: Optional[ConstraintsColoring] = None,
     ):
         self.graph = graph
@@ -248,17 +249,17 @@ class ColoringProblem(Problem):
             return True
         return node in self.subset_nodes
 
-    def count_colors(self, colors_list: List[int]) -> int:
+    def count_colors(self, colors_list: list[int]) -> int:
         if self.use_subset:
             nb_color = len(set([colors_list[j] for j in self.index_subset_nodes]))
         else:
             nb_color = len(set(colors_list))
         return nb_color
 
-    def count_colors_all_index(self, colors_list: List[int]) -> int:
+    def count_colors_all_index(self, colors_list: list[int]) -> int:
         return len(set(colors_list))
 
-    def evaluate(self, variable: ColoringSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+    def evaluate(self, variable: ColoringSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         """Evaluation implementation for ColoringProblem.
 
         Compute number of colors and violation of the current solution.
@@ -334,7 +335,7 @@ class ColoringProblem(Problem):
         }
         return EncodingRegister(dict_register)
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         """Returns the class of a solution instance for ColoringProblem."""
         return ColoringSolution
 
@@ -397,8 +398,8 @@ class ColoringProblem(Problem):
         return val
 
     def evaluate_from_encoding(
-        self, int_vector: List[int], encoding_name: str
-    ) -> Dict[str, float]:
+        self, int_vector: list[int], encoding_name: str
+    ) -> dict[str, float]:
         """Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.
 
         Args:
@@ -437,7 +438,7 @@ def compute_constraints_penalty(
 
 def transform_coloring_problem(
     coloring_problem: ColoringProblem,
-    subset_nodes: Optional[Set[Hashable]] = None,
+    subset_nodes: Optional[set[Hashable]] = None,
     constraints_coloring: Optional[ConstraintsColoring] = None,
 ) -> ColoringProblem:
     return ColoringProblem(

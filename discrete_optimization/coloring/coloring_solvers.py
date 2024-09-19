@@ -4,7 +4,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
 from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
@@ -46,7 +46,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-solvers: Dict[str, List[Tuple[Type[SolverColoring], Dict[str, Any]]]] = {
+solvers: dict[str, list[tuple[type[SolverColoring], dict[str, Any]]]] = {
     "lp": [
         (
             ColoringLP,
@@ -92,13 +92,13 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility: Dict[Type[SolverColoring], List[Type[Problem]]] = {}
+solvers_compatibility: dict[type[SolverColoring], list[type[Problem]]] = {}
 for x in solvers:
     for y in solvers[x]:
         solvers_compatibility[y[0]] = [ColoringProblem]
 
 
-def look_for_solver(domain: "ColoringProblem") -> List[Type[SolverColoring]]:
+def look_for_solver(domain: "ColoringProblem") -> list[type[SolverColoring]]:
     """Given an instance of ColoringProblem, return a list of class of solvers.
 
 
@@ -112,8 +112,8 @@ def look_for_solver(domain: "ColoringProblem") -> List[Type[SolverColoring]]:
 
 
 def look_for_solver_class(
-    class_domain: Type[ColoringProblem],
-) -> List[Type[SolverColoring]]:
+    class_domain: type[ColoringProblem],
+) -> list[type[SolverColoring]]:
     """Given a class domain, return a list of class of solvers.
 
 
@@ -130,7 +130,7 @@ def look_for_solver_class(
 
 
 def solve(
-    method: Type[SolverColoring], problem: ColoringProblem, **kwargs: Any
+    method: type[SolverColoring], problem: ColoringProblem, **kwargs: Any
 ) -> ResultStorage:
     """Solve a coloring instance with a given class of solver.
 
@@ -151,7 +151,7 @@ def solve(
 
 
 def return_solver(
-    method: Type[SolverColoring], problem: ColoringProblem, **kwargs: Any
+    method: type[SolverColoring], problem: ColoringProblem, **kwargs: Any
 ) -> SolverColoring:
     """Return the solver initialized with the coloring problem instance
 

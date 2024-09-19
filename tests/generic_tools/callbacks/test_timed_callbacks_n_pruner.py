@@ -5,7 +5,7 @@
 
 import random
 from time import sleep
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pytest
@@ -54,7 +54,7 @@ class FakeSolver(SolverDO):
     nb_colors_series = [100 - i for i in range(96)]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         param = kwargs["param"]

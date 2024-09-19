@@ -3,8 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
+from collections.abc import Hashable
 from math import isclose
-from typing import Dict, Hashable, Tuple
 
 import pytest
 
@@ -111,7 +111,7 @@ def test_feasible_modes_solution():
 
 def create_task_details_classic(
     solution: RCPSPSolution, time_to_cut: int
-) -> Tuple[Dict[Hashable, TaskDetails], Dict[Hashable, TaskDetails]]:
+) -> tuple[dict[Hashable, TaskDetails], dict[Hashable, TaskDetails]]:
     finished = set(
         [t for t in solution.rcpsp_schedule if solution.get_end_time(t) <= time_to_cut]
     )

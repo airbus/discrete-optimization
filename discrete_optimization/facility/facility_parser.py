@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import List, Optional
+from typing import Optional
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.facility.facility_model import (
@@ -16,7 +16,7 @@ from discrete_optimization.facility.facility_model import (
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """Get datasets available for facility.
 
     Params:

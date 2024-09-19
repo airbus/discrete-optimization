@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 
 import operator
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -57,13 +58,13 @@ def get_profit(
     return problem.list_items[item_index].value
 
 
-def get_capacities(problem: MultidimensionalKnapsack, **kwargs: Any) -> List[float]:
+def get_capacities(problem: MultidimensionalKnapsack, **kwargs: Any) -> list[float]:
     return problem.max_capacities
 
 
 def get_res_consumption(
     problem: MultidimensionalKnapsack, item_index: int, **kwargs: Any
-) -> List[float]:
+) -> list[float]:
     return problem.list_items[item_index].weights
 
 
@@ -79,7 +80,7 @@ def get_avg_res_consumption_delta_capacity(
     ) / len(problem.max_capacities)
 
 
-feature_function_map: Dict[FeatureEnum, Callable[..., Union[float, List[float]]]] = {
+feature_function_map: dict[FeatureEnum, Callable[..., Union[float, list[float]]]] = {
     FeatureEnum.PROFIT: get_profit,
     FeatureEnum.CAPACITIES: get_capacities,
     FeatureEnum.RES_CONSUMPTION_ARRAY: get_res_consumption,
@@ -90,7 +91,7 @@ feature_function_map: Dict[FeatureEnum, Callable[..., Union[float, List[float]]]
 class ParametersGPHH:
     def __init__(
         self,
-        list_feature: List[FeatureEnum],
+        list_feature: list[FeatureEnum],
         set_primitves: PrimitiveSetTyped,
         tournament_ratio: float,
         pop_size: int,
@@ -172,7 +173,7 @@ class GPHH(SolverDO):
     def __init__(
         self,
         problem: MultidimensionalKnapsack,
-        training_domains: Optional[List[MultidimensionalKnapsack]] = None,
+        training_domains: Optional[list[MultidimensionalKnapsack]] = None,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
@@ -311,7 +312,7 @@ class GPHH(SolverDO):
         if func_heuristic is None:
             func_heuristic = self.toolbox.compile(expr=individual)
         d: MultidimensionalKnapsack = domain
-        raw_values: List[float] = []
+        raw_values: list[float] = []
         for j in range(len(d.list_items)):
             input_features = [
                 feature_function_map[lf](problem=domain, item_index=j)
@@ -351,8 +352,8 @@ class GPHH(SolverDO):
         return solution
 
     def evaluate_heuristic(
-        self, individual: Any, domains: List[MultidimensionalKnapsack]
-    ) -> List[float]:
+        self, individual: Any, domains: list[MultidimensionalKnapsack]
+    ) -> list[float]:
         vals = []
         func_heuristic = self.toolbox.compile(expr=individual)
         for domain in domains:

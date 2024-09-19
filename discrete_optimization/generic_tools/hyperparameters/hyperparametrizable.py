@@ -5,7 +5,8 @@
 from __future__ import annotations  # see annotations as str
 
 from collections import ChainMap, defaultdict
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Set
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any, Optional
 
 import networkx as nx
 
@@ -31,7 +32,7 @@ class Hyperparametrizable:
 
     """
 
-    hyperparameters: List[Hyperparameter] = []
+    hyperparameters: list[Hyperparameter] = []
     """Hyperparameters available for this solver.
 
     These hyperparameters are to be feed to **kwargs found in
@@ -42,12 +43,12 @@ class Hyperparametrizable:
     """
 
     @classmethod
-    def get_hyperparameters_names(cls) -> List[str]:
+    def get_hyperparameters_names(cls) -> list[str]:
         """List of hyperparameters names."""
         return [h.name for h in cls.hyperparameters]
 
     @classmethod
-    def get_hyperparameters_by_name(cls) -> Dict[str, Hyperparameter]:
+    def get_hyperparameters_by_name(cls) -> dict[str, Hyperparameter]:
         """Mapping from name to corresponding hyperparameter."""
         return {h.name: h for h in cls.hyperparameters}
 
@@ -58,8 +59,8 @@ class Hyperparametrizable:
 
     @classmethod
     def copy_and_update_hyperparameters(
-        cls, names: Optional[List[str]] = None, **kwargs_by_name: Dict[str, Any]
-    ) -> List[Hyperparameter]:
+        cls, names: Optional[list[str]] = None, **kwargs_by_name: dict[str, Any]
+    ) -> list[Hyperparameter]:
         """Copy hyperparameters definition of this class and update them with specified kwargs.
 
         This is useful to define hyperparameters for a child class
@@ -85,8 +86,8 @@ class Hyperparametrizable:
 
     @classmethod
     def get_default_hyperparameters(
-        cls, names: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        cls, names: Optional[list[str]] = None
+    ) -> dict[str, Any]:
         """Get hyperparameters default values.
 
         Args:
@@ -109,7 +110,7 @@ class Hyperparametrizable:
 
     @classmethod
     def complete_with_default_hyperparameters(
-        cls, kwargs: Dict[str, Any], names: Optional[List[str]] = None
+        cls, kwargs: dict[str, Any], names: Optional[list[str]] = None
     ):
         """Add missing hyperparameters to kwargs by using default values
 
@@ -165,11 +166,11 @@ class Hyperparametrizable:
     def suggest_hyperparameters_with_optuna(
         cls,
         trial: optuna.trial.Trial,
-        names: Optional[List[str]] = None,
-        kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
-        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        names: Optional[list[str]] = None,
+        kwargs_by_name: Optional[dict[str, dict[str, Any]]] = None,
+        fixed_hyperparameters: Optional[dict[str, Any]] = None,
         prefix: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Suggest hyperparameters values during an Optuna trial.
 
         Args:
@@ -212,7 +213,7 @@ class Hyperparametrizable:
         suggested_and_fixed_hyperparameters = ChainMap(
             suggested_hyperparameters, fixed_hyperparameters
         )
-        skipped_hyperparameters: Set[str] = set()
+        skipped_hyperparameters: set[str] = set()
 
         for name in cls._sort_hyperparameters_by_dependency():
             hyperparameter = name2hyperparameter[name]

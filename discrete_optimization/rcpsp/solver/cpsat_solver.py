@@ -5,7 +5,8 @@
 #  Note : Model could most likely be improved with
 #  https://github.com/google/or-tools/blob/stable/examples/python/rcpsp_sat.py
 import logging
-from typing import Any, Dict, Hashable, Iterable, List, Optional, Set, Tuple
+from collections.abc import Hashable, Iterable
+from typing import Any, Optional
 
 from ortools.sat.python.cp_model import (
     Constraint,
@@ -54,17 +55,17 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
         )
         self.cp_model: Optional[CpModel] = None
         self.cp_solver: Optional[CpSolver] = None
-        self.variables: Optional[Dict[str, Any]] = None
+        self.variables: Optional[dict[str, Any]] = None
         self.status_solver: Optional[StatusSolver] = None
 
     def init_temporal_variable(
         self, model: CpModel
-    ) -> Tuple[
-        Dict[Hashable, IntVar],
-        Dict[Hashable, IntVar],
-        Dict[Tuple[Hashable, int], IntVar],
-        Dict[Tuple[Hashable, int], IntervalVar],
-        Dict[Hashable, Set[Tuple[Hashable, int]]],
+    ) -> tuple[
+        dict[Hashable, IntVar],
+        dict[Hashable, IntVar],
+        dict[tuple[Hashable, int], IntVar],
+        dict[tuple[Hashable, int], IntervalVar],
+        dict[Hashable, set[tuple[Hashable, int]]],
     ]:
         starts_var = {}
         ends_var = {}
@@ -99,8 +100,8 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
     def add_classical_precedence_constraints(
         self,
         model: CpModel,
-        starts_var: Dict[Hashable, IntVar],
-        ends_var: Dict[Hashable, IntVar],
+        starts_var: dict[Hashable, IntVar],
+        ends_var: dict[Hashable, IntVar],
     ):
         # Precedence constraints
         for task in self.problem.successors:
@@ -110,20 +111,20 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
     def add_one_mode_selected_per_task(
         self,
         model: CpModel,
-        is_present_var: Dict[Tuple[Hashable, int], IntVar],
-        interval_per_tasks: Dict[Hashable, Set[Tuple[Hashable, int]]],
+        is_present_var: dict[tuple[Hashable, int], IntVar],
+        interval_per_tasks: dict[Hashable, set[tuple[Hashable, int]]],
     ):
         # 1 mode selected
         for task in interval_per_tasks:
             model.AddExactlyOne([is_present_var[k] for k in interval_per_tasks[task]])
 
-    def create_fake_tasks(self) -> List[Dict[str, int]]:
+    def create_fake_tasks(self) -> list[dict[str, int]]:
         """
         Create tasks representing the variable resource availability.
         :return:
         """
         if self.problem.is_calendar:
-            fake_task: List[Dict[str, int]] = create_fake_tasks(
+            fake_task: list[dict[str, int]] = create_fake_tasks(
                 rcpsp_problem=self.problem
             )
         else:
@@ -134,9 +135,9 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
         self,
         model: CpModel,
         resource: str,
-        interval_var: Dict[Tuple[Hashable, int], IntervalVar],
-        is_present_var: Dict[Tuple[Hashable, int], IntVar],
-        fake_task: List[Dict[str, int]],
+        interval_var: dict[tuple[Hashable, int], IntervalVar],
+        is_present_var: dict[tuple[Hashable, int], IntVar],
+        fake_task: list[dict[str, int]],
     ):
         if resource in self.problem.non_renewable_resources:
             task_modes_consuming = [
@@ -190,8 +191,8 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
     def create_mode_pair_constraint(
         self,
         model: CpModel,
-        interval_per_tasks: Dict[Hashable, Set[Tuple[Hashable, int]]],
-        is_present_var: Dict[Tuple[Hashable, int], IntVar],
+        interval_per_tasks: dict[Hashable, set[tuple[Hashable, int]]],
+        is_present_var: dict[tuple[Hashable, int], IntVar],
         pair_mode_constraint: PairModeConstraint,
     ):
         if pair_mode_constraint.allowed_mode_assignment is not None:
@@ -340,10 +341,10 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         self,
         model: CpModel,
         resource: str,
-        is_used_resource: Dict[str, IntVar],
-        interval_var: Dict[Tuple[Hashable, int], IntervalVar],
-        is_present_var: Dict[Tuple[Hashable, int], IntVar],
-        fake_task: List[Dict[str, int]],
+        is_used_resource: dict[str, IntVar],
+        interval_var: dict[tuple[Hashable, int], IntervalVar],
+        is_present_var: dict[tuple[Hashable, int], IntVar],
+        fake_task: list[dict[str, int]],
     ):
         if resource in self.problem.non_renewable_resources:
             task_modes_consuming = [
@@ -516,7 +517,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         }
         return sol
 
-    def get_model_objectives_available(self) -> List[str]:
+    def get_model_objectives_available(self) -> list[str]:
         return ["makespan", "used_resource"]
 
     def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
@@ -552,10 +553,10 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         self,
         model: CpModel,
         resource: str,
-        resource_capacity_var: Dict[str, IntVar],
-        interval_var: Dict[Tuple[Hashable, int], IntervalVar],
-        is_present_var: Dict[Tuple[Hashable, int], IntVar],
-        fake_task: List[Dict[str, int]],
+        resource_capacity_var: dict[str, IntVar],
+        interval_var: dict[tuple[Hashable, int], IntervalVar],
+        is_present_var: dict[tuple[Hashable, int], IntVar],
+        fake_task: list[dict[str, int]],
         use_overlap_for_disjunctive_resource: bool,
     ):
         if resource in self.problem.non_renewable_resources:
@@ -744,7 +745,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         }
         return sol
 
-    def get_model_objectives_available(self) -> List[str]:
+    def get_model_objectives_available(self) -> list[str]:
         return ["makespan", "used_resource"]
 
     def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:

@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import Problem
@@ -23,7 +23,7 @@ from discrete_optimization.tsp.tsp_model import (
     TSPModelDistanceMatrix,
 )
 
-solvers: Dict[str, List[Tuple[Type[SolverTSP], Dict[str, Any]]]] = {
+solvers: dict[str, list[tuple[type[SolverTSP], dict[str, Any]]]] = {
     "lp": [
         (
             LP_TSP_Iterative,
@@ -47,18 +47,18 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility: Dict[Type[SolverTSP], List[Type[Problem]]] = {}
+solvers_compatibility: dict[type[SolverTSP], list[type[Problem]]] = {}
 for x in solvers:
     for y in solvers[x]:
         solvers_compatibility[y[0]] = [TSPModel2D, TSPModelDistanceMatrix]
 
 
-def look_for_solver(domain: TSPModel) -> List[Type[SolverTSP]]:
+def look_for_solver(domain: TSPModel) -> list[type[SolverTSP]]:
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
 
-def look_for_solver_class(class_domain: Type["TSPModel"]) -> List[Type[SolverTSP]]:
+def look_for_solver_class(class_domain: type["TSPModel"]) -> list[type[SolverTSP]]:
     available = []
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
@@ -66,7 +66,7 @@ def look_for_solver_class(class_domain: Type["TSPModel"]) -> List[Type[SolverTSP
     return available
 
 
-def solve(method: Type[SolverTSP], problem: TSPModel, **kwargs: Any) -> ResultStorage:
+def solve(method: type[SolverTSP], problem: TSPModel, **kwargs: Any) -> ResultStorage:
     solver = method(problem=problem, **kwargs)
     try:
         solver.init_model(**kwargs)
@@ -76,7 +76,7 @@ def solve(method: Type[SolverTSP], problem: TSPModel, **kwargs: Any) -> ResultSt
 
 
 def return_solver(
-    method: Type[SolverTSP], problem: TSPModel, **kwargs: Any
+    method: type[SolverTSP], problem: TSPModel, **kwargs: Any
 ) -> SolverTSP:
     solver = method(problem, **kwargs)
     try:

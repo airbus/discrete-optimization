@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import List, Union
+from typing import Union
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.ea.ga import (
@@ -21,8 +21,8 @@ class ParametersGa:
         selection: DeapSelection,
         encoding: str,
         objective_handling: ObjectiveHandling,
-        objectives: Union[str, List[str]],
-        objective_weights: List[float],
+        objectives: Union[str, list[str]],
+        objective_weights: list[float],
         pop_size: int,
         max_evals: int,
         mut_rate: float,
@@ -66,20 +66,20 @@ class ParametersGa:
 class ParametersAltGa:
     def __init__(
         self,
-        mutations: List[Union[Mutation, DeapMutation]],
-        crossovers: List[DeapCrossover],
-        selections: List[DeapSelection],
-        encodings: List[str],
+        mutations: list[Union[Mutation, DeapMutation]],
+        crossovers: list[DeapCrossover],
+        selections: list[DeapSelection],
+        encodings: list[str],
         objective_handling: ObjectiveHandling,
-        objectives: Union[str, List[str]],
-        objective_weights: List[float],
+        objectives: Union[str, list[str]],
+        objective_weights: list[float],
         pop_size: int,
         max_evals: int,
         mut_rate: float,
         crossover_rate: float,
         tournament_size: float,
         deap_verbose: bool,
-        sub_evals: List[int],
+        sub_evals: list[int],
     ):
         self.mutations = mutations
         self.crossovers = crossovers

@@ -4,7 +4,7 @@
 
 import random
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 
@@ -23,8 +23,8 @@ class ShuffleMove(LocalMove):
     def __init__(
         self,
         attribute: str,
-        new_permutation: Union[List[int], np.ndarray],
-        prev_permutation: Union[List[int], np.ndarray],
+        new_permutation: Union[list[int], np.ndarray],
+        prev_permutation: Union[list[int], np.ndarray],
     ):
         self.attribute = attribute
         self.permutation = new_permutation
@@ -58,7 +58,7 @@ class PermutationShuffleMutation(Mutation):
         self.range_shuffle = register.dict_attribute_to_type[self.attribute]["range"]
         self.range_int = list(range(len(self.range_shuffle)))
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         previous = list(getattr(solution, self.attribute))
         random.shuffle(self.range_int)
         new = [previous[i] for i in self.range_int]
@@ -71,7 +71,7 @@ class PermutationShuffleMutation(Mutation):
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
         return sol, move, obj
@@ -107,7 +107,7 @@ class PermutationPartialShuffleMutation(Mutation):
         self.range_int = list(range(self.n_to_move))
         self.range_int_total = list(range(len(self.range_shuffle)))
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         previous = deepcopy(getattr(solution, self.attribute))
         random.shuffle(self.range_int_total)
         int_to_move = self.range_int_total[: self.n_to_move]
@@ -121,14 +121,14 @@ class PermutationPartialShuffleMutation(Mutation):
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
         return sol, move, obj
 
 
 class SwapsLocalMove(LocalMove):
-    def __init__(self, attribute: str, list_index_swap: List[Tuple[int, int]]):
+    def __init__(self, attribute: str, list_index_swap: list[tuple[int, int]]):
         self.attribute = attribute
         self.list_index_swap = list_index_swap
 
@@ -173,7 +173,7 @@ class PermutationSwap(Mutation):
             self.attribute = attribute
         self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         swaps = np.random.randint(low=0, high=self.length - 1, size=(self.nb_swap, 2))
         move = SwapsLocalMove(
             self.attribute, [(swaps[i, 0], swaps[i, 1]) for i in range(self.nb_swap)]
@@ -183,14 +183,14 @@ class PermutationSwap(Mutation):
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
         return sol, move, obj
 
 
 class TwoOptMove(LocalMove):
-    def __init__(self, attribute: str, index_2opt: List[Tuple[int, int]]):
+    def __init__(self, attribute: str, index_2opt: list[tuple[int, int]]):
         self.attribute = attribute
         self.index_2opt = index_2opt
 
@@ -227,7 +227,7 @@ class TwoOptMutation(Mutation):
             self.attribute = attribute
         self.length = len(register.dict_attribute_to_type[self.attribute]["range"])
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         i = random.randint(0, self.length - 2)
         j = random.randint(i + 1, self.length - 1)
         two_opt_move = TwoOptMove(self.attribute, [(i, j)])
@@ -236,7 +236,7 @@ class TwoOptMutation(Mutation):
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         obj = self.problem.evaluate(sol)
         return sol, move, obj

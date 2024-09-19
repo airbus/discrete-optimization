@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Dict, Iterable, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
@@ -136,7 +137,7 @@ class MutationRelocate(Mutation):
         self.customer_count = vrp_model.customer_count
         self.vehicle_count = vrp_model.vehicle_count
 
-    def mutate(self, solution: VrpSolution) -> Tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, solution: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         vehicles_used = [
             v
             for v in range(self.vrp_model.vehicle_count)
@@ -161,7 +162,7 @@ class MutationRelocate(Mutation):
 
     def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
         self, solution: VrpSolution
-    ) -> Tuple[VrpSolution, LocalMove, Dict[str, float]]:
+    ) -> tuple[VrpSolution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         f = self.vrp_model.evaluate(sol)
         return sol, move, f
@@ -286,7 +287,7 @@ class MutationSwap(Mutation):
         self.customer_count = vrp_model.customer_count
         self.vehicle_count = vrp_model.vehicle_count
 
-    def mutate(self, solution: VrpSolution) -> Tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, solution: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         vehicles_used = [
             v
             for v in range(self.vrp_model.vehicle_count)
@@ -330,7 +331,7 @@ class MutationSwap(Mutation):
 
     def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
         self, solution: VrpSolution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         f = self.vrp_model.evaluate(sol)
         return sol, move, f
@@ -366,7 +367,7 @@ class MutationTwoOptVRP(Mutation):
 
     def get_points(
         self, vehicle: int, it: int, jt: int, variable: VrpSolution
-    ) -> Tuple[BasicCustomer, BasicCustomer, BasicCustomer, BasicCustomer]:
+    ) -> tuple[BasicCustomer, BasicCustomer, BasicCustomer, BasicCustomer]:
         perm = variable.list_paths[vehicle]
         if it == 0:
             point_before_i = self.points[variable.list_start_index[vehicle]]
@@ -382,7 +383,7 @@ class MutationTwoOptVRP(Mutation):
 
     def get_points_index(
         self, vehicle: int, it: int, jt: int, variable: VrpSolution
-    ) -> Tuple[int, int, int, int]:
+    ) -> tuple[int, int, int, int]:
         i_before = None
         j_after = None
         perm = variable.list_paths[vehicle]
@@ -398,7 +399,7 @@ class MutationTwoOptVRP(Mutation):
             j_after = perm[jt + 1]
         return i_before, i, j, j_after
 
-    def mutate_and_compute_obj(self, variable: VrpSolution) -> Tuple[VrpSolution, LocalMove, Dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(self, variable: VrpSolution) -> tuple[VrpSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if (
             variable.length is None
             or variable.lengths is None
@@ -490,6 +491,6 @@ class MutationTwoOptVRP(Mutation):
                 self.vrp_model.evaluate(variable),
             )
 
-    def mutate(self, variable: VrpSolution) -> Tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, variable: VrpSolution) -> tuple[VrpSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         v, move, f = self.mutate_and_compute_obj(variable)
         return v, move

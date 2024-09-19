@@ -5,8 +5,9 @@
 import json
 import logging
 import os
+from collections.abc import Hashable
 from datetime import timedelta
-from typing import Any, Dict, Hashable, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 from deprecation import deprecated
 from minizinc import Instance, Model, Solver
@@ -143,7 +144,7 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             "s"
         ]  # For now, I've put the var name of the CP model (not the rcpsp_model)
         self.stats = []
-        self.keys_in_instance: Optional[List[str]] = None
+        self.keys_in_instance: Optional[list[str]] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "single")
@@ -250,7 +251,7 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         s = "constraint (s[" + str(ind) + "]+d[" + str(ind) + "]==objective);\n"
         return [s]
 
-    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_ending_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         s = (
             """int: nb_indexes="""
@@ -263,7 +264,7 @@ class CP_RCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         )
         return [s]
 
-    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_starting_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         s = (
             """int: nb_indexes="""
@@ -371,14 +372,14 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             "mrun",
         ]  # For now, I've put the var names of the CP model (not the rcpsp_model)
         self.calendar = self.problem.is_varying_resource()
-        self.keys_in_instance: Optional[List[str]] = None
+        self.keys_in_instance: Optional[list[str]] = None
 
         # Utility objects to map minizinc vars and do vars.
-        self.modeindex_map: Optional[Dict[int, Dict[str, Any]]] = None
+        self.modeindex_map: Optional[dict[int, dict[str, Any]]] = None
         self.mode_dict_task_mode_to_index_minizinc: Optional[
-            Dict[Tuple[Hashable, int], int]
+            dict[tuple[Hashable, int], int]
         ] = None
-        self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
+        self.index_in_minizinc: Optional[dict[Hashable, int]] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multi")
@@ -544,7 +545,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
             ]
         return s
 
-    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_ending_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         s = (
             """int: nb_indexes="""
@@ -557,7 +558,7 @@ class CP_MRCPSP_MZN(MinizincCPSolver, SolverRCPSP):
         )
         return [s]
 
-    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_starting_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         s = (
             """int: nb_indexes="""
@@ -814,7 +815,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
             ]
         return s
 
-    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_ending_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         s = (
             """int: nb_indexes="""
@@ -827,7 +828,7 @@ class CP_MRCPSP_MZN_WITH_FAKE_TASK(CP_MRCPSP_MZN):
         )
         return [s]
 
-    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_starting_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         s = (
             """int: nb_indexes="""
@@ -867,11 +868,11 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         self.nb_preemptive = None
 
         # Utility objects to map minizinc vars and do vars.
-        self.modeindex_map: Optional[Dict[int, Dict[str, Any]]] = None
+        self.modeindex_map: Optional[dict[int, dict[str, Any]]] = None
         self.mode_dict_task_mode_to_index_minizinc: Optional[
-            Dict[Tuple[Hashable, int], int]
+            dict[tuple[Hashable, int], int]
         ] = None
-        self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
+        self.index_in_minizinc: Optional[dict[Hashable, int]] = None
 
     def init_model(self, **args):
         model_type = args.get("model_type", "multi-preemptive")
@@ -1237,7 +1238,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         )
         return [s]
 
-    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_ending_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
         s = (
@@ -1254,7 +1255,7 @@ class CP_MRCPSP_MZN_PREEMPTIVE(MinizincCPSolver, SolverRCPSP):
         )
         return [s]
 
-    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_starting_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
 
@@ -1492,7 +1493,7 @@ class CP_MRCPSP_MZN_NOBOOL(MinizincCPSolver, SolverRCPSP):
         if self.problem.is_varying_resource():
             self.calendar = True
 
-        self.index_in_minizinc: Optional[Dict[Hashable, int]] = None
+        self.index_in_minizinc: Optional[dict[Hashable, int]] = None
 
     def init_model(self, **args):
         add_objective_makespan = args.get("add_objective_makespan", True)
@@ -1917,7 +1918,7 @@ def precompute_possible_starting_time_interval(problem: RCPSPModelPreemptive):
 
 
 def hard_start_times(
-    dict_start_times: Dict[Hashable, int],
+    dict_start_times: dict[Hashable, int],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
@@ -1934,7 +1935,7 @@ def hard_start_times(
 
 
 def soft_start_times(
-    dict_start_times: Dict[Hashable, int],
+    dict_start_times: dict[Hashable, int],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     list_task = list(dict_start_times.keys())
@@ -1959,7 +1960,7 @@ def soft_start_times(
 
 
 def hard_start_times_mrcpsp(
-    dict_start_times: Dict[Hashable, int],
+    dict_start_times: dict[Hashable, int],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     constraint_strings = []
@@ -1976,7 +1977,7 @@ def hard_start_times_mrcpsp(
 
 
 def soft_start_times_mrcpsp(
-    dict_start_times: Dict[Hashable, int],
+    dict_start_times: dict[Hashable, int],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     list_task = list(dict_start_times.keys())
@@ -2001,7 +2002,7 @@ def soft_start_times_mrcpsp(
 
 
 def soft_start_together_mrcpsp(
-    list_start_together: List[Tuple[Hashable, Hashable]],
+    list_start_together: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     s = (
@@ -2026,7 +2027,7 @@ def soft_start_together_mrcpsp(
 
 
 def hard_start_together_mrcpsp(
-    list_start_together: List[Tuple[Hashable, Hashable]],
+    list_start_together: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     constraint_strings = []
@@ -2043,7 +2044,7 @@ def hard_start_together_mrcpsp(
 
 
 def soft_start_together(
-    list_start_together: List[Tuple[Hashable, Hashable]],
+    list_start_together: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     s = (
@@ -2068,7 +2069,7 @@ def soft_start_together(
 
 
 def hard_start_together(
-    list_start_together: List[Tuple[Hashable, Hashable]],
+    list_start_together: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
@@ -2085,7 +2086,7 @@ def hard_start_together(
 
 
 def hard_start_after_nunit(
-    list_start_after_nunit: List[Tuple[Hashable, Hashable, int]],
+    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     constraint_strings = []
@@ -2104,7 +2105,7 @@ def hard_start_after_nunit(
 
 
 def soft_start_after_nunit(
-    list_start_after_nunit: List[Tuple[Hashable, Hashable, int]],
+    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     s = (
@@ -2143,7 +2144,7 @@ def soft_start_after_nunit(
 
 
 def hard_start_after_nunit_mrcpsp(
-    list_start_after_nunit: List[Tuple[Hashable, Hashable, int]],
+    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     constraint_strings = []
@@ -2162,7 +2163,7 @@ def hard_start_after_nunit_mrcpsp(
 
 
 def soft_start_after_nunit_mrcpsp(
-    list_start_after_nunit: List[Tuple[Hashable, Hashable, int]],
+    list_start_after_nunit: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     s = (
@@ -2254,7 +2255,7 @@ def hard_start_at_end_plus_offset(
 
 
 def soft_start_at_end_plus_offset_mrcpsp(
-    list_start_at_end_plus_offset: List[Tuple[Hashable, Hashable, int]],
+    list_start_at_end_plus_offset: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     s = (
@@ -2293,7 +2294,7 @@ def soft_start_at_end_plus_offset_mrcpsp(
 
 
 def soft_start_at_end_plus_offset(
-    list_start_at_end_plus_offset: List[Tuple[Hashable, Hashable, int]],
+    list_start_at_end_plus_offset: list[tuple[Hashable, Hashable, int]],
     cp_solver: Union[CP_RCPSP_MZN_PREEMPTIVE, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN],
 ):
     s = (
@@ -2337,7 +2338,7 @@ def soft_start_at_end_plus_offset(
 
 
 def hard_start_at_end_mrcpsp(
-    list_start_at_end: List[Tuple[Hashable, Hashable]],
+    list_start_at_end: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     constraint_strings = []
@@ -2356,7 +2357,7 @@ def hard_start_at_end_mrcpsp(
 
 
 def soft_start_at_end_mrcpsp(
-    list_start_at_end: List[Tuple[Hashable, Hashable]],
+    list_start_at_end: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     s = (
@@ -2381,7 +2382,7 @@ def soft_start_at_end_mrcpsp(
 
 
 def hard_start_at_end(
-    list_start_at_end: List[Tuple[Hashable, Hashable]],
+    list_start_at_end: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     constraint_strings = []
@@ -2409,7 +2410,7 @@ def hard_start_at_end(
 
 
 def soft_start_at_end(
-    list_start_at_end: List[Tuple[Hashable, Hashable]],
+    list_start_at_end: list[tuple[Hashable, Hashable]],
     cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     s = (
@@ -2441,7 +2442,7 @@ def soft_start_at_end(
 
 
 def soft_start_window(
-    start_times_window: Dict[Hashable, Tuple[int, int]],
+    start_times_window: dict[Hashable, tuple[int, int]],
     cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     l_low = [
@@ -2491,7 +2492,7 @@ def soft_start_window(
 
 
 def soft_end_window(
-    end_times_window: Dict[Hashable, Tuple[int, int]],
+    end_times_window: dict[Hashable, tuple[int, int]],
     cp_solver: Union[CP_RCPSP_MZN, CP_MRCPSP_MZN_PREEMPTIVE, CP_RCPSP_MZN_PREEMPTIVE],
 ):
     l_low = [
@@ -2548,7 +2549,7 @@ def soft_end_window(
 
 
 def soft_start_window_mrcpsp(
-    start_times_window: Dict[Hashable, Tuple[int, int]],
+    start_times_window: dict[Hashable, tuple[int, int]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     l_low = [
@@ -2598,7 +2599,7 @@ def soft_start_window_mrcpsp(
 
 
 def soft_end_window_mrcpsp(
-    end_times_window: Dict[Hashable, Tuple[int, int]],
+    end_times_window: dict[Hashable, tuple[int, int]],
     cp_solver: Union[CP_MRCPSP_MZN, CP_MRCPSP_MZN_WITH_FAKE_TASK, CP_MRCPSP_MZN_NOBOOL],
 ):
     l_low = [
@@ -2648,7 +2649,7 @@ def soft_end_window_mrcpsp(
 
 
 def hard_start_window(
-    start_times_window: Dict[Hashable, Tuple[int, int]],
+    start_times_window: dict[Hashable, tuple[int, int]],
     cp_solver: Union[
         CP_RCPSP_MZN,
         CP_MRCPSP_MZN_PREEMPTIVE,
@@ -2676,7 +2677,7 @@ def hard_start_window(
 
 
 def hard_end_window(
-    end_times_window: Dict[Hashable, Tuple[int, int]],
+    end_times_window: dict[Hashable, tuple[int, int]],
     cp_solver: Union[
         CP_RCPSP_MZN,
         CP_MRCPSP_MZN_PREEMPTIVE,

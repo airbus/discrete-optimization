@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 from enum import Enum
-from typing import Tuple
 
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -48,7 +47,7 @@ class RestartHandler:
 
     def restart(
         self, cur_solution: Solution, cur_objective: fitness_class
-    ) -> Tuple[Solution, fitness_class]:
+    ) -> tuple[Solution, fitness_class]:
         return cur_solution, cur_objective
 
 
@@ -62,7 +61,7 @@ class RestartHandlerLimit(RestartHandler):
 
     def restart(
         self, cur_solution: Solution, cur_objective: fitness_class
-    ) -> Tuple[Solution, fitness_class]:
+    ) -> tuple[Solution, fitness_class]:
         if (
             self.nb_iteration_no_global_improve > self.nb_iteration_no_improvement
             or self.nb_iteration_no_local_improve > self.nb_iteration_no_improvement

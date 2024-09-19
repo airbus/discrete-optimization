@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import clingo
 
@@ -130,7 +130,7 @@ class ColoringASPSolver(ASPClingoSolver, SolverColoringWithStartingSolution):
                 s += f"fixed_color({index_node+1}, c_{value}). "
         return s
 
-    def compute_clever_colors_map(self, colors_name: List[str]):
+    def compute_clever_colors_map(self, colors_name: list[str]):
         colors_to_protect = set()
         colors_to_index = {}
         if self.problem.has_constraints_coloring:

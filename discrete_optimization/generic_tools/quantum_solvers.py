@@ -4,7 +4,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Union
 
 from discrete_optimization.coloring.solvers.coloring_quantum import (
     QAOAColoringSolver_FeasibleNbColor,
@@ -35,7 +35,7 @@ from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
 from discrete_optimization.tsp.solver.tsp_quantum import QAOATSPSolver, VQETSPSolver
 from discrete_optimization.tsp.tsp_model import TSPModel2D
 
-solvers_coloring: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+solvers_coloring: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAColoringSolver_MinimizeNbColor,
@@ -64,7 +64,7 @@ for key in solvers_coloring:
         solvers_map_coloring[solver] = (key, param)
 
 
-solvers_mis: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+solvers_mis: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAMisSolver,
@@ -84,7 +84,7 @@ for key in solvers_mis:
     for solver, param in solvers_mis[key]:
         solvers_map_mis[solver] = (key, param)
 
-solvers_facility: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+solvers_facility: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAFacilitySolver,
@@ -105,7 +105,7 @@ for key in solvers_facility:
         solvers_map_facility[solver] = (key, param)
 
 
-solvers_tsp: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+solvers_tsp: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOATSPSolver,
@@ -125,7 +125,7 @@ for key in solvers_mis:
     for solver, param in solvers_tsp[key]:
         solvers_map_mis[solver] = (key, param)
 
-solvers_knapsack: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+solvers_knapsack: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAKnapsackSolver,
@@ -147,9 +147,9 @@ for key in solvers_mis:
 
 
 def solve(
-    method: Type[QiskitSolver],
+    method: type[QiskitSolver],
     problem: Union[MisProblem, TSPModel2D, KnapsackModel, FacilityProblem2DPoints],
-    **kwargs: Any
+    **kwargs: Any,
 ) -> ResultStorage:
     """Solve a problem instance with a given class of solver.
 
@@ -171,7 +171,7 @@ def solve(
 
 
 def solve_coloring(
-    method: Type[QiskitSolver], problem: ColoringProblem, nb_color, **kwargs: Any
+    method: type[QiskitSolver], problem: ColoringProblem, nb_color, **kwargs: Any
 ) -> ResultStorage:
     """Solve a problem instance with a given class of solver.
 

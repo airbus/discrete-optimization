@@ -2,8 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict
-
 import numpy as np
 
 from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
@@ -21,8 +19,8 @@ class MultiSkillToRCPSP:
 
     def is_compatible(
         self,
-        task_requirements: Dict[str, int],
-        ressource_availability: Dict[str, np.array],
+        task_requirements: dict[str, int],
+        ressource_availability: dict[str, np.array],
         duration_task,
         horizon,
     ):

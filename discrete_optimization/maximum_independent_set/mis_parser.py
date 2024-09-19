@@ -1,5 +1,6 @@
 import os
-from typing import Any, Dict, Hashable, List, Optional, Tuple
+from collections.abc import Hashable
+from typing import Any, Optional
 
 import networkx as nx
 
@@ -12,7 +13,7 @@ os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """Get datasets available for mis.
 
     Params:
@@ -50,8 +51,8 @@ def dimacs_parser(filename: str):
     first_line = lines[0].split()
     node_count = int(first_line[2])
     edge_count = int(first_line[3])
-    edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]] = []
-    nodes: List[Tuple[Hashable, Dict[str, Any]]] = [(i, {}) for i in range(node_count)]
+    edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
+    nodes: list[tuple[Hashable, dict[str, Any]]] = [(i, {}) for i in range(node_count)]
     for i in range(1, edge_count + 1):
         line = lines[i]
         parts = line.split()
@@ -73,8 +74,8 @@ def basic_parser(filename: str):
     first_line = lines[0].split()
     node_count = int(first_line[0])
     edge_count = int(first_line[1])
-    edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]] = []
-    nodes: List[Tuple[Hashable, Dict[str, Any]]] = [(i, {}) for i in range(node_count)]
+    edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
+    nodes: list[tuple[Hashable, dict[str, Any]]] = [(i, {}) for i in range(node_count)]
     for i in range(1, edge_count + 1):
         line = lines[i]
         parts = line.split()

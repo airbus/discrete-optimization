@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import random
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pytest
@@ -83,7 +83,7 @@ class LNS_OrtoolsCPSat_Mix(LNS_OrtoolsCPSat):
 
     """
 
-    generated_constraint_handlers: List[ConstraintHandlerMix] = []
+    generated_constraint_handlers: list[ConstraintHandlerMix] = []
 
     hyperparameters = [
         h for h in LNS_OrtoolsCPSat.hyperparameters if h.name != "constraint_handler"
@@ -109,7 +109,7 @@ class LNS_OrtoolsCPSat_Mix(LNS_OrtoolsCPSat):
     def __init__(
         self,
         problem: Problem,
-        list_constraint_handlers: Optional[List[ConstraintHandler]] = None,
+        list_constraint_handlers: Optional[list[ConstraintHandler]] = None,
         subsolver: Optional[OrtoolsCPSatSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
         post_process_solution: Optional[PostProcessSolution] = None,

@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import logging
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -138,8 +138,8 @@ class VrpORToolsSolver(SolverVrp):
             raise RuntimeError(
                 "self.manager should be not None when calling self.retrieve()."
             )
-        vehicle_tours: List[List[int]] = []
-        vehicle_tours_all: List[List[int]] = []
+        vehicle_tours: list[list[int]] = []
+        vehicle_tours_all: list[list[int]] = []
         vehicle_count: int = self.problem.vehicle_count
         objective = 0.0
         route_distance = 0.0

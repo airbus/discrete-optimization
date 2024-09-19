@@ -10,7 +10,7 @@ Results can be viewed on optuna-dashboard with:
 """
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Type
+from typing import Any
 
 import optuna
 from optuna.storages import JournalFileStorage, JournalStorage
@@ -44,8 +44,8 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 
 # Solvers to test
-solvers_to_test: List[Type[SolverDO]] = [ORToolsGPDP]
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+solvers_to_test: list[type[SolverDO]] = [ORToolsGPDP]
+kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs factory for unspecified solvers
     {
         ORToolsGPDP: dict(
@@ -62,7 +62,7 @@ kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
 )
 # we need to map the classes to a unique string, to be seen as a categoricale hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
-solvers_by_name: Dict[str, Type[SolverDO]] = {
+solvers_by_name: dict[str, type[SolverDO]] = {
     cls.__name__: cls for cls in solvers_to_test
 }
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -52,7 +52,7 @@ class SequentialMetasolver(SolverDO):
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        list_subbricks: Optional[List[SubBrick]] = None,
+        list_subbricks: Optional[list[SubBrick]] = None,
         **kwargs,
     ):
         """
@@ -85,7 +85,7 @@ class SequentialMetasolver(SolverDO):
                 )
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         # wrap all callbacks in a single one
         callbacks_list = CallbackList(callbacks=callbacks)

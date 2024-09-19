@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import List, Union
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def compute_resource_consumption(
     rcpsp_model: RCPSPModelPreemptive,
     rcpsp_sol: RCPSPSolutionPreemptive,
-    list_resources: List[Union[int, str]] = None,
+    list_resources: list[Union[int, str]] = None,
     future_view=True,
 ):
     modes_dict = rcpsp_model.get_modes_dict(rcpsp_sol)
@@ -58,7 +58,7 @@ def compute_resource_consumption(
 def compute_nice_resource_consumption(
     rcpsp_model: RCPSPModelPreemptive,
     rcpsp_sol: RCPSPSolutionPreemptive,
-    list_resources: List[Union[int, str]] = None,
+    list_resources: list[Union[int, str]] = None,
 ):
     if list_resources is None:
         list_resources = rcpsp_model.resources_list
@@ -83,7 +83,7 @@ def compute_nice_resource_consumption(
 def plot_ressource_view(
     rcpsp_model: RCPSPModelPreemptive,
     rcpsp_sol: RCPSPSolutionPreemptive,
-    list_resource: List[Union[int, str]] = None,
+    list_resource: list[Union[int, str]] = None,
     title_figure="",
     x_lim=None,
     fig=None,
@@ -282,7 +282,7 @@ def plot_task_gantt(
 def compute_schedule_per_resource_individual(
     rcpsp_model: RCPSPModelPreemptive,
     rcpsp_sol: RCPSPSolutionPreemptive,
-    resource_types_to_consider: List[str] = None,
+    resource_types_to_consider: list[str] = None,
 ):
     modes_dict = rcpsp_model.build_mode_dict(
         rcpsp_modes_from_solution=rcpsp_sol.rcpsp_modes
@@ -452,7 +452,7 @@ def compute_schedule_per_resource_individual(
 def plot_resource_individual_gantt(
     rcpsp_model: RCPSPModelPreemptive,
     rcpsp_sol: RCPSPSolutionPreemptive,
-    resource_types_to_consider: List[str] = None,
+    resource_types_to_consider: list[str] = None,
     title_figure="",
     x_lim=None,
     fig=None,

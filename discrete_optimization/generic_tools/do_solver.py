@@ -6,7 +6,8 @@
 from __future__ import annotations  # see annotations as str
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -50,7 +51,7 @@ class SolverDO(Hyperparametrizable, ABC):
 
     @abstractmethod
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         """Generic solving function.
 
@@ -67,7 +68,7 @@ class SolverDO(Hyperparametrizable, ABC):
         ...
 
     def create_result_storage(
-        self, list_solution_fits: Optional[List[Tuple[Solution, fitness_class]]] = None
+        self, list_solution_fits: Optional[list[tuple[Solution, fitness_class]]] = None
     ) -> ResultStorage:
         """Create a result storage with the proper mode_optim.
 
@@ -103,7 +104,7 @@ class SolverDO(Hyperparametrizable, ABC):
         """
         return None
 
-    def get_model_objectives_available(self) -> List[str]:
+    def get_model_objectives_available(self) -> list[str]:
         """List objectives available for lexico optimization
 
         It corresponds to the labels accepted for obj argument for
@@ -229,7 +230,7 @@ class TrivialSolverFromResultStorage(SolverDO, WarmstartMixin):
         self.result_storage = result_storage
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.result_storage
 
@@ -257,7 +258,7 @@ class TrivialSolverFromSolution(SolverDO):
         self.set_warm_start(solution)
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         return self.result_storage
 

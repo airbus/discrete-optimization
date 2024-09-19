@@ -4,7 +4,8 @@
 
 import logging
 import random
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 import numpy as np
 from deap import algorithms, base, creator, tools
@@ -65,11 +66,11 @@ class Nsga(SolverDO, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
-        objectives: Union[str, List[str]],
+        objectives: Union[str, list[str]],
         mutation: Optional[Union[Mutation, DeapMutation]] = None,
         crossover: Optional[DeapCrossover] = None,
-        encoding: Optional[Union[str, Dict[str, Any]]] = None,
-        objective_weights: Optional[List[float]] = None,
+        encoding: Optional[Union[str, dict[str, Any]]] = None,
+        objective_weights: Optional[list[float]] = None,
         pop_size: int = 100,
         max_evals: Optional[int] = None,
         mut_rate: float = 0.1,
@@ -79,7 +80,7 @@ class Nsga(SolverDO, WarmstartMixin):
         self.problem = problem
         if not hasattr(self.problem, "evaluate_from_encoding"):
             raise ValueError("self.problem shoud define an evaluate_from_encoding()")
-            # self.problem.evaluate_from_encoding: Callable[[List[int], str], Dict[str, float]]
+            # self.problem.evaluate_from_encoding: Callable[[list[int], str], dict[str, float]]
         self._pop_size = pop_size
         if max_evals is not None:
             self._max_evals = max_evals
@@ -119,7 +120,7 @@ class Nsga(SolverDO, WarmstartMixin):
                         encoding_name
                     ]["arities"]
 
-        if encoding is not None and isinstance(encoding, Dict):
+        if encoding is not None and isinstance(encoding, dict):
             # check there is a type key and a n key
             if (
                 "name" in encoding.keys()
@@ -184,7 +185,7 @@ class Nsga(SolverDO, WarmstartMixin):
             self._objectives = [objectives]
         else:
             self._objectives = objectives
-        self._objective_weights: List[float]
+        self._objective_weights: list[float]
         if (objective_weights is None) or (
             objective_weights is not None
             and (len(objective_weights) != len(self._objectives))
@@ -335,7 +336,7 @@ class Nsga(SolverDO, WarmstartMixin):
         # No choice of selection: In NSGA, only 1 selection: Non Dominated Sorted Selection
         self._toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
-    def evaluate_problem(self, int_vector: List[int]) -> Tuple[float, ...]:
+    def evaluate_problem(self, int_vector: list[int]) -> tuple[float, ...]:
         objective_values = self.problem.evaluate_from_encoding(  # type: ignore
             int_vector, self._encoding_variable_name
         )

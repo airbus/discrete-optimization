@@ -4,7 +4,7 @@
 import logging
 import os
 import random
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -97,7 +97,7 @@ class KnapsackDecomposedSolver(SolverKnapsack, WarmstartMixin):
         sol: KnapsackSolution,
         original_knapsack_model: KnapsackModel,
         original_solution: KnapsackSolution,
-        indexes_to_remove: Set[int],
+        indexes_to_remove: set[int],
     ):
         """
         Rebuild a knapsack solution object from a partial solution.
@@ -129,7 +129,7 @@ class KnapsackDecomposedSolver(SolverKnapsack, WarmstartMixin):
         self.initial_solution = solution
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         # wrap all callbacks in a single one
         callbacks_list = CallbackList(callbacks=callbacks)
@@ -146,11 +146,11 @@ class KnapsackDecomposedSolver(SolverKnapsack, WarmstartMixin):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         initial_solver: SubBrick = kwargs["initial_solver"]
-        initial_solver_cls: Type[SolverKnapsack] = initial_solver.cls
+        initial_solver_cls: type[SolverKnapsack] = initial_solver.cls
         initial_solver_kwargs = initial_solver.kwargs
 
         root_solver: SubBrick = kwargs["root_solver"]
-        root_solver_cls: Type[SolverKnapsack] = root_solver.cls
+        root_solver_cls: type[SolverKnapsack] = root_solver.cls
         root_solver_kwargs = root_solver.kwargs
 
         nb_iteration = kwargs["nb_iteration"]

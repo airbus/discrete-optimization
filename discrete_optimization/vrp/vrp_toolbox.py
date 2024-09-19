@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Tuple
 
 import networkx as nx
 import numpy as np
@@ -13,7 +12,7 @@ from discrete_optimization.vrp.vrp_model import VrpProblem
 logger = logging.getLogger(__name__)
 
 
-def compute_length_matrix(vrp_model: VrpProblem) -> Tuple[np.ndarray, np.ndarray]:
+def compute_length_matrix(vrp_model: VrpProblem) -> tuple[np.ndarray, np.ndarray]:
     nb_customers = vrp_model.customer_count
     matrix_distance = np.zeros((nb_customers, nb_customers))
     for f in range(nb_customers):
@@ -26,7 +25,7 @@ def compute_length_matrix(vrp_model: VrpProblem) -> Tuple[np.ndarray, np.ndarray
 
 def prune_search_space(
     vrp_model: VrpProblem, n_shortest: int = 10
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     closest, matrix_distance = compute_length_matrix(vrp_model)
     matrix_adjacency = np.zeros(matrix_distance.shape, dtype=np.int_)
     nb_customers = vrp_model.customer_count
@@ -41,7 +40,7 @@ def prune_search_space(
     return matrix_adjacency, matrix_distance
 
 
-def build_graph(vrp_model: VrpProblem) -> Tuple[nx.Graph, np.ndarray]:
+def build_graph(vrp_model: VrpProblem) -> tuple[nx.Graph, np.ndarray]:
     matrix_adjacency, matrix_distance = prune_search_space(
         vrp_model=vrp_model, n_shortest=vrp_model.customer_count
     )

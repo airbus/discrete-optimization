@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 # Thanks to Leuven university for the cpmyp library.
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from cpmpy import Model, boolvar
 
@@ -29,7 +29,7 @@ class CPMPYKnapsackSolver(SolverKnapsack):
             problem=problem, params_objective_function=params_objective_function
         )
         self.model: Optional[Model] = None
-        self.variables: Dict[str, Any] = {}
+        self.variables: dict[str, Any] = {}
 
     def init_model(self, **kwargs: Any) -> None:
         values = [

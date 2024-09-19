@@ -10,7 +10,7 @@ Results can be viewed on optuna-dashboard with:
 """
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Type
+from typing import Any
 
 import optuna
 from optuna.storages import JournalFileStorage, JournalStorage
@@ -42,18 +42,18 @@ study_name = f"coloring_cpsat-auto-250_7"
 storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 # Solvers to test and their associated kwargs
-solvers_to_test: List[Type[SolverDO]] = [ColoringCPSatSolver]
+solvers_to_test: list[type[SolverDO]] = [ColoringCPSatSolver]
 
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {ColoringCPSatSolver: dict(parameters_cp=p, time_limit=10)},
 )
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
-solvers_by_name: Dict[str, Type[SolverDO]] = {
+solvers_by_name: dict[str, type[SolverDO]] = {
     cls.__name__: cls for cls in solvers_to_test
 }
 

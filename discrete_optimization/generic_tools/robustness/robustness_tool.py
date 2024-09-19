@@ -4,8 +4,9 @@
 
 import logging
 import random
+from collections.abc import Callable
 from multiprocessing import Pool
-from typing import Callable, List, Optional
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,9 +56,9 @@ class RobustnessTool:
     def __init__(
         self,
         base_instance: RCPSPModel,
-        all_instances: List[RCPSPModel],
-        train_instance: Optional[List[RCPSPModel]] = None,
-        test_instance: Optional[List[RCPSPModel]] = None,
+        all_instances: list[RCPSPModel],
+        train_instance: Optional[list[RCPSPModel]] = None,
+        test_instance: Optional[list[RCPSPModel]] = None,
         proportion_train: float = 0.8,
     ):
         self.base_instance = base_instance
@@ -89,9 +90,9 @@ class RobustnessTool:
 
     def get_models(
         self, apriori: bool = True, aposteriori: bool = True
-    ) -> List[RCPSPModel]:
-        models: List[RCPSPModel] = []
-        tags: List[str] = []
+    ) -> list[RCPSPModel]:
+        models: list[RCPSPModel] = []
+        tags: list[str] = []
         if aposteriori:
             models += [
                 self.model_aggreg_mean,
@@ -127,7 +128,7 @@ class RobustnessTool:
         models = self.get_models(apriori, aposteriori)
         p = Pool(min(8, len(models)))
         l = p.map(solve_models_function, models)
-        solutions: List[RCPSPSolution] = [li.get_best_solution_fit()[0] for li in l]  # type: ignore
+        solutions: list[RCPSPSolution] = [li.get_best_solution_fit()[0] for li in l]  # type: ignore
         results = np.zeros((len(solutions), len(self.test_instance), 3))
         for index_instance in range(len(self.test_instance)):
             logger.debug(f"Evaluating in instance #{index_instance}")

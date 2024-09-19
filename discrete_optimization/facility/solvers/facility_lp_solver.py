@@ -5,7 +5,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 import mip
 import numpy as np
@@ -60,7 +61,7 @@ else:
 
 def compute_length_matrix(
     facility_problem: FacilityProblem,
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.float64]]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.float64]]:
     """Precompute all the cost of allocation in a matrix form.
 
     A matrix "closest" is also computed, sorting for each customers the facility by distance.
@@ -88,7 +89,7 @@ def compute_length_matrix(
 
 def prune_search_space(
     facility_problem: FacilityProblem, n_cheapest: int = 10, n_shortest: int = 10
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Utility function that can prune the search space.
 
     Output of this function will be used to :
@@ -150,8 +151,8 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
             problem=problem, params_objective_function=params_objective_function
         )
         self.model = None
-        self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
-        self.constraints_dict: Dict[str, Dict[int, Any]] = {}
+        self.variable_decision: dict[str, dict[tuple[int, int], Union[int, Any]]] = {}
+        self.constraints_dict: dict[str, dict[int, Any]] = {}
         self.description_variable_description = {
             "x": {
                 "shape": (0, 0),
@@ -161,7 +162,7 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint: Dict[str, Dict[str, str]] = {}
+        self.description_constraint: dict[str, dict[str, str]] = {}
 
     def retrieve_current_solution(
         self,
@@ -221,7 +222,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin
                 n_shortest=nb_facilities,
             )
         s = Model("facilities")
-        x: Dict[Tuple[int, int], Union[int, Any]] = {}
+        x: dict[tuple[int, int], Union[int, Any]] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 if matrix_fc_indicator[f, c] == 0:
@@ -233,7 +234,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin
         facilities = self.problem.facilities
         customers = self.problem.customers
         used = s.addVars(nb_facilities, vtype=GRB.BINARY, name="y")
-        constraints_customer: Dict[
+        constraints_customer: dict[
             int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
         ] = {}
         for c in range(nb_customers):
@@ -241,7 +242,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin
                 quicksum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity: Dict[
+        constraint_capacity: dict[
             int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
         ] = {}
         for f in range(nb_facilities):
@@ -321,8 +322,8 @@ class LP_Facility_Solver_CBC(SolverFacility):
             problem=problem, params_objective_function=params_objective_function
         )
         self.model = None
-        self.variable_decision: Dict[str, Dict[Tuple[int, int], Union[int, Any]]] = {}
-        self.constraints_dict: Dict[str, Dict[int, Any]] = {}
+        self.variable_decision: dict[str, dict[tuple[int, int], Union[int, Any]]] = {}
+        self.constraints_dict: dict[str, dict[int, Any]] = {}
         self.description_variable_description = {
             "x": {
                 "shape": (0, 0),
@@ -332,7 +333,7 @@ class LP_Facility_Solver_CBC(SolverFacility):
                 "that the customer c is dealt with facility f",
             }
         }
-        self.description_constraint: Dict[str, Dict[str, str]] = {}
+        self.description_constraint: dict[str, dict[str, str]] = {}
 
     def init_model(self, **kwargs: Any) -> None:
         nb_facilities = self.problem.facility_count
@@ -352,7 +353,7 @@ class LP_Facility_Solver_CBC(SolverFacility):
                 n_shortest=nb_facilities,
             )
         s = pywraplp.Solver("facility", pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-        x: Dict[Tuple[int, int], Union[int, Any]] = {}
+        x: dict[tuple[int, int], Union[int, Any]] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 if matrix_fc_indicator[f, c] == 0:
@@ -366,13 +367,13 @@ class LP_Facility_Solver_CBC(SolverFacility):
         used = [
             s.BoolVar(name="y_" + str(j)) for j in range(self.problem.facility_count)
         ]
-        constraints_customer: Dict[int, Any] = {}
+        constraints_customer: dict[int, Any] = {}
         for c in range(nb_customers):
             constraints_customer[c] = s.Add(
                 s.Sum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity: Dict[int, Any] = {}
+        constraint_capacity: dict[int, Any] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 s.Add(used[f] >= x[f, c])
@@ -502,7 +503,7 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         s = mip.Model(
             name="facilities", sense=mip.MINIMIZE, solver_name=self.solver_name
         )
-        x: Dict[Tuple[int, int], Union[int, Any]] = {}
+        x: dict[tuple[int, int], Union[int, Any]] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 if matrix_fc_indicator[f, c] == 0:
@@ -516,13 +517,13 @@ class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
         facilities = self.problem.facilities
         customers = self.problem.customers
         used = s.add_var_tensor((nb_facilities, 1), var_type=GRB.BINARY, name="y")
-        constraints_customer: Dict[int, Any] = {}
+        constraints_customer: dict[int, Any] = {}
         for c in range(nb_customers):
             constraints_customer[c] = s.add_constr(
                 mip.xsum([x[f, c] for f in range(nb_facilities)]) == 1
             )
             # one facility
-        constraint_capacity: Dict[int, Any] = {}
+        constraint_capacity: dict[int, Any] = {}
         for f in range(nb_facilities):
             for c in range(nb_customers):
                 s.add_constr(used[f, 0] >= x[f, c])

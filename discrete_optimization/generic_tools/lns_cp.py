@@ -6,7 +6,8 @@ import logging
 import random
 import sys
 from abc import abstractmethod
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 import numpy as np
 from minizinc import Instance
@@ -34,12 +35,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     fitness_class,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pylint: disable=no-name-in-module
-else:
-    from typing_extensions import TypedDict
-
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +74,7 @@ class BaseLNS_CP(BaseLNS):
         nb_iteration_no_improvement: Optional[int] = None,
         skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with an LNS loop

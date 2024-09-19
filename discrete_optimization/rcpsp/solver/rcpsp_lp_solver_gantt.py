@@ -4,7 +4,8 @@
 
 import logging
 import random
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 import networkx as nx
 from mip import BINARY, MINIMIZE, Model, xsum
@@ -46,7 +47,7 @@ def intersect(i1, i2):
 
 
 class ConstraintTaskIndividual:
-    list_tuple: List[Tuple[str, int, int, bool]]
+    list_tuple: list[tuple[str, int, int, bool]]
     # task, resource, resource_individual, has or has not to do a task
     # indicates constraint for a given resource individual that has to do a task
 
@@ -57,7 +58,7 @@ class ConstraintTaskIndividual:
 class ConstraintWorkDuration:
     ressource: str
     individual: int
-    time_bounds: Tuple[int, int]
+    time_bounds: tuple[int, int]
     working_time_upper_bound: int
 
     def __init__(self, ressource, individual, time_bounds, working_time_upper_bound):
@@ -131,7 +132,7 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
         self,
         get_var_value_for_current_solution: Callable[[Any], float],
         get_obj_value_for_current_solution: Callable[[], float],
-    ) -> Tuple[Dict[Any, Dict[Any, Dict[Any, Any]]], float]:
+    ) -> tuple[dict[Any, dict[Any, dict[Any, Any]]], float]:
         objective = get_obj_value_for_current_solution()
         resource_id_usage = {
             k: {
@@ -409,7 +410,7 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
         self,
         get_var_value_for_current_solution: Callable[[Any], float],
         get_obj_value_for_current_solution: Callable[[], float],
-    ) -> Tuple[Dict[Any, Dict[Any, Dict[Any, Any]]], float]:
+    ) -> tuple[dict[Any, dict[Any, dict[Any, Any]]], float]:
         objective = get_obj_value_for_current_solution()
         resource_id_usage = {
             k: {
@@ -427,8 +428,8 @@ class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
 
     def build_objective_function_from_a_solution(
         self,
-        ressource_usage: Dict[str, Dict[int, Dict[int, bool]]],
-        ignore_tuple: Set[Tuple[str, int, int]] = None,
+        ressource_usage: dict[str, dict[int, dict[int, bool]]],
+        ignore_tuple: set[tuple[str, int, int]] = None,
     ):
         objective = gurobi.LinExpr(0.0)
         if ignore_tuple is None:

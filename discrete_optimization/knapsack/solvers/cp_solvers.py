@@ -5,7 +5,8 @@
 import logging
 import os
 import random
-from typing import Any, Iterable, Optional, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Any, Optional
 
 from minizinc import Instance, Model, Solver
 

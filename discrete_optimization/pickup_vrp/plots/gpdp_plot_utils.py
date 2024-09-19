@@ -3,8 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import print_function
 
-from typing import Tuple
-
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -16,7 +14,7 @@ from discrete_optimization.pickup_vrp.gpdp import GPDP, GPDPSolution
 def plot_gpdp_solution(
     sol: GPDPSolution,
     problem: GPDP,
-) -> Tuple[Figure, Axes]:
+) -> tuple[Figure, Axes]:
     if problem.coordinates_2d is None:
         raise ValueError(
             "problem.coordinates_2d cannot be None when calling plot_ortools_solution."

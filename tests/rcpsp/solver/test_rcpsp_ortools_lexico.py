@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import pytest
@@ -25,7 +25,7 @@ from discrete_optimization.rcpsp.solver.cpsat_solver import (
 
 class RetrieveSubRes(Callback):
     def __init__(self):
-        self.sol_per_step: List[List[Solution]] = []
+        self.sol_per_step: list[list[Solution]] = []
         self.all_sols = set()
 
     def on_step_end(

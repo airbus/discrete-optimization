@@ -4,7 +4,8 @@
 
 import logging
 import random
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from ortools.sat.python.cp_model import Constraint
 

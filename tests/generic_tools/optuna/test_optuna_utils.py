@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pytest
@@ -64,7 +64,7 @@ class FakeSolver(SolverDO, WarmstartMixin):
         self.nb_colors_warm_start = solution.nb_color
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         param = kwargs["param"]
@@ -96,7 +96,7 @@ class FakeSolver2(SolverDO):
     nb_colors_series = [100 - i for i in range(96)]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         param = kwargs["param2"]
@@ -339,7 +339,7 @@ class FakeMetaSolver(SolverDO):
     ]
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         subbrick = kwargs["subsolver"]
         subsolver_kwargs = dict(subbrick.kwargs)

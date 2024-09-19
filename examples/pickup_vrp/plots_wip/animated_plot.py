@@ -5,7 +5,7 @@
 import os
 from copy import deepcopy
 from functools import reduce
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import cartopy
 import cartopy.crs as ccrs
@@ -17,9 +17,9 @@ from discrete_optimization.pickup_vrp.gpdp import GPDP
 
 class VehicleStatus:
     time: float
-    position: Tuple[float, float]
+    position: tuple[float, float]
     distance: float
-    capacity: Dict[str, int]
+    capacity: dict[str, int]
     status: str
 
     def __init__(self, time, position, distance, capacity, status, name_node):
@@ -46,7 +46,7 @@ class VehicleStatus:
 
 def post_process_solution(result, problem: GPDP, delta_time: int = 10):
     path_aircraft = {}
-    current_vehicle_status: Dict[int, VehicleStatus] = {
+    current_vehicle_status: dict[int, VehicleStatus] = {
         v: None for v in range(problem.number_vehicle)
     }
     vehicle_status_history = {v: [] for v in range(problem.number_vehicle)}
@@ -119,7 +119,7 @@ def post_process_solution(result, problem: GPDP, delta_time: int = 10):
     return path_aircraft, vehicle_status_history
 
 
-def compute_bounds(history: Dict[int, List[VehicleStatus]]):
+def compute_bounds(history: dict[int, list[VehicleStatus]]):
     x_0_min = min(
         [history[v][k].position[0] for v in history for k in range(len(history[v]))]
     )
@@ -136,7 +136,7 @@ def compute_bounds(history: Dict[int, List[VehicleStatus]]):
 
 
 def plot_flights(
-    history: Dict[int, List[VehicleStatus]],
+    history: dict[int, list[VehicleStatus]],
     problem: GPDP,
     plot_all_flight: bool = False,
     plot_network: bool = False,

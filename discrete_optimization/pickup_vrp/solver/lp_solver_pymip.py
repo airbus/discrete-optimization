@@ -4,19 +4,8 @@
 
 import logging
 import random
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Hashable,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from collections.abc import Callable, Hashable, Iterable
+from typing import Any, Optional, Union, cast
 
 import mip
 import networkx as nx
@@ -65,10 +54,10 @@ class MipModelException(Exception):
 def retrieve_current_solution(
     get_var_value_for_current_solution: Callable[[Any], float],
     get_obj_value_for_current_solution: Callable[[], float],
-    variable_decisions: Dict[str, Any],
-) -> Tuple[Dict[str, Dict[Hashable, Any]], float]:
-    results: Dict[str, Dict[Hashable, Any]] = {}
-    xsolution: Dict[int, Dict[Edge, int]] = {
+    variable_decisions: dict[str, Any],
+) -> tuple[dict[str, dict[Hashable, Any]], float]:
+    results: dict[str, dict[Hashable, Any]] = {}
+    xsolution: dict[int, dict[Edge, int]] = {
         v: {} for v in variable_decisions["variables_edges"]
     }
     obj = float(get_obj_value_for_current_solution())
@@ -80,7 +69,7 @@ def retrieve_current_solution(
             if value <= 0.1:
                 continue
             xsolution[vehicle][edge] = 1
-    results["variables_edges"] = cast(Dict[Hashable, Any], xsolution)
+    results["variables_edges"] = cast(dict[Hashable, Any], xsolution)
     for key in variable_decisions:
         if key == "variables_edges":
             continue
@@ -125,16 +114,16 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             milp_solver_name=milp_solver_name,
             **kwargs,
         )
-        self.constraint_on_edge: Dict[int, Any] = {}
-        self.variable_order: Dict[Node, Any] = {}
+        self.constraint_on_edge: dict[int, Any] = {}
+        self.variable_order: dict[Node, Any] = {}
 
     def one_visit_per_node(
         self,
         model: mip.Model,
         nodes_of_interest: Iterable[Node],
-        variables_edges: Dict[int, Dict[Edge, Any]],
-        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        variables_edges: dict[int, dict[Edge, Any]],
+        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> None:
         constraint_one_visit = {}
         for node in nodes_of_interest:
@@ -157,11 +146,11 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         self,
         model: mip.Model,
         nodes_of_interest: Iterable[Node],
-        variables_edges: Dict[int, Dict[Edge, Any]],
-        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+        variables_edges: dict[int, dict[Edge, Any]],
+        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> None:
-        constraint_cluster: Dict[Hashable, Any] = {}
+        constraint_cluster: dict[Hashable, Any] = {}
         for cluster in self.problem.clusters_to_node:
             constraint_cluster[cluster] = model.add_constr(
                 mip.quicksum(
@@ -193,10 +182,10 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
     def resources_constraint(
         self,
         model: mip.Model,
-        variables_edges: Dict[int, Dict[Edge, Any]],
-        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-    ) -> Dict[str, Dict[str, Dict[Node, Any]]]:
+        variables_edges: dict[int, dict[Edge, Any]],
+        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+    ) -> dict[str, dict[str, dict[Node, Any]]]:
         resources = self.problem.resources_set
         resources_variable_coming = {
             r: {
@@ -258,15 +247,15 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
     def simple_capacity_constraint(
         self,
         model: mip.Model,
-        variables_edges: Dict[int, Dict[Edge, Any]],
-        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-    ) -> Dict[str, Dict[int, Dict[str, Any]]]:
+        variables_edges: dict[int, dict[Edge, Any]],
+        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+    ) -> dict[str, dict[int, dict[str, Any]]]:
         # Case where we don't have to track the resource flow etc...
         # we just want to check that we respect the capacity constraint (like in VRP with capacity)
         # we admit that the resource demand/consumption are positive.
         # corresponding to negative flow values in the problem definition.
-        consumption_per_vehicle: Dict[int, Dict[str, Any]] = {
+        consumption_per_vehicle: dict[int, dict[str, Any]] = {
             v: {
                 r: model.add_var(
                     var_type=mip.CONTINUOUS,
@@ -302,10 +291,10 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
     def time_evolution(
         self,
         model: mip.Model,
-        variables_edges: Dict[int, Dict[Edge, Any]],
-        edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-        edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-    ) -> Dict[str, Dict[Node, Any]]:
+        variables_edges: dict[int, dict[Edge, Any]],
+        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+    ) -> dict[str, dict[Node, Any]]:
         time_coming = {
             node: model.add_var(
                 var_type=mip.CONTINUOUS, name="time_coming_" + str(node)
@@ -368,7 +357,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             for n in graph.get_nodes()
             if n not in self.problem.nodes_origin and n not in self.problem.nodes_target
         ]
-        variables_edges: Dict[int, Dict[Edge, Any]]
+        variables_edges: dict[int, dict[Edge, Any]]
         if self.problem.any_grouping:
             variables_edges = {j: {} for j in range(nb_vehicle)}
             for k in self.problem.group_identical_vehicles:
@@ -398,7 +387,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             }
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
-        all_variables: Dict[str, Dict[Any, Any]] = {"variables_edges": variables_edges}
+        all_variables: dict[str, dict[Any, Any]] = {"variables_edges": variables_edges}
         constraint_loop = {}
         for vehicle in variables_edges:
             for e in variables_edges[vehicle]:
@@ -421,14 +410,14 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             variables_edges=variables_edges, clusters_dict=self.problem.clusters_dict
         )
 
-        constraints_out_flow: Dict[Tuple[int, Node], Any] = {}
-        constraints_in_flow: Dict[Union[Tuple[int, Node], Node], Any] = {}
-        constraints_flow_conservation: Dict[
-            Union[Tuple[int, Node], Tuple[int, Node, str]], Any
+        constraints_out_flow: dict[tuple[int, Node], Any] = {}
+        constraints_in_flow: dict[Union[tuple[int, Node], Node], Any] = {}
+        constraints_flow_conservation: dict[
+            Union[tuple[int, Node], tuple[int, Node, str]], Any
         ] = {}
 
-        count_origin: Dict[Node, int] = {}
-        count_target: Dict[Node, int] = {}
+        count_origin: dict[Node, int] = {}
+        count_target: dict[Node, int] = {}
         for vehicle in range(nb_vehicle):
             node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             node_target = self.problem.target_vehicle[name_vehicles[vehicle]]
@@ -686,29 +675,29 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
                 )
             )
 
-        self.edges_in_all_vehicles: Dict[
-            Node, Set[Tuple[int, Edge]]
+        self.edges_in_all_vehicles: dict[
+            Node, set[tuple[int, Edge]]
         ] = edges_in_all_vehicles
-        self.edges_out_all_vehicles: Dict[
-            Node, Set[Tuple[int, Edge]]
+        self.edges_out_all_vehicles: dict[
+            Node, set[tuple[int, Edge]]
         ] = edges_out_all_vehicles
-        self.edges_in_per_vehicles: Dict[
-            int, Dict[Node, Set[Edge]]
+        self.edges_in_per_vehicles: dict[
+            int, dict[Node, set[Edge]]
         ] = edges_in_per_vehicles
-        self.edges_out_per_vehicles: Dict[
-            int, Dict[Node, Set[Edge]]
+        self.edges_out_per_vehicles: dict[
+            int, dict[Node, set[Edge]]
         ] = edges_out_per_vehicles
-        self.edges_in_all_vehicles_cluster: Dict[
-            Hashable, Set[Tuple[int, Edge]]
+        self.edges_in_all_vehicles_cluster: dict[
+            Hashable, set[tuple[int, Edge]]
         ] = edges_in_all_vehicles_cluster
-        self.edges_out_all_vehicles_cluster: Dict[
-            Hashable, Set[Tuple[int, Edge]]
+        self.edges_out_all_vehicles_cluster: dict[
+            Hashable, set[tuple[int, Edge]]
         ] = edges_out_all_vehicles_cluster
-        self.edges_in_per_vehicles_cluster: Dict[
-            int, Dict[Hashable, Set[Edge]]
+        self.edges_in_per_vehicles_cluster: dict[
+            int, dict[Hashable, set[Edge]]
         ] = edges_in_per_vehicles_cluster
-        self.edges_out_per_vehicles_cluster: Dict[
-            int, Dict[Hashable, Set[Edge]]
+        self.edges_out_per_vehicles_cluster: dict[
+            int, dict[Hashable, set[Edge]]
         ] = edges_out_per_vehicles_cluster
         self.variable_decisions = all_variables
         self.model = model
@@ -776,11 +765,11 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
         **kwargs: Any,
-    ) -> List[TemporaryResult]:
+    ) -> list[TemporaryResult]:
         self.optimize_model(
             parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
         )
-        list_temporary_results: List[TemporaryResult] = []
+        list_temporary_results: list[TemporaryResult] = []
         for i in range(self.nb_solutions):
             list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
 
@@ -789,7 +778,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
     def solve_iterative(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         time_limit_subsolver: Optional[float] = 30.0,
         **kwargs: Any,
     ) -> ResultStorage:
@@ -811,7 +800,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
             "reinit", self.solver_name == mip.CBC
         )
         nb_iteration_max = kwargs.get("nb_iteration_max", 10)
-        solutions: List[TemporaryResult] = self.solve_one_iteration(
+        solutions: list[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, time_limit=time_limit_subsolver, **kwargs
         )
         first_solution: TemporaryResult = solutions[0]
@@ -837,7 +826,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         res = self.create_result_storage(
             self.convert_temporaryresults(solutions),
         )
-        list_constraints_tuples: List[Any] = []
+        list_constraints_tuples: list[Any] = []
         list_constraints_tuples += subtour.adding_component_constraints(
             [first_solution]
         )
@@ -922,7 +911,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         self,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit_subsolver: Optional[float] = 30.0,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         return self.solve_iterative(
@@ -933,9 +922,9 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         )
 
     def convert_temporaryresults(
-        self, temporary_results: List[TemporaryResult]
-    ) -> List[Tuple[Solution, Union[float, TupleFitness]]]:
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        self, temporary_results: list[TemporaryResult]
+    ) -> list[tuple[Solution, Union[float, TupleFitness]]]:
+        list_solution_fits: list[tuple[Solution, Union[float, TupleFitness]]] = []
         for temporaryresult in temporary_results:
             solution = convert_temporaryresult_to_gpdpsolution(
                 temporaryresult=temporaryresult, problem=self.problem
@@ -945,7 +934,7 @@ class LinearFlowSolver(PymipMilpSolver, SolverPickupVrp):
         return list_solution_fits
 
     def reapply_constraint(
-        self, list_constraint_tuple: List[Tuple[Set[Tuple[int, int]], int]]
+        self, list_constraint_tuple: list[tuple[set[tuple[int, int]], int]]
     ) -> None:
         if self.model is None:
             raise RuntimeError(
@@ -972,8 +961,8 @@ class SubtourAddingConstraint:
         self.lazy = lazy
 
     def adding_component_constraints(
-        self, list_solution: List[TemporaryResult]
-    ) -> List[Any]:
+        self, list_solution: list[TemporaryResult]
+    ) -> list[Any]:
         c = []
         for l in list_solution:
             if l.connected_components_per_vehicle is None:
@@ -1008,8 +997,8 @@ class SubtourAddingConstraintCluster:
         self.linear_solver = linear_solver
 
     def adding_component_constraints(
-        self, list_solution: List[TemporaryResult]
-    ) -> List[Any]:
+        self, list_solution: list[TemporaryResult]
+    ) -> list[Any]:
         c = []
         for l in list_solution:
             if l.connected_components_per_vehicle is None:
@@ -1046,12 +1035,12 @@ class ConstraintHandlerOrWarmStart:
         self.do_lns = do_lns
         self.remove_constr = remove_constr
 
-    def adding_constraint(self, rebuilt_dict: Dict[int, List[Node]]) -> None:
+    def adding_constraint(self, rebuilt_dict: dict[int, list[Node]]) -> None:
         if self.linear_solver.model is None:
             raise RuntimeError("self.linear_solver.model cannot be None at this point")
 
         vehicle_keys = self.linear_solver.variable_decisions["variables_edges"].keys()
-        edges_to_add: Dict[int, Set[Edge]] = {
+        edges_to_add: dict[int, set[Edge]] = {
             v: set() for v in vehicle_keys if rebuilt_dict[v] is not None
         }
         for v in rebuilt_dict:
@@ -1078,7 +1067,7 @@ class ConstraintHandlerOrWarmStart:
                 except IndexError as e:
                     pass
         self.linear_solver.constraint_on_edge = {}
-        edges_to_constraint: Dict[int, Set[Edge]] = {
+        edges_to_constraint: dict[int, set[Edge]] = {
             v: set() for v in range(self.problem.number_vehicle)
         }
         vehicle_to_not_constraints = set(
@@ -1189,10 +1178,10 @@ class ConstraintHandlerOrWarmStart:
 def update_model_cluster_tsp(
     problem: GPDP,
     lp_solver: LinearFlowSolver,
-    components_global: List[Tuple[Set[Hashable], int]],
-    edges_in_all_vehicles_cluster: Dict[Hashable, Set[Tuple[int, Edge]]],
-    edges_out_all_vehicles_cluster: Dict[Hashable, Set[Tuple[int, Edge]]],
-) -> List[Any]:
+    components_global: list[tuple[set[Hashable], int]],
+    edges_in_all_vehicles_cluster: dict[Hashable, set[tuple[int, Edge]]],
+    edges_out_all_vehicles_cluster: dict[Hashable, set[tuple[int, Edge]]],
+) -> list[Any]:
     if lp_solver.model is None:
         raise RuntimeError("self.lp_solver.model cannot be None at this point.")
     len_component_global = len(components_global)
@@ -1256,15 +1245,15 @@ def update_model_cluster_tsp(
 def update_model(
     problem: GPDP,
     lp_solver: LinearFlowSolver,
-    components_global: List[Tuple[Set[Node], int]],
-    edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-    edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-) -> Tuple[List[Any], List[Tuple[List[Tuple[int, Edge]], int]]]:
+    components_global: list[tuple[set[Node], int]],
+    edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+    edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+) -> tuple[list[Any], list[tuple[list[tuple[int, Edge]], int]]]:
     if lp_solver.model is None:
         raise RuntimeError("self.lp_solver.model cannot be None at this point.")
     len_component_global = len(components_global)
     list_constraints = []
-    list_constraints_tuple: List[Tuple[List[Tuple[int, Edge]], int]] = []
+    list_constraints_tuple: list[tuple[list[tuple[int, Edge]], int]] = []
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
@@ -1362,11 +1351,11 @@ def update_model(
 def update_model_lazy(
     problem: GPDP,
     lp_solver: LinearFlowSolver,
-    components_global: List[Tuple[Set[Node], int]],
-    edges_in_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
-    edges_out_all_vehicles: Dict[Node, Set[Tuple[int, Edge]]],
+    components_global: list[tuple[set[Node], int]],
+    edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+    edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     do_constraint_on_order: bool = False,
-) -> List[Any]:
+) -> list[Any]:
     if lp_solver.model is None:
         raise RuntimeError("self.lp_solver.model cannot be None at this point.")
     len_component_global = len(components_global)

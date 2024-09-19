@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -41,11 +41,11 @@ class KnapsackMutationSingleBitFlip(Mutation):
     def __init__(self, problem: KnapsackModel):
         self.problem = problem
 
-    def mutate(self, solution: KnapsackSolution) -> Tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, solution: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         s, m, f = self.mutate_and_compute_obj(solution)
         return s, m
 
-    def mutate_and_compute_obj(self, solution: KnapsackSolution) -> Tuple[KnapsackSolution, LocalMove, Dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(self, solution: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         n = len(solution.list_taken)
         i = random.randint(0, n - 1)
         move = SingleBitFlipMove(i, self.problem)
@@ -73,7 +73,7 @@ class KnapsackMutationSingleBitFlip(Mutation):
 
 class BitFlipMoveKP(LocalMove):
     def __init__(
-        self, attribute: str, problem: KnapsackModel, list_index_flip: List[int]
+        self, attribute: str, problem: KnapsackModel, list_index_flip: list[int]
     ):
         self.attribute = attribute
         self.problem = problem
@@ -132,7 +132,7 @@ class MutationKnapsack(Mutation):
 
     def switch_on(
         self, variable: KnapsackSolution, come_from_outside: bool = False
-    ) -> Tuple[KnapsackSolution, LocalMove, Dict[str, float]]:
+    ) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:
         if variable.weight is None or variable.value is None:
             raise RuntimeError(
                 "variable.weight and variable.value should not be None at this point."
@@ -183,7 +183,7 @@ class MutationKnapsack(Mutation):
 
     def switch_off(
         self, variable: KnapsackSolution, come_from_outside: bool = False
-    ) -> Tuple[KnapsackSolution, LocalMove, Dict[str, float]]:
+    ) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:
         if variable.weight is None or variable.value is None:
             raise RuntimeError(
                 "variable.weight and variable.value should not be None at this point."
@@ -225,13 +225,13 @@ class MutationKnapsack(Mutation):
                 )
             return self.switch_on(variable, come_from_outside=True)
 
-    def mutate(self, variable: KnapsackSolution) -> Tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, variable: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         s, m, f = self.mutate_and_compute_obj(variable)
         return s, m
 
     def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
         self, variable: KnapsackSolution
-    ) -> Tuple[KnapsackSolution, LocalMove, Dict[str, float]]:
+    ) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:
         if variable.weight is None:
             self.knapsack_model.evaluate(variable)
         r = random.random()
