@@ -38,7 +38,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 try:
+    from qiskit import QuantumCircuit
     from qiskit.circuit.library import EfficientSU2, QAOAAnsatz
+    from qiskit.quantum_info.operators.base_operator import BaseOperator
     from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
     from qiskit_aer import AerSimulator
     from qiskit_algorithms.utils import validate_bounds, validate_initial_point
@@ -46,9 +48,6 @@ try:
     from qiskit_ibm_runtime import SamplerV2, Session
     from qiskit_optimization.converters import QuadraticProgramToQubo
     from qiskit_optimization.translators import from_gurobipy
-    from qiskit_optimization import QuadraticProgram
-    from qiskit import QuantumCircuit
-    from qiskit.quantum_info.operators.base_operator import BaseOperator
 except ImportError:
     qiskit_available = False
     msg = (
@@ -309,7 +308,10 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         mixer_operator = None
         if kwargs.get("mixer_operator"):
             mixer_operator = kwargs["mixer_operator"]
-            if not (isinstance(mixer_operator, QuantumCircuit) or isinstance(mixer_operator, BaseOperator)):
+            if not (
+                isinstance(mixer_operator, QuantumCircuit)
+                or isinstance(mixer_operator, BaseOperator)
+            ):
                 raise RuntimeError(
                     "your personnalized mixer_operator must be a QuantumCircuit or a BaseOperator Object"
                 )
@@ -317,13 +319,16 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         if kwargs.get("initial_state"):
             initial_state = kwargs["initial_state"]
             if not isinstance(initial_state, QuantumCircuit):
-                raise RuntimeError(
-                    "the initial_state must be a QuantumCircuit Object"
-                )
-        self.ansatz = QAOAAnsatz(hamiltonian, reps=reps, mixer_operator=mixer_operator, initial_state=initial_state)
+                raise RuntimeError("the initial_state must be a QuantumCircuit Object")
+        self.ansatz = QAOAAnsatz(
+            hamiltonian,
+            reps=reps,
+            mixer_operator=mixer_operator,
+            initial_state=initial_state,
+        )
 
         if kwargs.get("parameter_bounds"):
-            if len(kwargs["parameter_bounds"]) != 2*reps:
+            if len(kwargs["parameter_bounds"]) != 2 * reps:
                 raise RuntimeError(
                     "For custom parameters of the quantum circuit you need to pass 2*reps bounds"
                 )
@@ -514,29 +519,3 @@ class GeneralVQESolver(QiskitVQESolver):
             self.model.init_model(kwargs=kwargs)
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
 
-
-def matrix(quad: QuadraticProgram):
-    """
-    @param quad: a quadratic programm, must be in QUBO form
-    @return: the QUBO matrix
-    """
-    num_var = quad.get_num_vars()
-    m = np.zeros((num_var, num_var))
-    obj = quad.objective.quadratic.to_dict()
-    for key, val in obj.items():
-        m[key[0], key[1]] = val
-    return m
-
-
-def compute_energy(matrix, x):
-    """
-    @param matrix: a matrix of a QUBO formulation
-    @param x: a binary vector
-    @return: the value of the matrix for the giving vector
-    """
-    energy = 0
-    for i in range(0, len(x)):
-        for j in range(i, len(x)):
-            if x[i] == 1 and x[j] == 1:
-                energy += matrix[i][j]
-    return energy

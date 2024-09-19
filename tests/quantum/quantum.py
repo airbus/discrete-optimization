@@ -8,16 +8,22 @@ import networkx as nx
 import pytest
 
 from discrete_optimization.coloring.coloring_model import ColoringProblem
-from discrete_optimization.facility.facility_model import Facility, Point, Customer, FacilityProblem2DPoints
+from discrete_optimization.facility.facility_model import (
+    Customer,
+    Facility,
+    FacilityProblem2DPoints,
+    Point,
+)
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.qiskit_tools import qiskit_available
 from discrete_optimization.generic_tools.quantum_solvers import (
     solve,
     solve_coloring,
     solvers_map_coloring,
+    solvers_map_facility,
     solvers_map_knapsack,
     solvers_map_mis,
-    solvers_map_tsp, solvers_map_facility,
+    solvers_map_tsp,
 )
 from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
@@ -76,7 +82,9 @@ def test_solvers_facility(solver_class):
 
     facilityProblem = FacilityProblem2DPoints(2, 2, [f1, f2], [c1, c2])
     results = solve(
-        method=solver_class, problem=facilityProblem, **solvers_map_facility[solver_class][1]
+        method=solver_class,
+        problem=facilityProblem,
+        **solvers_map_facility[solver_class][1]
     )
     sol, fit = results.get_best_solution_fit()
 
