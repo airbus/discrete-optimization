@@ -8,14 +8,21 @@ from typing import Optional, Union
 import numpy as np
 from qiskit_optimization.converters import InequalityToEquality, IntegerToBinary
 
-from discrete_optimization.facility.facility_model import FacilityProblem, length, FacilitySolution
+from discrete_optimization.facility.facility_model import (
+    FacilityProblem,
+    FacilitySolution,
+    length,
+)
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
+)
 from discrete_optimization.generic_tools.qiskit_tools import (
     QiskitQAOASolver,
     QiskitVQESolver,
     qiskit_available,
 )
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction, Solution
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +44,6 @@ else:
 
 
 class FacilityQiskit(OptimizationApplication):
-
     def __init__(self, problem: FacilityProblem) -> None:
         """
         Args:
@@ -64,15 +70,23 @@ class FacilityQiskit(OptimizationApplication):
         quadratic = {}
 
         for i in range(0, self.problem.facility_count):
-            quadratic[var_names[i], var_names[i]] = self.problem.facilities[i].setup_cost
+            quadratic[var_names[i], var_names[i]] = self.problem.facilities[
+                i
+            ].setup_cost
             for j in range(0, self.problem.customer_count):
-                quadratic[var_names[(i, j)], var_names[(i, j)]] = length(self.problem.facilities[i].location, self.problem.customers[j].location)
+                quadratic[var_names[(i, j)], var_names[(i, j)]] = length(
+                    self.problem.facilities[i].location,
+                    self.problem.customers[j].location,
+                )
 
         p = 0
         for i in range(0, self.problem.facility_count):
             p += self.problem.facilities[i].setup_cost
             for j in range(0, self.problem.customer_count):
-                p += length(self.problem.facilities[i].location, self.problem.customers[j].location)
+                p += length(
+                    self.problem.facilities[i].location,
+                    self.problem.customers[j].location,
+                )
 
         # a facility is used if unless one customer used it
         # X_i >= X_i_j pour tout j
@@ -88,7 +102,9 @@ class FacilityQiskit(OptimizationApplication):
             c2 = {}
             for j in range(0, self.problem.customer_count):
                 c2[var_names[(i, j)]] = self.problem.customers[j].demand
-            quadratic_program.linear_constraint(c2, "<=", self.problem.facilities[i].capacity)
+            quadratic_program.linear_constraint(
+                c2, "<=", self.problem.facilities[i].capacity
+            )
 
         # transform the inequality constraint into an equality constraint adding integer variable
         conv = InequalityToEquality()
@@ -159,14 +175,19 @@ class FacilityQiskit(OptimizationApplication):
                 if x[self.problem.facility_count * j + i + j] == 1:
                     facility_for_customers[j] = self.problem.facilities[i].index
 
-        sol = FacilitySolution(self.problem, facility_for_customers=facility_for_customers)
+        sol = FacilitySolution(
+            self.problem, facility_for_customers=facility_for_customers
+        )
 
         return sol
 
 
 class QAOAFacilitySolver(SolverFacility, QiskitQAOASolver):
-
-    def __init__(self, problem: FacilityProblem, params_objective_function: Optional[ParamsObjectiveFunction] = None):
+    def __init__(
+        self,
+        problem: FacilityProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         super().__init__(problem, params_objective_function)
         self.facility_qiskit = FacilityQiskit(problem)
 
@@ -178,8 +199,11 @@ class QAOAFacilitySolver(SolverFacility, QiskitQAOASolver):
 
 
 class VQEFacilitySolver(SolverFacility, QiskitVQESolver):
-
-    def __init__(self, problem: FacilityProblem, params_objective_function: Optional[ParamsObjectiveFunction] = None):
+    def __init__(
+        self,
+        problem: FacilityProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+    ):
         super().__init__(problem, params_objective_function)
         self.facility_qiskit = FacilityQiskit(problem)
 

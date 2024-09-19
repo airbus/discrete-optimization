@@ -1,5 +1,13 @@
-from discrete_optimization.facility.facility_model import Facility, Point, Customer, FacilityProblem2DPoints
-from discrete_optimization.facility.solvers.facility_quantum import QAOAFacilitySolver, VQEFacilitySolver
+from discrete_optimization.facility.facility_model import (
+    Customer,
+    Facility,
+    FacilityProblem2DPoints,
+    Point,
+)
+from discrete_optimization.facility.solvers.facility_quantum import (
+    QAOAFacilitySolver,
+    VQEFacilitySolver,
+)
 
 
 def facility_example():

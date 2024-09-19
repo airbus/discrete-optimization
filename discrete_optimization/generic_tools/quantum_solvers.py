@@ -14,7 +14,10 @@ from discrete_optimization.coloring.solvers.coloring_quantum import (
 )
 from discrete_optimization.coloring.solvers.greedy_coloring import ColoringProblem
 from discrete_optimization.facility.facility_model import FacilityProblem2DPoints
-from discrete_optimization.facility.solvers.facility_quantum import QAOAFacilitySolver, VQEFacilitySolver
+from discrete_optimization.facility.solvers.facility_quantum import (
+    QAOAFacilitySolver,
+    VQEFacilitySolver,
+)
 from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
