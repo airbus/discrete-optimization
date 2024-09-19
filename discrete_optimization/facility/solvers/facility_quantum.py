@@ -64,9 +64,9 @@ class FacilityQiskit(OptimizationApplication):
         quadratic = {}
 
         for i in range(0, self.problem.facility_count):
-            linear[var_names[i]] = self.problem.facilities[i].setup_cost
+            quadratic[var_names[i], var_names[i]] = self.problem.facilities[i].setup_cost
             for j in range(0, self.problem.customer_count):
-                linear[var_names[(i, j)]] = length(self.problem.facilities[i].location, self.problem.customers[j].location)
+                quadratic[var_names[(i, j)], var_names[(i, j)]] = length(self.problem.facilities[i].location, self.problem.customers[j].location)
 
         p = 0
         for i in range(0, self.problem.facility_count):
@@ -79,7 +79,7 @@ class FacilityQiskit(OptimizationApplication):
         for i in range(0, self.problem.facility_count):
             for j in range(0, self.problem.customer_count):
                 quadratic[var_names[i], var_names[(i, j)]] = -p
-                quadratic[var_names[(i, j)], var_names[(i, j)]] = p
+                quadratic[var_names[(i, j)], var_names[(i, j)]] += p
 
         # the sum of customer's demand who used a facility can't excess the facility's capacity
         # sum j X_i_j*j.demand <= i.capacity
@@ -145,14 +145,12 @@ class FacilityQiskit(OptimizationApplication):
             constant += p
 
         quadratic_program.minimize(constant, linear, quadratic)
-        print(quadratic_program)
 
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
 
         x = self._result_to_x(result)
-        print(x)
 
         facility_for_customers = [-1] * self.problem.customer_count
 
