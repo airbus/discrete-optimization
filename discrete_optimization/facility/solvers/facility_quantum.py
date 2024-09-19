@@ -6,7 +6,6 @@ import logging
 from typing import Optional, Union
 
 import numpy as np
-from qiskit_optimization.converters import InequalityToEquality, IntegerToBinary
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
@@ -30,6 +29,7 @@ if qiskit_available:
     from qiskit_optimization import QuadraticProgram
     from qiskit_optimization.algorithms import OptimizationResult
     from qiskit_optimization.applications import OptimizationApplication
+    from qiskit_optimization.converters import InequalityToEquality, IntegerToBinary
 else:
     msg = (
         "FacilityQiskit, QAOAFacilitySolver, VQEFacilitySolver, "
