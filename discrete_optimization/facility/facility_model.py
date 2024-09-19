@@ -14,7 +14,7 @@ import math
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -55,8 +55,8 @@ class FacilitySolution(Solution):
 
     Attributes:
         problem (FacilityProblem): facility problem instance
-        facility_for_customers (List[int]): for each customers, specify the index of the facility
-        dict_details (Dict): giving more metrics of the solution such as the capacities used, the setup cost etc.
+        facility_for_customers (list[int]): for each customers, specify the index of the facility
+        dict_details (dict): giving more metrics of the solution such as the capacities used, the setup cost etc.
         See problem.evaluate(sol) implementation for FacilityProblem
 
     """
@@ -64,8 +64,8 @@ class FacilitySolution(Solution):
     def __init__(
         self,
         problem: Problem,
-        facility_for_customers: List[int],
-        dict_details: Optional[Dict[str, Any]] = None,
+        facility_for_customers: list[int],
+        dict_details: Optional[dict[str, Any]] = None,
     ):
         self.problem = problem
         self.facility_for_customers = facility_for_customers
@@ -101,8 +101,8 @@ class FacilityProblem(Problem):
     Attributes:
         facility_count (int): number of facilities
         customer_count (int): number of customers
-        facilities (List[Facility]): list of facilities object, facility has a setup cost, capacity and location
-        customers (List[Customer]): list of customers object, which has demand and location.
+        facilities (list[Facility]): list of facilities object, facility has a setup cost, capacity and location
+        customers (list[Customer]): list of customers object, which has demand and location.
 
 
     """
@@ -111,8 +111,8 @@ class FacilityProblem(Problem):
         self,
         facility_count: int,
         customer_count: int,
-        facilities: List[Facility],
-        customers: List[Customer],
+        facilities: list[Facility],
+        customers: list[Customer],
     ):
         self.facility_count = facility_count
         self.customer_count = customer_count
@@ -134,7 +134,7 @@ class FacilityProblem(Problem):
         """
         ...
 
-    def evaluate(self, variable: FacilitySolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+    def evaluate(self, variable: FacilitySolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         """Computes the KPI of a FacilitySolution.
 
         Args:
@@ -155,12 +155,12 @@ class FacilityProblem(Problem):
         return d
 
     def evaluate_from_encoding(
-        self, int_vector: List[int], encoding_name: str
-    ) -> Dict[str, float]:
+        self, int_vector: list[int], encoding_name: str
+    ) -> dict[str, float]:
         """Evaluate function based on direct integer vector (used in GA algorithms only)
 
         Args:
-            int_vector (List[int]): vector encoding the solution
+            int_vector (list[int]): vector encoding the solution
             encoding_name (str): name of encoding (see get_attribute_register) for available encoding
 
         Returns: kpi of the solution
@@ -170,7 +170,7 @@ class FacilityProblem(Problem):
         if encoding_name == "facility_for_customers":
             kp_sol = FacilitySolution(problem=self, facility_for_customers=int_vector)
         elif encoding_name == "custom":
-            kwargs: Dict[str, Any] = {encoding_name: int_vector}
+            kwargs: dict[str, Any] = {encoding_name: int_vector}
             kp_sol = FacilitySolution(problem=self, **kwargs)
         else:
             raise ValueError(
@@ -179,7 +179,7 @@ class FacilityProblem(Problem):
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate_cost(self, variable: FacilitySolution) -> Dict[str, Any]:
+    def evaluate_cost(self, variable: FacilitySolution) -> dict[str, Any]:
         """Compute the allocation cost of the solution along with setup cost too.
 
         Args:
@@ -245,7 +245,7 @@ class FacilityProblem(Problem):
         """
         return FacilitySolution(self, [0] * self.customer_count)
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return FacilitySolution
 
     def get_objective_register(self) -> ObjectiveRegister:

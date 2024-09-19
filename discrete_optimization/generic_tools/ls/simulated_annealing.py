@@ -5,7 +5,8 @@
 import logging
 import random
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 import numpy as np
 
@@ -45,7 +46,7 @@ class TemperatureScheduling:
 
 class SimulatedAnnealing(SolverDO, WarmstartMixin):
     aggreg_from_sol: Callable[[Solution], float]
-    aggreg_from_dict: Callable[[Dict[str, float]], float]
+    aggreg_from_dict: Callable[[dict[str, float]], float]
 
     initial_solution: Optional[Solution] = None
     """Initial solution used for warm start."""
@@ -90,7 +91,7 @@ class SimulatedAnnealing(SolverDO, WarmstartMixin):
         self,
         nb_iteration_max: int,
         initial_variable: Optional[Solution] = None,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         callbacks_list = CallbackList(callbacks=callbacks)

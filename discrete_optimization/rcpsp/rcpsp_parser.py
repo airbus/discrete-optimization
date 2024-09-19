@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Dict, Hashable, List, Optional, Union
+from collections.abc import Hashable
+from typing import Optional, Union
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
@@ -11,7 +12,7 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """Get datasets available for rcpsp.
 
     Params:
@@ -59,7 +60,7 @@ def parse_psplib(input_data: str) -> RCPSPModel:
     # Parsing resource information
     tmp1 = lines[res_start_line_index].split()
     tmp2 = lines[res_start_line_index + 1].split()
-    resources: Dict[str, Union[int, List[int]]] = {
+    resources: dict[str, Union[int, list[int]]] = {
         str(tmp1[(i * 2)]) + str(tmp1[(i * 2) + 1]): int(tmp2[i])
         for i in range(len(tmp2))
     }
@@ -69,7 +70,7 @@ def parse_psplib(input_data: str) -> RCPSPModel:
     n_resources = len(resources.keys())
 
     # Parsing precedence relationship
-    successors: Dict[Hashable, List[Hashable]] = {}
+    successors: dict[Hashable, list[Hashable]] = {}
     for i in range(prec_start_line_index, prec_end_line_index + 1):
         tmp = lines[i].split()
         task_id = int(tmp[0])
@@ -77,7 +78,7 @@ def parse_psplib(input_data: str) -> RCPSPModel:
         successors[task_id] = [int(x) for x in tmp[3 : (3 + n_successors)]]
 
     # Parsing mode and duration information
-    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]] = {}
+    mode_details: dict[Hashable, dict[int, dict[str, int]]] = {}
     for i_line in range(duration_start_line_index, duration_end_line_index + 1):
         tmp = lines[i_line].split()
         if len(tmp) == 3 + n_resources:
@@ -92,7 +93,7 @@ def parse_psplib(input_data: str) -> RCPSPModel:
 
         if int(task_id) not in list(mode_details.keys()):
             mode_details[int(task_id)] = {}
-        mode_details[int(task_id)][mode_id] = {}  # Dict[int, Dict[str, int]]
+        mode_details[int(task_id)][mode_id] = {}  # dict[int, dict[str, int]]
         mode_details[int(task_id)][mode_id]["duration"] = duration
         for i in range(n_resources):
             mode_details[int(task_id)][mode_id][
@@ -123,7 +124,7 @@ def parse_patterson(input_data: str) -> RCPSPModel:
     n_renewable_resources = parsed_values[1]
 
     # Creating resource dict with only renewable resources
-    resources: Dict[str, Union[int, List[int]]] = {
+    resources: dict[str, Union[int, list[int]]] = {
         "R" + str(i + 1): parsed_values[2 + i] for i in range(n_renewable_resources)
     }
 
@@ -133,8 +134,8 @@ def parse_patterson(input_data: str) -> RCPSPModel:
     ]
 
     # setting up dict data structure for successor and mode_detail information
-    successors: Dict[Hashable, List[Hashable]] = {}
-    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]] = {}
+    successors: dict[Hashable, list[Hashable]] = {}
+    mode_details: dict[Hashable, dict[int, dict[str, int]]] = {}
 
     # pruning irrelevant content from parsed values
     start_index_activity_information = 2 + n_renewable_resources
@@ -152,7 +153,7 @@ def parse_patterson(input_data: str) -> RCPSPModel:
         mode_details[int(task_id)] = {}
         duration = parsed_values.pop(0)
 
-        mode_details[int(task_id)][mode_id] = {}  # Dict[int, Dict[str, int]]
+        mode_details[int(task_id)][mode_id] = {}  # dict[int, dict[str, int]]
         mode_details[int(task_id)][mode_id]["duration"] = duration
 
         horizon += duration

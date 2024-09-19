@@ -2,7 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Iterable, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any, Optional
 
 import numpy as np
 
@@ -54,14 +55,14 @@ class MutationBitFlip(Mutation):
             self.attribute = attribute
         self.length = register.dict_attribute_to_type[self.attribute]["n"]
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         indexes = np.where(np.random.random(self.length) <= self.probability_flip)
         move = BitFlipMove(self.attribute, indexes[0])
         return move.apply_local_move(solution), move
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         s, move = self.mutate(solution)
         f = self.problem.evaluate(s)
         return s, move, f

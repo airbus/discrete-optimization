@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import gc
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import mip
 from mip import IncumbentUpdater, Model, Var
@@ -20,20 +20,20 @@ class IncumbentStoreSolution(IncumbentUpdater):
     # Store intermediate solutions for further use.
     def __init__(self, model: Model):
         super().__init__(model=model)
-        self._solution_store: List[Dict[str, Any]] = []
+        self._solution_store: list[dict[str, Any]] = []
 
     def nb_solutions(self) -> int:
         return len(self._solution_store)
 
-    def get_solutions(self) -> List[Dict[str, Any]]:
+    def get_solutions(self) -> list[dict[str, Any]]:
         return self._solution_store
 
     def update_incumbent(
         self,
         objective_value: float,
         best_bound: float,
-        solution: List[Tuple[Var, float]],
-    ) -> List[Tuple[Var, float]]:
+        solution: list[tuple[Var, float]],
+    ) -> list[tuple[Var, float]]:
         dict_solution = {
             "obj": objective_value,
             "best_bound": best_bound,
@@ -57,7 +57,7 @@ class MyModelMilp(Model):
 
     def remove(
         self: "MyModelMilp",
-        objects: Union[mip.Var, mip.Constr, List[Union["mip.Var", "mip.Constr"]]],
+        objects: Union[mip.Var, mip.Constr, list[Union["mip.Var", "mip.Constr"]]],
     ) -> None:
         super().remove(objects)
         self.update()

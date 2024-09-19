@@ -6,12 +6,10 @@ from __future__ import annotations  # see annotations as str
 
 import inspect
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Callable, Container, Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Container, Dict, Iterable, List
-from typing import Mapping as MappingType
-from typing import Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 if TYPE_CHECKING:  # only for type checkers
     from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
@@ -43,7 +41,7 @@ class Hyperparameter:
 
     """
 
-    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    depends_on: Optional[tuple[str, Container[Any]]] = None
     """Other hyperparameter on which this ones depends on.
 
     If None: this hyperparameter is always needed.
@@ -135,7 +133,7 @@ class IntegerHyperparameter(Hyperparameter):
 
     """
 
-    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    depends_on: Optional[tuple[str, Container[Any]]] = None
     """Other hyperparameter on which this ones depends on.
 
     If None: this hyperparameter is always needed.
@@ -252,7 +250,7 @@ class FloatHyperparameter(Hyperparameter):
 
     """
 
-    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    depends_on: Optional[tuple[str, Container[Any]]] = None
     """Other hyperparameter on which this ones depends on.
 
     If None: this hyperparameter is always needed.
@@ -349,15 +347,15 @@ LabelType = Optional[Union[bool, int, float, str]]
 class CategoricalHyperparameter(Hyperparameter):
     """Categorical hyperparameter."""
 
-    choices: MappingType[LabelType, Any]
+    choices: Mapping[LabelType, Any]
     """Mapping lables to corresponding possible choices."""
 
     def __init__(
         self,
         name: str,
-        choices: Union[Iterable[LabelType], MappingType[LabelType, Any]],
+        choices: Union[Iterable[LabelType], Mapping[LabelType, Any]],
         default: Optional[Any] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
     ):
         super().__init__(
@@ -375,9 +373,7 @@ class CategoricalHyperparameter(Hyperparameter):
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        choices: Optional[
-            Union[Iterable[LabelType], MappingType[LabelType, Any]]
-        ] = None,
+        choices: Optional[Union[Iterable[LabelType], Mapping[LabelType, Any]]] = None,
         prefix: str = "",
         **kwargs: Any,
     ) -> Any:
@@ -414,10 +410,10 @@ class EnumHyperparameter(CategoricalHyperparameter):
     def __init__(
         self,
         name: str,
-        enum: Type[Enum],
-        choices: Optional[Union[Iterable[Enum], Dict[str, Enum]]] = None,
+        enum: type[Enum],
+        choices: Optional[Union[Iterable[Enum], dict[str, Enum]]] = None,
         default: Optional[Any] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
     ):
         if choices is None:
@@ -469,7 +465,7 @@ class SubBrickClsHyperparameter(CategoricalHyperparameter):
 
     """
 
-    choices: Dict[str, Type[Hyperparametrizable]]
+    choices: dict[str, type[Hyperparametrizable]]
     """Mapping of labelled Hyperparametrizable subclasses to choose from for the subbrick.
 
     NB: for now, it is not possible to pick the metasolver itself as a choice for its subbrick,
@@ -488,10 +484,10 @@ class SubBrickClsHyperparameter(CategoricalHyperparameter):
         self,
         name: str,
         choices: Union[
-            Dict[str, Type[Hyperparametrizable]], Iterable[Type[Hyperparametrizable]]
+            dict[str, type[Hyperparametrizable]], Iterable[type[Hyperparametrizable]]
         ],
-        default: Optional[Type[Hyperparametrizable]] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        default: Optional[type[Hyperparametrizable]] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
         include_module_in_labels: bool = False,
     ):
@@ -516,13 +512,13 @@ class SubBrickClsHyperparameter(CategoricalHyperparameter):
         trial: optuna.trial.Trial,
         choices: Optional[
             Union[
-                Dict[str, Type[Hyperparametrizable]],
-                Iterable[Type[Hyperparametrizable]],
+                dict[str, type[Hyperparametrizable]],
+                Iterable[type[Hyperparametrizable]],
             ]
         ] = None,
         prefix: str = "",
         **kwargs: Any,
-    ) -> Type[Hyperparametrizable]:
+    ) -> type[Hyperparametrizable]:
         """Suggest hyperparameter value for an Optuna trial.
 
         Args:
@@ -565,9 +561,9 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
         self,
         name: str,
         subbrick_hyperparameter: Optional[str] = None,
-        subbrick_cls: Optional[Type[Hyperparametrizable]] = None,
-        default: Optional[Dict[str, Any]] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        subbrick_cls: Optional[type[Hyperparametrizable]] = None,
+        default: Optional[dict[str, Any]] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
     ):
         super().__init__(
@@ -586,20 +582,20 @@ class SubBrickKwargsHyperparameter(Hyperparameter):
     def suggest_with_optuna(
         self,
         trial: optuna.trial.Trial,
-        subbrick: Optional[Type[Hyperparametrizable]] = None,
-        names: Optional[List[str]] = None,
-        names_by_subbrick: Optional[Dict[Type[Hyperparametrizable], List[str]]] = None,
-        kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        subbrick: Optional[type[Hyperparametrizable]] = None,
+        names: Optional[list[str]] = None,
+        names_by_subbrick: Optional[dict[type[Hyperparametrizable], list[str]]] = None,
+        kwargs_by_name: Optional[dict[str, dict[str, Any]]] = None,
         kwargs_by_name_by_subbrick: Optional[
-            Dict[Type[Hyperparametrizable], Dict[str, Dict[str, Any]]]
+            dict[type[Hyperparametrizable], dict[str, dict[str, Any]]]
         ] = None,
-        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        fixed_hyperparameters: Optional[dict[str, Any]] = None,
         fixed_hyperparameters_by_subbrick: Optional[
-            Dict[Type[Hyperparametrizable], Dict[str, Any]]
+            dict[type[Hyperparametrizable], dict[str, Any]]
         ] = None,
         prefix: str = "",
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
         Args:
@@ -705,10 +701,10 @@ class SubBrickHyperparameter(Hyperparameter):
         self,
         name: str,
         choices: Union[
-            Dict[str, Type[Hyperparametrizable]], Iterable[Type[Hyperparametrizable]]
+            dict[str, type[Hyperparametrizable]], Iterable[type[Hyperparametrizable]]
         ],
         default: Optional[SubBrick] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
         include_module_in_labels: bool = False,
     ):
@@ -747,19 +743,19 @@ class SubBrickHyperparameter(Hyperparameter):
         trial: optuna.trial.Trial,
         choices: Optional[
             Union[
-                Dict[str, Type[Hyperparametrizable]],
-                Iterable[Type[Hyperparametrizable]],
+                dict[str, type[Hyperparametrizable]],
+                Iterable[type[Hyperparametrizable]],
             ]
         ] = None,
-        names: Optional[List[str]] = None,
-        names_by_subbrick: Optional[Dict[Type[Hyperparametrizable], List[str]]] = None,
-        kwargs_by_name: Optional[Dict[str, Dict[str, Any]]] = None,
+        names: Optional[list[str]] = None,
+        names_by_subbrick: Optional[dict[type[Hyperparametrizable], list[str]]] = None,
+        kwargs_by_name: Optional[dict[str, dict[str, Any]]] = None,
         kwargs_by_name_by_subbrick: Optional[
-            Dict[Type[Hyperparametrizable], Dict[str, Dict[str, Any]]]
+            dict[type[Hyperparametrizable], dict[str, dict[str, Any]]]
         ] = None,
-        fixed_hyperparameters: Optional[Dict[str, Any]] = None,
+        fixed_hyperparameters: Optional[dict[str, Any]] = None,
         fixed_hyperparameters_by_subbrick: Optional[
-            Dict[Type[Hyperparametrizable], Dict[str, Any]]
+            dict[type[Hyperparametrizable], dict[str, Any]]
         ] = None,
         prefix: str = "",
         **kwargs: Any,
@@ -808,9 +804,9 @@ class SubBrick:
 
     """
 
-    cls: Type[Hyperparametrizable]
-    kwargs: Dict[str, Any]
-    kwargs_from_solution: Optional[Dict[str, Callable[..., Any]]] = None
+    cls: type[Hyperparametrizable]
+    kwargs: dict[str, Any]
+    kwargs_from_solution: Optional[dict[str, Callable[..., Any]]] = None
 
 
 class ListHyperparameter(Hyperparameter):
@@ -839,7 +835,7 @@ class ListHyperparameter(Hyperparameter):
 
     """
 
-    depends_on: Optional[Tuple[str, Container[Any]]] = None
+    depends_on: Optional[tuple[str, Container[Any]]] = None
     """Other hyperparameter on which this ones depends on.
 
     If None: this hyperparameter is always needed.
@@ -877,8 +873,8 @@ class ListHyperparameter(Hyperparameter):
         length_high: int,
         length_low: int = 0,
         numbering_start: int = 0,
-        default: List[Any] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        default: list[Any] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
     ):
         super().__init__(
@@ -900,7 +896,7 @@ class ListHyperparameter(Hyperparameter):
         numbering_start: Optional[int] = None,
         prefix: str = "",
         **kwargs: Any,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
         Args:
@@ -970,8 +966,8 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
         length_high: Optional[int] = None,
         length_low: int = 0,
         numbering_start: int = 0,
-        default: List[Any] = None,
-        depends_on: Optional[Tuple[str, Container[Any]]] = None,
+        default: list[Any] = None,
+        depends_on: Optional[tuple[str, Container[Any]]] = None,
         name_in_kwargs: Optional[str] = None,
     ):
         if length_high is None:
@@ -995,7 +991,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
         numbering_start: Optional[int] = None,
         prefix: str = "",
         **kwargs: Any,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Suggest hyperparameter value for an Optuna trial.
 
         Args:
@@ -1032,7 +1028,7 @@ class BaseListWithoutReplacementHyperparameter(ListHyperparameter, ABC):
         return list_values
 
     @abstractmethod
-    def has_duplicates(self, list_choices: List[Any]) -> True:
+    def has_duplicates(self, list_choices: list[Any]) -> True:
         """Check if the list contains duplicates
 
         Args:
@@ -1065,7 +1061,7 @@ class CategoricalListWithoutReplacementHyperparameter(
     hyperparameter_template: CategoricalHyperparameter
     """Hyperparameter template to fill the list."""
 
-    def has_duplicates(self, list_choices: List[Any]) -> True:
+    def has_duplicates(self, list_choices: list[Any]) -> True:
         """Check if the list contains duplicates
 
         Args:
@@ -1097,7 +1093,7 @@ class SubBrickListWithoutReplacementHyperparameter(
     hyperparameter_template: SubBrickHyperparameter
     """Hyperparameter template to fill the list."""
 
-    def has_duplicates(self, list_choices: List[Any]) -> True:
+    def has_duplicates(self, list_choices: list[Any]) -> True:
         """Check if the list contains duplicates
 
         Args:

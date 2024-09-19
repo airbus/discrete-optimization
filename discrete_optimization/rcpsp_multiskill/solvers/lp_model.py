@@ -4,8 +4,9 @@
 
 import logging
 import time
+from collections.abc import Callable
 from itertools import product
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, xsum
 

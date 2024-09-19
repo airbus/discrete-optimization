@@ -6,20 +6,10 @@
 
 import logging
 from abc import abstractmethod
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -62,7 +52,7 @@ class EncodingRegister:
     """Placeholder class where the Solution definition is defined.
 
     Attributes:
-        dict_attribute_to_type (Dict[str, Any]): specifies the encoding of a solution object.
+        dict_attribute_to_type (dict[str, Any]): specifies the encoding of a solution object.
         User may refer to example in the different implemented problem definition.
 
     Examples:
@@ -77,12 +67,12 @@ class EncodingRegister:
         }
     """
 
-    dict_attribute_to_type: Dict[str, Any]
+    dict_attribute_to_type: dict[str, Any]
 
-    def __init__(self, dict_attribute_to_type: Dict[str, Any]):
+    def __init__(self, dict_attribute_to_type: dict[str, Any]):
         self.dict_attribute_to_type = dict_attribute_to_type
 
-    def get_types(self) -> List[TypeAttribute]:
+    def get_types(self) -> list[TypeAttribute]:
         """Returns all the TypeAttribute that are present in our encoding."""
         return [
             t
@@ -93,14 +83,14 @@ class EncodingRegister:
     def __str__(self) -> str:
         return "Encoding : " + str(self.dict_attribute_to_type)
 
-    def lower_bound_vector_encoding(self, encoding_name: str) -> List[int]:
+    def lower_bound_vector_encoding(self, encoding_name: str) -> list[int]:
         """Return for an encoding that is of type LIST_INTEGER or associated, the lower bound vector.
         Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
         """
         dict_encoding = self.dict_attribute_to_type[encoding_name]
         return lower_bound_vector_encoding_from_dict(dict_encoding)
 
-    def upper_bound_vector_encoding(self, encoding_name: str) -> List[int]:
+    def upper_bound_vector_encoding(self, encoding_name: str) -> list[int]:
         """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
         Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
         """
@@ -108,7 +98,7 @@ class EncodingRegister:
         return upper_bound_vector_encoding_from_dict(dict_encoding)
 
 
-def lower_bound_vector_encoding_from_dict(dict_encoding: Dict[str, Any]) -> List[int]:
+def lower_bound_vector_encoding_from_dict(dict_encoding: dict[str, Any]) -> list[int]:
     length_encoding = dict_encoding["n"]
     if "low" in dict_encoding:
         low_value: Union[int, Iterable[int]] = dict_encoding["low"]
@@ -120,7 +110,7 @@ def lower_bound_vector_encoding_from_dict(dict_encoding: Dict[str, Any]) -> List
         return [0 for i in range(length_encoding)]  # By default we start at zero.
 
 
-def upper_bound_vector_encoding_from_dict(dict_encoding: Dict[str, Any]) -> List[int]:
+def upper_bound_vector_encoding_from_dict(dict_encoding: dict[str, Any]) -> list[int]:
     """Return for an encoding that is of type LIST_INTEGER or associated, the upper bound vector.
 
     Examples: if the vector should contains value higher or equal to 1, the function will return a list full of 1.
@@ -201,22 +191,22 @@ class ObjectiveRegister:
 
     objective_sense: ModeOptim
     objective_handling: ObjectiveHandling
-    dict_objective_to_doc: Dict[str, ObjectiveDoc]
+    dict_objective_to_doc: dict[str, ObjectiveDoc]
 
     def __init__(
         self,
         objective_sense: ModeOptim,
         objective_handling: ObjectiveHandling,
-        dict_objective_to_doc: Dict[str, Any],
+        dict_objective_to_doc: dict[str, Any],
     ):
         self.objective_sense = objective_sense
         self.objective_handling = objective_handling
         self.dict_objective_to_doc = dict_objective_to_doc
 
-    def get_objective_names(self) -> List[str]:
+    def get_objective_names(self) -> list[str]:
         return sorted(self.dict_objective_to_doc)
 
-    def get_list_objective_and_default_weight(self) -> Tuple[List[str], List[float]]:
+    def get_list_objective_and_default_weight(self) -> tuple[list[str], list[float]]:
         """Flatten the list of kpi names and default weight.
 
         Returns: list of kpi names, list of default weight for the aggregated objective function.
@@ -291,7 +281,7 @@ class Problem:
     """Base class for a discrete optimization problem."""
 
     @abstractmethod
-    def evaluate(self, variable: Solution) -> Dict[str, float]:
+    def evaluate(self, variable: Solution) -> dict[str, float]:
         """Evaluate a given solution object for the given problem.
 
         This method should return a dictionnary of KPI, that can be then used for mono or multiobjective optimization.
@@ -299,7 +289,7 @@ class Problem:
         Args:
             variable (Solution): the Solution object to evaluate.
 
-        Returns: Dictionnary of float kpi for the solution.
+        Returns: dictionnary of float kpi for the solution.
 
         """
         ...
@@ -320,7 +310,7 @@ class Problem:
         dict_values = self.evaluate(variable)
         return TupleFitness(np.array([dict_values[k] for k in keys]), len(keys))
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
+    def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         """Return an multiobjective fitness from a dictionnary of kpi (output of evaluate function).
 
         It consists in flattening the evaluate() function and put in an array.
@@ -357,7 +347,7 @@ class Problem:
         ...
 
     @abstractmethod
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         """Returns the class implementation of a Solution.
 
         Returns (class): class object of the given Problem.
@@ -382,7 +372,7 @@ class Problem:
             direction = "maximize"
         return direction
 
-    def get_objective_names(self) -> List[str]:
+    def get_objective_names(self) -> list[str]:
         return self.get_objective_register().get_objective_names()
 
 
@@ -491,13 +481,13 @@ class RobustProblem(Problem):
 
         return func
 
-    def evaluate(self, variable: Solution) -> Dict[str, float]:
+    def evaluate(self, variable: Solution) -> dict[str, float]:
         """Aggregated evaluate function.
 
         Args:
             variable (Solution): Solution to evaluate on the different scenarios.
 
-        Returns (Dict[str,float]): aggregated kpi on different scenarios.
+        Returns (dict[str,float]): aggregated kpi on different scenarios.
 
         """
         fits = [self.list_problem[i].evaluate(variable) for i in range(self.nb_problem)]
@@ -527,7 +517,7 @@ class RobustProblem(Problem):
         """See ```Problem.get_attribute_register``` doc."""
         return self.list_problem[0].get_attribute_register()
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         """See ```Problem.get_solution_type``` doc."""
         return self.list_problem[0].get_solution_type()
 
@@ -543,15 +533,15 @@ class ParamsObjectiveFunction:
     """
 
     objective_handling: ObjectiveHandling
-    objectives: List[str]
-    weights: List[float]
+    objectives: list[str]
+    weights: list[float]
     sense_function: ModeOptim
 
     def __init__(
         self,
         objective_handling: ObjectiveHandling,
-        objectives: List[str],
-        weights: List[float],
+        objectives: list[str],
+        weights: list[float],
         sense_function: ModeOptim,
     ):
         self.objective_handling = objective_handling
@@ -592,14 +582,14 @@ def get_default_objective_setup(problem: Problem) -> ParamsObjectiveFunction:
 def build_aggreg_function_and_params_objective(
     problem: Problem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
-) -> Tuple[
+) -> tuple[
     Union[
         Callable[[Solution], float],
         Callable[[Solution], TupleFitness],
     ],
     Union[
-        Callable[[Dict[str, float]], float],
-        Callable[[Dict[str, float]], TupleFitness],
+        Callable[[dict[str, float]], float],
+        Callable[[dict[str, float]], TupleFitness],
     ],
     ParamsObjectiveFunction,
 ]:
@@ -613,7 +603,7 @@ def build_aggreg_function_and_params_objective(
 
     Returns: the function returns a 3-uple :
                     -first element is a function of Solution->Union[float,TupleFitness]
-                    -second element is a function of (Dict[str,float])->Union[float, TupleFitness]
+                    -second element is a function of (dict[str,float])->Union[float, TupleFitness]
                     -third element, return the params_objective_function (either the object passed in argument of the
                     function, or the one created inside the function.)
 
@@ -630,14 +620,14 @@ def build_evaluate_function_aggregated(
     problem: Problem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
 ) -> Union[
-    Tuple[Callable[[Solution], float], Callable[[Dict[str, float]], float]],
-    Tuple[
-        Callable[[Solution], TupleFitness], Callable[[Dict[str, float]], TupleFitness]
+    tuple[Callable[[Solution], float], Callable[[dict[str, float]], float]],
+    tuple[
+        Callable[[Solution], TupleFitness], Callable[[dict[str, float]], TupleFitness]
     ],
 ]:
     """Build 2 eval functions based from the problem and params of objective function.
 
-    The 2 eval function are callable with a Solution for the first one, and a Dict[str, float]
+    The 2 eval function are callable with a Solution for the first one, and a dict[str, float]
     (output of Problem.evaluate function) for the second one. Those two eval function will return either a scalar for
     monoobjective problem or a TupleFitness for multiobjective.
     those aggregated function will be the one actually called by an optimisation algorithm at the end.
@@ -648,7 +638,7 @@ def build_evaluate_function_aggregated(
 
     Returns: the function returns a 2-uple :
                     -first element is a function of Solution->Union[float,TupleFitness]
-                    -second element is a function of (Dict[str,float])->Union[float, TupleFitness]
+                    -second element is a function of (dict[str,float])->Union[float, TupleFitness]
     """
     if params_objective_function is None:
         params_objective_function = get_default_objective_setup(problem)
@@ -664,7 +654,7 @@ def build_evaluate_function_aggregated(
             val = sum([dict_values[objectives[i]] * weights[i] for i in range(length)])
             return sign * val
 
-        def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
+        def eval_from_dict_values(dict_values: dict[str, float]) -> float:
             val = sum([dict_values[objectives[i]] * weights[i] for i in range(length)])
             return sign * val
 
@@ -677,7 +667,7 @@ def build_evaluate_function_aggregated(
             dict_values = problem.evaluate(solution)
             return sign * dict_values[objectives[0]] * weights[0]
 
-        def eval_from_dict_values(dict_values: Dict[str, float]) -> float:
+        def eval_from_dict_values(dict_values: dict[str, float]) -> float:
             return sign * dict_values[objectives[0]] * weights[0]
 
         return eval_sol, eval_from_dict_values
@@ -695,7 +685,7 @@ def build_evaluate_function_aggregated(
                 * sign
             )
 
-        def eval_from_dict_values2(dict_values: Dict[str, float]) -> TupleFitness:
+        def eval_from_dict_values2(dict_values: dict[str, float]) -> TupleFitness:
             return (
                 TupleFitness(
                     np.array(

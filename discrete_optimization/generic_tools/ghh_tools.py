@@ -2,16 +2,11 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import sys
-from typing import Any, Iterable, TypeVar, Union
+from collections.abc import Iterable
+from typing import Any, Protocol, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
 
 
 def index_min(list_or_array: npt.ArrayLike) -> np.int_:

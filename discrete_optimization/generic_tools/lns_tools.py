@@ -5,7 +5,8 @@ import contextlib
 import logging
 import random
 from abc import abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, TypedDict
+from collections.abc import Iterable
+from typing import Any, Optional, TypedDict
 
 import numpy as np
 
@@ -284,7 +285,7 @@ class BaseLNS(SolverDO, WarmstartMixin):
         nb_iteration_no_improvement: Optional[int] = None,
         skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with an LNS loop
@@ -502,10 +503,10 @@ class ConstraintHandlerMix(ConstraintHandler):
     def __init__(
         self,
         problem: Problem,
-        list_constraints_handler: List[ConstraintHandler],
-        list_proba: List[float],
+        list_constraints_handler: list[ConstraintHandler],
+        list_proba: list[float],
         update_proba: bool = True,
-        tag_constraint_handler: Optional[List[str]] = None,
+        tag_constraint_handler: Optional[list[str]] = None,
         sequential: bool = False,
     ):
         self.problem = problem
@@ -521,7 +522,7 @@ class ConstraintHandlerMix(ConstraintHandler):
         self.list_proba = self.list_proba / np.sum(self.list_proba)
         self.index_np = np.array(range(len(self.list_proba)), dtype=np.int_)
         self.current_iteration = 0
-        self.status: Dict[int, ConstraintStatus] = {
+        self.status: dict[int, ConstraintStatus] = {
             i: {
                 "nb_usage": 0,
                 "nb_improvement": 0,

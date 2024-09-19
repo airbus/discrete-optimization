@@ -6,8 +6,9 @@
 #  LICENSE file in the root directory of this source tree.
 
 import operator
+from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set
+from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -38,7 +39,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 
 def distance(
     problem: FacilityProblem, customer_index: int, **kwargs: Any
-) -> List[float]:
+) -> list[float]:
     """Compute distance to facilitied for a given customer index
 
     Args:
@@ -55,7 +56,7 @@ def distance(
 
 def demand_minus_capacity(
     problem: FacilityProblem, customer_index: int, **kwargs: Any
-) -> List[float]:
+) -> list[float]:
     """Compute demand-capacity feature for a given customer_index
 
     Args:
@@ -70,7 +71,7 @@ def demand_minus_capacity(
 
 def capacity(
     problem: FacilityProblem, customer_index: int, **kwargs: Any
-) -> List[float]:
+) -> list[float]:
     """Capacity feature.
     Args:
         problem (FacilityProblem): problem instance
@@ -105,7 +106,7 @@ class FeatureEnum(Enum):
     DEMAND_MINUS_CAPACITY = "demand_minus_capacity"
 
 
-feature_function_map: Dict[FeatureEnum, Callable[..., Iterable[float]]] = {
+feature_function_map: dict[FeatureEnum, Callable[..., Iterable[float]]] = {
     FeatureEnum.DISTANCE: distance,
     FeatureEnum.CAPACITIES: capacity,
     FeatureEnum.DEMAND_MINUS_CAPACITY: demand_minus_capacity,
@@ -122,7 +123,7 @@ class ParametersGPHH:
 
     def __init__(
         self,
-        set_feature: Set[FeatureEnum],
+        set_feature: set[FeatureEnum],
         set_primitives: PrimitiveSetTyped,
         tournament_ratio: float,
         pop_size: int,
@@ -201,7 +202,7 @@ class GPHH(SolverFacility):
     def __init__(
         self,
         problem: FacilityProblem,
-        training_domains: Optional[List[FacilityProblem]] = None,
+        training_domains: Optional[list[FacilityProblem]] = None,
         weight: int = 1,
         params_gphh: Optional[ParametersGPHH] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
@@ -317,10 +318,10 @@ class GPHH(SolverFacility):
     ) -> ResultStorage:
         if func_heuristic is None:
             func_heuristic = self.toolbox.compile(expr=individual)
-        raw_values: List[Iterable[int]] = []
+        raw_values: list[Iterable[int]] = []
 
         for j in range(domain.customer_count):
-            input_features: List[Iterable[float]] = [
+            input_features: list[Iterable[float]] = [
                 feature_function_map[lf](problem=domain, customer_index=j)
                 for lf in self.list_feature
             ]
@@ -332,9 +333,9 @@ class GPHH(SolverFacility):
         return result
 
     def evaluate_heuristic(
-        self, individual: Any, domains: List[FacilityProblem]
-    ) -> List[float]:
-        vals: List[float] = []
+        self, individual: Any, domains: list[FacilityProblem]
+    ) -> list[float]:
+        vals: list[float] = []
         func_heuristic = self.toolbox.compile(expr=individual)
         for domain in domains:
             result = self.build_solution(

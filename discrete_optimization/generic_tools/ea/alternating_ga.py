@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
@@ -43,16 +43,16 @@ class AlternatingGa(SolverDO, WarmstartMixin):
     def __init__(
         self,
         problem: Problem,
-        objectives: Union[str, List[str]],
-        encodings: Optional[Union[List[str], List[Dict[str, Any]]]] = None,
-        mutations: Optional[Union[List[Mutation], List[DeapMutation]]] = None,
-        crossovers: Optional[List[DeapCrossover]] = None,
-        selections: Optional[List[DeapSelection]] = None,
+        objectives: Union[str, list[str]],
+        encodings: Optional[Union[list[str], list[dict[str, Any]]]] = None,
+        mutations: Optional[Union[list[Mutation], list[DeapMutation]]] = None,
+        crossovers: Optional[list[DeapCrossover]] = None,
+        selections: Optional[list[DeapSelection]] = None,
         objective_handling: Optional[ObjectiveHandling] = None,
-        objective_weights: Optional[List[float]] = None,
+        objective_weights: Optional[list[float]] = None,
         pop_size: Optional[int] = None,
         max_evals: int = 10000,
-        sub_evals: Optional[List[int]] = None,
+        sub_evals: Optional[list[int]] = None,
         mut_rate: Optional[float] = None,
         crossover_rate: Optional[float] = None,
         tournament_size: Optional[float] = None,
@@ -102,7 +102,7 @@ class AlternatingGa(SolverDO, WarmstartMixin):
                     self.encodings[i], start_solution  # type: ignore
                 )
         while count_evals < self.max_evals:
-            kwargs_ga: Dict[str, Any] = {}
+            kwargs_ga: dict[str, Any] = {}
             if self.mutations is not None:
                 kwargs_ga["mutation"] = self.mutations[current_encoding_index]
             if self.encodings is not None:

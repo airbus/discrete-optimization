@@ -10,7 +10,7 @@ Results can be viewed on optuna-dashboard with:
 """
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Type
+from typing import Any
 
 import optuna
 from optuna.storages import JournalFileStorage, JournalStorage
@@ -56,12 +56,12 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 
 
 # Solvers to test
-kwargs_fixed: Dict[str, Any] = dict(
+kwargs_fixed: dict[str, Any] = dict(
     initial_solver=SubBrick(
         cls=GreedyDummy, kwargs={}
     ),  # Start from empty solution : make the experiment more interesting :)
 )
-kwargs_fixed_by_root_subsolver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+kwargs_fixed_by_root_subsolver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs factory for unspecified solvers
     {
         CPKnapsackMZN2: dict(time_limit=5),
@@ -69,7 +69,7 @@ kwargs_fixed_by_root_subsolver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdi
         KnapsackASPSolver: dict(time_limit=5),
     },
 )
-suggest_optuna_kwargs_by_name: Dict[str, Any] = {
+suggest_optuna_kwargs_by_name: dict[str, Any] = {
     "root_solver": dict(
         # limit choices to some solvers
         choices=[KnapsackDynProg, CPKnapsackMZN, CPKnapsackMZN2, KnapsackASPSolver],

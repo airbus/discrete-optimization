@@ -13,7 +13,7 @@ import logging
 import re
 from collections import defaultdict
 from os.path import basename
-from typing import Any, Dict, Type
+from typing import Any
 
 from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
     LargeNeighborhoodSearchScheduling,
@@ -64,7 +64,7 @@ solvers_to_test = look_for_solver(problems[0])
 # Fixed parameters
 parameters_cp = ParametersCP.default_cpsat()
 parameters_cp.nb_process = 6
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
         LargeNeighborhoodSearchScheduling: dict(
@@ -78,8 +78,8 @@ kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
 )
 
 # Restrict some hyperparameters choices, for some solvers (making use of `kwargs_by_name` of `suggest_with_optuna`)
-suggest_optuna_kwargs_by_name_by_solver: Dict[
-    Type[SolverDO], Dict[str, Dict[str, Any]]
+suggest_optuna_kwargs_by_name_by_solver: dict[
+    type[SolverDO], dict[str, dict[str, Any]]
 ] = defaultdict(
     dict,  # default kwargs_by_name for unspecified solvers
     {},

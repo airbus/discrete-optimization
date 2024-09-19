@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Dict, Hashable, Tuple
+from collections.abc import Hashable
 
 import pytest
 
@@ -49,7 +49,7 @@ def test_multiskill(rcpsp_model_file):
 
 def create_task_details_classic(
     solution: MS_RCPSPSolution_Variant, time_to_cut: int
-) -> Tuple[Dict[Hashable, TaskDetails], Dict[Hashable, TaskDetails]]:
+) -> tuple[dict[Hashable, TaskDetails], dict[Hashable, TaskDetails]]:
     finished = set(
         [t for t in solution.schedule if solution.get_end_time(t) <= time_to_cut]
     )
@@ -75,8 +75,8 @@ def create_task_details_classic(
 
 def create_task_details_preemptive(
     solution: MS_RCPSPSolution_Preemptive_Variant, time_to_cut: int
-) -> Tuple[
-    Dict[Hashable, TaskDetailsPreemptive], Dict[Hashable, TaskDetailsPreemptive]
+) -> tuple[
+    dict[Hashable, TaskDetailsPreemptive], dict[Hashable, TaskDetailsPreemptive]
 ]:
     finished = set(
         [t for t in solution.schedule if solution.get_end_time(t) <= time_to_cut]

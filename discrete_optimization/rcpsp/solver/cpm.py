@@ -4,7 +4,7 @@
 
 import logging
 from heapq import heappop, heappush
-from typing import Any, Dict, List
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -60,7 +60,7 @@ class CPM(SolverRCPSP):
         self.graph_nx = self.graph.to_networkx()
         self.source = problem.source_task
         self.sink = problem.sink_task
-        self.map_node: Dict[Any, CPMObject] = {
+        self.map_node: dict[Any, CPMObject] = {
             n: CPMObject(None, None, None, None) for n in self.graph_nx.nodes()
         }
         successors = {
@@ -172,9 +172,9 @@ class CPM(SolverRCPSP):
 
     def run_sgs_on_order(
         self,
-        map_nodes: Dict[Any, CPMObject],
-        critical_path: List[Any],
-        total_order: List[Any] = None,
+        map_nodes: dict[Any, CPMObject],
+        critical_path: list[Any],
+        total_order: list[Any] = None,
         cut_sgs_by_critical=True,
     ):
         if total_order is None:
@@ -377,9 +377,9 @@ class CPM(SolverRCPSP):
 
     def run_sgs_time_loop(
         self,
-        map_nodes: Dict[Any, CPMObject],
-        critical_path: List[Any],
-        total_order: List[Any] = None,
+        map_nodes: dict[Any, CPMObject],
+        critical_path: list[Any],
+        total_order: list[Any] = None,
     ):
         if total_order is None:
             total_order = self.return_order_cpm()
@@ -564,7 +564,7 @@ def run_partial_classic_cpm(partial_schedule, cpm_solver):
         }
         for k in cpm_solver.predecessors_map
     }
-    map_node: Dict[Any, CPMObject] = {
+    map_node: dict[Any, CPMObject] = {
         n: CPMObject(None, None, None, None) for n in cpm_solver.graph_nx.nodes()
     }
     forward = True

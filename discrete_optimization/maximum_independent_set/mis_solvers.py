@@ -4,7 +4,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import ModelingCPSat
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
@@ -33,7 +33,7 @@ from discrete_optimization.maximum_independent_set.solvers.mis_toulbar import (
     toulbar_available,
 )
 
-solvers: Dict[str, List[Tuple[Type[MisSolver], Dict[str, Any]]]] = {
+solvers: dict[str, list[tuple[type[MisSolver], dict[str, Any]]]] = {
     "lp": [
         (
             MisMilpSolver,
@@ -67,7 +67,7 @@ for key in solvers:
 
 
 def solve(
-    method_solver: Type[MisSolver], problem: MisProblem, **kwargs: Any
+    method_solver: type[MisSolver], problem: MisProblem, **kwargs: Any
 ) -> ResultStorage:
     """Solve a mis instance with a given class of solver.
 

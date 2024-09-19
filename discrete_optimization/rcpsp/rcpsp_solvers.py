@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Union
 
 from discrete_optimization.generic_rcpsp_tools.generic_rcpsp_solver import (
     SolverGenericRCPSP,
@@ -51,8 +51,8 @@ from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints
     RCPSPModelSpecialConstraintsPreemptive,
 )
 
-solvers: Dict[
-    str, List[Tuple[Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]], Dict[str, Any]]]
+solvers: dict[
+    str, list[tuple[Union[type[SolverRCPSP], type[SolverGenericRCPSP]], dict[str, Any]]]
 ] = {
     "lp": [
         (
@@ -142,8 +142,8 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility: Dict[
-    Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]], List[Type[ANY_CLASSICAL_RCPSP]]
+solvers_compatibility: dict[
+    Union[type[SolverRCPSP], type[SolverGenericRCPSP]], list[type[ANY_CLASSICAL_RCPSP]]
 ] = {
     LP_RCPSP: [RCPSPModel],
     LP_MRCPSP: [
@@ -197,14 +197,14 @@ solvers_compatibility: Dict[
 
 def look_for_solver(
     domain: ANY_CLASSICAL_RCPSP,
-) -> List[Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]]]:
+) -> list[Union[type[SolverRCPSP], type[SolverGenericRCPSP]]]:
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
 
 def look_for_solver_class(
-    class_domain: Type[ANY_CLASSICAL_RCPSP],
-) -> List[Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]]]:
+    class_domain: type[ANY_CLASSICAL_RCPSP],
+) -> list[Union[type[SolverRCPSP], type[SolverGenericRCPSP]]]:
     available = []
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
@@ -213,7 +213,7 @@ def look_for_solver_class(
 
 
 def solve(
-    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
+    method: Union[type[SolverRCPSP], type[SolverGenericRCPSP]],
     problem: ANY_CLASSICAL_RCPSP,
     **kwargs: Any,
 ) -> ResultStorage:
@@ -222,16 +222,16 @@ def solve(
 
 
 def solve_return_solver(
-    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
+    method: Union[type[SolverRCPSP], type[SolverGenericRCPSP]],
     problem: ANY_CLASSICAL_RCPSP,
     **kwargs: Any,
-) -> Tuple[ResultStorage, Union[SolverRCPSP, SolverGenericRCPSP]]:
+) -> tuple[ResultStorage, Union[SolverRCPSP, SolverGenericRCPSP]]:
     solver = return_solver(method=method, problem=problem, **kwargs)
     return solver.solve(**kwargs), solver
 
 
 def return_solver(
-    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]],
+    method: Union[type[SolverRCPSP], type[SolverGenericRCPSP]],
     problem: ANY_CLASSICAL_RCPSP,
     **kwargs: Any,
 ) -> Union[SolverRCPSP, SolverGenericRCPSP]:
@@ -245,8 +245,8 @@ def return_solver(
 
 
 def get_solver_default_arguments(
-    method: Union[Type[SolverRCPSP], Type[SolverGenericRCPSP]]
-) -> Dict[str, Any]:
+    method: Union[type[SolverRCPSP], type[SolverGenericRCPSP]]
+) -> dict[str, Any]:
     try:
         return solvers_map[method][1]
     except KeyError:

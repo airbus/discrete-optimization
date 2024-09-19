@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+from collections.abc import Callable, Hashable
 from itertools import product
-from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from mip import BINARY, INTEGER, MINIMIZE, Model, Var, xsum
 
@@ -126,7 +127,7 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
         # we have a better self.T to limit the number of variables :
         self.index_time = range(int(makespan + 1))
         self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
-        self.x: List[List[Var]] = [
+        self.x: list[list[Var]] = [
             [
                 self.model.add_var(name=f"x({task},{t})", var_type=BINARY)
                 for t in self.index_time
@@ -300,7 +301,7 @@ class LP_RCPSP(PymipMilpSolver, SolverRCPSP):
 
 class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
     problem: RCPSPModel
-    x: Dict[Tuple[Hashable, int, int], Any]
+    x: dict[tuple[Hashable, int, int], Any]
     hyperparameters = [
         CategoricalHyperparameter(
             name="greedy_start", choices=[True, False], default=True
@@ -325,7 +326,7 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
         get_obj_value_for_current_solution: Callable[[], float],
     ) -> RCPSPSolution:
         rcpsp_schedule = {}
-        modes: Dict[Hashable, Union[str, int]] = {}
+        modes: dict[Hashable, Union[str, int]] = {}
         for (task, mode, t), x in self.x.items():
             value = get_var_value_for_current_solution(x)
             if value >= 0.5:
@@ -421,7 +422,7 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         if self.start_solution.rcpsp_schedule_feasible:
             self.index_time = range(int(makespan + 1))
         self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
-        self.x: Dict[Tuple[Hashable, int, int], Var] = {}
+        self.x: dict[tuple[Hashable, int, int], Var] = {}
         last_task = self.problem.sink_task
         variable_per_task = {}
         for task in sorted_tasks:
@@ -650,7 +651,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
         if max_horizon is not None:
             self.index_time = list(range(max_horizon + 1))
         self.model = gurobi.Model("MRCPSP")
-        self.x: Dict[Tuple[Hashable, int, int], gurobi.Var] = {}
+        self.x: dict[tuple[Hashable, int, int], gurobi.Var] = {}
         last_task = self.problem.sink_task
         variable_per_task = {}
         keys_for_t = {}
@@ -906,7 +907,7 @@ class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):
         if max_horizon is not None:
             self.index_time = list(range(max_horizon + 1))
         self.model: "cplex.Model" = cplex.Model("MRCPSP")
-        self.x: Dict[Tuple[Hashable, int, int], "cplex_var.Var"] = {}
+        self.x: dict[tuple[Hashable, int, int], "cplex_var.Var"] = {}
         last_task = self.problem.sink_task
         variable_per_task = {}
         keys_for_t = {}

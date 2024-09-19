@@ -6,8 +6,9 @@ from __future__ import (
     annotations,  # make annotations be considered as string by default
 )
 
+from collections.abc import Hashable, Iterable
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, Hashable, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 from numpy import typing as npt
@@ -66,21 +67,21 @@ class RCPSPSolution(Solution):
     def __init__(
         self,
         problem: RCPSPModel,
-        rcpsp_permutation: Optional[List[int]] = None,
-        rcpsp_schedule: Optional[Dict[Hashable, Dict[str, int]]] = None,
-        rcpsp_modes: Optional[List[int]] = None,
+        rcpsp_permutation: Optional[list[int]] = None,
+        rcpsp_schedule: Optional[dict[Hashable, dict[str, int]]] = None,
+        rcpsp_modes: Optional[list[int]] = None,
         rcpsp_schedule_feasible: bool = True,
-        standardised_permutation: Optional[List[int]] = None,
+        standardised_permutation: Optional[list[int]] = None,
         fast: bool = True,
     ):
         self.problem = problem
         self.rcpsp_schedule_feasible = rcpsp_schedule_feasible
         self.fast = fast
 
-        self.rcpsp_modes: List[int]
-        self.rcpsp_schedule: Dict[Hashable, Dict[str, int]]
-        self.rcpsp_permutation: List[int]
-        self.standardised_permutation: List[int]
+        self.rcpsp_modes: list[int]
+        self.rcpsp_schedule: dict[Hashable, dict[str, int]]
+        self.rcpsp_permutation: list[int]
+        self.standardised_permutation: list[int]
 
         # init rcpsp_modes
         if rcpsp_modes is None:
@@ -165,7 +166,7 @@ class RCPSPSolution(Solution):
         val = "RCPSP solution (rcpsp_schedule): " + sched_str
         return val
 
-    def generate_permutation_from_schedule(self) -> List[int]:
+    def generate_permutation_from_schedule(self) -> list[int]:
         sorted_task = [
             self.problem.index_task_non_dummy[i]
             for i in sorted(
@@ -218,7 +219,7 @@ class RCPSPSolution(Solution):
             self.rcpsp_schedule_feasible = True
         else:
             if do_fast:
-                schedule: Dict[int, Tuple[int, int]]
+                schedule: dict[int, tuple[int, int]]
                 if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
                     # non existing modes
                     schedule, unfeasible = {}, True
@@ -255,8 +256,8 @@ class RCPSPSolution(Solution):
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
         current_t: int = 0,
-        completed_tasks: Optional[Dict[Hashable, TaskDetails]] = None,
-        scheduled_tasks_start_times: Optional[Dict[Hashable, int]] = None,
+        completed_tasks: Optional[dict[Hashable, TaskDetails]] = None,
+        scheduled_tasks_start_times: Optional[dict[Hashable, int]] = None,
         do_fast: bool = True,
     ) -> None:
         if completed_tasks is None:
@@ -264,7 +265,7 @@ class RCPSPSolution(Solution):
         if scheduled_tasks_start_times is None:
             scheduled_tasks_start_times = {}
         if do_fast and not self.problem.do_special_constraints:
-            schedule: Dict[int, Tuple[int, int]]
+            schedule: dict[int, tuple[int, int]]
             if max(self.rcpsp_modes) > self.problem.max_number_of_mode:
                 # non existing modes
                 schedule, unfeasible = {}, True
@@ -348,13 +349,13 @@ class RCPSPSolution(Solution):
     def get_end_time(self, task: Hashable) -> int:
         return self.rcpsp_schedule[task]["end_time"]
 
-    def get_start_times_list(self, task: Hashable) -> List[int]:
+    def get_start_times_list(self, task: Hashable) -> list[int]:
         return [self.get_start_time(task)]
 
-    def get_end_times_list(self, task: Hashable) -> List[int]:
+    def get_end_times_list(self, task: Hashable) -> list[int]:
         return [self.get_end_time(task)]
 
-    def get_active_time(self, task: Hashable) -> List[int]:
+    def get_active_time(self, task: Hashable) -> list[int]:
         return list(range(self.get_start_time(task), self.get_end_time(task)))
 
     def get_mode(self, task: Hashable) -> int:
@@ -385,7 +386,7 @@ def permutation_do_to_permutation_sgs_fast(
 
 def generate_schedule_from_permutation_serial_sgs(
     solution: RCPSPSolution, rcpsp_problem: RCPSPModel
-) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
+) -> tuple[dict[Hashable, dict[str, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
@@ -487,7 +488,7 @@ def generate_schedule_from_permutation_serial_sgs(
                 minimum_starting_time[s] = max(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
-    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+    rcpsp_schedule: dict[Hashable, dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
         rcpsp_schedule[act_id]["start_time"] = (
@@ -509,7 +510,7 @@ def generate_schedule_from_permutation_serial_sgs(
 
 def generate_schedule_from_permutation_serial_sgs_special_constraints(
     solution: RCPSPSolution, rcpsp_problem: RCPSPModel
-) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
+) -> tuple[dict[Hashable, dict[str, int]], bool]:
     activity_end_times = {}
 
     unfeasible_non_renewable_resources = False
@@ -554,7 +555,7 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
         if modes_dict[k] not in rcpsp_problem.mode_details[k]:
             modes_dict[k] = 1
 
-    def look_for_task(perm: List[Hashable], ignore_sc: bool = False) -> List[Hashable]:
+    def look_for_task(perm: list[Hashable], ignore_sc: bool = False) -> list[Hashable]:
         act_ids = []
         for task_id in perm:
             respected = True
@@ -713,7 +714,7 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
                             act_id
                         ][s],
                     )
-    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+    rcpsp_schedule: dict[Hashable, dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
         rcpsp_schedule[act_id]["start_time"] = (
@@ -737,9 +738,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
     solution: RCPSPSolution,
     rcpsp_problem: RCPSPModel,
     current_t: int,
-    completed_tasks: Dict[Hashable, TaskDetails],
-    scheduled_tasks_start_times: Dict[Hashable, int],
-) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
+    completed_tasks: dict[Hashable, TaskDetails],
+    scheduled_tasks_start_times: dict[Hashable, int],
+) -> tuple[dict[Hashable, dict[str, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
@@ -857,7 +858,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                 minimum_starting_time[s] = max(
                     minimum_starting_time[s], activity_end_times[act_id]
                 )
-    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+    rcpsp_schedule: dict[Hashable, dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
         rcpsp_schedule[act_id]["start_time"] = (
@@ -885,9 +886,9 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
     solution: RCPSPSolution,
     rcpsp_problem: RCPSPModel,
     current_t: int,
-    completed_tasks: Dict[Hashable, TaskDetails],
-    scheduled_tasks_start_times: Dict[Hashable, int],
-) -> Tuple[Dict[Hashable, Dict[str, int]], bool]:
+    completed_tasks: dict[Hashable, TaskDetails],
+    scheduled_tasks_start_times: dict[Hashable, int],
+) -> tuple[dict[Hashable, dict[str, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = rcpsp_problem.horizon
@@ -995,7 +996,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                 if pred in perm_extended:
                     respected = False
                     break
-            task_to_start_too: List[Hashable] = []
+            task_to_start_too: list[Hashable] = []
             if respected:
                 task_to_start_too = [
                     k
@@ -1112,7 +1113,7 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
                             act_id
                         ][s]
                     )
-    rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+    rcpsp_schedule: dict[Hashable, dict[str, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = {}
         rcpsp_schedule[act_id]["start_time"] = (
@@ -1183,18 +1184,18 @@ def compute_mean_resource_reserve(
 class PartialSolution:
     def __init__(
         self,
-        task_mode: Optional[Dict[int, int]] = None,
-        start_times: Optional[Dict[int, int]] = None,
-        end_times: Optional[Dict[int, int]] = None,
-        partial_permutation: Optional[List[int]] = None,
-        list_partial_order: Optional[List[List[int]]] = None,
-        start_together: Optional[List[Tuple[int, int]]] = None,
-        start_at_end: Optional[List[Tuple[int, int]]] = None,
-        start_at_end_plus_offset: Optional[List[Tuple[int, int, int]]] = None,
-        start_after_nunit: Optional[List[Tuple[int, int, int]]] = None,
-        disjunctive_tasks: Optional[List[Tuple[int, int]]] = None,
-        start_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
-        end_times_window: Optional[Dict[Hashable, Tuple[int, int]]] = None,
+        task_mode: Optional[dict[int, int]] = None,
+        start_times: Optional[dict[int, int]] = None,
+        end_times: Optional[dict[int, int]] = None,
+        partial_permutation: Optional[list[int]] = None,
+        list_partial_order: Optional[list[list[int]]] = None,
+        start_together: Optional[list[tuple[int, int]]] = None,
+        start_at_end: Optional[list[tuple[int, int]]] = None,
+        start_at_end_plus_offset: Optional[list[tuple[int, int, int]]] = None,
+        start_after_nunit: Optional[list[tuple[int, int, int]]] = None,
+        disjunctive_tasks: Optional[list[tuple[int, int]]] = None,
+        start_times_window: Optional[dict[Hashable, tuple[int, int]]] = None,
+        end_times_window: Optional[dict[Hashable, tuple[int, int]]] = None,
     ):
         self.task_mode = task_mode
         self.start_times = start_times

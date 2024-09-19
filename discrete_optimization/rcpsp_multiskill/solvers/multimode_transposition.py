@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Dict, Set, Union
+from typing import Union
 
 import numpy as np
 
@@ -43,7 +43,7 @@ class MultimodeTranspositionSolver(SolverDO):
         self,
         problem: MS_RCPSPModel,
         multimode_problem: Union[RCPSPModel, RCPSPModelPreemptive] = None,
-        worker_type_to_worker: Dict[str, Set[Union[str, int]]] = None,
+        worker_type_to_worker: dict[str, set[Union[str, int]]] = None,
         params_objective_function: ParamsObjectiveFunction = None,
         solver_multimode_rcpsp: SolverDO = None,
         **kwargs
@@ -80,7 +80,7 @@ class MultimodeTranspositionSolver(SolverDO):
 def rebuild_multiskill_solution(
     multiskill_rcpsp_model: MS_RCPSPModel,
     multimode_rcpsp_model: Union[RCPSPModel, RCPSPModelPreemptive],
-    worker_type_to_worker: Dict[str, Set[Union[str, int]]],
+    worker_type_to_worker: dict[str, set[Union[str, int]]],
     solution_rcpsp: Union[RCPSPSolution, RCPSPSolutionPreemptive],
 ):
     new_horizon = multimode_rcpsp_model.horizon
@@ -209,7 +209,7 @@ def rebuild_multiskill_solution(
 def rebuild_multiskill_solution_cp_based(
     multiskill_rcpsp_model: MS_RCPSPModel,
     multimode_rcpsp_model: Union[RCPSPModel, RCPSPModelPreemptive],
-    worker_type_to_worker: Dict[str, Set[Union[str, int]]],
+    worker_type_to_worker: dict[str, set[Union[str, int]]],
     solution_rcpsp: Union[RCPSPSolution, RCPSPSolutionPreemptive],
 ):
     if isinstance(solution_rcpsp, RCPSPSolution):

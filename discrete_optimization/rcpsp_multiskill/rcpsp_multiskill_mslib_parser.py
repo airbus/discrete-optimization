@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
-from typing import Dict, Optional
+from typing import Optional
 
 from discrete_optimization.datasets import fetch_data_from_mslib, get_data_home
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
@@ -99,7 +99,7 @@ def parse_file_mslib(file_path, skill_level_version: bool = True):
         )
         workers_list = [f"w-{i}" for i in range(number_units)]
         skills_list = [f"sk-{i}" for i in range(number_skills)]
-        workers: Dict[str, Employee] = {
+        workers: dict[str, Employee] = {
             w: Employee(
                 dict_skill={}, calendar_employee=[True] * (2 * horizon_1 + 1), salary=0
             )

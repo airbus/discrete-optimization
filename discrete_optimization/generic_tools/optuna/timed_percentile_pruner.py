@@ -9,7 +9,7 @@ from __future__ import annotations
 import functools
 import logging
 import math
-from typing import KeysView, List
+from collections.abc import KeysView
 
 import numpy as np
 
@@ -49,7 +49,7 @@ else:
             return np.nan
 
     def _get_percentile_intermediate_result_over_trials(
-        completed_trials: List["optuna.trial.FrozenTrial"],
+        completed_trials: list["optuna.trial.FrozenTrial"],
         direction: StudyDirection,
         step: int,
         percentile: float,

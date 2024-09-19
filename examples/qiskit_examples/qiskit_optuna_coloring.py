@@ -15,7 +15,7 @@ os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
 import logging
 import time
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 import optuna
 from optuna import Trial
@@ -62,7 +62,7 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 elapsed_time_attr = "elapsed_time"  # name of the user attribute used to store duration of trials (updated during intermediate reports)
 
 
-solvers: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
+solvers: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
             QAOAColoringSolver_MinimizeNbColor,
@@ -82,11 +82,11 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_to_test: List[Type[SolverDO]] = [s for s in solvers_map]
+solvers_to_test: list[type[SolverDO]] = [s for s in solvers_map]
 
 # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
 # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
-solvers_by_name: Dict[str, Type[SolverDO]] = {
+solvers_by_name: dict[str, type[SolverDO]] = {
     cls.__name__: cls for cls in solvers_to_test
 }
 

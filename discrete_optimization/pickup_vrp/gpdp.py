@@ -7,7 +7,8 @@
 # February 1995 Transportation Science 29(1):17-29
 # https://www.researchgate.net/publication/239063487_The_General_Pickup_and_Delivery_Problem
 import logging
-from typing import Any, Dict, Hashable, KeysView, List, Optional, Set, Tuple, Type
+from collections.abc import Hashable, KeysView
+from typing import Any, Optional
 
 import networkx as nx
 import numpy as np
@@ -31,16 +32,16 @@ logger = logging.getLogger(__name__)
 
 
 Node = Hashable
-Edge = Tuple[Node, Node]
+Edge = tuple[Node, Node]
 
 
 class GPDPSolution(Solution):
     def __init__(
         self,
         problem: "GPDP",
-        trajectories: Dict[int, List[Node]],
-        times: Dict[Node, float],
-        resource_evolution: Dict[Node, Dict[Node, List[int]]],
+        trajectories: dict[int, list[Node]],
+        times: dict[Node, float],
+        resource_evolution: dict[Node, dict[Node, list[int]]],
     ):
         self.problem = problem
         self.trajectories = trajectories
@@ -93,37 +94,37 @@ class GPDP(Problem):
     def __init__(
         self,
         number_vehicle: int,
-        nodes_transportation: Set[Node],
-        nodes_origin: Set[Node],
-        nodes_target: Set[Node],
-        list_pickup_deliverable: List[Tuple[List[Node], List[Node]]],
-        origin_vehicle: Dict[int, Node],
-        target_vehicle: Dict[int, Node],
-        resources_set: Set[str],
-        capacities: Dict[int, Dict[str, Tuple[float, float]]],
-        resources_flow_node: Dict[Node, Dict[str, float]],
-        resources_flow_edges: Dict[Edge, Dict[str, float]],
-        distance_delta: Dict[Node, Dict[Node, float]],
-        time_delta: Dict[Node, Dict[Node, float]],
-        time_delta_node: Optional[Dict[Node, float]] = None,
-        coordinates_2d: Optional[Dict[Node, Tuple[float, float]]] = None,
-        clusters_dict: Optional[Dict[Node, Hashable]] = None,
+        nodes_transportation: set[Node],
+        nodes_origin: set[Node],
+        nodes_target: set[Node],
+        list_pickup_deliverable: list[tuple[list[Node], list[Node]]],
+        origin_vehicle: dict[int, Node],
+        target_vehicle: dict[int, Node],
+        resources_set: set[str],
+        capacities: dict[int, dict[str, tuple[float, float]]],
+        resources_flow_node: dict[Node, dict[str, float]],
+        resources_flow_edges: dict[Edge, dict[str, float]],
+        distance_delta: dict[Node, dict[Node, float]],
+        time_delta: dict[Node, dict[Node, float]],
+        time_delta_node: Optional[dict[Node, float]] = None,
+        coordinates_2d: Optional[dict[Node, tuple[float, float]]] = None,
+        clusters_dict: Optional[dict[Node, Hashable]] = None,
         # For each node, returns an ID of a cluster associated. # This can modelize selective TSP
         list_pickup_deliverable_per_cluster: Optional[
-            List[Tuple[List[Node], List[Node]]]
+            list[tuple[list[Node], list[Node]]]
         ] = None,
-        mandatory_node_info: Optional[Dict[Node, bool]] = None,
+        mandatory_node_info: Optional[dict[Node, bool]] = None,
         # indicated for each node if the node is optional (=False) or mandatory (=True)
-        cumulative_constraints: Optional[List[Tuple[Set[Hashable], int]]] = None,
+        cumulative_constraints: Optional[list[tuple[set[Hashable], int]]] = None,
         time_windows_nodes: Optional[
-            Dict[Node, Tuple[Optional[int], Optional[int]]]
+            dict[Node, tuple[Optional[int], Optional[int]]]
         ] = None,
         time_windows_cluster: Optional[
-            Dict[Hashable, Tuple[Optional[int], Optional[int]]]
+            dict[Hashable, tuple[Optional[int], Optional[int]]]
         ] = None,
-        group_identical_vehicles: Optional[Dict[int, List[int]]] = None,
-        slack_time_bound_per_node: Optional[Dict[Node, Tuple[int, float]]] = None,
-        node_vehicle: Optional[Dict[Node, List[int]]] = None,
+        group_identical_vehicles: Optional[dict[int, list[int]]] = None,
+        slack_time_bound_per_node: Optional[dict[Node, tuple[int, float]]] = None,
+        node_vehicle: Optional[dict[Node, list[int]]] = None,
         compute_graph: bool = False,
     ):
         """
@@ -157,13 +158,13 @@ class GPDP(Problem):
         self.distance_delta = distance_delta
         self.time_delta = time_delta
 
-        self.all_nodes: Set[Node] = set()
+        self.all_nodes: set[Node] = set()
         self.all_nodes.update(self.nodes_origin)
         self.all_nodes.update(self.nodes_target)
         self.all_nodes.update(self.nodes_transportation)
         self.all_nodes.update([self.origin_vehicle[v] for v in self.origin_vehicle])
         self.all_nodes.update([self.target_vehicle[v] for v in self.target_vehicle])
-        self.all_nodes_dict: Dict[Node, Dict[str, Any]] = {}
+        self.all_nodes_dict: dict[Node, dict[str, Any]] = {}
         if time_delta_node is None:
             self.time_delta_node = {n: 0.0 for n in self.all_nodes}
         else:
@@ -190,14 +191,14 @@ class GPDP(Problem):
             for res in self.resources_flow_node[node]:
                 self.all_nodes_dict[node][res] = self.resources_flow_node[node][res]
 
-        self.edges_dict: Dict[Node, Dict[Node, Dict[str, float]]] = {}
+        self.edges_dict: dict[Node, dict[Node, dict[str, float]]] = {}
         self.update_edges()
         self.graph: Optional[Graph] = None
         if compute_graph:
             logger.info("compute graph")
             self.compute_graph()
             logger.info("done")
-        self.clusters_dict: Dict[Node, Hashable]
+        self.clusters_dict: dict[Node, Hashable]
         if clusters_dict is None:
             i = 0
             self.clusters_dict = {}
@@ -207,7 +208,7 @@ class GPDP(Problem):
         else:
             self.clusters_dict = clusters_dict
         self.clusters_set = set(self.clusters_dict.values())
-        self.clusters_to_node: Dict[Hashable, Set[Node]] = {
+        self.clusters_to_node: dict[Hashable, set[Node]] = {
             k: set() for k in self.clusters_set
         }
         for k in self.clusters_dict:
@@ -219,23 +220,23 @@ class GPDP(Problem):
                 self.mandatory_node_info = {n: False for n in self.all_nodes_dict}
         else:
             self.mandatory_node_info = mandatory_node_info
-        self.cumulative_constraints: List[Tuple[Set[Hashable], int]]
+        self.cumulative_constraints: list[tuple[set[Hashable], int]]
         if cumulative_constraints is None:
             self.cumulative_constraints = []
         else:
             self.cumulative_constraints = cumulative_constraints
-        self.time_windows_nodes: Dict[Node, Tuple[Optional[int], Optional[int]]]
+        self.time_windows_nodes: dict[Node, tuple[Optional[int], Optional[int]]]
         if time_windows_nodes is None:
             self.time_windows_nodes = {n: (None, None) for n in self.all_nodes_dict}
         else:
             self.time_windows_nodes = time_windows_nodes
-        self.time_windows_cluster: Dict[Hashable, Tuple[Optional[int], Optional[int]]]
+        self.time_windows_cluster: dict[Hashable, tuple[Optional[int], Optional[int]]]
         if time_windows_cluster is None:
             self.time_windows_cluster = {k: (None, None) for k in self.clusters_set}
         else:
             self.time_windows_cluster = time_windows_cluster
         self.list_nodes = list(self.all_nodes)
-        self.index_nodes: Dict[Node, int] = {
+        self.index_nodes: dict[Node, int] = {
             self.list_nodes[i]: i for i in range(len(self.list_nodes))
         }
         self.nodes_to_index = {
@@ -286,9 +287,9 @@ class GPDP(Problem):
         else:
             self.slack_time_bound_per_node = slack_time_bound_per_node
 
-    def evaluate(self, variable: GPDPSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
-        res_distance: Dict[str, float] = {}
-        res_time: Dict[str, float] = {}
+    def evaluate(self, variable: GPDPSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+        res_distance: dict[str, float] = {}
+        res_time: dict[str, float] = {}
         for v, path in variable.trajectories.items():
             res_distance[f"distance_{v}"] = self.compute_distance(path)
             if path[-1] in variable.times:
@@ -297,12 +298,12 @@ class GPDP(Problem):
                 res_time[f"time_{v}"] = 0.0
         res_distance["distance_max"] = max(res_distance.values())
         res_time["time_max"] = max(res_time.values())
-        res: Dict[str, float] = {}
+        res: dict[str, float] = {}
         res.update(res_distance)
         res.update(res_time)
         return res
 
-    def compute_distance(self, path: List[Node]) -> float:
+    def compute_distance(self, path: list[Node]) -> float:
         distance = 0.0
         for i in range(len(path) - 1):
             distance += self.distance_delta[path[i]].get(path[i + 1], GPDP.MAX_VALUE)
@@ -348,7 +349,7 @@ class GPDP(Problem):
             compute_predecessors=False,
         )
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return GPDPSolution
 
     def get_attribute_register(self) -> EncodingRegister:
@@ -552,10 +553,10 @@ class ProxyClass:
         real_client_to_initial = {
             j: clients_node[j][0] for j in range(len(clients_node))
         }
-        origin_vehicle: Dict[int, Node] = {
+        origin_vehicle: dict[int, Node] = {
             i: virtual_debut_node[i] for i in range(nb_vehicle)
         }
-        target_vehicle: Dict[int, Node] = {
+        target_vehicle: dict[int, Node] = {
             i: virtual_end_node[i] for i in range(nb_vehicle)
         }
         clients_gpdp = (
@@ -563,10 +564,10 @@ class ProxyClass:
             + virtual_debut_node
             + virtual_end_node
         )
-        dictionnary_distance: Dict[Node, Dict[Node, float]] = {}
-        time_delta: Dict[Node, Dict[Node, float]] = {}
-        resources_flow_node: Dict[Node, Dict[str, float]] = {}
-        coordinates: Dict[Node, Tuple[float, float]] = {}
+        dictionnary_distance: dict[Node, dict[Node, float]] = {}
+        time_delta: dict[Node, dict[Node, float]] = {}
+        resources_flow_node: dict[Node, dict[str, float]] = {}
+        coordinates: dict[Node, tuple[float, float]] = {}
         for node1 in clients_gpdp:
             dictionnary_distance[node1] = {}
             time_delta[node1] = {}
@@ -611,17 +612,17 @@ class ProxyClass:
             resources_flow_node[origin_vehicle[v]]["demand"] = int(
                 vrp_model.vehicle_capacities[v]
             )
-        resources_set: Set[str] = {"demand"}
-        nodes_transportation: Set[Node] = set(real_client_to_initial.keys())
-        nodes_origin: Set[Node] = set(virtual_to_initial.keys())
-        nodes_target: Set[Node] = set(virtual_to_end.keys())
-        list_pickup_deliverable: List[Tuple[List[Node], List[Node]]] = []
-        capacities: Dict[int, Dict[str, Tuple[float, float]]] = {
+        resources_set: set[str] = {"demand"}
+        nodes_transportation: set[Node] = set(real_client_to_initial.keys())
+        nodes_origin: set[Node] = set(virtual_to_initial.keys())
+        nodes_target: set[Node] = set(virtual_to_end.keys())
+        list_pickup_deliverable: list[tuple[list[Node], list[Node]]] = []
+        capacities: dict[int, dict[str, tuple[float, float]]] = {
             i: {"demand": (0.0, vrp_model.vehicle_capacities[i])}
             for i in range(nb_vehicle)
         }
         # {Vehicle:{resource: (min_capacity, max_capacity)}}
-        resources_flow_edges: Dict[Edge, Dict[str, float]] = {
+        resources_flow_edges: dict[Edge, dict[str, float]] = {
             (x, y): {"demand": 0.0}
             for x in dictionnary_distance
             for y in dictionnary_distance[x]
@@ -671,10 +672,10 @@ class ProxyClass:
         real_client_to_initial = {
             j: clients_node[j][0] for j in range(len(clients_node))
         }
-        origin_vehicle: Dict[int, Node] = {
+        origin_vehicle: dict[int, Node] = {
             i: virtual_debut_node[i] for i in range(nb_vehicle)
         }
-        target_vehicle: Dict[int, Node] = {
+        target_vehicle: dict[int, Node] = {
             i: virtual_end_node[i] for i in range(nb_vehicle)
         }
         clients_gpdp = (
@@ -682,10 +683,10 @@ class ProxyClass:
             + virtual_debut_node
             + virtual_end_node
         )
-        dictionnary_distance: Dict[Node, Dict[Node, float]] = {}
-        time_delta: Dict[Node, Dict[Node, float]] = {}
-        resources_flow_node: Dict[Node, Dict[str, float]] = {}
-        coordinates: Dict[Node, Tuple[float, float]] = {}
+        dictionnary_distance: dict[Node, dict[Node, float]] = {}
+        time_delta: dict[Node, dict[Node, float]] = {}
+        resources_flow_node: dict[Node, dict[str, float]] = {}
+        coordinates: dict[Node, tuple[float, float]] = {}
         for node1 in clients_gpdp:
             dictionnary_distance[node1] = {}
             time_delta[node1] = {}
@@ -726,12 +727,12 @@ class ProxyClass:
             resources_flow_node[node] = {}
         for v in range(nb_vehicle):
             resources_flow_node[origin_vehicle[v]] = {}
-        nodes_transportation: Set[Node] = set(real_client_to_initial.keys())
-        nodes_origin: Set[Node] = set(virtual_to_initial.keys())
-        nodes_target: Set[Node] = set(virtual_to_end.keys())
-        list_pickup_deliverable: List[Tuple[List[Node], List[Node]]] = []
-        resources_set: Set[str] = set()
-        capacities: Dict[int, Dict[str, Tuple[float, float]]] = {
+        nodes_transportation: set[Node] = set(real_client_to_initial.keys())
+        nodes_origin: set[Node] = set(virtual_to_initial.keys())
+        nodes_target: set[Node] = set(virtual_to_end.keys())
+        list_pickup_deliverable: list[tuple[list[Node], list[Node]]] = []
+        resources_set: set[str] = set()
+        capacities: dict[int, dict[str, tuple[float, float]]] = {
             i: {} for i in range(nb_vehicle)
         }
         # {Vehicle:{resource: (min_capacity, max_capacity)}}

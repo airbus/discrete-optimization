@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 import mip
 from mip import BINARY, MAXIMIZE, xsum
@@ -49,12 +50,12 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.variable_decision: Dict[str, Dict[int, Union["Var", mip.Var]]] = {}
-        self.constraints_dict: Dict[
+        self.variable_decision: dict[str, dict[int, Union["Var", mip.Var]]] = {}
+        self.constraints_dict: dict[
             str, Union["Constr", "QConstr", "MConstr", "GenConstr", "mip.Constr"]
         ] = {}
-        self.description_variable_description: Dict[str, Dict[str, Any]] = {}
-        self.description_constraint: Dict[str, Dict[str, str]] = {}
+        self.description_variable_description: dict[str, dict[str, Any]] = {}
+        self.description_constraint: dict[str, dict[str, str]] = {}
 
     def retrieve_current_solution(
         self,
@@ -145,13 +146,13 @@ class LPKnapsackCBC(SolverKnapsack):
             problem=problem, params_objective_function=params_objective_function
         )
         self.model: Optional[pywraplp.Solver] = None
-        self.variable_decision: Dict[str, Dict[int, Any]] = {}
-        self.constraints_dict: Dict[str, Any] = {}
-        self.description_variable_description: Dict[str, Dict[str, Any]] = {}
-        self.description_constraint: Dict[str, Dict[str, str]] = {}
+        self.variable_decision: dict[str, dict[int, Any]] = {}
+        self.constraints_dict: dict[str, Any] = {}
+        self.description_variable_description: dict[str, dict[str, Any]] = {}
+        self.description_constraint: dict[str, dict[str, str]] = {}
 
     def init_model(
-        self, warm_start: Optional[Dict[int, int]] = None, **kwargs: Any
+        self, warm_start: Optional[dict[int, int]] = None, **kwargs: Any
     ) -> None:
         if warm_start is None:
             warm_start = {}

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from discrete_optimization.coloring.coloring_model import ColoringSolution
 from discrete_optimization.coloring.solvers.coloring_solver_with_starting_solution import (
@@ -213,8 +213,8 @@ class ToulbarColoringSolver(SolverColoringWithStartingSolution):
         self,
         index1: int,
         index2: int,
-        costs: Dict[str, List],
-        range_map: Dict[int, Any],
+        costs: dict[str, list],
+        range_map: dict[int, Any],
     ):
         in_subset_index1 = self.problem.is_in_subset_index(index1)
         in_subset_index2 = self.problem.is_in_subset_index(index2)

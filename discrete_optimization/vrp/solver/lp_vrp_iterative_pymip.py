@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 import networkx as nx
 from mip import BINARY, CBC, MINIMIZE, Model, Var, xsum
@@ -26,38 +26,38 @@ from discrete_optimization.vrp.vrp_model import VrpProblem2D, VrpSolution
 
 logger = logging.getLogger(__name__)
 
-Node = Tuple[int, int]
-Edge = Tuple[Node, Node]
+Node = tuple[int, int]
+Edge = tuple[Node, Node]
 
 
 def init_model_lp(
     g: nx.DiGraph,
-    edges: Set[Edge],
-    edges_in_customers: Dict[int, Set[Edge]],
-    edges_out_customers: Dict[int, Set[Edge]],
-    edges_in_merged_graph: Dict[Node, Set[Edge]],
-    edges_out_merged_graph: Dict[Node, Set[Edge]],
-    edges_warm_set: Set[Edge],
+    edges: set[Edge],
+    edges_in_customers: dict[int, set[Edge]],
+    edges_out_customers: dict[int, set[Edge]],
+    edges_in_merged_graph: dict[Node, set[Edge]],
+    edges_out_merged_graph: dict[Node, set[Edge]],
+    edges_warm_set: set[Edge],
     fraction: float,
-    start_indexes: List[int],
-    end_indexes: List[int],
+    start_indexes: list[int],
+    end_indexes: list[int],
     vehicle_count: int,
-    vehicle_capacity: List[float],
+    vehicle_capacity: list[float],
     do_lns: bool = False,
     include_backward: bool = True,
     include_triangle: bool = False,
     solver_name: str = CBC,
-) -> Tuple[
+) -> tuple[
     MyModelMilp,
-    Dict[Edge, Var],
-    Dict[Union[str, int], Any],
-    Dict[str, Any],
-    Dict[int, Any],
+    dict[Edge, Var],
+    dict[Union[str, int], Any],
+    dict[str, Any],
+    dict[int, Any],
 ]:
     tsp_model = MyModelMilp("VRP-master", sense=MINIMIZE, solver_name=solver_name)
-    x_var: Dict[Edge, Var] = {}  # decision variables on edges
-    constraint_on_edge: Dict[int, Any] = {}
-    edges_to_constraint: Set[Edge] = set()
+    x_var: dict[Edge, Var] = {}  # decision variables on edges
+    constraint_on_edge: dict[int, Any] = {}
+    edges_to_constraint: set[Edge] = set()
     if do_lns:
         edges_to_constraint = set(
             random.sample(list(edges), int(fraction * len(edges)))
@@ -65,7 +65,7 @@ def init_model_lp(
         for iedge in constraint_on_edge:
             tsp_model.remove(constraint_on_edge[iedge])
     iedge = 0
-    start: List[Tuple[Var, int]] = []
+    start: list[tuple[Var, int]] = []
     for e in edges:
         x_var[e] = tsp_model.add_var(
             var_type=BINARY, obj=g[e[0]][e[1]]["weight"], name="x_" + str(e)
@@ -82,7 +82,7 @@ def init_model_lp(
             )
             iedge += 1
     tsp_model.start = start
-    constraint_tour_2length: Dict[int, Any] = {}
+    constraint_tour_2length: dict[int, Any] = {}
     cnt_tour = 0
     if include_backward:
         for edge in edges:
@@ -105,7 +105,7 @@ def init_model_lp(
                 )
                 cnt_tour += 1
     if include_triangle:
-        constraint_triangle: Dict[int, Any] = {}
+        constraint_triangle: dict[int, Any] = {}
         for node in g.nodes():
             neigh = set([n for n in nx.neighbors(g, node)])
             neigh_2 = {
@@ -120,8 +120,8 @@ def init_model_lp(
                             + x_var[(node_neigh_neigh, node)]
                             <= 2
                         )
-    constraint_flow_in: Dict[Union[str, int], Any] = {}
-    constraint_flow_out: Dict[str, Any] = {}
+    constraint_flow_in: dict[Union[str, int], Any] = {}
+    constraint_flow_out: dict[str, Any] = {}
     start_to_i, end_to_i = compute_start_end_flows_info(start_indexes, end_indexes)
     for s in start_to_i:
         for vehicle in start_to_i[s]["vehicle"]:
@@ -146,7 +146,7 @@ def init_model_lp(
                 xsum([x_var[e] for e in edges_in_customers[customer]]) == 1,
                 name="in_" + str(customer),
             )
-    c_flow: Dict[Node, Any] = {}
+    c_flow: dict[Node, Any] = {}
     for n in edges_in_merged_graph:
         if start_indexes[n[0]] == end_indexes[n[0]] or n[1] not in [
             start_indexes[n[0]],
@@ -171,15 +171,15 @@ def init_model_lp(
 
 class VRPIterativeLP_Pymip(SolverVrp):
     problem: VrpProblem2D
-    edges: Set[Edge]
-    edges_in_customers: Dict[int, Set[Edge]]
-    edges_out_customers: Dict[int, Set[Edge]]
-    edges_in_merged_graph: Dict[Node, Set[Edge]]
-    edges_out_merged_graph: Dict[Node, Set[Edge]]
-    edges_warm_set: Set[Edge]
+    edges: set[Edge]
+    edges_in_customers: dict[int, set[Edge]]
+    edges_out_customers: dict[int, set[Edge]]
+    edges_in_merged_graph: dict[Node, set[Edge]]
+    edges_out_merged_graph: dict[Node, set[Edge]]
+    edges_warm_set: set[Edge]
     model: Optional[MyModelMilp] = None
-    x_var: Optional[Dict[Edge, Var]] = None
-    constraint_on_edge: Optional[Dict[int, Any]] = None
+    x_var: Optional[dict[Edge, Var]] = None
+    constraint_on_edge: Optional[dict[int, Any]] = None
 
     def init_model(self, **kwargs: Any) -> None:
         (
@@ -277,12 +277,12 @@ class VRPIterativeLP_Pymip(SolverVrp):
         objective = self.model.objective_value
         # Query number of multiple objectives, and number of solutions
         finished = False
-        solutions: List[Dict[int, Set[Edge]]] = []
-        cost: List[float] = []
-        nb_components: List[int] = []
+        solutions: list[dict[int, set[Edge]]] = []
+        cost: list[float] = []
+        nb_components: list[int] = []
         iteration = 0
-        rebuilt_solution: List[Dict[int, List[Node]]] = []
-        rebuilt_obj: List[float] = []
+        rebuilt_solution: list[dict[int, list[Node]]] = []
+        rebuilt_obj: list[float] = []
         best_solution_rebuilt_index = 0
         best_solution_objective_rebuilt = float("inf")
         vehicle_count = self.problem.vehicle_count
@@ -330,7 +330,7 @@ class VRPIterativeLP_Pymip(SolverVrp):
                 best_solution_rebuilt_index = iteration
             iteration += 1
             if len(component_global_all[0]) > 1:
-                edges_to_add: Set[Edge] = set()
+                edges_to_add: set[Edge] = set()
                 for v in rebuilt_dict:
                     edges_to_add.update(
                         {
@@ -472,15 +472,15 @@ class VRPIterativeLP_Pymip(SolverVrp):
 
 
 def retrieve_solutions(
-    model: Model, x_var: Dict[Edge, Var], vehicle_count: int, g: nx.DiGraph
-) -> List[Tuple[nx.DiGraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]]:
+    model: Model, x_var: dict[Edge, Var], vehicle_count: int, g: nx.DiGraph
+) -> list[tuple[nx.DiGraph, dict[int, nx.DiGraph], dict[int, set[Edge]]]]:
     nSolutions = model.num_solutions
-    solutions: List[Tuple[nx.Digraph, Dict[int, nx.DiGraph], Dict[int, Set[Edge]]]] = []
+    solutions: list[tuple[nx.Digraph, dict[int, nx.DiGraph], dict[int, set[Edge]]]] = []
     for s in range(nSolutions):
         # Set which solution we will query from now on
         g_empty = {v: nx.DiGraph() for v in range(vehicle_count)}
         g_merge = nx.DiGraph()
-        x_solution: Dict[int, Set[Edge]] = {v: set() for v in range(vehicle_count)}
+        x_solution: dict[int, set[Edge]] = {v: set() for v in range(vehicle_count)}
         for e in x_var:
             value = x_var[e].xi(s)
             if value is None:
@@ -515,16 +515,16 @@ def retrieve_solutions(
 
 def update_model_2(
     model: MyModelMilp,
-    x_var: Dict[Edge, Var],
-    components_global: List[Tuple[Set[Node], int]],
-    edges_in_customers: Dict[int, Set[Edge]],
-    edges_out_customers: Dict[int, Set[Edge]],
+    x_var: dict[Edge, Var],
+    components_global: list[tuple[set[Node], int]],
+    edges_in_customers: dict[int, set[Edge]],
+    edges_out_customers: dict[int, set[Edge]],
 ) -> None:
     len_component_global = len(components_global)
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
         for s in components_global:
-            customers_component: Set[int] = {customer for vehicle, customer in s[0]}
+            customers_component: set[int] = {customer for vehicle, customer in s[0]}
             edge_in_of_interest = [
                 e
                 for customer in customers_component

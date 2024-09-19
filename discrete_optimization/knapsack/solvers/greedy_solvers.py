@@ -2,7 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Callable, List, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.knapsack.knapsack_model import (
@@ -13,7 +14,7 @@ from discrete_optimization.knapsack.knapsack_model import (
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 
 
-def compute_density(knapsack_model: KnapsackModel) -> List[Item]:
+def compute_density(knapsack_model: KnapsackModel) -> list[Item]:
     dd = sorted(
         [
             l
@@ -26,7 +27,7 @@ def compute_density(knapsack_model: KnapsackModel) -> List[Item]:
     return dd
 
 
-def compute_density_and_penalty(knapsack_model: KnapsackModel) -> List[Item]:
+def compute_density_and_penalty(knapsack_model: KnapsackModel) -> list[Item]:
     dd = sorted(
         [
             l
@@ -41,7 +42,7 @@ def compute_density_and_penalty(knapsack_model: KnapsackModel) -> List[Item]:
 
 def greedy_using_queue(
     knapsack_model: KnapsackModel,
-    method_queue: Optional[Callable[[KnapsackModel], List[Item]]] = None,
+    method_queue: Optional[Callable[[KnapsackModel], list[Item]]] = None,
 ) -> KnapsackSolution:
     if method_queue is None:
         method_queue = compute_density

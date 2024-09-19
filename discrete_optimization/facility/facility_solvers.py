@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from discrete_optimization.facility.facility_model import (
     FacilityProblem,
@@ -30,7 +30,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 
-solvers: Dict[str, List[Tuple[Type[SolverFacility], Dict[str, Any]]]] = {
+solvers: dict[str, list[tuple[type[SolverFacility], dict[str, Any]]]] = {
     "lp": [
         (
             LP_Facility_Solver,
@@ -80,20 +80,20 @@ for key in solvers:
     for solver, param in solvers[key]:
         solvers_map[solver] = (key, param)
 
-solvers_compatibility: Dict[Type[SolverFacility], List[Type[Problem]]] = {}
+solvers_compatibility: dict[type[SolverFacility], list[type[Problem]]] = {}
 for x in solvers:
     for y in solvers[x]:
         solvers_compatibility[y[0]] = [FacilityProblem2DPoints]
 
 
-def look_for_solver(domain: FacilityProblem) -> List[Type[SolverFacility]]:
+def look_for_solver(domain: FacilityProblem) -> list[type[SolverFacility]]:
     class_domain = domain.__class__
     return look_for_solver_class(class_domain)
 
 
 def look_for_solver_class(
-    class_domain: Type[FacilityProblem],
-) -> List[Type[SolverFacility]]:
+    class_domain: type[FacilityProblem],
+) -> list[type[SolverFacility]]:
     available = []
     for solver in solvers_compatibility:
         if class_domain in solvers_compatibility[solver]:
@@ -102,7 +102,7 @@ def look_for_solver_class(
 
 
 def solve(
-    method: Type[SolverFacility], problem: FacilityProblem, **kwargs: Any
+    method: type[SolverFacility], problem: FacilityProblem, **kwargs: Any
 ) -> ResultStorage:
     solver = method(problem, **kwargs)
     try:
@@ -113,7 +113,7 @@ def solve(
 
 
 def return_solver(
-    method: Type[SolverFacility], problem: FacilityProblem, **kwargs: Any
+    method: type[SolverFacility], problem: FacilityProblem, **kwargs: Any
 ) -> SolverFacility:
     solver = method(problem, **kwargs)
     try:

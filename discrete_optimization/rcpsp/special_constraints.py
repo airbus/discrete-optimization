@@ -2,7 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
+from collections.abc import Hashable
+from typing import Optional, Union
 
 import networkx as nx
 
@@ -24,10 +25,10 @@ class PairModeConstraint:
     def __init__(
         self,
         allowed_mode_assignment: Optional[
-            Dict[Tuple[Hashable, Hashable], Set[Tuple[int, int]]]
+            dict[tuple[Hashable, Hashable], set[tuple[int, int]]]
         ] = None,
-        same_score_mode: Optional[Set[Tuple[Hashable, Hashable]]] = None,
-        score_mode: Dict[Tuple[Hashable, int], int] = None,
+        same_score_mode: Optional[set[tuple[Hashable, Hashable]]] = None,
+        score_mode: dict[tuple[Hashable, int], int] = None,
     ):
         self.allowed_mode_assignment = allowed_mode_assignment
         self.same_score_mode = same_score_mode
@@ -42,22 +43,22 @@ class PairModeConstraint:
 class SpecialConstraintsDescription:
     def __init__(
         self,
-        task_mode: Optional[Dict[Hashable, int]] = None,
-        start_times: Optional[Dict[Hashable, int]] = None,
-        end_times: Optional[Dict[Hashable, int]] = None,
+        task_mode: Optional[dict[Hashable, int]] = None,
+        start_times: Optional[dict[Hashable, int]] = None,
+        end_times: Optional[dict[Hashable, int]] = None,
         start_times_window: Optional[
-            Dict[Hashable, Tuple[Union[int, None], Union[int, None]]]
+            dict[Hashable, tuple[Union[int, None], Union[int, None]]]
         ] = None,
         end_times_window: Optional[
-            Dict[Hashable, Tuple[Union[int, None], Union[int, None]]]
+            dict[Hashable, tuple[Union[int, None], Union[int, None]]]
         ] = None,
-        partial_permutation: Optional[List[Hashable]] = None,
-        list_partial_order: Optional[List[List[Hashable]]] = None,
-        start_together: Optional[List[Tuple[Hashable, Hashable]]] = None,
-        start_at_end: Optional[List[Tuple[Hashable, Hashable]]] = None,
-        start_at_end_plus_offset: Optional[List[Tuple[Hashable, Hashable, int]]] = None,
-        start_after_nunit: Optional[List[Tuple[Hashable, Hashable, int]]] = None,
-        disjunctive_tasks: Optional[List[Tuple[Hashable, Hashable]]] = None,
+        partial_permutation: Optional[list[Hashable]] = None,
+        list_partial_order: Optional[list[list[Hashable]]] = None,
+        start_together: Optional[list[tuple[Hashable, Hashable]]] = None,
+        start_at_end: Optional[list[tuple[Hashable, Hashable]]] = None,
+        start_at_end_plus_offset: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        start_after_nunit: Optional[list[tuple[Hashable, Hashable, int]]] = None,
+        disjunctive_tasks: Optional[list[tuple[Hashable, Hashable]]] = None,
         pair_mode_constraint: Optional[PairModeConstraint] = None,
     ):
         self.task_mode = task_mode
@@ -93,7 +94,7 @@ class SpecialConstraintsDescription:
             self.disjunctive_tasks = []
         else:
             self.disjunctive_tasks = disjunctive_tasks
-        self.dict_start_together: Dict[Hashable, Set[Hashable]] = {}
+        self.dict_start_together: dict[Hashable, set[Hashable]] = {}
         self.graph_start_together = nx.Graph()
         for i, j in self.start_together:
             if i not in self.graph_start_together:
@@ -107,8 +108,8 @@ class SpecialConstraintsDescription:
         for c in self.components:
             for j in c:
                 self.dict_start_together[j] = set([k for k in c if k != j])
-        self.dict_start_at_end: Dict[Hashable, Set[Hashable]] = {}
-        self.dict_start_at_end_reverse: Dict[Hashable, Set[Hashable]] = {}
+        self.dict_start_at_end: dict[Hashable, set[Hashable]] = {}
+        self.dict_start_at_end_reverse: dict[Hashable, set[Hashable]] = {}
         for i, j in self.start_at_end:
             if i not in self.dict_start_at_end:
                 self.dict_start_at_end[i] = set()
@@ -117,8 +118,8 @@ class SpecialConstraintsDescription:
             self.dict_start_at_end[i].add(j)
             self.dict_start_at_end_reverse[j].add(i)
 
-        self.dict_start_at_end_offset: Dict[Hashable, Dict[Hashable, int]] = {}
-        self.dict_start_at_end_offset_reverse: Dict[Hashable, Dict[Hashable, int]] = {}
+        self.dict_start_at_end_offset: dict[Hashable, dict[Hashable, int]] = {}
+        self.dict_start_at_end_offset_reverse: dict[Hashable, dict[Hashable, int]] = {}
         for i, j, off in self.start_at_end_plus_offset:
             if i not in self.dict_start_at_end_offset:
                 self.dict_start_at_end_offset[i] = {}
@@ -127,8 +128,8 @@ class SpecialConstraintsDescription:
             self.dict_start_at_end_offset_reverse[j][i] = off
             self.dict_start_at_end_offset[i][j] = off
 
-        self.dict_start_after_nunit: Dict[Hashable, Dict[Hashable, int]] = {}
-        self.dict_start_after_nunit_reverse: Dict[Hashable, Dict[Hashable, int]] = {}
+        self.dict_start_after_nunit: dict[Hashable, dict[Hashable, int]] = {}
+        self.dict_start_after_nunit_reverse: dict[Hashable, dict[Hashable, int]] = {}
         for i, j, off in self.start_after_nunit:
             if i not in self.dict_start_after_nunit:
                 self.dict_start_after_nunit[i] = {}
@@ -137,7 +138,7 @@ class SpecialConstraintsDescription:
             self.dict_start_after_nunit[i][j] = off
             self.dict_start_after_nunit_reverse[j][i] = off
 
-        self.dict_disjunctive: Dict[Hashable, Set[Hashable]] = {}
+        self.dict_disjunctive: dict[Hashable, set[Hashable]] = {}
         for i, j in self.disjunctive_tasks:
             if i not in self.dict_disjunctive:
                 self.dict_disjunctive[i] = set()

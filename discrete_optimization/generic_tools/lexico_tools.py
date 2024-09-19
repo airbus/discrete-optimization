@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 """Tools for lexicographic optimization."""
 import logging
-from typing import Any, Iterable, List, Optional, Protocol
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -79,7 +80,7 @@ class LexicoSolver(SolverDO):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         objectives: Optional[Iterable[str]] = None,
         **kwargs: Any,
     ) -> ResultStorage:

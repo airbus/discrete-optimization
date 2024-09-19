@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 import numpy as np
 import pytest
@@ -46,13 +46,13 @@ from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
 )
 
 
-def fit2dict(solver: SolverDO, fit: TupleFitness) -> Dict[str, float]:
+def fit2dict(solver: SolverDO, fit: TupleFitness) -> dict[str, float]:
     return dict(zip(solver.problem.get_objective_names(), fit.vector_fitness))
 
 
 class MyCallback(Callback):
     def __init__(self):
-        self.res_by_step: List[List[Dict[str, float]]] = []
+        self.res_by_step: list[list[dict[str, float]]] = []
 
     def on_step_end(
         self, step: int, res: ResultStorage, solver: SolverDO

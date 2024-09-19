@@ -4,7 +4,7 @@
 
 import logging
 import math
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Optional, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,18 +34,18 @@ class ResultComparator:
     # If test problem is None, then we use the fitnesses from the ResultStorage
     def __init__(
         self,
-        list_result_storage: List[ResultStorage],
-        result_storage_names: List[str],
-        objectives_str: List[str],
-        objective_weights: List[int],
-        test_problems: Optional[List[Problem]] = None,
+        list_result_storage: list[ResultStorage],
+        result_storage_names: list[str],
+        objectives_str: list[str],
+        objective_weights: list[int],
+        test_problems: Optional[list[Problem]] = None,
     ):
         self.list_result_storage = list_result_storage
         self.result_storage_names = result_storage_names
         self.objectives_str = objectives_str
         self.objective_weights = objective_weights
         self.test_problems = test_problems
-        self.reevaluated_results: Dict[int, Dict[str, List[float]]] = {}
+        self.reevaluated_results: dict[int, dict[str, list[float]]] = {}
 
         if self.test_problems is not None:
             self.reevaluate_result_storages()
@@ -96,9 +96,9 @@ class ResultComparator:
 
     def get_best_by_objective_by_result_storage(
         self, objectif_str: str
-    ) -> Dict[str, Tuple[Solution, fitness_class]]:
+    ) -> dict[str, tuple[Solution, fitness_class]]:
         obj_index = self.objectives_str.index(objectif_str)
-        val: Dict[str, Tuple[Solution, fitness_class]] = {}
+        val: dict[str, tuple[Solution, fitness_class]] = {}
         for i in range(len(self.list_result_storage)):
             fit_array = [
                 cast(
@@ -132,7 +132,7 @@ class ResultComparator:
         return pareto_store
 
     def plot_all_2d_paretos_single_plot(
-        self, objectives_str: Optional[List[str]] = None
+        self, objectives_str: Optional[list[str]] = None
     ) -> Axes:
 
         if objectives_str is None:
@@ -167,7 +167,7 @@ class ResultComparator:
         return ax
 
     def plot_all_2d_paretos_subplots(
-        self, objectives_str: Optional[List[str]] = None
+        self, objectives_str: Optional[list[str]] = None
     ) -> Figure:
 
         if objectives_str is None:

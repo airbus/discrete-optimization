@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
@@ -206,7 +206,7 @@ def parse_imopse(
 
 def parse_file(
     file_path, max_horizon=None, one_unit_per_task=True, preemptive=False
-) -> Tuple[MS_RCPSPModel, Dict]:
+) -> tuple[MS_RCPSPModel, dict]:
     with open(file_path, "r", encoding="utf-8") as input_data_file:
         input_data = input_data_file.read()
         rcpsp_model, new_tame_to_original_task_id = parse_imopse(

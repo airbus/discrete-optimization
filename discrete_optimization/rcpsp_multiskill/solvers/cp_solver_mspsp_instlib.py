@@ -7,7 +7,8 @@
 
 import logging
 import os
-from typing import Any, Hashable, Optional, Set
+from collections.abc import Hashable
+from typing import Any, Optional
 
 from minizinc import Instance, Model, Solver
 
@@ -273,7 +274,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
             ]
         return s
 
-    def constraint_sum_of_ending_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_ending_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
         s = (
@@ -290,7 +291,7 @@ class CP_MSPSP_MZN(MinizincCPSolver):
         )
         return [s]
 
-    def constraint_sum_of_starting_time(self, set_subtasks: Set[Hashable]):
+    def constraint_sum_of_starting_time(self, set_subtasks: set[Hashable]):
         indexes = [self.index_in_minizinc[s] for s in set_subtasks]
         weights = [10 if s == self.problem.sink_task else 1 for s in set_subtasks]
         s = (

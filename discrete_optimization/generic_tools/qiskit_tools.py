@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 import numpy as np
 
@@ -84,7 +85,7 @@ else:
     qiskit_available = True
 
 
-def get_result_from_dict_result(dict_result: Dict[(str, int)]) -> np.ndarray:
+def get_result_from_dict_result(dict_result: dict[(str, int)]) -> np.ndarray:
     """
     @param dict_result: dictionnary where keys are qubit's value and values are the number of time where this qubit's value have been chosen
     @return: the qubit's value the must often chose
@@ -283,7 +284,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         backend: Optional = None,
         use_session: Optional[bool] = False,
         **kwargs: Any,
@@ -404,7 +405,7 @@ class QiskitVQESolver(QiskitSolver):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         backend: Optional = None,
         use_session: Optional[bool] = False,
         **kwargs: Any,

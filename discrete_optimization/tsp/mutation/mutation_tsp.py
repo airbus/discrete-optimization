@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Iterable, Sequence
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
@@ -32,9 +33,9 @@ def find_intersection(
     points: Sequence[Point2D],
     test_all: bool = False,
     nb_tests: int = 10,
-) -> List[Tuple[int, int]]:
+) -> list[tuple[int, int]]:
     perm = variable.permutation
-    intersects: List[Tuple[int, int]] = []
+    intersects: list[tuple[int, int]] = []
     its = (
         range(len(perm))
         if test_all
@@ -64,7 +65,7 @@ def find_intersection(
 
 def get_points_index(
     it: int, jt: int, variable: SolutionTSP, length_permutation: int
-) -> Tuple[int, int, int, int]:
+) -> tuple[int, int, int, int]:
     perm = variable.permutation
     i = perm[it]
     j = perm[jt]
@@ -109,7 +110,7 @@ class Mutation2Opt(Mutation):
 
     def get_points(
         self, it: int, jt: int, variable: SolutionTSP
-    ) -> Tuple[Point2D, Point2D, Point2D, Point2D]:
+    ) -> tuple[Point2D, Point2D, Point2D, Point2D]:
         perm = variable.permutation
         if it == 0:
             point_before_i = self.points[variable.start_index]
@@ -125,7 +126,7 @@ class Mutation2Opt(Mutation):
 
     def get_points_index(
         self, it: int, jt: int, variable: SolutionTSP
-    ) -> Tuple[int, int, int, int]:
+    ) -> tuple[int, int, int, int]:
         perm = variable.permutation
         i = perm[it]
         j = perm[jt]
@@ -139,7 +140,7 @@ class Mutation2Opt(Mutation):
             j_after = perm[jt + 1]
         return i_before, i, j, j_after
 
-    def mutate_and_compute_obj(self, variable: SolutionTSP) -> Tuple[SolutionTSP, LocalMove, Dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(self, variable: SolutionTSP) -> tuple[SolutionTSP, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.length is None or variable.lengths is None:
             raise RuntimeError(
                 "length and lengths variable's attributes should not be None at this point."
@@ -211,7 +212,7 @@ class Mutation2Opt(Mutation):
                 {"length": variable.length},
             )
 
-    def mutate(self, variable: SolutionTSP) -> Tuple[SolutionTSP, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, variable: SolutionTSP) -> tuple[SolutionTSP, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         v, move, f = self.mutate_and_compute_obj(variable)
         return v, move
 
@@ -230,7 +231,7 @@ class Mutation2OptIntersection(Mutation2Opt):
         test_all: bool = True,
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
-        i_j_pairs: Optional[List[Tuple[int, int]]] = None,
+        i_j_pairs: Optional[list[tuple[int, int]]] = None,
         **kwargs: Any
     ):
         Mutation2Opt.__init__(
@@ -239,7 +240,7 @@ class Mutation2OptIntersection(Mutation2Opt):
         self.tsp_model = tsp_model
         self.i_j_pairs = i_j_pairs
 
-    def mutate_and_compute_obj(self, variable: SolutionTSP) -> Tuple[SolutionTSP, LocalMove, Dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(self, variable: SolutionTSP) -> tuple[SolutionTSP, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.length is None or variable.lengths is None:
             raise RuntimeError(
                 "length and lengths variable's attributes should not be None at this point."
@@ -304,7 +305,7 @@ class Mutation2OptIntersection(Mutation2Opt):
 
 
 class SwapTSPMove(LocalMove):
-    def __init__(self, attribute: str, tsp_model: TSPModel, swap: Tuple[int, int]):
+    def __init__(self, attribute: str, tsp_model: TSPModel, swap: tuple[int, int]):
         self.attribute = attribute
         self.tsp_model = tsp_model
         self.swap = swap
@@ -362,7 +363,7 @@ class MutationSwapTSP(Mutation):
         self.tsp_model = tsp_model
         self.length_permutation = tsp_model.length_permutation
 
-    def mutate(self, solution: SolutionTSP) -> Tuple[SolutionTSP, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate(self, solution: SolutionTSP) -> tuple[SolutionTSP, LocalMove]:  # type: ignore # avoid isinstance checks for efficiency
         i = random.randint(0, self.length_permutation - 3)
         j = random.randint(i + 2, min(self.length_permutation - 1, i + 1 + 4))
         two_opt_move = SwapTSPMove("permutation", self.tsp_model, (i, j))
@@ -371,7 +372,7 @@ class MutationSwapTSP(Mutation):
 
     def mutate_and_compute_obj(  # type: ignore # avoid isinstance checks for efficiency
         self, solution: SolutionTSP
-    ) -> Tuple[SolutionTSP, LocalMove, Dict[str, float]]:
+    ) -> tuple[SolutionTSP, LocalMove, dict[str, float]]:
         sol, move = self.mutate(solution)
         if sol.length is None or sol.lengths is None:
             raise RuntimeError(

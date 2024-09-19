@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.do_mutation import (
     LocalMove,
@@ -39,7 +39,7 @@ class MutationIntegerSpecificArity(Mutation):
         self,
         problem: Problem,
         attribute: Optional[str] = None,
-        arities: Optional[List[int]] = None,
+        arities: Optional[list[int]] = None,
         probability_flip: float = 0.1,
         min_value: int = 1,
     ):
@@ -66,7 +66,7 @@ class MutationIntegerSpecificArity(Mutation):
         ]
         self.size = len(self.range_arities)
 
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         s2 = solution.copy()
         vector = getattr(s2, self.attribute)
         for k in range(self.size):
@@ -78,7 +78,7 @@ class MutationIntegerSpecificArity(Mutation):
 
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         s, m = self.mutate(solution)
         obj = self.problem.evaluate(s)
         return s, m, obj

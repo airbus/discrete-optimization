@@ -4,9 +4,10 @@
 
 import logging
 import random
+from collections.abc import Hashable
 from copy import deepcopy
 from functools import partial
-from typing import Dict, Hashable, List, Optional, Set, Type, Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -94,8 +95,8 @@ class RCPSPSolutionSpecialPreemptive(RCPSPSolutionPreemptive):
     def generate_schedule_from_permutation_serial_sgs_2(
         self,
         current_t: int = 0,
-        completed_tasks: Optional[Set[Hashable]] = None,
-        partial_schedule: Optional[Dict[Hashable, Dict[str, List[int]]]] = None,
+        completed_tasks: Optional[set[Hashable]] = None,
+        partial_schedule: Optional[dict[Hashable, dict[str, list[int]]]] = None,
         do_fast: bool = True,
     ):
         if do_fast:
@@ -125,18 +126,18 @@ class RCPSPSolutionSpecialPreemptive(RCPSPSolutionPreemptive):
 class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
     def __init__(
         self,
-        resources: Union[Dict[str, int], Dict[str, List[int]]],
-        non_renewable_resources: List[str],
-        mode_details: Dict[Hashable, Dict[Union[str, int], Dict[str, int]]],
-        successors: Dict[Union[int, str], List[Union[str, int]]],
+        resources: Union[dict[str, int], dict[str, list[int]]],
+        non_renewable_resources: list[str],
+        mode_details: dict[Hashable, dict[Union[str, int], dict[str, int]]],
+        successors: dict[Union[int, str], list[Union[str, int]]],
         horizon,
         special_constraints: SpecialConstraintsDescription = None,
-        preemptive_indicator: Dict[Hashable, bool] = None,
+        preemptive_indicator: dict[Hashable, bool] = None,
         relax_the_start_at_end: bool = True,
-        tasks_list: List[Union[int, str]] = None,
+        tasks_list: list[Union[int, str]] = None,
         source_task=None,
         sink_task=None,
-        name_task: Dict[int, str] = None,
+        name_task: dict[int, str] = None,
         **kwargs
     ):
         super().__init__(
@@ -257,7 +258,7 @@ class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
             penalty = 0
         return makespan, penalty
 
-    def evaluate(self, rcpsp_sol: RCPSPSolutionPreemptive) -> Dict[str, float]:
+    def evaluate(self, rcpsp_sol: RCPSPSolutionPreemptive) -> dict[str, float]:
         obj_makespan, penalty = self.evaluate_function(rcpsp_sol)
         return {"makespan": obj_makespan, "constraint_penalty": penalty}
 
@@ -295,7 +296,7 @@ class RCPSPModelSpecialConstraintsPreemptive(RCPSPModelPreemptive):
         )
         return sol
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return RCPSPSolutionSpecialPreemptive
 
 
@@ -898,7 +899,7 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
 def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
     solution,
     rcpsp_problem,
-    partial_schedule: Dict[Hashable, Dict[str, List[int]]],
+    partial_schedule: dict[Hashable, dict[str, list[int]]],
     current_t,
     completed_tasks,
 ):

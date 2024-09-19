@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Any, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
@@ -96,7 +97,7 @@ class LNS_MILP(BaseLNS):
         nb_iteration_no_improvement: Optional[int] = None,
         skip_initial_solution_provider: bool = False,
         stop_first_iteration_if_optimal: bool = True,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with an LNS loop

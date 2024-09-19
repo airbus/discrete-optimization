@@ -6,7 +6,7 @@ import logging
 import random
 from enum import Enum
 from heapq import heappop, heappush
-from typing import Dict, List, Optional
+from typing import Optional
 
 import networkx as nx
 import numpy as np
@@ -493,7 +493,7 @@ class Executor(PileSolverRCPSP):
         self.resources = rcpsp_model.resources
 
     def compute_schedule_from_priority_list(
-        self, permutation_jobs: List[int], modes_dict: Dict[int, int]
+        self, permutation_jobs: list[int], modes_dict: dict[int, int]
     ):
         current_pred = {
             k: {

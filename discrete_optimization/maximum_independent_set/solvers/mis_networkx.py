@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import networkx as nx
 
@@ -12,7 +12,7 @@ from discrete_optimization.maximum_independent_set.solvers.mis_solver import Mis
 
 class MisNetworkXSolver(MisSolver):
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         sol = nx.approximation.maximum_independent_set(self.problem.graph_nx)
         chosen = [

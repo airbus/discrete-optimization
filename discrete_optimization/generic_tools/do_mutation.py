@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 from abc import abstractmethod
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
@@ -43,11 +43,11 @@ class Mutation:
         raise NotImplementedError("Please implement it !")
 
     @abstractmethod
-    def mutate(self, solution: Solution) -> Tuple[Solution, LocalMove]:
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         ...
 
     @abstractmethod
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> Tuple[Solution, LocalMove, Dict[str, float]]:
+    ) -> tuple[Solution, LocalMove, dict[str, float]]:
         ...

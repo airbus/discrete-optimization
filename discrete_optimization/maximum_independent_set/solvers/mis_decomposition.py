@@ -4,7 +4,7 @@
 import logging
 import os
 import random
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Optional
 
 import numpy as np
 
@@ -77,7 +77,7 @@ class MisDecomposedSolver(MisSolver, WarmstartMixin):
         sol: MisSolution,
         original_mis_model: MisProblem,
         original_solution: MisSolution,
-        indexes_to_remove: Set[int] = None,
+        indexes_to_remove: set[int] = None,
     ):
         """
         Rebuild a full Mus solution object from a partial solution.
@@ -107,7 +107,7 @@ class MisDecomposedSolver(MisSolver, WarmstartMixin):
         self.initial_solution = solution
 
     def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
         # wrap all callbacks in a single one
         callbacks_list = CallbackList(callbacks=callbacks)
@@ -123,11 +123,11 @@ class MisDecomposedSolver(MisSolver, WarmstartMixin):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         initial_solver: SubBrick = kwargs["initial_solver"]
-        initial_solver_cls: Type[MisSolver] = initial_solver.cls
+        initial_solver_cls: type[MisSolver] = initial_solver.cls
         initial_solver_kwargs = initial_solver.kwargs
 
         root_solver: SubBrick = kwargs["root_solver"]
-        root_solver_cls: Type[MisSolver] = root_solver.cls
+        root_solver_cls: type[MisSolver] = root_solver.cls
         root_solver_kwargs = root_solver.kwargs
 
         nb_iteration = kwargs["nb_iteration"]

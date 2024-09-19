@@ -4,8 +4,9 @@
 
 import logging
 import random
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable, List, Optional
+from typing import Any, Optional
 
 import mip
 import numpy as np
@@ -449,7 +450,7 @@ class LNS_LP_RCPSP_SOLVER(SolverRCPSP):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         time_limit_subsolver: Optional[float] = 30.0,
         time_limit_subsolver_iter0: Optional[float] = None,
         **kwargs

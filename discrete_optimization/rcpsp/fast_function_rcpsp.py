@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Dict, Tuple
 
 import numba.typed
 import numba.types
@@ -30,7 +29,7 @@ def sgs_fast(
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
     minimum_starting_time_array: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, Tuple[int, int]], bool]:
+) -> tuple[dict[int, tuple[int, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -106,7 +105,7 @@ def sgs_fast(
                         int(activity_end_times[act_id]),
                     )
                     pred_links[j] -= 1
-    rcpsp_schedule: Dict[int, Tuple[int, int]] = {}
+    rcpsp_schedule: dict[int, tuple[int, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = (
             activity_end_times[act_id] - duration_array[act_id, modes_array[act_id]],
@@ -130,7 +129,7 @@ def sgs_fast_preemptive(
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
     minimum_starting_time_array: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
+) -> tuple[dict[int, npt.NDArray[np.int_]], dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -276,7 +275,7 @@ def sgs_fast_preemptive_some_special_constraints(
     horizon: int,
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
-) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
+) -> tuple[dict[int, npt.NDArray[np.int_]], dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -461,7 +460,7 @@ def sgs_fast_preemptive_minduration(
     ressource_renewable: npt.NDArray[np.bool_],
     min_duration_preemptive_bool: npt.NDArray[np.bool_],
     min_duration_preemptive: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
+) -> tuple[dict[int, npt.NDArray[np.int_]], dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -617,8 +616,8 @@ def sgs_fast_partial_schedule(
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
     minimum_starting_time_array: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, Tuple[int, int]], bool]:
-    activity_end_times: Dict[int, int] = {}
+) -> tuple[dict[int, tuple[int, int]], bool]:
+    activity_end_times: dict[int, int] = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
     resource_avail_in_time = {}
@@ -725,7 +724,7 @@ def sgs_fast_partial_schedule(
                         int(minimum_starting_time[s]), int(activity_end_times[act_id])
                     )
                     pred_links[s] -= 1
-    rcpsp_schedule: Dict[int, Tuple[int, int]] = {}
+    rcpsp_schedule: dict[int, tuple[int, int]] = {}
     for act_id in activity_end_times:
         rcpsp_schedule[act_id] = (
             activity_end_times[act_id] - duration_array[act_id, modes_array[act_id]],
@@ -753,7 +752,7 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
     minimum_starting_time_array: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, Tuple[int, int]], bool]:
+) -> tuple[dict[int, tuple[int, int]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -899,7 +898,7 @@ def sgs_fast_partial_schedule_preemptive(
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
     minimum_starting_time_array: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
+) -> tuple[dict[int, npt.NDArray[np.int_]], dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -1092,7 +1091,7 @@ def sgs_fast_partial_schedule_preemptive_minduration(
     ressource_renewable: npt.NDArray[np.bool_],
     min_duration_preemptive_bool: npt.NDArray[np.bool_],
     min_duration_preemptive: npt.NDArray[np.int_],
-) -> Tuple[Dict[int, npt.NDArray[np.int_]], Dict[int, npt.NDArray[np.int_]], bool]:
+) -> tuple[dict[int, npt.NDArray[np.int_]], dict[int, npt.NDArray[np.int_]], bool]:
     activity_end_times = {}
     unfeasible_non_renewable_resources = False
     new_horizon = horizon
@@ -1338,9 +1337,9 @@ def compute_ressource_consumption(
     horizon: int,
     ressource_available: npt.NDArray[np.int_],
     ressource_renewable: npt.NDArray[np.bool_],
-) -> Dict[int, npt.NDArray[np.int_]]:
+) -> dict[int, npt.NDArray[np.int_]]:
     new_horizon = horizon
-    resource_avail_in_time: Dict[int, npt.NDArray[np.int_]] = {}
+    resource_avail_in_time: dict[int, npt.NDArray[np.int_]] = {}
     for index in range(ressource_available.shape[0]):
         resource_avail_in_time[index] = np.zeros(new_horizon + 1, dtype=np.int_)
     nb_task = start_array.shape[0]

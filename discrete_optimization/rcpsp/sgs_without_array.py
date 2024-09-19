@@ -2,8 +2,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from collections.abc import Hashable
 from copy import deepcopy
-from typing import Dict, Hashable, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 from numpy import typing as npt
@@ -16,7 +17,7 @@ from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 class SGSWithoutArray:
     def __init__(self, rcpsp_model: RCPSPModel):
         self.rcpsp_model = rcpsp_model
-        self.resource_avail_in_time: Dict[str, npt.NDArray[np.int_]] = {}
+        self.resource_avail_in_time: dict[str, npt.NDArray[np.int_]] = {}
         for res in self.rcpsp_model.resources_list:
             if self.rcpsp_model.is_varying_resource():
                 self.resource_avail_in_time[res] = np.array(
@@ -28,7 +29,7 @@ class SGSWithoutArray:
                     self.rcpsp_model.resources[res],
                     dtype=np.int_,
                 )
-        self.dict_step_ressource: Dict[str, SortedDict] = {}
+        self.dict_step_ressource: dict[str, SortedDict] = {}
         for res in self.resource_avail_in_time:
             self.dict_step_ressource[res] = SGSWithoutArray.create_absolute_dict(
                 self.resource_avail_in_time[res]
@@ -107,7 +108,7 @@ class SGSWithoutArray:
 
     def generate_schedule_from_permutation_serial_sgs(
         self, solution: RCPSPSolution, rcpsp_problem: RCPSPModel
-    ) -> Tuple[Dict[Hashable, Dict[str, int]], bool, Dict[str, SortedDict]]:
+    ) -> tuple[dict[Hashable, dict[str, int]], bool, dict[str, SortedDict]]:
         activity_end_times = {}
         unfeasible_non_renewable_resources = False
         new_horizon = rcpsp_problem.horizon
@@ -228,7 +229,7 @@ class SGSWithoutArray:
                     minimum_starting_time[s] = max(
                         minimum_starting_time[s], activity_end_times[act_id]
                     )
-        rcpsp_schedule: Dict[Hashable, Dict[str, int]] = {}
+        rcpsp_schedule: dict[Hashable, dict[str, int]] = {}
         for act_id in activity_end_times:
             rcpsp_schedule[act_id] = {}
             rcpsp_schedule[act_id]["start_time"] = (

@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, IntVar
 
@@ -66,7 +66,7 @@ class ColoringCPSatSolver(
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.modeling: Optional[ModelingCPSat] = None
-        self.variables: Dict[str, Union[List[IntVar], List[Dict[int, IntVar]]]] = {}
+        self.variables: dict[str, Union[list[IntVar], list[dict[int, IntVar]]]] = {}
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
         if self.modeling == ModelingCPSat.INTEGER:

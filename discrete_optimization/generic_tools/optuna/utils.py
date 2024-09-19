@@ -9,7 +9,7 @@ import logging
 import math
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Optional
 
 import numpy as np
 
@@ -61,13 +61,13 @@ def drop_already_tried_hyperparameters(trial: Trial) -> None:
 
 def generic_optuna_experiment_monoproblem(
     problem: Problem,
-    solvers_to_test: List[Type[SolverDO]],
-    kwargs_fixed_by_solver: Optional[Dict[Type[SolverDO], Dict[str, Any]]] = None,
+    solvers_to_test: list[type[SolverDO]],
+    kwargs_fixed_by_solver: Optional[dict[type[SolverDO], dict[str, Any]]] = None,
     suggest_optuna_kwargs_by_name_by_solver: Optional[
-        Dict[Type[SolverDO], Dict[str, Dict[str, Any]]]
+        dict[type[SolverDO], dict[str, dict[str, Any]]]
     ] = None,
     additional_hyperparameters_by_solver: Optional[
-        Dict[Type[SolverDO], List[Hyperparameter]]
+        dict[type[SolverDO], list[Hyperparameter]]
     ] = None,
     n_trials: int = 150,
     check_satisfy: bool = True,
@@ -80,7 +80,7 @@ def generic_optuna_experiment_monoproblem(
     pruner: Optional[BasePruner] = None,
     seed: Optional[int] = None,
     min_time_per_solver: int = 5,
-    callbacks: Optional[List[Callback]] = None,
+    callbacks: Optional[list[Callback]] = None,
 ) -> optuna.Study:
     """Create and run an optuna study to tune solvers hyperparameters on a given problem.
 
@@ -170,7 +170,7 @@ def generic_optuna_experiment_monoproblem(
 
     # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
     # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
-    solvers_by_name: Dict[str, Type[SolverDO]] = {
+    solvers_by_name: dict[str, type[SolverDO]] = {
         cls.__name__: cls for cls in solvers_to_test
     }
 
@@ -300,14 +300,14 @@ def generic_optuna_experiment_monoproblem(
 
 
 def generic_optuna_experiment_multiproblem(
-    problems: List[Problem],
-    solvers_to_test: List[Type[SolverDO]],
-    kwargs_fixed_by_solver: Optional[Dict[Type[SolverDO], Dict[str, Any]]] = None,
+    problems: list[Problem],
+    solvers_to_test: list[type[SolverDO]],
+    kwargs_fixed_by_solver: Optional[dict[type[SolverDO], dict[str, Any]]] = None,
     suggest_optuna_kwargs_by_name_by_solver: Optional[
-        Dict[Type[SolverDO], Dict[str, Dict[str, Any]]]
+        dict[type[SolverDO], dict[str, dict[str, Any]]]
     ] = None,
     additional_hyperparameters_by_solver: Optional[
-        Dict[Type[SolverDO], List[Hyperparameter]]
+        dict[type[SolverDO], list[Hyperparameter]]
     ] = None,
     n_trials: int = 150,
     check_satisfy: bool = True,
@@ -321,7 +321,7 @@ def generic_optuna_experiment_multiproblem(
     prop_startup_instances: float = 0.2,
     randomize_instances: bool = True,
     report_cumulated_fitness: bool = False,
-    callbacks: Optional[List[Callback]] = None,
+    callbacks: Optional[list[Callback]] = None,
 ) -> optuna.Study:
     """Create and run an optuna study to tune solvers hyperparameters on several instances of a problem.
 
@@ -405,7 +405,7 @@ def generic_optuna_experiment_multiproblem(
 
     # we need to map the classes to a unique string, to be seen as a categorical hyperparameter by optuna
     # by default, we use the class name, but if there are identical names, f"{cls.__module__}.{cls.__name__}" could be used.
-    solvers_by_name: Dict[str, Type[SolverDO]] = {
+    solvers_by_name: dict[str, type[SolverDO]] = {
         cls.__name__: cls for cls in solvers_to_test
     }
 

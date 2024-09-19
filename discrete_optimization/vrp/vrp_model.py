@@ -4,9 +4,10 @@
 
 import math
 from abc import abstractmethod
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from functools import partial
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Optional, Union
 
 import numpy as np
 from numba import njit
@@ -53,12 +54,12 @@ class VrpSolution(Solution):
     def __init__(
         self,
         problem: "VrpProblem",
-        list_start_index: List[int],
-        list_end_index: List[int],
-        list_paths: List[List[int]],
-        capacities: Optional[List[float]] = None,
+        list_start_index: list[int],
+        list_end_index: list[int],
+        list_paths: list[list[int]],
+        capacities: Optional[list[float]] = None,
         length: Optional[float] = None,
-        lengths: Optional[List[List[float]]] = None,
+        lengths: Optional[list[list[float]]] = None,
     ):
         self.problem = problem
         self.list_start_index = list_start_index
@@ -89,11 +90,11 @@ class VrpProblem(Problem):
     def __init__(
         self,
         vehicle_count: int,
-        vehicle_capacities: List[float],
+        vehicle_capacities: list[float],
         customer_count: int,
         customers: Sequence[BasicCustomer],
-        start_indexes: List[int],
-        end_indexes: List[int],
+        start_indexes: list[int],
+        end_indexes: list[int],
     ):
         self.vehicle_count = vehicle_count
         self.vehicle_capacities = vehicle_capacities
@@ -108,14 +109,14 @@ class VrpProblem(Problem):
     @abstractmethod
     def evaluate_function(
         self, var_tsp: VrpSolution
-    ) -> Tuple[List[List[float]], List[float], float, List[float]]:
+    ) -> tuple[list[list[float]], list[float], float, list[float]]:
         ...
 
     @abstractmethod
     def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
         ...
 
-    def evaluate(self, variable: VrpSolution) -> Dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
+    def evaluate(self, variable: VrpSolution) -> dict[str, float]:  # type: ignore # avoid isinstance checks for efficiency
         if (
             variable.lengths is None
             or variable.length is None
@@ -140,7 +141,7 @@ class VrpProblem(Problem):
         }
         return EncodingRegister(dict_encoding)
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return VrpSolution
 
     def get_objective_register(self) -> ObjectiveRegister:
@@ -192,11 +193,11 @@ class VrpProblem2D(VrpProblem):
     def __init__(
         self,
         vehicle_count: int,
-        vehicle_capacities: List[float],
+        vehicle_capacities: list[float],
         customer_count: int,
         customers: Sequence[Customer2D],
-        start_indexes: List[int],
-        end_indexes: List[int],
+        start_indexes: list[int],
+        end_indexes: list[int],
     ):
         super().__init__(
             vehicle_count=vehicle_count,
@@ -210,17 +211,17 @@ class VrpProblem2D(VrpProblem):
 
     def evaluate_function(
         self, vrp_sol: VrpSolution
-    ) -> Tuple[List[List[float]], List[float], float, List[float]]:
+    ) -> tuple[list[list[float]], list[float], float, list[float]]:
         return self.evaluate_function_2d(vrp_sol)
 
     def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
         return length(self.customers[index_1], self.customers[index_2])
 
 
-def trivial_solution(vrp_model: VrpProblem) -> Tuple[VrpSolution, Dict[str, float]]:
+def trivial_solution(vrp_model: VrpProblem) -> tuple[VrpSolution, dict[str, float]]:
     # build a trivial solution
     # assign customers to vehicles starting by the largest customer demands
-    vehicle_tours: List[List[int]] = []
+    vehicle_tours: list[list[int]] = []
     customers = range(vrp_model.customer_count)
     nb_vehicles = vrp_model.vehicle_count
     nb_customers = vrp_model.customer_count
@@ -285,10 +286,10 @@ def trivial_solution(vrp_model: VrpProblem) -> Tuple[VrpSolution, Dict[str, floa
     return solution, fit
 
 
-def stupid_solution(vrp_model: VrpProblem) -> Tuple[VrpSolution, Dict[str, float]]:
+def stupid_solution(vrp_model: VrpProblem) -> tuple[VrpSolution, dict[str, float]]:
     # build a trivial solution
     # assign customers to vehicles starting by the largest customer demands
-    vehicle_tours: List[List[int]] = []
+    vehicle_tours: list[list[int]] = []
     customers = range(vrp_model.customer_count)
     nb_vehicles = vrp_model.vehicle_count
     remaining_capacity_vehicle = {
@@ -323,10 +324,10 @@ def stupid_solution(vrp_model: VrpProblem) -> Tuple[VrpSolution, Dict[str, float
 def compute_length(
     start_index: int,
     end_index: int,
-    solution: List[int],
+    solution: list[int],
     list_customers: Sequence[BasicCustomer],
     method: Callable[[int, int], float],
-) -> Tuple[List[float], float, float]:
+) -> tuple[list[float], float, float]:
     if len(solution) > 0:
         obj = method(start_index, solution[0])
         lengths = [obj]
@@ -355,9 +356,9 @@ def compute_length(
 def compute_length_np(
     start_index: int,
     end_index: int,
-    solution: Union[List[int], np.ndarray],
+    solution: Union[list[int], np.ndarray],
     np_points: np.ndarray,
-) -> Tuple[Union[List[float], np.ndarray], float]:
+) -> tuple[Union[list[float], np.ndarray], float]:
     obj = np.sqrt(
         (np_points[start_index, 0] - np_points[solution[0], 0]) ** 2
         + (np_points[start_index, 1] - np_points[solution[0], 1]) ** 2
@@ -382,10 +383,10 @@ def compute_length_np(
 
 def sequential_computing(
     vrp_sol: VrpSolution, vrp_model: VrpProblem
-) -> Tuple[List[List[float]], List[float], float, List[float]]:
-    lengths_list: List[List[float]] = []
-    obj_list: List[float] = []
-    capacity_list: List[float] = []
+) -> tuple[list[list[float]], list[float], float, list[float]]:
+    lengths_list: list[list[float]] = []
+    obj_list: list[float] = []
+    capacity_list: list[float] = []
     sum_obj = 0.0
     for i in range(len(vrp_sol.list_paths)):
         lengths, obj, capacity = compute_length(
@@ -404,5 +405,5 @@ def sequential_computing(
 
 def build_evaluate_function(
     vrp_model: VrpProblem,
-) -> Callable[[VrpSolution], Tuple[List[List[float]], List[float], float, List[float]]]:
+) -> Callable[[VrpSolution], tuple[list[list[float]], list[float], float, list[float]]]:
     return partial(sequential_computing, vrp_model=vrp_model)

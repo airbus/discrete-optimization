@@ -4,8 +4,9 @@
 
 import logging
 import random
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable
+from typing import Any
 
 import mip
 

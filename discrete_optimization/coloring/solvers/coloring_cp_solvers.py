@@ -9,8 +9,9 @@ CP formulation rely on minizinc models stored in coloring/minizinc folder.
 
 import logging
 import os
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Optional
 
 import networkx as nx
 import pymzn
@@ -99,7 +100,7 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
         self.graph = self.problem.graph
         self.g = None
         self.cp_solver_name = cp_solver_name
-        self.dict_datas: Optional[Dict[str, Any]] = None
+        self.dict_datas: Optional[dict[str, Any]] = None
 
     def init_model(self, **kwargs: Any) -> None:
         """Instantiate a minizinc model with the coloring problem data.
@@ -182,7 +183,7 @@ class ColoringCP(MinizincCPSolver, SolverColoring):
 
         Args:
             file_name (str): file path where to dump the data file
-            keys (List[str]): list of input data names to dump.
+            keys (list[str]): list of input data names to dump.
 
         Returns: None
 

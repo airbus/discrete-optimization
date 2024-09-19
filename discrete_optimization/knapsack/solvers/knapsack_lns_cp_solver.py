@@ -3,7 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import random
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from minizinc import Instance
 from ortools.sat.python.cp_model import Constraint

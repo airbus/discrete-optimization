@@ -5,8 +5,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import sys
-from typing import Any, Callable, Dict, Hashable, Optional, Tuple, Union
+from collections.abc import Callable, Hashable
+from typing import Any, Optional, TypedDict, Union
 
 import mip
 import networkx as nx
@@ -45,20 +45,15 @@ else:
     gurobi_available = True
     from gurobipy import GRB, Constr, GenConstr, MConstr, Model, QConstr, Var, quicksum
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pylint: disable=no-name-in-module
-else:
-    from typing_extensions import TypedDict
-
 
 logger = logging.getLogger(__name__)
 
 
-OneColorConstraints = Dict[int, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
-NeighborsConstraints = Dict[
-    Tuple[Hashable, Hashable, int], Union["Constr", "QConstr", "MConstr", "GenConstr"]
+OneColorConstraints = dict[int, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
+NeighborsConstraints = dict[
+    tuple[Hashable, Hashable, int], Union["Constr", "QConstr", "MConstr", "GenConstr"]
 ]
-VariableDecision = Dict[str, Dict[Tuple[Hashable, int], Union["Var", mip.Var]]]
+VariableDecision = dict[str, dict[tuple[Hashable, int], Union["Var", mip.Var]]]
 
 
 class ConstraintsDict(TypedDict):
@@ -111,7 +106,7 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
                 "descr": "for each node and each color," " a binary indicator",
             }
         }
-        self.description_constraint: Dict[str, Dict[str, str]] = {}
+        self.description_constraint: dict[str, dict[str, str]] = {}
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution: Optional[ColoringSolution] = None
 
@@ -205,7 +200,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP, WarmstartMixin):
         if nb_colors is None:
             raise RuntimeError("self.start_solution.nb_color should not be None.")
         color_model = Model("color")
-        colors_var: Dict[Tuple[Hashable, int], "Var"] = {}
+        colors_var: dict[tuple[Hashable, int], "Var"] = {}
         range_node = self.nodes_name
         range_color = range(nb_colors)
         range_color_subset = range(nb_colors_subset)
@@ -235,7 +230,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP, WarmstartMixin):
             cliques = sorted(cliques, key=lambda x: len(x), reverse=True)
         else:
             cliques = [[e[0], e[1]] for e in g.edges()]
-        cliques_constraint: Dict[Union[int, Tuple[int, int]], Any] = {}
+        cliques_constraint: dict[Union[int, tuple[int, int]], Any] = {}
         index_c = 0
         opt = color_model.addVar(vtype=GRB.INTEGER, lb=0, ub=nb_colors, obj=1)
         if use_cliques:
@@ -420,7 +415,7 @@ class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
             cliques = sorted(cliques, key=lambda x: len(x), reverse=True)
         else:
             cliques = [[e[0], e[1]] for e in g.edges()]
-        cliques_constraint: Dict[Union[int, Tuple[int, int]], Any] = {}
+        cliques_constraint: dict[Union[int, tuple[int, int]], Any] = {}
         index_c = 0
         opt = color_model.add_var(var_type=INTEGER, lb=0, ub=nb_colors, obj=1)
         if use_cliques:

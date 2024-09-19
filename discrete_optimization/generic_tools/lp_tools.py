@@ -4,8 +4,9 @@
 
 import logging
 from abc import abstractmethod
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import mip
 
@@ -101,7 +102,7 @@ class MilpSolver(SolverDO):
             n_solutions = self.nb_solutions
         else:
             n_solutions = 1
-        list_solution_fits: List[Tuple[Solution, Union[float, TupleFitness]]] = []
+        list_solution_fits: list[tuple[Solution, Union[float, TupleFitness]]] = []
         for i in range(n_solutions):
             solution = self.retrieve_ith_solution(i=i)
             fit = self.aggreg_from_sol(solution)
@@ -157,7 +158,7 @@ class MilpSolver(SolverDO):
     @abstractmethod
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_milp: Optional[ParametersMilp] = None,
         **kwargs: Any,
     ) -> ResultStorage:
@@ -290,7 +291,7 @@ class GurobiMilpSolver(MilpSolver):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
         **kwargs: Any,
@@ -447,7 +448,7 @@ class GurobiCallback:
 
 class CplexMilpSolver(MilpSolver):
     model: Optional["docplex.mp.model.Model"]
-    results_solve: Optional[List["SolveSolution"]]
+    results_solve: Optional[list["SolveSolution"]]
 
     def solve(
         self,

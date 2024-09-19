@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import random
 from collections.abc import MutableSequence
-from typing import Any, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 import matplotlib.pyplot as plt
 
@@ -33,12 +33,12 @@ class ResultStorage(MutableSequence):
 
     """
 
-    list_solution_fits: List[Tuple[Solution, fitness_class]]
+    list_solution_fits: list[tuple[Solution, fitness_class]]
 
     def __init__(
         self,
         mode_optim: ModeOptim,
-        list_solution_fits: Optional[List[Tuple[Solution, fitness_class]]] = None,
+        list_solution_fits: Optional[list[tuple[Solution, fitness_class]]] = None,
     ):
         if list_solution_fits is None:
             self.list_solution_fits = []
@@ -50,24 +50,24 @@ class ResultStorage(MutableSequence):
     def __add__(self, other: ResultStorage) -> ResultStorage:
         return merge_results_storage(self, other)
 
-    def __getitem__(self, index) -> Tuple[Solution, fitness_class]:
+    def __getitem__(self, index) -> tuple[Solution, fitness_class]:
         return self.list_solution_fits[index]
 
     def __len__(self) -> int:
         return len(self.list_solution_fits)
 
-    def __setitem__(self, index: int, value: Tuple[Solution, fitness_class]):
+    def __setitem__(self, index: int, value: tuple[Solution, fitness_class]):
         self.list_solution_fits[index] = value
 
     def __delitem__(self, index: int) -> None:
         del self.list_solution_fits[index]
 
-    def insert(self, index, value: Tuple[Solution, fitness_class]) -> None:
+    def insert(self, index, value: tuple[Solution, fitness_class]) -> None:
         self.list_solution_fits.insert(index, value)
 
     def get_best_solution_fit(
         self, satisfying: Optional[Problem] = None
-    ) -> Union[Tuple[Solution, fitness_class], Tuple[None, None]]:
+    ) -> Union[tuple[Solution, fitness_class], tuple[None, None]]:
         if len(self.list_solution_fits) == 0:
             return None, None
         if satisfying is None:
@@ -82,7 +82,7 @@ class ResultStorage(MutableSequence):
                     return sol, fit
             return None, None
 
-    def get_last_best_solution(self) -> Tuple[Solution, fitness_class]:
+    def get_last_best_solution(self) -> tuple[Solution, fitness_class]:
         f = max if self.maximize else min
         best = f(self.list_solution_fits, key=lambda x: x[1])[1]
         sol = max(
@@ -94,7 +94,7 @@ class ResultStorage(MutableSequence):
         )
         return self.list_solution_fits[sol]
 
-    def get_random_best_solution(self) -> Tuple[Solution, fitness_class]:
+    def get_random_best_solution(self) -> tuple[Solution, fitness_class]:
         f = max if self.maximize else min
         best = f(self.list_solution_fits, key=lambda x: x[1])[1]
         sol = random.choice(
@@ -106,7 +106,7 @@ class ResultStorage(MutableSequence):
         )
         return self.list_solution_fits[sol]
 
-    def get_random_solution(self) -> Tuple[Solution, fitness_class]:
+    def get_random_solution(self) -> tuple[Solution, fitness_class]:
         s = [
             l
             for l in self.list_solution_fits
@@ -125,7 +125,7 @@ class ResultStorage(MutableSequence):
 
     def get_n_best_solution(
         self, n_solutions: int
-    ) -> List[Tuple[Solution, fitness_class]]:
+    ) -> list[tuple[Solution, fitness_class]]:
         f = max if self.maximize else min
         n = min(n_solutions, len(self.list_solution_fits))
         l = sorted(self.list_solution_fits, key=lambda x: x[1])[:n]
@@ -165,7 +165,7 @@ def merge_results_storage(
 
 
 def from_solutions_to_result_storage(
-    list_solution: List[Solution],
+    list_solution: list[Solution],
     problem: Problem,
     params_objective_function: Optional[ParamsObjectiveFunction] = None,
 ) -> ResultStorage:
@@ -179,7 +179,7 @@ def from_solutions_to_result_storage(
     ) = build_aggreg_function_and_params_objective(
         problem=problem, params_objective_function=params_objective_function
     )
-    list_solution_fit: List[Tuple[Solution, fitness_class]] = []
+    list_solution_fit: list[tuple[Solution, fitness_class]] = []
     for s in list_solution:
         list_solution_fit += [(s, aggreg_from_sol(s))]
     return ResultStorage(mode_optim=mode_optim, list_solution_fits=list_solution_fit)
@@ -205,11 +205,11 @@ def result_storage_to_pareto_front(
 class ParetoFront(ResultStorage):
     def __init__(
         self,
-        list_solution_fits: List[Tuple[Solution, fitness_class]],
+        list_solution_fits: list[tuple[Solution, fitness_class]],
         mode_optim: ModeOptim = ModeOptim.MAXIMIZATION,
     ):
         super().__init__(mode_optim=mode_optim, list_solution_fits=list_solution_fits)
-        self.paretos: List[Tuple[Solution, TupleFitness]] = []
+        self.paretos: list[tuple[Solution, TupleFitness]] = []
 
     def add_point(self, solution: Solution, tuple_fitness: TupleFitness) -> None:
         if self.maximize:
@@ -246,19 +246,19 @@ class ParetoFront(ResultStorage):
                 )
             self.add_point(solution=s, tuple_fitness=t)
 
-    def compute_extreme_points(self) -> List[Tuple[Solution, TupleFitness]]:
+    def compute_extreme_points(self) -> list[tuple[Solution, TupleFitness]]:
         function_used = max if self.maximize else min
         number_fitness = self.list_solution_fits[0][1].size  # type: ignore
-        extreme_points: List[Tuple[Solution, TupleFitness]] = []
+        extreme_points: list[tuple[Solution, TupleFitness]] = []
         for i in range(number_fitness):
-            extr: Tuple[Solution, TupleFitness] = function_used(self.paretos, key=lambda x: x[1].vector_fitness[i])  # type: ignore
+            extr: tuple[Solution, TupleFitness] = function_used(self.paretos, key=lambda x: x[1].vector_fitness[i])  # type: ignore
             extreme_points += [extr]
         return extreme_points
 
 
 def plot_storage_2d(
     result_storage: ResultStorage,
-    name_axis: List[str],
+    name_axis: list[str],
     ax: Any = None,
     color: str = "r",
 ) -> None:
@@ -266,7 +266,7 @@ def plot_storage_2d(
         fig, ax = plt.subplots(1)
     # Specify for mypy that we should be in the multiobjective case
     list_solution_fits = cast(
-        List[Tuple[Solution, TupleFitness]], result_storage.list_solution_fits
+        list[tuple[Solution, TupleFitness]], result_storage.list_solution_fits
     )
     ax.scatter(
         x=[p[1].vector_fitness[0] for p in list_solution_fits],
@@ -278,7 +278,7 @@ def plot_storage_2d(
 
 
 def plot_pareto_2d(
-    pareto_front: ParetoFront, name_axis: List[str], ax: Any = None, color: str = "b"
+    pareto_front: ParetoFront, name_axis: list[str], ax: Any = None, color: str = "b"
 ) -> Any:
     if ax is None:
         fig, ax = plt.subplots(1)

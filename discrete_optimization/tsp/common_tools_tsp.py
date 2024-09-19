@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Callable, Iterable, List, Sequence, Tuple
+from collections.abc import Callable, Iterable, Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -15,8 +15,8 @@ def length_1(point1: Point2D, point2: Point2D) -> float:
 
 
 def compute_length(
-    solution: List[int], list_points: Sequence[Point2D], nodeCount: int
-) -> Tuple[List[float], float]:
+    solution: list[int], list_points: Sequence[Point2D], nodeCount: int
+) -> tuple[list[float], float]:
     obj = length(list_points[solution[-1]], list_points[solution[0]])
     lengths = []
     pp = obj
@@ -30,7 +30,7 @@ def compute_length(
 
 def baseline_in_order(
     nodeCount: int, points: Sequence[Point2D]
-) -> Tuple[Iterable[int], float, int]:
+) -> tuple[Iterable[int], float, int]:
     # build a trivial solution
     # visit the nodes in the order they appear in the file
     solution = range(0, nodeCount)
@@ -58,7 +58,7 @@ def build_matrice_distance(
 
 def build_matrice_distance_np(
     nodeCount: int, points: Sequence[Point2D]
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     matrix_x = np.ones((nodeCount, nodeCount), dtype=np.int_)
     matrix_y = np.ones((nodeCount, nodeCount), dtype=np.int_)
     for i in range(nodeCount):
@@ -73,7 +73,7 @@ def build_matrice_distance_np(
 
 def closest_greedy(
     nodeCount: int, points: Sequence[Point2D]
-) -> Tuple[List[int], float, int]:
+) -> tuple[list[int], float, int]:
     sd, d = build_matrice_distance_np(nodeCount, points)
     sol = [0]
     length_circuit = 0.0

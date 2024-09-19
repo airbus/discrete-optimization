@@ -17,7 +17,7 @@ Results can be viewed on optuna-dashboard with:
 """
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Type
+from typing import Any
 
 from ortools.sat.sat_parameters_pb2 import SatParameters
 
@@ -73,11 +73,11 @@ modelfilename = "gc_70_9"  # filename of the model used
 study_basename = f"coloring-ortools-cpsat-finetune-{modelfilename}"
 
 # solvers to test
-solvers_to_test: List[Type[SolverDO]] = [ColoringCPSatSolver]
+solvers_to_test: list[type[SolverDO]] = [ColoringCPSatSolver]
 # fixed kwargs per solver: either hyperparameters we do not want to search, or other parameters like time limits
 p = ParametersCP.default_cpsat()
 p.nb_process = 6
-kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
+kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
         ColoringCPSatSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
@@ -88,8 +88,8 @@ kwargs_fixed_by_solver: Dict[Type[SolverDO], Dict[str, Any]] = defaultdict(
     },
 )
 # restrict some hyperparameters choices, for some solvers (making use of `kwargs_by_name` of `suggest_with_optuna`)
-suggest_optuna_kwargs_by_name_by_solver: Dict[
-    Type[SolverDO], Dict[str, Dict[str, Any]]
+suggest_optuna_kwargs_by_name_by_solver: dict[
+    type[SolverDO], dict[str, dict[str, Any]]
 ] = defaultdict(
     dict,  # default kwargs_by_name for unspecified solvers
     {

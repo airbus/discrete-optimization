@@ -2,8 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from typing import Dict, List
-
 import pytest
 
 from discrete_optimization.generic_rcpsp_tools.ls_solver import (
@@ -35,7 +33,7 @@ def model():
     skills_set = {"l1", "l2", "l3", "l4"}
     resource_set = {"R1"}
     resources_availability = {"R1": [2] * 100}
-    employee: Dict[int, Employee] = {
+    employee: dict[int, Employee] = {
         1: Employee(
             dict_skill={
                 "l1": SkillDetail(1.0, 1.0, 1.0),
@@ -53,7 +51,7 @@ def model():
         ),
     }
 
-    employees_availability: List[int] = [2] * 1000
+    employees_availability: list[int] = [2] * 1000
     mode_details = {
         "A0": {1: {"R1": 0, "duration": 0}},
         "A1": {1: {"R1": 1, "l1": 1, "duration": 5}},
@@ -62,7 +60,7 @@ def model():
         "A4": {1: {"R1": 0, "l3": 1, "duration": 2}},
         "A5": {1: {"R1": 0, "duration": 0}},
     }
-    successors: Dict[str, List[str]] = {
+    successors: dict[str, list[str]] = {
         "A0": ["A" + str(i) for i in range(1, 6)],
         "A1": ["A5"],
         "A2": ["A5"],

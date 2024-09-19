@@ -5,10 +5,11 @@
 import logging
 from abc import abstractmethod
 from collections import defaultdict
+from collections.abc import Hashable
 from copy import deepcopy
 from enum import Enum
 from functools import partial
-from typing import Dict, Hashable, Iterable, List, Optional, Set, Tuple, Type, Union
+from typing import Iterable, Optional, Union
 
 import numpy as np
 import scipy.stats as ss
@@ -51,7 +52,7 @@ class ScheduleGenerationScheme(Enum):
 
 
 class TaskDetails:
-    def __init__(self, start, end, resource_units_used: List[int]):
+    def __init__(self, start, end, resource_units_used: list[int]):
         self.start = start
         self.end = end
         self.resource_units_used = resource_units_used
@@ -70,9 +71,9 @@ class TaskDetails:
 class TaskDetailsPreemptive:
     def __init__(
         self,
-        starts: List[int],
-        ends: List[int],
-        resource_units_used: List[List[Hashable]],
+        starts: list[int],
+        ends: list[int],
+        resource_units_used: list[list[Hashable]],
     ):
         self.starts = starts
         self.ends = ends
@@ -93,12 +94,12 @@ class MS_RCPSPSolution(Solution):
     def __init__(
         self,
         problem: Problem,
-        modes: Dict[Hashable, int],
-        schedule: Dict[
-            Hashable, Dict[str, Union[int, List[int]]]
+        modes: dict[Hashable, int],
+        schedule: dict[
+            Hashable, dict[str, Union[int, list[int]]]
         ],  # (task: {"start_time": start, "end_time": }}
-        employee_usage: Dict[Hashable, Dict[Hashable, Set[str]]],
-    ):  # {task: {employee: Set(skills})}):
+        employee_usage: dict[Hashable, dict[Hashable, set[str]]],
+    ):  # {task: {employee: set(skills})}):
         self.problem: MS_RCPSPModel = problem
         self.modes = modes
         self.schedule = schedule
@@ -153,10 +154,10 @@ class MS_RCPSPSolution_Preemptive(MS_RCPSPSolution):
     def __init__(
         self,
         problem: Problem,
-        modes: Dict[Hashable, int],
-        schedule: Dict[Hashable, Dict[str, List[int]]],
-        employee_usage: Dict[Hashable, List[Dict[Hashable, Set[str]]]],
-    ):  # {task: {employee: Set(skills})}):
+        modes: dict[Hashable, int],
+        schedule: dict[Hashable, dict[str, list[int]]],
+        employee_usage: dict[Hashable, list[dict[Hashable, set[str]]]],
+    ):  # {task: {employee: set(skills})}):
         super().__init__(problem, modes, schedule, None)
         self.employee_usage = employee_usage
 
@@ -253,15 +254,15 @@ class MS_RCPSPSolution_Variant(MS_RCPSPSolution):
     def __init__(
         self,
         problem: Problem,
-        modes_vector: Optional[List[int]] = None,
-        modes_vector_from0: Optional[List[int]] = None,
-        priority_list_task: Optional[List[int]] = None,
-        priority_worker_per_task: Optional[List[List[Hashable]]] = None,
-        modes: Dict[int, int] = None,
-        schedule: Dict[int, Dict[str, int]] = None,
-        employee_usage: Dict[int, Dict[int, Set[str]]] = None,
+        modes_vector: Optional[list[int]] = None,
+        modes_vector_from0: Optional[list[int]] = None,
+        priority_list_task: Optional[list[int]] = None,
+        priority_worker_per_task: Optional[list[list[Hashable]]] = None,
+        modes: dict[int, int] = None,
+        schedule: dict[int, dict[str, int]] = None,
+        employee_usage: dict[int, dict[int, set[str]]] = None,
         fast: bool = True,
-    ):  # {task: {employee: Set(skills})}):
+    ):  # {task: {employee: set(skills})}):
         super().__init__(problem, modes, schedule, employee_usage)
         self.priority_list_task = priority_list_task
         self.modes_vector = modes_vector
@@ -367,8 +368,8 @@ class MS_RCPSPSolution_Variant(MS_RCPSPSolution):
     def run_sgs_partial(
         self,
         current_t,
-        completed_tasks: Dict[Hashable, TaskDetails],
-        scheduled_tasks_start_times: Dict[Hashable, TaskDetails],
+        completed_tasks: dict[Hashable, TaskDetails],
+        scheduled_tasks_start_times: dict[Hashable, TaskDetails],
         fast=True,
     ):
         if not fast:
@@ -486,15 +487,15 @@ class MS_RCPSPSolution_Preemptive_Variant(MS_RCPSPSolution_Preemptive):
     def __init__(
         self,
         problem: Problem,
-        modes_vector: Optional[List[int]] = None,
-        modes_vector_from0: Optional[List[int]] = None,
-        priority_list_task: Optional[List[int]] = None,
-        priority_worker_per_task: Optional[List[List[Hashable]]] = None,
-        modes: Dict[int, int] = None,
-        schedule: Dict[Hashable, Dict[str, List[int]]] = None,
-        employee_usage: Dict[Hashable, List[Dict[Hashable, Set[str]]]] = None,
+        modes_vector: Optional[list[int]] = None,
+        modes_vector_from0: Optional[list[int]] = None,
+        priority_list_task: Optional[list[int]] = None,
+        priority_worker_per_task: Optional[list[list[Hashable]]] = None,
+        modes: dict[int, int] = None,
+        schedule: dict[Hashable, dict[str, list[int]]] = None,
+        employee_usage: dict[Hashable, list[dict[Hashable, set[str]]]] = None,
         fast: bool = True,
-    ):  # {task: {employee: Set(skills})}):
+    ):  # {task: {employee: set(skills})}):
         super().__init__(problem, modes, schedule, employee_usage)
         self.priority_list_task = priority_list_task
         self.modes_vector = modes_vector
@@ -614,8 +615,8 @@ class MS_RCPSPSolution_Preemptive_Variant(MS_RCPSPSolution_Preemptive):
     def run_sgs_partial(
         self,
         current_t,
-        completed_tasks: Dict[Hashable, TaskDetailsPreemptive],
-        scheduled_tasks_start_times: Dict[Hashable, TaskDetailsPreemptive],
+        completed_tasks: dict[Hashable, TaskDetailsPreemptive],
+        scheduled_tasks_start_times: dict[Hashable, TaskDetailsPreemptive],
         fast: bool = True,
     ):
         if not fast:
@@ -1202,8 +1203,8 @@ def sgs_multi_skill_preemptive(solution: MS_RCPSPSolution_Preemptive_Variant):
 def sgs_multi_skill_preemptive_partial_schedule(
     solution: MS_RCPSPSolution_Preemptive_Variant,
     current_t,
-    completed_tasks: Dict[Hashable, TaskDetailsPreemptive],
-    scheduled_tasks_start_times: Dict[Hashable, TaskDetailsPreemptive],
+    completed_tasks: dict[Hashable, TaskDetailsPreemptive],
+    scheduled_tasks_start_times: dict[Hashable, TaskDetailsPreemptive],
 ):
     problem: MS_RCPSPModel = solution.problem
     activity_end_times = {}
@@ -1539,8 +1540,8 @@ def sgs_multi_skill_preemptive_partial_schedule(
 def sgs_multi_skill_partial_schedule(
     solution: MS_RCPSPSolution_Variant,
     current_t,
-    completed_tasks: Dict[Hashable, TaskDetails],
-    scheduled_tasks_start_times: Dict[Hashable, TaskDetails],
+    completed_tasks: dict[Hashable, TaskDetails],
+    scheduled_tasks_start_times: dict[Hashable, TaskDetails],
 ):
     problem: MS_RCPSPModel = solution.problem
     activity_end_times = {}
@@ -1857,13 +1858,13 @@ class SkillDetail:
 
 
 class Employee:
-    dict_skill: Dict[str, SkillDetail]
-    calendar_employee: List[bool]
+    dict_skill: dict[str, SkillDetail]
+    calendar_employee: list[bool]
 
     def __init__(
         self,
-        dict_skill: Dict[str, SkillDetail],
-        calendar_employee: List[bool],
+        dict_skill: dict[str, SkillDetail],
+        calendar_employee: list[bool],
         salary: float = 0.0,
     ):
         self.salary = salary
@@ -1918,17 +1919,17 @@ def intersect(i1, i2):
 
 class MS_RCPSPModel(Problem):
     sgs: ScheduleGenerationScheme
-    skills_set: Set[str]
-    resources_set: Set[str]
-    non_renewable_resources: Set[str]
-    resources_availability: Dict[str, List[int]]
-    employees: Dict[Hashable, Employee]
-    employees_availability: List[int]
+    skills_set: set[str]
+    resources_set: set[str]
+    non_renewable_resources: set[str]
+    resources_availability: dict[str, list[int]]
+    employees: dict[Hashable, Employee]
+    employees_availability: list[int]
     n_jobs_non_dummy: int
-    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]]
-    successors: Dict[Hashable, List[Hashable]]
-    partial_preemption_data: Dict[Hashable, Dict[int, Dict[str, bool]]]
-    resource_blocking_data: List[Tuple[List[Hashable], Set[str]]]
+    mode_details: dict[Hashable, dict[int, dict[str, int]]]
+    successors: dict[Hashable, list[Hashable]]
+    partial_preemption_data: dict[Hashable, dict[int, dict[str, bool]]]
+    resource_blocking_data: list[tuple[list[Hashable], set[str]]]
     # List task 1, task 2, resource : resource should be blocked between start of task 1 and end of task 2
     # {task_id: {mode: {ressource: is_releasable during preemption }
     strictly_disjunctive_subtasks: bool
@@ -1936,28 +1937,28 @@ class MS_RCPSPModel(Problem):
 
     def __init__(
         self,
-        skills_set: Set[str],
-        resources_set: Set[str],
-        non_renewable_resources: Set[str],
-        resources_availability: Dict[str, List[int]],
-        employees: Dict[Hashable, Employee],
-        mode_details: Dict[Hashable, Dict[int, Dict[str, int]]],
-        successors: Dict[Hashable, List[Hashable]],
+        skills_set: set[str],
+        resources_set: set[str],
+        non_renewable_resources: set[str],
+        resources_availability: dict[str, list[int]],
+        employees: dict[Hashable, Employee],
+        mode_details: dict[Hashable, dict[int, dict[str, int]]],
+        successors: dict[Hashable, list[Hashable]],
         horizon,
-        employees_availability: List[int] = None,
-        tasks_list: List[Hashable] = None,
-        employees_list: List[Hashable] = None,
+        employees_availability: list[int] = None,
+        tasks_list: list[Hashable] = None,
+        employees_list: list[Hashable] = None,
         horizon_multiplier=1,
         sink_task: Optional[Hashable] = None,
         source_task: Optional[Hashable] = None,
         one_unit_per_task_max: bool = False,
         preemptive: bool = False,
-        preemptive_indicator: Dict[Hashable, bool] = None,
+        preemptive_indicator: dict[Hashable, bool] = None,
         special_constraints: SpecialConstraintsDescription = None,
-        partial_preemption_data: Dict[Hashable, Dict[int, Dict[str, bool]]] = None,
-        always_releasable_resources: Set[str] = None,
-        never_releasable_resources: Set[str] = None,
-        resource_blocking_data: List[Tuple[List[Hashable], Set[str]]] = None,
+        partial_preemption_data: dict[Hashable, dict[int, dict[str, bool]]] = None,
+        always_releasable_resources: set[str] = None,
+        never_releasable_resources: set[str] = None,
+        resource_blocking_data: list[tuple[list[Hashable], set[str]]] = None,
         strictly_disjunctive_subtasks: bool = True,
     ):
         self.skills_set = skills_set
@@ -2262,7 +2263,7 @@ class MS_RCPSPModel(Problem):
     def evaluate_from_encoding(self, int_vector, encoding_name):
         ...
 
-    def evaluate(self, rcpsp_sol: MS_RCPSPSolution) -> Dict[str, float]:
+    def evaluate(self, rcpsp_sol: MS_RCPSPSolution) -> dict[str, float]:
         obj_makespan = self.evaluate_function(rcpsp_sol)
         d = {"makespan": obj_makespan}
         if self.includes_special_constraint():
@@ -2275,7 +2276,7 @@ class MS_RCPSPModel(Problem):
     def evaluate_mobj(self, rcpsp_sol: MS_RCPSPSolution):
         return self.evaluate_mobj_from_dict(self.evaluate(rcpsp_sol))
 
-    def evaluate_mobj_from_dict(self, dict_values: Dict[str, float]) -> TupleFitness:
+    def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(np.array([-dict_values["makespan"]]), 1)
 
     def satisfy(self, variable: Solution) -> bool:
@@ -2597,19 +2598,19 @@ class MS_RCPSPModel(Problem):
         val += "\nSpecial constraints : " + str(self.do_special_constraints)
         return val
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return MS_RCPSPSolution
 
     def get_attribute_register(self) -> EncodingRegister:
         dict_register = {
-            "modes": {"name": "modes", "type": [Dict[int, int]]},
+            "modes": {"name": "modes", "type": [dict[int, int]]},
             "schedule": {
                 "name": "schedule",
-                "type": [Dict[int, Dict[str, int]]],
+                "type": [dict[int, dict[str, int]]],
             },
             "employee_usage": {
                 "name": "employee_usage",
-                "type": [Dict[int, Dict[int, Set[str]]]],
+                "type": [dict[int, dict[int, set[str]]]],
             },
         }
         return EncodingRegister(dict_register)
@@ -2688,28 +2689,28 @@ class MS_RCPSPModel(Problem):
 class MS_RCPSPModel_Variant(MS_RCPSPModel):
     def __init__(
         self,
-        skills_set: Set[str],
-        resources_set: Set[str],
-        non_renewable_resources: Set[str],
-        resources_availability: Dict[str, List[int]],
-        employees: Dict[Hashable, Employee],
-        employees_availability: List[int],
-        mode_details: Dict[Hashable, Dict[int, Dict[str, int]]],
-        successors: Dict[Hashable, List[Hashable]],
+        skills_set: set[str],
+        resources_set: set[str],
+        non_renewable_resources: set[str],
+        resources_availability: dict[str, list[int]],
+        employees: dict[Hashable, Employee],
+        employees_availability: list[int],
+        mode_details: dict[Hashable, dict[int, dict[str, int]]],
+        successors: dict[Hashable, list[Hashable]],
         horizon,
-        tasks_list: List[Hashable] = None,
-        employees_list: List[Hashable] = None,
+        tasks_list: list[Hashable] = None,
+        employees_list: list[Hashable] = None,
         horizon_multiplier=1,
         sink_task: Optional[Hashable] = None,
         source_task: Optional[Hashable] = None,
         one_unit_per_task_max: bool = False,
         preemptive: bool = False,
-        preemptive_indicator: Dict[Hashable, bool] = None,
+        preemptive_indicator: dict[Hashable, bool] = None,
         special_constraints: SpecialConstraintsDescription = None,
-        partial_preemption_data: Dict[Hashable, Dict[int, Dict[str, bool]]] = None,
-        always_releasable_resources: Set[str] = None,
-        never_releasable_resources: Set[str] = None,
-        resource_blocking_data: List[Tuple[List[Hashable], Set[str]]] = None,
+        partial_preemption_data: dict[Hashable, dict[int, dict[str, bool]]] = None,
+        always_releasable_resources: set[str] = None,
+        never_releasable_resources: set[str] = None,
+        resource_blocking_data: list[tuple[list[Hashable], set[str]]] = None,
         strictly_disjunctive_subtasks: bool = True,
     ):
         MS_RCPSPModel.__init__(
@@ -2762,7 +2763,7 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         }
         dict_register["priority_worker_per_task"] = {
             "name": "priority_worker_per_task",
-            "type": [List[List[int]]],
+            "type": [list[list[int]]],
         }
         dict_register["modes_vector"] = {
             "name": "modes_vector",
@@ -2796,11 +2797,11 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
 
         dict_register["schedule"] = {
             "name": "schedule",
-            "type": [Dict[int, Dict[str, int]]],
+            "type": [dict[int, dict[str, int]]],
         }
         dict_register["employee_usage"] = {
             "name": "employee_usage",
-            "type": [Dict[int, Dict[int, Set[str]]]],
+            "type": [dict[int, dict[int, set[str]]]],
         }
         return EncodingRegister(dict_register)
 
@@ -2915,7 +2916,7 @@ class MS_RCPSPModel_Variant(MS_RCPSPModel):
         objectives = self.evaluate(rcpsp_sol)
         return objectives
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         if not self.preemptive:
             return MS_RCPSPSolution_Variant
         else:
@@ -2949,8 +2950,8 @@ def priority_worker_per_task_do_to_permutation_sgs_fast(
 
 def build_partial_vectors(
     problem: MS_RCPSPModel,
-    completed_tasks: Dict[Hashable, TaskDetails],
-    scheduled_tasks_start_times: Dict[Hashable, TaskDetails],
+    completed_tasks: dict[Hashable, TaskDetails],
+    scheduled_tasks_start_times: dict[Hashable, TaskDetails],
 ):
     scheduled_task_indicator = np.zeros(problem.n_jobs)
     scheduled_tasks_start_times_vector = np.zeros(problem.n_jobs, dtype=np.int_)
@@ -2976,8 +2977,8 @@ def build_partial_vectors(
 
 def build_partial_vectors_preemptive(
     problem: MS_RCPSPModel,
-    completed_tasks: Dict[Hashable, TaskDetailsPreemptive],
-    scheduled_tasks_start_times: Dict[Hashable, TaskDetailsPreemptive],
+    completed_tasks: dict[Hashable, TaskDetailsPreemptive],
+    scheduled_tasks_start_times: dict[Hashable, TaskDetailsPreemptive],
 ):
     scheduled_task_indicator = np.zeros(problem.n_jobs)
     scheduled_tasks_start_times_array = np.zeros((problem.n_jobs, 10), dtype=np.int_)

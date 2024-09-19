@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, List, Type, Union
+from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -19,7 +19,7 @@ from discrete_optimization.generic_tools.graph_api import Graph
 
 
 class MisSolution(Solution):
-    def __init__(self, problem: "MisProblem", chosen: Union[List, np.ndarray]):
+    def __init__(self, problem: "MisProblem", chosen: Union[list, np.ndarray]):
         self.problem = problem
         self.chosen = chosen
 
@@ -83,7 +83,7 @@ class MisProblem(Problem):
                 self.attr_list = attr_list
             self.func = sum
 
-    def evaluate(self, variable: MisSolution) -> Dict[str, float]:
+    def evaluate(self, variable: MisSolution) -> dict[str, float]:
         return {
             "value": self.func(variable.chosen),
             "penalty": self.compute_violation(variable),
@@ -118,7 +118,7 @@ class MisProblem(Problem):
             }
         )
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return MisSolution
 
     def get_objective_register(self) -> ObjectiveRegister:
