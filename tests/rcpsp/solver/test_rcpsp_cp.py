@@ -204,10 +204,10 @@ def test_ortools_with_cb(caplog, random_seed):
             logging.debug(sol.rcpsp_schedule)
             logging.debug(sol.rcpsp_modes)
 
-    callbacks = [VariablePrinterCallback(), TimerStopper(2)]
+    callbacks = [VariablePrinterCallback(), TimerStopper(1)]
 
     with caplog.at_level(logging.DEBUG):
-        result_storage = solver.solve(callbacks=callbacks, time_limit=10)
+        result_storage = solver.solve(callbacks=callbacks, time_limit=20)
 
     assert "Solution #1" in caplog.text
     assert (
