@@ -46,6 +46,7 @@ try:
     from qiskit_algorithms.utils import validate_bounds, validate_initial_point
     from qiskit_ibm_runtime import EstimatorV2 as Estimator
     from qiskit_ibm_runtime import SamplerV2, Session
+    from qiskit_optimization import QuadraticProgram
     from qiskit_optimization.converters import QuadraticProgramToQubo
     from qiskit_optimization.translators import from_gurobipy
 except ImportError:
@@ -76,6 +77,8 @@ except ImportError:
             **kwargs: Any,
         ):
             raise RuntimeError(msg)
+
+    QuadraticProgram = object
 
 else:
     qiskit_available = True
@@ -518,3 +521,30 @@ class GeneralVQESolver(QiskitVQESolver):
         else:
             self.model.init_model(kwargs=kwargs)
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
+
+
+def matrix(quad: QuadraticProgram):
+    """
+    @param quad: a quadratic programm, must be in QUBO form
+    @return: the QUBO matrix
+    """
+    num_var = quad.get_num_vars()
+    m = np.zeros((num_var, num_var))
+    obj = quad.objective.quadratic.to_dict()
+    for key, val in obj.items():
+        m[key[0], key[1]] = val
+    return m
+
+
+def compute_energy(matrix, x):
+    """
+    @param matrix: a matrix of a QUBO formulation
+    @param x: a binary vector
+    @return: the value of the matrix for the giving vector
+    """
+    energy = 0
+    for i in range(0, len(x)):
+        for j in range(i, len(x)):
+            if x[i] == 1 and x[j] == 1:
+                energy += matrix[i][j]
+    return energy
