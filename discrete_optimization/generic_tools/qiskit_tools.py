@@ -46,6 +46,9 @@ try:
     from qiskit_ibm_runtime import SamplerV2, Session
     from qiskit_optimization.converters import QuadraticProgramToQubo
     from qiskit_optimization.translators import from_gurobipy
+    from qiskit_optimization import QuadraticProgram
+    from qiskit import QuantumCircuit
+    from qiskit.quantum_info.operators.base_operator import BaseOperator
 except ImportError:
     qiskit_available = False
     msg = (
@@ -217,6 +220,7 @@ def execute_ansatz_with_Hamiltonian(
 
     # Assign solution parameters to our ansatz
     qc = new_ansatz.assign_parameters(res.x)
+    solver.set_final_ansatz((qc.copy()))
     # Add measurements to our circuit
     qc.measure_all()
     # transpile our circuit
@@ -242,9 +246,13 @@ class QiskitSolver(SolverDO):
     ):
         super().__init__(problem, params_objective_function)
         self.executed_ansatz = None
+        self.final_ansatz = None
 
     def set_executed_ansatz(self, ansatz):
         self.executed_ansatz = ansatz
+
+    def set_final_ansatz(self, ansatz):
+        self.final_ansatz = ansatz
 
 
 class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
@@ -258,9 +266,6 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         IntegerHyperparameter(name="maxiter", low=100, high=1000, step=50, default=300),
         FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
         CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
-        # TODO rajouter initial_point et initial_bound dans les hyperparams ?
-        # TODO add mixer_operator comme hyperparam
-        # TODO QAOA using Cobyla optimizer seems stop to soon, no respect of maxiter or tol, no problem with VQE
     ]
 
     def __init__(
@@ -301,17 +306,40 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         qubo = conv.convert(self.quadratic_programm)
 
         hamiltonian, offset = qubo.to_ising()
-        self.ansatz = QAOAAnsatz(hamiltonian, reps=reps)
-        """
-        by default only hyperparameters of the mixer operator are initialized
-        but for some optimizer we need to initialize also hyperparameters of the cost operator
-        """
-        bounds = []
-        for hp in self.ansatz.parameter_bounds:
-            if hp == (None, None):
-                hp = (0, np.pi)
-            bounds.append(hp)
-        self.ansatz.parameter_bounds = bounds
+        mixer_operator = None
+        if kwargs.get("mixer_operator"):
+            mixer_operator = kwargs["mixer_operator"]
+            if not (isinstance(mixer_operator, QuantumCircuit) or isinstance(mixer_operator, BaseOperator)):
+                raise RuntimeError(
+                    "your personnalized mixer_operator must be a QuantumCircuit or a BaseOperator Object"
+                )
+        initial_state = None
+        if kwargs.get("initial_state"):
+            initial_state = kwargs["initial_state"]
+            if not isinstance(initial_state, QuantumCircuit):
+                raise RuntimeError(
+                    "the initial_state must be a QuantumCircuit Object"
+                )
+        self.ansatz = QAOAAnsatz(hamiltonian, reps=reps, mixer_operator=mixer_operator, initial_state=initial_state)
+
+        if kwargs.get("parameter_bounds"):
+            if len(kwargs["parameter_bounds"]) != 2*reps:
+                raise RuntimeError(
+                    "For custom parameters of the quantum circuit you need to pass 2*reps bounds"
+                )
+            self.ansatz.parameter_bounds = kwargs["parameter_bounds"]
+
+        else:
+            """
+            by default only hyperparameters of the mixer operator are initialized
+            but for some optimizer we need to initialize also hyperparameters of the cost operator
+            """
+            bounds = []
+            for hp in self.ansatz.parameter_bounds:
+                if hp == (None, None):
+                    hp = (0, np.pi)
+                bounds.append(hp)
+            self.ansatz.parameter_bounds = bounds
 
         result = execute_ansatz_with_Hamiltonian(
             self, self.backend, self.ansatz, hamiltonian, use_session, **kwargs
@@ -344,6 +372,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
 
 class QiskitVQESolver(QiskitSolver):
     hyperparameters = [
+        IntegerHyperparameter(name="reps", low=1, high=6, default=3),
         IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
         CategoricalHyperparameter(name="method", choices=["COBYLA"], default="COBYLA"),
         IntegerHyperparameter(
@@ -352,7 +381,6 @@ class QiskitVQESolver(QiskitSolver):
         IntegerHyperparameter(name="maxiter", low=100, high=2000, step=50, default=300),
         FloatHyperparameter(name="rhobeg", low=0.5, high=1.5, default=1.0),
         CategoricalHyperparameter(name="tol", choices=[1e-1, 1e-2, 1e-3], default=1e-2),
-        # TODO rajouter initial_point et initial_bound dans les hyperparams ?
     ]
 
     def __init__(
@@ -391,7 +419,18 @@ class QiskitVQESolver(QiskitSolver):
         qubo = conv.convert(self.quadratic_programm)
 
         hamiltonian, offset = qubo.to_ising()
-        self.ansatz = EfficientSU2(hamiltonian.num_qubits)
+        if kwargs.get("personnalized_ansatz"):
+            self.ansatz = kwargs["personnalized_ansatz"]
+            if self.ansatz.num_qubits != hamiltonian.num_qubits:
+                raise RuntimeError(
+                    "your personnalized ansatz must have the same number of qubits that the number of binary variable of the problem"
+                )
+            if not isinstance(self.ansatz, QuantumCircuit):
+                raise RuntimeError(
+                    "your personnalized ansatz must be a QuantumCircuit Object"
+                )
+        else:
+            self.ansatz = EfficientSU2(hamiltonian.num_qubits, reps=kwargs["reps"])
 
         result = execute_ansatz_with_Hamiltonian(
             self, self.backend, self.ansatz, hamiltonian, use_session, **kwargs
@@ -474,3 +513,30 @@ class GeneralVQESolver(QiskitVQESolver):
         else:
             self.model.init_model(kwargs=kwargs)
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
+
+
+def matrix(quad: QuadraticProgram):
+    """
+    @param quad: a quadratic programm, must be in QUBO form
+    @return: the QUBO matrix
+    """
+    num_var = quad.get_num_vars()
+    m = np.zeros((num_var, num_var))
+    obj = quad.objective.quadratic.to_dict()
+    for key, val in obj.items():
+        m[key[0], key[1]] = val
+    return m
+
+
+def compute_energy(matrix, x):
+    """
+    @param matrix: a matrix of a QUBO formulation
+    @param x: a binary vector
+    @return: the value of the matrix for the giving vector
+    """
+    energy = 0
+    for i in range(0, len(x)):
+        for j in range(i, len(x)):
+            if x[i] == 1 and x[j] == 1:
+                energy += matrix[i][j]
+    return energy
