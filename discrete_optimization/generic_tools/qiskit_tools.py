@@ -518,4 +518,3 @@ class GeneralVQESolver(QiskitVQESolver):
         else:
             self.model.init_model(kwargs=kwargs)
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
-
