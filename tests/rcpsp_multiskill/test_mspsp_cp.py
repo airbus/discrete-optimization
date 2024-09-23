@@ -32,11 +32,9 @@ def test_solve():
     cp_solver_1.instance["full_output"] = True
     cp_solver_1.instance.add_string("my_search=priority_smallest;\n")
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 35
-    parameters_cp.TimeLimit_iter0 = 25
     parameters_cp.multiprocess = False
     parameters_cp.nb_process = 4
-    results = cp_solver_1.solve(parameters_cp=parameters_cp)
+    results = cp_solver_1.solve(parameters_cp=parameters_cp, time_limit=35)
     solution = results.get_best_solution()
     assert model.satisfy(solution)
     cp_solver_2 = CP_MSPSP_MZN(model, cp_solver_name=CPSolverName.CHUFFED)
@@ -49,10 +47,8 @@ def test_solve():
     cp_solver_2.instance["maxt"] = 150
     cp_solver_2.instance["full_output"] = True
     parameters_cp = ParametersCP.default()
-    parameters_cp.TimeLimit = 35
-    parameters_cp.TimeLimit_iter0 = 25
     parameters_cp.multiprocess = False
     parameters_cp.free_search = True
-    results = cp_solver_2.solve(parameters_cp=parameters_cp)
+    results = cp_solver_2.solve(parameters_cp=parameters_cp, time_limit=35)
     solution = results.get_best_solution()
     assert model.satisfy(solution)
