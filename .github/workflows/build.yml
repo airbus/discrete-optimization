@@ -213,7 +213,7 @@ jobs:
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          pip install ${wheelfile}[test]
+          pip install "${wheelfile}[test, quantum]"
           if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
             echo "install gurobi"
             pip install gurobipy
