@@ -114,6 +114,12 @@ def parse_file_mslib(file_path, skill_level_version: bool = True):
                         workers[worker].dict_skill[
                             (skills_list[k], datas_workforce[k])
                         ] = SkillDetail(skill_value=1, efficiency_ratio=0, experience=0)
+                        for other_level in range(1, datas_workforce[k]):
+                            workers[worker].dict_skill[
+                                (skills_list[k], other_level)
+                            ] = SkillDetail(
+                                skill_value=1, efficiency_ratio=0, experience=0
+                            )
                     else:
                         workers[worker].dict_skill[skills_list[k]] = SkillDetail(
                             skill_value=1, efficiency_ratio=0, experience=0
