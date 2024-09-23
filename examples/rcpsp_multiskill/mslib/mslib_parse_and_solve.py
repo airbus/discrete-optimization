@@ -1,22 +1,28 @@
-#  Copyright (c) 2022 AIRBUS and its affiliates.
+#  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
 
 from discrete_optimization.generic_rcpsp_tools.ls_solver import LS_RCPSP_Solver
+from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
     plot_resource_individual_gantt,
     plt,
 )
+from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPSolution
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_mslib_parser import (
     get_data_available,
     parse_file_mslib,
 )
+from discrete_optimization.rcpsp_multiskill.solvers.cpsat_msrcpsp_solver import (
+    CPSatMSRCPSPSolver,
+)
 
 logger = logging.getLogger(__name__)
 this_folder = os.path.dirname(os.path.abspath(__file__))
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def example_parsing_and_local_search():
@@ -32,5 +38,38 @@ def example_parsing_and_local_search():
     plt.show()
 
 
+def example_mslib_cpsat():
+    files_dict = get_data_available()
+    file = [f for f in files_dict["MSLIB4"] if "MSLIB_Set4_1003.msrcp" in f][0]
+    model = parse_file_mslib(file, skill_level_version=False)
+    cp_model = CPSatMSRCPSPSolver(
+        problem=model,
+    )
+    cp_model.init_model(
+        one_worker_per_task=False, slack_skill=False, one_skill_per_task=True
+    )
+    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
+    p = ParametersCP.default_cpsat()
+    p.nb_process = 10
+    res = cp_model.solve(
+        parameters_cp=p,
+        time_limit=20,
+        callbacks=[
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            )
+        ],
+    )
+    print(cp_model.get_status_solver())
+    from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
+        plot_resource_individual_gantt,
+    )
+
+    solution = res.get_best_solution_fit()[0]
+    solution: MS_RCPSPSolution
+    plot_resource_individual_gantt(rcpsp_model=model, rcpsp_sol=solution)
+    plt.show()
+
+
 if __name__ == "__main__":
-    example_parsing_and_local_search()
+    example_mslib_cpsat()
