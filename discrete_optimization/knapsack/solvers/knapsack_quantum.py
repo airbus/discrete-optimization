@@ -158,10 +158,10 @@ class QAOAKnapsackSolver(SolverKnapsack, QiskitQAOASolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.knapsack_qiskit = KnapsackQiskit(problem)
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.knapsack_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:
@@ -175,10 +175,10 @@ class VQEKnapsackSolver(SolverKnapsack, QiskitVQESolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.knapsack_qiskit = KnapsackQiskit(problem)
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.knapsack_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:

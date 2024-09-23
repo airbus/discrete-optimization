@@ -246,7 +246,7 @@ class QiskitSolver(SolverDO):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.executed_ansatz = None
         self.final_ansatz = None
 
@@ -275,8 +275,9 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         backend: Optional = None,
+        **kwargs,
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.quadratic_programm = None
         self.backend = backend
         self.ansatz = None
@@ -396,8 +397,9 @@ class QiskitVQESolver(QiskitSolver):
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         backend: Optional = None,
+        **kwargs,
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.quadratic_programm = None
         self.backend = backend
         self.ansatz = None
@@ -481,6 +483,7 @@ class GeneralQAOASolver(QiskitQAOASolver):
         retrieve_solution: Callable,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         backend: Optional = None,
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, backend=backend)
         self.quadratic_programm = None
@@ -494,7 +497,7 @@ class GeneralQAOASolver(QiskitQAOASolver):
         if isinstance(self.model, Model):
             self.quadratic_programm = gurobi_to_qubo(self.model)
         else:
-            self.model.init_model(kwargs=kwargs)
+            self.model.init_model(**kwargs)
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
 
 
@@ -506,8 +509,9 @@ class GeneralVQESolver(QiskitVQESolver):
         retrieve_solution: Callable,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         backend: Optional = None,
+        **kwargs,
     ):
-        super().__init__(problem, params_objective_function, backend=backend)
+        super().__init__(problem, params_objective_function, backend=backend, **kwargs)
         self.quadratic_programm = None
         self.model = model
         self.retrieve_solution = retrieve_solution
@@ -519,7 +523,7 @@ class GeneralVQESolver(QiskitVQESolver):
         if isinstance(self.model, Model):
             self.quadratic_programm = gurobi_to_qubo(self.model)
         else:
-            self.model.init_model(kwargs=kwargs)
+            self.model.init_model(**kwargs)
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
 
 
