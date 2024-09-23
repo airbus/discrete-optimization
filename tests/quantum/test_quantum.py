@@ -72,6 +72,9 @@ def test_solvers_mis(solver_class):
     sol, fit = results.get_best_solution_fit()
 
 
+@pytest.mark.skipif(
+    not qiskit_available, reason="You need Qiskit modules to this test."
+)
 @pytest.mark.parametrize("solver_class", solvers_map_facility)
 def test_solvers_facility(solver_class):
     f1 = Facility(0, 2, 5, Point(1, 1))
@@ -104,7 +107,7 @@ def test_solver_TSP(solver_class):
         [p1, p2, p3, p4, p5], 5, start_index=0, end_index=4
     )
     results = solve(
-        method=solver_class, problem=tspProblem, **solvers_map_mis[solver_class][1]
+        method=solver_class, problem=tspProblem, **solvers_map_tsp[solver_class][1]
     )
     sol, fit = results.get_best_solution_fit()
 
@@ -125,7 +128,9 @@ def test_solver_Knapsack(solver_class):
     i6 = Item(5, 2, 1)
     knapsackProblem = KnapsackModel([i1, i2, i3, i4, i5, i6], max_capacity)
     results = solve(
-        method=solver_class, problem=knapsackProblem, **solvers_map_mis[solver_class][1]
+        method=solver_class,
+        problem=knapsackProblem,
+        **solvers_map_knapsack[solver_class][1]
     )
     sol, fit = results.get_best_solution_fit()
 

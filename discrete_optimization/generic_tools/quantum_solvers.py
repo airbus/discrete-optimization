@@ -59,8 +59,8 @@ solvers_coloring: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
 }
 
 solvers_map_coloring = {}
-for key in solvers_coloring:
-    for solver, param in solvers_coloring[key]:
+for key, solver_configs in solvers_coloring.items():
+    for solver, param in solver_configs:
         solvers_map_coloring[solver] = (key, param)
 
 
@@ -80,8 +80,8 @@ solvers_mis: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
 }
 
 solvers_map_mis = {}
-for key in solvers_mis:
-    for solver, param in solvers_mis[key]:
+for key, solver_configs in solvers_mis.items():
+    for solver, param in solver_configs:
         solvers_map_mis[solver] = (key, param)
 
 solvers_facility: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
@@ -100,8 +100,8 @@ solvers_facility: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
 }
 
 solvers_map_facility = {}
-for key in solvers_facility:
-    for solver, param in solvers_facility[key]:
+for key, solver_configs in solvers_facility.items():
+    for solver, param in solver_configs:
         solvers_map_facility[solver] = (key, param)
 
 
@@ -121,9 +121,9 @@ solvers_tsp: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
 }
 
 solvers_map_tsp = {}
-for key in solvers_mis:
-    for solver, param in solvers_tsp[key]:
-        solvers_map_mis[solver] = (key, param)
+for key, solver_configs in solvers_tsp.items():
+    for solver, param in solver_configs:
+        solvers_map_tsp[solver] = (key, param)
 
 solvers_knapsack: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
     "qaoa": [
@@ -141,9 +141,9 @@ solvers_knapsack: Dict[str, List[Tuple[Type[QiskitSolver], Dict[str, Any]]]] = {
 }
 
 solvers_map_knapsack = {}
-for key in solvers_mis:
-    for solver, param in solvers_knapsack[key]:
-        solvers_map_mis[solver] = (key, param)
+for key, solver_configs in solvers_knapsack.items():
+    for solver, param in solver_configs:
+        solvers_map_knapsack[solver] = (key, param)
 
 
 def solve(
