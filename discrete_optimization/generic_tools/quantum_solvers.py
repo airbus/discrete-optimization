@@ -164,7 +164,7 @@ def solve(
     solver_ = method(problem, **kwargs)
     try:
 
-        solver_.init_model()
+        solver_.init_model(**kwargs)
     except AttributeError:
         pass
     return solver_.solve(**kwargs)
@@ -184,10 +184,10 @@ def solve_coloring(
     Returns: a ResultsStorage objecting obtained by the solver.
 
     """
-    solver_ = method(problem, nb_color)
+    solver_ = method(problem, nb_color, **kwargs)
     try:
 
-        solver_.init_model()
+        solver_.init_model(**kwargs)
     except AttributeError:
         pass
     return solver_.solve(**kwargs)

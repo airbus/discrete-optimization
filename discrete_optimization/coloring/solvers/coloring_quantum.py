@@ -152,12 +152,12 @@ class QAOAColoringSolver_MinimizeNbColor(SolverColoring, QiskitQAOASolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(
             problem, nb_max_color=nb_max_color
         )
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:
@@ -172,12 +172,12 @@ class VQEColoringSolver_MinimizeNbColor(SolverColoring, QiskitVQESolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = ColoringQiskit_MinimizeNbColor(
             problem, nb_max_color=nb_max_color
         )
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:
@@ -262,12 +262,12 @@ class QAOAColoringSolver_FeasibleNbColor(SolverColoring, QiskitQAOASolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(
             problem, nb_color=nb_color
         )
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:
@@ -282,12 +282,12 @@ class VQEColoringSolver_FeasibleNbColor(SolverColoring, QiskitVQESolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs
     ):
-        super().__init__(problem, params_objective_function)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = ColoringQiskit_FeasibleNbColor(
             problem, nb_color=nb_color
         )
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.coloring_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:

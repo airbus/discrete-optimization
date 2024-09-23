@@ -84,10 +84,10 @@ class QAOAMisSolver(MisSolver, QiskitQAOASolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        super().__init__(problem, params_objective_function, kwargs)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.mis_qiskit = MisQiskit(problem)
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.mis_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result):
@@ -101,10 +101,10 @@ class VQEMisSolver(MisSolver, QiskitVQESolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs,
     ):
-        super().__init__(problem, params_objective_function, kwargs)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.mis_qiskit = MisQiskit(problem)
 
-    def init_model(self):
+    def init_model(self, **kwargs):
         self.quadratic_programm = self.mis_qiskit.to_quadratic_program()
 
     def retrieve_current_solution(self, result) -> Solution:
