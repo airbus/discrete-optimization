@@ -21,6 +21,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
 )
 from discrete_optimization.generic_tools.lp_tools import (
+    ConstraintType,
     CplexMilpSolver,
     GurobiMilpSolver,
     MilpSolver,
@@ -28,6 +29,7 @@ from discrete_optimization.generic_tools.lp_tools import (
     OrtoolsMathOptMilpSolver,
     ParametersMilp,
     PymipMilpSolver,
+    VariableType,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -90,6 +92,210 @@ class _BaseLP_RCPSP(MilpSolver, SolverRCPSP):
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
         self.start_solution: Optional[RCPSPSolution] = None
+
+    def init_model(self, **kwargs):
+        greedy_start = kwargs.get("greedy_start", True)
+        start_solution = kwargs.get("start_solution", None)
+        self.hinted_values = {}
+        if start_solution is None:
+            if greedy_start:
+                logger.info("Computing greedy solution")
+                greedy_solver = PileSolverRCPSP(self.problem)
+                store_solution = greedy_solver.solve(
+                    greedy_choice=GreedyChoice.MOST_SUCCESSORS
+                )
+                self.start_solution = store_solution.get_best_solution_fit()[0]
+                makespan = self.problem.evaluate(self.start_solution)["makespan"]
+            else:
+                logger.info("Get dummy solution")
+                solution = self.problem.get_dummy_solution()
+                self.start_solution = solution
+                makespan = self.problem.evaluate(solution)["makespan"]
+        else:
+            self.start_solution = start_solution
+            makespan = self.problem.evaluate(start_solution)["makespan"]
+        sorted_tasks = self.problem.tasks_list
+        resources = self.problem.resources_list
+        p = [int(self.problem.mode_details[key][1]["duration"]) for key in sorted_tasks]
+        u = [
+            [self.problem.mode_details[t][1].get(r, 0) for r in resources]
+            for t in sorted_tasks
+        ]
+        c = [self.problem.resources[r] for r in resources]
+        S = []
+        logger.debug(f"successors: {self.problem.successors}")
+        for task in sorted_tasks:
+            for suc in self.problem.successors[task]:
+                S.append([task, suc])
+        # we have a better self.T to limit the number of variables :
+        self.index_time = range(int(makespan + 1))
+        self.model = self.create_empty_model()
+        self.x: list[list[VariableType]] = [
+            [self.add_binary_variable(name=f"x({task},{t})") for t in self.index_time]
+            for task in sorted_tasks
+        ]
+        self.index_in_var = {
+            t: self.problem.return_index_task(task=t, offset=0) for t in sorted_tasks
+        }
+        # set objective
+        self.set_model_objective(
+            self.construct_linear_sum(
+                self.x[self.index_in_var[self.problem.sink_task]][t] * t
+                for t in self.index_time
+            ),
+            minimize=True,
+        )
+        self.index_task = range(self.problem.n_jobs)
+        self.index_resource = range(len(resources))
+        for task in self.index_task:
+            self.add_linear_constraint(
+                self.construct_linear_sum(self.x[task][t] for t in self.index_time) == 1
+            )
+
+        for (r, t) in product(self.index_resource, self.index_time):
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    u[j][r] * self.x[j][t2]
+                    for j in self.index_task
+                    for t2 in range(max(0, t - p[j] + 1), t + 1)
+                )
+                <= c[r]
+            )
+
+        for (j, s) in S:
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    t * self.x[self.index_in_var[s]][t]
+                    - t * self.x[self.index_in_var[j]][t]
+                    for t in self.index_time
+                )
+                >= p[self.index_in_var[j]]
+            )
+        for j in self.index_task:
+            for t in self.index_time:
+                if (
+                    self.start_solution.rcpsp_schedule[self.problem.tasks_list[j]][
+                        "start_time"
+                    ]
+                    == t
+                ):
+                    self.hinted_values[self.x[j][t]] = 1
+                else:
+                    self.hinted_values[self.x[j][t]] = 0
+        p_s: Optional[PartialSolution] = kwargs.get("partial_solution", None)
+        self.partial_solution = p_s
+        self.constraints_partial_solutions = []
+        if p_s is not None:
+            constraints = []
+            if p_s.start_times is not None:
+                for task in p_s.start_times:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.construct_linear_sum(
+                                [
+                                    j * self.x[self.index_in_var[task]][j]
+                                    for j in self.index_time
+                                ]
+                            )
+                            == p_s.start_times[task]
+                        )
+                    ]
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.x[self.index_in_var[task]][p_s.start_times[task]] == 1
+                        )
+                    ]
+
+            if p_s.partial_permutation is not None:
+                for t1, t2 in zip(
+                    p_s.partial_permutation[:-1], p_s.partial_permutation[1:]
+                ):
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.construct_linear_sum(
+                                [
+                                    t * self.x[self.index_in_var[t1]][t]
+                                    - t * self.x[self.index_in_var[t2]][t]
+                                    for t in self.index_time
+                                ]
+                            )
+                            <= 0
+                        )
+                    ]
+            if p_s.list_partial_order is not None:
+                for l in p_s.list_partial_order:
+                    for t1, t2 in zip(l[:-1], l[1:]):
+                        constraints += [
+                            self.add_linear_constraint(
+                                self.construct_linear_sum(
+                                    [
+                                        t * self.x[self.index_in_var[t1]][t]
+                                        - t * self.x[self.index_in_var[t2]][t]
+                                        for t in self.index_time
+                                    ]
+                                )
+                                <= 0
+                            )
+                        ]
+            self.starts = {}
+            for j in self.index_task:
+                self.starts[j] = self.add_continuous_variable(
+                    name="start_" + str(j), lb=0, ub=makespan
+                )
+                self.add_linear_constraint(
+                    self.construct_linear_sum(t * self.x[j][t] for t in self.index_time)
+                    == self.starts[j]
+                )
+            if p_s.start_at_end is not None:
+                for i, j in p_s.start_at_end:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[self.index_in_var[j]]
+                            == self.starts[self.index_in_var[i]]
+                            + p[self.index_in_var[i]]
+                        )
+                    ]
+            if p_s.start_together is not None:
+                for i, j in p_s.start_together:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[self.index_in_var[j]]
+                            == self.starts[self.index_in_var[i]]
+                        )
+                    ]
+            if p_s.start_after_nunit is not None:
+                for t1, t2, delta in p_s.start_after_nunit:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[self.index_in_var[t2]]
+                            >= self.starts[self.index_in_var[t1]] + delta
+                        )
+                    ]
+            if p_s.start_at_end_plus_offset is not None:
+                for t1, t2, delta in p_s.start_at_end_plus_offset:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[self.index_in_var[t2]]
+                            >= self.starts[self.index_in_var[t1]]
+                            + delta
+                            + p[self.index_in_var[t1]]
+                        )
+                    ]
+            self.constraints_partial_solutions = constraints
+        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
+        self.set_warm_start_from_values(variable_values=self.hinted_values)
+
+    def set_warm_start_from_values(
+        self,
+        variable_values: dict[VariableType, float],
+        dual_values: Optional[dict[ConstraintType, float]] = None,
+    ) -> None:
+        """
+
+        Implemented by OrtoolsMathOptMilpSolver or GurobiMilpSolver.
+
+        """
+        raise NotImplementedError()
 
     def retrieve_current_solution(
         self,
@@ -325,200 +531,6 @@ class LP_RCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_RCPSP):
     problem: RCPSPModel
     hinted_values: dict[mathopt.Variable, float]
 
-    def init_model(self, **kwargs):
-        greedy_start = kwargs.get("greedy_start", True)
-        start_solution = kwargs.get("start_solution", None)
-        self.hinted_values = {}
-        if start_solution is None:
-            if greedy_start:
-                logger.info("Computing greedy solution")
-                greedy_solver = PileSolverRCPSP(self.problem)
-                store_solution = greedy_solver.solve(
-                    greedy_choice=GreedyChoice.MOST_SUCCESSORS
-                )
-                self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.problem.evaluate(self.start_solution)["makespan"]
-            else:
-                logger.info("Get dummy solution")
-                solution = self.problem.get_dummy_solution()
-                self.start_solution = solution
-                makespan = self.problem.evaluate(solution)["makespan"]
-        else:
-            self.start_solution = start_solution
-            makespan = self.problem.evaluate(start_solution)["makespan"]
-        sorted_tasks = self.problem.tasks_list
-        resources = self.problem.resources_list
-        p = [int(self.problem.mode_details[key][1]["duration"]) for key in sorted_tasks]
-        u = [
-            [self.problem.mode_details[t][1].get(r, 0) for r in resources]
-            for t in sorted_tasks
-        ]
-        c = [self.problem.resources[r] for r in resources]
-        S = []
-        logger.debug(f"successors: {self.problem.successors}")
-        for task in sorted_tasks:
-            for suc in self.problem.successors[task]:
-                S.append([task, suc])
-        # we have a better self.T to limit the number of variables :
-        self.index_time = range(int(makespan + 1))
-        self.model = mathopt.Model()
-        self.x: list[list[mathopt.Variable]] = [
-            [
-                self.model.add_binary_variable(name=f"x({task},{t})")
-                for t in self.index_time
-            ]
-            for task in sorted_tasks
-        ]
-        self.index_in_var = {
-            t: self.problem.return_index_task(task=t, offset=0) for t in sorted_tasks
-        }
-        # set objective
-        self.model.minimize(
-            mathopt.LinearSum(
-                self.x[self.index_in_var[self.problem.sink_task]][t] * t
-                for t in self.index_time
-            )
-        )
-        self.index_task = range(self.problem.n_jobs)
-        self.index_resource = range(len(resources))
-        for task in self.index_task:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(self.x[task][t] for t in self.index_time) == 1
-            )
-
-        for (r, t) in product(self.index_resource, self.index_time):
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
-                    u[j][r] * self.x[j][t2]
-                    for j in self.index_task
-                    for t2 in range(max(0, t - p[j] + 1), t + 1)
-                )
-                <= c[r]
-            )
-
-        for (j, s) in S:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
-                    t * self.x[self.index_in_var[s]][t]
-                    - t * self.x[self.index_in_var[j]][t]
-                    for t in self.index_time
-                )
-                >= p[self.index_in_var[j]]
-            )
-        for j in self.index_task:
-            for t in self.index_time:
-                if (
-                    self.start_solution.rcpsp_schedule[self.problem.tasks_list[j]][
-                        "start_time"
-                    ]
-                    == t
-                ):
-                    self.hinted_values[self.x[j][t]] = 1
-                else:
-                    self.hinted_values[self.x[j][t]] = 0
-        p_s: Optional[PartialSolution] = kwargs.get("partial_solution", None)
-        self.partial_solution = p_s
-        self.constraints_partial_solutions = []
-        if p_s is not None:
-            constraints = []
-            if p_s.start_times is not None:
-                for task in p_s.start_times:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            mathopt.LinearSum(
-                                [
-                                    j * self.x[self.index_in_var[task]][j]
-                                    for j in self.index_time
-                                ]
-                            )
-                            == p_s.start_times[task]
-                        )
-                    ]
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.x[self.index_in_var[task]][p_s.start_times[task]] == 1
-                        )
-                    ]
-
-            if p_s.partial_permutation is not None:
-                for t1, t2 in zip(
-                    p_s.partial_permutation[:-1], p_s.partial_permutation[1:]
-                ):
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            mathopt.LinearSum(
-                                [
-                                    t * self.x[self.index_in_var[t1]][t]
-                                    - t * self.x[self.index_in_var[t2]][t]
-                                    for t in self.index_time
-                                ]
-                            )
-                            <= 0
-                        )
-                    ]
-            if p_s.list_partial_order is not None:
-                for l in p_s.list_partial_order:
-                    for t1, t2 in zip(l[:-1], l[1:]):
-                        constraints += [
-                            self.model.add_linear_constraint(
-                                mathopt.LinearSum(
-                                    [
-                                        t * self.x[self.index_in_var[t1]][t]
-                                        - t * self.x[self.index_in_var[t2]][t]
-                                        for t in self.index_time
-                                    ]
-                                )
-                                <= 0
-                            )
-                        ]
-            self.starts = {}
-            for j in self.index_task:
-                self.starts[j] = self.model.add_variable(
-                    name="start_" + str(j), lb=0, ub=makespan
-                )
-                self.model.add_linear_constraint(
-                    mathopt.LinearSum(t * self.x[j][t] for t in self.index_time)
-                    == self.starts[j]
-                )
-            if p_s.start_at_end is not None:
-                for i, j in p_s.start_at_end:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[self.index_in_var[j]]
-                            == self.starts[self.index_in_var[i]]
-                            + p[self.index_in_var[i]]
-                        )
-                    ]
-            if p_s.start_together is not None:
-                for i, j in p_s.start_together:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[self.index_in_var[j]]
-                            == self.starts[self.index_in_var[i]]
-                        )
-                    ]
-            if p_s.start_after_nunit is not None:
-                for t1, t2, delta in p_s.start_after_nunit:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[self.index_in_var[t2]]
-                            >= self.starts[self.index_in_var[t1]] + delta
-                        )
-                    ]
-            if p_s.start_at_end_plus_offset is not None:
-                for t1, t2, delta in p_s.start_at_end_plus_offset:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[self.index_in_var[t2]]
-                            >= self.starts[self.index_in_var[t1]]
-                            + delta
-                            + p[self.index_in_var[t1]]
-                        )
-                    ]
-            self.constraints_partial_solutions = constraints
-        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
-        self.solution_hint = mathopt.SolutionHint(variable_values=self.hinted_values)
-
     def convert_to_variable_values(
         self, solution: RCPSPSolution
     ) -> dict[mathopt.Variable, float]:
@@ -537,10 +549,10 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
         )
     ]
 
-    x: dict[tuple[Hashable, int, int], Any]
+    x: dict[tuple[Hashable, int, int], VariableType]
     max_horizon: Optional[int] = None
     partial_solution: Optional[PartialSolution] = None
-    hinted_values: dict[Any, float]
+    hinted_values: dict[VariableType, float]
 
     def __init__(
         self,
@@ -553,6 +565,286 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
         )
         self.variable_decision = {}
         self.constraints_dict = {"lns": []}
+
+    def init_model(self, **args):
+        args = self.complete_with_default_hyperparameters(args)
+        greedy_start = args["greedy_start"]
+        start_solution = args.get("start_solution", None)
+        max_horizon = args.get("max_horizon", None)
+        self.max_horizon = max_horizon
+        if start_solution is None:
+            if greedy_start:
+                logger.info("Computing greedy solution")
+                if self.problem.is_varying_resource():
+                    greedy_solver = PileSolverRCPSP_Calendar(self.problem)
+                else:
+                    greedy_solver = PileSolverRCPSP(self.problem)
+                store_solution = greedy_solver.solve(
+                    greedy_choice=GreedyChoice.MOST_SUCCESSORS
+                )
+                self.start_solution = store_solution.get_best_solution_fit()[0]
+                makespan = self.problem.evaluate(self.start_solution)["makespan"]
+            else:
+                logger.info("Get dummy solution")
+                solution = self.problem.get_dummy_solution()
+                self.start_solution = solution
+                makespan = self.problem.evaluate(solution)["makespan"]
+        else:
+            self.start_solution = start_solution
+            makespan = self.problem.evaluate(start_solution)["makespan"]
+        sorted_tasks = self.problem.tasks_list
+        resources = self.problem.resources_list
+        p = [
+            int(
+                max(
+                    [
+                        self.problem.mode_details[key][mode]["duration"]
+                        for mode in self.problem.mode_details[key]
+                    ]
+                )
+            )
+            for key in sorted_tasks
+        ]
+        renewable = {
+            r: self.problem.resources[r]
+            for r in self.problem.resources
+            if r not in self.problem.non_renewable_resources
+        }
+        non_renewable = {
+            r: self.problem.resources[r] for r in self.problem.non_renewable_resources
+        }
+        S = []
+        logger.debug(f"successors: {self.problem.successors}")
+        for task in sorted_tasks:
+            for suc in self.problem.successors[task]:
+                S.append([task, suc])
+        self.index_time = list(range(sum(p)))
+        # we have a better self.T to limit the number of variables :
+        if self.start_solution.rcpsp_schedule_feasible:
+            self.index_time = list(range(int(makespan + 1)))
+        if max_horizon is not None:
+            self.index_time = list(range(max_horizon + 1))
+        self.model = self.create_empty_model(name="MRCPSP")
+        self.x: dict[tuple[Hashable, int, int], VariableType] = {}
+        last_task = self.problem.sink_task
+        variable_per_task = {}
+        keys_for_t = {}
+        for task in sorted_tasks:
+            if task not in variable_per_task:
+                variable_per_task[task] = []
+            for mode in self.problem.mode_details[task]:
+                for t in self.index_time:
+                    self.x[(task, mode, t)] = self.add_binary_variable(
+                        name=f"x({task},{mode}, {t})",
+                    )
+                    for tt in range(
+                        t, t + self.problem.mode_details[task][mode]["duration"]
+                    ):
+                        if tt not in keys_for_t:
+                            keys_for_t[tt] = set()
+                        keys_for_t[tt].add((task, mode, t))
+                    variable_per_task[task] += [(task, mode, t)]
+        self.set_model_objective(
+            self.construct_linear_sum(
+                self.x[key] * key[2] for key in variable_per_task[last_task]
+            ),
+            minimize=True,
+        )
+        for j in variable_per_task:
+            self.add_linear_constraint(
+                self.construct_linear_sum(self.x[key] for key in variable_per_task[j])
+                == 1
+            )
+
+        if self.problem.is_varying_resource():
+            renewable_quantity = {r: renewable[r] for r in renewable}
+        else:
+            renewable_quantity = {
+                r: [renewable[r]] * len(self.index_time) for r in renewable
+            }
+
+        if self.problem.is_varying_resource():
+            non_renewable_quantity = {r: non_renewable[r] for r in non_renewable}
+        else:
+            non_renewable_quantity = {
+                r: [non_renewable[r]] * len(self.index_time) for r in non_renewable
+            }
+
+        for (r, t) in product(renewable, self.index_time):
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
+                    for key in keys_for_t[t]
+                )
+                <= renewable_quantity[r][t]
+            )
+
+        for r in non_renewable:
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
+                    for key in self.x
+                )
+                <= non_renewable_quantity[r][0]
+            )
+        durations = {
+            j: self.add_integer_variable(name="duration_" + str(j))
+            for j in variable_per_task
+        }
+        self.durations = durations
+        self.variable_per_task = variable_per_task
+        for j in variable_per_task:
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    self.problem.mode_details[key[0]][key[1]]["duration"] * self.x[key]
+                    for key in variable_per_task[j]
+                )
+                == durations[j]
+            )
+        for (j, s) in S:
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    key[2] * self.x[key] for key in variable_per_task[s]
+                )
+                - self.construct_linear_sum(
+                    key[2] * self.x[key] for key in variable_per_task[j]
+                )
+                >= durations[j]
+            )
+
+        hinted_values_tuple_list = []
+        self.starts = {}
+        for task in sorted_tasks:
+            self.starts[task] = self.add_integer_variable(
+                name=f"start({task})",
+                lb=0,
+                ub=self.index_time[-1],
+            )
+            if task in self.start_solution.rcpsp_schedule:
+                hinted_values_tuple_list.append(
+                    (
+                        self.starts[task],
+                        self.start_solution.rcpsp_schedule[task]["start_time"],
+                    )
+                )
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    [self.x[key] * key[2] for key in variable_per_task[task]]
+                )
+                == self.starts[task]
+            )
+        modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
+        for j in self.start_solution.rcpsp_schedule:
+            start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
+            hinted_values_tuple_list.append(
+                (
+                    self.durations[j],
+                    self.problem.mode_details[j][modes_dict[j]]["duration"],
+                )
+            )
+            for k in self.variable_per_task[j]:
+                task, mode, time = k
+                if start_time_j == time and mode == modes_dict[j]:
+                    hinted_values_tuple_list.append((self.x[k], 1))
+                else:
+                    hinted_values_tuple_list.append((self.x[k], 0))
+
+        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
+        self.partial_solution = p_s
+        self.constraints_partial_solutions = []
+        if p_s is not None:
+            constraints = []
+            if p_s.start_times is not None:
+                constraints = [
+                    self.add_linear_constraint(
+                        self.construct_linear_sum(
+                            self.x[k]
+                            for k in self.variable_per_task[task]
+                            if k[2] == p_s.start_times[task]
+                        )
+                        == 1
+                    )
+                    for task in p_s.start_times
+                ]
+
+            if p_s.partial_permutation is not None:
+                for t1, t2 in zip(
+                    p_s.partial_permutation[:-1], p_s.partial_permutation[1:]
+                ):
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.construct_linear_sum(
+                                [key[2] * self.x[key] for key in variable_per_task[t1]]
+                                + [
+                                    -key[2] * self.x[key]
+                                    for key in variable_per_task[t2]
+                                ]
+                            )
+                            <= 0
+                        )
+                    ]
+            if p_s.list_partial_order is not None:
+                for l in p_s.list_partial_order:
+                    for t1, t2 in zip(l[:-1], l[1:]):
+                        constraints += [
+                            self.add_linear_constraint(
+                                self.construct_linear_sum(
+                                    [
+                                        key[2] * self.x[key]
+                                        for key in variable_per_task[t1]
+                                    ]
+                                    + [
+                                        -key[2] * self.x[key]
+                                        for key in variable_per_task[t2]
+                                    ]
+                                )
+                                <= 0
+                            )
+                        ]
+            if p_s.start_at_end is not None:
+                for i, j in p_s.start_at_end:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[j] == self.starts[i] + durations[i]
+                        )
+                    ]
+            if p_s.start_together is not None:
+                for i, j in p_s.start_together:
+                    constraints += [
+                        self.add_linear_constraint(self.starts[j] == self.starts[i])
+                    ]
+            if p_s.start_after_nunit is not None:
+                for t1, t2, delta in p_s.start_after_nunit:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[t2] >= self.starts[t1] + delta
+                        )
+                    ]
+            if p_s.start_at_end_plus_offset is not None:
+                for t1, t2, delta in p_s.start_at_end_plus_offset:
+                    constraints += [
+                        self.add_linear_constraint(
+                            self.starts[t2] >= self.starts[t1] + delta + durations[t1]
+                        )
+                    ]
+            self.constraints_partial_solutions = constraints
+            logger.debug(
+                f"Partial solution constraints : {self.constraints_partial_solutions}"
+            )
+
+        self.update_model()
+
+        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
+        self.hinted_values = dict(hinted_values_tuple_list)
+        self.set_warm_start_from_values(variable_values=self.hinted_values)
+
+    def update_model(self) -> None:
+        """Update model (especially for gurobi).
+
+        It ensures the well defintion of variables.
+
+        """
+        ...
 
     def retrieve_current_solution(
         self,
@@ -835,272 +1127,13 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
 class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
     hyperparameters = _BaseLP_MRCPSP.hyperparameters
 
-    def init_model(self, **args):
-        args = self.complete_with_default_hyperparameters(args)
-        greedy_start = args["greedy_start"]
-        start_solution = args.get("start_solution", None)
-        max_horizon = args.get("max_horizon", None)
-        self.max_horizon = max_horizon
-        if start_solution is None:
-            if greedy_start:
-                logger.info("Computing greedy solution")
-                if self.problem.is_varying_resource():
-                    greedy_solver = PileSolverRCPSP_Calendar(self.problem)
-                else:
-                    greedy_solver = PileSolverRCPSP(self.problem)
-                store_solution = greedy_solver.solve(
-                    greedy_choice=GreedyChoice.MOST_SUCCESSORS
-                )
-                self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.problem.evaluate(self.start_solution)["makespan"]
-            else:
-                logger.info("Get dummy solution")
-                solution = self.problem.get_dummy_solution()
-                self.start_solution = solution
-                makespan = self.problem.evaluate(solution)["makespan"]
-        else:
-            self.start_solution = start_solution
-            makespan = self.problem.evaluate(start_solution)["makespan"]
-        sorted_tasks = self.problem.tasks_list
-        resources = self.problem.resources_list
-        p = [
-            int(
-                max(
-                    [
-                        self.problem.mode_details[key][mode]["duration"]
-                        for mode in self.problem.mode_details[key]
-                    ]
-                )
-            )
-            for key in sorted_tasks
-        ]
-        renewable = {
-            r: self.problem.resources[r]
-            for r in self.problem.resources
-            if r not in self.problem.non_renewable_resources
-        }
-        non_renewable = {
-            r: self.problem.resources[r] for r in self.problem.non_renewable_resources
-        }
-        S = []
-        logger.debug(f"successors: {self.problem.successors}")
-        for task in sorted_tasks:
-            for suc in self.problem.successors[task]:
-                S.append([task, suc])
-        self.index_time = list(range(sum(p)))
-        # we have a better self.T to limit the number of variables :
-        if self.start_solution.rcpsp_schedule_feasible:
-            self.index_time = list(range(int(makespan + 1)))
-        if max_horizon is not None:
-            self.index_time = list(range(max_horizon + 1))
-        self.model = gurobi.Model("MRCPSP")
-        self.x: dict[tuple[Hashable, int, int], gurobi.Var] = {}
-        last_task = self.problem.sink_task
-        variable_per_task = {}
-        keys_for_t = {}
-        for task in sorted_tasks:
-            if task not in variable_per_task:
-                variable_per_task[task] = []
-            for mode in self.problem.mode_details[task]:
-                for t in self.index_time:
-                    self.x[(task, mode, t)] = self.model.addVar(
-                        name=f"x({task},{mode}, {t})",
-                        vtype=gurobi.GRB.BINARY,
-                    )
-                    for tt in range(
-                        t, t + self.problem.mode_details[task][mode]["duration"]
-                    ):
-                        if tt not in keys_for_t:
-                            keys_for_t[tt] = set()
-                        keys_for_t[tt].add((task, mode, t))
-                    variable_per_task[task] += [(task, mode, t)]
+    def update_model(self) -> None:
+        """Update model (especially for gurobi).
+
+        It ensures the well defintion of variables.
+
+        """
         self.model.update()
-        self.model.setObjective(
-            gurobi.quicksum(
-                self.x[key] * key[2] for key in variable_per_task[last_task]
-            )
-        )
-        self.model.addConstrs(
-            gurobi.quicksum(self.x[key] for key in variable_per_task[j]) == 1
-            for j in variable_per_task
-        )
-
-        if self.problem.is_varying_resource():
-            renewable_quantity = {r: renewable[r] for r in renewable}
-        else:
-            renewable_quantity = {
-                r: [renewable[r]] * len(self.index_time) for r in renewable
-            }
-
-        if self.problem.is_varying_resource():
-            non_renewable_quantity = {r: non_renewable[r] for r in non_renewable}
-        else:
-            non_renewable_quantity = {
-                r: [non_renewable[r]] * len(self.index_time) for r in non_renewable
-            }
-
-        self.model.addConstrs(
-            gurobi.quicksum(
-                int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
-                for key in keys_for_t[t]
-            )
-            <= renewable_quantity[r][t]
-            for (r, t) in product(renewable, self.index_time)
-        )
-
-        self.model.addConstrs(
-            gurobi.quicksum(
-                int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
-                for key in self.x
-            )
-            <= non_renewable_quantity[r][0]
-            for r in non_renewable
-        )
-        self.model.update()
-        durations = {
-            j: self.model.addVar(name="duration_" + str(j), vtype=gurobi.GRB.INTEGER)
-            for j in variable_per_task
-        }
-        self.durations = durations
-        self.variable_per_task = variable_per_task
-        self.model.addConstrs(
-            gurobi.quicksum(
-                self.problem.mode_details[key[0]][key[1]]["duration"] * self.x[key]
-                for key in variable_per_task[j]
-            )
-            == durations[j]
-            for j in variable_per_task
-        )
-        self.model.addConstrs(
-            gurobi.quicksum(key[2] * self.x[key] for key in variable_per_task[s])
-            - gurobi.quicksum(key[2] * self.x[key] for key in variable_per_task[j])
-            >= durations[j]
-            for (j, s) in S
-        )
-
-        hinted_values_tuple_list = []
-        self.starts = {}
-        for task in sorted_tasks:
-            self.starts[task] = self.model.addVar(
-                name=f"start({task})",
-                vtype=gurobi.GRB.INTEGER,
-                lb=0,
-                ub=self.index_time[-1],
-            )
-            if task in self.start_solution.rcpsp_schedule:
-                hinted_values_tuple_list.append(
-                    (
-                        self.starts[task],
-                        self.start_solution.rcpsp_schedule[task]["start_time"],
-                    )
-                )
-            self.model.addLConstr(
-                gurobi.quicksum(
-                    [self.x[key] * key[2] for key in variable_per_task[task]]
-                )
-                == self.starts[task]
-            )
-        modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
-        for j in self.start_solution.rcpsp_schedule:
-            start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
-            hinted_values_tuple_list.append(
-                (
-                    self.durations[j],
-                    self.problem.mode_details[j][modes_dict[j]]["duration"],
-                )
-            )
-
-            for k in self.variable_per_task[j]:
-                task, mode, time = k
-                if start_time_j == time and mode == modes_dict[j]:
-                    hinted_values_tuple_list.append((self.x[k], 1))
-                else:
-                    hinted_values_tuple_list.append((self.x[k], 0))
-
-        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
-        self.partial_solution = p_s
-        self.constraints_partial_solutions = []
-        self.model.update()
-        if p_s is not None:
-            constraints = []
-            if p_s.start_times is not None:
-                constraints = self.model.addConstrs(
-                    gurobi.quicksum(
-                        self.x[k]
-                        for k in self.variable_per_task[task]
-                        if k[2] == p_s.start_times[task]
-                    )
-                    == 1
-                    for task in p_s.start_times
-                )
-            if p_s.partial_permutation is not None:
-                for t1, t2 in zip(
-                    p_s.partial_permutation[:-1], p_s.partial_permutation[1:]
-                ):
-                    constraints += [
-                        self.model.addLConstr(
-                            gurobi.quicksum(
-                                [key[2] * self.x[key] for key in variable_per_task[t1]]
-                                + [
-                                    -key[2] * self.x[key]
-                                    for key in variable_per_task[t2]
-                                ]
-                            )
-                            <= 0
-                        )
-                    ]
-            if p_s.list_partial_order is not None:
-                for l in p_s.list_partial_order:
-                    for t1, t2 in zip(l[:-1], l[1:]):
-                        constraints += [
-                            self.model.addLConstr(
-                                gurobi.quicksum(
-                                    [
-                                        key[2] * self.x[key]
-                                        for key in variable_per_task[t1]
-                                    ]
-                                    + [
-                                        -key[2] * self.x[key]
-                                        for key in variable_per_task[t2]
-                                    ]
-                                )
-                                <= 0
-                            )
-                        ]
-            if p_s.start_at_end is not None:
-                for i, j in p_s.start_at_end:
-                    constraints += [
-                        self.model.addLConstr(
-                            self.starts[j] == self.starts[i] + durations[i]
-                        )
-                    ]
-            if p_s.start_together is not None:
-                for i, j in p_s.start_together:
-                    constraints += [
-                        self.model.addLConstr(self.starts[j] == self.starts[i])
-                    ]
-            if p_s.start_after_nunit is not None:
-                for t1, t2, delta in p_s.start_after_nunit:
-                    constraints += [
-                        self.model.addLConstr(
-                            self.starts[t2] >= self.starts[t1] + delta
-                        )
-                    ]
-            if p_s.start_at_end_plus_offset is not None:
-                for t1, t2, delta in p_s.start_at_end_plus_offset:
-                    constraints += [
-                        self.model.addLConstr(
-                            self.starts[t2] >= self.starts[t1] + delta + durations[t1]
-                        )
-                    ]
-            self.constraints_partial_solutions = constraints
-            logger.debug(
-                f"Partial solution constraints : {self.constraints_partial_solutions}"
-            )
-            self.model.update()
-        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
-        self.hinted_values = dict(hinted_values_tuple_list)
-        self.set_warm_start_from_values(variable_values=self.hinted_values)
 
     def convert_to_variable_values(self, solution: RCPSPSolution) -> dict[Var, float]:
         """Convert a solution to a mapping between model variables and their values.
@@ -1117,266 +1150,6 @@ class LP_MRCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_MRCPSP):
     max_horizon: Optional[int] = None
     partial_solution: Optional[PartialSolution] = None
     hinted_values: dict[mathopt.Variable, float]
-
-    def init_model(self, **args):
-        args = self.complete_with_default_hyperparameters(args)
-        greedy_start = args["greedy_start"]
-        start_solution = args.get("start_solution", None)
-        max_horizon = args.get("max_horizon", None)
-        self.max_horizon = max_horizon
-        self.hinted_values = {}
-        if start_solution is None:
-            if greedy_start:
-                logger.info("Computing greedy solution")
-                if self.problem.is_varying_resource():
-                    greedy_solver = PileSolverRCPSP_Calendar(self.problem)
-                else:
-                    greedy_solver = PileSolverRCPSP(self.problem)
-                store_solution = greedy_solver.solve(
-                    greedy_choice=GreedyChoice.MOST_SUCCESSORS
-                )
-                self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.problem.evaluate(self.start_solution)["makespan"]
-            else:
-                logger.info("Get dummy solution")
-                solution = self.problem.get_dummy_solution()
-                self.start_solution = solution
-                makespan = self.problem.evaluate(solution)["makespan"]
-        else:
-            self.start_solution = start_solution
-            makespan = self.problem.evaluate(start_solution)["makespan"]
-        sorted_tasks = self.problem.tasks_list
-        resources = self.problem.resources_list
-        p = [
-            int(
-                max(
-                    [
-                        self.problem.mode_details[key][mode]["duration"]
-                        for mode in self.problem.mode_details[key]
-                    ]
-                )
-            )
-            for key in sorted_tasks
-        ]
-        renewable = {
-            r: self.problem.resources[r]
-            for r in self.problem.resources
-            if r not in self.problem.non_renewable_resources
-        }
-        non_renewable = {
-            r: self.problem.resources[r] for r in self.problem.non_renewable_resources
-        }
-        S = []
-        logger.debug(f"successors: {self.problem.successors}")
-        for task in sorted_tasks:
-            for suc in self.problem.successors[task]:
-                S.append([task, suc])
-        self.index_time = list(range(sum(p)))
-        # we have a better self.T to limit the number of variables :
-        if self.start_solution.rcpsp_schedule_feasible:
-            self.index_time = list(range(int(makespan + 1)))
-        if max_horizon is not None:
-            self.index_time = list(range(max_horizon + 1))
-        self.model = mathopt.Model(name="MRCPSP")
-        self.x: dict[tuple[Hashable, int, int], mathopt.Variable] = {}
-        last_task = self.problem.sink_task
-        variable_per_task = {}
-        keys_for_t = {}
-        for task in sorted_tasks:
-            if task not in variable_per_task:
-                variable_per_task[task] = []
-            for mode in self.problem.mode_details[task]:
-                for t in self.index_time:
-                    self.x[(task, mode, t)] = self.model.add_binary_variable(
-                        name=f"x({task},{mode}, {t})",
-                    )
-                    for tt in range(
-                        t, t + self.problem.mode_details[task][mode]["duration"]
-                    ):
-                        if tt not in keys_for_t:
-                            keys_for_t[tt] = set()
-                        keys_for_t[tt].add((task, mode, t))
-                    variable_per_task[task] += [(task, mode, t)]
-        self.model.minimize(
-            mathopt.LinearSum(
-                self.x[key] * key[2] for key in variable_per_task[last_task]
-            )
-        )
-        for j in variable_per_task:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(self.x[key] for key in variable_per_task[j]) == 1
-            )
-
-        if self.problem.is_varying_resource():
-            renewable_quantity = {r: renewable[r] for r in renewable}
-        else:
-            renewable_quantity = {
-                r: [renewable[r]] * len(self.index_time) for r in renewable
-            }
-
-        if self.problem.is_varying_resource():
-            non_renewable_quantity = {r: non_renewable[r] for r in non_renewable}
-        else:
-            non_renewable_quantity = {
-                r: [non_renewable[r]] * len(self.index_time) for r in non_renewable
-            }
-
-        for (r, t) in product(renewable, self.index_time):
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
-                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
-                    for key in keys_for_t[t]
-                )
-                <= renewable_quantity[r][t]
-            )
-
-        for r in non_renewable:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
-                    int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
-                    for key in self.x
-                )
-                <= non_renewable_quantity[r][0]
-            )
-        durations = {
-            j: self.model.add_integer_variable(name="duration_" + str(j))
-            for j in variable_per_task
-        }
-        self.durations = durations
-        self.variable_per_task = variable_per_task
-        for j in variable_per_task:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
-                    self.problem.mode_details[key[0]][key[1]]["duration"] * self.x[key]
-                    for key in variable_per_task[j]
-                )
-                == durations[j]
-            )
-        for (j, s) in S:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(key[2] * self.x[key] for key in variable_per_task[s])
-                - mathopt.LinearSum(
-                    key[2] * self.x[key] for key in variable_per_task[j]
-                )
-                >= durations[j]
-            )
-
-        self.starts = {}
-        for task in sorted_tasks:
-            self.starts[task] = self.model.add_integer_variable(
-                name=f"start({task})",
-                lb=0,
-                ub=self.index_time[-1],
-            )
-            if task in self.start_solution.rcpsp_schedule:
-                self.hinted_values[
-                    self.starts[task]
-                ] = self.start_solution.rcpsp_schedule[task]["start_time"]
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
-                    [self.x[key] * key[2] for key in variable_per_task[task]]
-                )
-                == self.starts[task]
-            )
-        modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
-        for j in self.start_solution.rcpsp_schedule:
-            start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
-            self.hinted_values[self.durations[j]] = self.problem.mode_details[j][
-                modes_dict[j]
-            ]["duration"]
-            for k in self.variable_per_task[j]:
-                task, mode, time = k
-                if start_time_j == time and mode == modes_dict[j]:
-                    self.hinted_values[self.x[k]] = 1
-                else:
-                    self.hinted_values[self.x[k]] = 0
-
-        p_s: Optional[PartialSolution] = args.get("partial_solution", None)
-        self.partial_solution = p_s
-        self.constraints_partial_solutions = []
-        if p_s is not None:
-            constraints = []
-            if p_s.start_times is not None:
-                constraints = [
-                    self.model.add_linear_constraint(
-                        mathopt.LinearSum(
-                            self.x[k]
-                            for k in self.variable_per_task[task]
-                            if k[2] == p_s.start_times[task]
-                        )
-                        == 1
-                    )
-                    for task in p_s.start_times
-                ]
-
-            if p_s.partial_permutation is not None:
-                for t1, t2 in zip(
-                    p_s.partial_permutation[:-1], p_s.partial_permutation[1:]
-                ):
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            mathopt.LinearSum(
-                                [key[2] * self.x[key] for key in variable_per_task[t1]]
-                                + [
-                                    -key[2] * self.x[key]
-                                    for key in variable_per_task[t2]
-                                ]
-                            )
-                            <= 0
-                        )
-                    ]
-            if p_s.list_partial_order is not None:
-                for l in p_s.list_partial_order:
-                    for t1, t2 in zip(l[:-1], l[1:]):
-                        constraints += [
-                            self.model.add_linear_constraint(
-                                mathopt.LinearSum(
-                                    [
-                                        key[2] * self.x[key]
-                                        for key in variable_per_task[t1]
-                                    ]
-                                    + [
-                                        -key[2] * self.x[key]
-                                        for key in variable_per_task[t2]
-                                    ]
-                                )
-                                <= 0
-                            )
-                        ]
-            if p_s.start_at_end is not None:
-                for i, j in p_s.start_at_end:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[j] == self.starts[i] + durations[i]
-                        )
-                    ]
-            if p_s.start_together is not None:
-                for i, j in p_s.start_together:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[j] == self.starts[i]
-                        )
-                    ]
-            if p_s.start_after_nunit is not None:
-                for t1, t2, delta in p_s.start_after_nunit:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[t2] >= self.starts[t1] + delta
-                        )
-                    ]
-            if p_s.start_at_end_plus_offset is not None:
-                for t1, t2, delta in p_s.start_at_end_plus_offset:
-                    constraints += [
-                        self.model.add_linear_constraint(
-                            self.starts[t2] >= self.starts[t1] + delta + durations[t1]
-                        )
-                    ]
-            self.constraints_partial_solutions = constraints
-            logger.debug(
-                f"Partial solution constraints : {self.constraints_partial_solutions}"
-            )
-        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
-        self.set_warm_start_from_values(variable_values=self.hinted_values)
 
     def convert_to_variable_values(
         self, solution: RCPSPSolution

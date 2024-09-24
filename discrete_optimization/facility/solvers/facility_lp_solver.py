@@ -31,12 +31,14 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     IntegerHyperparameter,
 )
 from discrete_optimization.generic_tools.lp_tools import (
+    ConstraintType,
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
     OrtoolsMathOptMilpSolver,
     ParametersMilp,
     PymipMilpSolver,
+    VariableType,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -170,6 +172,87 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
         }
         self.description_constraint: dict[str, dict[str, str]] = {}
 
+    def init_model(self, **kwargs: Any) -> None:
+        """
+
+        Keyword Args:
+            use_matrix_indicator_heuristic (bool): use the prune search method to reduce number of variable.
+            n_shortest (int): parameter for the prune search method
+            n_cheapest (int): parameter for the prune search method
+
+        Returns: None
+
+        """
+        nb_facilities = self.problem.facility_count
+        nb_customers = self.problem.customer_count
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        use_matrix_indicator_heuristic = kwargs["use_matrix_indicator_heuristic"]
+        if use_matrix_indicator_heuristic:
+            n_shortest = kwargs["n_shortest"]
+            n_cheapest = kwargs["n_cheapest"]
+            matrix_fc_indicator, matrix_length = prune_search_space(
+                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
+            )
+        else:
+            matrix_fc_indicator, matrix_length = prune_search_space(
+                self.problem,
+                n_cheapest=nb_facilities,
+                n_shortest=nb_facilities,
+            )
+        self.model = self.create_empty_model(name="facilities")
+        x: dict[tuple[int, int], Union[int, Any]] = {}
+        for f in range(nb_facilities):
+            for c in range(nb_customers):
+                if matrix_fc_indicator[f, c] == 0:
+                    x[f, c] = 0
+                elif matrix_fc_indicator[f, c] == 1:
+                    x[f, c] = 1
+                elif matrix_fc_indicator[f, c] == 2:
+                    x[f, c] = self.add_binary_variable(name="x_" + str((f, c)))
+        facilities = self.problem.facilities
+        customers = self.problem.customers
+        used = [self.add_binary_variable(name=f"y_{i}") for i in range(nb_facilities)]
+        constraints_customer: dict[int, ConstraintType] = {}
+        for c in range(nb_customers):
+            constraints_customer[c] = self.add_linear_constraint(
+                self.construct_linear_sum(x[f, c] for f in range(nb_facilities)) == 1
+            )
+            # one facility
+        constraint_capacity: dict[int, ConstraintType] = {}
+        for f in range(nb_facilities):
+            for c in range(nb_customers):
+                self.add_linear_constraint(used[f] >= x[f, c])
+            constraint_capacity[f] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    x[f, c] * customers[c].demand for c in range(nb_customers)
+                )
+                <= facilities[f].capacity
+            )
+        new_obj_f = self.construct_linear_sum(
+            facilities[f].setup_cost * used[f] for f in range(nb_facilities)
+        )
+        new_obj_f += self.construct_linear_sum(
+            matrix_length[f, c] * x[f, c]
+            for f in range(nb_facilities)
+            for c in range(nb_customers)
+        )
+        self.set_model_objective(new_obj_f, minimize=True)
+        self.variable_decision = {"x": x, "y": used}
+        self.constraints_dict = {
+            "constraint_customer": constraints_customer,
+            "constraint_capacity": constraint_capacity,
+        }
+        self.description_variable_description = {
+            "x": {
+                "shape": (nb_facilities, nb_customers),
+                "type": bool,
+                "descr": "for each facility/customer indicate"
+                " if the pair is active, meaning "
+                "that the customer c is dealt with facility f",
+            }
+        }
+        logger.info("Initialized")
+
     def convert_to_variable_values(
         self, solution: FacilitySolution
     ) -> dict[Any, float]:
@@ -229,88 +312,10 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
         Returns: None
 
         """
-        nb_facilities = self.problem.facility_count
-        nb_customers = self.problem.customer_count
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        use_matrix_indicator_heuristic = kwargs["use_matrix_indicator_heuristic"]
-        if use_matrix_indicator_heuristic:
-            n_shortest = kwargs["n_shortest"]
-            n_cheapest = kwargs["n_cheapest"]
-            matrix_fc_indicator, matrix_length = prune_search_space(
-                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
-            )
-        else:
-            matrix_fc_indicator, matrix_length = prune_search_space(
-                self.problem,
-                n_cheapest=nb_facilities,
-                n_shortest=nb_facilities,
-            )
-        s = Model("facilities")
-        x: dict[tuple[int, int], Union[int, Any]] = {}
-        for f in range(nb_facilities):
-            for c in range(nb_customers):
-                if matrix_fc_indicator[f, c] == 0:
-                    x[f, c] = 0
-                elif matrix_fc_indicator[f, c] == 1:
-                    x[f, c] = 1
-                elif matrix_fc_indicator[f, c] == 2:
-                    x[f, c] = s.addVar(vtype=GRB.BINARY, obj=0, name="x_" + str((f, c)))
-        facilities = self.problem.facilities
-        customers = self.problem.customers
-        used = s.addVars(nb_facilities, vtype=GRB.BINARY, name="y")
-        constraints_customer: dict[
-            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
-        ] = {}
-        for c in range(nb_customers):
-            constraints_customer[c] = s.addLConstr(
-                quicksum([x[f, c] for f in range(nb_facilities)]) == 1
-            )
-            # one facility
-        constraint_capacity: dict[
-            int, Union["Constr", "QConstr", "MConstr", "GenConstr"]
-        ] = {}
-        for f in range(nb_facilities):
-            s.addConstrs(used[f] >= x[f, c] for c in range(nb_customers))
-            constraint_capacity[f] = s.addLConstr(
-                quicksum([x[f, c] * customers[c].demand for c in range(nb_customers)])
-                <= facilities[f].capacity
-            )
-        s.update()
-        new_obj_f = LinExpr(0.0)
-        new_obj_f += quicksum(
-            [facilities[f].setup_cost * used[f] for f in range(nb_facilities)]
-        )
-        new_obj_f += quicksum(
-            [
-                matrix_length[f, c] * x[f, c]
-                for f in range(nb_facilities)
-                for c in range(nb_customers)
-            ]
-        )
-        s.setObjective(new_obj_f)
-        s.update()
-        s.modelSense = GRB.MINIMIZE
-        s.setParam(GRB.Param.Threads, 4)
-        s.setParam(GRB.Param.PoolSolutions, 10000)
-        s.setParam(GRB.Param.Method, 1)
-        s.setParam("MIPGapAbs", 0.00001)
-        s.setParam("MIPGap", 0.00000001)
-        self.model = s
-        self.variable_decision = {"x": x, "y": used}
-        self.constraints_dict = {
-            "constraint_customer": constraints_customer,
-            "constraint_capacity": constraint_capacity,
-        }
-        self.description_variable_description = {
-            "x": {
-                "shape": (nb_facilities, nb_customers),
-                "type": bool,
-                "descr": "for each facility/customer indicate"
-                " if the pair is active, meaning "
-                "that the customer c is dealt with facility f",
-            }
-        }
-        logger.info("Initialized")
+        _LPFacilitySolverBase.init_model(self, **kwargs)
+        self.model.setParam(GRB.Param.Threads, 4)
+        self.model.setParam(GRB.Param.Method, 1)
+        self.model.update()
 
     def convert_to_variable_values(
         self, solution: Solution
@@ -332,88 +337,7 @@ class LP_Facility_Solver_MathOpt(OrtoolsMathOptMilpSolver, _LPFacilitySolverBase
                         (however this is just used for the ResultStorage creation, not in the optimisation)
     """
 
-    def init_model(self, **kwargs: Any) -> None:
-        """
-
-        Keyword Args:
-            use_matrix_indicator_heuristic (bool): use the prune search method to reduce number of variable.
-            n_shortest (int): parameter for the prune search method
-            n_cheapest (int): parameter for the prune search method
-
-        Returns: None
-
-        """
-        nb_facilities = self.problem.facility_count
-        nb_customers = self.problem.customer_count
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        use_matrix_indicator_heuristic = kwargs["use_matrix_indicator_heuristic"]
-        if use_matrix_indicator_heuristic:
-            n_shortest = kwargs["n_shortest"]
-            n_cheapest = kwargs["n_cheapest"]
-            matrix_fc_indicator, matrix_length = prune_search_space(
-                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
-            )
-        else:
-            matrix_fc_indicator, matrix_length = prune_search_space(
-                self.problem,
-                n_cheapest=nb_facilities,
-                n_shortest=nb_facilities,
-            )
-        s = mathopt.Model(name="facilities")
-        x: dict[tuple[int, int], Union[int, Any]] = {}
-        for f in range(nb_facilities):
-            for c in range(nb_customers):
-                if matrix_fc_indicator[f, c] == 0:
-                    x[f, c] = 0
-                elif matrix_fc_indicator[f, c] == 1:
-                    x[f, c] = 1
-                elif matrix_fc_indicator[f, c] == 2:
-                    x[f, c] = s.add_binary_variable(name="x_" + str((f, c)))
-        facilities = self.problem.facilities
-        customers = self.problem.customers
-        used = [s.add_binary_variable(name=f"y_{i}") for i in range(nb_facilities)]
-        constraints_customer: dict[int, mathopt.LinearConstraint] = {}
-        for c in range(nb_customers):
-            constraints_customer[c] = s.add_linear_constraint(
-                mathopt.LinearSum(x[f, c] for f in range(nb_facilities)) == 1
-            )
-            # one facility
-        constraint_capacity: dict[int, mathopt.LinearConstraint] = {}
-        for f in range(nb_facilities):
-            for c in range(nb_customers):
-                s.add_linear_constraint(used[f] >= x[f, c])
-            constraint_capacity[f] = s.add_linear_constraint(
-                mathopt.LinearSum(
-                    x[f, c] * customers[c].demand for c in range(nb_customers)
-                )
-                <= facilities[f].capacity
-            )
-        new_obj_f = 0.0
-        new_obj_f += mathopt.LinearSum(
-            facilities[f].setup_cost * used[f] for f in range(nb_facilities)
-        )
-        new_obj_f += mathopt.LinearSum(
-            matrix_length[f, c] * x[f, c]
-            for f in range(nb_facilities)
-            for c in range(nb_customers)
-        )
-        s.minimize(new_obj_f)
-        self.model = s
-        self.variable_decision = {"x": x, "y": used}
-        self.constraints_dict = {
-            "constraint_customer": constraints_customer,
-            "constraint_capacity": constraint_capacity,
-        }
-        self.description_variable_description = {
-            "x": {
-                "shape": (nb_facilities, nb_customers),
-                "type": bool,
-                "descr": "for each facility/customer indicate"
-                " if the pair is active, meaning "
-                "that the customer c is dealt with facility f",
-            }
-        }
-        logger.info("Initialized")
+    hyperparameters = _LPFacilitySolverBase.hyperparameters
 
     def convert_to_variable_values(
         self, solution: FacilitySolution
