@@ -589,7 +589,9 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
             )
 
     def constraint_redundant_cumulative_worker(self):
-        merged_calendar = np.zeros(self.problem.horizon + 1)
+        some_employee = next(emp for emp in self.problem.employees)
+        len_calendar = len(self.problem.employees[some_employee].calendar_employee)
+        merged_calendar = np.zeros(len_calendar)
         for emp in self.problem.employees:
             merged_calendar += np.array(self.problem.employees[emp].calendar_employee)
         discr_calendar = discretize_calendar_(merged_calendar)

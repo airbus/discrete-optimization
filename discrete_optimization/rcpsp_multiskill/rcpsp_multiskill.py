@@ -3067,7 +3067,9 @@ def create_fake_tasks_multiskills(
 
 def compute_skills_calendar(problem: MS_RCPSPModel):
     skills = problem.skills_set
-    dict_calendar_skills = {s: np.zeros(problem.horizon + 1) for s in skills}
+    some_employee = next(emp for emp in problem.employees)
+    len_calendar = len(problem.employees[some_employee].calendar_employee)
+    dict_calendar_skills = {s: np.zeros(len_calendar) for s in skills}
     for emp in problem.employees:
         emp_object = problem.employees[emp]
         for s in emp_object.get_non_zero_skills():
