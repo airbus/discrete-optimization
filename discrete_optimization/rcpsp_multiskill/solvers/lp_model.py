@@ -408,7 +408,7 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
         self.constraints_dict = {"lns": []}
 
     def init_model(self, **args):
-        self.model = mathopt.Model(name="mrcpsp")
+        self.model = self.create_empty_model(name="mrcpsp")
         sorted_tasks = self.problem.tasks_list
         max_time = args.get("max_time", self.problem.horizon)
         max_duration = max_time
@@ -429,7 +429,7 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
         times = range(max_duration)
         self.modes = {
             task: {
-                mode: self.model.add_binary_variable(name=f"mode_{task},{mode}")
+                mode: self.add_binary_variable(name=f"mode_{task},{mode}")
                 for mode in self.problem.mode_details[task]
             }
             for task in self.problem.mode_details
@@ -438,7 +438,7 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
         self.start_times = {
             task: {
                 mode: {
-                    t: self.model.add_binary_variable(name=f"start_{task},{mode},{t}")
+                    t: self.add_binary_variable(name=f"start_{task},{mode},{t}")
                     for t in times
                 }
                 for mode in self.problem.mode_details[task]
@@ -447,8 +447,8 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
         }
         # you have to choose one starting date :
         for task in self.start_times:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
+            self.add_linear_constraint(
+                self.construct_linear_sum(
                     self.start_times[task][mode][t]
                     for mode in self.start_times[task]
                     for t in self.start_times[task][mode]
@@ -456,36 +456,36 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
                 == 1
             )
             for mode in self.modes[task]:
-                self.model.add_linear_constraint(
+                self.add_linear_constraint(
                     self.modes[task][mode]
-                    == mathopt.LinearSum(
+                    == self.construct_linear_sum(
                         self.start_times[task][mode][t]
                         for t in self.start_times[task][mode]
                     )
                 )
         self.durations = {
-            task: self.model.add_integer_variable(name="duration_" + str(task))
+            task: self.add_integer_variable(name="duration_" + str(task))
             for task in self.modes
         }
         self.start_times_task = {
-            task: self.model.add_integer_variable(name=f"start_time_{task}")
+            task: self.add_integer_variable(name=f"start_time_{task}")
             for task in self.start_times
         }
         self.end_times_task = {
-            task: self.model.add_integer_variable(name=f"end_time_{task}")
+            task: self.add_integer_variable(name=f"end_time_{task}")
             for task in self.start_times
         }
 
         for task in self.start_times:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
+            self.add_linear_constraint(
+                self.construct_linear_sum(
                     self.start_times[task][mode][t] * t
                     for mode in self.start_times[task]
                     for t in self.start_times[task][mode]
                 )
                 == self.start_times_task[task]
             )
-            self.model.add_linear_constraint(
+            self.add_linear_constraint(
                 self.end_times_task[task]
                 - self.start_times_task[task]
                 - self.durations[task]
@@ -493,8 +493,8 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
             )
 
         for task in self.durations:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
+            self.add_linear_constraint(
+                self.construct_linear_sum(
                     self.problem.mode_details[task][mode]["duration"]
                     * self.modes[task][mode]
                     for mode in self.modes[task]
@@ -525,16 +525,16 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
                         for t in range(max_duration):
                             self.employee_usage[
                                 (employee, task, mode, t, s)
-                            ] = self.model.add_binary_variable(
+                            ] = self.add_binary_variable(
                                 name=f"employee_{employee}{task}{mode}{t}{s}",
                             )
                             task_in_employee_usage.add(task)
-                            self.model.add_linear_constraint(
+                            self.add_linear_constraint(
                                 self.employee_usage[(employee, task, mode, t, s)]
                                 - self.modes[task][mode]
                                 <= 0
                             )
-                            self.model.add_linear_constraint(
+                            self.add_linear_constraint(
                                 self.employee_usage[(employee, task, mode, t, s)]
                                 - self.start_times[task][mode][t]
                                 <= 0
@@ -557,7 +557,7 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
                                     ),
                                 )
                             ):
-                                self.model.add_linear_constraint(
+                                self.add_linear_constraint(
                                     self.employee_usage[(employee, task, mode, t, s)]
                                     == 0
                                 )
@@ -565,8 +565,8 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
 
         # can't work on overlapping tasks.
         for emp, t in product(employees, times):
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
+            self.add_linear_constraint(
+                self.construct_linear_sum(
                     self.employee_usage[x]
                     for x in self.employee_usage
                     if x[0] == emp
@@ -578,8 +578,8 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
             )
         # ressource usage limit
         for (r, t) in product(renewable, times):
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
+            self.add_linear_constraint(
+                self.construct_linear_sum(
                     int(self.problem.mode_details[task][mode][r])
                     * self.start_times[task][mode][time]
                     for task in self.start_times
@@ -593,8 +593,8 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
             )
         # for non renewable ones.
         for r in non_renewable:
-            self.model.add_linear_constraint(
-                mathopt.LinearSum(
+            self.add_linear_constraint(
+                self.construct_linear_sum(
                     int(self.problem.mode_details[task][mode][r])
                     * self.start_times[task][mode][time]
                     for task in self.start_times
@@ -616,23 +616,26 @@ class LP_Solver_MRSCPSP_MathOpt(OrtoolsMathOptMilpSolver):
                 employee_usage_keys = [
                     v for v in self.employee_usage if v[1] == task and v[4] == s
                 ]
-                self.model.add_linear_constraint(
-                    mathopt.LinearSum(
+                self.add_linear_constraint(
+                    self.construct_linear_sum(
                         self.employee_usage[x]
                         * self.problem.employees[x[0]].dict_skill[s].skill_value
                         for x in employee_usage_keys
                     )
-                    >= mathopt.LinearSum(
+                    >= self.construct_linear_sum(
                         self.modes[task][mode]
                         * self.problem.mode_details[task][mode].get(s, 0)
                         for mode in self.modes[task]
                     )
                 )
         for (j, s) in list_edges:
-            self.model.add_linear_constraint(
+            self.add_linear_constraint(
                 self.start_times_task[s] - self.end_times_task[j] >= 0
             )
-        self.model.minimize(self.start_times_task[max(self.start_times_task)])
+        self.set_model_objective(
+            self.start_times_task[max(self.start_times_task)],
+            minimize=True,
+        )
 
     def retrieve_current_solution(
         self,

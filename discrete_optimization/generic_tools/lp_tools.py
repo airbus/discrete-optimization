@@ -6,9 +6,10 @@ from __future__ import annotations
 import copy
 import datetime
 import logging
+import math
 from abc import abstractmethod
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from enum import Enum
 from typing import Any, Optional, Union
 
@@ -66,6 +67,22 @@ else:
 
 
 logger = logging.getLogger(__name__)
+
+# types aliases
+if gurobi_available:
+    VariableType = Union[gurobipy.Var, mip.Var, mathopt.Variable]
+    ConstraintType = Union[
+        gurobipy.Constr,
+        gurobipy.MConstr,
+        gurobipy.QConstr,
+        gurobipy.GenConstr,
+        mip.Constr,
+        mathopt.LinearConstraint,
+    ]
+
+else:
+    VariableType = Union[mip.Var, mathopt.Variable]
+    ConstraintType = Union[mip.Constr, mathopt.LinearConstraint]
 
 
 class MilpSolverName(Enum):
@@ -196,6 +213,85 @@ class MilpSolver(SolverDO):
     def nb_solutions(self) -> int:
         """Number of solutions found by the solver."""
 
+    @staticmethod
+    @abstractmethod
+    def create_empty_model(name: str = "") -> Any:
+        """Generate an empty milp model.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        """
+        ...
+
+    @abstractmethod
+    def add_linear_constraint(self, expr: Any, name: str = "") -> Any:
+        """Add a linear constraint to the model.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        """
+        ...
+
+    @abstractmethod
+    def add_binary_variable(self, name: str = "") -> Any:
+        """Add a binary variable to the model.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        """
+        ...
+
+    @abstractmethod
+    def add_integer_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> Any:
+        """Add an integer variable to the model.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        Args:
+            lb: lower bound
+            ub: upper bound
+
+        """
+        ...
+
+    @abstractmethod
+    def add_continuous_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> Any:
+        """Add a continuous variable to the model.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        Args:
+            lb: lower bound
+            ub: upper bound
+
+        """
+        ...
+
+    @abstractmethod
+    def set_model_objective(self, expr: Any, minimize: bool) -> None:
+        """Define the model objective.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        Args:
+            expr:
+            minimize: if True, objective will be minimized, else maximized
+
+        Returns:
+
+        """
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def construct_linear_sum(expr: Iterable) -> Any:
+        """Generate a linear sum (with variables) ready for the internal model."""
+        ...
+
 
 class PymipMilpSolver(MilpSolver):
     """Milp solver wrapping a solver from pymip library."""
@@ -300,6 +396,33 @@ class PymipMilpSolver(MilpSolver):
             return 0
         else:
             return self.model.num_solutions
+
+    @staticmethod
+    def create_empty_model(name: str = "") -> Any:
+        raise NotImplementedError()
+
+    def add_linear_constraint(self, expr: Any, name: str = "") -> Any:
+        raise NotImplementedError()
+
+    def add_binary_variable(self, name: str = "") -> Any:
+        raise NotImplementedError()
+
+    def add_integer_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> Any:
+        raise NotImplementedError()
+
+    def add_continuous_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> Any:
+        raise NotImplementedError()
+
+    def set_model_objective(self, expr: Any, minimize: bool) -> None:
+        raise NotImplementedError()
+
+    @staticmethod
+    def construct_linear_sum(expr: Iterable) -> Any:
+        raise NotImplementedError()
 
 
 class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
@@ -533,6 +656,47 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
             logger.info(f"Objective : {mathopt_res.objective_value()}")
         return mathopt_res
 
+    @staticmethod
+    def create_empty_model(name: str = "") -> mathopt.Model:
+        return mathopt.Model(name=name)
+
+    def add_linear_constraint(
+        self, expr: Any, name: str = ""
+    ) -> mathopt.LinearConstraint:
+        return self.model.add_linear_constraint(expr, name=name)
+
+    def add_binary_variable(self, name: str = "") -> mathopt.Variable:
+        return self.model.add_binary_variable(name=name)
+
+    def add_integer_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> mathopt.Variable:
+        return self.model.add_integer_variable(lb=lb, ub=ub, name=name)
+
+    def add_continuous_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> mathopt.Variable:
+        return self.model.add_variable(lb=lb, ub=ub, is_integer=False, name=name)
+
+    def set_model_objective(self, expr: Any, minimize: bool) -> None:
+        """Define the model objective.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        Args:
+            expr:
+            minimize: if True, objective will be minimized, else maximized
+
+        Returns:
+
+        """
+        self.model.set_objective(expr, is_maximize=not minimize)
+
+    @staticmethod
+    def construct_linear_sum(expr: Iterable) -> Any:
+        """Generate a linear sum (with variables) ready for the internal model."""
+        return mathopt.LinearSum(expr)
+
 
 map_mathopt_status_to_do_status: dict[mathopt.TerminationReason, StatusSolver] = {
     mathopt.TerminationReason.OPTIMAL: StatusSolver.OPTIMAL,
@@ -711,6 +875,49 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
         else:
             return self.model.SolCount
 
+    @staticmethod
+    def create_empty_model(name: str = "") -> gurobipy.Model:
+        return gurobipy.Model(name=name)
+
+    def add_linear_constraint(self, expr: Any, name: str = "") -> gurobipy.Constr:
+        return self.model.addLConstr(expr, name=name)
+
+    def add_binary_variable(self, name: str = "") -> gurobipy.Var:
+        return self.model.addVar(vtype=gurobipy.GRB.BINARY, name=name)
+
+    def add_integer_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> gurobipy.Var:
+        return self.model.addVar(vtype=gurobipy.GRB.INTEGER, lb=lb, ub=ub, name=name)
+
+    def add_continuous_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> gurobipy.Var:
+        return self.model.addVar(vtype=gurobipy.GRB.CONTINUOUS, lb=lb, ub=ub, name=name)
+
+    def set_model_objective(self, expr: Any, minimize: bool) -> None:
+        """Define the model objective.
+
+        Useful to write an `init_model()` common to gurobi and ortools/mathopt.
+
+        Args:
+            expr:
+            minimize: if True, objective will be minimized, else maximized
+
+        Returns:
+
+        """
+        if minimize:
+            sense = gurobipy.GRB.MINIMIZE
+        else:
+            sense = gurobipy.GRB.MAXIMIZE
+        self.model.setObjective(expr, sense=sense)
+
+    @staticmethod
+    def construct_linear_sum(expr: Iterable) -> Any:
+        """Generate a linear sum (with variables) ready for the internal model."""
+        return gurobipy.quicksum(expr)
+
     @abstractmethod
     def convert_to_variable_values(
         self, solution: Solution
@@ -843,3 +1050,30 @@ class CplexMilpSolver(MilpSolver):
             return 0
         else:
             return len(self.results_solve)
+
+    @staticmethod
+    def create_empty_model(name: str = "") -> Any:
+        raise NotImplementedError()
+
+    def add_linear_constraint(self, expr: Any, name: str = "") -> Any:
+        raise NotImplementedError()
+
+    def add_binary_variable(self, name: str = "") -> Any:
+        raise NotImplementedError()
+
+    def add_integer_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> Any:
+        raise NotImplementedError()
+
+    def add_continuous_variable(
+        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
+    ) -> Any:
+        raise NotImplementedError()
+
+    def set_model_objective(self, expr: Any, minimize: bool) -> None:
+        raise NotImplementedError()
+
+    @staticmethod
+    def construct_linear_sum(expr: Iterable) -> Any:
+        raise NotImplementedError()

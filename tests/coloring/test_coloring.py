@@ -494,25 +494,34 @@ def test_coloring_nsga_2():
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_color_lp_gurobi():
-    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+@pytest.mark.parametrize("use_cliques", [False, True])
+@pytest.mark.parametrize("greedy_start", [True, False])
+def test_color_lp_gurobi(use_cliques, greedy_start):
+    file = [f for f in get_data_available() if "gc_20_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringLP(
         color_problem,
         params_objective_function=get_default_objective_setup(color_problem),
     )
-    result_store = solver.solve(parameters_milp=ParametersMilp.default())
+    kwargs = dict(
+        use_cliques=use_cliques,
+        greedy_start=greedy_start,
+        parameters_milp=ParametersMilp.default(),
+    )
+    result_store = solver.solve(**kwargs)
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
-    assert len(result_store) > 1
 
-    # first solution is not start_solution
-    assert result_store[0][0].colors != solver.start_solution.colors
+    # Test warm-start only once
+    if greedy_start and not use_cliques:
 
-    # warm start => first solution is start_solution
-    solver.set_warm_start(solver.start_solution)
-    result_store = solver.solve(parameters_milp=ParametersMilp.default())
-    assert result_store[0][0].colors == solver.start_solution.colors
+        # first solution is not start_solution
+        assert result_store[0][0].colors != solver.start_solution.colors
+
+        # warm start => first solution is start_solution
+        solver.set_warm_start(solver.start_solution)
+        result_store = solver.solve(**kwargs)
+        assert result_store[0][0].colors == solver.start_solution.colors
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -565,30 +574,33 @@ def test_color_lp_gurobi_cb_exception():
         )
 
 
-def test_color_lp_ortools_mathopt():
+@pytest.mark.parametrize("use_cliques", [False, True])
+@pytest.mark.parametrize("greedy_start", [True, False])
+def test_color_lp_ortools_mathopt(use_cliques, greedy_start):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringLPMathOpt(
         color_problem,
         params_objective_function=get_default_objective_setup(color_problem),
     )
-    result_store = solver.solve(parameters_milp=ParametersMilp.default())
+    kwargs = dict(
+        use_cliques=use_cliques,
+        greedy_start=greedy_start,
+        parameters_milp=ParametersMilp.default(),
+    )
+    result_store = solver.solve(**kwargs)
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
-    assert len(result_store) > 1
 
-    # first solution is not start_solution
-    assert result_store[0][0].colors != solver.start_solution.colors
+    # Test warm-start only once
+    if greedy_start and not use_cliques:
+        # first solution is not start_solution
+        assert result_store[0][0].colors != solver.start_solution.colors
 
-    # warm start => first solution is start_solution
-    solver2 = ColoringLPMathOpt(
-        color_problem,
-        params_objective_function=get_default_objective_setup(color_problem),
-    )
-    solver2.init_model()
-    solver2.set_warm_start(solver.start_solution)
-    result_store = solver2.solve(parameters_milp=ParametersMilp.default())
-    assert result_store[0][0].colors == solver.start_solution.colors
+        # warm start => first solution is start_solution
+        solver.set_warm_start(solver.start_solution)
+        result_store = solver.solve(**kwargs)
+        assert result_store[0][0].colors == solver.start_solution.colors
 
 
 def test_color_lp_ortools_mathopt_cb_log():

@@ -33,13 +33,14 @@ else:
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_facility_lp_gurobi():
+@pytest.mark.parametrize("use_matrix_indicator_heuristic", [True, False])
+def test_facility_lp_gurobi(use_matrix_indicator_heuristic):
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver(color_problem)
     kwargs = dict(
         time_limit=20,
-        use_matrix_indicator_heuristic=False,
+        use_matrix_indicator_heuristic=use_matrix_indicator_heuristic,
     )
     result_storage = solver.solve(**kwargs)
     solution, fit = result_storage.get_best_solution_fit()
@@ -65,13 +66,14 @@ def test_facility_lp_gurobi():
     )
 
 
-def test_facility_lp_ortools_mathopt():
+@pytest.mark.parametrize("use_matrix_indicator_heuristic", [True, False])
+def test_facility_lp_ortools_mathopt(use_matrix_indicator_heuristic):
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_3_1"][0]
     color_problem = parse_file(file)
     solver = LP_Facility_Solver_MathOpt(color_problem)
     kwargs = dict(
         time_limit=20,
-        use_matrix_indicator_heuristic=False,
+        use_matrix_indicator_heuristic=use_matrix_indicator_heuristic,
     )
     result_storage = solver.solve(**kwargs)
     solution, fit = result_storage.get_best_solution_fit()

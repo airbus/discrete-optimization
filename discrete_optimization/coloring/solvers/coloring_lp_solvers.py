@@ -24,20 +24,18 @@ from discrete_optimization.coloring.solvers.greedy_coloring import (
     GreedyColoring,
     NXGreedyColoringMethod,
 )
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Problem,
-    Solution,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
 from discrete_optimization.generic_tools.lp_tools import (
+    ConstraintType,
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
     OrtoolsMathOptMilpSolver,
     PymipMilpSolver,
+    VariableType,
 )
 
 try:
@@ -46,17 +44,14 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    from gurobipy import GRB, Constr, GenConstr, MConstr, Model, QConstr, Var, quicksum
 
 
 logger = logging.getLogger(__name__)
 
 
-OneColorConstraints = dict[int, Union["Constr", "QConstr", "MConstr", "GenConstr"]]
-NeighborsConstraints = dict[
-    tuple[Hashable, Hashable, int], Union["Constr", "QConstr", "MConstr", "GenConstr"]
-]
-VariableDecision = dict[str, dict[tuple[Hashable, int], Union["Var", mip.Var]]]
+OneColorConstraints = dict[int, ConstraintType]
+NeighborsConstraints = dict[tuple[Hashable, Hashable, int], ConstraintType]
+VariableDecision = dict[str, dict[tuple[Hashable, int], VariableType]]
 
 
 class ConstraintsDict(TypedDict):
@@ -112,6 +107,140 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
         self.description_constraint: dict[str, dict[str, str]] = {}
         self.sense_optim = self.params_objective_function.sense_function
         self.start_solution: Optional[ColoringSolution] = None
+
+    def init_model(self, **kwargs: Any) -> None:
+        """Initialize the internal model.
+
+        Keyword Args:
+            greedy_start (bool): if True, a greedy solution is computed (using GreedyColoring solver)
+                and used as warm start for the LP.
+            use_cliques (bool): if True, compute cliques of the coloring problem and add constraints to the model.
+
+        """
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        greedy_start = kwargs["greedy_start"]
+        use_cliques = kwargs["use_cliques"]
+        if greedy_start:
+            logger.info("Computing greedy solution")
+            greedy_solver = GreedyColoring(
+                self.problem,
+                params_objective_function=self.params_objective_function,
+            )
+            sol = greedy_solver.solve(
+                strategy=NXGreedyColoringMethod.best
+            ).get_best_solution()
+            if sol is None:
+                raise RuntimeError(
+                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
+                    "should not be None."
+                )
+            if not isinstance(sol, ColoringSolution):
+                raise RuntimeError(
+                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
+                    "should be a ColoringSolution."
+                )
+            self.start_solution = sol
+        else:
+            logger.info("Get dummy solution")
+            self.start_solution = self.problem.get_dummy_solution()
+        nb_colors = self.start_solution.nb_color
+        nb_colors_subset = nb_colors
+        if self.problem.use_subset:
+            nb_colors_subset = self.problem.count_colors(self.start_solution.colors)
+            nb_colors = self.problem.count_colors_all_index(self.start_solution.colors)
+
+        if nb_colors is None:
+            raise RuntimeError("self.start_solution.nb_color should not be None.")
+        self.model = self.create_empty_model("color")
+        colors_var: dict[tuple[Hashable, int], VariableType] = {}
+        range_node = self.nodes_name
+        range_color = range(nb_colors)
+        range_color_subset = range(nb_colors_subset)
+        range_color_per_node = {}
+        for node in self.nodes_name:
+            rng = self.get_range_color(
+                node_name=node,
+                range_color_subset=range_color_subset,
+                range_color_all=range_color,
+            )
+            for color in rng:
+                colors_var[node, color] = self.add_binary_variable(
+                    name="x_" + str((node, color))
+                )
+            range_color_per_node[node] = set(rng)
+        one_color_constraints: OneColorConstraints = {}
+        for n in range_node:
+            one_color_constraints[n] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    colors_var[n, c] for c in range_color_per_node[n]
+                )
+                == 1
+            )
+        cliques = []
+        g = self.graph.to_networkx()
+        if use_cliques:
+            for c in nx.algorithms.clique.find_cliques(g):
+                cliques += [c]
+            cliques = sorted(cliques, key=lambda x: len(x), reverse=True)
+        else:
+            cliques = [[e[0], e[1]] for e in g.edges()]
+        cliques_constraint: dict[Union[int, tuple[int, int]], ConstraintType] = {}
+        index_c = 0
+        opt = self.add_integer_variable(lb=0, ub=nb_colors, name="nb_colors")
+        if use_cliques:
+            for c in cliques[:100]:
+                cliques_constraint[index_c] = self.add_linear_constraint(
+                    self.construct_linear_sum(
+                        (color_i + 1) * colors_var[node, color_i]
+                        for node in c
+                        for color_i in range_color_per_node[node]
+                    )
+                    >= sum([i + 1 for i in range(len(c))])
+                )
+                cliques_constraint[(index_c, 1)] = self.add_linear_constraint(
+                    self.construct_linear_sum(
+                        colors_var[node, color_i]
+                        for node in c
+                        for color_i in range_color_per_node[node]
+                    )
+                    <= opt
+                )
+                index_c += 1
+        edges = g.edges()
+        constraints_neighbors: NeighborsConstraints = {}
+        for e in edges:
+            for c in range_color_per_node[e[0]]:
+                if c in range_color_per_node[e[1]]:
+                    constraints_neighbors[(e[0], e[1], c)] = self.add_linear_constraint(
+                        colors_var[e[0], c] + colors_var[e[1], c] <= 1
+                    )
+        for n in range_node:
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    (color_i + 1) * colors_var[n, color_i]
+                    for color_i in range_color_per_node[n]
+                )
+                <= opt
+            )
+        self.set_model_objective(opt, minimize=True)
+        self.variable_decision = {"colors_var": colors_var, "nb_colors": opt}
+        self.constraints_dict = {
+            "one_color_constraints": one_color_constraints,
+            "constraints_neighbors": constraints_neighbors,
+        }
+        self.description_variable_description = {
+            "colors_var": {
+                "shape": (self.number_of_nodes, nb_colors),
+                "type": bool,
+                "descr": "for each node and each color," " a binary indicator",
+            }
+        }
+        self.description_constraint["one_color_constraints"] = {
+            "descr": "one and only one color " "should be assignated to a node"
+        }
+        self.description_constraint["constraints_neighbors"] = {
+            "descr": "no neighbors can have same color"
+        }
 
     def convert_to_variable_values(
         self, solution: ColoringSolution
@@ -191,148 +320,16 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
             greedy_start (bool): if True, a greedy solution is computed (using GreedyColoring solver)
                 and used as warm start for the LP.
             use_cliques (bool): if True, compute cliques of the coloring problem and add constraints to the model.
-            verbose (bool): verbose option.
         """
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        greedy_start = kwargs["greedy_start"]
-        use_cliques = kwargs["use_cliques"]
-        if greedy_start:
-            logger.info("Computing greedy solution")
-            greedy_solver = GreedyColoring(
-                self.problem,
-                params_objective_function=self.params_objective_function,
-            )
-            sol = greedy_solver.solve(
-                strategy=NXGreedyColoringMethod.best
-            ).get_best_solution()
-            if sol is None:
-                raise RuntimeError(
-                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
-                    "should not be None."
-                )
-            if not isinstance(sol, ColoringSolution):
-                raise RuntimeError(
-                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
-                    "should be a ColoringSolution."
-                )
-            self.start_solution = sol
-        else:
-            logger.info("Get dummy solution")
-            self.start_solution = self.problem.get_dummy_solution()
-        nb_colors = self.start_solution.nb_color
-        nb_colors_subset = nb_colors
-        if self.problem.use_subset:
-            nb_colors_subset = self.problem.count_colors(self.start_solution.colors)
-            nb_colors = self.problem.count_colors_all_index(self.start_solution.colors)
-
-        if nb_colors is None:
-            raise RuntimeError("self.start_solution.nb_color should not be None.")
-        color_model = Model("color")
-        colors_var: dict[tuple[Hashable, int], "Var"] = {}
-        range_node = self.nodes_name
-        range_color = range(nb_colors)
-        range_color_subset = range(nb_colors_subset)
-        range_color_per_node = {}
-        for node in self.nodes_name:
-            rng = self.get_range_color(
-                node_name=node,
-                range_color_subset=range_color_subset,
-                range_color_all=range_color,
-            )
-            for color in rng:
-                colors_var[node, color] = color_model.addVar(
-                    vtype=GRB.BINARY, obj=0, name="x_" + str((node, color))
-                )
-            range_color_per_node[node] = set(rng)
-        one_color_constraints: OneColorConstraints = {}
-        for n in range_node:
-            one_color_constraints[n] = color_model.addLConstr(
-                quicksum([colors_var[n, c] for c in range_color_per_node[n]]) == 1
-            )
-        color_model.update()
-        cliques = []
-        g = self.graph.to_networkx()
-        if use_cliques:
-            for c in nx.algorithms.clique.find_cliques(g):
-                cliques += [c]
-            cliques = sorted(cliques, key=lambda x: len(x), reverse=True)
-        else:
-            cliques = [[e[0], e[1]] for e in g.edges()]
-        cliques_constraint: dict[Union[int, tuple[int, int]], Any] = {}
-        index_c = 0
-        opt = color_model.addVar(vtype=GRB.INTEGER, lb=0, ub=nb_colors, obj=1)
-        if use_cliques:
-            for c in cliques[:100]:
-                cliques_constraint[index_c] = color_model.addLConstr(
-                    quicksum(
-                        [
-                            (color_i + 1) * colors_var[node, color_i]
-                            for node in c
-                            for color_i in range_color_per_node[node]
-                        ]
-                    )
-                    >= sum([i + 1 for i in range(len(c))])
-                )
-                cliques_constraint[(index_c, 1)] = color_model.addLConstr(
-                    quicksum(
-                        [
-                            colors_var[node, color_i]
-                            for node in c
-                            for color_i in range_color
-                        ]
-                    )
-                    <= opt
-                )
-                index_c += 1
-        edges = g.edges()
-        constraints_neighbors: NeighborsConstraints = {}
-        for e in edges:
-            for c in range_color_per_node[e[0]]:
-                if c in range_color_per_node[e[1]]:
-                    constraints_neighbors[(e[0], e[1], c)] = color_model.addLConstr(
-                        colors_var[e[0], c] + colors_var[e[1], c] <= 1
-                    )
-        for n in range_node:
-            color_model.addLConstr(
-                quicksum(
-                    [
-                        (color_i + 1) * colors_var[n, color_i]
-                        for color_i in range_color_per_node[n]
-                    ]
-                )
-                <= opt
-            )
-        color_model.update()
-        color_model.modelSense = GRB.MINIMIZE
-        color_model.setParam(GRB.Param.Threads, 8)
-        color_model.setParam(GRB.Param.PoolSolutions, 10000)
-        color_model.setParam(GRB.Param.Method, -1)
-        color_model.setParam("MIPGapAbs", 0.001)
-        color_model.setParam("MIPGap", 0.001)
-        color_model.setParam("Heuristics", 0.01)
-        self.model = color_model
-        self.variable_decision = {"colors_var": colors_var, "nb_colors": opt}
-        self.constraints_dict = {
-            "one_color_constraints": one_color_constraints,
-            "constraints_neighbors": constraints_neighbors,
-        }
-        self.description_variable_description = {
-            "colors_var": {
-                "shape": (self.number_of_nodes, nb_colors),
-                "type": bool,
-                "descr": "for each node and each color," " a binary indicator",
-            }
-        }
-        self.description_constraint["one_color_constraints"] = {
-            "descr": "one and only one color " "should be assignated to a node"
-        }
-        self.description_constraint["constraints_neighbors"] = {
-            "descr": "no neighbors can have same color"
-        }
+        _BaseColoringLP.init_model(self, **kwargs)
+        self.model.setParam(gurobipy.GRB.Param.Threads, 8)
+        self.model.setParam(gurobipy.GRB.Param.Method, -1)
+        self.model.setParam("Heuristics", 0.01)
+        self.model.update()
 
     def convert_to_variable_values(
         self, solution: ColoringSolution
-    ) -> dict[Var, float]:
+    ) -> dict[gurobipy.Var, float]:
         """Convert a solution to a mapping between model variables and their values.
 
         Will be used by set_warm_start().
@@ -536,130 +533,3 @@ class ColoringLPMathOpt(OrtoolsMathOptMilpSolver, _BaseColoringLP):
 
         """
         return _BaseColoringLP.convert_to_variable_values(self, solution)
-
-    def init_model(self, **kwargs: Any) -> None:
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        greedy_start = kwargs["greedy_start"]
-        use_cliques = kwargs["use_cliques"]
-        if greedy_start:
-            logger.info("Computing greedy solution")
-            greedy_solver = GreedyColoring(
-                self.problem,
-                params_objective_function=self.params_objective_function,
-            )
-            sol = greedy_solver.solve(
-                strategy=NXGreedyColoringMethod.best
-            ).get_best_solution()
-            if sol is None:
-                raise RuntimeError(
-                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
-                    "should not be None."
-                )
-            if not isinstance(sol, ColoringSolution):
-                raise RuntimeError(
-                    "greedy_solver.solve(strategy=NXGreedyColoringMethod.best).get_best_solution() "
-                    "should be a ColoringSolution."
-                )
-            self.start_solution = sol
-        else:
-            logger.info("Get dummy solution")
-            self.start_solution = self.problem.get_dummy_solution()
-        nb_colors = self.start_solution.nb_color
-        nb_colors_subset = nb_colors
-        if self.problem.use_subset:
-            nb_colors_subset = self.problem.count_colors(self.start_solution.colors)
-            nb_colors = self.problem.count_colors_all_index(self.start_solution.colors)
-
-        if nb_colors is None:
-            raise RuntimeError("self.start_solution.nb_color should not be None.")
-        color_model = mathopt.Model(name="color")
-        colors_var = {}
-        range_node = self.nodes_name
-        range_color = range(nb_colors)
-        range_color_subset = range(nb_colors_subset)
-        range_color_per_node = {}
-        for node in self.nodes_name:
-            rng = self.get_range_color(
-                node_name=node,
-                range_color_subset=range_color_subset,
-                range_color_all=range_color,
-            )
-            for color in rng:
-                colors_var[node, color] = color_model.add_binary_variable(
-                    name="x_" + str((node, color))
-                )
-            range_color_per_node[node] = set(rng)
-        one_color_constraints = {}
-        for n in range_node:
-            one_color_constraints[n] = color_model.add_linear_constraint(
-                mathopt.LinearSum(colors_var[n, c] for c in range_color_per_node[n])
-                == 1
-            )
-        cliques = []
-        g = self.graph.to_networkx()
-        if use_cliques:
-            for c in nx.algorithms.clique.find_cliques(g):
-                cliques += [c]
-            cliques = sorted(cliques, key=lambda x: len(x), reverse=True)
-        else:
-            cliques = [[e[0], e[1]] for e in g.edges()]
-        cliques_constraint: dict[Union[int, tuple[int, int]], Any] = {}
-        index_c = 0
-        opt = color_model.add_integer_variable(lb=0, ub=nb_colors, name="nb_colors")
-        color_model.minimize(opt)
-        if use_cliques:
-            for c in cliques[:100]:
-                cliques_constraint[index_c] = color_model.add_linear_constraint(
-                    mathopt.LinearSum(
-                        (color_i + 1) * colors_var[node, color_i]
-                        for node in c
-                        for color_i in range_color_per_node[node]
-                    )
-                    >= sum([i + 1 for i in range(len(c))])
-                )
-                cliques_constraint[(index_c, 1)] = color_model.add_linear_constraint(
-                    mathopt.LinearSum(
-                        colors_var[node, color_i]
-                        for node in c
-                        for color_i in range_color_per_node[node]
-                    )
-                    <= opt
-                )
-                index_c += 1
-        edges = g.edges()
-        constraints_neighbors = {}
-        for e in edges:
-            for c in range_color_per_node[e[0]]:
-                if c in range_color_per_node[e[1]]:
-                    constraints_neighbors[
-                        (e[0], e[1], c)
-                    ] = color_model.add_linear_constraint(
-                        colors_var[e[0], c] + colors_var[e[1], c] <= 1
-                    )
-        for n in range_node:
-            color_model.add_linear_constraint(
-                mathopt.LinearSum(
-                    (color_i + 1) * colors_var[n, color_i]
-                    for color_i in range_color_per_node[n]
-                )
-                <= opt
-            )
-        self.model = color_model
-        self.variable_decision = {"colors_var": colors_var, "nb_colors": opt}
-        self.constraints_dict = {
-            "one_color_constraints": one_color_constraints,
-            "constraints_neighbors": constraints_neighbors,
-        }
-        self.description_variable_description = {
-            "colors_var": {
-                "shape": (self.number_of_nodes, nb_colors),
-                "type": bool,
-                "descr": "for each node and each color," " a binary indicator",
-            }
-        }
-        self.description_constraint["one_color_constraints"] = {
-            "descr": "one and only one color " "should be assignated to a node"
-        }
-        self.description_constraint["constraints_neighbors"] = {
-            "descr": "no neighbors can have same color"
-        }

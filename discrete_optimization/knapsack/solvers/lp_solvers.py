@@ -72,6 +72,38 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         self.description_variable_description: dict[str, dict[str, Any]] = {}
         self.description_constraint: dict[str, dict[str, str]] = {}
 
+    def init_model(self, **kwargs: Any) -> None:
+        self.model = self.create_empty_model("Knapsack")
+        self.variable_decision = {"x": {}}
+        self.description_variable_description = {
+            "x": {
+                "shape": self.problem.nb_items,
+                "type": bool,
+                "descr": "dictionary with key the item index \
+                                                                 and value the boolean value corresponding \
+                                                                 to taking the item or not",
+            }
+        }
+        self.description_constraint["weight"] = {
+            "descr": "sum of weight of used items doesn't exceed max capacity"
+        }
+        weight = {}
+        list_item = self.problem.list_items
+        max_capacity = self.problem.max_capacity
+        x = {}
+        for item in list_item:
+            i = item.index
+            x[i] = self.add_binary_variable(name="x_" + str(i))
+            weight[i] = item.weight
+        self.set_model_objective(
+            self.construct_linear_sum(item.value * x[item.index] for item in list_item),
+            minimize=False,
+        )
+        self.variable_decision["x"] = x
+        self.constraints_dict["weight"] = self.add_linear_constraint(
+            self.construct_linear_sum([weight[i] * x[i] for i in x]) <= max_capacity
+        )
+
     def convert_to_variable_values(
         self, solution: KnapsackSolution
     ) -> dict[Any, float]:
@@ -117,45 +149,8 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
 
 class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
     def init_model(self, **kwargs: Any) -> None:
-        warm_start = kwargs.get("warm_start", {})
-        self.model = Model("Knapsack")
-        self.variable_decision = {"x": {}}
-        self.description_variable_description = {
-            "x": {
-                "shape": self.problem.nb_items,
-                "type": bool,
-                "descr": "dictionary with key the item index \
-                                                                 and value the boolean value corresponding \
-                                                                 to taking the item or not",
-            }
-        }
-        self.description_constraint["weight"] = {
-            "descr": "sum of weight of used items doesn't exceed max capacity"
-        }
-        weight = {}
-        list_item = self.problem.list_items
-        max_capacity = self.problem.max_capacity
-        x = {}
-        for item in list_item:
-            i = item.index
-            x[i] = self.model.addVar(
-                vtype=GRB.BINARY, obj=item.value, name="x_" + str(i)
-            )
-            if i in warm_start:
-                x[i].start = warm_start[i]
-                x[i].varhintval = warm_start[i]
-            weight[i] = item.weight
-        self.variable_decision["x"] = x
+        _BaseLPKnapsack.init_model(self, **kwargs)
         self.model.update()
-        self.constraints_dict["weight"] = self.model.addLConstr(
-            quicksum([weight[i] * x[i] for i in x]) <= max_capacity
-        )
-        self.model.update()
-        self.model.setParam("TimeLimit", 200)
-        self.model.modelSense = GRB.MAXIMIZE
-        self.model.setParam(GRB.Param.PoolSolutions, 10000)
-        self.model.setParam("MIPGapAbs", 0.00001)
-        self.model.setParam("MIPGap", 0.00000001)
 
     def convert_to_variable_values(
         self, solution: KnapsackSolution
@@ -169,37 +164,6 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
 
 
 class LPKnapsackMathOpt(OrtoolsMathOptMilpSolver, _BaseLPKnapsack):
-    def init_model(self, **kwargs: Any) -> None:
-        self.model = mathopt.Model(name="Knapsack")
-        self.variable_decision = {"x": {}}
-        self.description_variable_description = {
-            "x": {
-                "shape": self.problem.nb_items,
-                "type": bool,
-                "descr": "dictionary with key the item index \
-                                                                 and value the boolean value corresponding \
-                                                                 to taking the item or not",
-            }
-        }
-        self.description_constraint["weight"] = {
-            "descr": "sum of weight of used items doesn't exceed max capacity"
-        }
-        weight = {}
-        list_item = self.problem.list_items
-        max_capacity = self.problem.max_capacity
-        x = {}
-        for item in list_item:
-            i = item.index
-            x[i] = self.model.add_binary_variable(name="x_" + str(i))
-            weight[i] = item.weight
-        self.model.maximize(
-            mathopt.LinearSum(item.value * x[item.index] for item in list_item)
-        )
-        self.variable_decision["x"] = x
-        self.constraints_dict["weight"] = self.model.add_linear_constraint(
-            mathopt.LinearSum(weight[i] * x[i] for i in x) <= max_capacity
-        )
-
     def convert_to_variable_values(
         self, solution: KnapsackSolution
     ) -> dict[mathopt.Variable, float]:
