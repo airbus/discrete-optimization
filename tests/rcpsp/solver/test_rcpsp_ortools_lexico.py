@@ -49,7 +49,7 @@ def check_lexico_order_on_result_storage(
         # print("len ", len(callback_subres.sol_per_step))
         obj_array = np.array(
             [
-                [sol._intern_objectives[obj] for obj in objectives]
+                [sol._internal_objectives[obj] for obj in objectives]
                 for sol in callback_subres.sol_per_step[i]
             ]
         )
@@ -84,7 +84,7 @@ def test_ortools_cumulativeresource_optim(objectives):
     clb = RetrieveSubRes()
     result_storage = solver.solve(time_limit=10, objectives=objectives, callbacks=[clb])
 
-    print([sol._intern_objectives for sol, fit in result_storage.list_solution_fits])
+    print([sol._internal_objectives for sol, fit in result_storage.list_solution_fits])
     check_lexico_order_on_result_storage(callback_subres=clb, solver=solver)
 
 
@@ -113,5 +113,5 @@ def test_ortools_resource_optim(objectives):
         time_limit=10,
         objectives=objectives,
     )
-    print([sol._intern_objectives for sol, fit in result_storage.list_solution_fits])
+    print([sol._internal_objectives for sol, fit in result_storage.list_solution_fits])
     check_lexico_order_on_result_storage(callback_subres=clb, solver=solver)

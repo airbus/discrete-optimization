@@ -95,7 +95,7 @@ class SolverDO(Hyperparametrizable, ABC):
         )
 
     def init_model(self, **kwargs: Any) -> None:
-        """Initialize intern model used to solve.
+        """Initialize internal model used to solve.
 
         Can initialize a ortools, milp, gurobi, ... model.
 
@@ -132,7 +132,7 @@ class SolverDO(Hyperparametrizable, ABC):
         return self.problem.get_objective_names()
 
     def set_model_objective(self, obj: str) -> None:
-        """Update intern model objective.
+        """Update internal model objective.
 
         Args:
             obj: a string representing the desired objective.
@@ -144,7 +144,7 @@ class SolverDO(Hyperparametrizable, ABC):
         ...
 
     def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
-        """Get best intern model objective value found by last call to `solve()`.
+        """Get best internal model objective value found by last call to `solve()`.
 
         The default implementation consists in using the fit of the last solution in result_storage.
         This assumes:
@@ -186,7 +186,7 @@ class SolverDO(Hyperparametrizable, ABC):
         ...
 
     def remove_model_constraint(self, constraints: Iterable[Any]) -> None:
-        """Remove the intern model constraints.
+        """Remove the internal model constraints.
 
         Args:
             constraints: constraints created with `add_model_constraint()`
@@ -209,7 +209,7 @@ class SolverDO(Hyperparametrizable, ABC):
         have been really implemented, i.e.
         - calling `set_model_objective()` and `add_model_constraint()`
           should actually change the next call to `solve()`,
-        - `get_model_objective_value()` should correspond to the intern model objective
+        - `get_model_objective_value()` should correspond to the internal model objective
 
         """
         return False

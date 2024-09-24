@@ -43,7 +43,7 @@ def run_ortools_resource_optim(objectives):
         time_limit=5,
         objectives=objectives,
     )
-    print([sol._intern_objectives for sol, fit in result_storage.list_solution_fits])
+    print([sol._internal_objectives for sol, fit in result_storage.list_solution_fits])
     import matplotlib.pyplot as plt
 
     fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -52,13 +52,13 @@ def run_ortools_resource_optim(objectives):
     ax1.set_ylabel("KPI 1", color=color1)
     obj_array_0 = np.array(
         [
-            sol._intern_objectives[objectives[0]]
+            sol._internal_objectives[objectives[0]]
             for sol, fit in result_storage.list_solution_fits
         ]
     )
     obj_array_1 = np.array(
         [
-            sol._intern_objectives[objectives[1]]
+            sol._internal_objectives[objectives[1]]
             for sol, fit in result_storage.list_solution_fits
         ]
     )

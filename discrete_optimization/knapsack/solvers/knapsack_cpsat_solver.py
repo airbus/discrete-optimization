@@ -50,7 +50,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
         self.variables["taken"] = variables
         self.cp_model = model
 
-        model.Add(-self._intern_weight() <= self.problem.max_capacity)
+        model.Add(-self._internal_weight() <= self.problem.max_capacity)
 
         self.set_model_objective("value")
 
@@ -60,7 +60,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
         for i in range(len(solution.list_taken)):
             self.cp_model.AddHint(self.variables["taken"][i], solution.list_taken[i])
 
-    def _intern_value(self) -> LinearExpr:
+    def _internal_value(self) -> LinearExpr:
         return sum(
             [
                 self.variables["taken"][i] * self.problem.list_items[i].value
@@ -68,7 +68,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
             ]
         )
 
-    def _intern_weight(self) -> LinearExpr:
+    def _internal_weight(self) -> LinearExpr:
         return sum(
             [
                 -self.variables["taken"][i] * self.problem.list_items[i].weight
@@ -76,7 +76,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
             ]
         )
 
-    def _intern_heaviest_item(self) -> IntVar:
+    def _internal_heaviest_item(self) -> IntVar:
         if "heaviest_item" not in self.variables:
             heaviest_item_var = self.cp_model.new_int_var(
                 name="heaviest_item",
@@ -102,14 +102,14 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
             heaviest_item_var = self.variables["heaviest_item"][0]
         return heaviest_item_var
 
-    def _intern_objective(self, obj: str) -> ObjLinearExprT:
-        intern_objective_mapping = {
-            "value": self._intern_value,
-            "weight": self._intern_weight,
-            "heaviest_item": self._intern_heaviest_item,
+    def _internal_objective(self, obj: str) -> ObjLinearExprT:
+        internal_objective_mapping = {
+            "value": self._internal_value,
+            "weight": self._internal_weight,
+            "heaviest_item": self._internal_heaviest_item,
         }
-        if obj in intern_objective_mapping:
-            return intern_objective_mapping[obj]()
+        if obj in internal_objective_mapping:
+            return internal_objective_mapping[obj]()
         else:
             if obj == "weight_violation":
                 raise ValueError(
@@ -120,7 +120,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
                 raise ValueError(f"Unknown objective '{obj}'.")
 
     def set_model_objective(self, obj: str) -> None:
-        self.cp_model.Maximize(self._intern_objective(obj))
+        self.cp_model.Maximize(self._internal_objective(obj))
 
     def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         """
@@ -136,7 +136,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
             the created constraints.
 
         """
-        return [self.cp_model.Add(self._intern_objective(obj) >= int(value))]
+        return [self.cp_model.Add(self._internal_objective(obj) >= int(value))]
 
     @staticmethod
     def implements_lexico_api() -> bool:

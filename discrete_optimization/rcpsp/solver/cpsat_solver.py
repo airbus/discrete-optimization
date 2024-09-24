@@ -460,24 +460,24 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
             "is_used_resource": is_used_resource,
         }
 
-    def _intern_makespan(self) -> IntVar:
+    def _internal_makespan(self) -> IntVar:
         return self.variables["start"][self.problem.sink_task]
 
-    def _intern_used_resource(self) -> LinearExpr:
+    def _internal_used_resource(self) -> LinearExpr:
         return sum(self.variables["is_used_resource"].values())
 
-    def _intern_objective(self, obj: str) -> ObjLinearExprT:
-        intern_objective_mapping = {
-            "makespan": self._intern_makespan,
-            "used_resource": self._intern_used_resource,
+    def _internal_objective(self, obj: str) -> ObjLinearExprT:
+        internal_objective_mapping = {
+            "makespan": self._internal_makespan,
+            "used_resource": self._internal_used_resource,
         }
-        if obj in intern_objective_mapping:
-            return intern_objective_mapping[obj]()
+        if obj in internal_objective_mapping:
+            return internal_objective_mapping[obj]()
         else:
             raise ValueError(f"Unknown objective '{obj}'.")
 
     def set_model_objective(self, obj: str) -> None:
-        """Update intern model objective.
+        """Update internal model objective.
 
         Args:
             obj: a string representing the desired objective.
@@ -486,7 +486,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         Returns:
 
         """
-        self.cp_model.Minimize(self._intern_objective(obj))
+        self.cp_model.Minimize(self._internal_objective(obj))
 
     def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         """
@@ -502,7 +502,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
             the created constraints.
 
         """
-        return [self.cp_model.Add(self._intern_objective(obj) <= int(value))]
+        return [self.cp_model.Add(self._internal_objective(obj) <= int(value))]
 
     @staticmethod
     def implements_lexico_api() -> bool:
@@ -510,8 +510,8 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> RCPSPSolution:
         sol = super().retrieve_solution(cpsolvercb)
-        sol._intern_objectives = {
-            obj: cpsolvercb.value(self._intern_objective(obj))
+        sol._internal_objectives = {
+            obj: cpsolvercb.value(self._internal_objective(obj))
             for obj in self.get_model_objectives_available()
         }
         return sol
@@ -520,7 +520,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         return ["makespan", "used_resource"]
 
     def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
-        values = [sol._intern_objectives[obj] for sol, fit in res.list_solution_fits]
+        values = [sol._internal_objectives[obj] for sol, fit in res.list_solution_fits]
         return min(values)
 
 
@@ -688,24 +688,24 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
             "resource_capacity": resource_capacity_var,
         }
 
-    def _intern_makespan(self) -> IntVar:
+    def _internal_makespan(self) -> IntVar:
         return self.variables["start"][self.problem.sink_task]
 
-    def _intern_used_resource(self) -> LinearExpr:
+    def _internal_used_resource(self) -> LinearExpr:
         return sum(self.variables["resource_capacity"].values())
 
-    def _intern_objective(self, obj: str) -> ObjLinearExprT:
-        intern_objective_mapping = {
-            "makespan": self._intern_makespan,
-            "used_resource": self._intern_used_resource,
+    def _internal_objective(self, obj: str) -> ObjLinearExprT:
+        internal_objective_mapping = {
+            "makespan": self._internal_makespan,
+            "used_resource": self._internal_used_resource,
         }
-        if obj in intern_objective_mapping:
-            return intern_objective_mapping[obj]()
+        if obj in internal_objective_mapping:
+            return internal_objective_mapping[obj]()
         else:
             raise ValueError(f"Unknown objective '{obj}'.")
 
     def set_model_objective(self, obj: str) -> None:
-        """Update intern model objective.
+        """Update internal model objective.
 
         Args:
             obj: a string representing the desired objective.
@@ -714,7 +714,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         Returns:
 
         """
-        self.cp_model.Minimize(self._intern_objective(obj))
+        self.cp_model.Minimize(self._internal_objective(obj))
 
     def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         """
@@ -730,7 +730,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
             the created constraints.
 
         """
-        return [self.cp_model.Add(self._intern_objective(obj) <= int(value))]
+        return [self.cp_model.Add(self._internal_objective(obj) <= int(value))]
 
     @staticmethod
     def implements_lexico_api() -> bool:
@@ -738,8 +738,8 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> RCPSPSolution:
         sol = super().retrieve_solution(cpsolvercb)
-        sol._intern_objectives = {
-            obj: cpsolvercb.value(self._intern_objective(obj))
+        sol._internal_objectives = {
+            obj: cpsolvercb.value(self._internal_objective(obj))
             for obj in self.get_model_objectives_available()
         }
         return sol
@@ -748,5 +748,5 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         return ["makespan", "used_resource"]
 
     def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
-        values = [sol._intern_objectives[obj] for sol, fit in res.list_solution_fits]
+        values = [sol._internal_objectives[obj] for sol, fit in res.list_solution_fits]
         return min(values)
