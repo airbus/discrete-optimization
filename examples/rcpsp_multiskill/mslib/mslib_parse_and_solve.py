@@ -42,16 +42,15 @@ def example_mslib_cpsat():
     files_dict = get_data_available()
     file = [f for f in files_dict["MSLIB4"] if "MSLIB_Set4_1003.msrcp" in f][0]
     model = parse_file_mslib(file, skill_level_version=False)
-    cp_model = CPSatMSRCPSPSolver(
+    solver = CPSatMSRCPSPSolver(
         problem=model,
     )
-    cp_model.init_model(
+    solver.init_model(
         one_worker_per_task=False, slack_skill=False, one_skill_per_task=True
     )
-    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
-    res = cp_model.solve(
+    res = solver.solve(
         parameters_cp=p,
         time_limit=20,
         callbacks=[
@@ -59,8 +58,9 @@ def example_mslib_cpsat():
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
             )
         ],
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
-    print(cp_model.get_status_solver())
+    print(solver.get_status_solver())
     from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
         plot_resource_individual_gantt,
     )

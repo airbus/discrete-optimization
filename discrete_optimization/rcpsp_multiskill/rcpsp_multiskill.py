@@ -3065,6 +3065,53 @@ def create_fake_tasks_multiskills(
     return fake_tasks, fake_tasks_unit
 
 
+def compute_skills_calendar(problem: MS_RCPSPModel):
+    skills = problem.skills_set
+    dict_calendar_skills = {s: np.zeros(problem.horizon + 1) for s in skills}
+    for emp in problem.employees:
+        emp_object = problem.employees[emp]
+        for s in emp_object.get_non_zero_skills():
+            val = emp_object.get_skill_level(s)
+            dict_calendar_skills[s] += np.array(emp_object.calendar_employee) * val
+    return dict_calendar_skills
+
+
+def discretize_calendar_(capacity_calendar: np.ndarray):
+    """Compute decrease of capacity slots as a list of (interval, consumption)"""
+    max_capacity = np.max(capacity_calendar)
+    consumptions = []
+    delta = capacity_calendar[:-1] - capacity_calendar[1:]
+    index_non_zero = np.nonzero(delta)[0]
+    if capacity_calendar[0] < max_capacity:
+        consume = {
+            "value": int(max_capacity - capacity_calendar[0]),
+            "duration": int(index_non_zero[0] + 1),
+            "start": 0,
+        }
+        consumptions.append(consume)
+    for j in range(len(index_non_zero) - 1):
+        ind = index_non_zero[j]
+        value = capacity_calendar[ind + 1]
+        if value != max_capacity:
+            consume = {
+                "value": int(max_capacity - value),
+                "duration": int(index_non_zero[j + 1] - ind),
+                "start": int(ind + 1),
+            }
+            consumptions.append(consume)
+    return consumptions
+
+
+def compute_discretize_calendar_skills(
+    problem: MS_RCPSPModel,
+) -> tuple[dict[str, list[dict]], dict[str, np.ndarray]]:
+    dict_calendar_skills = compute_skills_calendar(problem=problem)
+    discr_calendar = {}
+    for s in dict_calendar_skills:
+        discr_calendar[s] = discretize_calendar_(dict_calendar_skills[s])
+    return discr_calendar, dict_calendar_skills
+
+
 def cluster_employees_to_resource_types(ms_rcpsp_problem: MS_RCPSPModel):
     skills_representation_str = dict()
     skills_dict = dict()
