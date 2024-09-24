@@ -1,6 +1,8 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import copy
 import datetime
 import logging
@@ -329,9 +331,22 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
         return dict()
 
     def set_warm_start(self, solution: Solution) -> None:
-        self.solution_hint = mathopt.SolutionHint(
+        """Make the solver warm start from the given solution."""
+        self.set_warm_start_from_values(
             variable_values=self.convert_to_variable_values(solution),
             dual_values=self.convert_to_dual_values(solution),
+        )
+
+    def set_warm_start_from_values(
+        self,
+        variable_values: dict[mathopt.Variable, float],
+        dual_values: Optional[dict[mathopt.LinearConstraint, float]] = None,
+    ) -> None:
+        if dual_values is None:
+            dual_values = {}
+        self.solution_hint = mathopt.SolutionHint(
+            variable_values=variable_values,
+            dual_values=dual_values,
         )
 
     def get_var_value_for_ith_solution(self, var: Any, i: int) -> float:
@@ -543,7 +558,7 @@ class MathOptCallback:
         return mathopt.CallbackResult(terminate=stopping)
 
 
-class GurobiMilpSolver(MilpSolver):
+class GurobiMilpSolver(MilpSolver, WarmstartMixin):
     """Milp solver wrapping a solver from gurobi library."""
 
     model: Optional["gurobipy.Model"] = None
@@ -667,6 +682,38 @@ class GurobiMilpSolver(MilpSolver):
             return 0
         else:
             return self.model.SolCount
+
+    @abstractmethod
+    def convert_to_variable_values(
+        self, solution: Solution
+    ) -> dict[gurobipy.Var, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by `set_warm_start()`.
+
+        Override it in subclasses to have a proper warm start. You can also override
+        `set_warm_start()` if default behaviour is not sufficient.
+
+        """
+        return {}
+
+    def set_warm_start(self, solution: Solution) -> None:
+        """Make the solver warm start from the given solution.
+
+        By default, this is using `convert_to_variable_values()`. If not sufficient,
+        you can override it. (And for instance make implementation of `convert_to_variable_values()`
+        raise a `NotImplementedError`.)
+
+        """
+        self.set_warm_start_from_values(
+            variable_values=self.convert_to_variable_values(solution),
+        )
+
+    def set_warm_start_from_values(
+        self, variable_values: dict[gurobipy.Var, float]
+    ) -> None:
+        for var, val in variable_values.items():
+            var.Start = val
 
 
 class GurobiCallback:

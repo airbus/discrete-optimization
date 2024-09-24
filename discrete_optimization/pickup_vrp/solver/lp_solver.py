@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -20,7 +22,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
@@ -145,7 +146,7 @@ def retrieve_current_solution(
     return results, obj
 
 
-class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
+class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
     problem: GPDP
     warm_start: Optional[GPDPSolution] = None
 
@@ -169,6 +170,19 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp, WarmstartMixin):
 
         """
         self.warm_start = solution
+
+    def convert_to_variable_values(self, solution: Solution) -> dict[grb.Var, float]:
+        """
+
+        Not used here by set_warm_start().
+
+        Args:
+            solution:
+
+        Returns:
+
+        """
+        raise NotImplementedError
 
     def one_visit_per_node(
         self,

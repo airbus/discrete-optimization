@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Callable, Hashable
 from itertools import product
@@ -14,7 +16,6 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
@@ -530,12 +531,16 @@ class LP_RCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_RCPSP):
 
 class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
     problem: RCPSPModel
-    x: dict[tuple[Hashable, int, int], Any]
     hyperparameters = [
         CategoricalHyperparameter(
             name="greedy_start", choices=[True, False], default=True
         )
     ]
+
+    x: dict[tuple[Hashable, int, int], Any]
+    max_horizon: Optional[int] = None
+    partial_solution: Optional[PartialSolution] = None
+    hinted_values: dict[Any, float]
 
     def __init__(
         self,
@@ -572,6 +577,18 @@ class _BaseLP_MRCPSP(MilpSolver, SolverRCPSP):
             rcpsp_modes=modes_vec,
             rcpsp_schedule_feasible=True,
         )
+
+    def convert_to_variable_values(self, solution: RCPSPSolution) -> dict[Any, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+        """
+        self.init_model(
+            max_horizon=self.max_horizon,
+            partial_solution=self.partial_solution,
+            start_solution=solution,
+        )
+        return self.hinted_values
 
 
 class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
@@ -815,11 +832,8 @@ class LP_MRCPSP(PymipMilpSolver, _BaseLP_MRCPSP):
         )
 
 
-class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
+class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP):
     hyperparameters = _BaseLP_MRCPSP.hyperparameters
-
-    max_horizon: Optional[int] = None
-    partial_solution: Optional[PartialSolution] = None
 
     def init_model(self, **args):
         args = self.complete_with_default_hyperparameters(args)
@@ -964,7 +978,7 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
             for (j, s) in S
         )
 
-        start = []
+        hinted_values_tuple_list = []
         self.starts = {}
         for task in sorted_tasks:
             self.starts[task] = self.model.addVar(
@@ -974,9 +988,12 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
                 ub=self.index_time[-1],
             )
             if task in self.start_solution.rcpsp_schedule:
-                self.starts[task].start = self.start_solution.rcpsp_schedule[task][
-                    "start_time"
-                ]
+                hinted_values_tuple_list.append(
+                    (
+                        self.starts[task],
+                        self.start_solution.rcpsp_schedule[task]["start_time"],
+                    )
+                )
             self.model.addLConstr(
                 gurobi.quicksum(
                     [self.x[key] * key[2] for key in variable_per_task[task]]
@@ -986,20 +1003,19 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
         modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
         for j in self.start_solution.rcpsp_schedule:
             start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
-            start += [
+            hinted_values_tuple_list.append(
                 (
                     self.durations[j],
                     self.problem.mode_details[j][modes_dict[j]]["duration"],
                 )
-            ]
+            )
+
             for k in self.variable_per_task[j]:
                 task, mode, time = k
                 if start_time_j == time and mode == modes_dict[j]:
-                    start += [(self.x[k], 1)]
-                    self.x[k].start = 1
+                    hinted_values_tuple_list.append((self.x[k], 1))
                 else:
-                    start += [(self.x[k], 0)]
-                    self.x[k].start = 0
+                    hinted_values_tuple_list.append((self.x[k], 0))
 
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
         self.partial_solution = p_s
@@ -1082,13 +1098,17 @@ class LP_MRCPSP_GUROBI(GurobiMilpSolver, _BaseLP_MRCPSP, WarmstartMixin):
                 f"Partial solution constraints : {self.constraints_partial_solutions}"
             )
             self.model.update()
+        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
+        self.hinted_values = dict(hinted_values_tuple_list)
+        self.set_warm_start_from_values(variable_values=self.hinted_values)
 
-    def set_warm_start(self, solution: RCPSPSolution) -> None:
-        self.init_model(
-            max_horizon=self.max_horizon,
-            partial_solution=self.partial_solution,
-            start_solution=solution,
-        )
+    def convert_to_variable_values(self, solution: RCPSPSolution) -> dict[Var, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return _BaseLP_MRCPSP.convert_to_variable_values(self, solution)
 
 
 class LP_MRCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_MRCPSP):
@@ -1241,7 +1261,6 @@ class LP_MRCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_MRCPSP):
                 >= durations[j]
             )
 
-        start = []
         self.starts = {}
         for task in sorted_tasks:
             self.starts[task] = self.model.add_integer_variable(
@@ -1262,19 +1281,14 @@ class LP_MRCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_MRCPSP):
         modes_dict = self.problem.build_mode_dict(self.start_solution.rcpsp_modes)
         for j in self.start_solution.rcpsp_schedule:
             start_time_j = self.start_solution.rcpsp_schedule[j]["start_time"]
-            start += [
-                (
-                    self.durations[j],
-                    self.problem.mode_details[j][modes_dict[j]]["duration"],
-                )
-            ]
+            self.hinted_values[self.durations[j]] = self.problem.mode_details[j][
+                modes_dict[j]
+            ]["duration"]
             for k in self.variable_per_task[j]:
                 task, mode, time = k
                 if start_time_j == time and mode == modes_dict[j]:
-                    start += [(self.x[k], 1)]
                     self.hinted_values[self.x[k]] = 1
                 else:
-                    start += [(self.x[k], 0)]
                     self.hinted_values[self.x[k]] = 0
 
         p_s: Optional[PartialSolution] = args.get("partial_solution", None)
@@ -1361,20 +1375,18 @@ class LP_MRCPSP_MATHOPT(OrtoolsMathOptMilpSolver, _BaseLP_MRCPSP):
             logger.debug(
                 f"Partial solution constraints : {self.constraints_partial_solutions}"
             )
-            # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
-            self.solution_hint = mathopt.SolutionHint(
-                variable_values=self.hinted_values
-            )
+        # take into account "warmstart" w/o calling set_warmstart (would cause a recursion issue here)
+        self.set_warm_start_from_values(variable_values=self.hinted_values)
 
     def convert_to_variable_values(
         self, solution: RCPSPSolution
     ) -> dict[mathopt.Variable, float]:
-        self.init_model(
-            max_horizon=self.max_horizon,
-            partial_solution=self.partial_solution,
-            start_solution=solution,
-        )
-        return self.hinted_values
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return _BaseLP_MRCPSP.convert_to_variable_values(self, solution)
 
 
 class LP_RCPSP_CPLEX(CplexMilpSolver, _BaseLP_MRCPSP):

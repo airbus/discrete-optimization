@@ -117,6 +117,28 @@ def test_solver_gurobi():
     assert result_storage[0][0].chosen == start_solution.chosen
 
 
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_solver_quad_gurobi():
+    small_example = [f for f in get_data_available() if "1dc.64" in f][0]
+    mis_model: MisProblem = dimacs_parser_nx(small_example)
+
+    solver = MisQuadraticSolver(mis_model)
+    result_storage = solver.solve()
+
+    # test warm start
+    start_solver = MisMilpSolver(mis_model)
+    start_solution = start_solver.solve().get_best_solution()
+
+    # first solution is not start_solution
+    assert result_storage[0][0].chosen != start_solution.chosen
+
+    # warm start at first solution
+    solver.set_warm_start(start_solution)
+    # force first solution to be the hinted one
+    result_storage = solver.solve()
+    assert result_storage[0][0].chosen == start_solution.chosen
+
+
 def test_solver_mathopt():
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
@@ -129,6 +151,10 @@ def test_solver_mathopt():
 
     sol, fit = result_storage.get_best_solution_fit(satisfying=mis_model)
     assert isinstance(sol, MisSolution)
+
+    # test warm start with no assert (sometimes mathopt start from a feasible solution
+    # but provides only the next optimized solution in results)
+    solver.set_warm_start(sol)
 
 
 def test_solver_quad_mathopt():
@@ -143,3 +169,7 @@ def test_solver_quad_mathopt():
 
     sol, fit = result_storage.get_best_solution_fit(satisfying=mis_model)
     assert isinstance(sol, MisSolution)
+
+    # test warm start with no assert (sometimes mathopt start from a feasible solution
+    # but provides only the next optimized solution in results)
+    solver.set_warm_start(sol)

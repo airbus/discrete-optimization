@@ -69,22 +69,28 @@ class MisMathOptQuadraticSolver(OrtoolsMathOptMilpSolver, BaseLPMisSolver):
     if there is weight, it's going to ignore them
     """
 
+    @property
+    def vars_node(self) -> dict[int, Var]:
+        return dict(enumerate(self.vars_node_matrix.tolist()))
+
     def init_model(self, **kwargs: Any) -> None:
 
         # Create a new model
         self.model = mathopt.Model()
 
         # Create variables
-        self.vars_node = [
-            self.model.add_binary_variable(name=f"N{i}")
-            for i in range(self.problem.number_nodes)
-        ]
+        self.vars_node_matrix = np.array(
+            [
+                self.model.add_binary_variable(name=f"N{i}")
+                for i in range(self.problem.number_nodes)
+            ]
+        )
 
         # Set objective
         adj = nx.to_numpy_array(self.problem.graph_nx)
         J = np.identity(self.problem.number_nodes)
         A = J - adj
-        self.model.maximize(self.vars_node @ A @ self.vars_node)
+        self.model.maximize(self.vars_node_matrix @ A @ self.vars_node_matrix)
 
     def convert_to_variable_values(
         self, solution: MisSolution

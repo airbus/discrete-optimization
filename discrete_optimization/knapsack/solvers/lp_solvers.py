@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Callable
 from typing import Any, Optional, Union
@@ -16,7 +18,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import ResultStorage, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
@@ -113,7 +115,7 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         )
 
 
-class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack, WarmstartMixin):
+class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack):
     def init_model(self, **kwargs: Any) -> None:
         warm_start = kwargs.get("warm_start", {})
         self.model = Model("Knapsack")
@@ -155,12 +157,15 @@ class LPKnapsackGurobi(GurobiMilpSolver, _BaseLPKnapsack, WarmstartMixin):
         self.model.setParam("MIPGapAbs", 0.00001)
         self.model.setParam("MIPGap", 0.00000001)
 
-    def set_warm_start(self, solution: KnapsackSolution) -> None:
-        """Make the solver warm start from the given solution."""
-        for i, variable_decision_key in enumerate(sorted(self.variable_decision["x"])):
-            self.variable_decision["x"][
-                variable_decision_key
-            ].Start = solution.list_taken[i]
+    def convert_to_variable_values(
+        self, solution: KnapsackSolution
+    ) -> dict[Var, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return _BaseLPKnapsack.convert_to_variable_values(self, solution)
 
 
 class LPKnapsackMathOpt(OrtoolsMathOptMilpSolver, _BaseLPKnapsack):

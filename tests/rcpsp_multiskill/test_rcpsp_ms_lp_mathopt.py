@@ -1,6 +1,12 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import random
+
+import numpy as np
+import pytest
+from ortools.math_opt.python import mathopt
+
 from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
@@ -18,7 +24,15 @@ from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
 )
 
 
-def test_lp():
+@pytest.fixture()
+def random_seed():
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    return seed
+
+
+def test_lp(random_seed):
     skills_set: set[str] = {"S1", "S2", "S3"}
     resources_set: set[str] = {"R1", "R2", "R3"}
     non_renewable_resources = set()
@@ -59,17 +73,22 @@ def test_lp():
         horizon=100,
         horizon_multiplier=1,
     )
+    kwargs_solver = dict(
+        parameters_milp=ParametersMilp.default(),
+        mathopt_additional_solve_parameters=mathopt.SolveParameters(
+            random_seed=random_seed
+        ),
+    )
     lp_solver = LP_Solver_MRSCPSP_MathOpt(problem=model)
-    lp_solver.init_model()
-
-    res = lp_solver.solve(parameters_milp=ParametersMilp.default())
+    lp_solver.init_model(**kwargs_solver)
+    res = lp_solver.solve(**kwargs_solver)
     sol = res.get_best_solution()
     assert model.satisfy(sol)
 
     # test warm start
     # start solution
-    start_solver = CPSatMSRCPSPSolver(problem=model)
-    start_solution = start_solver.solve(time_limit=10).get_best_solution()
+    assert len(res) > 1
+    start_solution, start_fit = res[1]
     assert model.satisfy(start_solution)
 
     # check different from first solution found
@@ -80,8 +99,10 @@ def test_lp():
     )
 
     # solve with warm_start
+    lp_solver = LP_Solver_MRSCPSP_MathOpt(problem=model)
+    lp_solver.init_model(**kwargs_solver)
     lp_solver.set_warm_start(start_solution)
-    res2 = lp_solver.solve(parameters_milp=ParametersMilp.default())
+    res2 = lp_solver.solve(**kwargs_solver)
 
     # check first solution is the warmstart
     assert (

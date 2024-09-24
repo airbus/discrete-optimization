@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 import random
 from collections.abc import Callable
@@ -13,6 +15,7 @@ from mip import BINARY, MINIMIZE, Model, xsum
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
+    Solution,
 )
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
@@ -254,6 +257,13 @@ class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
 # gurobi solver which is usefull to get a pool of solution (indeed, using the other one we dont have usually a lot of
 # solution since we converge rapidly to the "optimum" (we don't have an objective value..)
 class LP_MRCPSP_GANTT_GUROBI(GurobiMilpSolver, _Base_LP_MRCPSP_GANTT):
+    def convert_to_variable_values(
+        self, solution: Solution
+    ) -> dict[gurobipy.Var, float]:
+        raise NotImplementedError(
+            f"No warmstart implemented for {self.__class__.__name__}."
+        )
+
     def init_model(self, **args):
         self.model = gurobi.Model("Gantt")
         self.ressource_id_usage = {
