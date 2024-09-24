@@ -64,7 +64,7 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
         # return ["makespan", "cost"]
 
     def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
-        return min(s._intern_obj[obj] for s, _ in res.list_solution_fits)
+        return min(s._internal_obj[obj] for s, _ in res.list_solution_fits)
 
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
@@ -807,7 +807,7 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
             modes=modes_dict,
             employee_usage=employee_usage,
         )
-        sol._intern_obj = {}
+        sol._internal_obj = {}
         for k in self.get_model_objectives_available():
-            sol._intern_obj[k] = cpsolvercb.Value(self.variables[k])
+            sol._internal_obj[k] = cpsolvercb.Value(self.variables[k])
         return sol
