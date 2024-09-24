@@ -161,15 +161,16 @@ def execute_ansatz_with_Hamiltonian(
     if use_session:
         max_time = kwargs.get("session_time", "2h")
         session = Session(backend=backend, max_time=max_time)
+        mode = session
     else:
-        session = None
+        mode = backend
 
     # Configure estimator
-    estimator = Estimator(backend=backend, session=session)
+    estimator = Estimator(mode=mode)
     estimator.options.default_shots = nb_shots
 
     # Configure sampler
-    sampler = SamplerV2(backend=backend, session=session)
+    sampler = SamplerV2(mode=mode)
     sampler.options.default_shots = nb_shots
 
     callback_dict = {
