@@ -5,7 +5,6 @@ from typing import Any
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.graph_api import get_node_attributes
 from discrete_optimization.maximum_independent_set.solvers.mis_lp import BaseLPMisSolver
 
@@ -21,13 +20,16 @@ from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 from discrete_optimization.maximum_independent_set.mis_model import MisSolution
 
 
-class BaseGurobiMisSolver(GurobiMilpSolver, BaseLPMisSolver, WarmstartMixin):
+class BaseGurobiMisSolver(GurobiMilpSolver, BaseLPMisSolver):
     vars_node: dict[int, Var]
 
-    def set_warm_start(self, solution: MisSolution) -> None:
-        """Make the solver warm start from the given solution."""
-        for i in range(0, self.problem.number_nodes):
-            self.vars_node[i].Start = solution.chosen[i]
+    def convert_to_variable_values(self, solution: MisSolution) -> dict[Var, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return BaseLPMisSolver.convert_to_variable_values(self, solution)
 
 
 class MisMilpSolver(BaseGurobiMisSolver):
@@ -66,13 +68,17 @@ class MisQuadraticSolver(BaseGurobiMisSolver):
     if there is weight, it's going to ignore them
     """
 
+    @property
+    def vars_node(self) -> dict[int, Var]:
+        return dict(enumerate(self.vars_node_matrix.tolist()))
+
     def init_model(self, **kwargs: Any) -> None:
 
         # Create a new model
         self.model = Model()
 
         # Create variables
-        self.vars_node = self.model.addMVar(
+        self.vars_node_matrix = self.model.addMVar(
             self.problem.number_nodes, vtype=GRB.BINARY, name="N"
         )
 
@@ -80,4 +86,6 @@ class MisQuadraticSolver(BaseGurobiMisSolver):
         adj = nx.to_numpy_array(self.problem.graph_nx, nodelist=self.problem.nodes)
         J = np.identity(self.problem.number_nodes)
         A = J - adj
-        self.model.setObjective(self.vars_node @ A @ self.vars_node, GRB.MAXIMIZE)
+        self.model.setObjective(
+            self.vars_node_matrix @ A @ self.vars_node_matrix, GRB.MAXIMIZE
+        )

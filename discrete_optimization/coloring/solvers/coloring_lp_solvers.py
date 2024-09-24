@@ -4,6 +4,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Callable, Hashable
 from typing import Any, Optional, TypedDict, Union
@@ -27,7 +29,6 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
@@ -171,7 +172,7 @@ class _BaseColoringLP(MilpSolver, SolverColoring):
             return range_color_all
 
 
-class ColoringLP(GurobiMilpSolver, _BaseColoringLP, WarmstartMixin):
+class ColoringLP(GurobiMilpSolver, _BaseColoringLP):
     """Coloring LP solver based on gurobipy library.
 
     Attributes:
@@ -310,7 +311,7 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP, WarmstartMixin):
         color_model.setParam("MIPGap", 0.001)
         color_model.setParam("Heuristics", 0.01)
         self.model = color_model
-        self.variable_decision = {"colors_var": colors_var}
+        self.variable_decision = {"colors_var": colors_var, "nb_colors": opt}
         self.constraints_dict = {
             "one_color_constraints": one_color_constraints,
             "constraints_neighbors": constraints_neighbors,
@@ -329,16 +330,15 @@ class ColoringLP(GurobiMilpSolver, _BaseColoringLP, WarmstartMixin):
             "descr": "no neighbors can have same color"
         }
 
-    def set_warm_start(self, solution: ColoringSolution) -> None:
-        """Make the solver warm start from the given solution."""
-        # Init all variables to 0
-        for var in self.variable_decision["colors_var"].values():
-            var.Start = 0
-        # Set var(node, color) to 1 according to the solution
-        for i, color in enumerate(solution.colors):
-            node = self.index_to_nodes_name[i]
-            variable_decision_key = (node, color)
-            self.variable_decision["colors_var"][variable_decision_key].Start = 1
+    def convert_to_variable_values(
+        self, solution: ColoringSolution
+    ) -> dict[Var, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return _BaseColoringLP.convert_to_variable_values(self, solution)
 
 
 class ColoringLP_MIP(PymipMilpSolver, _BaseColoringLP):
@@ -524,7 +524,6 @@ class ColoringLPMathOpt(OrtoolsMathOptMilpSolver, _BaseColoringLP):
     hyperparameters = _BaseColoringLP.hyperparameters
 
     problem: ColoringProblem
-    solution_hint: Optional[dict[mathopt.Variable, float]] = None
 
     def convert_to_variable_values(
         self, solution: ColoringSolution

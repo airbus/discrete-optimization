@@ -4,6 +4,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Callable
 from typing import Any, Optional, Union
@@ -22,8 +24,8 @@ from discrete_optimization.facility.solvers.facility_solver import SolverFacilit
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
+    Solution,
 )
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
@@ -207,7 +209,7 @@ class _LPFacilitySolverBase(MilpSolver, SolverFacility):
         return FacilitySolution(self.problem, facility_for_customer)
 
 
-class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin):
+class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase):
     """Milp solver using gurobi library
 
     Attributes:
@@ -294,7 +296,7 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin
         s.setParam("MIPGapAbs", 0.00001)
         s.setParam("MIPGap", 0.00000001)
         self.model = s
-        self.variable_decision = {"x": x}
+        self.variable_decision = {"x": x, "y": used}
         self.constraints_dict = {
             "constraint_customer": constraints_customer,
             "constraint_capacity": constraint_capacity,
@@ -310,15 +312,15 @@ class LP_Facility_Solver(GurobiMilpSolver, _LPFacilitySolverBase, WarmstartMixin
         }
         logger.info("Initialized")
 
-    def set_warm_start(self, solution: FacilitySolution) -> None:
-        """Make the solver warm start from the given solution."""
-        # Init all variables to 0
-        for var in self.variable_decision["x"].values():
-            var.Start = 0
-        # Set var(facility, customer) to 1 according to the solution
-        for c, f in enumerate(solution.facility_for_customers):
-            variable_decision_key = (f, c)
-            self.variable_decision["x"][variable_decision_key].Start = 1
+    def convert_to_variable_values(
+        self, solution: Solution
+    ) -> dict[gurobipy.Var, float]:
+        """Convert a solution to a mapping between model variables and their values.
+
+        Will be used by set_warm_start().
+
+        """
+        return _LPFacilitySolverBase.convert_to_variable_values(self, solution)
 
 
 class LP_Facility_Solver_MathOpt(OrtoolsMathOptMilpSolver, _LPFacilitySolverBase):
