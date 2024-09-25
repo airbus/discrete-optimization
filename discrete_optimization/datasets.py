@@ -43,6 +43,8 @@ IMOPSE_DATASET_RELATIVE_PATH = "configurations/problems/MSRCPSP/Regular"
 MSPSPLIB_REPO_URL = "https://github.com/youngkd/MSPSP-InstLib"
 MSPSPLIB_REPO_URL_SHA1 = "f77644175b84beed3bd365315412abee1a15eea1"
 
+JSPLIB_REPO_URL = "https://github.com/tamy0612/JSPLIB"
+JSPLIB_REPO_URL_SHA1 = "eea2b60dd7e2f5c907ff7302662c61812eb7efdf"
 
 MSLIB_DATASET_URL = "http://www.projectmanagement.ugent.be/sites/default/files/datasets/MSRCPSP/MSLIB.zip"
 MSLIB_DATASET_RELATIVE_PATH = "MSLIB.zip"
@@ -342,6 +344,42 @@ def fetch_data_for_mis(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_jsplib_repo(data_home: Optional[str] = None):
+    """Fetch data from jsplib repo. (for jobshop problems)
+
+    https://github.com/tamy0612/JSPLIB
+
+    Params:
+        data_home: Specify the cache folder for the datasets. By default
+            all discrete-optimization data is stored in '~/discrete_optimization_data' subfolders.
+
+    """
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # download in a temporary file the repo data
+    url = f"{JSPLIB_REPO_URL}/archive/{JSPLIB_REPO_URL_SHA1}.zip"
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_dir = f"{data_home}/jobshop"
+            os.makedirs(dataset_dir, exist_ok=True)
+            dataset_prefix_in_zip = f"{rootdir}/instances/"
+            for name in namelist:
+                if name.startswith(dataset_prefix_in_zip):
+                    zipf.extract(name, path=dataset_dir)
+            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
+                os.replace(
+                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
+                )
+            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -355,6 +393,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_imopse(data_home=data_home)
     fetch_data_from_solutionsupdate(data_home=data_home)
     fetch_data_for_mis(data_home=data_home)
+    fetch_data_from_jsplib_repo(data_home=data_home)
 
 
 if __name__ == "__main__":
