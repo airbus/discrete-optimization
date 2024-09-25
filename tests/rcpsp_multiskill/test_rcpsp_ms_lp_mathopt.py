@@ -8,6 +8,9 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     SkillDetail,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import CP_MS_MRCPSP_MZN
+from discrete_optimization.rcpsp_multiskill.solvers.cpsat_msrcpsp_solver import (
+    CPSatMSRCPSPSolver,
+)
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
     LP_Solver_MRSCPSP,
     LP_Solver_MRSCPSP_MathOpt,
@@ -65,7 +68,7 @@ def test_lp():
 
     # test warm start
     # start solution
-    start_solver = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
+    start_solver = CPSatMSRCPSPSolver(problem=model)
     start_solution = start_solver.solve(time_limit=10).get_best_solution()
     assert model.satisfy(start_solution)
 
@@ -84,8 +87,17 @@ def test_lp():
     assert (
         res2[0][0].schedule == start_solution.schedule
         and res2[0][0].modes == start_solution.modes
-        and res2[0][0].employee_usage == start_solution.employee_usage
+        and (
+            all(
+                res2[0][0].employee_usage[t] == start_solution.employee_usage[t]
+                for t in res2[0][0].employee_usage
+                if t in start_solution.employee_usage
+            )
+        )
     )
+    # for employee usage, we check the common keys on the dictionnary, there was some issue otherwise
+    # CPSatMSRCPSPSolver returns empty employee usage for dummy task whereas for other solver the dummy task
+    # simply don't appear : TODO harmonize that.
 
 
 def test_lp_bis():
