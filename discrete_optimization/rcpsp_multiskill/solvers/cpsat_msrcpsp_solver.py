@@ -502,7 +502,7 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
                         )
         calendar_tasks = [
             (
-                self.cp_model.NewFixedSizedIntervalVar(
+                self.cp_model.NewFixedSizeIntervalVar(
                     start=f["start"], size=f["duration"], name="calendar_res"
                 ),
                 f.get(res, 0),
@@ -531,7 +531,7 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
                     )
             calendar_tasks = [
                 (
-                    self.cp_model.NewFixedSizedIntervalVar(
+                    self.cp_model.NewFixedSizeIntervalVar(
                         start=f["start"], size=f["duration"], name="calendar_res"
                     ),
                     f.get(worker, 0),
@@ -574,7 +574,7 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
                             )
             calendar_tasks = [
                 (
-                    self.cp_model.NewFixedSizedIntervalVar(
+                    self.cp_model.NewFixedSizeIntervalVar(
                         start=f["start"], size=f["duration"], name="calendar_res"
                     ),
                     f.get("value", 0),
@@ -652,7 +652,7 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
                         )
         calendar_tasks = [
             (
-                self.cp_model.NewFixedSizedIntervalVar(
+                self.cp_model.NewFixedSizeIntervalVar(
                     start=f["start"], size=f["duration"], name="calendar_res"
                 ),
                 f.get("value", 0),

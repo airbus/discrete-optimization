@@ -160,6 +160,53 @@ def test_ortools(model):
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
+def test_ortools_with_calendar_resource(model):
+    files_available = get_data_available()
+    file = [f for f in files_available if model in f][0]
+    rcpsp_problem = parse_file(file)
+    for resource in rcpsp_problem.resources:
+        rcpsp_problem.resources[resource] = np.array(
+            rcpsp_problem.get_resource_availability_array(resource)
+        )
+        rcpsp_problem.resources[resource][10:15] = 0
+    rcpsp_problem.is_calendar = True
+    rcpsp_problem.update_functions()
+    solver = CPSatRCPSPSolver(problem=rcpsp_problem)
+    result_storage = solver.solve(time_limit=100)
+    solution, fit = result_storage.get_best_solution_fit()
+    solution_rebuilt = RCPSPSolution(
+        problem=rcpsp_problem,
+        rcpsp_permutation=solution.rcpsp_permutation,
+        rcpsp_modes=solution.rcpsp_modes,
+    )
+    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
+    assert fit == -fit_2["makespan"]
+    assert rcpsp_problem.satisfy(solution)
+    rcpsp_problem.plot_ressource_view(solution)
+    plot_task_gantt(rcpsp_problem, solution)
+
+    # test warm start
+    start_solution = (
+        PileSolverRCPSP(problem=rcpsp_problem).solve().get_best_solution_fit()[0]
+    )
+
+    # first solution is not start_solution
+    assert result_storage[0][0].rcpsp_schedule != start_solution.rcpsp_schedule
+
+    # warm start at first solution
+    solver.set_warm_start(start_solution)
+    # force first solution to be the hinted one
+    result_storage = solver.solve(
+        time_limit=100,
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+    )
+    assert result_storage[0][0].rcpsp_schedule == start_solution.rcpsp_schedule
+
+
+@pytest.mark.parametrize(
+    "model",
+    ["j301_1.sm", "j1010_1.mm"],
+)
 def test_ortools_cumulativeresource_optim(model):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
