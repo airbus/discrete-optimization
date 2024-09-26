@@ -37,7 +37,7 @@ from discrete_optimization.rcpsp.robust_rcpsp import (
     UncertainRCPSPModel,
     create_poisson_laws_duration,
 )
-from discrete_optimization.rcpsp.solver import PileSolverRCPSP
+from discrete_optimization.rcpsp.solver import PileSolverRCPSP, PileSolverRCPSP_Calendar
 from discrete_optimization.rcpsp.solver.cp_solvers import (
     CP_MRCPSP_MZN,
     CP_MRCPSP_MZN_NOBOOL,
@@ -187,7 +187,9 @@ def test_ortools_with_calendar_resource(model):
 
     # test warm start
     start_solution = (
-        PileSolverRCPSP(problem=rcpsp_problem).solve().get_best_solution_fit()[0]
+        PileSolverRCPSP_Calendar(problem=rcpsp_problem)
+        .solve()
+        .get_best_solution_fit()[0]
     )
 
     # first solution is not start_solution
