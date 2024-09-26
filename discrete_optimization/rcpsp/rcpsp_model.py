@@ -521,7 +521,8 @@ class RCPSPModel(Problem):
         fig, ax = plt.subplots(nrows=len(self.resources_list), sharex=True)
         for i in range(len(self.resources_list)):
             ax[i].axhline(
-                y=self.resources[self.resources_list[i]], label=self.resources_list[i]
+                y=self.get_max_resource_capacity(self.resources_list[i]),
+                label=self.resources_list[i],
             )
             ax[i].plot(consumption[i, :])
             ax[i].legend()
