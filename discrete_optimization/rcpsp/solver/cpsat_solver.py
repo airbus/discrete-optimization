@@ -165,7 +165,7 @@ class CPSatRCPSPSolver(OrtoolsCPSatSolver, SolverRCPSP, WarmstartMixin):
             ]
             fake_task_res = [
                 (
-                    model.NewFixedSizedIntervalVar(
+                    model.NewFixedSizeIntervalVar(
                         start=f["start"], size=f["duration"], name=f"res_"
                     ),
                     f.get(resource, 0),
@@ -379,7 +379,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
                 return
             fake_task_res = [
                 (
-                    model.NewFixedSizedIntervalVar(
+                    model.NewFixedSizeIntervalVar(
                         start=f["start"], size=f["duration"], name=f"res_"
                     ),
                     int(f.get(resource, 0)),
@@ -588,7 +588,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
                 return
             fake_task_res = [
                 (
-                    model.NewFixedSizedIntervalVar(
+                    model.NewFixedSizeIntervalVar(
                         start=f["start"], size=f["duration"], name=f"res_"
                     ),
                     f.get(resource, 0),
