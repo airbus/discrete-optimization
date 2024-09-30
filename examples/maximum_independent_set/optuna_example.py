@@ -62,7 +62,7 @@ seed = 42
 optuna_nb_trials = 10
 
 gurobi_full_license_available = True
-kamis_available = False
+kamis_available = "KAMIS_DEPLOY" in os.environ
 create_another_study = True  # avoid relaunching the same study, keep the previous ones
 max_time_per_solver = 60  # max duration (s)
 min_time_per_solver = 5  # min duration before pruning (s)
