@@ -47,7 +47,7 @@ def run_cpsat_coloring():
         callbacks=[NbIterationTracker(step_verbosity_level=logging.INFO)],
         parameters_cp=p,
     )
-    print("Status solver : ", solver.get_status_solver())
+    print("Status solver : ", solver.status_solver)
     solution, fit = result_store.get_best_solution_fit()
     plot_coloring_solution(solution)
     plt.show()
@@ -70,7 +70,7 @@ def run_cpsat_coloring_with_constraints():
     p = ParametersCP.default()
     result_store = solver.solve(parameters_cp=p, time_limit=20)
     solution, fit = result_store.get_best_solution_fit()
-    print("Status solver : ", solver.get_status_solver())
+    print("Status solver : ", solver.status_solver)
     plot_coloring_solution(solution)
     plt.show()
     print(solution, fit)

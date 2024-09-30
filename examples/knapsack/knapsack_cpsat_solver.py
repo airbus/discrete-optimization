@@ -20,7 +20,7 @@ def run_cpsat_knapsack():
     params_cp = ParametersCP.default()
     result_storage = cp_model.solve(parameters_cp=params_cp, time_limit=10)
     sol, fit = result_storage.get_best_solution_fit()
-    print("Status solver :", cp_model.get_status_solver())
+    print("Status solver :", cp_model.status_solver)
     assert knapsack_model.satisfy(sol)
 
 

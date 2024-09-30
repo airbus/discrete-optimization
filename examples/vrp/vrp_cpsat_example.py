@@ -26,7 +26,7 @@ def run_cpsat_vrp():
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
     res = solver.solve(parameters_cp=p, time_limit=20)
-    print(solver.get_status_solver())
+    print(solver.status_solver)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution
     print(problem.evaluate(sol))
@@ -111,7 +111,7 @@ def warm_starting():
             fix_variables_to_their_hinted_value=False, log_search_progress=True
         ),
     )
-    print(solver.get_status_solver())
+    print(solver.status_solver)
     # assert res[0][0].list_paths == start_solution.list_paths
 
 

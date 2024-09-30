@@ -19,9 +19,8 @@ from ortools.sat.python.cp_model import (
     ObjLinearExprT,
 )
 
-from discrete_optimization.generic_tools.cp_tools import StatusSolver
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )

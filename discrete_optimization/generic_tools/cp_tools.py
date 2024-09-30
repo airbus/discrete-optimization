@@ -23,7 +23,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     CallbackList,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, StatusSolver
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
@@ -160,13 +160,6 @@ class SignEnum(Enum):
     UP = ">"
 
 
-class StatusSolver(Enum):
-    SATISFIED = "SATISFIED"
-    UNSATISFIABLE = "UNSATISFIABLE"
-    OPTIMAL = "OPTIMAL"
-    UNKNOWN = "UNKNOWN"
-
-
 map_mzn_status_to_do_status: dict[Status, StatusSolver] = {
     Status.SATISFIED: StatusSolver.SATISFIED,
     Status.UNSATISFIABLE: StatusSolver.UNSATISFIABLE,
@@ -179,22 +172,6 @@ class CPSolver(SolverDO):
     """
     Additional function to be implemented by a CP Solver.
     """
-
-    status_solver: Optional[StatusSolver] = None
-
-    def is_optimal(self) -> Optional[bool]:
-        """Tell if found solution is supposed to be optimal.
-
-        To be called after a solve.
-
-        Returns:
-            optimality of the solution. If information missing, returns None instead.
-
-        """
-        if self.status_solver is None or self.status_solver == StatusSolver.UNKNOWN:
-            return None
-        else:
-            return self.status_solver == StatusSolver.OPTIMAL
 
     @abstractmethod
     def init_model(self, **args: Any) -> None:
@@ -214,9 +191,6 @@ class CPSolver(SolverDO):
         **args: Any,
     ) -> ResultStorage:
         ...
-
-    def get_status_solver(self) -> Union[StatusSolver, None]:
-        return self.status_solver
 
 
 class MinizincCPSolver(CPSolver):

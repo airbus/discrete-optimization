@@ -7,6 +7,7 @@ import copy
 import datetime
 import logging
 from abc import abstractmethod
+from collections import defaultdict
 from collections.abc import Callable
 from enum import Enum
 from typing import Any, Optional, Union
@@ -23,7 +24,11 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import (
+    SolverDO,
+    StatusSolver,
+    WarmstartMixin,
+)
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
@@ -41,7 +46,14 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-    GRB = gurobipy.GRB
+    map_gurobi_status_to_do_status: dict[int, StatusSolver] = defaultdict(
+        lambda: StatusSolver.UNKNOWN,
+        {
+            gurobipy.GRB.status.OPTIMAL: StatusSolver.OPTIMAL,
+            gurobipy.GRB.status.INFEASIBLE: StatusSolver.UNSATISFIABLE,
+            gurobipy.GRB.status.SUBOPTIMAL: StatusSolver.SATISFIED,
+        },
+    )
 
 try:
     import docplex
@@ -511,6 +523,8 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
             cb=mathopt_cb,
         )
         self.termination = mathopt_res.termination
+        self.status_solver = map_mathopt_status_to_do_status[self.termination.reason]
+
         logger.info(f"Solver found {len(mathopt_res.solutions)} solutions")
         if mathopt_res.termination.reason in [
             mathopt.TerminationReason.OPTIMAL,
@@ -518,6 +532,19 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
         ]:
             logger.info(f"Objective : {mathopt_res.objective_value()}")
         return mathopt_res
+
+
+map_mathopt_status_to_do_status: dict[mathopt.TerminationReason, StatusSolver] = {
+    mathopt.TerminationReason.OPTIMAL: StatusSolver.OPTIMAL,
+    mathopt.TerminationReason.INFEASIBLE: StatusSolver.UNSATISFIABLE,
+    mathopt.TerminationReason.INFEASIBLE_OR_UNBOUNDED: StatusSolver.UNKNOWN,
+    mathopt.TerminationReason.UNBOUNDED: StatusSolver.UNKNOWN,
+    mathopt.TerminationReason.FEASIBLE: StatusSolver.SATISFIED,
+    mathopt.TerminationReason.NO_SOLUTION_FOUND: StatusSolver.UNSATISFIABLE,
+    mathopt.TerminationReason.IMPRECISE: StatusSolver.UNKNOWN,
+    mathopt.TerminationReason.NUMERICAL_ERROR: StatusSolver.UNKNOWN,
+    mathopt.TerminationReason.OTHER_ERROR: StatusSolver.UNKNOWN,
+}
 
 
 def _mathopt_cb_get_obj_value_for_current_solution():
@@ -652,6 +679,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
             parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
         )
         self.model.optimize()
+        self.status_solver = map_gurobi_status_to_do_status[self.model.Status]
 
         logger.info(f"Problem has {self.model.NumObj} objectives")
         logger.info(f"Solver found {self.model.SolCount} solutions")
@@ -724,13 +752,13 @@ class GurobiCallback:
         self.nb_solutions = 0
 
     def __call__(self, model, where) -> None:
-        if where == GRB.Callback.MIPSOL:
+        if where == gurobipy.GRB.Callback.MIPSOL:
             try:
                 # retrieve and store new solution
                 sol = self.do_solver.retrieve_current_solution(
                     get_var_value_for_current_solution=model.cbGetSolution,
                     get_obj_value_for_current_solution=lambda: model.cbGet(
-                        GRB.Callback.MIPSOL_OBJ
+                        gurobipy.GRB.Callback.MIPSOL_OBJ
                     ),
                 )
                 fit = self.do_solver.aggreg_from_sol(sol)
