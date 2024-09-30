@@ -380,6 +380,20 @@ def fetch_data_from_jsplib_repo(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_fjsp(data_home: Optional[str] = None):
+    data_home = get_data_home(data_home=data_home)
+    url = "https://openhsu.ub.hsu-hh.de/bitstreams/4ed8d5b1-2546-4a30-8f3a-a8f3732ffbbd/download"
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        dataset_dir = f"{data_home}/jfsp_openhsu"
+        os.makedirs(dataset_dir, exist_ok=True)
+        with zipfile.ZipFile(local_file_path) as zipf:
+            zipf.extractall(path=dataset_dir)
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -394,6 +408,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_solutionsupdate(data_home=data_home)
     fetch_data_for_mis(data_home=data_home)
     fetch_data_from_jsplib_repo(data_home=data_home)
+    fetch_data_fjsp(data_home=data_home)
 
 
 if __name__ == "__main__":
