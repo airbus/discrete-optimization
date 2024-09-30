@@ -20,10 +20,8 @@ from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.lns_cp import LNS_OrtoolsCPSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
 
-logging.basicConfig(level=logging.INFO)
 
-
-def run_lnscpsat_fjsp():
+def test_lnscpsat_fjsp():
     files = get_data_available_fjsp()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     print(file)
@@ -63,7 +61,4 @@ def run_lnscpsat_fjsp():
         time_limit_subsolver=2,
     )
     sol, fit = res.get_best_solution_fit()
-
-
-if __name__ == "__main__":
-    run_lnscpsat_fjsp()
+    assert problem.satisfy(sol)
