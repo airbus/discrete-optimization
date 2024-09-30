@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 
 import os
-import platform
 
 import pytest
 
@@ -12,18 +11,21 @@ from discrete_optimization.facility.facility_parser import (
     parse_file,
 )
 from discrete_optimization.facility.solvers.facility_lp_lns_solver import (
-    ConstraintHandlerFacility,
+    ConstraintHandlerFacilityGurobi,
+    ConstraintHandlerFacilityMathOpt,
     InitialFacilityMethod,
     InitialFacilitySolution,
 )
 from discrete_optimization.facility.solvers.facility_lp_solver import (
-    LP_Facility_Solver_PyMip,
-    MilpSolverName,
+    LP_Facility_Solver,
+    LP_Facility_Solver_MathOpt,
     ParametersMilp,
 )
+from discrete_optimization.facility.solvers.greedy_solvers import GreedySolverFacility
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.lns_mip import LNS_MILP
+from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 
 try:
     import gurobipy
@@ -33,15 +35,16 @@ else:
     gurobi_available = True
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-@pytest.mark.skipif(
-    platform.machine() == "arm64",
-    reason=(
-        "Python-mip has issues with cbclib on macos arm64. "
-        "See https://github.com/coin-or/python-mip/issues/167"
-    ),
+@pytest.mark.parametrize(
+    "solver_cls, constraint_handler_cls",
+    [
+        (LP_Facility_Solver_MathOpt, ConstraintHandlerFacilityMathOpt),
+        (LP_Facility_Solver, ConstraintHandlerFacilityGurobi),
+    ],
 )
-def test_facility_lns():
+def test_facility_lns(solver_cls, constraint_handler_cls):
+    if issubclass(solver_cls, GurobiMilpSolver) and not gurobi_available:
+        pytest.skip("You need Gurobi to test this solver.")
     file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
     facility_problem = parse_file(file)
     params_objective_function = get_default_objective_setup(problem=facility_problem)
@@ -51,9 +54,8 @@ def test_facility_lns():
         mip_gap_abs=0.001,
         retrieve_all_solution=True,
     )
-    solver = LP_Facility_Solver_PyMip(
+    solver = solver_cls(
         facility_problem,
-        milp_solver_name=MilpSolverName.CBC,
         params_objective_function=params_objective_function,
     )
     solver.init_model(use_matrix_indicator_heuristic=False)
@@ -62,9 +64,10 @@ def test_facility_lns():
         initial_method=InitialFacilityMethod.GREEDY,
         params_objective_function=params_objective_function,
     )
-    constraint_handler = ConstraintHandlerFacility(
-        problem=facility_problem, fraction_to_fix=0.5, skip_first_iter=True
+    constraint_handler = constraint_handler_cls(
+        problem=facility_problem, fraction_to_fix=0.5
     )
+
     lns_solver = LNS_MILP(
         problem=facility_problem,
         subsolver=solver,
@@ -76,12 +79,46 @@ def test_facility_lns():
     result_store = lns_solver.solve(
         parameters_milp=params_milp,
         time_limit_subsolver=20,
-        nb_iteration_lns=100,
+        nb_iteration_lns=5,
         callbacks=[TimerStopper(total_seconds=100)],
+        stop_first_iteration_if_optimal=False,
     )
     solution = result_store.get_best_solution_fit()[0]
     assert facility_problem.satisfy(solution)
     facility_problem.evaluate(solution)
+
+
+@pytest.mark.parametrize(
+    "solver_cls, constraint_handler_cls",
+    [
+        (LP_Facility_Solver_MathOpt, ConstraintHandlerFacilityMathOpt),
+        (LP_Facility_Solver, ConstraintHandlerFacilityGurobi),
+    ],
+)
+def test_facility_constraint_handler(solver_cls, constraint_handler_cls):
+    if issubclass(solver_cls, GurobiMilpSolver) and not gurobi_available:
+        pytest.skip("You need Gurobi to test this solver.")
+    file = [f for f in get_data_available() if os.path.basename(f) == "fl_16_1"][0]
+    facility_problem = parse_file(file)
+    params_objective_function = get_default_objective_setup(problem=facility_problem)
+    solver = solver_cls(
+        facility_problem,
+        params_objective_function=params_objective_function,
+    )
+    solver.init_model(use_matrix_indicator_heuristic=False)
+    constraint_handler = constraint_handler_cls(
+        problem=facility_problem, fraction_to_fix=0.5
+    )
+
+    greedy_solver = GreedySolverFacility(
+        facility_problem, params_objective_function=params_objective_function
+    )
+    solution = greedy_solver.solve().get_best_solution()
+    dummy_result_storage = solver.create_result_storage([(solution, 0.0)])
+    constraints = constraint_handler.adding_constraint_from_results_store(
+        solver=solver, result_storage=dummy_result_storage
+    )
+    assert len(constraints) > 0
 
 
 if __name__ == "__main__":

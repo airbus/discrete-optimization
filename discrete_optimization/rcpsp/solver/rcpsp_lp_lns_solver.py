@@ -6,7 +6,7 @@ import logging
 import random
 from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import mip
 import numpy as np
@@ -22,8 +22,10 @@ from discrete_optimization.generic_tools.lns_mip import (
     LNS_MILP,
     GurobiConstraintHandler,
     InitialSolution,
+    OrtoolsMathOptConstraintHandler,
     PymipConstraintHandler,
 )
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.ls.local_search import (
     ModeMutation,
@@ -51,7 +53,9 @@ from discrete_optimization.rcpsp.solver import CP_MRCPSP_MZN
 from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
     LP_MRCPSP,
     LP_MRCPSP_GUROBI,
+    LP_MRCPSP_MATHOPT,
     LP_RCPSP,
+    LP_RCPSP_MATHOPT,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     GreedyChoice,
@@ -260,6 +264,102 @@ class ConstraintHandlerStartTimeInterval(PymipConstraintHandler):
         return lns_constraints
 
 
+class ConstraintHandlerFixStartTime_MathOpt(OrtoolsMathOptConstraintHandler):
+    def __init__(self, problem: RCPSPModel, fraction_fix_start_time: float = 0.9):
+        self.problem = problem
+        self.fraction_fix_start_time = fraction_fix_start_time
+
+    def adding_constraint_from_results_store(
+        self, solver: LP_RCPSP_MATHOPT, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+
+        nb_jobs = self.problem.n_jobs + 2
+        lns_constraints = []
+        current_solution, fit = result_storage.get_best_solution_fit()
+        # Starting point
+        solver.set_warm_start(current_solution)
+
+        # Fix start time for a subset of task.
+        jobs_to_fix = set(
+            random.sample(
+                list(current_solution.rcpsp_schedule),
+                int(self.fraction_fix_start_time * nb_jobs),
+            )
+        )
+        for job_to_fix in jobs_to_fix:
+            for t in solver.index_time:
+                if current_solution.rcpsp_schedule[job_to_fix]["start_time"] == t:
+                    lns_constraints.append(
+                        solver.add_linear_constraint(
+                            solver.x[solver.index_in_var[job_to_fix]][t] == 1
+                        )
+                    )
+                else:
+                    lns_constraints.append(
+                        solver.add_linear_constraint(
+                            solver.x[solver.index_in_var[job_to_fix]][t] == 0
+                        )
+                    )
+        return lns_constraints
+
+
+class ConstraintHandlerStartTimeInterval_MathOpt(OrtoolsMathOptConstraintHandler):
+    def __init__(
+        self,
+        problem: RCPSPModel,
+        fraction_to_fix: float = 0.9,
+        minus_delta: int = 2,
+        plus_delta: int = 2,
+    ):
+        self.problem = problem
+        self.fraction_to_fix = fraction_to_fix
+        self.minus_delta = minus_delta
+        self.plus_delta = plus_delta
+
+    def adding_constraint_from_results_store(
+        self, solver: LP_RCPSP_MATHOPT, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        lns_constraints = []
+        current_solution, fit = result_storage.get_best_solution_fit()
+        # Starting point
+        solver.set_warm_start(current_solution)
+        # Avoid fixing last jobs to allow makespan reduction
+        max_time = max(
+            [
+                current_solution.rcpsp_schedule[x]["end_time"]
+                for x in current_solution.rcpsp_schedule
+            ]
+        )
+        last_jobs = [
+            x
+            for x in current_solution.rcpsp_schedule
+            if current_solution.rcpsp_schedule[x]["end_time"] >= max_time - 5
+        ]
+        nb_jobs = self.problem.n_jobs
+        jobs_to_fix = set(
+            random.sample(
+                list(current_solution.rcpsp_schedule),
+                int(self.fraction_to_fix * nb_jobs),
+            )
+        )
+        for lj in last_jobs:
+            if lj in jobs_to_fix:
+                jobs_to_fix.remove(lj)
+        # add constraints
+        for job in jobs_to_fix:
+            start_time_j = current_solution.rcpsp_schedule[job]["start_time"]
+            min_st = max(start_time_j - self.minus_delta, 0)
+            max_st = min(start_time_j + self.plus_delta, max_time)
+            for t in solver.index_time:
+                if t < min_st or t > max_st:
+                    lns_constraints.append(
+                        solver.add_linear_constraint(
+                            solver.x[solver.index_in_var[job]][t] == 0
+                        )
+                    )
+        return lns_constraints
+
+
 class ConstraintHandlerStartTimeIntervalMRCPSP(PymipConstraintHandler):
     def __init__(
         self,
@@ -337,7 +437,7 @@ class ConstraintHandlerStartTimeIntervalMRCPSP(PymipConstraintHandler):
         return lns_constraints
 
 
-class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(GurobiConstraintHandler):
+class _BaseConstraintHandlerStartTimeIntervalMRCPSP(ConstraintHandler):
     def __init__(
         self,
         problem: RCPSPModel,
@@ -351,8 +451,12 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(GurobiConstraintHandler):
         self.plus_delta = plus_delta
 
     def adding_constraint_from_results_store(
-        self, solver: LP_MRCPSP_GUROBI, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: Union[LP_MRCPSP_GUROBI, LP_MRCPSP_MATHOPT],
+        result_storage: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
+        # set a good start: either solver.start_solution or result_storage.best_solution()
         current_solution, fit = result_storage.get_best_solution_fit()
         st = solver.start_solution
         if (
@@ -360,24 +464,9 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(GurobiConstraintHandler):
             < self.problem.evaluate(current_solution)["makespan"]
         ):
             current_solution = st
-        start = []
-        modes_dict = self.problem.build_mode_dict(current_solution.rcpsp_modes)
-        for j in current_solution.rcpsp_schedule:
-            start_time_j = current_solution.rcpsp_schedule[j]["start_time"]
-            mode_j = modes_dict[j]
-            start += [
-                (
-                    solver.durations[j],
-                    self.problem.mode_details[j][mode_j]["duration"],
-                )
-            ]
-            for k in solver.variable_per_task[j]:
-                task, mode, time = k
-                if start_time_j == time and mode == mode_j:
-                    solver.x[k].start = 1
-                    solver.starts[j].start = start_time_j
-                else:
-                    solver.x[k].start = 0
+        solver.set_warm_start(current_solution)
+
+        # add constraints
         constraints = []
         max_time = max(
             [
@@ -407,8 +496,32 @@ class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(GurobiConstraintHandler):
             for key in solver.variable_per_task[job]:
                 t = key[2]
                 if t < min_st or t > max_st:
-                    constraints.append(solver.model.addLConstr(solver.x[key] == 0))
+                    constraints.append(solver.add_linear_constraint(solver.x[key] == 0))
+        return constraints
+
+
+class ConstraintHandlerStartTimeIntervalMRCPSP_GRB(
+    GurobiConstraintHandler, _BaseConstraintHandlerStartTimeIntervalMRCPSP
+):
+    def adding_constraint_from_results_store(
+        self, solver: LP_MRCPSP_GUROBI, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        constraints = _BaseConstraintHandlerStartTimeIntervalMRCPSP.adding_constraint_from_results_store(
+            self, solver=solver, result_storage=result_storage, **kwargs
+        )
         solver.model.update()
+        return constraints
+
+
+class ConstraintHandlerStartTimeIntervalMRCPSP_MathOpt(
+    OrtoolsMathOptConstraintHandler, _BaseConstraintHandlerStartTimeIntervalMRCPSP
+):
+    def adding_constraint_from_results_store(
+        self, solver: LP_MRCPSP_MATHOPT, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        constraints = _BaseConstraintHandlerStartTimeIntervalMRCPSP.adding_constraint_from_results_store(
+            self, solver=solver, result_storage=result_storage, **kwargs
+        )
         return constraints
 
 

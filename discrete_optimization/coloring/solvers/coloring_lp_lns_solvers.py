@@ -7,7 +7,7 @@
 import random
 from collections.abc import Iterable
 from enum import Enum
-from typing import Any
+from typing import Any, Union
 
 from discrete_optimization.coloring.coloring_model import (
     ColoringProblem,
@@ -16,19 +16,26 @@ from discrete_optimization.coloring.coloring_model import (
 from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
     ColoringLP,
     ColoringLP_MIP,
+    ColoringLPMathOpt,
 )
 from discrete_optimization.coloring.solvers.greedy_coloring import GreedyColoring
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_aggreg_function_and_params_objective,
 )
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    FloatHyperparameter,
+)
 from discrete_optimization.generic_tools.lns_mip import (
     GurobiConstraintHandler,
     InitialSolution,
+    OrtoolsMathOptConstraintHandler,
     PymipConstraintHandler,
 )
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
+    MilpSolver,
     MilpSolverName,
     PymipMilpSolver,
 )
@@ -82,8 +89,8 @@ class InitialColoring(InitialSolution):
             return solver.solve()
 
 
-class ConstraintHandlerFixColorsGrb(GurobiConstraintHandler):
-    """Constraint builder used in LNS+LP (using gurobi solver) for coloring problem.
+class _BaseConstraintHandlerFixColors(ConstraintHandler):
+    """Base class for constraint builder used in LNS+LP for coloring problem.
 
     This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
 
@@ -92,21 +99,20 @@ class ConstraintHandlerFixColorsGrb(GurobiConstraintHandler):
         fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
     """
 
+    hyperparameters = [
+        FloatHyperparameter("fraction_to_fix", low=0.0, high=1.0, default=0.9),
+    ]
+
     def __init__(self, problem: ColoringProblem, fraction_to_fix: float = 0.9):
         self.problem = problem
         self.fraction_to_fix = fraction_to_fix
 
     def adding_constraint_from_results_store(
-        self, solver: GurobiMilpSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: Union[ColoringLP, ColoringLPMathOpt],
+        result_storage: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
-        if not isinstance(solver, ColoringLP):
-            raise ValueError("milp_solver must a ColoringLP for this constraint.")
-        if solver.model is None:
-            solver.init_model()
-            if solver.model is None:
-                raise RuntimeError(
-                    "milp_solver.model must be not None after calling milp_solver.init_model()"
-                )
         subpart_color = set(
             random.sample(
                 solver.nodes_name,
@@ -114,7 +120,6 @@ class ConstraintHandlerFixColorsGrb(GurobiConstraintHandler):
             )
         )
         dict_color_fixed = {}
-        dict_color_start = {}
         current_solution = result_storage.get_best_solution()
         if current_solution is None:
             raise ValueError(
@@ -129,30 +134,76 @@ class ConstraintHandlerFixColorsGrb(GurobiConstraintHandler):
                 "result_storage.get_best_solution().colors " "should not be None."
             )
         max_color = max(current_solution.colors)
+        solver.set_warm_start(current_solution)
         for n in solver.nodes_name:
-            dict_color_start[n] = current_solution.colors[solver.index_nodes_name[n]]
-            if n in subpart_color and dict_color_start[n] <= max_color - 1:
-                dict_color_fixed[n] = dict_color_start[n]
+            current_node_color = current_solution.colors[solver.index_nodes_name[n]]
+            if n in subpart_color and current_node_color <= max_color - 1:
+                dict_color_fixed[n] = current_node_color
         colors_var = solver.variable_decision["colors_var"]
-        lns_constraint = []
+        lns_constraints = []
         for key in colors_var:
             n, c = key
-            if c == dict_color_start[n]:
-                colors_var[n, c].start = 1
-                colors_var[n, c].varhintval = 1
-            else:
-                colors_var[n, c].start = 0
-                colors_var[n, c].varhintval = 0
             if n in dict_color_fixed:
                 if c == dict_color_fixed[n]:
-                    lns_constraint.append(
-                        solver.model.addLConstr(colors_var[key] == 1, name=str((n, c)))
+                    lns_constraints.append(
+                        solver.add_linear_constraint(
+                            colors_var[key] == 1, name=str((n, c))
+                        )
                     )
                 else:
-                    lns_constraint.append(
-                        solver.model.addLConstr(colors_var[key] == 0, name=str((n, c)))
+                    lns_constraints.append(
+                        solver.add_linear_constraint(
+                            colors_var[key] == 0, name=str((n, c))
+                        )
                     )
-        return lns_constraint
+        return lns_constraints
+
+
+class ConstraintHandlerFixColorsGrb(
+    GurobiConstraintHandler, _BaseConstraintHandlerFixColors
+):
+    """Constraint builder used in LNS+LP (using gurobi solver) for coloring problem.
+
+    This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
+    """
+
+    def adding_constraint_from_results_store(
+        self, solver: ColoringLP, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        constraints = (
+            _BaseConstraintHandlerFixColors.adding_constraint_from_results_store(
+                self, solver=solver, result_storage=result_storage, **kwargs
+            )
+        )
+        solver.model.update()
+        return constraints
+
+
+class ConstraintHandlerFixColorsMathOpt(
+    OrtoolsMathOptConstraintHandler, _BaseConstraintHandlerFixColors
+):
+    """Constraint builder used in LNS+LP (using mathopt solver) for coloring problem.
+
+    This constraint handler is pretty basic, it fixes a fraction_to_fix proportion of nodes color.
+
+    Attributes:
+        problem (ColoringProblem): input coloring problem
+        fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
+    """
+
+    def adding_constraint_from_results_store(
+        self, solver: ColoringLPMathOpt, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        constraints = (
+            _BaseConstraintHandlerFixColors.adding_constraint_from_results_store(
+                self, solver=solver, result_storage=result_storage, **kwargs
+            )
+        )
+        return constraints
 
 
 class ConstraintHandlerFixColorsPyMip(PymipConstraintHandler):
