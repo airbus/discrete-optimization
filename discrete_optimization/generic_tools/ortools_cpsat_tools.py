@@ -21,12 +21,9 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
-    ParametersCP,
-    StatusSolver,
-)
+from discrete_optimization.generic_tools.cp_tools import CPSolver, ParametersCP
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,

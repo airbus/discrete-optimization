@@ -76,7 +76,7 @@ def test_lns_cpsat_coloring():
         parameters_cp=p,
         time_limit_subsolver=20,
     )
-    print("Status solver : ", solver.get_status_solver())
+    print("Status solver : ", solver.status_solver)
     solution, fit = result_store.get_best_solution_fit()
     # plot_coloring_solution(solution)
     # plt.show()
@@ -128,7 +128,7 @@ def test_lns_cpsat_coloring_with_constraints():
         ],
         parameters_cp=p,
     )
-    print("Status solver : ", solver.get_status_solver())
+    print("Status solver : ", solver.status_solver)
     solution, fit = result_store.get_best_solution_fit()
     # plot_coloring_solution(solution)
     # plt.show()

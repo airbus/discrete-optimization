@@ -7,6 +7,7 @@ from __future__ import annotations  # see annotations as str
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from enum import Enum
 from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
@@ -28,10 +29,18 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 
 
+class StatusSolver(Enum):
+    SATISFIED = "SATISFIED"
+    UNSATISFIABLE = "UNSATISFIABLE"
+    OPTIMAL = "OPTIMAL"
+    UNKNOWN = "UNKNOWN"
+
+
 class SolverDO(Hyperparametrizable, ABC):
     """Base class for a discrete-optimization solver."""
 
     problem: Problem
+    status_solver: StatusSolver = StatusSolver.UNKNOWN
 
     def __init__(
         self,
@@ -102,7 +111,10 @@ class SolverDO(Hyperparametrizable, ABC):
             optimality of the solution. If information missing, returns None instead.
 
         """
-        return None
+        if self.status_solver == StatusSolver.UNKNOWN:
+            return None
+        else:
+            return self.status_solver == StatusSolver.OPTIMAL
 
     def get_model_objectives_available(self) -> list[str]:
         """List objectives available for lexico optimization

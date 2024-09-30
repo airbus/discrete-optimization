@@ -50,7 +50,7 @@ def run_lns():
     )
     sol, fit = res.get_best_solution_fit()
     print("Found by cpsat :", fit)
-    print("Status : ", solver.get_status_solver())
+    print("Status : ", solver.status_solver)
 
     initial_solution_provider = TrivialInitialSolution(
         solver.create_result_storage(
@@ -106,7 +106,7 @@ def run_lns_mix():
     )
     sol, fit = res.get_best_solution_fit()
     print("Found by cpsat :", fit)
-    print("Status : ", solver.get_status_solver())
+    print("Status : ", solver.status_solver)
 
     initial_solution_provider = TrivialInitialSolution(
         solver.create_result_storage(

@@ -60,7 +60,7 @@ def example_mslib_cpsat():
         ],
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
-    print(solver.get_status_solver())
+    print(solver.status_solver)
     from discrete_optimization.rcpsp_multiskill.plots.plot_solution import (
         plot_resource_individual_gantt,
     )

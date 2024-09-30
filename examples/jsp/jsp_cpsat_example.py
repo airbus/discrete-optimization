@@ -31,7 +31,7 @@ def run_cpsat_jsp():
     p.nb_process = 10
     res = solver.solve(parameters_cp=p, time_limit=10)
     sol = res.get_best_solution_fit()[0]
-    print(solver.get_status_solver())
+    print(solver.status_solver)
     assert problem.satisfy(sol)
     print(problem.evaluate(sol))
 
