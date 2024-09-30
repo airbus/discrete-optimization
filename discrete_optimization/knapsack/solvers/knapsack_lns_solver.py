@@ -16,9 +16,14 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 )
 from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
+    OrtoolsMathOptConstraintHandler,
     PymipConstraintHandler,
 )
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName, PymipMilpSolver
+from discrete_optimization.generic_tools.lp_tools import (
+    MilpSolverName,
+    OrtoolsMathOptMilpSolver,
+    PymipMilpSolver,
+)
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
@@ -27,7 +32,10 @@ from discrete_optimization.knapsack.solvers.greedy_solvers import (
     GreedyBest,
     ResultStorage,
 )
-from discrete_optimization.knapsack.solvers.lp_solvers import LPKnapsack
+from discrete_optimization.knapsack.solvers.lp_solvers import (
+    LPKnapsack,
+    LPKnapsackMathOpt,
+)
 
 
 class InitialKnapsackMethod(Enum):
@@ -126,4 +134,42 @@ class ConstraintHandlerKnapsack(PymipConstraintHandler):
         if solver.milp_solver_name == MilpSolverName.GRB:
             solver.model.solver.update()
         solver.model.start = start
+        return lns_constraint
+
+
+class ConstraintHandlerKnapsackMathOpt(OrtoolsMathOptConstraintHandler):
+    def __init__(self, problem: KnapsackModel, fraction_to_fix: float = 0.9):
+        self.problem = problem
+        self.fraction_to_fix = fraction_to_fix
+        self.iter = 0
+
+    def adding_constraint_from_results_store(
+        self, solver: LPKnapsackMathOpt, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        subpart_item = set(
+            random.sample(
+                range(self.problem.nb_items),
+                int(self.fraction_to_fix * self.problem.nb_items),
+            )
+        )
+        current_solution = result_storage.get_best_solution()
+        if current_solution is None:
+            raise ValueError(
+                "result_storage.get_best_solution() " "should not be None."
+            )
+        if not isinstance(current_solution, KnapsackSolution):
+            raise ValueError(
+                "result_storage.get_best_solution() " "should be a KnapsackSolution."
+            )
+        solver.set_warm_start(current_solution)
+
+        x_var = solver.variable_decision["x"]
+        lns_constraint = []
+        for c in range(self.problem.nb_items):
+            if c in subpart_item:
+                lns_constraint.append(
+                    solver.add_linear_constraint(
+                        x_var[c] == current_solution.list_taken[c], name=str(c)
+                    )
+                )
         return lns_constraint

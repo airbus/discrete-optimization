@@ -21,6 +21,7 @@ from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
     MilpSolverName,
+    OrtoolsMathOptMilpSolver,
     ParametersMilp,
     PymipMilpSolver,
 )
@@ -40,6 +41,17 @@ class GurobiConstraintHandler(ConstraintHandler):
     ) -> None:
         solver.model.remove(list(previous_constraints))
         solver.model.update()
+
+
+class OrtoolsMathOptConstraintHandler(ConstraintHandler):
+    def remove_constraints_from_previous_iteration(
+        self,
+        solver: OrtoolsMathOptMilpSolver,
+        previous_constraints: Iterable[Any],
+        **kwargs: Any,
+    ) -> None:
+        for cstr in previous_constraints:
+            solver.model.delete_linear_constraint(cstr)
 
 
 class PymipConstraintHandler(ConstraintHandler):

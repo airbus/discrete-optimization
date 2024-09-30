@@ -949,6 +949,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
     ) -> None:
         for var, val in variable_values.items():
             var.Start = val
+            var.VarHintVal = val
 
 
 class GurobiCallback:
