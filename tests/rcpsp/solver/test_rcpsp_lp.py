@@ -101,7 +101,7 @@ def test_rcpsp_sm_lp_mathopt():
     files_available = get_data_available()
     file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
-    solver = LP_RCPSP_MATHOPT(problem=rcpsp_problem, lp_solver=MilpSolverName.CBC)
+    solver = LP_RCPSP_MATHOPT(problem=rcpsp_problem)
     solver.init_model()
     results_storage: ResultStorage = solver.solve(
         parameters_milp=ParametersMilp.default()
@@ -122,7 +122,7 @@ def test_rcpsp_mm_lp_mathopt():
     file = [f for f in files_available if "j1010_1.mm" in f][0]
     rcpsp_problem = parse_file(file)
     rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
-    solver = LP_MRCPSP_MATHOPT(problem=rcpsp_problem, lp_solver=MilpSolverName.CBC)
+    solver = LP_MRCPSP_MATHOPT(problem=rcpsp_problem)
     solver.init_model(greedy_start=False)
     results_storage: ResultStorage = solver.solve(
         parameters_milp=ParametersMilp.default()
@@ -150,7 +150,7 @@ def test_rcpsp_sm_lp_mathopt_partial():
     }
     partial_solution = PartialSolution(task_mode=None, start_times=some_constraints)
     partial_solution_for_lp = partial_solution
-    solver = LP_RCPSP_MATHOPT(problem=rcpsp_problem, lp_solver=MilpSolverName.CBC)
+    solver = LP_RCPSP_MATHOPT(problem=rcpsp_problem)
     solver.init_model(partial_solution=partial_solution_for_lp, greedy_start=False)
     store = solver.solve(time_limit=20)
     solution, fit = store.get_best_solution_fit()
