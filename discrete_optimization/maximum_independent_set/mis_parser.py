@@ -8,8 +8,6 @@ from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.maximum_independent_set.mis_model import MisProblem
 
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
-
 
 def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None

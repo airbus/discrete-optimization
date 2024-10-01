@@ -163,19 +163,16 @@ jobs:
           python -m pip install -U pip
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
           pip install ${wheelfile}
-      - name: Check import work without minizinc if DO_SKIP_MZN_CHECK set
-        run: |
-          export DO_SKIP_MZN_CHECK=1
-          python -c "import discrete_optimization"
-      - name: Check import fails without minizinc if DO_SKIP_MZN_CHECK unset
+      - name: Check minizinc based solvers fails without minizinc binary
         run: |
           python -c "
           try:
-            import discrete_optimization
+            from discrete_optimization.generic_tools.cp_tools import find_right_minizinc_solver_name, CPSolverName
+            find_right_minizinc_solver_name(CPSolverName.CHUFFED)
           except RuntimeError:
             pass
           else:
-            raise AssertionError('We should not be able to import discrete_optimization without minizinc being installed.')
+            raise AssertionError('We should not be able to `find_right_minizinc_solver_name()` without minizinc being installed.')
           "
       - name: Create bin/
         run: mkdir -p bin
@@ -208,7 +205,7 @@ jobs:
         run: |
           # configure minizinc
           ${{ matrix.minizinc_config_cmdline }}
-          # check imports
+          # check imports
           python tests/test_import_all_submodules.py
       - name: Install test dependencies
         run: |

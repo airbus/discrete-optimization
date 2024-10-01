@@ -61,6 +61,12 @@ map_cp_solver_name = {
 }
 
 
+_minizinc_minimal_parsed_version = (2, 8)
+_minizinc_minimal_str_version = ".".join(
+    str(i) for i in _minizinc_minimal_parsed_version
+)
+
+
 def find_right_minizinc_solver_name(cp_solver_name: CPSolverName):
     """
     This small utility function is adapting the ortools tag if needed.
@@ -68,7 +74,21 @@ def find_right_minizinc_solver_name(cp_solver_name: CPSolverName):
     :return: the tag for minizinc corresponding to the given cpsolver.
     """
     driver = minizinc.default_driver
-    assert driver is not None
+
+    # Check minzinc binary is found and has proper version
+    if minizinc.default_driver is None:
+        raise RuntimeError(
+            "Minizinc binary has not been found.\n"
+            "You need to install it and/or configure the PATH environment variable.\n"
+            "See minizinc documentation for more details: https://www.minizinc.org/doc-latest/en/installation.html."
+        )
+    if minizinc.default_driver.parsed_version < _minizinc_minimal_parsed_version:
+        raise RuntimeError(
+            f"Minizinc binary version must be at least {_minizinc_minimal_str_version}.\n"
+            "Install an appropriate version of minizinc and/or configure the PATH environment variable.\n"
+            "See minizinc documentation for more details: https://www.minizinc.org/doc-latest/en/installation.html."
+        )
+
     tag_map = driver.available_solvers(False)
     if map_cp_solver_name[cp_solver_name] not in tag_map:
         if cp_solver_name == CPSolverName.ORTOOLS:

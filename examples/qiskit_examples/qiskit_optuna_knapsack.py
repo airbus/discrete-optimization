@@ -9,9 +9,6 @@ Results can be viewed on optuna-dashboard with:
 
 """
 
-import os
-
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
 
 import logging
 import time
@@ -19,7 +16,6 @@ from typing import Any
 
 import optuna
 from optuna import Trial
-from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import TrialState
 
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger

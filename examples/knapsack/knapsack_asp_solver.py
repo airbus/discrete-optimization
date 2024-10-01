@@ -3,9 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import os
 
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
