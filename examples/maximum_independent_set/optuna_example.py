@@ -9,22 +9,14 @@ Results can be viewed on optuna-dashboard with:
 
 """
 
-import os
-
-from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
-    MisKamisSolver,
-)
-
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
-
 import logging
+import os
 import time
 from collections import defaultdict
 from typing import Any
 
 import optuna
 from optuna import Trial
-from optuna.storages import JournalFileStorage, JournalStorage
 from optuna.trial import TrialState
 
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
@@ -32,10 +24,7 @@ from discrete_optimization.generic_tools.callbacks.optuna import OptunaCallback
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.lp_tools import (
-    ParametersMilp,
-    gurobi_available,
-)
+from discrete_optimization.generic_tools.lp_tools import gurobi_available
 from discrete_optimization.generic_tools.optuna.timed_percentile_pruner import (
     TimedPercentilePruner,
 )
@@ -47,6 +36,9 @@ from discrete_optimization.maximum_independent_set.mis_solvers import solvers_ma
 from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
     MisMilpSolver,
     MisQuadraticSolver,
+)
+from discrete_optimization.maximum_independent_set.solvers.mis_kamis import (
+    MisKamisSolver,
 )
 from discrete_optimization.maximum_independent_set.solvers.mis_networkx import (
     MisNetworkXSolver,

@@ -3,12 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import os
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
-
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,

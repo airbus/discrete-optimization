@@ -3,12 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import os
 
-os.environ["DO_SKIP_MZN_CHECK"] = "1"
 from discrete_optimization.coloring.coloring_model import (
-    ColoringProblem,
-    ColoringSolution,
     ConstraintsColoring,
     transform_coloring_problem,
 )
