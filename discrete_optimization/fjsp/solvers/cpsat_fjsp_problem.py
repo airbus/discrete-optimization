@@ -186,6 +186,8 @@ class CPSatFJspSolver(OrtoolsCPSatSolver, WarmstartMixin):
 
     def create_is_present_constraints(self):
         for subjob in self.variables["keys_per_subjob"]:
+            if len(self.variables["keys_per_subjob"][subjob]) <= 1:
+                continue
             # One way of doing the subjob should be selected !
             self.cp_model.AddExactlyOne(
                 [
