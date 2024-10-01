@@ -39,7 +39,11 @@ class JobShopProblem(Problem):
     list_jobs: list[list[Subjob]]
 
     def __init__(
-        self, list_jobs: list[list[Subjob]], n_jobs: int = None, n_machines: int = None
+        self,
+        list_jobs: list[list[Subjob]],
+        n_jobs: int = None,
+        n_machines: int = None,
+        horizon: int = None,
     ):
         self.n_jobs = n_jobs
         self.n_machines = n_machines
@@ -56,6 +60,11 @@ class JobShopProblem(Problem):
         for k in range(self.n_jobs):
             for sub_k in range(len(list_jobs[k])):
                 self.job_per_machines[list_jobs[k][sub_k].machine_id] += [(k, sub_k)]
+        self.horizon = horizon
+        if self.horizon is None:
+            self.horizon = sum(
+                sum(subjob.processing_time for subjob in job) for job in self.list_jobs
+            )
 
     def evaluate(self, variable: SolutionJobshop) -> dict[str, float]:
         return {"makespan": max(x[-1][1] for x in variable.schedule)}
