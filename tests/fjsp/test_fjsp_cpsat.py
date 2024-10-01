@@ -51,7 +51,7 @@ def test_cpsat_fjsp():
     p.nb_process = 10
     res = solver.solve(
         parameters_cp=p,
-        time_limit=300,
+        time_limit=30,
         ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
         duplicate_temporal_var=True,
         add_cumulative_constraint=True,

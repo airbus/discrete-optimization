@@ -78,11 +78,71 @@ class FJobShopProblem(Problem):
                 )
                 for job in self.list_jobs
             )
+        self.nb_subjob_per_job = {
+            i: len(self.list_jobs[i].sub_jobs) for i in range(self.n_jobs)
+        }
+        self.subjob_possible_machines = {
+            (i, j): set(x.machine_id for x in self.list_jobs[i].sub_jobs[j])
+            for i in range(self.n_jobs)
+            for j in range(self.nb_subjob_per_job[i])
+        }
+        self.duration_per_machines = {
+            (i, j): {
+                x.machine_id: x.processing_time for x in self.list_jobs[i].sub_jobs[j]
+            }
+            for (i, j) in self.subjob_possible_machines
+        }
 
     def evaluate(self, variable: SolutionFJobshop) -> dict[str, float]:
         return {"makespan": max(x[-1][1] for x in variable.schedule)}
 
-    def satisfy(self, variable: Solution) -> bool:
+    def satisfy(self, variable: SolutionFJobshop) -> bool:
+        if not all(
+            variable.schedule[i][j][2] in self.subjob_possible_machines[(i, j)]
+            for (i, j) in self.subjob_possible_machines
+        ):
+            logger.info("Unallowed machine used for some subjob")
+            return False
+        for m in self.job_per_machines:
+            sorted_ = sorted(
+                [
+                    variable.schedule[x[0]][x[1]]
+                    for x in self.job_per_machines[m]
+                    if variable.schedule[x[0]][x[1]][2] == m
+                ],
+                key=lambda y: y[0],
+            )
+            len_ = len(sorted_)
+            for i in range(1, len_):
+                if sorted_[i][0] < sorted_[i - 1][1]:
+                    logger.info("Overlapping task on same machines")
+                    return False
+        for job in range(self.n_jobs):
+            m = variable.schedule[job][0][2]
+            if not (
+                variable.schedule[job][0][1] - variable.schedule[job][0][0]
+                == self.duration_per_machines[(job, 0)][m]
+            ):
+                logger.info(
+                    f"Duration of task {job, 0} not coherent with the machine choice "
+                )
+            for s_j in range(1, len(variable.schedule[job])):
+                if variable.schedule[job][s_j][0] < variable.schedule[job][s_j - 1][1]:
+                    logger.info(
+                        f"Precedence constraint not respected between {job, s_j}"
+                        f"and {job, s_j-1}"
+                    )
+                    return False
+                if not (
+                    variable.schedule[job][s_j][1] - variable.schedule[job][s_j][0]
+                    == self.duration_per_machines[(job, s_j)][
+                        variable.schedule[job][s_j][2]
+                    ]
+                ):
+                    logger.info(
+                        f"Duration of task {job, s_j} not coherent with the machine choice "
+                    )
+                    return False
         return True
 
     def get_attribute_register(self) -> EncodingRegister:
