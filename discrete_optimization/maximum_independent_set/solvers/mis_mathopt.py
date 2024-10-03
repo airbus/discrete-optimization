@@ -34,6 +34,8 @@ class MisMathOptQuadraticSolver(OrtoolsMathOptMilpSolver, BaseQuadMisSolver):
 
     """
 
+    has_quadratic_objective = True
+
     def convert_to_variable_values(
         self, solution: MisSolution
     ) -> dict[mathopt.Variable, float]:

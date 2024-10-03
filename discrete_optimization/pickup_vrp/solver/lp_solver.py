@@ -9,10 +9,13 @@ import logging
 import os
 import random
 import time
+from abc import abstractmethod
 from collections.abc import Callable, Hashable, Iterable
+from enum import Enum
 from typing import Any, Optional, Union, cast
 
 import networkx as nx
+from ortools.math_opt.python import mathopt
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -24,8 +27,15 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.generic_tools.lp_tools import (
+    ConstraintType,
+    GurobiCallback,
     GurobiMilpSolver,
+    InequalitySense,
+    MathOptCallback,
+    MilpSolver,
+    OrtoolsMathOptMilpSolver,
     ParametersMilp,
+    VariableType,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -35,7 +45,7 @@ from discrete_optimization.pickup_vrp.gpdp import GPDP, Edge, GPDPSolution, Node
 from discrete_optimization.pickup_vrp.solver.pickup_vrp_solver import SolverPickupVrp
 
 try:
-    import gurobipy as grb
+    import gurobipy
 except ImportError:
     gurobi_available = False
 else:
@@ -146,22 +156,9 @@ def retrieve_current_solution(
     return results, obj
 
 
-class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
+class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
     problem: GPDP
     warm_start: Optional[GPDPSolution] = None
-
-    def __init__(
-        self,
-        problem: GPDP,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs: Any,
-    ):
-        super().__init__(
-            problem=problem, params_objective_function=params_objective_function
-        )
-        self.model: Optional["grb.Model"] = None
-        self.constraint_on_edge: dict[int, Any] = {}
-        self.variable_order: dict[Node, Any] = {}
 
     def set_warm_start(self, solution: GPDPSolution) -> None:
         """Make the solver warm start from the given solution.
@@ -171,7 +168,9 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         """
         self.warm_start = solution
 
-    def convert_to_variable_values(self, solution: Solution) -> dict[grb.Var, float]:
+    def convert_to_variable_values(
+        self, solution: Solution
+    ) -> dict[gurobipy.Var, float]:
         """
 
         Not used here by set_warm_start().
@@ -186,7 +185,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
 
     def one_visit_per_node(
         self,
-        model: "grb.Model",
         nodes_of_interest: Iterable[Node],
         variables_edges: dict[int, dict[Edge, Any]],
         edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
@@ -194,27 +192,23 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
     ) -> None:
         constraint_one_visit = {}
         for node in nodes_of_interest:
-            constraint_one_visit[node] = model.addLConstr(
-                lhs=grb.quicksum(
-                    [variables_edges[x[0]][x[1]] for x in edges_in_all_vehicles[node]]
-                ),
-                sense=grb.GRB.GREATER_EQUAL,
-                rhs=1,
+            constraint_one_visit[node] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[x[0]][x[1]] for x in edges_in_all_vehicles[node]
+                )
+                >= 1,
                 name="visit_" + str(node),
             )
-            constraint_one_visit[(node, "out")] = model.addLConstr(
-                lhs=grb.quicksum(
-                    [variables_edges[x[0]][x[1]] for x in edges_out_all_vehicles[node]]
-                ),
-                sense=grb.GRB.GREATER_EQUAL,
-                rhs=1,
+            constraint_one_visit[(node, "out")] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[x[0]][x[1]] for x in edges_out_all_vehicles[node]
+                )
+                >= 1,
                 name="visitout_" + str(node),
             )
-        model.update()
 
     def one_visit_per_clusters(
         self,
-        model: "grb.Model",
         nodes_of_interest: Iterable[Node],
         variables_edges: dict[int, dict[Edge, Any]],
         edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
@@ -226,39 +220,31 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                 node in nodes_of_interest
                 for node in self.problem.clusters_to_node[cluster]
             ):
-                constraint_cluster[cluster] = model.addLConstr(
-                    lhs=grb.quicksum(
-                        [
-                            variables_edges[x[0]][x[1]]
-                            for node in self.problem.clusters_to_node[cluster]
-                            for x in edges_in_all_vehicles[node]
-                            if node in nodes_of_interest
-                            and x[0] in self.problem.vehicles_representative
-                        ]
-                    ),
-                    sense=grb.GRB.GREATER_EQUAL,
-                    rhs=1,
+                constraint_cluster[cluster] = self.add_linear_constraint(
+                    self.construct_linear_sum(
+                        variables_edges[x[0]][x[1]]
+                        for node in self.problem.clusters_to_node[cluster]
+                        for x in edges_in_all_vehicles[node]
+                        if node in nodes_of_interest
+                        and x[0] in self.problem.vehicles_representative
+                    )
+                    >= 1,
                     name="visit_" + str(cluster),
                 )
-                constraint_cluster[(cluster, "out")] = model.addLConstr(
-                    lhs=grb.quicksum(
-                        [
-                            variables_edges[x[0]][x[1]]
-                            for node in self.problem.clusters_to_node[cluster]
-                            for x in edges_out_all_vehicles[node]
-                            if node in nodes_of_interest
-                            and x[0] in self.problem.vehicles_representative
-                        ]
-                    ),
-                    sense=grb.GRB.EQUAL,
-                    rhs=1,
+                constraint_cluster[(cluster, "out")] = self.add_linear_constraint(
+                    self.construct_linear_sum(
+                        variables_edges[x[0]][x[1]]
+                        for node in self.problem.clusters_to_node[cluster]
+                        for x in edges_out_all_vehicles[node]
+                        if node in nodes_of_interest
+                        and x[0] in self.problem.vehicles_representative
+                    )
+                    == 1,
                     name="visitout_" + str(cluster),
                 )
-        model.update()
 
     def resources_constraint(
         self,
-        model: "grb.Model",
         variables_edges: dict[int, dict[Edge, Any]],
         edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
         edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
@@ -266,8 +252,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         resources = self.problem.resources_set
         resources_variable_coming: dict[str, dict[Node, Any]] = {
             r: {
-                node: model.addVar(
-                    vtype=grb.GRB.CONTINUOUS,
+                node: self.add_continuous_variable(
                     name="res_coming_" + str(r) + "_" + str(node),
                 )
                 for node in edges_in_all_vehicles
@@ -276,8 +261,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         }
         resources_variable_leaving = {
             r: {
-                node: model.addVar(
-                    vtype=grb.GRB.CONTINUOUS,
+                node: self.add_continuous_variable(
                     name="res_leaving_" + str(r) + "_" + str(node),
                 )
                 for node in edges_in_all_vehicles
@@ -286,13 +270,13 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         }
         for v in self.problem.origin_vehicle:
             for r in resources_variable_coming:
-                model.addLConstr(
+                self.add_linear_constraint(
                     resources_variable_coming[r][self.problem.origin_vehicle[v]]
                     == self.problem.resources_flow_node[self.problem.origin_vehicle[v]][
                         r
                     ]
                 )
-                model.addLConstr(
+                self.add_linear_constraint(
                     resources_variable_leaving[r][self.problem.origin_vehicle[v]]
                     == self.problem.resources_flow_node[self.problem.origin_vehicle[v]][
                         r
@@ -305,17 +289,18 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                 for vehicle, edge in edges_in_all_vehicles[node]:
                     if edge[0] == edge[1]:
                         continue
-                    model.addGenConstrIndicator(
-                        variables_edges[vehicle][edge],
-                        1,
-                        resources_variable_coming[r][node]
-                        == resources_variable_leaving[r][edge[0]]
+                    self.add_linear_constraint_with_indicator(
+                        binvar=variables_edges[vehicle][edge],
+                        binval=1,
+                        lhs=resources_variable_coming[r][node],
+                        sense=InequalitySense.EQUAL,
+                        rhs=resources_variable_leaving[r][edge[0]]
                         + self.problem.resources_flow_edges[edge][r],
-                        name="res_coming_indicator_" + str(index),
+                        name=f"res_coming_indicator_{index}",
                     )
                     index += 1
                 if node not in all_origin:
-                    model.addLConstr(
+                    self.add_linear_constraint(
                         resources_variable_leaving[r][node]
                         == resources_variable_coming[r][node]
                         + self.problem.resources_flow_node[node][r]
@@ -327,7 +312,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
 
     def simple_capacity_constraint(
         self,
-        model: "grb.Model",
         variables_edges: dict[int, dict[Edge, Any]],
         edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
         edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
@@ -338,8 +322,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         # corresponding to negative flow values in the problem definition.
         consumption_per_vehicle: dict[int, dict[str, Any]] = {
             v: {
-                r: model.addVar(
-                    vtype=grb.GRB.CONTINUOUS,
+                r: self.add_continuous_variable(
                     lb=0,
                     ub=self.problem.capacities[v][r][1],
                     name="consumption_v_" + str(v) + "_" + str(r),
@@ -350,9 +333,9 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         }
         for v in consumption_per_vehicle:
             for r in consumption_per_vehicle[v]:
-                model.addLConstr(
+                self.add_linear_constraint(
                     consumption_per_vehicle[v][r]
-                    == grb.quicksum(
+                    == self.construct_linear_sum(
                         variables_edges[v][e]
                         * (
                             -self.problem.resources_flow_node[e[1]][r]
@@ -363,59 +346,53 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                     )
                 )
                 # redundant :
-                model.addLConstr(
-                    lhs=consumption_per_vehicle[v][r],
-                    sense=grb.GRB.LESS_EQUAL,
-                    rhs=self.problem.capacities[v][r][1],
+                self.add_linear_constraint(
+                    consumption_per_vehicle[v][r] <= self.problem.capacities[v][r][1],
                     name="constraint_capa_" + str(v) + "_" + str(r),
                 )
         return {"consumption_per_vehicle": consumption_per_vehicle}
 
     def time_evolution(
         self,
-        model: "grb.Model",
         variables_edges: dict[int, dict[Edge, Any]],
         edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
         edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> dict[str, dict[Node, Any]]:
         time_coming: dict[Node, Any] = {
-            node: model.addVar(
-                vtype=grb.GRB.CONTINUOUS, name="time_coming_" + str(node)
-            )
+            node: self.add_continuous_variable(name="time_coming_" + str(node))
             for node in edges_in_all_vehicles
         }
         time_leaving: dict[Node, Any] = {
-            node: model.addVar(
-                vtype=grb.GRB.CONTINUOUS, name="time_leaving_" + str(node)
-            )
+            node: self.add_continuous_variable(name="time_leaving_" + str(node))
             for node in edges_in_all_vehicles
         }
         for v in self.problem.origin_vehicle:
-            model.addLConstr(time_coming[self.problem.origin_vehicle[v]] == 0)
+            self.add_linear_constraint(time_coming[self.problem.origin_vehicle[v]] == 0)
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         for node in time_leaving:
             for vehicle, edge in edges_in_all_vehicles[node]:
                 if edge[0] == edge[1]:
                     continue
-                model.addGenConstrIndicator(
-                    variables_edges[vehicle][edge],
-                    1,
-                    time_coming[node]
-                    == time_leaving[edge[0]]
+                self.add_linear_constraint_with_indicator(
+                    binvar=variables_edges[vehicle][edge],
+                    binval=1,
+                    lhs=time_coming[node],
+                    sense=InequalitySense.EQUAL,
+                    rhs=time_leaving[edge[0]]
                     + self.problem.time_delta[edge[0]][edge[1]],
-                    name="time_coming_" + str(index),
+                    name=f"time_coming_{index}",
                 )
                 index += 1
             if node not in all_origin:
-                model.addLConstr(
+                self.add_linear_constraint(
                     time_leaving[node]
                     >= time_coming[node] + self.problem.time_delta_node[node]
                 )
         return {"time_coming": time_coming, "time_leaving": time_leaving}
 
     def init_model(self, **kwargs: Any) -> None:
-        model: grb.Model = grb.Model("GPDP-flow")
+        self.model = self.create_empty_model("GPDP-flow")
         include_backward = kwargs.get("include_backward", True)
         include_triangle = kwargs.get("include_triangle", False)
         include_subtour = kwargs.get("include_subtour", False)
@@ -447,8 +424,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             for k in self.problem.group_identical_vehicles:
                 j = self.problem.group_identical_vehicles[k][0]
                 variables_edges[j] = {
-                    e: model.addVar(
-                        vtype=grb.GRB.BINARY,
+                    e: self.add_binary_variable(
                         name="flow_" + str(j) + "_" + str(e),
                         obj=graph.edges_infos_dict[e]["distance"],
                     )
@@ -460,34 +436,34 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         else:
             variables_edges = {
                 j: {
-                    e: model.addVar(
-                        vtype=grb.GRB.BINARY,
+                    e: self.add_binary_variable(
                         name="flow_" + str(j) + "_" + str(e),
-                        obj=graph.edges_infos_dict[e]["distance"],
                     )
                     for e in self.problem.get_edges_for_vehicle(j)
                 }
                 for j in range(nb_vehicle)
             }
+        obj = self.construct_linear_sum(
+            graph.edges_infos_dict[e]["distance"] * var
+            for variables_edges_per_group in variables_edges.values()
+            for e, var in variables_edges_per_group.items()
+        )
         if optimize_span:
             self.spans = {
-                j: model.addVar(vtype=grb.GRB.INTEGER, name="span_" + str(j))
+                j: self.add_integer_variable(name="span_" + str(j))
                 for j in range(nb_vehicle)
             }
-            self.objective = model.addVar(vtype=grb.GRB.INTEGER, obj=100)
+            self.objective = self.add_integer_variable()
+            obj += 100 * self.objective
             for j in self.spans:
-                model.addLConstr(
+                self.add_linear_constraint(
                     self.spans[j]
-                    == grb.quicksum(
-                        [
-                            variables_edges[j][e]
-                            * graph.edges_infos_dict[e]["distance"]
-                            for e in variables_edges[j]
-                        ]
+                    == self.construct_linear_sum(
+                        variables_edges[j][e] * graph.edges_infos_dict[e]["distance"]
+                        for e in variables_edges[j]
                     )
                 )
-                model.addLConstr(self.objective >= self.spans[j], name="obj")
-            model.update()
+                self.add_linear_constraint(self.objective >= self.spans[j], name="obj")
         self.nodes_of_interest = nodes_of_interest
         self.variables_edges = variables_edges
         all_variables: dict[str, dict[Any, Any]] = {"variables_edges": variables_edges}
@@ -495,7 +471,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         for vehicle in variables_edges:
             for e in variables_edges[vehicle]:
                 if e[0] == e[1]:
-                    constraint_loop[(vehicle, e)] = model.addLConstr(
+                    constraint_loop[(vehicle, e)] = self.add_linear_constraint(
                         variables_edges[vehicle][e] == 0,
                         name="loop_" + str((vehicle, e)),
                     )
@@ -535,68 +511,51 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             node_target = self.problem.target_vehicle[name_vehicles[vehicle]]
             same_node = node_origin == node_target
-            constraints_out_flow[(vehicle, node_origin)] = model.addLConstr(
-                grb.quicksum(
-                    [
-                        variables_edges[vehicle][edge]
-                        for edge in edges_out_per_vehicles[vehicle].get(
-                            node_origin, set()
-                        )
-                        if edge[1] != node_origin or same_node
-                    ]
+            constraints_out_flow[(vehicle, node_origin)] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[vehicle][edge]
+                    for edge in edges_out_per_vehicles[vehicle].get(node_origin, set())
+                    if edge[1] != node_origin or same_node
                 )
                 == count_origin[node_origin],
                 name="outflow_" + str((vehicle, node_origin)),
             )  # Avoid loop
-            constraints_in_flow[(vehicle, node_target)] = model.addLConstr(
-                grb.quicksum(
-                    [
-                        variables_edges[vehicle][edge]
-                        for edge in edges_in_per_vehicles[vehicle].get(
-                            node_target, set()
-                        )
-                        if edge[0] != node_target or same_node
-                    ]
+            constraints_in_flow[(vehicle, node_target)] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[vehicle][edge]
+                    for edge in edges_in_per_vehicles[vehicle].get(node_target, set())
+                    if edge[0] != node_target or same_node
                 )
                 == count_target[node_target],
                 name="inflow_" + str((vehicle, node_target)),
             )  # Avoid loop
 
-            constraints_out_flow[(vehicle, node_target)] = model.addLConstr(
-                lhs=grb.quicksum(
-                    [
-                        variables_edges[vehicle][edge]
-                        for edge in edges_out_per_vehicles[vehicle].get(
-                            node_target, set()
-                        )
-                        if edge[1] != node_target or same_node
-                    ]
-                ),
-                rhs=0,
-                sense=grb.GRB.LESS_EQUAL,
+            constraints_out_flow[(vehicle, node_target)] = self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[vehicle][edge]
+                    for edge in edges_out_per_vehicles[vehicle].get(node_target, set())
+                    if edge[1] != node_target or same_node
+                )
+                <= 0,
                 name="outflow_" + str((vehicle, node_target)),
             )
 
         for vehicle in range(nb_vehicle):
             origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
             target = self.problem.target_vehicle[name_vehicles[vehicle]]
-            model.addLConstr(
-                grb.quicksum(
-                    [
-                        variables_edges[v][edge]
-                        for v, edge in edges_out_all_vehicles[origin]
-                        if self.problem.origin_vehicle[name_vehicles[v]] != origin
-                    ]
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[v][edge]
+                    for v, edge in edges_out_all_vehicles[origin]
+                    if self.problem.origin_vehicle[name_vehicles[v]] != origin
                 )
                 == 0
             )
-            model.addLConstr(
-                grb.quicksum(
-                    [
-                        variables_edges[v][edge]
-                        for v, edge in edges_in_all_vehicles[target]
-                        if self.problem.target_vehicle[name_vehicles[v]] != target
-                    ]
+            self.add_linear_constraint(
+                self.construct_linear_sum(
+                    variables_edges[v][edge]
+                    for v, edge in edges_in_all_vehicles[target]
+                    if self.problem.target_vehicle[name_vehicles[v]] != target
                 )
                 == 0
             )
@@ -607,20 +566,18 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             same_node = node_origin == node_target
             for node in edges_in_per_vehicles[vehicle]:
                 if same_node or node not in {node_origin, node_target}:
-                    constraints_flow_conservation[(vehicle, node)] = model.addLConstr(
-                        grb.quicksum(
-                            [
-                                variables_edges[vehicle][e]
-                                for e in edges_in_per_vehicles[vehicle].get(node, set())
-                                if e[1] != e[0]
-                            ]
-                            + [
-                                -variables_edges[vehicle][e]
-                                for e in edges_out_per_vehicles[vehicle].get(
-                                    node, set()
-                                )
-                                if e[1] != e[0]
-                            ]
+                    constraints_flow_conservation[
+                        (vehicle, node)
+                    ] = self.add_linear_constraint(
+                        self.construct_linear_sum(
+                            variables_edges[vehicle][e]
+                            for e in edges_in_per_vehicles[vehicle].get(node, set())
+                            if e[1] != e[0]
+                        )
+                        + self.construct_linear_sum(
+                            -variables_edges[vehicle][e]
+                            for e in edges_out_per_vehicles[vehicle].get(node, set())
+                            if e[1] != e[0]
                         )
                         == 0,
                         name="convflow_" + str((vehicle, node)),
@@ -628,15 +585,11 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                     if unique_visit:
                         constraints_flow_conservation[
                             (vehicle, node, "in")
-                        ] = model.addLConstr(
-                            grb.quicksum(
-                                [
-                                    variables_edges[vehicle][e]
-                                    for e in edges_in_per_vehicles[vehicle].get(
-                                        node, set()
-                                    )
-                                    if e[1] != e[0]
-                                ]
+                        ] = self.add_linear_constraint(
+                            self.construct_linear_sum(
+                                variables_edges[vehicle][e]
+                                for e in edges_in_per_vehicles[vehicle].get(node, set())
+                                if e[1] != e[0]
                             )
                             <= 1,
                             name="valueflow_" + str((vehicle, node)),
@@ -656,7 +609,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                             continue
                         if edge[0] == node_target or edge[1] == node_target:
                             continue
-                        constraint_tour_2length[cnt_tour] = model.addLConstr(
+                        constraint_tour_2length[cnt_tour] = self.add_linear_constraint(
                             variables_edges[vehicle][edge]
                             + variables_edges[vehicle][(edge[1], edge[0])]
                             <= 1,
@@ -680,7 +633,9 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                     if len(neigh_2[node_neigh]) >= 1:
                         for node_neigh_neigh in neigh_2[node_neigh]:
                             for vehicle in range(nb_vehicle):
-                                constraint_triangle[cnt_triangle] = model.addLConstr(
+                                constraint_triangle[
+                                    cnt_triangle
+                                ] = self.add_linear_constraint(
                                     variables_edges[vehicle][(node, node_neigh)]
                                     + variables_edges[vehicle][
                                         (node_neigh, node_neigh_neigh)
@@ -693,16 +648,14 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
 
         if include_subtour:
             variables_order = {
-                node: model.addVar(vtype=grb.GRB.CONTINUOUS, name="order_" + str(node))
+                node: self.add_continuous_variable(name="order_" + str(node))
                 for node in edges_in_all_vehicles
             }
             constraints_order = {}
             for vehicle in range(nb_vehicle):
                 node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
-                constraints_order[node_origin] = model.addLConstr(
-                    lhs=variables_order[node_origin],
-                    sense=grb.GRB.EQUAL,
-                    rhs=0,
+                constraints_order[node_origin] = self.add_linear_constraint(
+                    variables_order[node_origin] == 0,
                     name="order_" + str(node_origin),
                 )
             use_big_m = True
@@ -712,7 +665,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                 if node not in constraints_order:
                     for vehicle, edge in edges_in_all_vehicles[node]:
                         if use_big_m:
-                            constraints_order[node] = model.addLConstr(
+                            constraints_order[node] = self.add_linear_constraint(
                                 variables_order[node]
                                 >= variables_order[edge[0]]
                                 + 1
@@ -720,21 +673,23 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                                 name="order_" + str(node),
                             )
                         if use_indicator:
-                            constraints_order[node] = model.addGenConstrIndicator(
-                                variables_edges[vehicle][edge],
-                                1,
-                                variables_order[node] == variables_order[edge[0]] + 1,
+                            constraints_order[
+                                node
+                            ] = self.add_linear_constraint_with_indicator(
+                                binvar=variables_edges[vehicle][edge],
+                                binval=1,
+                                lhs=variables_order[node],
+                                sense=InequalitySense.EQUAL,
+                                rhs=variables_order[edge[0]] + 1,
                             )
 
         for vehicle in range(nb_vehicle):
             for node in [self.problem.origin_vehicle[name_vehicles[vehicle]]]:
                 if node in edges_in_all_vehicles:
-                    constraints_in_flow[node] = model.addLConstr(
-                        grb.quicksum(
-                            [
-                                variables_edges[x[0]][x[1]]
-                                for x in edges_in_all_vehicles[node]
-                            ]
+                    constraints_in_flow[node] = self.add_linear_constraint(
+                        self.construct_linear_sum(
+                            variables_edges[x[0]][x[1]]
+                            for x in edges_in_all_vehicles[node]
                         )
                         == 0,
                         name="no_inflow_start_" + str(node),
@@ -742,7 +697,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
 
         if one_visit_per_node:
             self.one_visit_per_node(
-                model=model,
                 nodes_of_interest=nodes_of_interest,
                 variables_edges=variables_edges,
                 edges_in_all_vehicles=edges_in_all_vehicles,
@@ -750,7 +704,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             )
         if one_visit_per_cluster:
             self.one_visit_per_clusters(
-                model=model,
                 nodes_of_interest=nodes_of_interest,
                 variables_edges=variables_edges,
                 edges_in_all_vehicles=edges_in_all_vehicles,
@@ -759,7 +712,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         if include_capacity:
             all_variables.update(
                 self.simple_capacity_constraint(
-                    model=model,
                     variables_edges=variables_edges,
                     edges_in_all_vehicles=edges_in_all_vehicles,
                     edges_out_all_vehicles=edges_out_all_vehicles,
@@ -768,7 +720,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         if include_resources:
             all_variables.update(
                 self.resources_constraint(
-                    model=model,
                     variables_edges=variables_edges,
                     edges_in_all_vehicles=edges_in_all_vehicles,
                     edges_out_all_vehicles=edges_out_all_vehicles,
@@ -777,17 +728,13 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         if include_time_evolution:
             all_variables.update(
                 self.time_evolution(
-                    model=model,
                     variables_edges=variables_edges,
                     edges_in_all_vehicles=edges_in_all_vehicles,
                     edges_out_all_vehicles=edges_out_all_vehicles,
                 )
             )
+        self.set_model_objective(obj, minimize=True)
 
-        model.update()
-        model.setParam("Heuristics", 0.5)
-        model.setParam(grb.GRB.Param.Method, 2)
-        model.modelSense = grb.GRB.MINIMIZE
         self.edges_in_all_vehicles: dict[
             Node, set[tuple[int, Edge]]
         ] = edges_in_all_vehicles
@@ -814,21 +761,8 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         ] = edges_out_per_vehicles_cluster
 
         self.variable_decisions = all_variables
-        self.model = model
         self.clusters_version = one_visit_per_cluster
         self.tsp_version = one_visit_per_node
-
-    def retrieve_ith_temporaryresult(self, i: int) -> TemporaryResult:
-        get_var_value_for_current_solution = (
-            lambda var: self.get_var_value_for_ith_solution(var=var, i=i)
-        )
-        get_obj_value_for_current_solution = (
-            lambda: self.get_obj_value_for_ith_solution(i=i)
-        )
-        return self.retrieve_current_temporaryresult(
-            get_var_value_for_current_solution=get_var_value_for_current_solution,
-            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
-        )
 
     def retrieve_current_temporaryresult(
         self,
@@ -851,9 +785,6 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         reevaluate_result(temporaryresult, problem=self.problem)
         return temporaryresult
 
-    def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
-        return super().retrieve_solutions(parameters_milp=parameters_milp)
-
     def retrieve_current_solution(
         self,
         get_var_value_for_current_solution: Callable[[Any], float],
@@ -861,33 +792,20 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
     ) -> GPDPSolution:
         """
 
-        Not used here as GurobiMilpSolver.solve() is overriden
+        Not used here as solve() is overriden
 
 
         """
-        temporaryresult = self.retrieve_current_temporaryresult(
-            get_var_value_for_current_solution=get_var_value_for_current_solution,
-            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
-        )
-        return convert_temporaryresult_to_gpdpsolution(
-            temporaryresult=temporaryresult, problem=self.problem
-        )
+        raise NotImplementedError()
 
+    @abstractmethod
     def solve_one_iteration(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
         **kwargs: Any,
     ) -> list[TemporaryResult]:
-
-        self.optimize_model(
-            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
-        )
-        list_temporary_results: list[TemporaryResult] = []
-        for i in range(self.nb_solutions - 1, -1, -1):
-            list_temporary_results.append(self.retrieve_ith_temporaryresult(i=i))
-
-        return list_temporary_results
+        ...
 
     def solve_iterative(
         self,
@@ -941,25 +859,20 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         solutions: list[TemporaryResult] = self.solve_one_iteration(
             parameters_milp=parameters_milp, time_limit=time_limit_subsolver, **kwargs
         )
-        first_solution: TemporaryResult = solutions[-1]
+        best_solution: TemporaryResult = min(solutions, key=lambda sol: sol.obj)
         if (
-            (first_solution.rebuilt_dict is None)
-            or (first_solution.connected_components_per_vehicle is None)
-            or (first_solution.component_global is None)
+            (best_solution.rebuilt_dict is None)
+            or (best_solution.connected_components_per_vehicle is None)
+            or (best_solution.component_global is None)
         ):
             raise RuntimeError(
                 "Temporary result attributes rebuilt_dict, component_global"
                 "and connected_components_per_vehicle cannot be None after solving."
             )
-        subtour: Union[SubtourAddingConstraint, SubtourAddingConstraintCluster]
-        if self.clusters_version:
-            subtour = SubtourAddingConstraintCluster(
-                problem=self.problem, linear_solver=self
-            )
-        else:
-            subtour = SubtourAddingConstraint(problem=self.problem, linear_solver=self)
-        subtour.adding_component_constraints([first_solution])
-        self.model.update()
+        subtour = SubtourAddingConstraint(
+            problem=self.problem, linear_solver=self, cluster=self.clusters_version
+        )
+        subtour.adding_component_constraints([best_solution])
         nb_iteration = 0
         res = self.create_result_storage(
             self.convert_temporaryresults(solutions),
@@ -968,8 +881,8 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
         if (
             max(
                 [
-                    len(first_solution.connected_components_per_vehicle[v])
-                    for v in first_solution.connected_components_per_vehicle
+                    len(best_solution.connected_components_per_vehicle[v])
+                    for v in best_solution.connected_components_per_vehicle
                 ]
             )
             == 1
@@ -982,7 +895,7 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             )
 
         while not finished:
-            rebuilt_dict = first_solution.rebuilt_dict
+            rebuilt_dict = best_solution.rebuilt_dict
             if (json_dump_folder is not None) and all(
                 rebuilt_dict[v] is not None for v in rebuilt_dict
             ):
@@ -1009,37 +922,31 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
                 rebuilt_dict[v] is None for v in rebuilt_dict
             ):
                 c.adding_constraint(warm_start)
-            self.model.update()
             solutions = self.solve_one_iteration(
                 parameters_milp=parameters_milp,
                 time_limit=time_limit_subsolver,
                 **kwargs,
             )
-            first_solution = solutions[-1]
+            best_solution = min(solutions, key=lambda sol: sol.obj)
             if (
-                (first_solution.rebuilt_dict is None)
-                or (first_solution.connected_components_per_vehicle is None)
-                or (first_solution.component_global is None)
+                (best_solution.rebuilt_dict is None)
+                or (best_solution.connected_components_per_vehicle is None)
+                or (best_solution.component_global is None)
             ):
                 raise RuntimeError(
                     "Temporary result attributes rebuilt_dict, component_global"
                     "and connected_components_per_vehicle cannot be None after solving."
                 )
-            if self.clusters_version:
-                subtour = SubtourAddingConstraintCluster(
-                    problem=self.problem, linear_solver=self
-                )
-            else:
-                subtour = SubtourAddingConstraint(
-                    problem=self.problem, linear_solver=self
-                )
-            logger.debug(len(first_solution.component_global))
-            subtour.adding_component_constraints([first_solution])
+            subtour = SubtourAddingConstraint(
+                problem=self.problem, linear_solver=self, cluster=self.clusters_version
+            )
+            logger.debug(len(best_solution.component_global))
+            subtour.adding_component_constraints([best_solution])
             if (
                 max(
                     [
-                        len(first_solution.connected_components_per_vehicle[v])
-                        for v in first_solution.connected_components_per_vehicle
+                        len(best_solution.connected_components_per_vehicle[v])
+                        for v in best_solution.connected_components_per_vehicle
                     ]
                 )
                 == 1
@@ -1092,18 +999,177 @@ class LinearFlowSolver(GurobiMilpSolver, SolverPickupVrp):
             list_solution_fits.append((solution, fit))
         return list_solution_fits
 
-    def init_warm_start(self, routes: dict[int, list]) -> None:
-        if routes is None:
-            return
-        for v in routes:
-            edges = [(e1, e2) for e1, e2 in zip(routes[v][:-1], routes[v][1:])]
-            for e in self.variable_decisions["variables_edges"][v]:
-                if e in edges:
-                    self.variable_decisions["variables_edges"][v][e].start = 1
-                    self.variable_decisions["variables_edges"][v][e].varhintval = 1
-                else:
-                    self.variable_decisions["variables_edges"][v][e].start = 0
-                    self.variable_decisions["variables_edges"][v][e].varhintval = 0
+
+class TemporaryResultGurobiCallback(GurobiCallback):
+    def __init__(self, do_solver: LinearFlowSolver):
+        self.do_solver = do_solver
+        self.temporary_results = []
+
+    def __call__(self, model, where) -> None:
+        if where == gurobipy.GRB.Callback.MIPSOL:
+            try:
+                # retrieve and store new solution
+                self.temporary_results.append(
+                    self.do_solver.retrieve_current_temporaryresult(
+                        get_var_value_for_current_solution=model.cbGetSolution,
+                        get_obj_value_for_current_solution=lambda: model.cbGet(
+                            gurobipy.GRB.Callback.MIPSOL_OBJ
+                        ),
+                    )
+                )
+            except Exception as e:
+                # catch exceptions because gurobi ignore them and do not stop solving
+                self.do_solver.early_stopping_exception = e
+                model.terminate()
+
+
+class LinearFlowSolver(GurobiMilpSolver, BaseLinearFlowSolver):
+    model: Optional["gurobipy.Model"] = None
+
+    def init_model(self, **kwargs):
+        BaseLinearFlowSolver.init_model(self, **kwargs)
+        self.model.update()
+        self.model.setParam("Heuristics", 0.5)
+        self.model.setParam(gurobipy.GRB.Param.Method, 2)
+
+    def solve_one_iteration(
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        **kwargs: Any,
+    ) -> list[TemporaryResult]:
+
+        gurobi_callback = TemporaryResultGurobiCallback(do_solver=self)
+        self.optimize_model(
+            parameters_milp=parameters_milp,
+            time_limit=time_limit,
+            gurobi_callback=gurobi_callback,
+            **kwargs,
+        )
+
+        return gurobi_callback.temporary_results
+
+    def solve(
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
+        do_lns: bool = True,
+        nb_iteration_max: int = 10,
+        json_dump_folder: Optional[str] = None,
+        warm_start: Optional[dict[Any, Any]] = None,
+        callbacks: Optional[list[Callback]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        return BaseLinearFlowSolver.solve(
+            self,
+            parameters_milp=parameters_milp,
+            time_limit_subsolver=time_limit_subsolver,
+            do_lns=do_lns,
+            nb_iteration_max=nb_iteration_max,
+            json_dump_folder=json_dump_folder,
+            warm_start=warm_start,
+            callbacks=callbacks,
+            **kwargs,
+        )
+
+    def convert_to_variable_values(
+        self, solution: Solution
+    ) -> dict[gurobipy.Var, float]:
+        BaseLinearFlowSolver.convert_to_variable_values(self, solution=solution)
+
+    def set_warm_start(self, solution: GPDPSolution) -> None:
+        BaseLinearFlowSolver.set_warm_start(self, solution)
+
+
+class TemporaryResultMathOptCallback(MathOptCallback):
+    def __init__(self, do_solver: LinearFlowSolverMathOpt):
+        self.do_solver = do_solver
+        self.temporary_results = []
+
+    def __call__(self, callback_data: mathopt.CallbackData) -> mathopt.CallbackResult:
+        cb_sol = callback_data.solution
+        try:
+            # retrieve and store new solution
+            get_var_value_for_current_solution = lambda var: cb_sol[var]
+            if self.do_solver.has_quadratic_objective:
+                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_quadratic_expression().evaluate(
+                    cb_sol
+                )
+            else:
+                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_linear_expression().evaluate(
+                    cb_sol
+                )
+            self.temporary_results.append(
+                self.do_solver.retrieve_current_temporaryresult(
+                    get_var_value_for_current_solution=get_var_value_for_current_solution,
+                    get_obj_value_for_current_solution=get_obj_value_for_current_solution,
+                )
+            )
+        except Exception as e:
+            # catch exceptions because gurobi ignore them and do not stop solving
+            self.do_solver.early_stopping_exception = e
+            stopping = True
+        else:
+            stopping = False
+        return mathopt.CallbackResult(terminate=stopping)
+
+
+class LinearFlowSolverMathOpt(OrtoolsMathOptMilpSolver, BaseLinearFlowSolver):
+    def solve_one_iteration(
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit: Optional[float] = 30.0,
+        mathopt_solver_type: mathopt.SolverType = mathopt.SolverType.CP_SAT,
+        mathopt_enable_output: bool = False,
+        mathopt_model_parameters: Optional[mathopt.ModelSolveParameters] = None,
+        mathopt_additional_solve_parameters: Optional[mathopt.SolveParameters] = None,
+        **kwargs: Any,
+    ) -> list[TemporaryResult]:
+
+        mathopt_cb = TemporaryResultMathOptCallback(do_solver=self)
+        self.optimize_model(
+            parameters_milp=parameters_milp,
+            time_limit=time_limit,
+            mathopt_solver_type=mathopt_solver_type,
+            mathopt_cb=mathopt_cb,
+            mathopt_enable_output=mathopt_enable_output,
+            mathopt_model_parameters=mathopt_model_parameters,
+            mathopt_additional_solve_parameters=mathopt_additional_solve_parameters,
+            **kwargs,
+        )
+
+        return mathopt_cb.temporary_results
+
+    def solve(
+        self,
+        parameters_milp: Optional[ParametersMilp] = None,
+        time_limit_subsolver: Optional[float] = 30.0,
+        do_lns: bool = True,
+        nb_iteration_max: int = 10,
+        json_dump_folder: Optional[str] = None,
+        warm_start: Optional[dict[Any, Any]] = None,
+        callbacks: Optional[list[Callback]] = None,
+        **kwargs: Any,
+    ) -> ResultStorage:
+        return BaseLinearFlowSolver.solve(
+            self,
+            parameters_milp=parameters_milp,
+            time_limit_subsolver=time_limit_subsolver,
+            do_lns=do_lns,
+            nb_iteration_max=nb_iteration_max,
+            json_dump_folder=json_dump_folder,
+            warm_start=warm_start,
+            callbacks=callbacks,
+            **kwargs,
+        )
+
+    def convert_to_variable_values(
+        self, solution: Solution
+    ) -> dict[mathopt.Variable, float]:
+        BaseLinearFlowSolver.convert_to_variable_values(self, solution=solution)
+
+    def set_warm_start(self, solution: GPDPSolution) -> None:
+        BaseLinearFlowSolver.set_warm_start(self, solution)
 
 
 def construct_edges_in_out_dict(
@@ -1243,8 +1309,8 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
             for e in self.variable_decisions["variables_edges"][v]
         ]
 
-        def callback(model: grb.Model, where: int) -> None:
-            if where == grb.GRB.Callback.MIPSOL:
+        def callback(model: gurobipy.Model, where: int) -> None:
+            if where == gurobipy.GRB.Callback.MIPSOL:
                 if self.problem.graph is None:
                     raise RuntimeError(
                         "self.problem.graph cannot be None at this point"
@@ -1316,7 +1382,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                                                 for e0, e1 in zip(pp[:-1], pp[1:])
                                             ]
                                             model.cbLazy(
-                                                grb.quicksum(
+                                                self.construct_linear_sum(
                                                     [
                                                         self.variable_decisions[
                                                             "variables_edges"
@@ -1333,7 +1399,7 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                                 (s[-1], s[0])
                             ]
                             model.cbLazy(
-                                grb.quicksum(
+                                self.construct_linear_sum(
                                     [
                                         self.variable_decisions["variables_edges"][v][
                                             key
@@ -1344,17 +1410,13 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                                 <= len(keys) - 1
                             )
 
-                subtour: Union[SubtourAddingConstraint, SubtourAddingConstraintCluster]
-                if not self.clusters_version:
-                    subtour = SubtourAddingConstraint(
-                        problem=self.problem, linear_solver=self, lazy=True
-                    )
-                    subtour.adding_component_constraints([temporary_result])
-                else:
-                    subtour = SubtourAddingConstraintCluster(
-                        problem=self.problem, linear_solver=self, lazy=True
-                    )
-                    subtour.adding_component_constraints([temporary_result])
+                subtour = SubtourAddingConstraint(
+                    problem=self.problem,
+                    linear_solver=self,
+                    lazy=True,
+                    cluster=self.clusters_version,
+                )
+                subtour.adding_component_constraints([temporary_result])
 
         self.model.Params.lazyConstraints = 1
         self.model.optimize(callback)
@@ -1479,9 +1541,11 @@ class SubtourAddingConstraint:
     def __init__(
         self,
         problem: GPDP,
-        linear_solver: LinearFlowSolver,
+        linear_solver: BaseLinearFlowSolver,
         lazy: bool = False,
+        cluster: bool = False,
     ):
+        self.cluster = cluster
         self.problem = problem
         self.linear_solver = linear_solver
         self.lazy = lazy
@@ -1501,15 +1565,7 @@ class SubtourAddingConstraint:
                     "and connected_components_per_vehicle cannot be None after solving."
                 )
             for v in l.connected_components_per_vehicle:
-                if self.lazy:
-                    c += update_model_lazy(
-                        self.problem,
-                        self.linear_solver,
-                        l.connected_components_per_vehicle[v],
-                        self.linear_solver.edges_in_all_vehicles,
-                        self.linear_solver.edges_out_all_vehicles,
-                    )
-                else:
+                if not self.lazy and not self.cluster:
                     if len(l.connected_components_per_vehicle[v]) > 1:
                         ind = 0
                         for p_ind in l.paths_component[v]:
@@ -1528,8 +1584,8 @@ class SubtourAddingConstraint:
                                 ):
                                     keys = [(e0, e1) for e0, e1 in zip(pp[:-1], pp[1:])]
                                     c += [
-                                        self.linear_solver.model.addLConstr(
-                                            grb.quicksum(
+                                        self.linear_solver.add_linear_constraint(
+                                            self.linear_solver.construct_linear_sum(
                                                 [
                                                     self.linear_solver.variable_decisions[
                                                         "variables_edges"
@@ -1546,58 +1602,30 @@ class SubtourAddingConstraint:
                                     ]
 
                             ind += 1
-                    c += update_model(
-                        self.problem,
-                        self.linear_solver,
-                        l.connected_components_per_vehicle[v],
-                        self.linear_solver.edges_in_all_vehicles,
-                        self.linear_solver.edges_out_all_vehicles,
-                        do_order=False,
-                    )
-        self.linear_solver.model.update()
-
-
-class SubtourAddingConstraintCluster:
-    def __init__(
-        self,
-        problem: GPDP,
-        linear_solver: LinearFlowSolver,
-        lazy: bool = False,
-    ):
-        self.problem = problem
-        self.linear_solver = linear_solver
-        self.lazy = lazy
-
-    def adding_component_constraints(
-        self, list_solution: list[TemporaryResult]
-    ) -> None:
-        c = []
-        for l in list_solution:
-            if l.connected_components_per_vehicle is None:
-                raise RuntimeError(
-                    "Temporary result attributes "
-                    "connected_components_per_vehicle cannot be None after solving."
-                )
-            for v in l.connected_components_per_vehicle:
-                connected_components = l.connected_components_per_vehicle[v]
-                conn = []
-                for x in connected_components:
-                    s = set([self.problem.clusters_dict[k] for k in x[0]])
-                    conn += [(s, len(s))]
-                c += update_model_cluster_tsp(
-                    self.problem,
-                    self.linear_solver,
-                    conn,
-                    self.linear_solver.edges_in_all_vehicles_cluster,
-                    self.linear_solver.edges_out_all_vehicles_cluster,
+                if self.cluster:
+                    connected_components = []
+                    for x in l.connected_components_per_vehicle[v]:
+                        s = set([self.problem.clusters_dict[k] for k in x[0]])
+                        connected_components += [(s, len(s))]
+                else:
+                    connected_components = l.connected_components_per_vehicle[v]
+                c += update_model_generic(
+                    problem=self.problem,
+                    lp_solver=self.linear_solver,
+                    components_global=connected_components,
+                    edges_in_all_vehicles=self.linear_solver.edges_in_all_vehicles,
+                    edges_out_all_vehicles=self.linear_solver.edges_out_all_vehicles,
                     lazy=self.lazy,
+                    cluster=self.cluster,
                 )
+        if isinstance(self.linear_solver, GurobiMilpSolver):
+            self.linear_solver.model.update()
 
 
 class ConstraintHandlerOrWarmStart:
     def __init__(
         self,
-        linear_solver: LinearFlowSolver,
+        linear_solver: BaseLinearFlowSolver,
         problem: GPDP,
         do_lns: bool = True,
     ):
@@ -1629,13 +1657,12 @@ class ConstraintHandlerOrWarmStart:
 
         if self.do_lns:
             try:
-                self.linear_solver.model.remove(
+                self.linear_solver.remove_constraints(
                     [
                         self.linear_solver.constraint_on_edge[iedge]
                         for iedge in self.linear_solver.constraint_on_edge
                     ]
                 )
-                self.linear_solver.model.update()
             except:
                 pass
         self.linear_solver.constraint_on_edge = {}
@@ -1720,25 +1747,17 @@ class ConstraintHandlerOrWarmStart:
         )
         logger.debug(f"{nb_edges_to_constraint} edges constraint over {nb_edges_total}")
         iedge = 0
+        hinted_values = {}
         for v in vehicle_keys:
             if rebuilt_dict[v] is not None:
                 for e in self.linear_solver.variable_decisions["variables_edges"][v]:
-                    val = 0
                     if v in edges_to_add and e in edges_to_add[v]:
-                        self.linear_solver.variable_decisions["variables_edges"][v][
-                            e
-                        ].start = 1
-                        self.linear_solver.variable_decisions["variables_edges"][v][
-                            e
-                        ].varhintval = 1
                         val = 1
                     else:
-                        self.linear_solver.variable_decisions["variables_edges"][v][
-                            e
-                        ].start = 0
-                        self.linear_solver.variable_decisions["variables_edges"][v][
-                            e
-                        ].varhintval = 0
+                        val = 0
+                    hinted_values[
+                        self.linear_solver.variable_decisions["variables_edges"][v][e]
+                    ] = val
                     if self.do_lns:
                         if (
                             rebuilt_dict[v] is not None
@@ -1747,7 +1766,7 @@ class ConstraintHandlerOrWarmStart:
                         ):
                             self.linear_solver.constraint_on_edge[
                                 iedge
-                            ] = self.linear_solver.model.addLConstr(
+                            ] = self.linear_solver.add_linear_constraint(
                                 self.linear_solver.variable_decisions[
                                     "variables_edges"
                                 ][v][e]
@@ -1755,7 +1774,9 @@ class ConstraintHandlerOrWarmStart:
                                 name="c_" + str(v) + "_" + str(e) + "_" + str(val),
                             )
                             iedge += 1
-        self.linear_solver.model.update()
+        self.linear_solver.set_warm_start_from_values(variable_values=hinted_values)
+        if isinstance(self.linear_solver, GurobiMilpSolver):
+            self.linear_solver.model.update()
 
 
 def build_the_cycles(
@@ -2163,138 +2184,60 @@ def build_graph_solutions(
     return transformed_solutions
 
 
-def update_model_cluster_tsp(
+def update_model_generic(
     problem: GPDP,
-    lp_solver: LinearFlowSolver,
-    components_global: list[tuple[set[Hashable], int]],
-    edges_in_all_vehicles: dict[Hashable, set[tuple[int, Edge]]],
-    edges_out_all_vehicles: dict[Hashable, set[tuple[int, Edge]]],
+    lp_solver: BaseLinearFlowSolver,
+    components_global: list[tuple[set[Node], int]],
+    edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
+    edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     lazy: bool = False,
+    cluster: bool = False,
 ) -> list[Any]:
     if lp_solver.model is None:
         raise RuntimeError("self.lp_solver.model cannot be None at this point.")
-    len_component_global = len(components_global)
-    list_constraints = []
-    if len_component_global > 1:
-        logger.debug(f"Nb component : {len_component_global}")
-        for s in components_global:
-            edge_in_of_interest = [
-                e
-                for n in s[0]
-                for e in edges_in_all_vehicles[n]
-                if problem.clusters_dict[e[1][0]] not in s[0]
-                and problem.clusters_dict[e[1][1]] in s[0]
-            ]
-            edge_out_of_interest = [
-                e
-                for n in s[0]
-                for e in edges_out_all_vehicles[n]
-                if problem.clusters_dict[e[1][0]] in s[0]
-                and problem.clusters_dict[e[1][1]] not in s[0]
-            ]
-            if not any(
-                problem.clusters_dict[problem.target_vehicle[v]] in s[0]
-                for v in problem.origin_vehicle
-            ):
-                if lazy:
-                    list_constraints += [
-                        lp_solver.model.cbLazy(
-                            grb.quicksum(
-                                [
-                                    lp_solver.variable_decisions["variables_edges"][
-                                        e[0]
-                                    ][e[1]]
-                                    for e in edge_out_of_interest
-                                ]
-                            )
-                            >= 1
-                        )
-                    ]
-                else:
-                    list_constraints += [
-                        lp_solver.model.addLConstr(
-                            grb.quicksum(
-                                [
-                                    lp_solver.variable_decisions["variables_edges"][
-                                        e[0]
-                                    ][e[1]]
-                                    for e in edge_out_of_interest
-                                ]
-                            )
-                            >= 1,
-                            name="component_out_" + str(s)[:10],
-                        )
-                    ]
-            if not any(
-                problem.clusters_dict[problem.origin_vehicle[v]] in s[0]
-                for v in problem.origin_vehicle
-            ):
-                if lazy:
-                    list_constraints += [
-                        lp_solver.model.cbLazy(
-                            grb.quicksum(
-                                [
-                                    lp_solver.variable_decisions["variables_edges"][
-                                        e[0]
-                                    ][e[1]]
-                                    for e in edge_in_of_interest
-                                ]
-                            )
-                            >= 1
-                        )
-                    ]
-                else:
-                    list_constraints += [
-                        lp_solver.model.addLConstr(
-                            grb.quicksum(
-                                [
-                                    lp_solver.variable_decisions["variables_edges"][
-                                        e[0]
-                                    ][e[1]]
-                                    for e in edge_in_of_interest
-                                ]
-                            )
-                            >= 1,
-                            name="component_in_" + str(s)[:10],
-                        )
-                    ]
-    lp_solver.model.update()
-    return list_constraints
-
-
-def update_model(
-    problem: GPDP,
-    lp_solver: LinearFlowSolver,
-    components_global: list[tuple[set[Node], int]],
-    edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-    edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-    do_order: bool = True,
-) -> list[Any]:
-    if lp_solver.model is None:
-        raise RuntimeError("self.lp_solver.model cannot be None at this point.")
+    if lazy:
+        if isinstance(lp_solver, GurobiMilpSolver):
+            add_constraint_fn = lp_solver.model.cbLazy
+        else:
+            raise NotImplementedError(
+                "Lazy constraints are implemented only for the gurobi solvers."
+            )
+    else:
+        add_constraint_fn = lp_solver.add_linear_constraint
+    if cluster:
+        cluster_label_fn = lambda node: problem.clusters_dict[node]
+    else:
+        cluster_label_fn = lambda node: node
     len_component_global = len(components_global)
     list_constraints: list[Any] = []
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
-        for s in components_global[:1]:
+        if cluster:
+            components_global_to_consider = components_global
+        else:
+            components_global_to_consider = components_global[:1]
+        for s in components_global_to_consider:
             edge_in_of_interest = [
                 e
                 for n in s[0]
-                for e in edges_in_all_vehicles.get(n, [])
-                if e[1][0] not in s[0] and e[1][1] in s[0]
+                for e in edges_in_all_vehicles.get(n, set())
+                if cluster_label_fn(e[1][0]) not in s[0]
+                and cluster_label_fn(e[1][1]) in s[0]
             ]
             edge_out_of_interest = [
                 e
                 for n in s[0]
-                for e in edges_out_all_vehicles.get(n, [])
-                if e[1][0] in s[0] and e[1][1] not in s[0]
+                for e in edges_out_all_vehicles.get(n, set())
+                if cluster_label_fn(e[1][0]) in s[0]
+                and cluster_label_fn(e[1][1]) not in s[0]
             ]
             if not any(
-                problem.target_vehicle[v] in s[0] for v in problem.origin_vehicle
+                cluster_label_fn(problem.target_vehicle[v]) in s[0]
+                for v in problem.origin_vehicle
             ):
                 list_constraints += [
-                    lp_solver.model.addLConstr(
-                        grb.quicksum(
+                    add_constraint_fn(
+                        lp_solver.construct_linear_sum(
                             [
                                 lp_solver.variable_decisions["variables_edges"][e[0]][
                                     e[1]
@@ -2303,15 +2246,14 @@ def update_model(
                             ]
                         )
                         >= 1,
-                        name="component_out_" + str(s)[:10],
                     )
                 ]
             if not any(
                 problem.origin_vehicle[v] in s[0] for v in problem.origin_vehicle
             ):
                 list_constraints += [
-                    lp_solver.model.addLConstr(
-                        grb.quicksum(
+                    add_constraint_fn(
+                        lp_solver.construct_linear_sum(
                             [
                                 lp_solver.variable_decisions["variables_edges"][e[0]][
                                     e[1]
@@ -2320,181 +2262,8 @@ def update_model(
                             ]
                         )
                         >= 1,
-                        name="component_in_" + str(s)[:10],
                     )
                 ]
-    if do_order:
-        if len_component_global > 1:
-            constraints_order = {}
-            try:
-                variable_order = lp_solver.model.variable_order
-
-            except:
-                variable_order = {
-                    node: lp_solver.model.addVar(
-                        vtype=grb.GRB.CONTINUOUS, name="order_" + str(node)
-                    )
-                    for node in edges_in_all_vehicles
-                }
-                for vehicle in range(lp_solver.problem.number_vehicle):
-                    node_origin = lp_solver.problem.origin_vehicle[vehicle]
-                    constraints_order[node_origin] = lp_solver.model.addLConstr(
-                        lhs=variable_order[node_origin],
-                        sense=grb.GRB.EQUAL,
-                        rhs=0,
-                        name="order_" + str(node_origin),
-                    )
-                lp_solver.variable_order = variable_order
-            c = min(components_global, key=lambda x: x[1])
-            nb_nodes = len(lp_solver.problem.list_nodes)
-            for s in [c]:
-                use_big_m = True
-                use_indicator = False
-                for node in s[0]:
-                    if node not in constraints_order:
-                        for vehicle, edge in edges_in_all_vehicles[node]:
-                            if edge[0] == edge[1]:
-                                continue
-                            if use_big_m:
-                                constraints_order[node] = lp_solver.model.addLConstr(
-                                    variable_order[node]
-                                    >= variable_order[edge[0]]
-                                    + 1
-                                    - 2
-                                    * nb_nodes
-                                    * (
-                                        1
-                                        - lp_solver.variable_decisions[
-                                            "variables_edges"
-                                        ][vehicle][edge]
-                                    ),
-                                    name="order_" + str(node),
-                                )
-                            if use_indicator:
-                                constraints_order[
-                                    node
-                                ] = lp_solver.model.addGenConstrIndicator(
-                                    lp_solver.variable_decisions["variables_edges"][
-                                        vehicle
-                                    ][edge],
-                                    1,
-                                    variable_order[node] == variable_order[edge[0]] + 1,
-                                    name="order_" + str(node),
-                                )
-    lp_solver.model.update()
-    return list_constraints
-
-
-def update_model_lazy(
-    problem: GPDP,
-    lp_solver: LinearFlowSolver,
-    components_global: list[tuple[set[Node], int]],
-    edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-    edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-    do_order: bool = False,
-) -> list[Any]:
-    if lp_solver.model is None:
-        raise RuntimeError("self.lp_solver.model cannot be None at this point.")
-
-    len_component_global = len(components_global)
-    list_constraints: list[Any] = []
-    if len_component_global > 1:
-        logger.debug(f"Nb component : {len_component_global}")
-        for s in components_global[:1]:
-            edge_in_of_interest = [
-                e
-                for n in s[0]
-                for e in edges_in_all_vehicles.get(n, {})
-                if e[1][0] not in s[0] and e[1][1] in s[0]
-            ]
-            edge_out_of_interest = [
-                e
-                for n in s[0]
-                for e in edges_out_all_vehicles.get(n, {})
-                if e[1][0] in s[0] and e[1][1] not in s[0]
-            ]
-            if not any(
-                problem.target_vehicle[v] in s[0] for v in problem.origin_vehicle
-            ):
-                list_constraints += [
-                    lp_solver.model.cbLazy(
-                        grb.quicksum(
-                            [
-                                lp_solver.variable_decisions["variables_edges"][e[0]][
-                                    e[1]
-                                ]
-                                for e in edge_out_of_interest
-                            ]
-                        )
-                        >= 1
-                    )
-                ]
-            if not any(
-                problem.origin_vehicle[v] in s[0] for v in problem.origin_vehicle
-            ):
-                list_constraints += [
-                    lp_solver.model.cbLazy(
-                        grb.quicksum(
-                            [
-                                lp_solver.variable_decisions["variables_edges"][e[0]][
-                                    e[1]
-                                ]
-                                for e in edge_in_of_interest
-                            ]
-                        )
-                        >= 1
-                    )
-                ]
-    if len_component_global > 1 and do_order:
-        constraints_order = {}
-        try:
-            variable_order = lp_solver.variable_order
-
-        except:
-            variable_order = {
-                node: lp_solver.model.addVar(
-                    vtype=grb.GRB.CONTINUOUS, name="order_" + str(node)
-                )
-                for node in edges_in_all_vehicles
-            }
-            for vehicle in range(lp_solver.problem.number_vehicle):
-                node_origin = lp_solver.problem.origin_vehicle[vehicle]
-                constraints_order[node_origin] = lp_solver.model.addLConstr(
-                    lhs=variable_order[node_origin], sense=grb.GRB.EQUAL, rhs=0
-                )
-            lp_solver.variable_order = variable_order
-        c = max(components_global, key=lambda x: x[1])
-        for s in [c]:
-            use_big_m = True
-            use_indicator = False
-            for node in s[0]:
-                if node not in constraints_order:
-                    for vehicle, edge in edges_in_all_vehicles[node]:
-                        if edge[0] == edge[1]:
-                            continue
-                        if use_big_m:
-                            constraints_order[node] = lp_solver.model.cbLazy(
-                                variable_order[node]
-                                >= variable_order[edge[0]]
-                                + 1
-                                - 1000
-                                * (
-                                    1
-                                    - lp_solver.variable_decisions["variables_edges"][
-                                        vehicle
-                                    ][edge]
-                                )
-                            )
-                        if use_indicator:
-                            constraints_order[
-                                node
-                            ] = lp_solver.model.addGenConstrIndicator(
-                                lp_solver.variable_decisions["variables_edges"][
-                                    vehicle
-                                ][edge],
-                                1,
-                                variable_order[node] == variable_order[edge[0]] + 1,
-                                name="order_" + str(node),
-                            )
-    lp_solver.model.update()
+    if isinstance(lp_solver, GurobiMilpSolver):
+        lp_solver.model.update()
     return list_constraints

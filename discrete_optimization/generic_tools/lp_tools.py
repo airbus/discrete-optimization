@@ -10,6 +10,7 @@ import math
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Iterable
+from enum import Enum
 from typing import Any, Optional, Union
 
 from ortools.math_opt.python import mathopt
@@ -105,6 +106,14 @@ class ParametersMilp:
             mip_gap=0.000001,
             retrieve_all_solution=True,
         )
+
+
+class InequalitySense(Enum):
+    """Sense of an inequality/equality."""
+
+    LOWER_OR_EQUAL = "<="
+    GREATER_OR_EQUAL = ">="
+    EQUAL = "=="
 
 
 class MilpSolver(SolverDO):
@@ -281,6 +290,64 @@ class MilpSolver(SolverDO):
         """Generate a linear sum (with variables) ready for the internal model."""
         ...
 
+    def add_linear_constraint_with_indicator(
+        self,
+        binvar: VariableType,
+        binval: int,
+        lhs: Any,
+        sense: InequalitySense,
+        rhs: Any,
+        penalty_coeff=100000,
+        name: str = "",
+    ) -> list[ConstraintType]:
+        """Add a linear constraint depending on the value of an indicator (boolean var)
+
+        This mirrors `gurobipy.Model.addGenConstrIndicator().
+
+        Args:
+            binvar:
+            binval:
+            lhs:
+            sense:
+            rhs:
+            penalty_coeff:
+            name:
+
+        Returns:
+
+        """
+        if binval == 1:
+            penalty = penalty_coeff * (1 - binvar)
+        elif binval == 0:
+            penalty = penalty_coeff * (binvar - 0)
+        else:
+            raise ValueError("binval should only be 0 or 1.")
+
+        constraints = []
+        if sense in [InequalitySense.LOWER_OR_EQUAL, InequalitySense.EQUAL]:
+            if name:
+                name_lower = name + "_lower"
+            else:
+                name_lower = ""
+            constraints.append(
+                self.add_linear_constraint(lhs <= rhs + penalty, name=name_lower)
+            )
+        if sense in [InequalitySense.GREATER_OR_EQUAL, InequalitySense.EQUAL]:
+            if name:
+                name_upper = name + "_upper"
+            else:
+                name_upper = ""
+            constraints.append(
+                self.add_linear_constraint(lhs >= rhs - penalty, name=name_upper)
+            )
+        return constraints
+
+    def set_warm_start_from_values(
+        self, variable_values: dict[VariableType, float]
+    ) -> None:
+        """Make the model variables warm start from the given values."""
+        raise NotImplementedError()
+
 
 class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
     """Milp solver wrapping a solver from pymip library."""
@@ -293,6 +360,21 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
     ]
 
     solution_hint: Optional[mathopt.SolutionHint] = None
+    model: Optional[mathopt.Model] = None
+    termination: mathopt.Termination
+    early_stopping_exception: Optional[Exception] = None
+    has_quadratic_objective: bool = False
+    """Flag telling that the objective is a quadratic expression.
+
+    This is use to pass the proper function to `retrieve_current_solution` for the objective.
+    Should be overriden to True in solvers with quadratic objectives.
+
+    """
+    random_seed: Optional[int] = None
+
+    def remove_constraints(self, constraints: Iterable[Any]) -> None:
+        for cstr in constraints:
+            self.model.delete_linear_constraint(cstr)
 
     @abstractmethod
     def convert_to_variable_values(
@@ -351,10 +433,6 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
     def nb_solutions(self) -> int:
         raise NotImplementedError()
 
-    model: Optional[mathopt.Model] = None
-    termination: mathopt.Termination
-    early_stopping_exception: Optional[Exception] = None
-
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
@@ -406,13 +484,6 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
             **kwargs,
         )
 
-        # raise potential exception found during callback (useful for optuna pruning, and debugging)
-        if self.early_stopping_exception:
-            if isinstance(self.early_stopping_exception, SolveEarlyStop):
-                logger.info(self.early_stopping_exception)
-            else:
-                raise self.early_stopping_exception
-
         # get result storage
         res = mathopt_cb.res
 
@@ -420,6 +491,9 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
         callbacks_list.on_solve_end(res=res, solver=self)
 
         return res
+
+    def set_random_seed(self, random_seed: int) -> None:
+        self.random_seed = random_seed
 
     def optimize_model(
         self,
@@ -451,14 +525,6 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
         Returns:
 
         """
-        """Optimize the mip Model.
-
-        The solutions are yet to be retrieved via `self.retrieve_solutions()`.
-
-        Args:
-            time_limit
-
-        """
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:
@@ -481,6 +547,8 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
         if mathopt_solver_type != mathopt.SolverType.HIGHS:
             # solution_pool_size not supported for HIGHS solver
             params.solution_pool_size = parameters_milp.pool_solutions
+        if self.random_seed is not None:
+            params.random_seed = self.random_seed
 
         # model specific solve parameters
         if mathopt_model_parameters is None:
@@ -511,6 +579,14 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
             mathopt.TerminationReason.FEASIBLE,
         ]:
             logger.info(f"Objective : {mathopt_res.objective_value()}")
+
+        # raise potential exception found during callback (useful for optuna pruning, and debugging)
+        if self.early_stopping_exception:
+            if isinstance(self.early_stopping_exception, SolveEarlyStop):
+                logger.info(self.early_stopping_exception)
+            else:
+                raise self.early_stopping_exception
+
         return mathopt_res
 
     @staticmethod
@@ -568,10 +644,6 @@ map_mathopt_status_to_do_status: dict[mathopt.TerminationReason, StatusSolver] =
 }
 
 
-def _mathopt_cb_get_obj_value_for_current_solution():
-    raise RuntimeError("Cannot retrieve objective!")
-
-
 class MathOptCallback:
     def __init__(self, do_solver: OrtoolsMathOptMilpSolver, callback: Callback):
         self.do_solver = do_solver
@@ -583,9 +655,18 @@ class MathOptCallback:
         cb_sol = callback_data.solution
         try:
             # retrieve and store new solution
+            get_var_value_for_current_solution = lambda var: cb_sol[var]
+            if self.do_solver.has_quadratic_objective:
+                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_quadratic_expression().evaluate(
+                    cb_sol
+                )
+            else:
+                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_linear_expression().evaluate(
+                    cb_sol
+                )
             sol = self.do_solver.retrieve_current_solution(
-                get_var_value_for_current_solution=lambda var: cb_sol[var],
-                get_obj_value_for_current_solution=_mathopt_cb_get_obj_value_for_current_solution,
+                get_var_value_for_current_solution=get_var_value_for_current_solution,
+                get_obj_value_for_current_solution=get_obj_value_for_current_solution,
             )
             fit = self.do_solver.aggreg_from_sol(sol)
             self.res.append((sol, fit))
@@ -612,6 +693,10 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
     model: Optional["gurobipy.Model"] = None
     early_stopping_exception: Optional[Exception] = None
 
+    def remove_constraints(self, constraints: Iterable[Any]) -> None:
+        self.model.remove(list(constraints))
+        self.model.update()
+
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
@@ -621,31 +706,20 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
     ) -> ResultStorage:
         self.early_stopping_exception = None
         callbacks_list = CallbackList(callbacks=callbacks)
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
 
         # callback: solve start
         callbacks_list.on_solve_start(solver=self)
 
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        self.prepare_model(
-            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
-        )
-
         # wrap user callback in a gurobi callback
         gurobi_callback = GurobiCallback(do_solver=self, callback=callbacks_list)
-        self.model.optimize(gurobi_callback)
-        # raise potential exception found during callback (useful for optuna pruning, and debugging)
-        if self.early_stopping_exception:
-            if isinstance(self.early_stopping_exception, SolveEarlyStop):
-                logger.info(self.early_stopping_exception)
-            else:
-                raise self.early_stopping_exception
+
+        self.optimize_model(
+            parameters_milp=parameters_milp,
+            time_limit=time_limit,
+            gurobi_callback=gurobi_callback,
+            **kwargs,
+        )
+
         # get result storage
         res = gurobi_callback.res
 
@@ -653,6 +727,9 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
         callbacks_list.on_solve_end(res=res, solver=self)
 
         return res
+
+    def set_random_seed(self, random_seed: int) -> None:
+        self.model.setParam(gurobipy.GRB.Param.Seed, random_seed)
 
     def prepare_model(
         self,
@@ -682,6 +759,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
         self,
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
+        gurobi_callback: Optional[GurobiCallback] = None,
         **kwargs: Any,
     ) -> None:
         """Optimize the Gurobi Model.
@@ -699,12 +777,15 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
         self.prepare_model(
             parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
         )
-        self.model.optimize()
+        self.model.optimize(gurobi_callback)
         self.status_solver = map_gurobi_status_to_do_status[self.model.Status]
 
-        logger.info(f"Problem has {self.model.NumObj} objectives")
-        logger.info(f"Solver found {self.model.SolCount} solutions")
-        logger.info(f"Objective : {self.model.getObjective().getValue()}")
+        # raise potential exception found during callback (useful for optuna pruning, and debugging)
+        if self.early_stopping_exception:
+            if isinstance(self.early_stopping_exception, SolveEarlyStop):
+                logger.info(self.early_stopping_exception)
+            else:
+                raise self.early_stopping_exception
 
     def get_var_value_for_ith_solution(self, var: "gurobipy.Var", i: int):  # type: ignore # avoid isinstance checks for efficiency
         """Get value for i-th solution of a given variable."""
@@ -774,6 +855,48 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
     def construct_linear_sum(expr: Iterable) -> Any:
         """Generate a linear sum (with variables) ready for the internal model."""
         return gurobipy.quicksum(expr)
+
+    def add_linear_constraint_with_indicator(
+        self,
+        binvar: VariableType,
+        binval: int,
+        lhs: Any,
+        sense: InequalitySense,
+        rhs: Any,
+        penalty_coeff=100000,
+        name: str = "",
+    ) -> list[ConstraintType]:
+        """Add a linear constraint dependending on the value of an indicator (boolean var)
+
+        This wraps `gurobipy.Model.addGenConstrIndicator().
+
+        Args:
+            binvar:
+            binval:
+            lhs:
+            sense:
+            rhs:
+            penalty_coeff:
+            name:
+
+        Returns:
+
+        """
+        if sense == InequalitySense.EQUAL:
+            expr = lhs == rhs
+        elif sense == InequalitySense.LOWER_OR_EQUAL:
+            expr = lhs <= rhs
+        else:
+            expr = lhs >= rhs
+
+        return [
+            self.model.addGenConstrIndicator(
+                binvar,
+                binval,
+                expr,
+                name=name,
+            )
+        ]
 
     @abstractmethod
     def convert_to_variable_values(

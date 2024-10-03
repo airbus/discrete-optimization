@@ -5,12 +5,14 @@ import random
 
 import numpy as np
 import pytest
+from ortools.math_opt.python import mathopt
 
 import discrete_optimization.tsp.tsp_parser as tsp_parser
 import discrete_optimization.vrp.vrp_parser as vrp_parser
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
+from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -25,7 +27,7 @@ from discrete_optimization.pickup_vrp.gpdp import (
 from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
-    ParametersMilp,
+    LinearFlowSolverMathOpt,
 )
 
 try:
@@ -46,13 +48,20 @@ def random_seed():
     return seed
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_tsp_new_api():
+@pytest.fixture(params=[LinearFlowSolver, LinearFlowSolverMathOpt])
+def solver_class(request):
+    solver_class = request.param
+    if issubclass(solver_class, GurobiMilpSolver) and not gurobi_available:
+        pytest.skip("You need Gurobi to test this solver.")
+    return solver_class
+
+
+def test_tsp_new_api(solver_class):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -75,17 +84,16 @@ def test_tsp_new_api():
     assert nb_nodes_visited == len(gpdp.all_nodes)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_tsp_cb(random_seed):
+def test_tsp_cb(solver_class, random_seed):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
-    linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
+    linear_flow_solver.set_random_seed(random_seed)
     iteration_stopper = NbIterationStopper(nb_iteration_max=2)
     res = linear_flow_solver.solve(
         time_limit_subsolver=100,
@@ -100,13 +108,12 @@ def test_tsp_cb(random_seed):
     )
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_tsp_new_api_with_time():
+def test_tsp_new_api_with_time(solver_class):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=True
     )
@@ -115,6 +122,8 @@ def test_tsp_new_api_with_time():
         do_lns=False,
         nb_iteration_max=20,
         include_subtour=False,
+        mathopt_enable_output=True,
+        mathopt_solver_type=mathopt.SolverType.GSCIP,
     )
     assert isinstance(res, ResultStorage)
     sol = res.get_best_solution()
@@ -134,13 +143,12 @@ def test_tsp_new_api_with_time():
     assert nb_nodes_visited == len(gpdp.all_nodes)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_tsp():
+def test_tsp(solver_class):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -154,14 +162,13 @@ def test_tsp():
     plot_gpdp_solution(sol, gpdp)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_tsp_simplified():
+def test_tsp_simplified(solver_class):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
     gpdp = build_pruned_problem(gpdp, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -175,35 +182,36 @@ def test_tsp_simplified():
     plot_gpdp_solution(sol, gpdp)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_vrp():
+def test_vrp(solver_class, random_seed):
     files_available = vrp_parser.get_data_available()
     file_path = [f for f in files_available if "vrp_16_3_1" in f][0]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
+    linear_flow_solver.set_random_seed(random_seed)
     res = linear_flow_solver.solve_iterative(
         time_limit_subsolver=100,
         do_lns=False,
         nb_iteration_max=20,
         include_subtour=False,
+        mathopt_solver_type=mathopt.SolverType.GSCIP,
+        mathopt_enable_output=True,
     )
     sol: GPDPSolution = res.get_best_solution()
     plot_gpdp_solution(sol, gpdp)
 
 
 @pytest.mark.skip(reason="build_pruned_problem() is buggy for now.")
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_vrp_simplified():
+def test_vrp_simplified(solver_class):
     files_available = vrp_parser.get_data_available()
     file_path = [f for f in files_available if "vrp_16_3_1" in f][0]
     vrp_model = vrp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_vrp_model_to_gpdp(vrp_model=vrp_model, compute_graph=True)
     gpdp = build_pruned_problem(gpdp, compute_graph=True)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=True, include_capacity=False, include_time_evolution=False
     )
@@ -217,10 +225,9 @@ def test_vrp_simplified():
     plot_gpdp_solution(sol, gpdp)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_selective_tsp(random_seed):
+def test_selective_tsp(random_seed, solver_class):
     gpdp = create_selective_tsp(nb_nodes=20, nb_vehicles=1, nb_clusters=4)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     kwargs_init_model = dict(
         one_visit_per_node=False,
         one_visit_per_cluster=True,
@@ -228,7 +235,7 @@ def test_selective_tsp(random_seed):
         include_time_evolution=False,
     )
     linear_flow_solver.init_model(**kwargs_init_model)
-    linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
+    linear_flow_solver.set_random_seed(random_seed)
     kwargs_solve = dict(
         time_limit_subsolver=100,
         do_lns=False,
@@ -246,9 +253,9 @@ def test_selective_tsp(random_seed):
     assert result_storage[0][0].trajectories != start_solution.trajectories
 
     # warm start at first solution
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(**kwargs_init_model)
-    linear_flow_solver.model.setParam(grb.GRB.Param.Seed, random_seed)
+    linear_flow_solver.set_random_seed(random_seed)
     linear_flow_solver.set_warm_start(start_solution)
 
     # force first solution to be the hinted one
@@ -260,10 +267,9 @@ def test_selective_tsp(random_seed):
     assert result_storage2[0][0].trajectories == start_solution.trajectories
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_selective_vrp():
+def test_selective_vrp(solver_class):
     gpdp = create_selective_tsp(nb_nodes=20, nb_vehicles=3, nb_clusters=4)
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=False,
         one_visit_per_cluster=True,
@@ -280,15 +286,14 @@ def test_selective_vrp():
     plot_gpdp_solution(sol, gpdp)
 
 
-@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_selective_vrp_new_api_with_time():
+def test_selective_vrp_new_api_with_time(solver_class):
     nb_nodes = 10
     nb_vehicles = 2
     nb_clusters = 4
     gpdp = create_selective_tsp(
         nb_nodes=nb_nodes, nb_vehicles=nb_vehicles, nb_clusters=nb_clusters
     )
-    linear_flow_solver = LinearFlowSolver(problem=gpdp)
+    linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
         one_visit_per_node=False,
         one_visit_per_cluster=True,
@@ -324,7 +329,3 @@ def test_selective_vrp_new_api_with_time():
     }
     for cluster, nb_visit in nb_visit_per_cluster.items():
         assert nb_visit > 0
-
-
-if __name__ == "__main__":
-    test_vrp()
