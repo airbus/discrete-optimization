@@ -52,7 +52,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
 
         model.Add(-self._internal_weight() <= self.problem.max_capacity)
 
-        self.set_model_objective("value")
+        self.set_lexico_objective("value")
 
     def set_warm_start(self, solution: KnapsackSolution) -> None:
         """Make the solver warm start from the given solution."""
@@ -119,10 +119,10 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
             else:
                 raise ValueError(f"Unknown objective '{obj}'.")
 
-    def set_model_objective(self, obj: str) -> None:
+    def set_lexico_objective(self, obj: str) -> None:
         self.cp_model.Maximize(self._internal_objective(obj))
 
-    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         """
 
         Args:
@@ -142,7 +142,7 @@ class CPSatKnapsackSolver(OrtoolsCPSatSolver, SolverKnapsack, WarmstartMixin):
     def implements_lexico_api() -> bool:
         return True
 
-    def get_model_objectives_available(self) -> list[str]:
+    def get_lexico_objectives_available(self) -> list[str]:
         return ["value", "weight", "heaviest_item"]
 
     def retrieve_solution(

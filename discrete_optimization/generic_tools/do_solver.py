@@ -116,13 +116,13 @@ class SolverDO(Hyperparametrizable, ABC):
         else:
             return self.status_solver == StatusSolver.OPTIMAL
 
-    def get_model_objectives_available(self) -> list[str]:
+    def get_lexico_objectives_available(self) -> list[str]:
         """List objectives available for lexico optimization
 
         It corresponds to the labels accepted for obj argument for
-        - `set_model_objective()`
-        - `add_model_constraint()`
-        - `get_model_objective_value()`
+        - `set_lexico_objective()`
+        - `add_lexico_constraint()`
+        - `get_lexico_objective_value()`
 
         Default to `self.problem.get_objective_names()`.
 
@@ -131,19 +131,19 @@ class SolverDO(Hyperparametrizable, ABC):
         """
         return self.problem.get_objective_names()
 
-    def set_model_objective(self, obj: str) -> None:
+    def set_lexico_objective(self, obj: str) -> None:
         """Update internal model objective.
 
         Args:
             obj: a string representing the desired objective.
-                Should be one of `self.get_model_objectives_available()`.
+                Should be one of `self.get_lexico_objectives_available()`.
 
         Returns:
 
         """
         ...
 
-    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
         """Get best internal model objective value found by last call to `solve()`.
 
         The default implementation consists in using the fit of the last solution in result_storage.
@@ -154,7 +154,7 @@ class SolverDO(Hyperparametrizable, ABC):
 
         Args:
             obj: a string representing the desired objective.
-                Should be one of `self.get_model_objectives_available()`.
+                Should be one of `self.get_lexico_objectives_available()`.
             res: result storage returned by last call to solve().
 
         Returns:
@@ -169,12 +169,12 @@ class SolverDO(Hyperparametrizable, ABC):
         idx = objectives.index(obj)
         return float(fit.vector_fitness[idx])
 
-    def add_model_constraint(self, obj: str, value: float) -> Iterable[Any]:
+    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Any]:
         """Add a constraint on a computed sub-objective
 
         Args:
             obj: a string representing the desired objective.
-                Should be one of `self.get_model_objectives_available()`.
+                Should be one of `self.get_lexico_objectives_available()`.
             value: the limiting value.
                 If the optimization direction is maximizing, this is a lower bound,
                 else this is an upper bound.
@@ -185,11 +185,11 @@ class SolverDO(Hyperparametrizable, ABC):
         """
         ...
 
-    def remove_model_constraint(self, constraints: Iterable[Any]) -> None:
+    def remove_constraints(self, constraints: Iterable[Any]) -> None:
         """Remove the internal model constraints.
 
         Args:
-            constraints: constraints created with `add_model_constraint()`
+            constraints: constraints created for instance with `add_lexico_constraint()`
 
         Returns:
 
@@ -202,14 +202,14 @@ class SolverDO(Hyperparametrizable, ABC):
 
         Should return True only if
 
-        - `set_model_objective()`
-        - `add_model_constraint()`
-        - `get_model_objective_value()`
+        - `set_lexico_objective()`
+        - `add_lexico_constraint()`
+        - `get_lexico_objective_value()`
 
         have been really implemented, i.e.
-        - calling `set_model_objective()` and `add_model_constraint()`
+        - calling `set_lexico_objective()` and `add_lexico_constraint()`
           should actually change the next call to `solve()`,
-        - `get_model_objective_value()` should correspond to the internal model objective
+        - `get_lexico_objective_value()` should correspond to the internal model objective
 
         """
         return False

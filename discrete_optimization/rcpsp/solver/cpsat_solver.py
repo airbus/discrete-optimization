@@ -476,7 +476,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         else:
             raise ValueError(f"Unknown objective '{obj}'.")
 
-    def set_model_objective(self, obj: str) -> None:
+    def set_lexico_objective(self, obj: str) -> None:
         """Update internal model objective.
 
         Args:
@@ -488,7 +488,7 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         """
         self.cp_model.Minimize(self._internal_objective(obj))
 
-    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         """
 
         Args:
@@ -512,14 +512,14 @@ class CPSatRCPSPSolverResource(CPSatRCPSPSolver):
         sol = super().retrieve_solution(cpsolvercb)
         sol._internal_objectives = {
             obj: cpsolvercb.value(self._internal_objective(obj))
-            for obj in self.get_model_objectives_available()
+            for obj in self.get_lexico_objectives_available()
         }
         return sol
 
-    def get_model_objectives_available(self) -> list[str]:
+    def get_lexico_objectives_available(self) -> list[str]:
         return ["makespan", "used_resource"]
 
-    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
         values = [sol._internal_objectives[obj] for sol, fit in res.list_solution_fits]
         return min(values)
 
@@ -704,7 +704,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         else:
             raise ValueError(f"Unknown objective '{obj}'.")
 
-    def set_model_objective(self, obj: str) -> None:
+    def set_lexico_objective(self, obj: str) -> None:
         """Update internal model objective.
 
         Args:
@@ -716,7 +716,7 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         """
         self.cp_model.Minimize(self._internal_objective(obj))
 
-    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         """
 
         Args:
@@ -740,13 +740,13 @@ class CPSatRCPSPSolverCumulativeResource(CPSatRCPSPSolver):
         sol = super().retrieve_solution(cpsolvercb)
         sol._internal_objectives = {
             obj: cpsolvercb.value(self._internal_objective(obj))
-            for obj in self.get_model_objectives_available()
+            for obj in self.get_lexico_objectives_available()
         }
         return sol
 
-    def get_model_objectives_available(self) -> list[str]:
+    def get_lexico_objectives_available(self) -> list[str]:
         return ["makespan", "used_resource"]
 
-    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
         values = [sol._internal_objectives[obj] for sol, fit in res.list_solution_fits]
         return min(values)
