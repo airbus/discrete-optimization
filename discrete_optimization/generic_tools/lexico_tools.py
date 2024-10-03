@@ -90,7 +90,7 @@ class LexicoSolver(SolverDO):
         callbacks_list.on_solve_start(solver=self)
 
         if objectives is None:
-            objectives = self.subsolver.get_model_objectives_available()
+            objectives = self.subsolver.get_lexico_objectives_available()
 
         self._objectives = objectives
         res = ResultStorage(
@@ -105,7 +105,7 @@ class LexicoSolver(SolverDO):
             logger.debug(f"Optimizing on {obj}")
 
             # optimize next objective
-            self.subsolver.set_model_objective(obj)
+            self.subsolver.set_lexico_objective(obj)
             res.extend(
                 self.subsolver.solve(callbacks=kwargs["subsolver_callbacks"], **kwargs)
             )
@@ -115,9 +115,9 @@ class LexicoSolver(SolverDO):
                 break
 
             # add constraint on current objective for next one
-            fit = self.subsolver.get_model_objective_value(obj, res)
+            fit = self.subsolver.get_lexico_objective_value(obj, res)
             logger.debug(f"Found {fit} when optimizing {obj}")
-            self.subsolver.add_model_constraint(obj, fit)
+            self.subsolver.add_lexico_constraint(obj, fit)
 
         # end of solve callback
         callbacks_list.on_solve_end(res=res, solver=self)

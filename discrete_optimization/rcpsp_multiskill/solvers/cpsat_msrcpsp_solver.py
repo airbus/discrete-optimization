@@ -49,21 +49,21 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
         super().__init__(problem, **kwargs)
         self.variables = {}
 
-    def set_model_objective(self, obj: str) -> None:
+    def set_lexico_objective(self, obj: str) -> None:
         self.cp_model.Minimize(self.variables[obj])
 
-    def add_model_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
+    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
         return [self.cp_model.Add(self.variables[obj] <= int(value))]
 
     @staticmethod
     def implements_lexico_api() -> bool:
         return True
 
-    def get_model_objectives_available(self) -> List[str]:
+    def get_lexico_objectives_available(self) -> List[str]:
         return ["makespan"]
         # return ["makespan", "cost"]
 
-    def get_model_objective_value(self, obj: str, res: ResultStorage) -> float:
+    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
         return min(s._internal_obj[obj] for s, _ in res.list_solution_fits)
 
     def init_model(self, **args: Any) -> None:
@@ -808,6 +808,6 @@ class CPSatMSRCPSPSolver(OrtoolsCPSatSolver):
             employee_usage=employee_usage,
         )
         sol._internal_obj = {}
-        for k in self.get_model_objectives_available():
+        for k in self.get_lexico_objectives_available():
             sol._internal_obj[k] = cpsolvercb.Value(self.variables[k])
         return sol

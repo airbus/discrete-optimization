@@ -112,11 +112,11 @@ class OrtoolsCPSatSolver(CPSolver):
         callbacks_list.on_solve_end(res=res, solver=self)
         return res
 
-    def remove_model_constraint(self, constraints: Iterable[Any]) -> None:
+    def remove_constraints(self, constraints: Iterable[Any]) -> None:
         """Remove the internal model constraints.
 
         Args:
-            constraints: constraints created with `add_model_constraint()`
+            constraints: constraints created for instance with `add_lexico_constraint()`
 
         Returns:
 
