@@ -28,15 +28,11 @@ from discrete_optimization.coloring.coloring_parser import (
 from discrete_optimization.coloring.coloring_solvers import (
     ColoringASPSolver,
     ColoringLP,
-    ParametersMilp,
-    solvers_map,
-    toulbar2_available,
 )
 from discrete_optimization.coloring.solvers.coloring_cp_solvers import ColoringCP
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
 )
-from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLP_MIP
 from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
     ToulbarColoringSolver,
 )
@@ -53,7 +49,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
-from discrete_optimization.generic_tools.lp_tools import gurobi_available
 from discrete_optimization.generic_tools.optuna.utils import (
     generic_optuna_experiment_monoproblem,
 )

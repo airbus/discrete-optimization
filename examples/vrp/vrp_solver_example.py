@@ -11,7 +11,7 @@ from discrete_optimization.vrp.vrp_parser import (
     parse_file,
     parse_input,
 )
-from discrete_optimization.vrp.vrp_solvers import VRPIterativeLP, VRPIterativeLP_Pymip
+from discrete_optimization.vrp.vrp_solvers import VRPIterativeLP
 
 
 def run_ortools_vrp_solver():

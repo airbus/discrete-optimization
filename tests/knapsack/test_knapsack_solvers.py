@@ -2,18 +2,13 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-import platform
 import random
 
 import numpy as np
 import pytest
 from ortools.math_opt.python import mathopt
 
-from discrete_optimization.generic_tools.lp_tools import PymipMilpSolver
-from discrete_optimization.knapsack.knapsack_model import (
-    KnapsackModel,
-    KnapsackSolution,
-)
+from discrete_optimization.knapsack.knapsack_model import KnapsackModel
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
@@ -50,11 +45,6 @@ def test_load_file(knapsack_problem_file):
 def test_solvers(solver_class):
     if solver_class == LPKnapsackGurobi and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
-    if issubclass(solver_class, PymipMilpSolver) and platform.machine() == "arm64":
-        pytest.skip(
-            "Python-mip has issues with cbclib on macos arm64. "
-            "See https://github.com/coin-or/python-mip/issues/167"
-        )
 
     logging.basicConfig(level=logging.INFO)
     small_example = [f for f in get_data_available() if "ks_40_0" in f][0]

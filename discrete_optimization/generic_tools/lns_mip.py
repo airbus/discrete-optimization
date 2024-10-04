@@ -20,10 +20,8 @@ from discrete_optimization.generic_tools.lns_tools import (
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
-    MilpSolverName,
     OrtoolsMathOptMilpSolver,
     ParametersMilp,
-    PymipMilpSolver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -52,18 +50,6 @@ class OrtoolsMathOptConstraintHandler(ConstraintHandler):
     ) -> None:
         for cstr in previous_constraints:
             solver.model.delete_linear_constraint(cstr)
-
-
-class PymipConstraintHandler(ConstraintHandler):
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: PymipMilpSolver,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        solver.model.remove(list(previous_constraints))
-        if solver.milp_solver_name == MilpSolverName.GRB:
-            solver.model.solver.update()
 
 
 class LNS_MILP(BaseLNS):

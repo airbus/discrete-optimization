@@ -4,21 +4,15 @@
 
 import logging
 
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.knapsack.knapsack_parser import (
     get_data_available,
     parse_file,
 )
 from discrete_optimization.knapsack.knapsack_solvers import (
-    CPKnapsackMZN2,
-    LPKnapsack,
     LPKnapsackGurobi,
-    ParametersMilp,
     solve,
-    solvers,
     solvers_map,
 )
-from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyDummy
 
 try:
     import gurobipy
@@ -42,17 +36,6 @@ def main_run():
         s, f = results.get_best_solution_fit()
         logging.info(f"sol={s}")
         logging.info(f"fitness={f}")
-
-
-def run_lp():
-    file = [f for f in get_data_available() if "ks_10000_0" in f][0]
-    knapsack_model = parse_file(file)
-    pymip_solver = LPKnapsack(knapsack_model, milp_solver_name=MilpSolverName.CBC)
-
-    pymip_solver.init_model()
-    parameters_milp = ParametersMilp.default()
-    solutions = pymip_solver.solve(parameters_milp=parameters_milp)
-    print(solutions.get_best_solution())
 
 
 if __name__ == "__main__":

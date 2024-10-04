@@ -5,25 +5,17 @@
 from __future__ import annotations
 
 import logging
-import random
 from collections.abc import Callable
 from typing import Any, Optional, Union
 
 import networkx as nx
-from mip import BINARY, MINIMIZE, Model, xsum
 
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ParamsObjectiveFunction,
     Solution,
 )
-from discrete_optimization.generic_tools.lp_tools import (
-    GurobiMilpSolver,
-    MilpSolver,
-    MilpSolverName,
-    PymipMilpSolver,
-    map_solver,
-)
+from discrete_optimization.generic_tools.lp_tools import GurobiMilpSolver, MilpSolver
 from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
 from discrete_optimization.rcpsp.solver.rcpsp_solver import SolverRCPSP
@@ -150,108 +142,6 @@ class _Base_LP_MRCPSP_GANTT(MilpSolver, SolverRCPSP):
             for k in self.ressource_id_usage
         }
         return (resource_id_usage, objective)
-
-
-class LP_MRCPSP_GANTT(PymipMilpSolver, _Base_LP_MRCPSP_GANTT):
-    def __init__(
-        self,
-        problem: RCPSPModel,
-        rcpsp_solution: RCPSPSolution,
-        milp_solver_name=MilpSolverName.CBC,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs,
-    ):
-        _Base_LP_MRCPSP_GANTT.__init__(
-            self,
-            problem=problem,
-            rcpsp_solution=rcpsp_solution,
-            params_objective_function=params_objective_function,
-            **kwargs,
-        )
-        # backward compatibility: lp_solver -> milp_solver_name
-        if "lp_solver" in kwargs:
-            milp_solver_name = kwargs["lp_solver"]
-        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
-
-    def init_model(self, **args):
-        self.model = Model(sense=MINIMIZE, solver_name=self.solver_name)
-        self.ressource_id_usage = {
-            k: {i: {} for i in range(len(self.problem.calendar_details[k]))}
-            for k in self.problem.calendar_details.keys()
-        }
-        variables_per_task = {}
-        variables_per_individual = {}
-        constraints_ressource_need = {}
-
-        for task in self.jobs:
-            start = self.rcpsp_schedule[task]["start_time"]
-            end = self.rcpsp_schedule[task]["end_time"]
-            for k in self.ressource_id_usage:  # typically worker
-                needed_ressource = (
-                    self.problem.mode_details[task][self.modes_dict[task]][k] > 0
-                )
-                if needed_ressource:
-                    for individual in self.ressource_id_usage[k]:
-                        available = all(
-                            self.problem.calendar_details[k][individual][time]
-                            for time in range(start, end)
-                        )
-                        if available:
-                            key_variable = (k, individual, task)
-                            self.ressource_id_usage[k][individual][
-                                task
-                            ] = self.model.add_var(
-                                name=str(key_variable),
-                                var_type=BINARY,
-                                obj=random.random(),
-                            )
-                            if task not in variables_per_task:
-                                variables_per_task[task] = set()
-                            if k not in variables_per_individual:
-                                variables_per_individual[k] = {}
-                            if individual not in variables_per_individual[k]:
-                                variables_per_individual[k][individual] = set()
-                            variables_per_task[task].add(key_variable)
-                            variables_per_individual[k][individual].add(key_variable)
-                    ressource_needed = self.problem.mode_details[task][
-                        self.modes_dict[task]
-                    ][k]
-                    if k not in constraints_ressource_need:
-                        constraints_ressource_need[k] = {}
-                    constraints_ressource_need[k][task] = self.model.add_constr(
-                        xsum(
-                            [
-                                self.ressource_id_usage[k][key[1]][key[2]]
-                                for key in variables_per_task[task]
-                                if key[0] == k
-                            ]
-                        )
-                        == ressource_needed,
-                        name="ressource_" + str(k) + "_" + str(task),
-                    )
-        overlaps_constraints = {}
-
-        for i in range(len(self.cliques)):
-            tasks = set(self.cliques[i])
-            for k in variables_per_individual:
-                for individual in variables_per_individual[k]:
-                    keys_variable = [
-                        variable
-                        for variable in variables_per_individual[k][individual]
-                        if variable[2] in tasks
-                    ]
-                    if len(keys_variable) > 0:
-                        overlaps_constraints[
-                            (i, k, individual)
-                        ] = self.model.add_constr(
-                            xsum(
-                                [
-                                    self.ressource_id_usage[key[0]][key[1]][key[2]]
-                                    for key in keys_variable
-                                ]
-                            )
-                            <= 1
-                        )
 
 
 # gurobi solver which is usefull to get a pool of solution (indeed, using the other one we dont have usually a lot of

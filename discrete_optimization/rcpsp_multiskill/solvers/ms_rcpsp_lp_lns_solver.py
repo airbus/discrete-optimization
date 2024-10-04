@@ -2,20 +2,13 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import random
-from collections.abc import Iterable
-from typing import Any
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     build_evaluate_function_aggregated,
     get_default_objective_setup,
 )
-from discrete_optimization.generic_tools.lns_mip import (
-    InitialSolution,
-    PymipConstraintHandler,
-)
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName
+from discrete_optimization.generic_tools.lns_mip import InitialSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -24,11 +17,7 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import (
     InitialMethodRCPSP,
     InitialSolutionRCPSP,
 )
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-    MS_RCPSPModel,
-    MS_RCPSPSolution,
-)
-from discrete_optimization.rcpsp_multiskill.solvers.lp_model import LP_Solver_MRSCPSP
+from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import MS_RCPSPModel
 
 
 class InitialSolutionMS_RCPSP(InitialSolution):
@@ -85,107 +74,3 @@ class InitialSolutionMS_RCPSP(InitialSolution):
             mode_optim=self.params_objective_function.sense_function,
             list_solution_fits=list_solution_fits,
         )
-
-
-class ConstraintHandlerFixStartTime(PymipConstraintHandler):
-    def __init__(self, problem: MS_RCPSPModel, fraction_fix_start_time: float = 0.9):
-        self.problem = problem
-        self.fraction_fix_start_time = fraction_fix_start_time
-
-    def adding_constraint_from_results_store(
-        self, solver: LP_Solver_MRSCPSP, result_storage: ResultStorage, **kwargs: Any
-    ) -> Iterable[Any]:
-
-        nb_jobs = self.problem.nb_tasks
-        lns_constraints = []
-        current_solution, fit = result_storage.get_best_solution_fit()
-
-        start = []
-        for j in current_solution.schedule:
-            start_time_j = current_solution.schedule[j]["start_time"]
-            mode = current_solution.modes[j]
-            start += [(solver.start_times_task[j], start_time_j)]
-            start += [(solver.modes[j][mode], 1)]
-            for m in solver.modes[j]:
-                start += [(solver.modes[j][m], 1 if mode == m else 0)]
-        solver.model.start = start
-        # Fix start time for a subset of task.
-        jobs_to_fix = set(
-            random.sample(
-                list(current_solution.rcpsp_schedule),
-                int(self.fraction_fix_start_time * nb_jobs),
-            )
-        )
-        for job_to_fix in jobs_to_fix:
-            lns_constraints.append(
-                solver.model.add_constr(
-                    solver.start_times_task[job_to_fix]
-                    - current_solution.schedule[job_to_fix]["start_time"]
-                    == 0
-                )
-            )
-        if solver.lp_solver == MilpSolverName.GRB:
-            solver.model.solver.update()
-        return lns_constraints
-
-
-class ConstraintHandlerStartTimeIntervalMRCPSP(PymipConstraintHandler):
-    def __init__(
-        self,
-        problem: MS_RCPSPModel,
-        fraction_to_fix: float = 0.9,
-        minus_delta: int = 2,
-        plus_delta: int = 2,
-    ):
-        self.problem = problem
-        self.fraction_to_fix = fraction_to_fix
-        self.minus_delta = minus_delta
-        self.plus_delta = plus_delta
-
-    def adding_constraint_from_results_store(
-        self, solver: LP_Solver_MRSCPSP, result_storage: ResultStorage, **kwargs: Any
-    ) -> Iterable[Any]:
-        current_solution: MS_RCPSPSolution = result_storage.get_best_solution()
-        start = []
-        for j in current_solution.schedule:
-            start_time_j = current_solution.schedule[j]["start_time"]
-            mode = current_solution.modes[j]
-            start += [(solver.start_times_task[j], start_time_j)]
-            start += [(solver.modes[j][mode], 1)]
-            for m in solver.modes[j]:
-                start += [(solver.modes[j][m], 1 if mode == m else 0)]
-        solver.model.start = start
-        lns_constraints = []
-        max_time = max(
-            [
-                current_solution.schedule[x]["end_time"]
-                for x in current_solution.schedule
-            ]
-        )
-        last_jobs = [
-            x
-            for x in current_solution.schedule
-            if current_solution.schedule[x]["end_time"] >= max_time - 5
-        ]
-        nb_jobs = self.problem.nb_tasks
-        jobs_to_fix = set(
-            random.sample(
-                list(current_solution.schedule), int(self.fraction_to_fix * nb_jobs)
-            )
-        )
-        for lj in last_jobs:
-            if lj in jobs_to_fix:
-                jobs_to_fix.remove(lj)
-        for job in jobs_to_fix:
-            start_time_j = current_solution.schedule[job]["start_time"]
-            min_st = max(start_time_j - self.minus_delta, 0)
-            max_st = min(start_time_j + self.plus_delta, max_time)
-            lns_constraints.append(
-                solver.model.add_constr(solver.start_times_task[job] <= max_st)
-            )
-            lns_constraints.append(
-                solver.model.add_constr(solver.start_times_task[job] >= min_st)
-            )
-        if solver.lp_solver == MilpSolverName.GRB:
-            solver.model.solver.update()
-        return lns_constraints

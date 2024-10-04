@@ -25,8 +25,7 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
-    LP_Solver_MRSCPSP,
-    MilpSolverName,
+    LP_Solver_MRSCPSP_MathOpt,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_ga_solver import (
     GA_MSRCPSP_Solver,
@@ -35,9 +34,8 @@ from discrete_optimization.rcpsp_multiskill.solvers.ms_rcpsp_ga_solver import (
 solvers = {
     "lp": [
         (
-            LP_Solver_MRSCPSP,
+            LP_Solver_MRSCPSP_MathOpt,
             {
-                "lp_solver": MilpSolverName.CBC,
                 "parameters_milp": ParametersMilp.default(),
             },
         )
@@ -82,7 +80,7 @@ for key in solvers:
         solvers_map[solver] = (key, param)
 
 solvers_compatibility = {
-    LP_Solver_MRSCPSP: [MS_RCPSPModel, MS_RCPSPModel_Variant],
+    LP_Solver_MRSCPSP_MathOpt: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     CP_MS_MRCPSP_MZN: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     LS_RCPSP_Solver: [MS_RCPSPModel, MS_RCPSPModel_Variant],
     GA_MSRCPSP_Solver: [MS_RCPSPModel_Variant],

@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-import platform
 import random
 import sys
 
@@ -61,7 +60,7 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.nsga import Nsga
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp, PymipMilpSolver
+from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
 )
@@ -107,11 +106,7 @@ def test_load_file(coloring_problem_file):
 def test_solvers(solver_class):
     if solver_class == ColoringLP and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
-    if issubclass(solver_class, PymipMilpSolver) and platform.machine() == "arm64":
-        pytest.skip(
-            "Python-mip has issues with cbclib on macos arm64. "
-            "See https://github.com/coin-or/python-mip/issues/167"
-        )
+
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)
     results = solve(
@@ -124,11 +119,6 @@ def test_solvers(solver_class):
 def test_solvers_subset(solver_class):
     if solver_class == ColoringLP and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
-    if issubclass(solver_class, PymipMilpSolver) and platform.machine() == "arm64":
-        pytest.skip(
-            "Python-mip has issues with cbclib on macos arm64. "
-            "See https://github.com/coin-or/python-mip/issues/167"
-        )
 
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_model: ColoringProblem = parse_file(small_example)

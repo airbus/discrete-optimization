@@ -26,8 +26,6 @@ from discrete_optimization.generic_tools.cp_tools import (
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
-    MilpSolverName,
-    ParametersMilp,
     gurobi_available,
 )
 from discrete_optimization.generic_tools.optuna.utils import (
@@ -35,7 +33,10 @@ from discrete_optimization.generic_tools.optuna.utils import (
 )
 from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.rcpsp_solvers import look_for_solver
-from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
+from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
+    LP_MRCPSP_MATHOPT,
+    LP_RCPSP_MATHOPT,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
@@ -72,8 +73,8 @@ kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
             parameters_cp=parameters_cp,
             time_limit=max_time_per_solver,
         ),
-        LP_RCPSP: dict(time_limit=max_time_per_solver),
-        LP_MRCPSP: dict(time_limit=max_time_per_solver),
+        LP_RCPSP_MATHOPT: dict(time_limit=max_time_per_solver),
+        LP_MRCPSP_MATHOPT: dict(time_limit=max_time_per_solver),
     },
 )
 
@@ -89,12 +90,6 @@ if not gurobi_available or not gurobi_full_license_available:
     solvers_to_test = [
         s for s in solvers_to_test if not isinstance(s, GurobiMilpSolver)
     ]
-    suggest_optuna_kwargs_by_name_by_solver[LP_RCPSP].update(
-        {"lp_solver": dict(choices=[MilpSolverName.CBC])}
-    )
-    suggest_optuna_kwargs_by_name_by_solver[LP_MRCPSP].update(
-        {"lp_solver": dict(choices=[MilpSolverName.CBC])}
-    )
     for s in solvers_to_test:
         if isinstance(s, MinizincCPSolver):
             suggest_optuna_kwargs_by_name_by_solver[s].update(

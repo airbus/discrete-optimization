@@ -10,7 +10,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import (
     TrivialSolverFromSolution,
     WarmstartMixin,
@@ -40,7 +39,6 @@ from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackA
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 from discrete_optimization.knapsack.solvers.lp_solvers import (
     KnapsackORTools,
-    LPKnapsack,
     LPKnapsackCBC,
     LPKnapsackGurobi,
 )
@@ -51,7 +49,6 @@ logger = logging.getLogger(__name__)
 
 subsolvers = [
     KnapsackORTools,
-    LPKnapsack,
     LPKnapsackCBC,
     LPKnapsackGurobi,
     KnapsackASPSolver,

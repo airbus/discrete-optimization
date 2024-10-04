@@ -24,8 +24,7 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser import (
     parse_file,
 )
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
-    LP_Solver_MRSCPSP,
-    MilpSolverName,
+    LP_Solver_MRSCPSP_MathOpt,
     ParametersMilp,
 )
 
@@ -71,7 +70,7 @@ def run_lp_debug():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_model = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
+    lp_model = LP_Solver_MRSCPSP_MathOpt(problem=model)
     lp_model.init_model()
     result = lp_model.solve(parameters_milp=ParametersMilp.default())
 
@@ -144,7 +143,7 @@ def run_lp_debug_bis():
         horizon=100,
         horizon_multiplier=1,
     )
-    lp_model = LP_Solver_MRSCPSP(problem=model, lp_solver=MilpSolverName.CBC)
+    lp_model = LP_Solver_MRSCPSP_MathOpt(problem=model)
     lp_model.init_model()
     result = lp_model.solve(parameters_milp=ParametersMilp.default())
     best_solution = result.get_best_solution()
