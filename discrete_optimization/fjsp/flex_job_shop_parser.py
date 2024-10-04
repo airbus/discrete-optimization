@@ -14,7 +14,7 @@ from discrete_optimization.fjsp.flex_job_shop_problem import (
 )
 
 
-def get_data_available_fjsp(
+def get_data_available(
     data_folder: Optional[str] = None, data_home: Optional[str] = None
 ) -> list[str]:
     """Get datasets available for jobshop."""
@@ -39,7 +39,7 @@ def get_data_available_fjsp(
     return files
 
 
-def parse_fjs_file(file_path: str):
+def parse_file(file_path: str):
     with open(file_path, "r") as file:
         lines = file.readlines()
         list_jobs = []

@@ -9,7 +9,7 @@ from discrete_optimization.fjsp.flex_job_shop_problem import (
     SolutionFJobshop,
     Subjob,
 )
-from discrete_optimization.fjsp.solvers.cpsat_fjsp_problem import (
+from discrete_optimization.fjsp.solvers.cpsat_fjsp_solver import (
     CPSatFJspSolver,
     FJobShopProblem,
 )
