@@ -8,7 +8,7 @@ from discrete_optimization.fjsp.flex_job_shop_problem import (
     FJobShopProblem,
     SolutionFJobshop,
 )
-from discrete_optimization.fjsp.solvers.cpsat_fjsp_problem import CPSatFJspSolver
+from discrete_optimization.fjsp.solvers.cpsat_fjsp_solver import CPSatFJspSolver
 from discrete_optimization.generic_tools.lns_cp import OrtoolsCPSatConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
