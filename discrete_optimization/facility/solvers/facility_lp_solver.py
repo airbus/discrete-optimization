@@ -10,7 +10,6 @@ import logging
 from collections.abc import Callable
 from typing import Any, Optional, Union
 
-import mip
 import numpy as np
 import numpy.typing as npt
 from ortools.linear_solver import pywraplp
@@ -23,7 +22,6 @@ from discrete_optimization.facility.facility_model import (
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
-    Problem,
     Solution,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -34,11 +32,8 @@ from discrete_optimization.generic_tools.lp_tools import (
     ConstraintType,
     GurobiMilpSolver,
     MilpSolver,
-    MilpSolverName,
     OrtoolsMathOptMilpSolver,
     ParametersMilp,
-    PymipMilpSolver,
-    VariableType,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -509,110 +504,3 @@ class LP_Facility_Solver_CBC(SolverFacility):
         objective = self.model.Objective().Value()
         logger.info(f"Objective : {objective}")
         return self.retrieve()
-
-
-class LP_Facility_Solver_PyMip(PymipMilpSolver, _LPFacilitySolverBase):
-    """Milp solver using pymip library
-
-    Note:
-        Gurobi and CBC are available backends.
-
-    """
-
-    problem: FacilityProblem
-
-    def __init__(
-        self,
-        problem: FacilityProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
-        **kwargs: Any,
-    ):
-        _LPFacilitySolverBase.__init__(
-            self,
-            problem=problem,
-            params_objective_function=params_objective_function,
-            **kwargs,
-        )
-        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
-
-    def init_model(self, **kwargs: Any) -> None:
-        nb_facilities = self.problem.facility_count
-        nb_customers = self.problem.customer_count
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        use_matrix_indicator_heuristic = kwargs["use_matrix_indicator_heuristic"]
-        if use_matrix_indicator_heuristic:
-            n_shortest = kwargs["n_shortest"]
-            n_cheapest = kwargs["n_cheapest"]
-            matrix_fc_indicator, matrix_length = prune_search_space(
-                self.problem, n_cheapest=n_cheapest, n_shortest=n_shortest
-            )
-        else:
-            matrix_fc_indicator, matrix_length = prune_search_space(
-                self.problem,
-                n_cheapest=nb_facilities,
-                n_shortest=nb_facilities,
-            )
-        s = mip.Model(
-            name="facilities", sense=mip.MINIMIZE, solver_name=self.solver_name
-        )
-        x: dict[tuple[int, int], Union[int, Any]] = {}
-        for f in range(nb_facilities):
-            for c in range(nb_customers):
-                if matrix_fc_indicator[f, c] == 0:
-                    x[f, c] = 0
-                elif matrix_fc_indicator[f, c] == 1:
-                    x[f, c] = 1
-                elif matrix_fc_indicator[f, c] == 2:
-                    x[f, c] = s.add_var(
-                        var_type=mip.BINARY, obj=0, name="x_" + str((f, c))
-                    )
-        facilities = self.problem.facilities
-        customers = self.problem.customers
-        used = s.add_var_tensor((nb_facilities, 1), var_type=GRB.BINARY, name="y")
-        constraints_customer: dict[int, Any] = {}
-        for c in range(nb_customers):
-            constraints_customer[c] = s.add_constr(
-                mip.xsum([x[f, c] for f in range(nb_facilities)]) == 1
-            )
-            # one facility
-        constraint_capacity: dict[int, Any] = {}
-        for f in range(nb_facilities):
-            for c in range(nb_customers):
-                s.add_constr(used[f, 0] >= x[f, c])
-            constraint_capacity[f] = s.add_constr(
-                mip.xsum([x[f, c] * customers[c].demand for c in range(nb_customers)])
-                <= facilities[f].capacity
-            )
-        new_obj_f = mip.LinExpr(const=0.0)
-        new_obj_f.add_expr(
-            mip.xsum(
-                [facilities[f].setup_cost * used[f, 0] for f in range(nb_facilities)]
-            )
-        )
-        new_obj_f.add_expr(
-            mip.xsum(
-                [
-                    matrix_length[f, c] * x[f, c]
-                    for f in range(nb_facilities)
-                    for c in range(nb_customers)
-                ]
-            )
-        )
-        s.objective = new_obj_f
-        self.model = s
-        self.variable_decision = {"x": x}
-        self.constraints_dict = {
-            "constraint_customer": constraints_customer,
-            "constraint_capacity": constraint_capacity,
-        }
-        self.description_variable_description = {
-            "x": {
-                "shape": (nb_facilities, nb_customers),
-                "type": bool,
-                "descr": "for each facility/customer indicate"
-                " if the pair is active, meaning "
-                "that the customer c is dealt with facility f",
-            }
-        }
-        logger.info("Initialized")

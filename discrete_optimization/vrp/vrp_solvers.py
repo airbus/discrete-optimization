@@ -8,14 +8,15 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.vrp.solver.lp_vrp_iterative import VRPIterativeLP
-from discrete_optimization.vrp.solver.lp_vrp_iterative_pymip import VRPIterativeLP_Pymip
 from discrete_optimization.vrp.solver.solver_ortools import VrpORToolsSolver
 from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
 from discrete_optimization.vrp.vrp_model import VrpProblem, VrpProblem2D
 
 solvers: dict[str, list[tuple[type[SolverVrp], dict[str, Any]]]] = {
     "ortools": [(VrpORToolsSolver, {"time_limit": 100})],
-    "lp": [(VRPIterativeLP, {}), (VRPIterativeLP_Pymip, {})],
+    "lp": [
+        (VRPIterativeLP, {}),
+    ],
 }
 
 solvers_map = {}

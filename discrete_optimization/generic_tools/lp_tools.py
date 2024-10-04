@@ -10,10 +10,8 @@ import math
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Iterable
-from enum import Enum
 from typing import Any, Optional, Union
 
-import mip
 from ortools.math_opt.python import mathopt
 
 from discrete_optimization.generic_tools.callbacks.callback import (
@@ -70,27 +68,18 @@ logger = logging.getLogger(__name__)
 
 # types aliases
 if gurobi_available:
-    VariableType = Union[gurobipy.Var, mip.Var, mathopt.Variable]
+    VariableType = Union[gurobipy.Var, mathopt.Variable]
     ConstraintType = Union[
         gurobipy.Constr,
         gurobipy.MConstr,
         gurobipy.QConstr,
         gurobipy.GenConstr,
-        mip.Constr,
         mathopt.LinearConstraint,
     ]
 
 else:
-    VariableType = Union[mip.Var, mathopt.Variable]
-    ConstraintType = Union[mip.Constr, mathopt.LinearConstraint]
-
-
-class MilpSolverName(Enum):
-    CBC = 0
-    GRB = 1
-
-
-map_solver = {MilpSolverName.GRB: mip.GRB, MilpSolverName.CBC: mip.CBC}
+    VariableType = Union[mathopt.Variable]
+    ConstraintType = Union[mathopt.LinearConstraint]
 
 
 class ParametersMilp:
@@ -291,138 +280,6 @@ class MilpSolver(SolverDO):
     def construct_linear_sum(expr: Iterable) -> Any:
         """Generate a linear sum (with variables) ready for the internal model."""
         ...
-
-
-class PymipMilpSolver(MilpSolver):
-    """Milp solver wrapping a solver from pymip library."""
-
-    model: Optional[mip.Model] = None
-    milp_solver_name: MilpSolverName
-    solver_name: str
-
-    def __init__(
-        self,
-        problem: Problem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
-        **kwargs: Any,
-    ):
-        super().__init__(
-            problem=problem,
-            params_objective_function=params_objective_function,
-            **kwargs,
-        )
-        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
-
-    def set_milp_solver_name(self, milp_solver_name: MilpSolverName):
-        self.milp_solver_name = milp_solver_name
-        self.solver_name = map_solver[milp_solver_name]
-
-    def solve(
-        self,
-        parameters_milp: Optional[ParametersMilp] = None,
-        time_limit: Optional[float] = 30.0,
-        **kwargs: Any,
-    ) -> ResultStorage:
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        self.optimize_model(
-            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
-        )
-        return self.retrieve_solutions(parameters_milp=parameters_milp)
-
-    def prepare_model(
-        self,
-        parameters_milp: Optional[ParametersMilp] = None,
-        time_limit: Optional[float] = 30.0,
-        **kwargs: Any,
-    ) -> None:
-        """Set Gurobi Model parameters according to parameters_milp"""
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        self.model.max_mip_gap = parameters_milp.mip_gap
-        self.model.max_mip_gap_abs = parameters_milp.mip_gap_abs
-        self.model.sol_pool_size = parameters_milp.pool_solutions
-        if time_limit is not None:
-            self.model.max_seconds = time_limit
-
-    def optimize_model(
-        self,
-        parameters_milp: Optional[ParametersMilp] = None,
-        time_limit: Optional[float] = 30.0,
-        **kwargs: Any,
-    ) -> None:
-        """Optimize the mip Model.
-
-        The solutions are yet to be retrieved via `self.retrieve_solutions()`.
-
-        """
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        self.prepare_model(
-            parameters_milp=parameters_milp, time_limit=time_limit, **kwargs
-        )
-        self.model.optimize()
-
-        logger.info(f"Solver found {self.model.num_solutions} solutions")
-        logger.info(f"Objective : {self.model.objective_value}")
-
-    def get_var_value_for_ith_solution(self, var: mip.Var, i: int) -> float:  # type: ignore # avoid isinstance checks for efficiency
-        """Get value for i-th solution of a given variable."""
-        return var.xi(i)
-
-    def get_obj_value_for_ith_solution(self, i: int) -> float:
-        """Get objective value for i-th solution."""
-        if self.model is None:  # for mypy
-            raise RuntimeError(
-                "self.model should not be None when calling this method."
-            )
-        return self.model.objective_values[i]
-
-    @property
-    def nb_solutions(self) -> int:
-        """Number of solutions found by the solver."""
-        if self.model is None:
-            return 0
-        else:
-            return self.model.num_solutions
-
-    @staticmethod
-    def create_empty_model(name: str = "") -> Any:
-        raise NotImplementedError()
-
-    def add_linear_constraint(self, expr: Any, name: str = "") -> Any:
-        raise NotImplementedError()
-
-    def add_binary_variable(self, name: str = "") -> Any:
-        raise NotImplementedError()
-
-    def add_integer_variable(
-        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
-    ) -> Any:
-        raise NotImplementedError()
-
-    def add_continuous_variable(
-        self, lb: float = 0.0, ub: float = math.inf, name: str = ""
-    ) -> Any:
-        raise NotImplementedError()
-
-    def set_model_objective(self, expr: Any, minimize: bool) -> None:
-        raise NotImplementedError()
-
-    @staticmethod
-    def construct_linear_sum(expr: Iterable) -> Any:
-        raise NotImplementedError()
 
 
 class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):

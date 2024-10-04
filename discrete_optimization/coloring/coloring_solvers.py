@@ -15,11 +15,7 @@ from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
     ModelingCPSat,
 )
-from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
-    ColoringLP,
-    ColoringLP_MIP,
-    MilpSolverName,
-)
+from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLP
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
 
 try:
@@ -54,15 +50,6 @@ solvers: dict[str, list[tuple[type[SolverColoring], dict[str, Any]]]] = {
                 "greedy_start": True,
                 "use_cliques": False,
                 "parameters_milp": ParametersMilp.default(),
-            },
-        ),
-        (
-            ColoringLP_MIP,
-            {
-                "milp_solver_name": MilpSolverName.CBC,
-                "greedy_start": True,
-                "parameters_milp": ParametersMilp.default(),
-                "use_cliques": False,
             },
         ),
     ],

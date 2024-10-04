@@ -17,12 +17,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.lns_mip import (
     InitialSolution,
     OrtoolsMathOptConstraintHandler,
-    PymipConstraintHandler,
-)
-from discrete_optimization.generic_tools.lp_tools import (
-    MilpSolverName,
-    OrtoolsMathOptMilpSolver,
-    PymipMilpSolver,
 )
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
@@ -32,10 +26,7 @@ from discrete_optimization.knapsack.solvers.greedy_solvers import (
     GreedyBest,
     ResultStorage,
 )
-from discrete_optimization.knapsack.solvers.lp_solvers import (
-    LPKnapsack,
-    LPKnapsackMathOpt,
-)
+from discrete_optimization.knapsack.solvers.lp_solvers import LPKnapsackMathOpt
 
 
 class InitialKnapsackMethod(Enum):
@@ -80,61 +71,6 @@ class InitialKnapsackSolution(InitialSolution):
                 list_solution_fits=[(solution, fit)],
                 mode_optim=self.params_objective_function.sense_function,
             )
-
-
-class ConstraintHandlerKnapsack(PymipConstraintHandler):
-    def __init__(self, problem: KnapsackModel, fraction_to_fix: float = 0.9):
-        self.problem = problem
-        self.fraction_to_fix = fraction_to_fix
-        self.iter = 0
-
-    def adding_constraint_from_results_store(
-        self, solver: PymipMilpSolver, result_storage: ResultStorage, **kwargs: Any
-    ) -> Iterable[Any]:
-        if not isinstance(solver, LPKnapsack):
-            raise ValueError("milp_solver must a LPKnapsack for this constraint.")
-        if solver.model is None:
-            solver.init_model()
-            if solver.model is None:
-                raise RuntimeError(
-                    "milp_solver.model must be not None after calling milp_solver.init_model()"
-                )
-        subpart_item = set(
-            random.sample(
-                range(self.problem.nb_items),
-                int(self.fraction_to_fix * self.problem.nb_items),
-            )
-        )
-        current_solution = result_storage.get_best_solution()
-        if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
-        if not isinstance(current_solution, KnapsackSolution):
-            raise ValueError(
-                "result_storage.get_best_solution() " "should be a KnapsackSolution."
-            )
-        dict_f_fixed = {}
-        dict_f_start = {}
-        start = []
-        for c in range(self.problem.nb_items):
-            dict_f_start[c] = current_solution.list_taken[c]
-            if c in subpart_item:
-                dict_f_fixed[c] = dict_f_start[c]
-        x_var = solver.variable_decision["x"]
-        lns_constraint = []
-        for key in x_var:
-            start += [(x_var[key], dict_f_start[key])]
-            if key in subpart_item:
-                lns_constraint.append(
-                    solver.model.add_constr(
-                        x_var[key] == dict_f_start[key], name=str(key)
-                    )
-                )
-        if solver.milp_solver_name == MilpSolverName.GRB:
-            solver.model.solver.update()
-        solver.model.start = start
-        return lns_constraint
 
 
 class ConstraintHandlerKnapsackMathOpt(OrtoolsMathOptConstraintHandler):

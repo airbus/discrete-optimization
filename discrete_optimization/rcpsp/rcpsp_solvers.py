@@ -21,7 +21,7 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName, ParametersMilp
+from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -39,8 +39,10 @@ from discrete_optimization.rcpsp.solver.rcpsp_ga_solver import (
     GA_MRCPSP_Solver,
     GA_RCPSP_Solver,
 )
-from discrete_optimization.rcpsp.solver.rcpsp_lp_lns_solver import LNS_LP_RCPSP_SOLVER
-from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP, LP_RCPSP
+from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
+    LP_MRCPSP_MATHOPT,
+    LP_RCPSP_MATHOPT,
+)
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
     GreedyChoice,
     PileSolverRCPSP,
@@ -56,16 +58,14 @@ solvers: dict[
 ] = {
     "lp": [
         (
-            LP_RCPSP,
+            LP_RCPSP_MATHOPT,
             {
-                "lp_solver": MilpSolverName.CBC,
                 "parameters_milp": ParametersMilp.default(),
             },
         ),
         (
-            LP_MRCPSP,
+            LP_MRCPSP_MATHOPT,
             {
-                "lp_solver": MilpSolverName.CBC,
                 "parameters_milp": ParametersMilp.default(),
             },
         ),
@@ -106,18 +106,6 @@ solvers: dict[
         (CPSatRCPSPSolver, {"parameters_cp": ParametersCP.default()}),
     ],
     "critical-path": [(CPM, {})],
-    "lns": [
-        (
-            LNS_LP_RCPSP_SOLVER,
-            {"nb_iteration_lns": 100, "lp_solver": MilpSolverName.CBC},
-        ),
-    ],
-    "lns-lp": [
-        (
-            LNS_LP_RCPSP_SOLVER,
-            {"nb_iteration_lns": 100, "lp_solver": MilpSolverName.CBC},
-        )
-    ],
     "lns-scheduling": [
         (
             LargeNeighborhoodSearchScheduling,
@@ -145,8 +133,8 @@ for key in solvers:
 solvers_compatibility: dict[
     Union[type[SolverRCPSP], type[SolverGenericRCPSP]], list[type[ANY_CLASSICAL_RCPSP]]
 ] = {
-    LP_RCPSP: [RCPSPModel],
-    LP_MRCPSP: [
+    LP_RCPSP_MATHOPT: [RCPSPModel],
+    LP_MRCPSP_MATHOPT: [
         RCPSPModel,
     ],
     PileSolverRCPSP: [RCPSPModel],
@@ -159,9 +147,6 @@ solvers_compatibility: dict[
     ],
     CP_RCPSP_MZN_PREEMPTIVE: [RCPSPModelPreemptive],
     CP_MRCPSP_MZN_PREEMPTIVE: [RCPSPModelPreemptive],
-    LNS_LP_RCPSP_SOLVER: [
-        RCPSPModel,
-    ],
     LS_RCPSP_Solver: [
         RCPSPModelPreemptive,
         RCPSPModelSpecialConstraintsPreemptive,

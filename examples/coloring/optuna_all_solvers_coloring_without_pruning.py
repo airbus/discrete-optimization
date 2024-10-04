@@ -27,7 +27,6 @@ from discrete_optimization.coloring.coloring_parser import (
 from discrete_optimization.coloring.coloring_solvers import (
     ColoringASPSolver,
     ColoringLP,
-    ParametersMilp,
     solvers_map,
     toulbar2_available,
 )
@@ -35,7 +34,6 @@ from discrete_optimization.coloring.solvers.coloring_cp_solvers import ColoringC
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
 )
-from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLP_MIP
 from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
     ToulbarColoringSolver,
 )
@@ -64,7 +62,7 @@ storage_path = "./optuna-journal.log"  # NFS path for distributed optimization
 elapsed_time_attr = "elapsed_time"  # name of the user attribute used to store duration of trials (updated during intermediate reports)
 
 # Solvers to test and their associated kwargs
-solvers_to_remove = {ColoringLP_MIP, ColoringCP}
+solvers_to_remove = {ColoringCP}
 if not gurobi_available or not gurobi_full_license_available:
     solvers_to_remove.add(ColoringLP)
 if not toulbar2_available:

@@ -7,18 +7,12 @@ import numpy as np
 import pytest
 from ortools.math_opt.python import mathopt
 
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel,
     SkillDetail,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import CP_MS_MRCPSP_MZN
-from discrete_optimization.rcpsp_multiskill.solvers.cpsat_msrcpsp_solver import (
-    CPSatMSRCPSPSolver,
-)
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
-    LP_Solver_MRSCPSP,
     LP_Solver_MRSCPSP_MathOpt,
     ParametersMilp,
 )

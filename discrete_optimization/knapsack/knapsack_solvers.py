@@ -21,10 +21,8 @@ from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackA
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 from discrete_optimization.knapsack.solvers.lp_solvers import (
     KnapsackORTools,
-    LPKnapsack,
     LPKnapsackCBC,
     LPKnapsackGurobi,
-    MilpSolverName,
 )
 
 solvers: dict[str, list[tuple[type[SolverKnapsack], dict[str, Any]]]] = {
@@ -32,13 +30,6 @@ solvers: dict[str, list[tuple[type[SolverKnapsack], dict[str, Any]]]] = {
         (KnapsackORTools, {}),
         (LPKnapsackCBC, {}),
         (LPKnapsackGurobi, {"parameter_gurobi": ParametersMilp.default()}),
-        (
-            LPKnapsack,
-            {
-                "milp_solver_name": MilpSolverName.CBC,
-                "parameters_milp": ParametersMilp.default(),
-            },
-        ),
     ],
     "greedy": [(GreedyBest, {})],
     "cp": [

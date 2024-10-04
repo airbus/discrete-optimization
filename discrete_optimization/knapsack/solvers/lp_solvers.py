@@ -8,25 +8,18 @@ import logging
 from collections.abc import Callable
 from typing import Any, Optional, Union
 
-import mip
-from mip import BINARY, MAXIMIZE, xsum
 from ortools.algorithms.python import knapsack_solver
 from ortools.linear_solver import pywraplp
 from ortools.math_opt.python import mathopt
 
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
+from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import ResultStorage
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
     MilpSolver,
-    MilpSolverName,
     OrtoolsMathOptMilpSolver,
-    PymipMilpSolver,
+    VariableType,
 )
-from discrete_optimization.generic_tools.mip.pymip_tools import MyModelMilp
 from discrete_optimization.knapsack.knapsack_model import (
     KnapsackModel,
     KnapsackSolution,
@@ -57,7 +50,7 @@ class _BaseLPKnapsack(MilpSolver, SolverKnapsack):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.variable_decision: dict[str, dict[int, Union["Var", mip.Var]]] = {}
+        self.variable_decision: dict[str, dict[int, VariableType]] = {}
         self.constraints_dict: dict[
             str,
             Union[
@@ -271,64 +264,6 @@ class LPKnapsackCBC(SolverKnapsack):
         return self.create_result_storage(
             [(sol, fit)],
         )
-
-
-# Can use GRB or CBC
-class LPKnapsack(PymipMilpSolver, _BaseLPKnapsack):
-    problem: KnapsackModel
-
-    def __init__(
-        self,
-        problem: KnapsackModel,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        milp_solver_name: MilpSolverName = MilpSolverName.CBC,
-        **kwargs: Any,
-    ):
-        _BaseLPKnapsack.__init__(
-            self,
-            problem=problem,
-            params_objective_function=params_objective_function,
-            **kwargs,
-        )
-        self.set_milp_solver_name(milp_solver_name=milp_solver_name)
-
-    def init_model(self, **kwargs: Any) -> None:
-        warm_start = kwargs.get("warm_start", {})
-        solver_name = kwargs.get("solver_name", self.solver_name)
-        self.model = MyModelMilp("Knapsack", solver_name=solver_name, sense=MAXIMIZE)
-        self.variable_decision = {"x": {}}
-        self.description_variable_description = {
-            "x": {
-                "shape": self.problem.nb_items,
-                "type": bool,
-                "descr": "dictionary with key the item index \
-                                                                 and value the boolean value corresponding \
-                                                                 to taking the item or not",
-            }
-        }
-        self.description_constraint["weight"] = {
-            "descr": "sum of weight of used items doesn't exceed max capacity"
-        }
-        weight = {}
-        list_item = self.problem.list_items
-        max_capacity = self.problem.max_capacity
-        x = {}
-        start = []
-        for item in list_item:
-            i = item.index
-            x[i] = self.model.add_var(
-                var_type=BINARY, obj=item.value, name="x_" + str(i)
-            )
-            if i in warm_start:
-                start += [(x[i], warm_start[i])]
-            weight[i] = item.weight
-        self.model.start = start
-        self.variable_decision["x"] = x
-        self.model.update()
-        self.constraints_dict["weight"] = self.model.add_constr(
-            xsum([weight[i] * x[i] for i in x]) <= max_capacity, name="capacity_constr"
-        )
-        self.model.update()
 
 
 class KnapsackORTools(SolverKnapsack):

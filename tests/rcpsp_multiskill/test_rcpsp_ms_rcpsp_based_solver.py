@@ -2,12 +2,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import platform
 
-import pytest
-
-from discrete_optimization.generic_tools.lp_tools import MilpSolverName
-from discrete_optimization.rcpsp.rcpsp_solvers import LP_MRCPSP, solvers
+from discrete_optimization.rcpsp.rcpsp_solvers import solvers
+from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import LP_MRCPSP_MATHOPT
 from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
     Employee,
     MS_RCPSPModel_Variant,
@@ -17,13 +14,6 @@ from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
 from discrete_optimization.rcpsp_multiskill.solvers.solver_rcpsp_based import (
     Solver_RCPSP_Based,
 )
-
-if platform.machine() == "arm64":
-    pytest.skip(
-        "Python-mip has issues with cbclib on macos arm64. "
-        "See https://github.com/coin-or/python-mip/issues/167",
-        allow_module_level=True,
-    )
 
 
 def create_toy_msrcpsp():
@@ -100,14 +90,13 @@ def create_toy_msrcpsp():
 def test_rcpsp_based():
     model = create_toy_msrcpsp()
     model = model.to_variant_model()
-    method = LP_MRCPSP
+    method = LP_MRCPSP_MATHOPT
     params = [
         solvers[k][j][1]
         for k in solvers
         for j in range(len(solvers[k]))
         if solvers[k][j][0] == method
     ][0]
-    params["lp_solver"] = MilpSolverName.CBC
     solver = Solver_RCPSP_Based(problem=model, method=method, **params)
     result = solver.solve()
     solution: MS_RCPSPSolution = result.get_best_solution()

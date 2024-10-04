@@ -17,7 +17,6 @@ from discrete_optimization.knapsack.solvers.knapsack_lns_solver import (
 )
 from discrete_optimization.knapsack.solvers.lp_solvers import (
     KnapsackModel,
-    LPKnapsack,
     LPKnapsackMathOpt,
 )
 
