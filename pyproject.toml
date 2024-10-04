@@ -51,7 +51,6 @@ dependencies = [
     "scipy",
     "numpy>=1.21",
     "clingo>=5.6",
-    "cffi>=1.17",
     "setuptools"
 ]
 dynamic = ["version"]
