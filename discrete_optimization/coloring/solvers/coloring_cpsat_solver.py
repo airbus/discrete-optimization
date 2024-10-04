@@ -36,7 +36,7 @@ class ColoringCPSatSolver(
             name="modeling", enum=ModelingCPSat, default=ModelingCPSat.INTEGER
         ),
         CategoricalHyperparameter(
-            name="warmstart", choices=[True, False], default=True
+            name="do_warmstart", choices=[True, False], default=True
         ),
         CategoricalHyperparameter(
             name="value_sequence_chain",
@@ -220,7 +220,7 @@ class ColoringCPSatSolver(
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
         modeling = args["modeling"]
-        do_warmstart = args["warmstart"]
+        do_warmstart = args["do_warmstart"]
         assert isinstance(modeling, ModelingCPSat)
         if "nb_colors" not in args or do_warmstart:
             solution = self.get_starting_solution(**args)

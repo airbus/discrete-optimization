@@ -46,7 +46,7 @@ def test_lns_cpsat_coloring():
     solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
     solver.init_model(
         modeling=ModelingCPSat.INTEGER,
-        warmstart=False,
+        do_warmstart=False,
         value_sequence_chain=False,
         used_variable=True,
         symmetry_on_used=True,
@@ -98,7 +98,7 @@ def test_lns_cpsat_coloring_with_constraints():
     solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
     solver.init_model(
         modeling=ModelingCPSat.INTEGER,
-        warmstart=False,
+        do_warmstart=False,
         value_sequence_chain=False,
         used_variable=True,
         symmetry_on_used=True,
@@ -147,7 +147,7 @@ def test_lns_cpsat_coloring_warm_start():
         solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
         solver.init_model(
             modeling=ModelingCPSat.INTEGER,
-            warmstart=False,
+            do_warmstart=False,
             value_sequence_chain=False,
             used_variable=True,
             symmetry_on_used=True,
