@@ -11,9 +11,9 @@ from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
 class GA_MSRCPSP_Solver(SolverDO):
     problem: RCPSPModel
 
-    def solve(
-        self, parameters_ga: ParametersAltGa = ParametersAltGa.default_msrcpsp(), **args
-    ):
+    def solve(self, parameters_ga: ParametersAltGa = None, **args):
+        if parameters_ga is None:
+            parameters_ga = ParametersAltGa.default_msrcpsp()
         ga_solver = AlternatingGa(
             problem=self.problem,
             encodings=parameters_ga.encodings,

@@ -21,7 +21,6 @@ from discrete_optimization.generic_tools.ea.ga_tools import (
     ParametersAltGa,
     ParametersGa,
 )
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -44,7 +43,6 @@ from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
     LP_RCPSP_MATHOPT,
 )
 from discrete_optimization.rcpsp.solver.rcpsp_pile import (
-    GreedyChoice,
     PileSolverRCPSP,
     PileSolverRCPSP_Calendar,
 )
@@ -59,51 +57,35 @@ solvers: dict[
     "lp": [
         (
             LP_RCPSP_MATHOPT,
-            {
-                "parameters_milp": ParametersMilp.default(),
-            },
+            {},
         ),
         (
             LP_MRCPSP_MATHOPT,
-            {
-                "parameters_milp": ParametersMilp.default(),
-            },
+            {},
         ),
     ],
     "greedy": [
-        (PileSolverRCPSP, {"greedy_choice": GreedyChoice.MOST_SUCCESSORS}),
-        (PileSolverRCPSP_Calendar, {"greedy_choice": GreedyChoice.MOST_SUCCESSORS}),
+        (PileSolverRCPSP, {}),
+        (PileSolverRCPSP_Calendar, {}),
     ],
     "cp": [
+        (CPSatRCPSPSolver, {"parameters_cp": ParametersCP.default()}),
         (
             CP_RCPSP_MZN,
-            {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "parameters_cp": ParametersCP.default(),
-            },
+            {},
         ),
         (
             CP_MRCPSP_MZN,
-            {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "parameters_cp": ParametersCP.default(),
-            },
+            {},
         ),
         (
             CP_RCPSP_MZN_PREEMPTIVE,
-            {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "parameters_cp": ParametersCP.default(),
-            },
+            {},
         ),
         (
             CP_MRCPSP_MZN_PREEMPTIVE,
-            {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "parameters_cp": ParametersCP.default(),
-            },
+            {},
         ),
-        (CPSatRCPSPSolver, {"parameters_cp": ParametersCP.default()}),
     ],
     "critical-path": [(CPM, {})],
     "lns-scheduling": [

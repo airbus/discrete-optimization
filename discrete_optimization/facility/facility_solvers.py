@@ -15,7 +15,7 @@ from discrete_optimization.facility.solvers.facility_cp_solvers import (
 from discrete_optimization.facility.solvers.facility_lp_solver import (
     LP_Facility_Solver,
     LP_Facility_Solver_CBC,
-    ParametersMilp,
+    LP_Facility_Solver_MathOpt,
 )
 from discrete_optimization.facility.solvers.facility_solver import SolverFacility
 from discrete_optimization.facility.solvers.greedy_solvers import (
@@ -31,22 +31,16 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 solvers: dict[str, list[tuple[type[SolverFacility], dict[str, Any]]]] = {
     "lp": [
         (
+            LP_Facility_Solver_MathOpt,
+            {},
+        ),
+        (
             LP_Facility_Solver,
-            {
-                "parameters_milp": ParametersMilp.default(),
-                "use_matrix_indicator_heuristic": True,
-                "n_shortest": 10,
-                "n_cheapest": 10,
-            },
+            {},
         ),
         (
             LP_Facility_Solver_CBC,
-            {
-                "parameters_milp": ParametersMilp.default(),
-                "use_matrix_indicator_heuristic": True,
-                "n_shortest": 10,
-                "n_cheapest": 10,
-            },
+            {},
         ),
     ],
     "cp": [

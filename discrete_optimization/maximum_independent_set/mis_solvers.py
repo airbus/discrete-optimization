@@ -6,8 +6,6 @@
 
 from typing import Any
 
-from discrete_optimization.coloring.solvers.coloring_cpsat_solver import ModelingCPSat
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -30,7 +28,6 @@ from discrete_optimization.maximum_independent_set.solvers.mis_ortools import (
 from discrete_optimization.maximum_independent_set.solvers.mis_solver import MisSolver
 from discrete_optimization.maximum_independent_set.solvers.mis_toulbar import (
     MisToulbarSolver,
-    toulbar_available,
 )
 
 solvers: dict[str, list[tuple[type[MisSolver], dict[str, Any]]]] = {
@@ -48,10 +45,10 @@ solvers: dict[str, list[tuple[type[MisSolver], dict[str, Any]]]] = {
             },
         ),
     ],
-    "ortools": [
+    "cp": [
         (
             MisOrtoolsSolver,
-            {"modeling": ModelingCPSat.BINARY, "parameters_cp": ParametersCP.default()},
+            {},
         ),
     ],
     "networkX": [(MisNetworkXSolver, {})],
