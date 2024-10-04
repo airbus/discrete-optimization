@@ -24,6 +24,9 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
     CP_MS_MRCPSP_MZN,
     CP_MS_MRCPSP_MZN_PREEMPTIVE,
 )
+from discrete_optimization.rcpsp_multiskill.solvers.cpsat_msrcpsp_solver import (
+    CPSatMSRCPSPSolver,
+)
 from discrete_optimization.rcpsp_multiskill.solvers.lp_model import (
     LP_Solver_MRSCPSP_MathOpt,
 )
@@ -35,39 +38,33 @@ solvers = {
     "lp": [
         (
             LP_Solver_MRSCPSP_MathOpt,
-            {
-                "parameters_milp": ParametersMilp.default(),
-            },
+            {},
         )
     ],
     "cp": [
         (
+            CPSatMSRCPSPSolver,
+            {},
+        ),
+        (
             CP_MS_MRCPSP_MZN,
-            {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "parameters_cp": ParametersCP.default(),
-                "exact_skills_need": False,
-            },
+            {},
         ),
         (
             CP_MS_MRCPSP_MZN_PREEMPTIVE,
             {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "parameters_cp": ParametersCP.default(),
-                "exact_skills_need": False,
                 "nb_preemptive": 5,
             },
         ),
     ],
-    "ls": [(LS_RCPSP_Solver, {"ls_solver": LS_SOLVER.SA, "nb_iteration_max": 20})],
-    "ga": [(GA_MSRCPSP_Solver, {"parameters_ga": ParametersAltGa.default_msrcpsp()})],
+    "ls": [(LS_RCPSP_Solver, {"nb_iteration_max": 20})],
+    "ga": [(GA_MSRCPSP_Solver, {})],
     "lns-scheduling": [
         (
             LargeNeighborhoodSearchScheduling,
             {
                 "nb_iteration_lns": 100,
                 "nb_iteration_no_improvement": 100,
-                "parameters_cp": ParametersCP.default(),
             },
         )
     ],

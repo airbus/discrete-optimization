@@ -6,7 +6,6 @@ import logging
 import pytest
 from ortools.math_opt.python import mathopt
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.maximum_independent_set.mis_model import (
     MisProblem,
     MisSolution,
@@ -15,11 +14,7 @@ from discrete_optimization.maximum_independent_set.mis_parser import (
     dimacs_parser_nx,
     get_data_available,
 )
-from discrete_optimization.maximum_independent_set.mis_solvers import (
-    solve,
-    solvers_map,
-    toulbar_available,
-)
+from discrete_optimization.maximum_independent_set.mis_solvers import solve, solvers_map
 from discrete_optimization.maximum_independent_set.solvers.mis_gurobi import (
     MisMilpSolver,
     MisQuadraticSolver,
@@ -44,7 +39,12 @@ except ImportError:
     gurobi_available = False
 else:
     gurobi_available = True
-
+try:
+    import pytoulbar2
+except ImportError:
+    toulbar_available = False
+else:
+    toulbar_available = True
 kamis_available = False
 
 logger = logging.getLogger(__name__)

@@ -7,16 +7,25 @@
 from typing import Any
 
 from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
-from discrete_optimization.coloring.solvers.coloring_cp_solvers import (
-    ColoringCP,
-    ColoringCPModel,
-)
+from discrete_optimization.coloring.solvers.coloring_cp_solvers import ColoringCP
 from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
     ModelingCPSat,
 )
-from discrete_optimization.coloring.solvers.coloring_lp_solvers import ColoringLP
+from discrete_optimization.coloring.solvers.coloring_lp_solvers import (
+    ColoringLP,
+    ColoringLPMathOpt,
+)
 from discrete_optimization.coloring.solvers.coloring_solver import SolverColoring
+from discrete_optimization.coloring.solvers.greedy_coloring import (
+    ColoringProblem,
+    GreedyColoring,
+)
+from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.do_problem import Problem
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 
 try:
     import pytoulbar2
@@ -30,45 +39,28 @@ else:
     toulbar2_available = True
 
 
-from discrete_optimization.coloring.solvers.greedy_coloring import (
-    ColoringProblem,
-    GreedyColoring,
-    NXGreedyColoringMethod,
-)
-from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.generic_tools.do_problem import Problem
-from discrete_optimization.generic_tools.lp_tools import ParametersMilp
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
-
 solvers: dict[str, list[tuple[type[SolverColoring], dict[str, Any]]]] = {
     "lp": [
         (
             ColoringLP,
-            {
-                "greedy_start": True,
-                "use_cliques": False,
-                "parameters_milp": ParametersMilp.default(),
-            },
+            {},
+        ),
+        (
+            ColoringLPMathOpt,
+            {},
         ),
     ],
     "cp": [
         (
-            ColoringCP,
-            {
-                "cp_solver_name": CPSolverName.CHUFFED,
-                "cp_model": ColoringCPModel.DEFAULT,
-                "parameters_cp": ParametersCP.default(),
-                "object_output": True,
-            },
-        ),
-        (
             ColoringCPSatSolver,
             {"modeling": ModelingCPSat.BINARY, "parameters_cp": ParametersCP.default()},
         ),
+        (
+            ColoringCP,
+            {},
+        ),
     ],
-    "greedy": [(GreedyColoring, {"strategy": NXGreedyColoringMethod.best})],
+    "greedy": [(GreedyColoring, {})],
     "asp": [(ColoringASPSolver, {"time_limit": 5})],
 }
 if toulbar2_available:

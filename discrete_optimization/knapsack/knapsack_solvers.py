@@ -4,7 +4,6 @@
 
 from typing import Any
 
-from discrete_optimization.generic_tools.cp_tools import CPSolverName
 from discrete_optimization.generic_tools.do_problem import Problem
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -18,6 +17,9 @@ from discrete_optimization.knapsack.solvers.cp_solvers import (
 from discrete_optimization.knapsack.solvers.dyn_prog_knapsack import KnapsackDynProg
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
+from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
+    CPSatKnapsackSolver,
+)
 from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsack
 from discrete_optimization.knapsack.solvers.lp_solvers import (
     KnapsackORTools,
@@ -33,10 +35,11 @@ solvers: dict[str, list[tuple[type[SolverKnapsack], dict[str, Any]]]] = {
     ],
     "greedy": [(GreedyBest, {})],
     "cp": [
-        (CPKnapsackMZN, {"cp_solver_name": CPSolverName.CHUFFED}),
-        (CPKnapsackMZN2, {"cp_solver_name": CPSolverName.CHUFFED}),
+        (CPSatKnapsackSolver, {}),
+        (CPKnapsackMZN, {}),
+        (CPKnapsackMZN2, {}),
     ],
-    "asp": [(KnapsackASPSolver, {"time_limit": 100})],
+    "asp": [(KnapsackASPSolver, {})],
     "dyn_prog": [
         (
             KnapsackDynProg,
