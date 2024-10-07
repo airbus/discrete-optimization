@@ -39,7 +39,7 @@ def run_cpsat_jsp():
 def run_cpsat_fjsp():
     files = fjsp_parser.get_data_available()
     print(files)
-    file = [f for f in files if "Behnke60.fjs" in f][0]
+    file = [f for f in files if "DPpaulli18a.fjs" in f][0]
     print(file)
     problem = fjsp_parser.parse_file(file)
     print(problem)

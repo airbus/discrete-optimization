@@ -7,6 +7,8 @@ from typing import Any, List, Optional
 import didppy as dp
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DidSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -17,7 +19,7 @@ from discrete_optimization.knapsack.solvers.knapsack_solver import SolverKnapsac
 logger = logging.getLogger(__name__)
 
 
-class DidKnapsackSolver(SolverKnapsack, DidSolver):
+class DidKnapsackSolver(SolverKnapsack, DidSolver, WarmstartMixin):
     hyperparameters = DidSolver.hyperparameters
     model: dp.Model
 
@@ -41,6 +43,7 @@ class DidKnapsackSolver(SolverKnapsack, DidSolver):
             preconditions=[i < n, r >= w[i]],
         )
         model.add_transition(pack)
+        self.transitions = {"pack": pack}
 
         ignore = dp.Transition(
             name="ignore",
@@ -48,23 +51,24 @@ class DidKnapsackSolver(SolverKnapsack, DidSolver):
             effects=[(i, i + 1)],
             preconditions=[i < n],
         )
+        self.transitions["ignore"] = ignore
         model.add_transition(ignore)
         model.add_base_case([i == n])
         self.model = model
 
-    def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
-    ) -> ResultStorage:
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        solver_cls = kwargs["solver"]
-        solver = solver_cls(self.model, time_limit=10, quiet=False)
-        solution = solver.search()
+    def retrieve_solution(self, sol: dp.Solution) -> Solution:
         taken = [0 for _ in range(self.problem.nb_items)]
-        for i, t in enumerate(solution.transitions):
+        for i, t in enumerate(sol.transitions):
             if t.name == "pack":
                 taken[i] = 1
                 logger.info(f"pack {i}")
-        logger.info(f"profit: {solution.cost}")
-        sol = KnapsackSolution(problem=self.problem, list_taken=taken)
-        fit = self.aggreg_from_sol(sol)
-        return self.create_result_storage([(sol, fit)])
+        return KnapsackSolution(problem=self.problem, list_taken=taken)
+
+    def set_warm_start(self, solution: KnapsackSolution) -> None:
+        transition = []
+        for i in range(len(solution.list_taken)):
+            if solution.list_taken[i] == 1:
+                transition.append(self.transitions["pack"])
+            else:
+                transition.append(self.transitions["ignore"])
+        self.initial_transitions = transition

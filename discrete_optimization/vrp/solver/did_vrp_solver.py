@@ -2,36 +2,48 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import logging
 import re
-from typing import Any, List, Optional
 
 import didppy as dp
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_solver import ResultStorage
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.dyn_prog_tools import DidSolver
 from discrete_optimization.vrp.solver.vrp_solver import SolverVrp
-from discrete_optimization.vrp.vrp_model import VrpSolution, trivial_solution
+from discrete_optimization.vrp.vrp_model import VrpSolution
 from discrete_optimization.vrp.vrp_toolbox import compute_length_matrix
+
+logger = logging.getLogger(__name__)
 
 
 class DidVrpSolver(SolverVrp, DidSolver):
     hyperparameters = DidSolver.hyperparameters
 
     def init_model(self, **kwargs):
-        """Directly adapted from https://didppy.readthedocs.io/en/stable/tutorial.html"""
+        """
+        DP model for CVRP
+        Directly adapted from https://github.com/domain-independent-dp/didp-rs/blob/main/didppy/examples/cvrp.ipynb
+        """
         # Number of locations
         n = self.problem.customer_count
         # Number of vehicles
         m = self.problem.vehicle_count
         # Capacity of a vehicle
         q = self.problem.vehicle_capacities[0]
+        # Capacities
+        capacities = self.problem.vehicle_capacities
+        sum_capacities_backward = [
+            sum(capacities[i:]) for i in range(self.problem.vehicle_count)
+        ] + [0]
+
         # Weights
         d = [self.problem.customers[i].demand for i in range(n)]
         # Travel cost
-        c, _ = compute_length_matrix(self.problem)
+        _, c = compute_length_matrix(self.problem)
+        c = [[int(10 * c[i, j]) for j in range(c.shape[1])] for i in range(c.shape[0])]
         model = dp.Model()
         customer = model.add_object_type(number=n)
+        vehicle_obj = model.add_object_type(number=m)
         # U
         unvisited = model.add_set_var(object_type=customer, target=list(range(1, n)))
         # i
@@ -39,9 +51,12 @@ class DidVrpSolver(SolverVrp, DidSolver):
         # l
         load = model.add_int_resource_var(target=0, less_is_better=True)
         # k
-        vehicles = model.add_int_resource_var(target=1, less_is_better=True)
+        vehicles = model.add_int_resource_var(target=0, less_is_better=True)
+        vehicles_ = model.add_element_var(object_type=vehicle_obj, target=0)
         weight = model.add_int_table(d)
         distance = model.add_int_table(c)
+        capacities = model.add_int_table(self.problem.vehicle_capacities)
+        sum_capacities_backward = model.add_int_table(sum_capacities_backward)
         model.add_base_case([unvisited.is_empty(), location == 0])
         for j in range(1, n):
             visit = dp.Transition(
@@ -52,7 +67,10 @@ class DidVrpSolver(SolverVrp, DidSolver):
                     (location, j),
                     (load, load + weight[j]),
                 ],
-                preconditions=[unvisited.contains(j), load + weight[j] <= q],
+                preconditions=[
+                    unvisited.contains(j),
+                    load + weight[j] <= capacities[vehicles_],
+                ],
             )
             model.add_transition(visit)
 
@@ -65,6 +83,7 @@ class DidVrpSolver(SolverVrp, DidSolver):
                     (location, j),
                     (load, weight[j]),
                     (vehicles, vehicles + 1),
+                    (vehicles_, vehicles_ + 1),
                 ],
                 preconditions=[unvisited.contains(j), vehicles < m],
             )
@@ -77,7 +96,9 @@ class DidVrpSolver(SolverVrp, DidSolver):
             preconditions=[unvisited.is_empty(), location != 0],
         )
         model.add_transition(return_to_depot)
-
+        model.add_state_constr(
+            sum_capacities_backward[vehicles_] - load >= weight[unvisited]
+        )
         model.add_state_constr((m - vehicles + 1) * q - load >= weight[unvisited])
 
         min_distance_to = model.add_int_table(
@@ -97,22 +118,8 @@ class DidVrpSolver(SolverVrp, DidSolver):
         )
         self.model = model
 
-    def solve(
-        self, callbacks: Optional[List[Callback]] = None, **kwargs: Any
-    ) -> ResultStorage:
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
-        solver_cls = kwargs["solver"]
-        solver = solver_cls(self.model, time_limit=10, quiet=False)
-        solution = solver.search()
-        print("Transitions to apply:")
-        print("")
-        sol = VrpSolution(
-            problem=self.problem,
-            list_start_index=self.problem.start_indexes,
-            list_end_index=self.problem.end_indexes,
-            list_paths=[],
-        )
-        list_paths = [[] for i in range(self.problem.vehicle_count)]
+    def retrieve_solution(self, sol: dp.Solution) -> Solution:
+        list_paths = [[] for _ in range(self.problem.vehicle_count)]
 
         def extract_visit_number(text):
             match = re.search(r"visit\s(\d+)", text, re.IGNORECASE)
@@ -121,7 +128,7 @@ class DidVrpSolver(SolverVrp, DidSolver):
             return None
 
         cur_index = 0
-        for t in solution.transitions:
+        for t in sol.transitions:
             name = t.name
             if "with a new vehicle" in name:
                 cur_index += 1
@@ -130,13 +137,11 @@ class DidVrpSolver(SolverVrp, DidSolver):
             list_paths[cur_index].append(extract_visit_number(name))
             print(name)
             print(extract_visit_number(name))
-        print("")
-        print("Cost: {}".format(solution.cost))
-        sol = VrpSolution(
+        logger.info(f"Cost: {sol.cost}")
+        vrp_sol = VrpSolution(
             problem=self.problem,
             list_start_index=self.problem.start_indexes,
             list_end_index=self.problem.end_indexes,
             list_paths=list_paths,
         )
-        fit = self.aggreg_from_sol(sol)
-        return self.create_result_storage([(sol, fit)])
+        return vrp_sol

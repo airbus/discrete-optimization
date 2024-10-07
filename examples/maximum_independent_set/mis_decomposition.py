@@ -11,6 +11,10 @@ from discrete_optimization.maximum_independent_set.mis_solvers import (
     MisOrtoolsSolver,
     ParametersCP,
 )
+from discrete_optimization.maximum_independent_set.solvers.did_mis_solver import (
+    DidMisSolver,
+    DidModeling,
+)
 from discrete_optimization.maximum_independent_set.solvers.mis_asp import MisASPSolver
 from discrete_optimization.maximum_independent_set.solvers.mis_decomposition import (
     MisDecomposedSolver,
@@ -114,5 +118,23 @@ def run_decomposition_gurobi():
     )
 
 
+def run_decomposition_did():
+    small_example = [f for f in get_data_available() if "1dc.1024" in f][0]
+    mis_model: MisProblem = dimacs_parser_nx(small_example)
+    solver = MisDecomposedSolver(problem=mis_model)
+    res = solver.solve(
+        initial_solver=SubBrick(
+            cls=DidMisSolver,
+            kwargs={"modeling": DidModeling.ORDER, "time_limit": 10, "quiet": True},
+        ),
+        root_solver=SubBrick(
+            cls=DidMisSolver,
+            kwargs={"modeling": DidModeling.ORDER, "time_limit": 3, "quiet": True},
+        ),
+        proportion_to_remove=0.4,
+        nb_iteration=10000,
+    )
+
+
 if __name__ == "__main__":
-    run_decomposition_gurobi()
+    run_decomposition_did()

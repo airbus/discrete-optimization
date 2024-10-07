@@ -56,7 +56,7 @@ https://developers.google.com/optimization/routing/routing_options#search_status
 class BasicRoutingMonitor:
     def __init__(self, do_solver: "VrpORToolsSolver"):
         self.model = do_solver.routing
-        self.problem = do_solver.vrp_model
+        self.problem = do_solver.problem
         self.do_solver = do_solver
         self._counter = 0
         self._best_objective = np.inf
@@ -169,7 +169,7 @@ class VrpORToolsSolver(SolverVrp):
             vehicle_tours_all[-1] += [self.manager.IndexToNode(index)]
         logger.debug(f"Route distance : {route_distance}")
         logger.debug(f"Vehicle tours : {vehicle_tours}")
-        logger.debug(f"Objective : {objective}")
+        logger.info(f"Objective : {objective}")
         logger.debug(f"Vehicle tours all : {vehicle_tours_all}")
         variable_vrp = VrpSolution(
             problem=self.problem,

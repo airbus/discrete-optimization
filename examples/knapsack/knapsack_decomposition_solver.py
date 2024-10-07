@@ -10,6 +10,10 @@ from discrete_optimization.knapsack.knapsack_parser import (
     parse_file,
 )
 from discrete_optimization.knapsack.solvers.cp_solvers import CPKnapsackMZN2
+from discrete_optimization.knapsack.solvers.dip_knapsack_solver import (
+    DidKnapsackSolver,
+    dp,
+)
 from discrete_optimization.knapsack.solvers.greedy_solvers import GreedyBest
 from discrete_optimization.knapsack.solvers.knapsack_asp_solver import KnapsackASPSolver
 from discrete_optimization.knapsack.solvers.knapsack_cpsat_solver import (
@@ -89,5 +93,28 @@ def run_decomposed_knapsack_cpsat():
     assert knapsack_model.satisfy(solution)
 
 
+def run_decomposed_knapsack_did():
+    logging.basicConfig(level=logging.INFO)
+    file = [f for f in get_data_available() if "ks_100_0" in f][0]
+    knapsack_model = parse_file(file)
+    solver = KnapsackDecomposedSolver(
+        problem=knapsack_model,
+        params_objective_function=None,
+    )
+    result_store = solver.solve(
+        initial_solver=SubBrick(
+            cls=DidKnapsackSolver, kwargs=dict(solver=dp.LNBS, time_limit=5)
+        ),
+        root_solver=SubBrick(
+            cls=DidKnapsackSolver, kwargs=dict(solver=dp.LNBS, time_limit=5)
+        ),
+        nb_iteration=200,
+        proportion_to_remove=0.85,
+    )
+    solution, fit = result_store.get_best_solution_fit()
+    print(solution, fit)
+    assert knapsack_model.satisfy(solution)
+
+
 if __name__ == "__main__":
-    run_decomposed_knapsack_cpsat()
+    run_decomposed_knapsack_did()
