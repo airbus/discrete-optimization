@@ -172,7 +172,7 @@ class DidFjspSolver(DidSolver):
             preconditions=[done.len() == self.problem.n_all_jobs],
         )
         model.add_transition(finish)
-        model.add_dual_bound()
+        # model.add_dual_bound()
         self.jobs = jobs
         self.prec = precedence_by_index
         self.index = index

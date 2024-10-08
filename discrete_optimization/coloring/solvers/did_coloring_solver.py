@@ -86,10 +86,12 @@ class DidColoringSolver(DidSolver, SolverColoring):
             s = s.strip("()")
             return tuple(int(num) for num in s.split(","))
 
-        colors = [None for i in range(self.problem.number_of_nodes)]
-        colors[0] = 0
+        colors = [None for _ in range(self.problem.number_of_nodes)]
+        colors[self.nodes_index[0]] = 0
         for t in sol.transitions:
-            print("transition : ", t.name)
             n, c = extract_numbers(t.name)
+            print(t.name)
+            # print(self.nodes_index[n])
+            # print(n, c)
             colors[self.nodes_index[n]] = c
         return ColoringSolution(problem=self.problem, colors=colors)

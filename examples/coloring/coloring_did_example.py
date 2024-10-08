@@ -16,11 +16,11 @@ from discrete_optimization.coloring.solvers.did_coloring_solver import (
 
 def run_did_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_500_5" in f][0]
+    file = [f for f in get_data_available() if "gc_20_1" in f][0]
     color_problem = parse_file(file)
     solver = DidColoringSolver(color_problem)
     solver.init_model(nb_colors=70)
-    result_store = solver.solve(solver=dp.LNBS, time_limit=100)
+    result_store = solver.solve(solver=dp.LNBS, time_limit=1)
     solution, fit = result_store.get_best_solution_fit()
     plot_coloring_solution(solution)
     print(solution, fit)

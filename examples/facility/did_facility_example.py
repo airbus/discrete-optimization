@@ -20,12 +20,12 @@ from discrete_optimization.generic_tools.optuna.utils import (
 
 
 def did_facility_example():
-    file = [f for f in get_data_available() if "fl_25_2" in f][0]
+    file = [f for f in get_data_available() if "fl_25_4" in f][0]
     problem: FacilityProblem = parse_file(file)
     print("customer : ", problem.customer_count, "facility : ", problem.facility_count)
     solver = DidFacilitySolver(problem=problem)
     res = solver.solve(
-        solver=dp.LNBS, modeling=DidModelingFacility.CUSTOMER, time_limit=50
+        solver=dp.LNBS, modeling=DidModelingFacility.FACILITY, time_limit=10
     )
     sol, fit = res.get_best_solution_fit()
     print(problem.evaluate(sol))
