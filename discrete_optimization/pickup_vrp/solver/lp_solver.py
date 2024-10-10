@@ -10,6 +10,7 @@ import os
 import random
 import time
 from abc import abstractmethod
+from collections import defaultdict
 from collections.abc import Callable, Hashable, Iterable
 from enum import Enum
 from typing import Any, Optional, Union, cast
@@ -187,21 +188,21 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
         self,
         nodes_of_interest: Iterable[Node],
         variables_edges: dict[int, dict[Edge, Any]],
-        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> None:
         constraint_one_visit = {}
         for node in nodes_of_interest:
             constraint_one_visit[node] = self.add_linear_constraint(
                 self.construct_linear_sum(
-                    variables_edges[x[0]][x[1]] for x in edges_in_all_vehicles[node]
+                    variables_edges[x[0]][x[1]]
+                    for x in self.edges_in_all_vehicles[node]
                 )
                 >= 1,
                 name="visit_" + str(node),
             )
             constraint_one_visit[(node, "out")] = self.add_linear_constraint(
                 self.construct_linear_sum(
-                    variables_edges[x[0]][x[1]] for x in edges_out_all_vehicles[node]
+                    variables_edges[x[0]][x[1]]
+                    for x in self.edges_out_all_vehicles[node]
                 )
                 >= 1,
                 name="visitout_" + str(node),
@@ -211,8 +212,6 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
         self,
         nodes_of_interest: Iterable[Node],
         variables_edges: dict[int, dict[Edge, Any]],
-        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> None:
         constraint_cluster: dict[Hashable, Any] = {}
         for cluster in self.problem.clusters_to_node:
@@ -224,7 +223,7 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                     self.construct_linear_sum(
                         variables_edges[x[0]][x[1]]
                         for node in self.problem.clusters_to_node[cluster]
-                        for x in edges_in_all_vehicles[node]
+                        for x in self.edges_in_all_vehicles[node]
                         if node in nodes_of_interest
                         and x[0] in self.problem.vehicles_representative
                     )
@@ -235,7 +234,7 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                     self.construct_linear_sum(
                         variables_edges[x[0]][x[1]]
                         for node in self.problem.clusters_to_node[cluster]
-                        for x in edges_out_all_vehicles[node]
+                        for x in self.edges_out_all_vehicles[node]
                         if node in nodes_of_interest
                         and x[0] in self.problem.vehicles_representative
                     )
@@ -246,8 +245,6 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
     def resources_constraint(
         self,
         variables_edges: dict[int, dict[Edge, Any]],
-        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> dict[str, dict[str, dict[Node, Any]]]:
         resources = self.problem.resources_set
         resources_variable_coming: dict[str, dict[Node, Any]] = {
@@ -255,7 +252,7 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                 node: self.add_continuous_variable(
                     name="res_coming_" + str(r) + "_" + str(node),
                 )
-                for node in edges_in_all_vehicles
+                for node in self.edges_in_all_vehicles
             }
             for r in resources
         }
@@ -264,7 +261,7 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                 node: self.add_continuous_variable(
                     name="res_leaving_" + str(r) + "_" + str(node),
                 )
-                for node in edges_in_all_vehicles
+                for node in self.edges_in_all_vehicles
             }
             for r in resources
         }
@@ -286,7 +283,7 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
         all_origin = set(self.problem.origin_vehicle.values())
         for r in resources_variable_coming:
             for node in resources_variable_coming[r]:
-                for vehicle, edge in edges_in_all_vehicles[node]:
+                for vehicle, edge in self.edges_in_all_vehicles[node]:
                     if edge[0] == edge[1]:
                         continue
                     self.add_linear_constraint_with_indicator(
@@ -313,8 +310,6 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
     def simple_capacity_constraint(
         self,
         variables_edges: dict[int, dict[Edge, Any]],
-        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> dict[str, dict[int, dict[str, Any]]]:
         # Case where we don't have to track the resource flow etc...
         # we just want to check that we respect the capacity constraint (like in VRP with capacity)
@@ -355,23 +350,21 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
     def time_evolution(
         self,
         variables_edges: dict[int, dict[Edge, Any]],
-        edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]],
-        edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     ) -> dict[str, dict[Node, Any]]:
         time_coming: dict[Node, Any] = {
             node: self.add_continuous_variable(name="time_coming_" + str(node))
-            for node in edges_in_all_vehicles
+            for node in self.edges_in_all_vehicles
         }
         time_leaving: dict[Node, Any] = {
             node: self.add_continuous_variable(name="time_leaving_" + str(node))
-            for node in edges_in_all_vehicles
+            for node in self.edges_in_all_vehicles
         }
         for v in self.problem.origin_vehicle:
             self.add_linear_constraint(time_coming[self.problem.origin_vehicle[v]] == 0)
         index = 0
         all_origin = set(self.problem.origin_vehicle.values())
         for node in time_leaving:
-            for vehicle, edge in edges_in_all_vehicles[node]:
+            for vehicle, edge in self.edges_in_all_vehicles[node]:
                 if edge[0] == edge[1]:
                     continue
                 self.add_linear_constraint_with_indicator(
@@ -391,6 +384,70 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                 )
         return {"time_coming": time_coming, "time_leaving": time_leaving}
 
+    def init_order_variables(self) -> None:
+        variables_order = {
+            node: self.add_continuous_variable(name="order_" + str(node))
+            for node in self.edges_in_all_vehicles
+        }
+        constraints_order: dict[Node, dict[Edge, ConstraintType]] = defaultdict(dict)
+        for vehicle in range(self.problem.number_vehicle):
+            node_origin = self.problem.origin_vehicle[vehicle]
+            constraints_order[node_origin][
+                (node_origin, node_origin)
+            ] = self.add_linear_constraint(
+                variables_order[node_origin] == 0,
+                name="order_" + str(node_origin),
+            )
+        self.variables_order = variables_order
+        self.constraints_order = constraints_order
+
+    def add_order_constraints(self, nodes: Iterable[Node], lazy: bool = False) -> None:
+        if lazy:
+            if isinstance(self, GurobiMilpSolver):
+                add_constraint_fn = self.model.cbLazy
+            else:
+                raise NotImplementedError(
+                    "Lazy constraints are implemented only for the gurobi solvers."
+                )
+        else:
+            add_constraint_fn = self.add_linear_constraint
+        constraints_order = self.constraints_order
+        variables_order = self.variables_order
+        nb_nodes = len(self.problem.list_nodes)
+        for node in nodes:
+            if node not in constraints_order:
+                for vehicle, edge in self.edges_in_all_vehicles[node]:
+                    if edge[0] == edge[1]:
+                        continue
+                    if self.subtour_use_indicator:
+                        constraints_order[node][
+                            edge
+                        ] = self.add_linear_constraint_with_indicator(
+                            binvar=self.variable_decisions["variables_edges"][vehicle][
+                                edge
+                            ],
+                            binval=1,
+                            lhs=variables_order[node],
+                            sense=InequalitySense.EQUAL,
+                            rhs=variables_order[edge[0]] + 1,
+                            name=f"order_{node}_{edge}",
+                        )
+                    else:
+                        constraints_order[node][edge] = add_constraint_fn(
+                            variables_order[node]
+                            >= variables_order[edge[0]]
+                            + 1
+                            - 2
+                            * nb_nodes
+                            * (
+                                1
+                                - self.variable_decisions["variables_edges"][vehicle][
+                                    edge
+                                ]
+                            ),
+                            name=f"order_{node}_{edge}",
+                        )
+
     def init_model(self, **kwargs: Any) -> None:
         self.model = self.create_empty_model("GPDP-flow")
         include_backward = kwargs.get("include_backward", True)
@@ -401,6 +458,11 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
         include_time_evolution = kwargs.get("include_time_evolution", False)
         one_visit_per_node = kwargs.get("one_visit_per_node", True)
         one_visit_per_cluster = kwargs.get("one_visit_per_cluster", False)
+        self.subtour_do_order = kwargs.get("subtour_do_order", False)
+        self.subtour_use_indicator = kwargs.get("subtour_use_indicator", False)
+        self.subtour_consider_only_first_component = kwargs.get(
+            "subtour_consider_only_first_component", True
+        )
         optimize_span = kwargs.get("optimize_span", False)
         unique_visit = kwargs.get("unique_visit", True)
         nb_vehicle = self.problem.number_vehicle
@@ -468,6 +530,9 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
         self.variables_edges = variables_edges
         all_variables: dict[str, dict[Any, Any]] = {"variables_edges": variables_edges}
         constraint_loop: dict[tuple[int, Edge], Any] = {}
+        self.variable_decisions = all_variables
+        self.clusters_version = one_visit_per_cluster
+        self.tsp_version = one_visit_per_node
         for vehicle in variables_edges:
             for e in variables_edges[vehicle]:
                 if e[0] == e[1]:
@@ -488,6 +553,30 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
         ) = construct_edges_in_out_dict(
             variables_edges=variables_edges, clusters_dict=self.problem.clusters_dict
         )
+        self.edges_in_all_vehicles: dict[
+            Node, set[tuple[int, Edge]]
+        ] = edges_in_all_vehicles
+        self.edges_out_all_vehicles: dict[
+            Node, set[tuple[int, Edge]]
+        ] = edges_out_all_vehicles
+        self.edges_in_per_vehicles: dict[
+            int, dict[Node, set[Edge]]
+        ] = edges_in_per_vehicles
+        self.edges_out_per_vehicles: dict[
+            int, dict[Node, set[Edge]]
+        ] = edges_out_per_vehicles
+        self.edges_in_all_vehicles_cluster: dict[
+            Hashable, set[tuple[int, Edge]]
+        ] = edges_in_all_vehicles_cluster
+        self.edges_out_all_vehicles_cluster: dict[
+            Hashable, set[tuple[int, Edge]]
+        ] = edges_out_all_vehicles_cluster
+        self.edges_in_per_vehicles_cluster: dict[
+            int, dict[Hashable, set[Edge]]
+        ] = edges_in_per_vehicles_cluster
+        self.edges_out_per_vehicles_cluster: dict[
+            int, dict[Hashable, set[Edge]]
+        ] = edges_out_per_vehicles_cluster
 
         constraints_out_flow: dict[tuple[int, Node], Any] = {}
         constraints_in_flow: dict[Union[tuple[int, Node], Node], Any] = {}
@@ -646,42 +735,11 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                                 )
                                 cnt_triangle += 1
 
+        if include_subtour or self.subtour_do_order:
+            self.init_order_variables()
+
         if include_subtour:
-            variables_order = {
-                node: self.add_continuous_variable(name="order_" + str(node))
-                for node in edges_in_all_vehicles
-            }
-            constraints_order = {}
-            for vehicle in range(nb_vehicle):
-                node_origin = self.problem.origin_vehicle[name_vehicles[vehicle]]
-                constraints_order[node_origin] = self.add_linear_constraint(
-                    variables_order[node_origin] == 0,
-                    name="order_" + str(node_origin),
-                )
-            use_big_m = True
-            use_indicator = False
-            nb_nodes = len(self.problem.list_nodes)
-            for node in variables_order:
-                if node not in constraints_order:
-                    for vehicle, edge in edges_in_all_vehicles[node]:
-                        if use_big_m:
-                            constraints_order[node] = self.add_linear_constraint(
-                                variables_order[node]
-                                >= variables_order[edge[0]]
-                                + 1
-                                - 2 * nb_nodes * (1 - variables_edges[vehicle][edge]),
-                                name="order_" + str(node),
-                            )
-                        if use_indicator:
-                            constraints_order[
-                                node
-                            ] = self.add_linear_constraint_with_indicator(
-                                binvar=variables_edges[vehicle][edge],
-                                binval=1,
-                                lhs=variables_order[node],
-                                sense=InequalitySense.EQUAL,
-                                rhs=variables_order[edge[0]] + 1,
-                            )
+            self.add_order_constraints(nodes=self.variables_order)
 
         for vehicle in range(nb_vehicle):
             for node in [self.problem.origin_vehicle[name_vehicles[vehicle]]]:
@@ -699,70 +757,31 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
             self.one_visit_per_node(
                 nodes_of_interest=nodes_of_interest,
                 variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
             )
         if one_visit_per_cluster:
             self.one_visit_per_clusters(
                 nodes_of_interest=nodes_of_interest,
                 variables_edges=variables_edges,
-                edges_in_all_vehicles=edges_in_all_vehicles,
-                edges_out_all_vehicles=edges_out_all_vehicles,
             )
         if include_capacity:
             all_variables.update(
                 self.simple_capacity_constraint(
                     variables_edges=variables_edges,
-                    edges_in_all_vehicles=edges_in_all_vehicles,
-                    edges_out_all_vehicles=edges_out_all_vehicles,
                 )
             )
         if include_resources:
             all_variables.update(
                 self.resources_constraint(
                     variables_edges=variables_edges,
-                    edges_in_all_vehicles=edges_in_all_vehicles,
-                    edges_out_all_vehicles=edges_out_all_vehicles,
                 )
             )
         if include_time_evolution:
             all_variables.update(
                 self.time_evolution(
                     variables_edges=variables_edges,
-                    edges_in_all_vehicles=edges_in_all_vehicles,
-                    edges_out_all_vehicles=edges_out_all_vehicles,
                 )
             )
         self.set_model_objective(obj, minimize=True)
-
-        self.edges_in_all_vehicles: dict[
-            Node, set[tuple[int, Edge]]
-        ] = edges_in_all_vehicles
-        self.edges_out_all_vehicles: dict[
-            Node, set[tuple[int, Edge]]
-        ] = edges_out_all_vehicles
-        self.edges_in_per_vehicles: dict[
-            int, dict[Node, set[Edge]]
-        ] = edges_in_per_vehicles
-        self.edges_out_per_vehicles: dict[
-            int, dict[Node, set[Edge]]
-        ] = edges_out_per_vehicles
-        self.edges_in_all_vehicles_cluster: dict[
-            Hashable, set[tuple[int, Edge]]
-        ] = edges_in_all_vehicles_cluster
-        self.edges_out_all_vehicles_cluster: dict[
-            Hashable, set[tuple[int, Edge]]
-        ] = edges_out_all_vehicles_cluster
-        self.edges_in_per_vehicles_cluster: dict[
-            int, dict[Hashable, set[Edge]]
-        ] = edges_in_per_vehicles_cluster
-        self.edges_out_per_vehicles_cluster: dict[
-            int, dict[Hashable, set[Edge]]
-        ] = edges_out_per_vehicles_cluster
-
-        self.variable_decisions = all_variables
-        self.clusters_version = one_visit_per_cluster
-        self.tsp_version = one_visit_per_node
 
     def retrieve_current_temporaryresult(
         self,
@@ -870,7 +889,11 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                 "and connected_components_per_vehicle cannot be None after solving."
             )
         subtour = SubtourAddingConstraint(
-            problem=self.problem, linear_solver=self, cluster=self.clusters_version
+            problem=self.problem,
+            linear_solver=self,
+            cluster=self.clusters_version,
+            do_order=self.subtour_do_order,
+            consider_only_first_component=self.subtour_consider_only_first_component,
         )
         subtour.adding_component_constraints([best_solution])
         nb_iteration = 0
@@ -938,7 +961,11 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                     "and connected_components_per_vehicle cannot be None after solving."
                 )
             subtour = SubtourAddingConstraint(
-                problem=self.problem, linear_solver=self, cluster=self.clusters_version
+                problem=self.problem,
+                linear_solver=self,
+                cluster=self.clusters_version,
+                do_order=self.subtour_do_order,
+                consider_only_first_component=self.subtour_consider_only_first_component,
             )
             logger.debug(len(best_solution.component_global))
             subtour.adding_component_constraints([best_solution])
@@ -1415,6 +1442,8 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
                     linear_solver=self,
                     lazy=True,
                     cluster=self.clusters_version,
+                    do_order=self.subtour_do_order,
+                    consider_only_first_component=self.subtour_consider_only_first_component,
                 )
                 subtour.adding_component_constraints([temporary_result])
 
@@ -1544,7 +1573,11 @@ class SubtourAddingConstraint:
         linear_solver: BaseLinearFlowSolver,
         lazy: bool = False,
         cluster: bool = False,
+        do_order: bool = False,
+        consider_only_first_component: bool = True,
     ):
+        self.consider_only_first_component = consider_only_first_component
+        self.do_order = do_order
         self.cluster = cluster
         self.problem = problem
         self.linear_solver = linear_solver
@@ -1617,6 +1650,8 @@ class SubtourAddingConstraint:
                     edges_out_all_vehicles=self.linear_solver.edges_out_all_vehicles,
                     lazy=self.lazy,
                     cluster=self.cluster,
+                    do_order=self.do_order,
+                    consider_only_first_component=self.consider_only_first_component,
                 )
         if isinstance(self.linear_solver, GurobiMilpSolver):
             self.linear_solver.model.update()
@@ -2192,6 +2227,8 @@ def update_model_generic(
     edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]],
     lazy: bool = False,
     cluster: bool = False,
+    consider_only_first_component: bool = True,
+    do_order: bool = False,
 ) -> list[Any]:
     if lp_solver.model is None:
         raise RuntimeError("self.lp_solver.model cannot be None at this point.")
@@ -2212,10 +2249,11 @@ def update_model_generic(
     list_constraints: list[Any] = []
     if len_component_global > 1:
         logger.debug(f"Nb component : {len_component_global}")
-        if cluster:
-            components_global_to_consider = components_global
-        else:
+        if consider_only_first_component:
             components_global_to_consider = components_global[:1]
+        else:
+            components_global_to_consider = components_global
+
         for s in components_global_to_consider:
             edge_in_of_interest = [
                 e
@@ -2264,6 +2302,12 @@ def update_model_generic(
                         >= 1,
                     )
                 ]
+    if do_order and len_component_global > 1:
+        lp_solver.add_order_constraints(
+            nodes=[int(node) for node in min(components_global, key=lambda x: x[1])[0]],
+            lazy=lazy,
+        )
+
     if isinstance(lp_solver, GurobiMilpSolver):
         lp_solver.model.update()
     return list_constraints
