@@ -37,8 +37,7 @@ class GurobiConstraintHandler(ConstraintHandler):
         previous_constraints: Iterable[Any],
         **kwargs: Any,
     ) -> None:
-        solver.model.remove(list(previous_constraints))
-        solver.model.update()
+        solver.remove_constraints(previous_constraints)
 
 
 class OrtoolsMathOptConstraintHandler(ConstraintHandler):
@@ -48,8 +47,7 @@ class OrtoolsMathOptConstraintHandler(ConstraintHandler):
         previous_constraints: Iterable[Any],
         **kwargs: Any,
     ) -> None:
-        for cstr in previous_constraints:
-            solver.model.delete_linear_constraint(cstr)
+        solver.remove_constraints(previous_constraints)
 
 
 class LNS_MILP(BaseLNS):
