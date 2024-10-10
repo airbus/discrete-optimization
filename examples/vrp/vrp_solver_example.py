@@ -1,5 +1,6 @@
 import logging
 
+from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.vrp.solver.greedy_vrp import GreedyVRPSolver
 from discrete_optimization.vrp.solver.solver_ortools import (
     FirstSolutionStrategy,
@@ -13,10 +14,13 @@ from discrete_optimization.vrp.vrp_parser import (
 )
 from discrete_optimization.vrp.vrp_solvers import VRPIterativeLP
 
+logging.basicConfig(level=logging.INFO)
+
 
 def run_ortools_vrp_solver():
     logging.basicConfig(level=logging.ERROR)
     file_path = get_data_available()[0]
+    file_path = [f for f in get_data_available() if "vrp_135_7_1" in f][0]
     print(file_path)
     vrp_model = parse_file(file_path)
     print("Nb vehicle : ", vrp_model.vehicle_count)
@@ -26,7 +30,11 @@ def run_ortools_vrp_solver():
         first_solution_strategy=FirstSolutionStrategy.SAVINGS,
         local_search_metaheuristic=LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
     )
-    res = solver.solve(time_limit_seconds=20)
+    res = solver.solve(
+        time_limit=20,
+        verbose=True,
+        callbacks=[ObjectiveLogger(step_verbosity_level=logging.INFO)],
+    )
     sol, fit = res.get_best_solution_fit()
     print(vrp_model.evaluate(sol))
     print(vrp_model.satisfy(sol))
@@ -62,4 +70,4 @@ def run_greedy_vrp_solver():
 
 
 if __name__ == "__main__":
-    run_greedy_vrp_solver()
+    run_ortools_vrp_solver()

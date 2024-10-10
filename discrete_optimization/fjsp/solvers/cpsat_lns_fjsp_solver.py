@@ -1,3 +1,7 @@
+#  Copyright (c) 2024 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 import math
 import random
 from typing import Any, Hashable, Iterable, Optional
@@ -79,6 +83,7 @@ class ConstraintHandlerFJSP(OrtoolsCPSatConstraintHandler):
             # constraints.append(solver.cp_model.Add(solver.variables["ends"][k] <= end+20))
             # constraints.append(solver.cp_model.Add(solver.variables["ends"][k] >= end-20))
         solver.cp_model.Minimize(solver.variables["makespan"])
+        solver.set_warm_start(sol)
         return constraints
 
 
@@ -114,4 +119,5 @@ class ConstraintHandlerNeighFJSP(OrtoolsCPSatConstraintHandler):
         # m = solver.cp_model.NewIntVar(lb=0, ub=makespan, name="")
         # solver.cp_model.AddMaxEquality(m, [solver.variables["ends"][k] for k in keys_part])
         # solver.cp_model.Minimize(m) #+sum([solver.variables["ends"][k] for k in keys_part]))
+        solver.set_warm_start(sol)
         return constraints

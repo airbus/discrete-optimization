@@ -14,21 +14,29 @@ from discrete_optimization.coloring.coloring_parser import (
 )
 from discrete_optimization.coloring.coloring_plot import plot_coloring_solution, plt
 from discrete_optimization.coloring.solvers.coloring_asp_solver import ColoringASPSolver
+from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 
 
 def run_asp_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_4_1" in f][0]
+    file = [f for f in get_data_available() if "gc_1000_1" in f][0]
     color_problem = parse_file(file)
     solver = ColoringASPSolver(color_problem, params_objective_function=None)
-    solver.init_model(max_models=50, nb_colors=20)
-    result_store = solver.solve(time_limit=5)
+    solver.init_model(max_models=50, nb_colors=100)
+    result_store = solver.solve(
+        callbacks=[
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            )
+        ],
+        time_limit=5,
+    )
     solution, fit = result_store.get_best_solution_fit()
     plot_coloring_solution(solution)
-    plt.show()
     print(solution, fit)
     print("Evaluation : ", color_problem.evaluate(solution))
     print("Satisfy : ", color_problem.satisfy(solution))
+    plt.show()
 
 
 def run_asp_coloring_with_constraints():
@@ -52,4 +60,4 @@ def run_asp_coloring_with_constraints():
 
 
 if __name__ == "__main__":
-    run_asp_coloring_with_constraints()
+    run_asp_coloring()

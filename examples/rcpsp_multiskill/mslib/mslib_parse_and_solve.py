@@ -40,13 +40,13 @@ def example_parsing_and_local_search():
 
 def example_mslib_cpsat():
     files_dict = get_data_available()
-    file = [f for f in files_dict["MSLIB4"] if "MSLIB_Set4_1003.msrcp" in f][0]
+    file = [f for f in files_dict["MSLIB4"] if "MSLIB_Set4_1046.msrcp" in f][0]
     model = parse_file_mslib(file, skill_level_version=False)
     solver = CPSatMSRCPSPSolver(
         problem=model,
     )
     solver.init_model(
-        one_worker_per_task=False, slack_skill=False, one_skill_per_task=True
+        one_worker_per_task=False, slack_skill=False, one_skill_per_task=False
     )
     p = ParametersCP.default_cpsat()
     p.nb_process = 10
