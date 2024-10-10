@@ -9,6 +9,7 @@ from discrete_optimization.coloring.coloring_parser import (
 )
 from discrete_optimization.coloring.coloring_plot import plot_coloring_solution, plt
 from discrete_optimization.coloring.solvers.did_coloring_solver import (
+    DidColoringModeling,
     DidColoringSolver,
     dp,
 )
@@ -16,17 +17,17 @@ from discrete_optimization.coloring.solvers.did_coloring_solver import (
 
 def run_did_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_20_1" in f][0]
+    file = [f for f in get_data_available() if "gc_500_7" in f][0]
     color_problem = parse_file(file)
     solver = DidColoringSolver(color_problem)
-    solver.init_model(nb_colors=70)
-    result_store = solver.solve(solver=dp.LNBS, time_limit=1)
+    solver.init_model(modeling=DidColoringModeling.COLOR_TRANSITION, nb_colors=120)
+    result_store = solver.solve(solver=dp.CABS, threads=10, time_limit=100)
     solution, fit = result_store.get_best_solution_fit()
-    plot_coloring_solution(solution)
     print(solution, fit)
     print("Evaluation : ", color_problem.evaluate(solution))
     print("Satisfy : ", color_problem.satisfy(solution))
-    plt.show()
+    # plot_coloring_solution(solution)
+    # plt.show()
 
 
 if __name__ == "__main__":

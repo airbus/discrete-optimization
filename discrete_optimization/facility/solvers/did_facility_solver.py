@@ -212,7 +212,6 @@ class DidFacilitySolver(DidSolver, SolverFacility):
         customer = 0
 
         for t in sol.transitions:
-            print("transition : ", t.name)
             current_factory = extract_ints(t.name)[0]
             solution.facility_for_customers[customer] = current_factory
             customer += 1

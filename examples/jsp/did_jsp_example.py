@@ -9,7 +9,9 @@ from didppy import BeamParallelizationMethod
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 from discrete_optimization.jsp.job_shop_parser import get_data_available, parse_file
 from discrete_optimization.jsp.job_shop_problem import JobShopProblem
+from discrete_optimization.jsp.job_shop_utils import transform_jsp_to_rcpsp
 from discrete_optimization.jsp.solvers.did_jsp_solver import DidJspSolver, dp
+from discrete_optimization.rcpsp.solver.did_rcpsp_solver import DidRCPSPSolver
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,15 +58,6 @@ def run_did_jsp():
     file_path = [f for f in get_data_available() if "ta68" in f][0]
     problem = parse_file(file_path)
     print("File path ", file_path)
-    print(
-        "Problem with ",
-        problem.n_jobs,
-        " jobs, ",
-        problem.n_all_jobs,
-        " subjobs, and ",
-        problem.n_machines,
-        " machines",
-    )
     solver = DidJspSolver(problem=problem)
     res = solver.solve(
         solver=dp.LNBS,
@@ -78,5 +71,23 @@ def run_did_jsp():
     print(problem.evaluate(sol))
 
 
+def run_did_of_rcpsp():
+    file_path = [f for f in get_data_available() if "ta68" in f][0]
+    problem = parse_file(file_path)
+    rcpsp_problem = transform_jsp_to_rcpsp(problem)
+    solver = DidRCPSPSolver(rcpsp_problem)
+    solver.init_model_multimode()
+    res = solver.solve(
+        solver=dp.LNBS,
+        time_limit=100,
+        max_beam_size=2048,
+        keep_all_layers=False,
+        parallelization_method=BeamParallelizationMethod.Hdbs2,
+    )
+    sol = res.get_best_solution_fit()[0]
+    assert rcpsp_problem.satisfy(sol)
+    print(rcpsp_problem.evaluate(sol))
+
+
 if __name__ == "__main__":
-    run_did_jsp()
+    run_did_of_rcpsp()

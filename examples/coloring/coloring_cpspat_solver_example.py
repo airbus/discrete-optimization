@@ -18,7 +18,10 @@ from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
     ColoringCPSatSolver,
     ModelingCPSat,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
+from discrete_optimization.generic_tools.callbacks.loggers import (
+    NbIterationTracker,
+    ObjectiveLogger,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCP
 
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 
 def run_cpsat_coloring():
     logging.basicConfig(level=logging.INFO)
-    file = [f for f in get_data_available() if "gc_250_3" in f][0]
+    file = [f for f in get_data_available() if "gc_500_7" in f][0]
     color_problem = parse_file(file)
     solver = ColoringCPSatSolver(color_problem, params_objective_function=None)
     solver.init_model(
@@ -39,7 +42,7 @@ def run_cpsat_coloring():
     p = ParametersCP.default_cpsat()
     logging.info("Starting solve")
     result_store = solver.solve(
-        callbacks=[NbIterationTracker(step_verbosity_level=logging.INFO)],
+        callbacks=[ObjectiveLogger(step_verbosity_level=logging.INFO)],
         parameters_cp=p,
     )
     print("Status solver : ", solver.status_solver)

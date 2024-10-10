@@ -10,6 +10,7 @@ from discrete_optimization.jsp.job_shop_problem import JobShopProblem, SolutionJ
 
 
 class DidJspSolver(DidSolver):
+    hyperparameters = DidSolver.hyperparameters
     problem: JobShopProblem
 
     def init_model(self, **kwargs: Any) -> None:
@@ -158,16 +159,6 @@ class DidJspSolver(DidSolver):
                 end = start + self.duration[t_number]
                 schedule_per_machine[m].append((start, end))
                 schedules[j] = (start, end)
-                if False:
-                    print("machine", m, state[self.cur_time_per_machine[m]])
-                    print("job", j, state[self.cur_time_per_job[j[0]]])
-                    print()
-                    print(schedule_per_machine[m])
-                    print(schedules[j])
-                    for i in range(len(self.cur_time_per_machine)):
-                        print("machine", i, state[self.cur_time_per_machine[i]])
-                    for j in range(len(self.cur_time_per_job)):
-                        print("job", j, state[self.cur_time_per_job[j]])
         sol = SolutionJobshop(
             problem=self.problem,
             schedule=[

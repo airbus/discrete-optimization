@@ -135,8 +135,6 @@ class DidVrpSolver(SolverVrp, DidSolver):
             if "return" in name:
                 break
             list_paths[cur_index].append(extract_visit_number(name))
-            print(name)
-            print(extract_visit_number(name))
         logger.info(f"Cost: {sol.cost}")
         vrp_sol = VrpSolution(
             problem=self.problem,
