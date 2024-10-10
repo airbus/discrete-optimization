@@ -56,14 +56,39 @@ def solver_class(request):
     return solver_class
 
 
-def test_tsp_new_api(solver_class):
+@pytest.mark.parametrize(
+    "subtour_do_order, subtour_use_indicator, include_subtour",
+    [
+        (False, False, False),
+        (True, False, False),
+        (True, True, False),
+        (False, False, True),
+    ],
+)
+@pytest.mark.parametrize(
+    "subtour_consider_only_first_component",
+    [True, False],
+)
+def test_tsp_new_api(
+    solver_class,
+    subtour_do_order,
+    subtour_use_indicator,
+    subtour_consider_only_first_component,
+    include_subtour,
+):
     files_available = tsp_parser.get_data_available()
     file_path = [f for f in files_available if "tsp_5_1" in f][0]
     tsp_model = tsp_parser.parse_file(file_path)
     gpdp = ProxyClass.from_tsp_model_gpdp(tsp_model=tsp_model, compute_graph=True)
     linear_flow_solver = solver_class(problem=gpdp)
     linear_flow_solver.init_model(
-        one_visit_per_node=True, include_capacity=False, include_time_evolution=False
+        one_visit_per_node=True,
+        include_capacity=False,
+        include_time_evolution=False,
+        subtour_do_order=subtour_do_order,
+        subtour_use_indicator=subtour_use_indicator,
+        subtour_consider_only_first_component=subtour_consider_only_first_component,
+        include_subtour=include_subtour,
     )
     res = linear_flow_solver.solve(
         time_limit_subsolver=100,
@@ -225,7 +250,21 @@ def test_vrp_simplified(solver_class):
     plot_gpdp_solution(sol, gpdp)
 
 
-def test_selective_tsp(random_seed, solver_class):
+@pytest.mark.parametrize(
+    "subtour_do_order, subtour_use_indicator",
+    [(False, False), (True, False), (True, True)],
+)
+@pytest.mark.parametrize(
+    "subtour_consider_only_first_component",
+    [True, False],
+)
+def test_selective_tsp(
+    random_seed,
+    solver_class,
+    subtour_do_order,
+    subtour_use_indicator,
+    subtour_consider_only_first_component,
+):
     gpdp = create_selective_tsp(nb_nodes=20, nb_vehicles=1, nb_clusters=4)
     linear_flow_solver = solver_class(problem=gpdp)
     kwargs_init_model = dict(
@@ -233,6 +272,9 @@ def test_selective_tsp(random_seed, solver_class):
         one_visit_per_cluster=True,
         include_capacity=False,
         include_time_evolution=False,
+        subtour_do_order=subtour_do_order,
+        subtour_use_indicator=subtour_use_indicator,
+        subtour_consider_only_first_component=subtour_consider_only_first_component,
     )
     linear_flow_solver.init_model(**kwargs_init_model)
     linear_flow_solver.set_random_seed(random_seed)
