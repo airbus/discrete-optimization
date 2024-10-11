@@ -43,8 +43,8 @@ solvers = {
 logger = logging.getLogger(__name__)
 
 
-class DidCallback:
-    def __init__(self, do_solver: "DidSolver", callback: Callback):
+class DpCallback:
+    def __init__(self, do_solver: "DpSolver", callback: Callback):
         super().__init__()
         self.do_solver = do_solver
         self.callback = callback
@@ -74,7 +74,7 @@ class DidCallback:
         self.res.append((solution, fit))
 
 
-class DidSolver(SolverDO):
+class DpSolver(SolverDO):
     early_stopping_exception: Optional[Exception] = None
     model: dp.Model = None
     hyperparameters = [
@@ -101,7 +101,7 @@ class DidSolver(SolverDO):
         callbacks_list.on_solve_start(solver=self)
         if self.model is None:
             self.init_model(**kwargs)
-        did_callback = DidCallback(do_solver=self, callback=callbacks_list)
+        did_callback = DpCallback(do_solver=self, callback=callbacks_list)
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         solver_cls = kwargs["solver"]
         if "initial_solution" in self.__dict__.keys():

@@ -35,7 +35,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class CPSolverName(Enum):
+class CpSolverName(Enum):
     """
     Enum choice of underlying CP/LP solver used by Minizinc typically
     """
@@ -50,14 +50,14 @@ class CPSolverName(Enum):
 
 
 map_cp_solver_name = {
-    CPSolverName.CHUFFED: "chuffed",
-    CPSolverName.GECODE: "gecode",
-    CPSolverName.CPLEX: "cplex",
-    CPSolverName.CPOPT: "cpo",
+    CpSolverName.CHUFFED: "chuffed",
+    CpSolverName.GECODE: "gecode",
+    CpSolverName.CPLEX: "cplex",
+    CpSolverName.CPOPT: "cpo",
     # need to install https://github.com/IBMDecisionOptimization/cpofzn
-    CPSolverName.GUROBI: "gurobi",
-    CPSolverName.ORTOOLS: "ortools",
-    CPSolverName.HIGHS: "highs",
+    CpSolverName.GUROBI: "gurobi",
+    CpSolverName.ORTOOLS: "ortools",
+    CpSolverName.HIGHS: "highs",
 }
 
 
@@ -67,7 +67,7 @@ _minizinc_minimal_str_version = ".".join(
 )
 
 
-def find_right_minizinc_solver_name(cp_solver_name: CPSolverName):
+def find_right_minizinc_solver_name(cp_solver_name: CpSolverName):
     """
     This small utility function is adapting the ortools tag if needed.
     :param cp_solver_name: desired cp solver backend
@@ -91,7 +91,7 @@ def find_right_minizinc_solver_name(cp_solver_name: CPSolverName):
 
     tag_map = driver.available_solvers(False)
     if map_cp_solver_name[cp_solver_name] not in tag_map:
-        if cp_solver_name == CPSolverName.ORTOOLS:
+        if cp_solver_name == CpSolverName.ORTOOLS:
             if "com.google.ortools.sat" in tag_map:
                 return "com.google.ortools.sat"
         else:
@@ -101,7 +101,7 @@ def find_right_minizinc_solver_name(cp_solver_name: CPSolverName):
         return map_cp_solver_name[cp_solver_name]
 
 
-class ParametersCP:
+class ParametersCp:
     """
     Parameters that can be used by any cp - solver
     """
@@ -131,16 +131,16 @@ class ParametersCP:
         self.optimisation_level = optimisation_level
 
     @staticmethod
-    def default() -> "ParametersCP":
-        return ParametersCP(
+    def default() -> "ParametersCp":
+        return ParametersCp(
             intermediate_solution=True,
             free_search=False,
             optimisation_level=1,
         )
 
     @staticmethod
-    def default_cpsat() -> "ParametersCP":
-        return ParametersCP(
+    def default_cpsat() -> "ParametersCp":
+        return ParametersCp(
             intermediate_solution=True,
             free_search=False,
             multiprocess=True,
@@ -149,21 +149,21 @@ class ParametersCP:
         )
 
     @staticmethod
-    def default_fast_lns() -> "ParametersCP":
-        return ParametersCP(
+    def default_fast_lns() -> "ParametersCp":
+        return ParametersCp(
             intermediate_solution=True,
             free_search=False,
         )
 
     @staticmethod
-    def default_free() -> "ParametersCP":
-        return ParametersCP(
+    def default_free() -> "ParametersCp":
+        return ParametersCp(
             intermediate_solution=True,
             free_search=True,
         )
 
-    def copy(self) -> "ParametersCP":
-        return ParametersCP(
+    def copy(self) -> "ParametersCp":
+        return ParametersCp(
             intermediate_solution=self.intermediate_solution,
             free_search=self.free_search,
             multiprocess=self.multiprocess,
@@ -188,7 +188,7 @@ map_mzn_status_to_do_status: dict[Status, StatusSolver] = {
 }
 
 
-class CPSolver(SolverDO):
+class CpSolver(SolverDO):
     """
     Additional function to be implemented by a CP Solver.
     """
@@ -207,18 +207,18 @@ class CPSolver(SolverDO):
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
-        parameters_cp: Optional[ParametersCP] = None,
+        parameters_cp: Optional[ParametersCp] = None,
         **args: Any,
     ) -> ResultStorage:
         ...
 
 
-class MinizincCPSolver(CPSolver):
+class MinizincCpSolver(CpSolver):
     """CP solver wrapping a minizinc solver."""
 
     hyperparameters = [
         EnumHyperparameter(
-            name="cp_solver_name", enum=CPSolverName, default=CPSolverName.CHUFFED
+            name="cp_solver_name", enum=CpSolverName, default=CpSolverName.CHUFFED
         )
     ]
     instance: Optional[Instance] = None
@@ -228,7 +228,7 @@ class MinizincCPSolver(CPSolver):
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
-        parameters_cp: Optional[ParametersCP] = None,
+        parameters_cp: Optional[ParametersCp] = None,
         instance: Optional[Instance] = None,
         time_limit: Optional[float] = 100.0,
         **kwargs: Any,
@@ -239,7 +239,7 @@ class MinizincCPSolver(CPSolver):
             callbacks: list of callbacks used to hook into the various stage of the solve
             parameters_cp: parameters specific to CP solvers
             instance: if specified, use this minizinc instance (and underlying model) rather than `self.instance`
-               Useful in iterative solvers like LNS_CP.
+               Useful in iterative solvers like LnsCpMzn.
             time_limit: the solve process stops after this time limit (in seconds).
                 If None, no time limit is applied.
             **kwargs: any argument specific to the solver
@@ -254,7 +254,7 @@ class MinizincCPSolver(CPSolver):
         callbacks_list.on_solve_start(solver=self)
 
         if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
+            parameters_cp = ParametersCp.default()
 
         if instance is None:
             if self.instance is None:
@@ -268,7 +268,7 @@ class MinizincCPSolver(CPSolver):
         intermediate_solutions = parameters_cp.intermediate_solution
 
         # set model output type to use
-        output_type = MinizincCPSolution.generate_subclass_for_solve(
+        output_type = MinizincCpSolution.generate_subclass_for_solve(
             solver=self, callback=callbacks_list
         )
         instance.output_type = output_type
@@ -326,7 +326,7 @@ class MinizincCPSolver(CPSolver):
         ...
 
 
-class MinizincCPSolution:
+class MinizincCpSolution:
     """Base class used by minizinc when building a new solution.
 
     This is used as an entry point for callbacks.
@@ -347,7 +347,7 @@ class MinizincCPSolution:
     res: ResultStorage
     """ResultStorage in which the solution will be added, class attribute."""
 
-    solver: MinizincCPSolver
+    solver: MinizincCpSolver
     """Instance of the solver using this class as an output_type."""
 
     def __init__(self, _output_item: Optional[str] = None, **kwargs: Any):
@@ -374,8 +374,8 @@ class MinizincCPSolution:
 
     @staticmethod
     def generate_subclass_for_solve(
-        solver: MinizincCPSolver, callback: Callback
-    ) -> type[MinizincCPSolution]:
+        solver: MinizincCpSolver, callback: Callback
+    ) -> type[MinizincCpSolution]:
         """Generate dynamically a subclass with initialized class attributes.
 
         Args:
@@ -386,8 +386,8 @@ class MinizincCPSolution:
 
         """
         return type(
-            f"MinizincCPSolution{id(solver)}",
-            (MinizincCPSolution,),
+            f"MinizincCpSolution{id(solver)}",
+            (MinizincCpSolution,),
             dict(
                 solver=solver,
                 callback=callback,

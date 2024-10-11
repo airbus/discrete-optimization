@@ -4,8 +4,8 @@
 
 
 from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.knapsack.knapsack_model import KnapsackModel
+from discrete_optimization.knapsack.problem import KnapsackProblem
 
 
-class SolverKnapsack(SolverDO):
-    problem: KnapsackModel
+class KnapsackSolver(SolverDO):
+    problem: KnapsackProblem

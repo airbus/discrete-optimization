@@ -33,13 +33,13 @@ from discrete_optimization.generic_tools.mutations.mixed_mutation import (
     BasicPortfolioMutation,
 )
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    PermutationMutationRCPSP,
+    PermutationMutationRcpsp,
     get_available_mutations,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp.solver import PileSolverRCPSP
+from discrete_optimization.rcpsp.parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.solution import RcpspSolution
+from discrete_optimization.rcpsp.solvers.pile import PileRcpspSolver
 
 SEED = 42
 
@@ -55,15 +55,15 @@ def test_sa_warm_start(random_seed):
     files = get_data_available()
     files = [f for f in files if "j1010_1.mm" in f]  # Multi mode RCPSP
     file_path = files[0]
-    rcpsp_model: RCPSPModel = parse_file(file_path)
-    rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
+    rcpsp_problem: RcpspProblem = parse_file(file_path)
+    rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
 
-    dummy = rcpsp_model.get_dummy_solution()
-    _, mutations = get_available_mutations(rcpsp_model, dummy)
+    dummy = rcpsp_problem.get_dummy_solution()
+    _, mutations = get_available_mutations(rcpsp_problem, dummy)
     list_mutation = [
-        mutate[0].build(rcpsp_model, dummy, **mutate[1])
+        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
         for mutate in mutations
-        if mutate[0] == PermutationMutationRCPSP
+        if mutate[0] == PermutationMutationRcpsp
     ]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
@@ -91,7 +91,7 @@ def test_sa_warm_start(random_seed):
         coefficient=coefficient_temperature,
     )
     sa = SimulatedAnnealing(
-        problem=rcpsp_model,
+        problem=rcpsp_problem,
         mutator=mixed_mutation,
         restart_handler=restart_handler,
         temperature_handler=temperature_handler,
@@ -101,8 +101,8 @@ def test_sa_warm_start(random_seed):
     )
 
     # test warm start
-    start_solution: RCPSPSolution = (
-        PileSolverRCPSP(problem=rcpsp_model).solve().get_best_solution_fit()[0]
+    start_solution: RcpspSolution = (
+        PileRcpspSolver(problem=rcpsp_problem).solve().get_best_solution_fit()[0]
     )
 
     sa.set_warm_start(start_solution)

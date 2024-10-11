@@ -13,15 +13,16 @@ from ortools.sat.python.cp_model import (
     UNKNOWN,
     Constraint,
     CpModel,
-    CpSolver,
-    CpSolverSolutionCallback,
 )
+from ortools.sat.python.cp_model import CpSolver
+from ortools.sat.python.cp_model import CpSolver as OrtoolsInternalCpSolver
+from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.cp_tools import CPSolver, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
@@ -32,11 +33,11 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class OrtoolsCPSatSolver(CPSolver):
+class OrtoolsCpSatSolver(CpSolver):
     """Generic ortools cp-sat solver."""
 
     cp_model: Optional[CpModel] = None
-    solver: Optional[CpSolver] = None
+    solver: Optional[OrtoolsInternalCpSolver] = None
     early_stopping_exception: Optional[Exception] = None
 
     @abstractmethod
@@ -58,12 +59,12 @@ class OrtoolsCPSatSolver(CPSolver):
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
-        parameters_cp: Optional[ParametersCP] = None,
+        parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
-        """Solve the problem with a CPSat solver drom ortools library.
+        """Solve the problem with a CpSat solver drom ortools library.
 
         Args:
             callbacks: list of callbacks used to hook into the various stage of the solve
@@ -72,7 +73,7 @@ class OrtoolsCPSatSolver(CPSolver):
             parameters_cp: parameters specific to cp solvers.
                 We use here only `parameters_cp.nb_process`.
             ortools_cpsat_solver_kwargs: used to customize the underlying ortools solver.
-                Each key/value will update the corresponding attribute from the ortools.sat.python.cp_model.CPSolver
+                Each key/value will update the corresponding attribute from the ortools.sat.python.cp_model.CpSolver
             **kwargs: keyword arguments passed to `self.init_model()`
 
         Returns:
@@ -90,8 +91,8 @@ class OrtoolsCPSatSolver(CPSolver):
         if self.cp_model is None:
             self.init_model(**kwargs)
         if parameters_cp is None:
-            parameters_cp = ParametersCP.default_cpsat()
-        solver = CpSolver()
+            parameters_cp = ParametersCp.default_cpsat()
+        solver = OrtoolsInternalCpSolver()
         self.solver = solver
         if time_limit is not None:
             solver.parameters.max_time_in_seconds = time_limit
@@ -100,7 +101,7 @@ class OrtoolsCPSatSolver(CPSolver):
             # customize solver
             for k, v in ortools_cpsat_solver_kwargs.items():
                 setattr(solver.parameters, k, v)
-        ortools_callback = OrtoolsCallback(do_solver=self, callback=callbacks_list)
+        ortools_callback = OrtoolsCpSatCallback(do_solver=self, callback=callbacks_list)
         status = solver.Solve(self.cp_model, ortools_callback)
         self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
         if self.early_stopping_exception:
@@ -127,8 +128,8 @@ class OrtoolsCPSatSolver(CPSolver):
             cstr.proto.Clear()
 
 
-class OrtoolsCallback(CpSolverSolutionCallback):
-    def __init__(self, do_solver: OrtoolsCPSatSolver, callback: Callback):
+class OrtoolsCpSatCallback(CpSolverSolutionCallback):
+    def __init__(self, do_solver: OrtoolsCpSatSolver, callback: Callback):
         super().__init__()
         self.do_solver = do_solver
         self.callback = callback

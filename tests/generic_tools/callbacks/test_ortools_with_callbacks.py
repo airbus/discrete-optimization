@@ -16,15 +16,15 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
 )
-from discrete_optimization.pickup_vrp.builders.instance_builders import (
-    GPDP,
+from discrete_optimization.gpdp.builders.instance_builders import (
+    GpdpProblem,
     create_selective_tsp,
 )
-from discrete_optimization.pickup_vrp.gpdp import GPDPSolution
-from discrete_optimization.pickup_vrp.solver.ortools_solver import (
+from discrete_optimization.gpdp.problem import GpdpSolution
+from discrete_optimization.gpdp.solvers.ortools import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
-    ORToolsGPDP,
+    OrtoolsGpdpSolver,
     ParametersCost,
 )
 
@@ -44,7 +44,7 @@ nb_clusters = 100
 
 
 def test_ortools_with_callbacks(random_seed):
-    gpdp: GPDP = create_selective_tsp(
+    gpdp: GpdpProblem = create_selective_tsp(
         nb_nodes=nb_nodes, nb_vehicles=nb_vehicles, nb_clusters=nb_clusters
     )
     params_objective_function = ParamsObjectiveFunction(
@@ -66,7 +66,7 @@ def test_ortools_with_callbacks(random_seed):
     use_cp_sat = True
 
     #  solver init
-    solver = ORToolsGPDP(
+    solver = OrtoolsGpdpSolver(
         problem=gpdp,
         factor_multiplier_distance=1,
         factor_multiplier_time=1,
@@ -97,6 +97,6 @@ def test_ortools_with_callbacks(random_seed):
     end_time = datetime.utcnow()
 
     assert isinstance(fit, float)
-    assert isinstance(sol, GPDPSolution)
+    assert isinstance(sol, GpdpSolution)
     assert nb_iteration_stopper.nb_iteration == 10
     assert (end_time - start_time).total_seconds() < 30

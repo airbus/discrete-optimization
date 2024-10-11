@@ -15,13 +15,13 @@ from collections import defaultdict
 from os.path import basename
 from typing import Any
 
-from discrete_optimization.generic_rcpsp_tools.large_neighborhood_search_scheduling import (
-    LargeNeighborhoodSearchScheduling,
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp import (
+    LnsCpMznGenericRcpspSolver,
 )
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolverName,
-    MinizincCPSolver,
-    ParametersCP,
+    CpSolverName,
+    MinizincCpSolver,
+    ParametersCp,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import (
@@ -31,12 +31,12 @@ from discrete_optimization.generic_tools.lp_tools import (
 from discrete_optimization.generic_tools.optuna.utils import (
     generic_optuna_experiment_multiproblem,
 )
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.rcpsp_solvers import look_for_solver
-from discrete_optimization.rcpsp.solver.rcpsp_lp_solver import (
-    LP_MRCPSP_MATHOPT,
-    LP_RCPSP_MATHOPT,
+from discrete_optimization.rcpsp.parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.solvers.lp import (
+    MathOptMultimodeRcpspSolver,
+    MathOptRcpspSolver,
 )
+from discrete_optimization.rcpsp.solvers_maps import look_for_solver
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
@@ -63,18 +63,18 @@ problems = [parse_file(f) for f in problems_files]
 solvers_to_test = look_for_solver(problems[0])
 
 # Fixed parameters
-parameters_cp = ParametersCP.default_cpsat()
+parameters_cp = ParametersCp.default_cpsat()
 parameters_cp.nb_process = 6
 kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
-        LargeNeighborhoodSearchScheduling: dict(
+        LnsCpMznGenericRcpspSolver: dict(
             nb_iteration_lns=10,
             parameters_cp=parameters_cp,
             time_limit=max_time_per_solver,
         ),
-        LP_RCPSP_MATHOPT: dict(time_limit=max_time_per_solver),
-        LP_MRCPSP_MATHOPT: dict(time_limit=max_time_per_solver),
+        MathOptRcpspSolver: dict(time_limit=max_time_per_solver),
+        MathOptMultimodeRcpspSolver: dict(time_limit=max_time_per_solver),
     },
 )
 
@@ -91,18 +91,18 @@ if not gurobi_available or not gurobi_full_license_available:
         s for s in solvers_to_test if not isinstance(s, GurobiMilpSolver)
     ]
     for s in solvers_to_test:
-        if isinstance(s, MinizincCPSolver):
+        if isinstance(s, MinizincCpSolver):
             suggest_optuna_kwargs_by_name_by_solver[s].update(
                 {
                     "cp_solver_name": dict(
-                        choices=[x for x in CPSolverName if x != CPSolverName.GUROBI]
+                        choices=[x for x in CpSolverName if x != CpSolverName.GUROBI]
                     )
                 }
             )
-    suggest_optuna_kwargs_by_name_by_solver[LargeNeighborhoodSearchScheduling].update(
+    suggest_optuna_kwargs_by_name_by_solver[LnsCpMznGenericRcpspSolver].update(
         {
             "cp_solver_name": dict(
-                choices=[x for x in CPSolverName if x != CPSolverName.GUROBI]
+                choices=[x for x in CpSolverName if x != CpSolverName.GUROBI]
             )
         }
     )

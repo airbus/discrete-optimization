@@ -10,28 +10,28 @@ import numpy as np
 from numpy import typing as npt
 from sortedcontainers import SortedDict
 
-from discrete_optimization.rcpsp import RCPSPModel
-from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
+from discrete_optimization.rcpsp import RcpspProblem
+from discrete_optimization.rcpsp.solution import RcpspSolution
 
 
-class SGSWithoutArray:
-    def __init__(self, rcpsp_model: RCPSPModel):
-        self.rcpsp_model = rcpsp_model
+class SgsWithoutArray:
+    def __init__(self, rcpsp_problem: RcpspProblem):
+        self.rcpsp_problem = rcpsp_problem
         self.resource_avail_in_time: dict[str, npt.NDArray[np.int_]] = {}
-        for res in self.rcpsp_model.resources_list:
-            if self.rcpsp_model.is_varying_resource():
+        for res in self.rcpsp_problem.resources_list:
+            if self.rcpsp_problem.is_varying_resource():
                 self.resource_avail_in_time[res] = np.array(
-                    self.rcpsp_model.resources[res][: self.rcpsp_model.horizon + 1]  # type: ignore
+                    self.rcpsp_problem.resources[res][: self.rcpsp_problem.horizon + 1]  # type: ignore
                 )
             else:
                 self.resource_avail_in_time[res] = np.full(
-                    self.rcpsp_model.horizon,
-                    self.rcpsp_model.resources[res],
+                    self.rcpsp_problem.horizon,
+                    self.rcpsp_problem.resources[res],
                     dtype=np.int_,
                 )
         self.dict_step_ressource: dict[str, SortedDict] = {}
         for res in self.resource_avail_in_time:
-            self.dict_step_ressource[res] = SGSWithoutArray.create_absolute_dict(
+            self.dict_step_ressource[res] = SgsWithoutArray.create_absolute_dict(
                 self.resource_avail_in_time[res]
             )
 
@@ -107,7 +107,7 @@ class SGSWithoutArray:
         return l
 
     def generate_schedule_from_permutation_serial_sgs(
-        self, solution: RCPSPSolution, rcpsp_problem: RCPSPModel
+        self, solution: RcpspSolution, rcpsp_problem: RcpspProblem
     ) -> tuple[dict[Hashable, dict[str, int]], bool, dict[str, SortedDict]]:
         activity_end_times = {}
         unfeasible_non_renewable_resources = False

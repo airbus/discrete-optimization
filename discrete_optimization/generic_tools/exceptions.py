@@ -6,7 +6,7 @@
 class SolveEarlyStop(Exception):
     """Exception used to stop some solvers
 
-    See for instance discrete_optimization.pickup_vrp.solver.ortools_solver.ORToolsGPDP.
+    See for instance discrete_optimization.gpdp.solver.ortools_solver.OrtoolsGpdpSolver.
 
     """
 

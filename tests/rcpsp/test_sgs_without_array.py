@@ -4,9 +4,9 @@
 
 from sortedcontainers import SortedDict
 
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp.sgs_without_array import SGSWithoutArray
+from discrete_optimization.rcpsp.parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.sgs_without_array import SgsWithoutArray
+from discrete_optimization.rcpsp.solution import RcpspSolution
 
 
 def test_sgs_wo_array():
@@ -14,23 +14,23 @@ def test_sgs_wo_array():
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
-    rcpsp_model = parse_file(file_path)
-    solution = rcpsp_model.get_dummy_solution()
-    rcpsp_model.horizon = 100000
+    rcpsp_problem = parse_file(file_path)
+    solution = rcpsp_problem.get_dummy_solution()
+    rcpsp_problem.horizon = 100000
 
     solution.generate_schedule_from_permutation_serial_sgs(do_fast=False)
-    assert rcpsp_model.evaluate(solution) == {
+    assert rcpsp_problem.evaluate(solution) == {
         "makespan": 49,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }
-    sgs = SGSWithoutArray(rcpsp_model=rcpsp_model)
+    sgs = SgsWithoutArray(rcpsp_problem=rcpsp_problem)
     (
         rcpsp_schedule,
         rcpsp_schedule_feasible,
         resources,
     ) = sgs.generate_schedule_from_permutation_serial_sgs(
-        solution=solution, rcpsp_problem=sgs.rcpsp_model
+        solution=solution, rcpsp_problem=sgs.rcpsp_problem
     )
     assert rcpsp_schedule_feasible
     assert resources == {
@@ -74,18 +74,18 @@ def test_sgs_wo_array():
             {0: 9, 6: 11, 8: 3, 13: 4, 16: 7, 18: 0, 23: 7, 26: 4, 32: 6, 34: 5, 42: 12}
         ),
     }
-    sol = RCPSPSolution(
-        problem=rcpsp_model,
+    sol = RcpspSolution(
+        problem=rcpsp_problem,
         rcpsp_schedule=rcpsp_schedule,
         rcpsp_schedule_feasible=rcpsp_schedule_feasible,
     )
-    assert rcpsp_model.evaluate(sol) == {
+    assert rcpsp_problem.evaluate(sol) == {
         "makespan": 49,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }
-    assert rcpsp_model.satisfy(sol)
-    assert rcpsp_schedule[rcpsp_model.sink_task] == {"start_time": 49, "end_time": 49}
+    assert rcpsp_problem.satisfy(sol)
+    assert rcpsp_schedule[rcpsp_problem.sink_task] == {"start_time": 49, "end_time": 49}
 
 
 if __name__ == "__main__":

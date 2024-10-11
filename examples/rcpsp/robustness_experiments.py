@@ -11,7 +11,7 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 
-from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
+from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
     MethodAggregating,
@@ -30,7 +30,7 @@ from discrete_optimization.generic_tools.mutations.mixed_mutation import (
     BasicPortfolioMutation,
 )
 from discrete_optimization.generic_tools.mutations.mutation_catalog import (
-    PermutationMutationRCPSP,
+    PermutationMutationRcpsp,
     get_available_mutations,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -39,19 +39,21 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.generic_tools.robustness.robustness_tool import (
     RobustnessTool,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp.rcpsp_parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp.robust_rcpsp import (
-    AggregRCPSPModel,
+from discrete_optimization.rcpsp.parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.problem_robust import (
+    AggregRcpspProblem,
     MethodBaseRobustification,
     MethodRobustification,
-    UncertainRCPSPModel,
+    UncertainRcpspProblem,
     create_poisson_laws_duration,
     create_poisson_laws_resource,
 )
-from discrete_optimization.rcpsp.solver.cp_solvers_multiscenario import CP_MULTISCENARIO
-from discrete_optimization.rcpsp.solver.rcpsp_pile import Executor
+from discrete_optimization.rcpsp.solution import RcpspSolution
+from discrete_optimization.rcpsp.solvers.cp_mzn_multiscenario import (
+    CpMultiscenarioRcpspSolver,
+)
+from discrete_optimization.rcpsp.solvers.pile import Executor
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -61,7 +63,7 @@ def tree():
 
 
 def create_models(
-    base_rcpsp_model: RCPSPModel,
+    base_rcpsp_problem: RcpspProblem,
     range_around_mean_resource: int = 1,
     range_around_mean_duration: int = 3,
     do_uncertain_resource: bool = True,
@@ -71,7 +73,7 @@ def create_models(
     poisson_laws = tree()
     if do_uncertain_duration:
         poisson_laws_duration = create_poisson_laws_duration(
-            base_rcpsp_model, range_around_mean=range_around_mean_duration
+            base_rcpsp_problem, range_around_mean=range_around_mean_duration
         )
         for job in poisson_laws_duration:
             for mode in poisson_laws_duration[job]:
@@ -79,22 +81,22 @@ def create_models(
                     poisson_laws[job][mode][res] = poisson_laws_duration[job][mode][res]
     if do_uncertain_resource:
         poisson_laws_resource = create_poisson_laws_resource(
-            base_rcpsp_model, range_around_mean=range_around_mean_resource
+            base_rcpsp_problem, range_around_mean=range_around_mean_resource
         )
         for job in poisson_laws_resource:
             for mode in poisson_laws_resource[job]:
                 for res in poisson_laws_resource[job][mode]:
                     poisson_laws[job][mode][res] = poisson_laws_resource[job][mode][res]
 
-    uncertain = UncertainRCPSPModel(base_rcpsp_model, poisson_laws=poisson_laws)
-    worst = uncertain.create_rcpsp_model(
+    uncertain = UncertainRcpspProblem(base_rcpsp_problem, poisson_laws=poisson_laws)
+    worst = uncertain.create_rcpsp_problem(
         MethodRobustification(MethodBaseRobustification.WORST_CASE, percentile=0)
     )
-    average = uncertain.create_rcpsp_model(
+    average = uncertain.create_rcpsp_problem(
         MethodRobustification(MethodBaseRobustification.AVERAGE, percentile=0)
     )
     many_random_instance = [
-        uncertain.create_rcpsp_model(
+        uncertain.create_rcpsp_problem(
             method_robustification=MethodRobustification(
                 MethodBaseRobustification.SAMPLE
             )
@@ -109,13 +111,13 @@ def run_cp_multiscenario():
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     print(files)
     file_path = files[0]
-    rcpsp_model = parse_file(file_path)
-    poisson_laws = create_poisson_laws_duration(rcpsp_model, range_around_mean=2)
-    uncertain_model: UncertainRCPSPModel = UncertainRCPSPModel(
-        base_rcpsp_model=rcpsp_model, poisson_laws=poisson_laws
+    rcpsp_problem = parse_file(file_path)
+    poisson_laws = create_poisson_laws_duration(rcpsp_problem, range_around_mean=2)
+    uncertain_model: UncertainRcpspProblem = UncertainRcpspProblem(
+        base_rcpsp_problem=rcpsp_problem, poisson_laws=poisson_laws
     )
-    list_rcpsp_model = [
-        uncertain_model.create_rcpsp_model(
+    list_rcpsp_problem = [
+        uncertain_model.create_rcpsp_problem(
             MethodRobustification(
                 method_base=MethodBaseRobustification.SAMPLE, percentile=0
             )
@@ -123,21 +125,21 @@ def run_cp_multiscenario():
         for i in range(20)
     ]
 
-    for m in list_rcpsp_model:
+    for m in list_rcpsp_problem:
         m.update_functions()
-    for model in list_rcpsp_model:
+    for model in list_rcpsp_problem:
         model.costs["mean_resource_reserve"] = True
-    dummy = list_rcpsp_model[0].get_dummy_solution()
-    model_aggreg_mean = AggregRCPSPModel(
-        list_problem=list_rcpsp_model,
+    dummy = list_rcpsp_problem[0].get_dummy_solution()
+    model_aggreg_mean = AggregRcpspProblem(
+        list_problem=list_rcpsp_problem,
         method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
     )
-    _, mutations = get_available_mutations(list_rcpsp_model[0], dummy)
+    _, mutations = get_available_mutations(list_rcpsp_problem[0], dummy)
     print(mutations)
     list_mutation = [
-        mutate[0].build(rcpsp_model, dummy, **mutate[1])
+        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
         for mutate in mutations
-        if mutate[0] == PermutationMutationRCPSP
+        if mutate[0] == PermutationMutationRcpsp
     ]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
@@ -154,20 +156,20 @@ def run_cp_multiscenario():
         store_solution=True,
     )
     result_sa = simulated_annealing.solve(initial_variable=dummy, nb_iteration_max=300)
-    best_solution: RCPSPSolution = result_sa.get_best_solution()
+    best_solution: RcpspSolution = result_sa.get_best_solution()
     permutation = best_solution.rcpsp_permutation
     annealing = []
-    for model in list_rcpsp_model:
-        s = RCPSPSolution(problem=model, rcpsp_permutation=permutation)
+    for model in list_rcpsp_problem:
+        s = RcpspSolution(problem=model, rcpsp_permutation=permutation)
         annealing += [model.evaluate(s)["makespan"]]
 
-    solver = CP_MULTISCENARIO(
-        problem=model_aggreg_mean, cp_solver_name=CPSolverName.CHUFFED
+    solver = CpMultiscenarioRcpspSolver(
+        problem=model_aggreg_mean, cp_solver_name=CpSolverName.CHUFFED
     )
     solver.init_model(
         output_type=True, relax_ordering=False, nb_incoherence_limit=2, max_time=300
     )
-    params_cp = ParametersCP.default()
+    params_cp = ParametersCp.default()
     params_cp.free_search = True
     result = solver.solve(parameters_cp=params_cp, time_limit=50)
     objectives_cp = [sol.minizinc_obj for sol, fit in result]
@@ -182,14 +184,14 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
     file_path = files[0]
-    rcpsp_model = parse_file(file_path)
-    dummy = rcpsp_model.get_dummy_solution()
-    _, mutations = get_available_mutations(rcpsp_model, dummy)
+    rcpsp_problem = parse_file(file_path)
+    dummy = rcpsp_problem.get_dummy_solution()
+    _, mutations = get_available_mutations(rcpsp_problem, dummy)
     print(mutations)
     list_mutation = [
-        mutate[0].build(rcpsp_model, dummy, **mutate[1])
+        mutate[0].build(rcpsp_problem, dummy, **mutate[1])
         for mutate in mutations
-        if mutate[0] == PermutationMutationRCPSP
+        if mutate[0] == PermutationMutationRcpsp
     ]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
@@ -205,7 +207,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             sense_function=ModeOptim.MAXIMIZATION,
         )
         sa = SimulatedAnnealing(
-            problem=rcpsp_model,
+            problem=rcpsp_problem,
             mutator=mixed_mutation,
             restart_handler=res,
             temperature_handler=TemperatureSchedulingFactor(
@@ -224,7 +226,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             sense_function=ModeOptim.MAXIMIZATION,
         )
         sa = HillClimberPareto(
-            problem=rcpsp_model,
+            problem=rcpsp_problem,
             mutator=mixed_mutation,
             restart_handler=res,
             params_objective_function=params_objective_function,
@@ -238,11 +240,11 @@ def local_search_postpro_multiobj_multimode(postpro=True):
         )
     result_ls = [l for l in result_ls if l[0].rcpsp_schedule_feasible]
     pareto_store = result_storage_to_pareto_front(
-        result_storage=result_ls, problem=rcpsp_model
+        result_storage=result_ls, problem=rcpsp_problem
     )
     print("Nb Pareto : ", pareto_store.len_pareto_front())
     worst, average, many_random_instance = create_models(
-        base_rcpsp_model=rcpsp_model,
+        base_rcpsp_problem=rcpsp_problem,
         range_around_mean_resource=5,
         range_around_mean_duration=3,
         do_uncertain_resource=True,
@@ -253,7 +255,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
     all_results = []
     results = np.zeros((len(solutions_pareto), len(many_random_instance), 3))
 
-    executor = Executor(problem=rcpsp_model)
+    executor = Executor(problem=rcpsp_problem)
     for index_instance in range(len(many_random_instance)):
         print("Evaluating in instance #", index_instance)
         instance = many_random_instance[index_instance]
@@ -267,7 +269,7 @@ def local_search_postpro_multiobj_multimode(postpro=True):
             sol_, fit = executor.compute_schedule_from_priority_list(
                 permutation_jobs=[1]
                 + [k + 2 for k in solutions_pareto[index_pareto].rcpsp_permutation]
-                + [rcpsp_model.n_jobs + 2],
+                + [rcpsp_problem.n_jobs + 2],
                 modes_dict=modes_dict,
             )
             t_end = time.time()
@@ -319,7 +321,7 @@ def solve_model(model, postpro=True, nb_iteration=500):
     list_mutation = [
         mutate[0].build(model, dummy, **mutate[1])
         for mutate in mutations
-        if mutate[0] == PermutationMutationRCPSP
+        if mutate[0] == PermutationMutationRcpsp
     ]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
@@ -375,11 +377,11 @@ def local_search_aggregated(
     files = get_data_available()
     files = [f for f in files if "j601_9.sm" in f]  # Single mode RCPS
     file_path = files[0]
-    rcpsp_model: RCPSPModel = parse_file(file_path)
-    if rcpsp_model.is_rcpsp_multimode():
-        rcpsp_model.set_fixed_modes([1 for i in range(rcpsp_model.n_jobs)])
+    rcpsp_problem: RcpspProblem = parse_file(file_path)
+    if rcpsp_problem.is_rcpsp_multimode():
+        rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
     worst, average, many_random_instance = create_models(
-        base_rcpsp_model=rcpsp_model,
+        base_rcpsp_problem=rcpsp_problem,
         range_around_mean_resource=1,
         range_around_mean_duration=2,
         do_uncertain_resource=False,
@@ -394,7 +396,7 @@ def local_search_aggregated(
     train_data = many_random_instance[:len_train]
     test_data = many_random_instance[len_train:]
     robust = RobustnessTool(
-        base_instance=rcpsp_model,
+        base_instance=rcpsp_problem,
         all_instances=many_random_instance,
         train_instance=train_data,
         test_instance=test_data,

@@ -4,16 +4,16 @@
 
 import numpy as np
 
-from discrete_optimization.generic_tools.cp_tools import CPSolverName, ParametersCP
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
-    MS_RCPSPModel,
+from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
+from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp_multiskill.solvers.cp_mzn import (
+    MultiskillRcpspProblem,
     PrecomputeEmployeesForTasks,
 )
 
 
-class MultiSkillToRCPSP:
-    def __init__(self, multiskill_model: MS_RCPSPModel):
+class MultiSkillToRcpsp:
+    def __init__(self, multiskill_model: MultiskillRcpspProblem):
         self.multiskill_model = multiskill_model
         self.worker_type_to_worker = None
 
@@ -42,10 +42,10 @@ class MultiSkillToRCPSP:
         check_resource_compliance: bool = True,
         one_worker_type_per_task: bool = False,
     ):
-        params_cp = ParametersCP.default()
+        params_cp = ParametersCp.default()
         params_cp.intermediate_solution = True
         solver = PrecomputeEmployeesForTasks(
-            ms_rcpsp_model=self.multiskill_model, cp_solver_name=CPSolverName.CHUFFED
+            ms_rcpsp_problem=self.multiskill_model, cp_solver_name=CpSolverName.CHUFFED
         )
         worker_type_name = sorted(solver.skills_dict)
         worker_type_container = solver.skills_representation_str
@@ -156,7 +156,7 @@ class MultiSkillToRCPSP:
                 for yy in tt[i]:
                     if yy in usage_worker_in_chosen_modes:
                         usage_worker_in_chosen_modes[yy] += 1
-        rcpsp_model = RCPSPModel(
+        rcpsp_problem = RcpspProblem(
             resources=resources_dict,
             non_renewable_resources=list(self.multiskill_model.non_renewable_resources),
             mode_details=mode_details_post_compute,
@@ -167,4 +167,4 @@ class MultiSkillToRCPSP:
             source_task=self.multiskill_model.source_task,
             sink_task=self.multiskill_model.sink_task,
         )
-        return rcpsp_model
+        return rcpsp_problem

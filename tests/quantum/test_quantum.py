@@ -7,11 +7,11 @@ import logging
 import networkx as nx
 import pytest
 
-from discrete_optimization.coloring.coloring_model import ColoringProblem
-from discrete_optimization.facility.facility_model import (
+from discrete_optimization.coloring.problem import ColoringProblem
+from discrete_optimization.facility.problem import (
     Customer,
     Facility,
-    FacilityProblem2DPoints,
+    Facility2DProblem,
     Point,
 )
 from discrete_optimization.generic_tools.graph_api import Graph
@@ -25,9 +25,9 @@ from discrete_optimization.generic_tools.quantum_solvers import (
     solvers_map_mis,
     solvers_map_tsp,
 )
-from discrete_optimization.knapsack.knapsack_model import Item, KnapsackModel
-from discrete_optimization.maximum_independent_set.mis_model import MisProblem
-from discrete_optimization.tsp.tsp_model import Point2D, TSPModel2D
+from discrete_optimization.knapsack.problem import Item, KnapsackProblem
+from discrete_optimization.maximum_independent_set.problem import MisProblem
+from discrete_optimization.tsp.problem import Point2D, Point2DTspProblem
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +40,10 @@ def test_solvers_coloring(solver_class):
     nodes = [(1, {}), (2, {}), (3, {}), (4, {})]
     edges = [(1, 2, {}), (1, 3, {}), (2, 4, {})]
     nb_colors = 2
-    coloring_model: ColoringProblem = ColoringProblem(Graph(nodes=nodes, edges=edges))
+    coloring_problem: ColoringProblem = ColoringProblem(Graph(nodes=nodes, edges=edges))
     results = solve_coloring(
         method=solver_class,
-        problem=coloring_model,
+        problem=coloring_problem,
         nb_color=nb_colors,
         **solvers_map_coloring[solver_class][1]
     )
@@ -83,7 +83,7 @@ def test_solvers_facility(solver_class):
     c1 = Customer(0, 2, Point(2, 2))
     c2 = Customer(1, 5, Point(0, -1))
 
-    facilityProblem = FacilityProblem2DPoints(2, 2, [f1, f2], [c1, c2])
+    facilityProblem = Facility2DProblem(2, 2, [f1, f2], [c1, c2])
     results = solve(
         method=solver_class,
         problem=facilityProblem,
@@ -96,14 +96,14 @@ def test_solvers_facility(solver_class):
     not qiskit_available, reason="You need Qiskit modules to this test."
 )
 @pytest.mark.parametrize("solver_class", solvers_map_tsp)
-def test_solver_TSP(solver_class):
+def test_solver_tsp(solver_class):
 
     p1 = Point2D(0, 0)
     p2 = Point2D(-1, 1)
     p3 = Point2D(1, -1)
     p4 = Point2D(1, 1)
     p5 = Point2D(1, -2)
-    tspProblem: TSPModel2D = TSPModel2D(
+    tspProblem: Point2DTspProblem = Point2DTspProblem(
         [p1, p2, p3, p4, p5], 5, start_index=0, end_index=4
     )
     results = solve(
@@ -126,7 +126,7 @@ def test_solver_Knapsack(solver_class):
     i4 = Item(3, 2, 1)
     i5 = Item(4, 5, 3)
     i6 = Item(5, 2, 1)
-    knapsackProblem = KnapsackModel([i1, i2, i3, i4, i5, i6], max_capacity)
+    knapsackProblem = KnapsackProblem([i1, i2, i3, i4, i5, i6], max_capacity)
     results = solve(
         method=solver_class,
         problem=knapsackProblem,
@@ -138,5 +138,5 @@ def test_solver_Knapsack(solver_class):
 if __name__ == "__main__":
     test_solvers_coloring()
     test_solvers_mis()
-    test_solver_TSP()
+    test_solver_tsp()
     test_solver_Knapsack()

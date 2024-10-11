@@ -167,8 +167,8 @@ jobs:
         run: |
           python -c "
           try:
-            from discrete_optimization.generic_tools.cp_tools import find_right_minizinc_solver_name, CPSolverName
-            find_right_minizinc_solver_name(CPSolverName.CHUFFED)
+            from discrete_optimization.generic_tools.cp_tools import find_right_minizinc_solver_name, CpSolverName
+            find_right_minizinc_solver_name(CpSolverName.CHUFFED)
           except RuntimeError:
             pass
           else:

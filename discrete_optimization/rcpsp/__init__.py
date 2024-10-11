@@ -4,14 +4,14 @@
 
 from typing import Union
 
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import RCPSPModelPreemptive
-from discrete_optimization.rcpsp.specialized_rcpsp.rcpsp_specialized_constraints import (
-    RCPSPModelSpecialConstraintsPreemptive,
+from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.problem_preemptive import PreemptiveRcpspProblem
+from discrete_optimization.rcpsp.problem_specialized_constraints import (
+    SpecialConstraintsPreemptiveRcpspProblem,
 )
 
 GENERIC_CLASS = Union[
-    RCPSPModel,
-    RCPSPModelPreemptive,
-    RCPSPModelSpecialConstraintsPreemptive,
+    RcpspProblem,
+    PreemptiveRcpspProblem,
+    SpecialConstraintsPreemptiveRcpspProblem,
 ]

@@ -42,12 +42,10 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     TupleFitness,
 )
-from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
-    PermutationMutationRCPSP,
-)
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp.robust_rcpsp import AggregRCPSPModel
+from discrete_optimization.rcpsp.mutation import PermutationMutationRcpsp
+from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.problem_robust import AggregRcpspProblem
+from discrete_optimization.rcpsp.solution import RcpspSolution
 
 logger = logging.getLogger(__name__)
 
@@ -55,10 +53,10 @@ logger = logging.getLogger(__name__)
 class RobustnessTool:
     def __init__(
         self,
-        base_instance: RCPSPModel,
-        all_instances: list[RCPSPModel],
-        train_instance: Optional[list[RCPSPModel]] = None,
-        test_instance: Optional[list[RCPSPModel]] = None,
+        base_instance: RcpspProblem,
+        all_instances: list[RcpspProblem],
+        train_instance: Optional[list[RcpspProblem]] = None,
+        test_instance: Optional[list[RcpspProblem]] = None,
         proportion_train: float = 0.8,
     ):
         self.base_instance = base_instance
@@ -71,27 +69,27 @@ class RobustnessTool:
         else:
             self.train_instance = train_instance
             self.test_instance = test_instance
-        self.model_aggreg_mean = AggregRCPSPModel(
+        self.model_aggreg_mean = AggregRcpspProblem(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MEAN),
         )
-        self.model_aggreg_max = AggregRCPSPModel(
+        self.model_aggreg_max = AggregRcpspProblem(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MAX),
         )
-        self.model_aggreg_min = AggregRCPSPModel(
+        self.model_aggreg_min = AggregRcpspProblem(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MIN),
         )
-        self.model_aggreg_median = AggregRCPSPModel(
+        self.model_aggreg_median = AggregRcpspProblem(
             list_problem=self.train_instance,
             method_aggregating=MethodAggregating(BaseMethodAggregating.MEDIAN),
         )
 
     def get_models(
         self, apriori: bool = True, aposteriori: bool = True
-    ) -> list[RCPSPModel]:
-        models: list[RCPSPModel] = []
+    ) -> list[RcpspProblem]:
+        models: list[RcpspProblem] = []
         tags: list[str] = []
         if aposteriori:
             models += [
@@ -102,10 +100,10 @@ class RobustnessTool:
             ]
             tags += ["post_mean", "post_max", "post_min", "post_median"]
         if apriori:
-            model_apriori_mean = self.model_aggreg_mean.get_unique_rcpsp_model()
-            model_apriori_max = self.model_aggreg_max.get_unique_rcpsp_model()
-            model_apriori_min = self.model_aggreg_min.get_unique_rcpsp_model()
-            model_apriori_median = self.model_aggreg_median.get_unique_rcpsp_model()
+            model_apriori_mean = self.model_aggreg_mean.get_unique_rcpsp_problem()
+            model_apriori_max = self.model_aggreg_max.get_unique_rcpsp_problem()
+            model_apriori_min = self.model_aggreg_min.get_unique_rcpsp_problem()
+            model_apriori_median = self.model_aggreg_median.get_unique_rcpsp_problem()
             models += [
                 model_apriori_mean,
                 model_apriori_max,
@@ -121,20 +119,20 @@ class RobustnessTool:
 
     def solve_and_retrieve(
         self,
-        solve_models_function: Callable[[RCPSPModel], ResultStorage],
+        solve_models_function: Callable[[RcpspProblem], ResultStorage],
         apriori: bool = True,
         aposteriori: bool = True,
     ) -> npt.NDArray[np.float64]:
         models = self.get_models(apriori, aposteriori)
         p = Pool(min(8, len(models)))
         l = p.map(solve_models_function, models)
-        solutions: list[RCPSPSolution] = [li.get_best_solution_fit()[0] for li in l]  # type: ignore
+        solutions: list[RcpspSolution] = [li.get_best_solution_fit()[0] for li in l]  # type: ignore
         results = np.zeros((len(solutions), len(self.test_instance), 3))
         for index_instance in range(len(self.test_instance)):
             logger.debug(f"Evaluating in instance #{index_instance}")
             instance = self.test_instance[index_instance]
             for index_pareto in range(len(solutions)):
-                sol_ = RCPSPSolution(
+                sol_ = RcpspSolution(
                     problem=instance,
                     rcpsp_permutation=solutions[index_pareto].rcpsp_permutation,
                     rcpsp_modes=solutions[index_pareto].rcpsp_modes,
@@ -176,7 +174,7 @@ def solve_model(
     list_mutation = [
         mutate[0].build(model, dummy, **mutate[1])
         for mutate in mutations
-        if mutate[0] == PermutationMutationRCPSP
+        if mutate[0] == PermutationMutationRcpsp
     ]
     mixed_mutation = BasicPortfolioMutation(
         list_mutation, np.ones((len(list_mutation)))
