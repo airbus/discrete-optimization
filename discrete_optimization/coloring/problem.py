@@ -185,6 +185,35 @@ def transform_color_values_to_value_precede(color_vector: list[int]) -> list[int
     return new_colors_vector
 
 
+def transform_color_values_to_value_precede_on_other_node_order(
+    color_vector: list[int], nodes_ordering: list[int]
+) -> list[int]:
+    """See method ColoringSolution.to_reformated_solution().
+
+    Args:
+        color_vector (list[int]): vector representing colors of vertices
+        nodes_ordering (list[int]): vector representing the order of index to look when building the value-precede rule
+
+    Returns: A vector with value precede chain property, when looking at nodes in another order
+    example if nodes_ordering = [1, 0, 2]
+    then the solution [0, 1, 1] does not respect the value precede property because
+    solution[nodes_ordering[0]] > solution[nodes_ordering[1]]
+    but, [1, 0, 1] respects it.
+
+    """
+    index_value_color = {}
+    new_value = 0
+    new_colors_vector = [None for i in range(len(color_vector))]
+    for k in range(len(color_vector)):
+        if color_vector[nodes_ordering[k]] not in index_value_color:
+            index_value_color[color_vector[nodes_ordering[k]]] = new_value
+            new_value += 1
+        new_colors_vector[nodes_ordering[k]] = index_value_color[
+            color_vector[nodes_ordering[k]]
+        ]
+    return new_colors_vector
+
+
 class ColoringConstraints:
     """Data structure to store additional constraints. Attributes will grow
     Attributes:

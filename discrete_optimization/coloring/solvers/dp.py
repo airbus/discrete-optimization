@@ -9,7 +9,10 @@ from typing import Any
 import didppy as dp
 import networkx as nx
 
-from discrete_optimization.coloring.problem import ColoringProblem, ColoringSolution
+from discrete_optimization.coloring.problem import (
+    ColoringSolution,
+    transform_color_values_to_value_precede_on_other_node_order,
+)
 from discrete_optimization.coloring.solvers import ColoringSolver
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -17,7 +20,6 @@ from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
-    SubBrickHyperparameter,
 )
 
 
@@ -41,7 +43,7 @@ def bfs_iterator(g: nx.Graph, source: Any) -> Iterator[Any]:
                 queue.append(neighbor)
 
 
-class DpColoringSolver(DpSolver, ColoringSolver):
+class DpColoringSolver(DpSolver, ColoringSolver, WarmstartMixin):
     hyperparameters = DpSolver.hyperparameters + [
         EnumHyperparameter(
             name="modeling",
@@ -115,6 +117,7 @@ class DpColoringSolver(DpSolver, ColoringSolver):
                     + [colors[n] != c for n in neighs],
                 )
                 model.add_transition(color)
+                self.transitions[(i, c)] = color
         self.model = model
 
     def init_model_color(self, **kwargs: Any) -> None:
@@ -150,6 +153,7 @@ class DpColoringSolver(DpSolver, ColoringSolver):
         ]
         neighbors_tab = model.add_set_table(neighbors, object_type=node_type)
         nb_color_used = model.add_int_resource_var(target=0)
+        self.transitions = {}
         for c in range(nb_colors):
             if c == 0:
                 alloc = dp.Transition(
@@ -172,6 +176,7 @@ class DpColoringSolver(DpSolver, ColoringSolver):
                     ],
                 )
                 model.add_transition(alloc)
+                self.transitions[("new_color", 0)] = alloc
             else:
                 alloc = dp.Transition(
                     name=f"alloc_{c}",
@@ -194,6 +199,7 @@ class DpColoringSolver(DpSolver, ColoringSolver):
                     ],
                 )
                 model.add_transition(alloc)
+                self.transitions[("new_color", c)] = alloc
             alloc_no_new = dp.Transition(
                 name=f"alloc_{c}_no_new",
                 cost=dp.IntExpr.state_cost(),
@@ -213,6 +219,8 @@ class DpColoringSolver(DpSolver, ColoringSolver):
                 ],
             )
             model.add_transition(alloc_no_new)
+            self.transitions[("not_new", c)] = alloc_no_new
+
         model.add_base_case([current_node == nb_nodes])
         if kwargs["dual_bound"]:
             model.add_dual_bound(0)
@@ -246,3 +254,25 @@ class DpColoringSolver(DpSolver, ColoringSolver):
             colors[self.nodes_reordering[ind]] = c
             ind += 1
         return ColoringSolution(problem=self.problem, colors=colors)
+
+    def set_warm_start(self, solution: ColoringSolution) -> None:
+        nodes_reordering = self.nodes_reordering
+        new_vector = transform_color_values_to_value_precede_on_other_node_order(
+            solution.colors, nodes_ordering=nodes_reordering
+        )
+        initial_solution = []
+        if self.modeling == DpColoringModeling.COLOR_TRANSITION:
+            set_colors = set()
+            for ind in range(len(nodes_reordering)):
+                c = new_vector[nodes_reordering[ind]]
+                if c not in set_colors:
+                    initial_solution.append(self.transitions[("new_color", c)])
+                    set_colors.add(c)
+                else:
+                    initial_solution.append(self.transitions[("not_new", c)])
+            self.initial_solution = initial_solution
+        if self.modeling == DpColoringModeling.COLOR_NODE_TRANSITION:
+            for ind in range(1, len(nodes_reordering)):
+                c = new_vector[nodes_reordering[ind]]
+                initial_solution.append(self.transitions[(ind, c)])
+            self.initial_solution = initial_solution
