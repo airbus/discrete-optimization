@@ -1,15 +1,17 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 import os.path
 
 from discrete_optimization.facility.parser import get_data_available, parse_file
-from discrete_optimization.facility.problem import FacilityProblem
+from discrete_optimization.facility.problem import FacilityProblem, FacilitySolution
 from discrete_optimization.facility.solvers.dp import (
     DpFacilityModeling,
     DpFacilitySolver,
     dp,
 )
+from discrete_optimization.facility.solvers.greedy import GreedyFacilitySolver
 from discrete_optimization.generic_tools.optuna.utils import (
     generic_optuna_experiment_monoproblem,
     generic_optuna_experiment_multiproblem,
@@ -28,6 +30,22 @@ def did_facility_example():
     print(problem.evaluate(sol))
     print(problem.satisfy(sol))
     print(fit)
+
+
+def did_facility_example_ws():
+    logging.basicConfig(level=logging.INFO)
+    file = [f for f in get_data_available() if "fl_25_4" in f][0]
+    problem: FacilityProblem = parse_file(file)
+    g_sol: FacilitySolution = GreedyFacilitySolver(problem).solve()[0][0]
+    print("customer : ", problem.customer_count, "facility : ", problem.facility_count)
+    solver = DpFacilitySolver(problem=problem)
+    solver.init_model(modeling=DpFacilityModeling.CUSTOMER)
+    solver.set_warm_start(g_sol)
+    res = solver.solve(solver=dp.LNBS, use_callback=True, time_limit=3)
+    sol: FacilitySolution = res[0][0]
+    assert sol.facility_for_customers == g_sol.facility_for_customers
+    print(problem.evaluate(sol))
+    print(problem.satisfy(sol))
 
 
 def did_optuna_example():
@@ -74,4 +92,4 @@ def did_optuna_example():
 
 
 if __name__ == "__main__":
-    did_facility_example()
+    did_facility_example_ws()

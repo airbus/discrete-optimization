@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import re
-from collections.abc import Iterator
 from enum import Enum
 from typing import Any
 
@@ -15,6 +14,7 @@ from discrete_optimization.facility.utils import (
     compute_matrix_distance_facility_problem,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
@@ -28,7 +28,7 @@ class DpFacilityModeling(Enum):
     FACILITY = 1
 
 
-class DpFacilitySolver(DpSolver, FacilitySolver):
+class DpFacilitySolver(DpSolver, FacilitySolver, WarmstartMixin):
     hyperparameters = DpSolver.hyperparameters + [
         EnumHyperparameter(
             "modeling", enum=DpFacilityModeling, default=DpFacilityModeling.CUSTOMER
@@ -76,6 +76,7 @@ class DpFacilitySolver(DpSolver, FacilitySolver):
         # nb_facility_used = model.add_int_resource_var(target=0, less_is_better=True)
         current_capacity = model.add_int_resource_var(target=0)
         model.add_base_case([unallocated.is_empty()])
+        self.transitions = {}
         for i in range(nb_customers):
             transition = dp.Transition(
                 name=f"alloc_{i}",
@@ -95,6 +96,7 @@ class DpFacilitySolver(DpSolver, FacilitySolver):
                 ],
             )
             model.add_transition(transition)
+            self.transitions[("current", "customer", i)] = transition
             for f in range(nb_facilities):
                 transition = dp.Transition(
                     name=f"alloc_via_{f}_{i}",
@@ -114,6 +116,7 @@ class DpFacilitySolver(DpSolver, FacilitySolver):
                     ],
                 )
                 model.add_transition(transition)
+                self.transitions[(f, "customer", i)] = transition
         self.model = model
 
     def init_model_factory_view(self, **kwargs: Any) -> None:
@@ -139,6 +142,7 @@ class DpFacilitySolver(DpSolver, FacilitySolver):
             for f in range(nb_facilities)
         ]
         current_customer = model.add_element_var(object_type=customer, target=0)
+        self.transitions = {}
         for f in range(nb_facilities):
             new_cost = (used_facilities.contains(f)).if_then_else(0, setup_cost[f])
             alloc = dp.Transition(
@@ -160,6 +164,7 @@ class DpFacilitySolver(DpSolver, FacilitySolver):
                 ],
             )
             model.add_transition(alloc)
+            self.transitions[f] = alloc
         model.add_base_case([current_customer == self.problem.customer_count])
         # min_distance_to = model.add_int_table(
         #     [
@@ -213,3 +218,27 @@ class DpFacilitySolver(DpSolver, FacilitySolver):
             solution.facility_for_customers[customer] = current_factory
             customer += 1
         return solution
+
+    def set_warm_start(self, solution: FacilitySolution) -> None:
+        if self.modeling == DpFacilityModeling.FACILITY:
+            self.initial_solution = [
+                self.transitions[f] for f in solution.facility_for_customers
+            ]
+        if self.modeling == DpFacilityModeling.CUSTOMER:
+            initial_solution = []
+            customer_by_facilities = {}
+            for i in range(len(solution.facility_for_customers)):
+                f = solution.facility_for_customers[i]
+                if f not in customer_by_facilities:
+                    customer_by_facilities[f] = []
+                customer_by_facilities[f].append(i)
+            for f in sorted(customer_by_facilities):
+                list_customer = customer_by_facilities[f]
+                initial_solution.append(
+                    self.transitions[(f, "customer", list_customer[0])]
+                )
+                for customer in list_customer[1:]:
+                    initial_solution.append(
+                        self.transitions[("current", "customer", customer)]
+                    )
+            self.initial_solution = initial_solution
