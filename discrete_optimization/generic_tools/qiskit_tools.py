@@ -53,13 +53,13 @@ try:
 except ImportError:
     qiskit_available = False
     msg = (
-        "QiskitQAOASolver and QiskitVQESolver need qiskit, qiskit_aer, qiskit_algorithms, qiskit_ibm_runtime, "
+        "QiskitQaoaSolver and QiskitVqeSolver need qiskit, qiskit_aer, qiskit_algorithms, qiskit_ibm_runtime, "
         "and qiskit_optimization to be installed. "
         "You can use the command `pip install discrete-optimization[quantum]` to install them."
     )
     logger.warning(msg)
 
-    class QiskitQAOASolver(SolverDO):
+    class QiskitQaoaSolver(SolverDO):
         def __init__(
             self,
             problem: Problem,
@@ -69,7 +69,7 @@ except ImportError:
         ):
             raise RuntimeError(msg)
 
-    class QiskitVQESolver(SolverDO):
+    class QiskitVqeSolver(SolverDO):
         def __init__(
             self,
             problem: Problem,
@@ -259,7 +259,7 @@ class QiskitSolver(SolverDO):
         self.final_ansatz = ansatz
 
 
-class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
+class QiskitQaoaSolver(QiskitSolver, Hyperparametrizable):
     hyperparameters = [
         IntegerHyperparameter(name="reps", low=1, high=6, default=2),
         IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
@@ -381,7 +381,7 @@ class QiskitQAOASolver(QiskitSolver, Hyperparametrizable):
         ...
 
 
-class QiskitVQESolver(QiskitSolver):
+class QiskitVqeSolver(QiskitSolver):
     hyperparameters = [
         IntegerHyperparameter(name="reps", low=1, high=6, default=3),
         IntegerHyperparameter(name="optimization_level", low=0, high=3, default=1),
@@ -477,7 +477,7 @@ def gurobi_to_qubo(model):
     return from_gurobipy(model)
 
 
-class GeneralQAOASolver(QiskitQAOASolver):
+class GeneralQaoaSolver(QiskitQaoaSolver):
     def __init__(
         self,
         problem: Problem,
@@ -503,7 +503,7 @@ class GeneralQAOASolver(QiskitQAOASolver):
             self.quadratic_programm = gurobi_to_qubo(self.model.model)
 
 
-class GeneralVQESolver(QiskitVQESolver):
+class GeneralVqeSolver(QiskitVqeSolver):
     def __init__(
         self,
         problem: Problem,

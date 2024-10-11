@@ -21,18 +21,18 @@ from discrete_optimization.generic_tools.mutations.permutation_mutations import 
     PermutationSwap,
     TwoOptMutation,
 )
-from discrete_optimization.knapsack.mutation.mutation_knapsack import (
+from discrete_optimization.knapsack.mutation import (
     KnapsackMutationSingleBitFlip,
     MutationKnapsack,
 )
-from discrete_optimization.rcpsp.mutations.mutation_rcpsp import (
-    DeadlineMutationRCPSP,
-    PermutationMutationRCPSP,
+from discrete_optimization.rcpsp.mutation import (
+    DeadlineMutationRcpsp,
+    PermutationMutationRcpsp,
 )
-from discrete_optimization.tsp.mutation.mutation_tsp import (
+from discrete_optimization.tsp.mutation import (
     Mutation2Opt,
     Mutation2OptIntersection,
-    MutationSwapTSP,
+    MutationSwapTsp,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,27 +52,27 @@ dictionnary_mutation: dict[
             Mutation2OptIntersection,
             {"test_all": False, "nb_test": 200},
         ),
-        "swap_tsp": (MutationSwapTSP, {}),
+        "swap_tsp": (MutationSwapTsp, {}),
     },
     TypeAttribute.PERMUTATION_RCPSP: {
         "total_shuffle_rcpsp": (
-            PermutationMutationRCPSP,
+            PermutationMutationRcpsp,
             {"other_mutation": PermutationShuffleMutation},
         ),
         "deadline": (
-            PermutationMutationRCPSP,
-            {"other_mutation": DeadlineMutationRCPSP},
+            PermutationMutationRcpsp,
+            {"other_mutation": DeadlineMutationRcpsp},
         ),
         "partial_shuffle_rcpsp": (
-            PermutationMutationRCPSP,
+            PermutationMutationRcpsp,
             {"proportion": 0.2, "other_mutation": PermutationPartialShuffleMutation},
         ),
         "swap_rcpsp": (
-            PermutationMutationRCPSP,
+            PermutationMutationRcpsp,
             {"nb_swap": 3, "other_mutation": PermutationSwap},
         ),
         "2opt_gen_rcpsp": (
-            PermutationMutationRCPSP,
+            PermutationMutationRcpsp,
             {"other_mutation": TwoOptMutation},
         ),
     },
@@ -86,7 +86,7 @@ dictionnary_mutation: dict[
     TypeAttribute.LIST_INTEGER_SPECIFIC_ARITY: {
         "random_flip": (MutationIntegerSpecificArity, {"probability_flip": 0.1}),
         "random_flip_modes_rcpsp": (
-            PermutationMutationRCPSP,
+            PermutationMutationRcpsp,
             {"other_mutation": MutationIntegerSpecificArity, "probability_flip": 0.1},
         ),
     },

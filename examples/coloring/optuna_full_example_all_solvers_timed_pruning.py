@@ -19,27 +19,18 @@ import logging
 from collections import defaultdict
 from typing import Any
 
-from discrete_optimization.coloring.coloring_parser import (
-    get_data_available,
-    parse_file,
-)
-from discrete_optimization.coloring.coloring_solvers import (
-    ColoringASPSolver,
-    ColoringLP,
+from discrete_optimization.coloring.parser import get_data_available, parse_file
+from discrete_optimization.coloring.solvers.cp_mzn import CpColoringSolver
+from discrete_optimization.coloring.solvers.cpsat import CpSatColoringSolver
+from discrete_optimization.coloring.solvers.greedy import NxGreedyColoringMethod
+from discrete_optimization.coloring.solvers.toulbar import ToulbarColoringSolver
+from discrete_optimization.coloring.solvers_map import (
+    AspColoringSolver,
+    GurobiColoringSolver,
     solvers_map,
     toulbar2_available,
 )
-from discrete_optimization.coloring.solvers.coloring_cp_solvers import ColoringCP
-from discrete_optimization.coloring.solvers.coloring_cpsat_solver import (
-    ColoringCPSatSolver,
-)
-from discrete_optimization.coloring.solvers.coloring_toulbar_solver import (
-    ToulbarColoringSolver,
-)
-from discrete_optimization.coloring.solvers.greedy_coloring import (
-    NXGreedyColoringMethod,
-)
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lp_tools import gurobi_available
 from discrete_optimization.generic_tools.optuna.utils import (
@@ -62,24 +53,24 @@ modelfilename = "gc_70_9"  # filename of the model used
 study_basename = f"coloring_all_solvers-auto-pruning-{modelfilename}"
 
 # solvers to test
-solvers_to_remove = {ColoringCP}
+solvers_to_remove = {CpColoringSolver}
 if not gurobi_available or not gurobi_full_license_available:
-    solvers_to_remove.add(ColoringLP)
+    solvers_to_remove.add(GurobiColoringSolver)
 if not toulbar2_available:
     solvers_to_remove.add(ToulbarColoringSolver)
 solvers_to_test: list[type[SolverDO]] = [
     s for s in solvers_map if s not in solvers_to_remove
 ]
 # fixed kwargs per solver: either hyperparameters we do not want to search, or other parameters like time limits
-p = ParametersCP.default_cpsat()
+p = ParametersCp.default_cpsat()
 p.nb_process = 6
 kwargs_fixed_by_solver: dict[type[SolverDO], dict[str, Any]] = defaultdict(
     dict,  # default kwargs for unspecified solvers
     {
-        ColoringCPSatSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
-        ColoringCP: dict(parameters_cp=p, time_limit=max_time_per_solver),
-        ColoringLP: dict(time_limit=max_time_per_solver),
-        ColoringASPSolver: dict(time_limit=max_time_per_solver),
+        CpSatColoringSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
+        CpColoringSolver: dict(parameters_cp=p, time_limit=max_time_per_solver),
+        GurobiColoringSolver: dict(time_limit=max_time_per_solver),
+        AspColoringSolver: dict(time_limit=max_time_per_solver),
         ToulbarColoringSolver: dict(time_limit=max_time_per_solver),
     },
 )
@@ -94,9 +85,9 @@ suggest_optuna_kwargs_by_name_by_solver: dict[
             "tolerance_delta_max": dict(low=1, high=2),  # we restrict to [1, 2]
             "greedy_method": dict(  # we restrict the available choices for greedy_method
                 choices=[
-                    NXGreedyColoringMethod.best,
-                    NXGreedyColoringMethod.largest_first,
-                    NXGreedyColoringMethod.random_sequential,
+                    NxGreedyColoringMethod.best,
+                    NxGreedyColoringMethod.largest_first,
+                    NxGreedyColoringMethod.random_sequential,
                 ]
             ),
         }

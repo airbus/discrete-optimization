@@ -5,10 +5,7 @@
 
 import pytest
 
-from discrete_optimization.coloring.coloring_model import (
-    ColoringProblem,
-    ColoringSolution,
-)
+from discrete_optimization.coloring.problem import ColoringProblem, ColoringSolution
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import TrivialSolverFromResultStorage
 from discrete_optimization.generic_tools.graph_api import Graph

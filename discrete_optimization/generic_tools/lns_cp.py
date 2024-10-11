@@ -15,9 +15,9 @@ from ortools.sat.python.cp_model import Constraint
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.cp_tools import (
-    CPSolver,
-    MinizincCPSolver,
-    ParametersCP,
+    CpSolver,
+    MinizincCpSolver,
+    ParametersCp,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -25,12 +25,12 @@ from discrete_optimization.generic_tools.do_problem import (
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lns_tools import (
-    BaseLNS,
+    BaseLns,
     ConstraintHandler,
     InitialSolution,
     PostProcessSolution,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCPSatSolver
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     fitness_class,
@@ -39,16 +39,16 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class BaseLNS_CP(BaseLNS):
+class BaseLnsCp(BaseLns):
     """Large Neighborhood Search solver using a cp solver at each iteration."""
 
-    subsolver: CPSolver
+    subsolver: CpSolver
     """Sub-solver used by this lns solver at each iteration."""
 
     def __init__(
         self,
         problem: Problem,
-        subsolver: Optional[CPSolver] = None,
+        subsolver: Optional[CpSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
         constraint_handler: Optional[ConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
@@ -68,7 +68,7 @@ class BaseLNS_CP(BaseLNS):
     def solve(
         self,
         nb_iteration_lns: int,
-        parameters_cp: Optional[ParametersCP] = None,
+        parameters_cp: Optional[ParametersCp] = None,
         time_limit_subsolver: Optional[float] = 100.0,
         time_limit_subsolver_iter0: Optional[float] = None,
         nb_iteration_no_improvement: Optional[int] = None,
@@ -101,7 +101,7 @@ class BaseLNS_CP(BaseLNS):
 
         """
         if parameters_cp is None:
-            parameters_cp = ParametersCP.default()
+            parameters_cp = ParametersCp.default()
         return super().solve(
             parameters_cp=parameters_cp,
             time_limit_subsolver=time_limit_subsolver,
@@ -115,14 +115,14 @@ class BaseLNS_CP(BaseLNS):
         )
 
 
-class LNS_OrtoolsCPSat(BaseLNS_CP):
-    subsolver: OrtoolsCPSatSolver
+class LnsOrtoolsCpSat(BaseLnsCp):
+    subsolver: OrtoolsCpSatSolver
     """Sub-solver used by this lns solver at each iteration."""
 
     def __init__(
         self,
         problem: Problem,
-        subsolver: Optional[OrtoolsCPSatSolver] = None,
+        subsolver: Optional[OrtoolsCpSatSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
         constraint_handler: Optional[ConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
@@ -148,18 +148,18 @@ class LNS_OrtoolsCPSat(BaseLNS_CP):
                 )
 
 
-class OrtoolsCPSatConstraintHandler(ConstraintHandler):
+class OrtoolsCpSatConstraintHandler(ConstraintHandler):
     """Base class for constraint handler for solvers based on ortools"""
 
     @abstractmethod
     def adding_constraint_from_results_store(
-        self, solver: OrtoolsCPSatSolver, result_storage: ResultStorage, **kwargs: Any
+        self, solver: OrtoolsCpSatSolver, result_storage: ResultStorage, **kwargs: Any
     ) -> Iterable[Constraint]:
         ...
 
     def remove_constraints_from_previous_iteration(
         self,
-        solver: OrtoolsCPSatSolver,
+        solver: OrtoolsCpSatSolver,
         previous_constraints: Iterable[Constraint],
         **kwargs: Any,
     ) -> None:
@@ -172,7 +172,7 @@ class MznConstraintHandler(ConstraintHandler):
     @abstractmethod
     def adding_constraint_from_results_store(
         self,
-        solver: MinizincCPSolver,
+        solver: MinizincCpSolver,
         child_instance: Instance,
         result_storage: ResultStorage,
         last_result_store: Optional[ResultStorage] = None,
@@ -194,9 +194,9 @@ class MznConstraintHandler(ConstraintHandler):
         pass
 
 
-class LNS_MinizincCP(BaseLNS_CP):
+class LnsCpMzn(BaseLnsCp):
 
-    subsolver: MinizincCPSolver
+    subsolver: MinizincCpSolver
     """Sub-solver used by this lns solver at each iteration."""
 
     constraint_handler: MznConstraintHandler
@@ -204,7 +204,7 @@ class LNS_MinizincCP(BaseLNS_CP):
     def __init__(
         self,
         problem: Problem,
-        subsolver: Optional[MinizincCPSolver] = None,
+        subsolver: Optional[MinizincCpSolver] = None,
         initial_solution_provider: Optional[InitialSolution] = None,
         constraint_handler: Optional[MznConstraintHandler] = None,
         post_process_solution: Optional[PostProcessSolution] = None,
@@ -232,7 +232,3 @@ class LNS_MinizincCP(BaseLNS_CP):
     def create_submodel(self) -> contextlib.AbstractContextManager:
         """Create a branch of the current instance, wrapped in a context manager."""
         return self.subsolver.instance.branch()
-
-
-# Alias for backward compatibility
-LNS_CP = LNS_MinizincCP

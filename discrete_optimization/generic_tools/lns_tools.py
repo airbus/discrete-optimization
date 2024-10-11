@@ -102,7 +102,7 @@ class TrivialPostProcessSolution(PostProcessSolution):
         return result_storage
 
 
-class BaseLNS(SolverDO, WarmstartMixin):
+class BaseLns(SolverDO, WarmstartMixin):
     """Base class for Large Neighborhood Search solvers."""
 
     subsolver: SolverDO

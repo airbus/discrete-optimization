@@ -3,9 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 
 
-from discrete_optimization.facility.facility_model import FacilityProblem
+from discrete_optimization.facility.problem import FacilityProblem
 from discrete_optimization.generic_tools.do_solver import SolverDO
 
 
-class SolverFacility(SolverDO):
+class FacilitySolver(SolverDO):
     problem: FacilityProblem

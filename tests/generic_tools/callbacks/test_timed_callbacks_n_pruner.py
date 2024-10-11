@@ -10,11 +10,8 @@ from typing import Any, Optional
 import numpy as np
 import pytest
 
-from discrete_optimization.coloring.coloring_model import ColoringSolution
-from discrete_optimization.coloring.coloring_parser import (
-    get_data_available,
-    parse_file,
-)
+from discrete_optimization.coloring.parser import get_data_available, parse_file
+from discrete_optimization.coloring.problem import ColoringSolution
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,

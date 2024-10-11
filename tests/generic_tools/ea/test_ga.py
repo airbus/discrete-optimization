@@ -2,8 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-import discrete_optimization.knapsack.knapsack_parser as knapsack_parser
-import discrete_optimization.tsp.tsp_parser as tsp_parser
+import discrete_optimization.knapsack.parser as knapsack_parser
+import discrete_optimization.tsp.parser as tsp_parser
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
@@ -16,11 +16,11 @@ from discrete_optimization.generic_tools.ea.ga import (
 
 def test_binary_cx():
     files = [f for f in knapsack_parser.get_data_available() if "ks_60_0" in f]
-    knapsack_model = knapsack_parser.parse_file(files[0])
-    params = get_default_objective_setup(knapsack_model)
+    knapsack_problem = knapsack_parser.parse_file(files[0])
+    params = get_default_objective_setup(knapsack_problem)
 
     ga_solver = Ga(
-        knapsack_model,
+        knapsack_problem,
         crossover=DeapCrossover.CX_ONE_POINT,
         max_evals=1000,
         objective_handling=params.objective_handling,
@@ -30,7 +30,7 @@ def test_binary_cx():
     kp_sol = ga_solver.solve()
 
     ga_solver = Ga(
-        knapsack_model,
+        knapsack_problem,
         crossover=DeapCrossover.CX_TWO_POINT,
         max_evals=1000,
         objective_handling=params.objective_handling,
@@ -40,7 +40,7 @@ def test_binary_cx():
     kp_sol = ga_solver.solve()
 
     ga_solver = Ga(
-        knapsack_model,
+        knapsack_problem,
         crossover=DeapCrossover.CX_UNIFORM,
         max_evals=1000,
         objective_handling=params.objective_handling,

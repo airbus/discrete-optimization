@@ -6,53 +6,53 @@
 
 from typing import Any, Union
 
-from discrete_optimization.coloring.solvers.coloring_quantum import (
-    QAOAColoringSolver_FeasibleNbColor,
-    QAOAColoringSolver_MinimizeNbColor,
-    VQEColoringSolver_FeasibleNbColor,
-    VQEColoringSolver_MinimizeNbColor,
+from discrete_optimization.coloring.solvers.greedy import ColoringProblem
+from discrete_optimization.coloring.solvers.quantum import (
+    FeasibleNbColorQaoaColoringSolver,
+    FeasibleNbColorVqeColoringSolver,
+    MinimizeNbColorQaoaColoringSolver,
+    MinimizeNbColorVqeColoringSolver,
 )
-from discrete_optimization.coloring.solvers.greedy_coloring import ColoringProblem
-from discrete_optimization.facility.facility_model import FacilityProblem2DPoints
-from discrete_optimization.facility.solvers.facility_quantum import (
-    QAOAFacilitySolver,
-    VQEFacilitySolver,
+from discrete_optimization.facility.problem import Facility2DProblem
+from discrete_optimization.facility.solvers.quantum import (
+    QaoaFacilitySolver,
+    VqeFacilitySolver,
 )
 from discrete_optimization.generic_tools.qiskit_tools import QiskitSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.knapsack.knapsack_model import KnapsackModel
-from discrete_optimization.knapsack.solvers.knapsack_quantum import (
-    QAOAKnapsackSolver,
-    VQEKnapsackSolver,
+from discrete_optimization.knapsack.problem import KnapsackProblem
+from discrete_optimization.knapsack.solvers.quantum import (
+    QaoaKnapsackSolver,
+    VqeKnapsackSolver,
 )
-from discrete_optimization.maximum_independent_set.mis_model import MisProblem
-from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
-    QAOAMisSolver,
-    VQEMisSolver,
+from discrete_optimization.maximum_independent_set.problem import MisProblem
+from discrete_optimization.maximum_independent_set.solvers.quantum import (
+    QaoaMisSolver,
+    VqeMisSolver,
 )
-from discrete_optimization.tsp.solver.tsp_quantum import QAOATSPSolver, VQETSPSolver
-from discrete_optimization.tsp.tsp_model import TSPModel2D
+from discrete_optimization.tsp.problem import Point2DTspProblem
+from discrete_optimization.tsp.solvers.quantum import QaoaTspSolver, VqeTspSolver
 
 solvers_coloring: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
-            QAOAColoringSolver_MinimizeNbColor,
+            MinimizeNbColorQaoaColoringSolver,
             {},
         ),
         (
-            QAOAColoringSolver_FeasibleNbColor,
+            FeasibleNbColorQaoaColoringSolver,
             {},
         ),
     ],
     "vqe": [
         (
-            VQEColoringSolver_MinimizeNbColor,
+            MinimizeNbColorVqeColoringSolver,
             {},
         ),
         (
-            VQEColoringSolver_FeasibleNbColor,
+            FeasibleNbColorVqeColoringSolver,
             {},
         ),
     ],
@@ -67,13 +67,13 @@ for key, solver_configs in solvers_coloring.items():
 solvers_mis: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
-            QAOAMisSolver,
+            QaoaMisSolver,
             {},
         ),
     ],
     "vqe": [
         (
-            VQEMisSolver,
+            VqeMisSolver,
             {},
         ),
     ],
@@ -87,13 +87,13 @@ for key, solver_configs in solvers_mis.items():
 solvers_facility: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
-            QAOAFacilitySolver,
+            QaoaFacilitySolver,
             {},
         ),
     ],
     "vqe": [
         (
-            VQEFacilitySolver,
+            VqeFacilitySolver,
             {},
         ),
     ],
@@ -108,13 +108,13 @@ for key, solver_configs in solvers_facility.items():
 solvers_tsp: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
-            QAOATSPSolver,
+            QaoaTspSolver,
             {},
         ),
     ],
     "vqe": [
         (
-            VQETSPSolver,
+            VqeTspSolver,
             {},
         ),
     ],
@@ -128,13 +128,13 @@ for key, solver_configs in solvers_tsp.items():
 solvers_knapsack: dict[str, list[tuple[type[QiskitSolver], dict[str, Any]]]] = {
     "qaoa": [
         (
-            QAOAKnapsackSolver,
+            QaoaKnapsackSolver,
             {},
         ),
     ],
     "vqe": [
         (
-            VQEKnapsackSolver,
+            VqeKnapsackSolver,
             {},
         ),
     ],
@@ -148,7 +148,7 @@ for key, solver_configs in solvers_knapsack.items():
 
 def solve(
     method: type[QiskitSolver],
-    problem: Union[MisProblem, TSPModel2D, KnapsackModel, FacilityProblem2DPoints],
+    problem: Union[MisProblem, Point2DTspProblem, KnapsackProblem, Facility2DProblem],
     **kwargs: Any,
 ) -> ResultStorage:
     """Solve a problem instance with a given class of solver.

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 cur_folder = os.path.abspath(os.path.dirname(__file__))
 
 
-class ASPClingoSolver(SolverDO):
+class AspClingoSolver(SolverDO):
     """Base class for solver based on Answer Set Programming formulation and clingo solver."""
 
     ctl: Optional[clingo.Control] = None
@@ -48,7 +48,7 @@ class ASPClingoSolver(SolverDO):
         time_limit: Optional[float] = 100.0,
         **kwargs: Any,
     ) -> ResultStorage:
-        """Solve the problem with a CPSat solver drom ortools library.
+        """Solve the problem with a CpSat solver drom ortools library.
 
         Args:
             callbacks: list of callbacks used to hook into the various stage of the solve
@@ -73,7 +73,7 @@ class ASPClingoSolver(SolverDO):
             self.init_model(**kwargs)
         self.ctl.ground([("base", [])])
 
-        asp_callback = ASPCallback(
+        asp_callback = AspCallback(
             do_solver=self,
             callback=callbacks_list,
             dump_model_in_folders=kwargs.get("dump_model_in_folders", False),
@@ -91,10 +91,10 @@ class ASPClingoSolver(SolverDO):
         return res
 
 
-class ASPCallback:
+class AspCallback:
     def __init__(
         self,
-        do_solver: ASPClingoSolver,
+        do_solver: AspClingoSolver,
         callback: Callback,
         dump_model_in_folders: bool = False,
     ):

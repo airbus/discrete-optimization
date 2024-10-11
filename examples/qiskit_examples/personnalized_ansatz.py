@@ -4,10 +4,10 @@ from qiskit.circuit.library import EfficientSU2
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_aer import AerSimulator
 
-from discrete_optimization.maximum_independent_set.mis_model import MisProblem
-from discrete_optimization.maximum_independent_set.solvers.mis_quantum import (
-    QAOAMisSolver,
-    VQEMisSolver,
+from discrete_optimization.maximum_independent_set.problem import MisProblem
+from discrete_optimization.maximum_independent_set.solvers.quantum import (
+    QaoaMisSolver,
+    VqeMisSolver,
 )
 
 
@@ -33,8 +33,8 @@ def quantum_personnalized_QAOA():
 
     # we create an instance of MisProblem
     misProblem = MisProblem(graph)
-    # we create an instance of a QAOAMisSolver
-    misSolver = QAOAMisSolver(misProblem)
+    # we create an instance of a QaoaMisSolver
+    misSolver = QaoaMisSolver(misProblem)
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     misSolver.init_model()
     # we solve the mis problem
@@ -87,8 +87,8 @@ def quantum_personnalized_VQE():
 
     # we create an instance of MisProblem
     misProblem = MisProblem(graph)
-    # we create an instance of a VQEMisSolver
-    misSolver = VQEMisSolver(misProblem)
+    # we create an instance of a VqeMisSolver
+    misSolver = VqeMisSolver(misProblem)
     # we initialize the solver, in fact this step transform the problem in a QUBO formulation
     misSolver.init_model()
     # we solve the mis problem

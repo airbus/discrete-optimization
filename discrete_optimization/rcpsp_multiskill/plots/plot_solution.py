@@ -10,23 +10,24 @@ from matplotlib.patches import Polygon as pp
 from shapely.geometry import Polygon
 
 from discrete_optimization.generic_tools.plot_utils import get_cmap_with_nb_colors
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-    MS_RCPSPModel,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Preemptive,
+from discrete_optimization.rcpsp_multiskill.problem import (
+    MultiskillRcpspProblem,
+    MultiskillRcpspSolution,
+    PreemptiveMultiskillRcpspSolution,
 )
 
 
 def compute_schedule_per_resource_individual_preemptive(
-    rcpsp_model: MS_RCPSPModel, rcpsp_sol: MS_RCPSPSolution_Preemptive
+    rcpsp_problem: MultiskillRcpspProblem, rcpsp_sol: PreemptiveMultiskillRcpspSolution
 ):
     sorted_task_by_start = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_start_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_start_time(x)
+        + rcpsp_problem.index_task[x],
     )
     sorted_task_by_end = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_problem.index_task[x],
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
@@ -37,11 +38,11 @@ def compute_schedule_per_resource_individual_preemptive(
             "total_activity": 0,
             "boxes_time": [],
         }
-        for employee in rcpsp_model.employees
+        for employee in rcpsp_problem.employees
     }
     index_to_time = {i: min_time + i for i in range(max_time - min_time + 1)}
     time_to_index = {index_to_time[i]: i for i in index_to_time}
-    sorted_employees = list(sorted(rcpsp_model.employees))
+    sorted_employees = list(sorted(rcpsp_problem.employees))
     for activity in sorted_task_by_start:
         for i in range(len(rcpsp_sol.employee_usage.get(activity, []))):
             if isinstance(rcpsp_sol.employee_usage[activity], dict):
@@ -54,7 +55,7 @@ def compute_schedule_per_resource_individual_preemptive(
                 employee_usage[employee]["activity"][
                     time_to_index[start_time] : time_to_index[end_time]
                 ] = (
-                    rcpsp_model.index_task[activity]
+                    rcpsp_problem.index_task[activity]
                     if isinstance(activity, str)
                     else activity
                 )
@@ -76,16 +77,17 @@ def compute_schedule_per_resource_individual_preemptive(
 
 
 def compute_schedule_per_resource_individual(
-    rcpsp_model: MS_RCPSPModel, rcpsp_sol: MS_RCPSPSolution
+    rcpsp_problem: MultiskillRcpspProblem, rcpsp_sol: MultiskillRcpspSolution
 ):
     modes = rcpsp_sol.modes
     sorted_task_by_start = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_start_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_start_time(x)
+        + rcpsp_problem.index_task[x],
     )
     sorted_task_by_end = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_problem.index_task[x],
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
@@ -96,11 +98,11 @@ def compute_schedule_per_resource_individual(
             "total_activity": 0,
             "boxes_time": [],
         }
-        for employee in rcpsp_model.employees
+        for employee in rcpsp_problem.employees
     }
     index_to_time = {i: min_time + i for i in range(max_time - min_time + 1)}
     time_to_index = {index_to_time[i]: i for i in index_to_time}
-    sorted_employees = list(sorted(rcpsp_model.employees))
+    sorted_employees = list(sorted(rcpsp_problem.employees))
     for activity in sorted_task_by_start:
         start_time = rcpsp_sol.get_start_time(activity)
         end_time = rcpsp_sol.get_end_time(activity)
@@ -108,7 +110,7 @@ def compute_schedule_per_resource_individual(
             employee_usage[employee]["activity"][
                 time_to_index[start_time] : time_to_index[end_time]
             ] = (
-                rcpsp_model.index_task[activity]
+                rcpsp_problem.index_task[activity]
                 if isinstance(activity, str)
                 else activity
             )
@@ -130,8 +132,8 @@ def compute_schedule_per_resource_individual(
 
 
 def plot_resource_individual_gantt(
-    rcpsp_model: MS_RCPSPModel,
-    rcpsp_sol: MS_RCPSPSolution,
+    rcpsp_problem: MultiskillRcpspProblem,
+    rcpsp_sol: MultiskillRcpspSolution,
     title_figure="",
     name_task=None,
     fig=None,
@@ -139,23 +141,24 @@ def plot_resource_individual_gantt(
     current_t=None,
 ):
     array_ressource_usage = compute_schedule_per_resource_individual(
-        rcpsp_model, rcpsp_sol
+        rcpsp_problem, rcpsp_sol
     )
     sorted_task_by_start = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_start_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_start_time(x)
+        + rcpsp_problem.index_task[x],
     )
     sorted_task_by_end = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_problem.index_task[x],
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
-    sorted_employees = list(sorted(rcpsp_model.employees))
+    sorted_employees = list(sorted(rcpsp_problem.employees))
 
     if name_task is None:
         name_task = {}
-        for t in rcpsp_model.mode_details:
+        for t in rcpsp_problem.mode_details:
             name_task[t] = str(t)
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, figsize=(12, 6))
@@ -173,7 +176,7 @@ def plot_resource_individual_gantt(
             patches.append(
                 pp(
                     xy=polygon.exterior.coords,
-                    facecolor=colors((rcpsp_model.index_task[activity]) % nb_colors),
+                    facecolor=colors((rcpsp_problem.index_task[activity]) % nb_colors),
                 )
             )
             activity = boxe[0][2]
@@ -217,8 +220,8 @@ def plot_resource_individual_gantt(
 
 
 def plot_resource_individual_gantt_preemptive(
-    rcpsp_model: MS_RCPSPModel,
-    rcpsp_sol: MS_RCPSPSolution_Preemptive,
+    rcpsp_problem: MultiskillRcpspProblem,
+    rcpsp_sol: PreemptiveMultiskillRcpspSolution,
     title_figure="",
     name_task=None,
     subtasks=None,
@@ -227,26 +230,27 @@ def plot_resource_individual_gantt_preemptive(
     current_t=None,
 ):
     array_ressource_usage = compute_schedule_per_resource_individual_preemptive(
-        rcpsp_model, rcpsp_sol
+        rcpsp_problem, rcpsp_sol
     )
     sorted_task_by_start = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_start_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_start_time(x)
+        + rcpsp_problem.index_task[x],
     )
     sorted_task_by_end = sorted(
         rcpsp_sol.schedule,
-        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_problem.index_task[x],
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_end[0])
-    sorted_employees = list(sorted(rcpsp_model.employees))
+    sorted_employees = list(sorted(rcpsp_problem.employees))
 
     if name_task is None:
         name_task = {}
-        for t in rcpsp_model.mode_details:
+        for t in rcpsp_problem.mode_details:
             name_task[t] = str(t)
     if subtasks is None:
-        subtasks = set(rcpsp_model.tasks_list)
+        subtasks = set(rcpsp_problem.tasks_list)
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, figsize=(12, 6))
         fig.suptitle(title_figure)
@@ -265,7 +269,7 @@ def plot_resource_individual_gantt_preemptive(
             patches.append(
                 pp(
                     xy=polygon.exterior.coords,
-                    facecolor=colors((rcpsp_model.index_task[activity]) % nb_colors),
+                    facecolor=colors((rcpsp_problem.index_task[activity]) % nb_colors),
                 )
             )
             activity = boxe[0][2]
@@ -304,8 +308,8 @@ def plot_resource_individual_gantt_preemptive(
 
 
 def plot_task_gantt(
-    rcpsp_model: MS_RCPSPModel,
-    rcpsp_sol: MS_RCPSPSolution,
+    rcpsp_problem: MultiskillRcpspProblem,
+    rcpsp_sol: MultiskillRcpspSolution,
     subtasks=None,
     fig=None,
     ax=None,
@@ -321,16 +325,17 @@ def plot_task_gantt(
     else:
         ax.set_title(title)
     if subtasks is None:
-        subtasks = set(rcpsp_model.tasks_list)
-    tasks = [t for t in rcpsp_model.tasks_list if t in subtasks]
+        subtasks = set(rcpsp_problem.tasks_list)
+    tasks = [t for t in rcpsp_problem.tasks_list if t in subtasks]
     nb_task = len(tasks)
     sorted_task_by_start = sorted(
         tasks,
-        key=lambda x: 100000 * rcpsp_sol.get_start_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_start_time(x)
+        + rcpsp_problem.index_task[x],
     )
     sorted_task_by_end = sorted(
         tasks,
-        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_model.index_task[x],
+        key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_problem.index_task[x],
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_start[0])

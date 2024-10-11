@@ -12,7 +12,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
 )
 from discrete_optimization.generic_tools.lns_tools import (
-    BaseLNS,
+    BaseLns,
     ConstraintHandler,
     InitialSolution,
     PostProcessSolution,
@@ -50,7 +50,7 @@ class OrtoolsMathOptConstraintHandler(ConstraintHandler):
         solver.remove_constraints(previous_constraints)
 
 
-class LNS_MILP(BaseLNS):
+class LnsMilp(BaseLns):
     """Large Neighborhood Search solver using a milp solver at each iteration."""
 
     subsolver: MilpSolver

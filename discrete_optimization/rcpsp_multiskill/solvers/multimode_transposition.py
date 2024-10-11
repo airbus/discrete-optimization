@@ -7,28 +7,28 @@ from typing import Union
 
 import numpy as np
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCP
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.rcpsp.rcpsp_model import RCPSPModel
-from discrete_optimization.rcpsp.rcpsp_model_preemptive import (
-    RCPSPModelPreemptive,
-    RCPSPSolutionPreemptive,
+from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.problem_preemptive import (
+    PreemptiveRcpspProblem,
+    PreemptiveRcpspSolution,
 )
-from discrete_optimization.rcpsp.rcpsp_solution import RCPSPSolution
-from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import MultiSkillToRCPSP
-from discrete_optimization.rcpsp_multiskill.rcpsp_multiskill import (
-    MS_RCPSPModel,
-    MS_RCPSPSolution,
-    MS_RCPSPSolution_Preemptive,
+from discrete_optimization.rcpsp.solution import RcpspSolution
+from discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp import MultiSkillToRcpsp
+from discrete_optimization.rcpsp_multiskill.problem import (
+    MultiskillRcpspProblem,
+    MultiskillRcpspSolution,
+    PreemptiveMultiskillRcpspSolution,
 )
-from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
-    CP_MS_MRCPSP_MZN,
-    CP_MS_MRCPSP_MZN_PREEMPTIVE,
-    CPSolverName,
+from discrete_optimization.rcpsp_multiskill.solvers.cp_mzn import (
+    CpMultiskillRcpspSolver,
+    CpPreemptiveMultiskillRcpspSolver,
+    CpSolverName,
     stick_to_solution,
     stick_to_solution_preemptive,
 )
@@ -36,13 +36,13 @@ from discrete_optimization.rcpsp_multiskill.solvers.cp_solvers import (
 logger = logging.getLogger(__name__)
 
 
-class MultimodeTranspositionSolver(SolverDO):
-    problem: MS_RCPSPModel
+class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
+    problem: MultiskillRcpspProblem
 
     def __init__(
         self,
-        problem: MS_RCPSPModel,
-        multimode_problem: Union[RCPSPModel, RCPSPModelPreemptive] = None,
+        problem: MultiskillRcpspProblem,
+        multimode_problem: Union[RcpspProblem, PreemptiveRcpspProblem] = None,
         worker_type_to_worker: dict[str, set[Union[str, int]]] = None,
         params_objective_function: ParamsObjectiveFunction = None,
         solver_multimode_rcpsp: SolverDO = None,
@@ -57,20 +57,20 @@ class MultimodeTranspositionSolver(SolverDO):
 
     def solve(self, **kwargs) -> ResultStorage:
         if self.multimode_problem is None or self.worker_type_to_worker is None:
-            algo = MultiSkillToRCPSP(self.problem)
-            rcpsp_model = algo.construct_rcpsp_by_worker_type(
+            algo = MultiSkillToRcpsp(self.problem)
+            rcpsp_problem = algo.construct_rcpsp_by_worker_type(
                 limit_number_of_mode_per_task=True,
                 max_number_of_mode=3,
                 check_resource_compliance=True,
             )
-            self.multimode_problem = rcpsp_model
+            self.multimode_problem = rcpsp_problem
             self.worker_type_to_worker = algo.worker_type_to_worker
         result_store = self.solver_multimode_rcpsp.solve(**kwargs)
         solution, fit = result_store.get_best_solution_fit()
-        solution: RCPSPSolutionPreemptive = solution
+        solution: PreemptiveRcpspSolution = solution
         res = rebuild_multiskill_solution_cp_based(
-            multiskill_rcpsp_model=self.problem,
-            multimode_rcpsp_model=self.multimode_problem,
+            multiskill_rcpsp_problem=self.problem,
+            multimode_rcpsp_problem=self.multimode_problem,
             worker_type_to_worker=self.worker_type_to_worker,
             solution_rcpsp=solution,
         )
@@ -78,35 +78,35 @@ class MultimodeTranspositionSolver(SolverDO):
 
 
 def rebuild_multiskill_solution(
-    multiskill_rcpsp_model: MS_RCPSPModel,
-    multimode_rcpsp_model: Union[RCPSPModel, RCPSPModelPreemptive],
+    multiskill_rcpsp_problem: MultiskillRcpspProblem,
+    multimode_rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],
     worker_type_to_worker: dict[str, set[Union[str, int]]],
-    solution_rcpsp: Union[RCPSPSolution, RCPSPSolutionPreemptive],
+    solution_rcpsp: Union[RcpspSolution, PreemptiveRcpspSolution],
 ):
-    new_horizon = multimode_rcpsp_model.horizon
+    new_horizon = multimode_rcpsp_problem.horizon
     resource_avail_in_time = {}
-    for res in multimode_rcpsp_model.resources_list:
-        if multimode_rcpsp_model.is_varying_resource():
-            resource_avail_in_time[res] = multimode_rcpsp_model.resources[res][
+    for res in multimode_rcpsp_problem.resources_list:
+        if multimode_rcpsp_problem.is_varying_resource():
+            resource_avail_in_time[res] = multimode_rcpsp_problem.resources[res][
                 : new_horizon + 1
             ]
         else:
             resource_avail_in_time[res] = np.full(
-                new_horizon, multimode_rcpsp_model.resources[res], dtype=np.int_
+                new_horizon, multimode_rcpsp_problem.resources[res], dtype=np.int_
             ).tolist()
     worker_avail_in_time = {}
-    for i in multiskill_rcpsp_model.employees:
+    for i in multiskill_rcpsp_problem.employees:
         worker_avail_in_time[i] = np.array(
-            multiskill_rcpsp_model.employees[i].calendar_employee[: new_horizon + 1],
+            multiskill_rcpsp_problem.employees[i].calendar_employee[: new_horizon + 1],
             dtype=np.bool_,
         )
     rcpsp_schedule = solution_rcpsp.rcpsp_schedule
     employee_usage = {}
-    modes_dict = multimode_rcpsp_model.build_mode_dict(solution_rcpsp.rcpsp_modes)
+    modes_dict = multimode_rcpsp_problem.build_mode_dict(solution_rcpsp.rcpsp_modes)
     sorted_tasks = sorted(rcpsp_schedule, key=lambda x: solution_rcpsp.get_end_time(x))
     for task in sorted_tasks:
         employee_usage[task] = {}
-        ressource_requirements = multimode_rcpsp_model.mode_details[task][
+        ressource_requirements = multimode_rcpsp_problem.mode_details[task][
             modes_dict[task]
         ]
         non_zeros_ressource_requirements = set(
@@ -129,11 +129,11 @@ def rebuild_multiskill_solution(
                     wavail = workers_available[:number_worker]
                     skills_needed_by_task = [
                         s
-                        for s in multiskill_rcpsp_model.mode_details[task][1]
-                        if s in multiskill_rcpsp_model.skills_set
-                        and multiskill_rcpsp_model.mode_details[task][1][s] > 0
+                        for s in multiskill_rcpsp_problem.mode_details[task][1]
+                        if s in multiskill_rcpsp_problem.skills_set
+                        and multiskill_rcpsp_problem.mode_details[task][1][s] > 0
                     ]
-                    non_zeros = multiskill_rcpsp_model.employees[
+                    non_zeros = multiskill_rcpsp_problem.employees[
                         wavail[0]
                     ].get_non_zero_skills()
                     skills_interest = [
@@ -146,7 +146,7 @@ def rebuild_multiskill_solution(
                         for w in wavail:
                             worker_avail_in_time[w][i] = False
                 else:
-                    if isinstance(solution_rcpsp, RCPSPSolutionPreemptive):
+                    if isinstance(solution_rcpsp, PreemptiveRcpspSolution):
                         for s, e in zip(
                             solution_rcpsp.rcpsp_schedule[task]["starts"],
                             solution_rcpsp.rcpsp_schedule[task]["ends"],
@@ -161,14 +161,16 @@ def rebuild_multiskill_solution(
                                 wavail = workers_available[:number_worker]
                                 skills_needed_by_task = [
                                     s
-                                    for s in multiskill_rcpsp_model.mode_details[task][
-                                        1
+                                    for s in multiskill_rcpsp_problem.mode_details[
+                                        task
+                                    ][1]
+                                    if s in multiskill_rcpsp_problem.skills_set
+                                    and multiskill_rcpsp_problem.mode_details[task][1][
+                                        s
                                     ]
-                                    if s in multiskill_rcpsp_model.skills_set
-                                    and multiskill_rcpsp_model.mode_details[task][1][s]
                                     > 0
                                 ]
-                                non_zeros = multiskill_rcpsp_model.employees[
+                                non_zeros = multiskill_rcpsp_problem.employees[
                                     wavail[0]
                                 ].get_non_zero_skills()
                                 skills_interest = [
@@ -190,31 +192,31 @@ def rebuild_multiskill_solution(
                             else:
                                 logger.warning("Problem finding a worker")
 
-    if isinstance(solution_rcpsp, RCPSPSolutionPreemptive):
-        return MS_RCPSPSolution_Preemptive(
-            problem=multiskill_rcpsp_model,
-            modes={task: 1 for task in multiskill_rcpsp_model.tasks_list},
+    if isinstance(solution_rcpsp, PreemptiveRcpspSolution):
+        return PreemptiveMultiskillRcpspSolution(
+            problem=multiskill_rcpsp_problem,
+            modes={task: 1 for task in multiskill_rcpsp_problem.tasks_list},
             employee_usage=employee_usage,
             schedule=rcpsp_schedule,
         )
     else:
-        return MS_RCPSPSolution(
-            problem=multiskill_rcpsp_model,
-            modes={task: 1 for task in multiskill_rcpsp_model.tasks_list},
+        return MultiskillRcpspSolution(
+            problem=multiskill_rcpsp_problem,
+            modes={task: 1 for task in multiskill_rcpsp_problem.tasks_list},
             employee_usage=employee_usage,
             schedule=rcpsp_schedule,
         )
 
 
 def rebuild_multiskill_solution_cp_based(
-    multiskill_rcpsp_model: MS_RCPSPModel,
-    multimode_rcpsp_model: Union[RCPSPModel, RCPSPModelPreemptive],
+    multiskill_rcpsp_problem: MultiskillRcpspProblem,
+    multimode_rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],
     worker_type_to_worker: dict[str, set[Union[str, int]]],
-    solution_rcpsp: Union[RCPSPSolution, RCPSPSolutionPreemptive],
+    solution_rcpsp: Union[RcpspSolution, PreemptiveRcpspSolution],
 ):
-    if isinstance(solution_rcpsp, RCPSPSolution):
-        model = CP_MS_MRCPSP_MZN(
-            problem=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+    if isinstance(solution_rcpsp, RcpspSolution):
+        model = CpMultiskillRcpspSolver(
+            problem=multiskill_rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
         )
         model.init_model(
             add_calendar_constraint_unit=False,
@@ -227,8 +229,8 @@ def rebuild_multiskill_solution_cp_based(
         for s in strings:
             model.instance.add_string(s)
     else:
-        model = CP_MS_MRCPSP_MZN_PREEMPTIVE(
-            problem=multiskill_rcpsp_model, cp_solver_name=CPSolverName.CHUFFED
+        model = CpPreemptiveMultiskillRcpspSolver(
+            problem=multiskill_rcpsp_problem, cp_solver_name=CpSolverName.CHUFFED
         )
         model.init_model(
             add_calendar_constraint_unit=False,
