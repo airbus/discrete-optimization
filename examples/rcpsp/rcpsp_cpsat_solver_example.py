@@ -4,6 +4,8 @@
 
 import logging
 
+import numpy as np
+
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.callbacks.loggers import (
     NbIterationTracker,
@@ -69,14 +71,14 @@ def solve_resource_with_cp_sat(problem: RCPSPModel):
 
 def cpsat_single_mode_makespan_optimization():
     files_available = get_data_available()
-    file = [f for f in files_available if "j1201_1.sm" in f][0]
+    file = [f for f in files_available if "j1201_2.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solve_makespan_with_cp_sat(rcpsp_problem)
 
 
 def cpsat_single_mode_resource_optimization():
     files_available = get_data_available()
-    file = [f for f in files_available if "j1201_1.sm" in f][0]
+    file = [f for f in files_available if "j301_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
     solve_resource_with_cp_sat(rcpsp_problem)
 
@@ -105,10 +107,42 @@ def cpsat_single_mode_resource_optimization_rcp_sd():
     solve_resource_with_cp_sat(rcpsp_problem)
 
 
+def cpsat_with_calendar():
+    files_available = get_data_available()
+    file = [f for f in files_available if "j1201_1.sm" in f][0]
+    rcpsp_problem = parse_file(file)
+    rcpsp_problem.horizon = 200
+    for resource in rcpsp_problem.resources:
+        rcpsp_problem.resources[resource] = np.array(
+            rcpsp_problem.get_resource_availability_array(resource)
+        )
+        rcpsp_problem.resources[resource][10:15] = 5
+        rcpsp_problem.resources[resource][30:35] = 5
+        rcpsp_problem.resources[resource][45:55] = 3
+        rcpsp_problem.resources[resource][65:80] = 3
+        # rcpsp_problem.resources[resource][10:15] = 0
+    rcpsp_problem.is_calendar = True
+    rcpsp_problem.update_functions()
+    solver = CPSatRCPSPSolver(problem=rcpsp_problem)
+    result_storage = solver.solve(
+        callbacks=[
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            )
+        ],
+        time_limit=100,
+    )
+    solution, fit = result_storage.get_best_solution_fit()
+    print(fit)
+    print(solver.status_solver)
+
+
 if __name__ == "__main__":
+    cpsat_with_calendar()
+    # cpsat_single_mode_makespan_optimization()
     # cpsat_single_mode_resource_optimization_rcp_sd()
-    cpsat_single_mode_makespan_optimization()
-    cpsat_single_mode_resource_optimization()
-    cpsat_single_mode_makespan_optimization_rcp()
-    cpsat_single_mode_resource_optimization_rcp()
-    plt.show()
+    # cpsat_single_mode_makespan_optimization()
+    # cpsat_single_mode_resource_optimization()
+    # cpsat_single_mode_makespan_optimization_rcp()
+    # cpsat_single_mode_resource_optimization_rcp()
+    # plt.show()
