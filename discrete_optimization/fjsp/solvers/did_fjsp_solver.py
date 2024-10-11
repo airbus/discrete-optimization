@@ -28,7 +28,6 @@ class DidFjspSolver(DidSolver):
         add_penalty = kwargs["add_penalty_on_inefficiency"]
         model = dp.Model()
         jobs = []
-        dp.IntResourceVar()
         durations = []
         machines = []
         job_id = []
