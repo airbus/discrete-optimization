@@ -10,6 +10,10 @@ from discrete_optimization.facility.solvers.dp import (
     DpFacilitySolver,
     dp,
 )
+from discrete_optimization.facility.solvers.greedy_solvers import GreedySolverFacility
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 
 
 @pytest.mark.parametrize(
@@ -23,3 +27,25 @@ def test_facility_example(modeling):
     res = solver.solve(solver=dp.LNBS, modeling=modeling, time_limit=5)
     sol, fit = res.get_best_solution_fit()
     assert problem.satisfy(sol)
+
+
+@pytest.mark.parametrize(
+    "modeling", [DidModelingFacility.CUSTOMER, DidModelingFacility.FACILITY]
+)
+def test_facility_example_ws(modeling):
+    file = [f for f in get_data_available() if "fl_25_2" in f][0]
+    problem: FacilityProblem = parse_file(file)
+    g_sol = GreedySolverFacility(problem).solve()[0][0]
+    solver = DidFacilitySolver(problem=problem)
+    solver.init_model(modeling=modeling)
+    solver.set_warm_start(g_sol)
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        solver=dp.LNBS,
+        use_callback=True,
+        time_limit=3,
+    )
+    sol = res[0][0]
+    assert sol.facility_for_customers == g_sol.facility_for_customers
+    print(problem.evaluate(sol))
+    print(problem.satisfy(sol))
