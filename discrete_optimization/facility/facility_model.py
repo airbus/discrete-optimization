@@ -148,7 +148,7 @@ class FacilityProblem(Problem):
         d = self.evaluate_cost(variable)
         capacity_constraint_violation = 0
         for f in d["details"]:
-            capacity_constraint_violation = max(
+            capacity_constraint_violation += max(
                 d["details"][f]["capacity_used"] - self.facilities[f].capacity, 0
             )
         d["capacity_constraint_violation"] = capacity_constraint_violation
