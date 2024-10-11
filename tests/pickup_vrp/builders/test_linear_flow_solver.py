@@ -27,6 +27,7 @@ from discrete_optimization.pickup_vrp.gpdp import (
 from discrete_optimization.pickup_vrp.plots.gpdp_plot_utils import plot_gpdp_solution
 from discrete_optimization.pickup_vrp.solver.lp_solver import (
     LinearFlowSolver,
+    LinearFlowSolverLazyConstraint,
     LinearFlowSolverMathOpt,
 )
 
@@ -48,7 +49,9 @@ def random_seed():
     return seed
 
 
-@pytest.fixture(params=[LinearFlowSolver, LinearFlowSolverMathOpt])
+@pytest.fixture(
+    params=[LinearFlowSolver, LinearFlowSolverMathOpt, LinearFlowSolverLazyConstraint]
+)
 def solver_class(request):
     solver_class = request.param
     if issubclass(solver_class, GurobiMilpSolver) and not gurobi_available:
