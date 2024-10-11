@@ -160,6 +160,12 @@ def retrieve_current_solution(
 class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
     problem: GPDP
     warm_start: Optional[GPDPSolution] = None
+    lazy: bool = False
+    """Flag to know if contraints are added via a callback in a lazy way.
+
+    Should only be True in `LinearFlowSolverLazyConstraint`.
+
+    """
 
     def set_warm_start(self, solution: GPDPSolution) -> None:
         """Make the solver warm start from the given solution.
@@ -865,7 +871,7 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                 )
         if parameters_milp is None:
             parameters_milp = ParametersMilp.default()
-        finished = False
+
         if json_dump_folder is not None:
             os.makedirs(json_dump_folder, exist_ok=True)
         if warm_start is None and self.warm_start is not None:
@@ -879,28 +885,34 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
             parameters_milp=parameters_milp, time_limit=time_limit_subsolver, **kwargs
         )
         best_solution: TemporaryResult = min(solutions, key=lambda sol: sol.obj)
-        if (
-            (best_solution.rebuilt_dict is None)
-            or (best_solution.connected_components_per_vehicle is None)
-            or (best_solution.component_global is None)
-        ):
-            raise RuntimeError(
-                "Temporary result attributes rebuilt_dict, component_global"
-                "and connected_components_per_vehicle cannot be None after solving."
+        if not self.lazy:
+            # contraints added in `solve_one_iteration` in lazy version
+            if (
+                (best_solution.rebuilt_dict is None)
+                or (best_solution.connected_components_per_vehicle is None)
+                or (best_solution.component_global is None)
+            ):
+                raise RuntimeError(
+                    "Temporary result attributes rebuilt_dict, component_global"
+                    "and connected_components_per_vehicle cannot be None after solving."
+                )
+            subtour = SubtourAddingConstraint(
+                problem=self.problem,
+                linear_solver=self,
+                cluster=self.clusters_version,
+                do_order=self.subtour_do_order,
+                consider_only_first_component=self.subtour_consider_only_first_component,
             )
-        subtour = SubtourAddingConstraint(
-            problem=self.problem,
-            linear_solver=self,
-            cluster=self.clusters_version,
-            do_order=self.subtour_do_order,
-            consider_only_first_component=self.subtour_consider_only_first_component,
-        )
-        subtour.adding_component_constraints([best_solution])
+            subtour.adding_component_constraints([best_solution])
+
         nb_iteration = 0
+        # store solutions
         res = self.create_result_storage(
             self.convert_temporaryresults(solutions),
         )
-
+        # earling stopping?
+        stopping = callbacks_list.on_step_end(step=nb_iteration, res=res, solver=self)
+        # end condition?
         if (
             max(
                 [
@@ -911,11 +923,8 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
             == 1
         ):
             finished = True
-            return res
         else:
-            finished = callbacks_list.on_step_end(
-                step=nb_iteration, res=res, solver=self
-            )
+            finished = stopping or nb_iteration > nb_iteration_max
 
         while not finished:
             rebuilt_dict = best_solution.rebuilt_dict
@@ -951,24 +960,35 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
                 **kwargs,
             )
             best_solution = min(solutions, key=lambda sol: sol.obj)
-            if (
-                (best_solution.rebuilt_dict is None)
-                or (best_solution.connected_components_per_vehicle is None)
-                or (best_solution.component_global is None)
-            ):
-                raise RuntimeError(
-                    "Temporary result attributes rebuilt_dict, component_global"
-                    "and connected_components_per_vehicle cannot be None after solving."
+            if not self.lazy:
+                # contraints added in `solve_one_iteration` in lazy version
+                if (
+                    (best_solution.rebuilt_dict is None)
+                    or (best_solution.connected_components_per_vehicle is None)
+                    or (best_solution.component_global is None)
+                ):
+                    raise RuntimeError(
+                        "Temporary result attributes rebuilt_dict, component_global"
+                        "and connected_components_per_vehicle cannot be None after solving."
+                    )
+                subtour = SubtourAddingConstraint(
+                    problem=self.problem,
+                    linear_solver=self,
+                    cluster=self.clusters_version,
+                    do_order=self.subtour_do_order,
+                    consider_only_first_component=self.subtour_consider_only_first_component,
                 )
-            subtour = SubtourAddingConstraint(
-                problem=self.problem,
-                linear_solver=self,
-                cluster=self.clusters_version,
-                do_order=self.subtour_do_order,
-                consider_only_first_component=self.subtour_consider_only_first_component,
+                logger.debug(len(best_solution.component_global))
+                subtour.adding_component_constraints([best_solution])
+
+            nb_iteration += 1
+            # store solutions
+            res.extend(self.convert_temporaryresults(solutions))
+            # early stopping?
+            stopping = callbacks_list.on_step_end(
+                step=nb_iteration, res=res, solver=self
             )
-            logger.debug(len(best_solution.component_global))
-            subtour.adding_component_constraints([best_solution])
+            # end condition
             if (
                 max(
                     [
@@ -981,11 +1001,6 @@ class BaseLinearFlowSolver(MilpSolver, SolverPickupVrp):
             ):
                 finished = True
             else:
-                nb_iteration += 1
-                res.extend(self.convert_temporaryresults(solutions))
-                stopping = callbacks_list.on_step_end(
-                    step=nb_iteration, res=res, solver=self
-                )
                 finished = stopping or nb_iteration > nb_iteration_max
 
         # end of solve callback
@@ -1303,6 +1318,8 @@ def build_path_from_vehicle_type_flow(
 
 
 class LinearFlowSolverLazyConstraint(LinearFlowSolver):
+    lazy = True
+
     def solve_one_iteration(
         self,
         parameters_milp: Optional[ParametersMilp] = None,
@@ -1459,111 +1476,17 @@ class LinearFlowSolverLazyConstraint(LinearFlowSolver):
 
         return list_temporary_results
 
-    def solve_iterative(
-        self,
-        parameters_milp: Optional[ParametersMilp] = None,
-        do_lns: bool = True,
-        nb_iteration_max: int = 10,
-        json_dump_folder: Optional[str] = None,
-        warm_start: Optional[dict[Any, Any]] = None,
-        callbacks: Optional[list[Callback]] = None,
-        **kwargs: Any,
-    ) -> ResultStorage:
-        """
-
-        Args:
-            parameters_milp:
-            do_lns:
-            nb_iteration_max:
-            json_dump_folder: if not None, solution will be dumped in this folder at each iteration
-            warm_start:
-            **kwargs:
-
-        Returns:
-
-        """
-        # wrap all callbacks in a single one
-        callbacks_list = CallbackList(callbacks=callbacks)
-        # start of solve callback
-        callbacks_list.on_solve_start(solver=self)
-
-        if self.model is None:
-            self.init_model(**kwargs)
-            if self.model is None:  # for mypy
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        if parameters_milp is None:
-            parameters_milp = ParametersMilp.default()
-        finished = False
-        if json_dump_folder is not None:
-            os.makedirs(json_dump_folder, exist_ok=True)
-        c = ConstraintHandlerOrWarmStart(
-            linear_solver=self, problem=self.problem, do_lns=do_lns
+    def retrieve_ith_temporaryresult(self, i: int) -> TemporaryResult:
+        get_var_value_for_current_solution = (
+            lambda var: self.get_var_value_for_ith_solution(var=var, i=i)
         )
-        if warm_start is None and self.warm_start is not None:
-            warm_start = self.warm_start.trajectories
-        if warm_start is not None:
-            c.adding_constraint(warm_start)
-        solutions: list[TemporaryResult] = self.solve_one_iteration(
-            parameters_milp=parameters_milp, no_warm_start=True, **kwargs
+        get_obj_value_for_current_solution = (
+            lambda: self.get_obj_value_for_ith_solution(i=i)
         )
-        first_solution: TemporaryResult = solutions[-1]
-        if (
-            (first_solution.rebuilt_dict is None)
-            or (first_solution.connected_components_per_vehicle is None)
-            or (first_solution.component_global is None)
-        ):
-            raise RuntimeError(
-                "Temporary result attributes rebuilt_dict, component_global"
-                "and connected_components_per_vehicle cannot be None after solving."
-            )
-        self.model.update()
-        nb_iteration = 0
-        res = self.create_result_storage(
-            self.convert_temporaryresults(solutions),
+        return self.retrieve_current_temporaryresult(
+            get_var_value_for_current_solution=get_var_value_for_current_solution,
+            get_obj_value_for_current_solution=get_obj_value_for_current_solution,
         )
-
-        while not finished:
-            rebuilt_dict = first_solution.rebuilt_dict
-            if (json_dump_folder is not None) and all(
-                rebuilt_dict[v] is not None for v in rebuilt_dict
-            ):
-                json.dump(
-                    rebuilt_dict,
-                    open(
-                        os.path.join(
-                            json_dump_folder,
-                            "res_"
-                            + str(nb_iteration)
-                            + "_"
-                            + str(time.time_ns())
-                            + ".json",
-                        ),
-                        "w",
-                    ),
-                    indent=4,
-                    default=int,
-                )
-            c.adding_constraint(rebuilt_dict)
-            if warm_start is not None and all(
-                rebuilt_dict[v] is None for v in rebuilt_dict
-            ):
-                c.adding_constraint(warm_start)
-            self.model.update()
-            solutions = self.solve_one_iteration(
-                parameters_milp=parameters_milp, no_warm_start=True, **kwargs
-            )
-            nb_iteration += 1
-            res.extend(self.convert_temporaryresults(solutions))
-            stopping = callbacks_list.on_step_end(
-                step=nb_iteration, res=res, solver=self
-            )
-            finished = stopping or nb_iteration > nb_iteration_max
-
-        # end of solve callback
-        callbacks_list.on_solve_end(res=res, solver=self)
-        return res
 
 
 class SubtourAddingConstraint:
