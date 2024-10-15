@@ -36,7 +36,7 @@ from discrete_optimization.rcpsp.solvers.lp import (
     MathOptMultimodeRcpspSolver,
     MathOptRcpspSolver,
 )
-from discrete_optimization.rcpsp.solvers_maps import look_for_solver
+from discrete_optimization.rcpsp.solvers_map import look_for_solver
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
