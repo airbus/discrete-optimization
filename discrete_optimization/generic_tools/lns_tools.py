@@ -358,6 +358,13 @@ class BaseLns(SolverDO, WarmstartMixin):
         result_store: ResultStorage
         lsn_contraints: Optional[Iterable[Any]] = None
         if not stopping:
+            # time_limit subsolver warning (only once)
+            if "time_limit" in kwargs:
+                logger.warning(
+                    "`time_limit` arg will be overriden by "
+                    "`time_limit_subsolver` and `time_limit_subsolver_iter0`."
+                )
+            kwargs_subsolver = dict(kwargs)
             for iteration in range(nb_iteration_lns):
                 logger.info(
                     f"Starting iteration n° {iteration} current objective {best_objective}"
@@ -377,21 +384,18 @@ class BaseLns(SolverDO, WarmstartMixin):
                             else result_store,
                         )
                     try:
-                        if "time_limit" in kwargs:
-                            logger.warning(
-                                "`time_limit` arg will be overriden by "
-                                "`time_limit_subsolver` and `time_limit_subsolver_iter0`."
-                            )
                         if (
                             skip_initial_solution_provider
                             and iteration == 0
                             and time_limit_subsolver_iter0 is not None
                         ):
-                            kwargs["time_limit"] = time_limit_subsolver_iter0
+                            kwargs_subsolver["time_limit"] = time_limit_subsolver_iter0
                         else:
-                            kwargs["time_limit"] = time_limit_subsolver
+                            kwargs_subsolver["time_limit"] = time_limit_subsolver
 
-                        result_store = self.subsolver.solve(instance=child, **kwargs)
+                        result_store = self.subsolver.solve(
+                            instance=child, **kwargs_subsolver
+                        )
                         logger.info(f"iteration n° {iteration} Solved !!!")
                         if hasattr(self.subsolver, "status_solver"):
                             logger.info(self.subsolver.status_solver)

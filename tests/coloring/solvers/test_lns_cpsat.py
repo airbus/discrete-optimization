@@ -36,7 +36,7 @@ from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 logging.basicConfig(level=logging.INFO)
 
 
-def test_lns_cpsat_coloring():
+def test_lns_cpsat_coloring(caplog):
     logging.basicConfig(level=logging.INFO)
     file = [f for f in get_data_available() if "gc_20_1" in f][0]
     color_problem = parse_file(file)
@@ -60,19 +60,22 @@ def test_lns_cpsat_coloring():
     )
     p = ParametersCp.default_cpsat()
     logging.info("Starting solve")
-    result_store = solver_lns.solve(
-        skip_initial_solution_provider=True,
-        nb_iteration_lns=5,
-        callbacks=[
-            NbIterationTracker(step_verbosity_level=logging.INFO),
-            ObjectiveLogger(
-                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
-            ),
-            TimerStopper(total_seconds=30),
-        ],
-        parameters_cp=p,
-        time_limit_subsolver=20,
-    )
+    with caplog.at_level(logging.WARNING):
+        result_store = solver_lns.solve(
+            skip_initial_solution_provider=True,
+            nb_iteration_lns=5,
+            callbacks=[
+                NbIterationTracker(step_verbosity_level=logging.INFO),
+                ObjectiveLogger(
+                    step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+                ),
+                TimerStopper(total_seconds=30),
+            ],
+            parameters_cp=p,
+            time_limit_subsolver=20,
+            stop_first_iteration_if_optimal=False,
+        )
+    assert "`time_limit` arg will be overriden by" not in caplog.text
     print("Status solver : ", solver.status_solver)
     solution, fit = result_store.get_best_solution_fit()
     # plot_coloring_solution(solution)
