@@ -4,7 +4,7 @@
 
 
 from discrete_optimization.rcpsp.solvers.lp import MathOptMultimodeRcpspSolver
-from discrete_optimization.rcpsp.solvers_maps import solvers
+from discrete_optimization.rcpsp.solvers_map import solvers
 from discrete_optimization.rcpsp_multiskill.problem import (
     Employee,
     MultiskillRcpspSolution,

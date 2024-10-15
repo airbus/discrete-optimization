@@ -6,7 +6,7 @@ import gc
 import time
 
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.solvers_maps import (
+from discrete_optimization.rcpsp.solvers_map import (
     RcpspProblem,
     look_for_solver,
     solve,

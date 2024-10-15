@@ -7,7 +7,7 @@ from typing import Union
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.rcpsp.solution import RcpspSolution
-from discrete_optimization.rcpsp.solvers_maps import solve
+from discrete_optimization.rcpsp.solvers_map import solve
 from discrete_optimization.rcpsp_multiskill.problem import (
     MultiskillRcpspProblem,
     VariantMultiskillRcpspProblem,
