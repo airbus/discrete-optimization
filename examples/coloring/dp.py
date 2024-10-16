@@ -36,7 +36,7 @@ def run_dp_coloring():
     # plt.show()
 
 
-def run_did_coloring_ws():
+def run_dp_coloring_ws():
     logging.basicConfig(level=logging.INFO)
     do_ws = True
     file = [f for f in get_data_available() if "gc_500_7" in f][0]
@@ -72,4 +72,4 @@ def run_did_coloring_ws():
 
 if __name__ == "__main__":
     run_dp_coloring()
-    run_did_coloring_ws()
+    run_dp_coloring_ws()

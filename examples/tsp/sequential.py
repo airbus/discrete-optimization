@@ -34,6 +34,7 @@ from discrete_optimization.tsp.mutation import Mutation2Opt, MutationSwapTsp
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 from discrete_optimization.tsp.plot import plot_tsp_solution
 from discrete_optimization.tsp.solvers.cpsat import CpSatTspSolver
+from discrete_optimization.tsp.solvers.dp import DpTspSolver, dp
 from discrete_optimization.tsp.solvers.gpdp import GpdpBasedTspSolver
 from discrete_optimization.tsp.solvers.lns_cpsat import (
     SubpathTspConstraintHandler,
@@ -45,7 +46,7 @@ logging.basicConfig(level=logging.INFO)
 
 def run_seq():
     files = get_data_available()
-    files = [f for f in files if "tsp_574_1" in f]
+    files = [f for f in files if "tsp_1291_1" in f]
     model = parse_file(files[0])
     params_objective_function = get_default_objective_setup(problem=model)
     solution = model.get_dummy_solution()
@@ -63,18 +64,8 @@ def run_seq():
         problem=model,
         list_subbricks=[
             SubBrick(GpdpBasedTspSolver, dict(time_limit=40)),
-            SubBrick(
-                SimulatedAnnealing,
-                dict(
-                    mutator=mutate_portfolio,
-                    restart_handler=res,
-                    temperature_handler=TemperatureSchedulingFactor(
-                        temperature=100, restart_handler=res, coefficient=0.99999
-                    ),
-                    mode_mutation=ModeMutation.MUTATE_AND_EVALUATE,
-                    nb_iteration_max=20000,
-                ),
-            ),
+            SubBrick(GpdpBasedTspSolver, dict(time_limit=40)),
+            SubBrick(DpTspSolver, dict(time_limit=40, solver=dp.LNBS, threads=5)),
             SubBrick(GpdpBasedTspSolver, dict(time_limit=20)),
             SubBrick(
                 LnsOrtoolsCpSat,
@@ -102,7 +93,6 @@ def run_seq():
                 CpSatTspSolver,
                 dict(parameters_cp=ParametersCp.default_cpsat(), time_limit=100),
             ),
-            SubBrick(GpdpBasedTspSolver, dict(time_limit=20)),
         ],
     )
     res = solv.solve(
@@ -118,9 +108,38 @@ def run_seq():
         ax.clear()
         plot_tsp_solution(tsp_model=model, solution=sol, ax=ax)
         ax.set_title(f"Length ={fit}")
-        plt.pause(0.05)
+        plt.pause(0.15)
+    plt.show()
+
+
+def run_seq_dp():
+    files = get_data_available()
+    files = [f for f in files if "tsp_2103_1" in f]
+    model = parse_file(files[0])
+    solv = SequentialMetasolver(
+        problem=model,
+        list_subbricks=[
+            SubBrick(GpdpBasedTspSolver, dict(time_limit=30)),
+            SubBrick(DpTspSolver, dict(time_limit=30, solver=dp.LNBS, threads=5)),
+        ]
+        * 5,
+    )
+    res = solv.solve(
+        callbacks=[
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            )
+        ]
+    )
+    fig, ax = plt.subplots(1)
+    list_solution_fit = sorted(res.list_solution_fits, key=lambda x: x[1], reverse=True)
+    for sol, fit in list_solution_fit:
+        ax.clear()
+        plot_tsp_solution(tsp_model=model, solution=sol, ax=ax)
+        ax.set_title(f"Length ={fit}")
+        plt.pause(0.15)
     plt.show()
 
 
 if __name__ == "__main__":
-    run_seq()
+    run_seq_dp()

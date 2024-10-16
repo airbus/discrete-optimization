@@ -18,7 +18,7 @@ from discrete_optimization.generic_tools.optuna.utils import (
 )
 
 
-def did_facility_example():
+def dp_facility_example():
     file = [f for f in get_data_available() if "fl_25_4" in f][0]
     problem: FacilityProblem = parse_file(file)
     print("customer : ", problem.customer_count, "facility : ", problem.facility_count)
@@ -32,7 +32,7 @@ def did_facility_example():
     print(fit)
 
 
-def did_facility_example_ws():
+def dp_facility_example_ws():
     logging.basicConfig(level=logging.INFO)
     file = [f for f in get_data_available() if "fl_25_4" in f][0]
     problem: FacilityProblem = parse_file(file)
@@ -48,7 +48,7 @@ def did_facility_example_ws():
     print(problem.satisfy(sol))
 
 
-def did_optuna_example():
+def dp_optuna_example():
 
     s = """fl_100_14
        fl_3_1
@@ -92,4 +92,4 @@ def did_optuna_example():
 
 
 if __name__ == "__main__":
-    did_facility_example_ws()
+    dp_facility_example_ws()

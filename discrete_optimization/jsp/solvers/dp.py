@@ -5,11 +5,12 @@ import re
 from typing import Any
 
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
 from discrete_optimization.jsp.problem import JobShopProblem, JobShopSolution
 
 
-class DpJspSolver(DpSolver):
+class DpJspSolver(DpSolver, WarmstartMixin):
     hyperparameters = DpSolver.hyperparameters
     problem: JobShopProblem
 
@@ -63,6 +64,7 @@ class DpJspSolver(DpSolver):
         finish = model.add_int_var(0)
         cur_time_total = model.add_int_resource_var(target=0, less_is_better=True)
         model.add_base_case([finish == 1, undone.is_empty()])
+        self.transitions = {}
         for i in range(len(jobs)):
             m = machines[i]
             dur = durations[i]
@@ -115,6 +117,7 @@ class DpJspSolver(DpSolver):
                 + [done.contains(j) for j in precedence_by_index[i]],
             )
             model.add_transition(sched)
+            self.transitions[i] = sched
         finish = dp.Transition(
             name="finish_",
             effects=[(finish, 1)],
@@ -123,6 +126,7 @@ class DpJspSolver(DpSolver):
             preconditions=[done.len() == self.problem.n_all_jobs],
         )
         model.add_transition(finish)
+        self.transitions["finish"] = finish
         self.jobs = jobs
         self.prec = precedence_by_index
         self.index = index
@@ -168,3 +172,15 @@ class DpJspSolver(DpSolver):
         )
         print(self.problem.evaluate(sol))
         return sol
+
+    def set_warm_start(self, solution: JobShopSolution) -> None:
+        initial_solution = []
+        flatten_schedule = [
+            (i, solution.schedule[self.jobs[i][0]][self.jobs[i][1]])
+            for i in range(len(self.jobs))
+        ]
+        sorted_flatten = sorted(flatten_schedule, key=lambda x: (x[1][0], x[1][1]))
+        for index, _ in sorted_flatten:
+            initial_solution.append(self.transitions[index])
+        initial_solution.append(self.transitions["finish"])
+        self.initial_solution = initial_solution

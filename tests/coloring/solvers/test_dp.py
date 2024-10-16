@@ -26,7 +26,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     "modeling",
     [DpColoringModeling.COLOR_TRANSITION, DpColoringModeling.COLOR_NODE_TRANSITION],
 )
-def test_coloring_did(modeling):
+def test_coloring_dp(modeling):
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     problem: ColoringProblem = parse_file(small_example)
     solver = DpColoringSolver(problem=problem)
@@ -40,7 +40,7 @@ def test_coloring_did(modeling):
     "modeling",
     [DpColoringModeling.COLOR_TRANSITION, DpColoringModeling.COLOR_NODE_TRANSITION],
 )
-def test_did_coloring_ws(modeling):
+def test_dp_coloring_ws(modeling):
     file = [f for f in get_data_available() if "gc_20_7" in f][0]
     color_problem = parse_file(file)
     greedy = GreedyColoringSolver(color_problem)
