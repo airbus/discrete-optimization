@@ -7,9 +7,13 @@ import logging
 import didppy as dp
 from didppy import BeamParallelizationMethod
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.jsp.parser import get_data_available, parse_file
 from discrete_optimization.jsp.problem import JobShopProblem
+from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
 from discrete_optimization.jsp.solvers.dp import DpJspSolver
 from discrete_optimization.jsp.utils import transform_jsp_to_rcpsp
 from discrete_optimization.rcpsp.solvers.dp import DpRcpspSolver
@@ -72,12 +76,35 @@ def run_dp_jsp():
     print(problem.evaluate(sol))
 
 
+def run_dp_jsp_ws():
+    # file_path = get_data_available()[1]
+    file_path = [f for f in get_data_available() if "ta68" in f][0]
+    problem = parse_file(file_path)
+    solver_ws = CpSatJspSolver(problem)
+    sol_ws = solver_ws.solve(time_limit=2)[0][0]
+    print("File path ", file_path)
+    solver = DpJspSolver(problem=problem)
+    solver.init_model()
+    solver.set_warm_start(sol_ws)
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        use_callback=True,
+        solver=dp.LNBS,
+        time_limit=100,
+    )
+    sol = res.get_best_solution_fit()[0]
+    print(sol_ws.schedule)
+    print(sol.schedule)
+    assert problem.satisfy(sol)
+    print(problem.evaluate(sol))
+
+
 def run_dp_of_rcpsp():
     file_path = [f for f in get_data_available() if "ta68" in f][0]
     problem = parse_file(file_path)
     rcpsp_problem = transform_jsp_to_rcpsp(problem)
     solver = DpRcpspSolver(rcpsp_problem)
-    solver.init_model_multimode()
+    solver.init_model()
     res = solver.solve(
         solver=dp.LNBS,
         time_limit=100,
@@ -91,4 +118,4 @@ def run_dp_of_rcpsp():
 
 
 if __name__ == "__main__":
-    run_dp_of_rcpsp()
+    run_dp_jsp_ws()

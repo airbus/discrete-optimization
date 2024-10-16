@@ -3,12 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import time
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import didppy as dp
 import numpy as np
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -28,10 +27,28 @@ logger = logging.getLogger(__name__)
 
 
 class DpKnapsackSolver(KnapsackSolver, DpSolver, WarmstartMixin):
-    hyperparameters = DpSolver.hyperparameters
+    hyperparameters = DpSolver.hyperparameters + [
+        CategoricalHyperparameter(
+            name="float_cost", choices=[True, False], default=False
+        ),
+        CategoricalHyperparameter(
+            name="dual_bound",
+            choices=[True, False],
+            default=True,
+            depends_on=("float_cost", True),
+        ),
+    ]
     model: dp.Model
+    transitions: dict
 
     def init_model(self, **kwargs):
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        if kwargs["float_cost"]:
+            self.init_model_float(**kwargs)
+        else:
+            self.init_model_int(**kwargs)
+
+    def init_model_int(self, **kwargs):
         """Adapted from https://didppy.readthedocs.io/en/stable/quickstart.html"""
         n = self.problem.nb_items
         weights = [self.problem.list_items[i].weight for i in range(n)]
@@ -64,12 +81,56 @@ class DpKnapsackSolver(KnapsackSolver, DpSolver, WarmstartMixin):
         model.add_base_case([i == n])
         self.model = model
 
+    def init_model_float(self, **kwargs):
+        n = self.problem.nb_items
+        weights = [self.problem.list_items[i].weight for i in range(n)]
+        profits = [self.problem.list_items[i].value for i in range(n)]
+        capacity = self.problem.max_capacity
+        model = dp.Model(maximize=True, float_cost=True)
+        item = model.add_object_type(number=self.problem.nb_items)
+        r = model.add_float_var(target=capacity)
+        i = model.add_element_var(object_type=item, target=0)
+
+        w = model.add_float_table(weights)
+        p = model.add_float_table(profits)
+        undone = model.add_set_var(
+            object_type=item, target=range(self.problem.nb_items)
+        )
+        pack = dp.Transition(
+            name="pack",
+            cost=p[i] + dp.FloatExpr.state_cost(),
+            effects=[(r, r - w[i]), (i, i + 1), (undone, undone.remove(i))],
+            preconditions=[i < n, r >= w[i]],
+        )
+        model.add_transition(pack)
+        self.transitions = {"pack": pack}
+
+        ignore = dp.Transition(
+            name="ignore",
+            cost=dp.FloatExpr.state_cost(),
+            effects=[(i, i + 1), (undone, undone.remove(i))],
+            preconditions=[i < n],
+        )
+        self.transitions["ignore"] = ignore
+        model.add_transition(ignore)
+        model.add_base_case([i == n])
+        if kwargs["dual_bound"]:
+            value_per_weight = [
+                profits[i] / weights[i] for i in range(self.problem.nb_items)
+            ]
+            value_pw = model.add_float_table(value_per_weight)
+            model.add_dual_bound(p[undone])
+            model.add_dual_bound(
+                (undone.is_empty()).if_then_else(0, value_pw.max(undone) * r)
+            )
+        self.model = model
+
     def retrieve_solution(self, sol: dp.Solution) -> Solution:
         taken = [0 for _ in range(self.problem.nb_items)]
         for i, t in enumerate(sol.transitions):
             if t.name == "pack":
                 taken[i] = 1
-                logger.info(f"pack {i}")
+                logger.debug(f"pack {i}")
         return KnapsackSolution(problem=self.problem, list_taken=taken)
 
     def set_warm_start(self, solution: KnapsackSolution) -> None:
@@ -79,7 +140,7 @@ class DpKnapsackSolver(KnapsackSolver, DpSolver, WarmstartMixin):
                 transition.append(self.transitions["pack"])
             else:
                 transition.append(self.transitions["ignore"])
-        self.initial_transitions = transition
+        self.initial_solution = transition
 
 
 class ExactDpKnapsackSolver(KnapsackSolver):

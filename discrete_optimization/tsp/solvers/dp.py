@@ -3,16 +3,17 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
-import re
-from typing import Any, List, Optional
+from typing import Any
 
 import didppy as dp
 import numpy as np
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import ResultStorage
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.tsp.problem import TspProblem, TspSolution
 from discrete_optimization.tsp.solvers import TspSolver
 from discrete_optimization.tsp.utils import build_matrice_distance
@@ -20,28 +21,36 @@ from discrete_optimization.tsp.utils import build_matrice_distance
 logger = logging.getLogger(__name__)
 
 
-class DpTspSolver(TspSolver, DpSolver):
+class DpTspSolver(TspSolver, DpSolver, WarmstartMixin):
     problem: TspProblem
-    hyperparameters = DpSolver.hyperparameters
+    hyperparameters = DpSolver.hyperparameters + [
+        CategoricalHyperparameter(
+            name="closest_distance", choices=[True, False], default=False
+        )
+    ]
+    transitions: dict
 
     def init_model(self, **kwargs: Any) -> None:
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
         model = dp.Model()
         distance_matrix = build_matrice_distance(
             self.problem.node_count,
             method=self.problem.evaluate_function_indexes,
         )
-        closest = np.argsort(distance_matrix, axis=1)
-        new_mat = 10 * distance_matrix
-        # new_mat = 100000*np.ones(distance_matrix.shape)
-        for c in range(distance_matrix.shape[0]):
-            new_mat[c, closest[c, :20]] = distance_matrix[c, closest[c, :20]]
-            new_mat[c, self.problem.start_index] = distance_matrix[
-                c, self.problem.start_index
-            ]
-            new_mat[c, self.problem.end_index] = distance_matrix[
-                c, self.problem.end_index
-            ]
-        # new_mat = distance_matrix
+        if kwargs["closest_distance"]:
+            closest = np.argsort(distance_matrix, axis=1)
+            new_mat = 10 * distance_matrix
+            # new_mat = 100000*np.ones(distance_matrix.shape)
+            for c in range(distance_matrix.shape[0]):
+                new_mat[c, closest[c, :20]] = distance_matrix[c, closest[c, :20]]
+                new_mat[c, self.problem.start_index] = distance_matrix[
+                    c, self.problem.start_index
+                ]
+                new_mat[c, self.problem.end_index] = distance_matrix[
+                    c, self.problem.end_index
+                ]
+        else:
+            new_mat = distance_matrix
         c = [
             [int(10 * new_mat[i, j]) for j in range(new_mat.shape[1])]
             for i in range(new_mat.shape[0])
@@ -56,6 +65,7 @@ class DpTspSolver(TspSolver, DpSolver):
         )
         location = model.add_element_var(object_type=customer, target=start)
         model.add_base_case([unvisited.is_empty(), location == end])
+        self.transitions = {}
         for i in range(self.problem.node_count):
             if i not in {end, start}:
                 visit = dp.Transition(
@@ -65,6 +75,7 @@ class DpTspSolver(TspSolver, DpSolver):
                     preconditions=[unvisited.contains(i)],
                 )
                 model.add_transition(visit)
+                self.transitions[i] = visit
             elif end != start and i == end:
                 visit = dp.Transition(
                     name=f"{i}",
@@ -73,6 +84,7 @@ class DpTspSolver(TspSolver, DpSolver):
                     preconditions=[unvisited.len() == 1, unvisited.contains(i)],
                 )
                 model.add_transition(visit)
+                self.transitions[i] = visit
             else:
                 visit = dp.Transition(
                     name=f"{i}",
@@ -81,6 +93,7 @@ class DpTspSolver(TspSolver, DpSolver):
                     preconditions=[unvisited.is_empty()],
                 )
                 model.add_transition(visit)
+                self.transitions[i] = visit
         min_distance_to = model.add_int_table(
             [
                 min(c[k][j] for k in range(self.problem.node_count) if j != k)
@@ -106,3 +119,8 @@ class DpTspSolver(TspSolver, DpSolver):
             permutation=path[:-1],
         )
         return tsp_sol
+
+    def set_warm_start(self, solution: TspSolution) -> None:
+        self.initial_solution = [self.transitions[x] for x in solution.permutation] + [
+            self.transitions[solution.end_index]
+        ]

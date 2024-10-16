@@ -80,6 +80,7 @@ class DpSolver(SolverDO):
     hyperparameters = [
         CategoricalHyperparameter(name="solver", choices=solvers, default=dp.CABS)
     ]
+    initial_solution: Optional[list[dp.Transition]] = None
 
     @abstractmethod
     def init_model(self, **kwargs: Any) -> None:
@@ -104,7 +105,7 @@ class DpSolver(SolverDO):
         did_callback = DpCallback(do_solver=self, callback=callbacks_list)
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         solver_cls = kwargs["solver"]
-        if "initial_solution" in self.__dict__.keys():
+        if self.initial_solution is not None:
             kwargs["initial_solution"] = self.initial_solution
         for k in list(kwargs.keys()):
             if k not in {"threads", "initial_solution"}:

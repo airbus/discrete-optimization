@@ -6,6 +6,9 @@ import logging
 import numpy as np
 
 from discrete_optimization.datasets import get_data_home
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.dp import DpRcpspModeling, DpRcpspSolver, dp
@@ -33,6 +36,34 @@ def run_dp_rcpsp():
         solver=dp.LNBS,
         use_callback=True,
         threads=10,
+    )
+    sol, fit = res.get_best_solution_fit()
+    print(rcpsp_problem.evaluate(sol))
+    print(rcpsp_problem.satisfy(sol))
+
+
+def run_dp_rcpsp_ws():
+    files_available = get_data_available()
+    file = [f for f in files_available if "j301_2.sm" in f][0]
+    rcpsp_problem = parse_file(file)
+    sol_ws = rcpsp_problem.get_dummy_solution()
+    print(rcpsp_problem.evaluate(sol_ws))
+    solver = DpRcpspSolver(problem=rcpsp_problem)
+    solver.init_model(modeling=DpRcpspModeling.TASK_ORIGINAL)
+    print("t")
+    solver.set_warm_start(sol_ws)
+    print("tt")
+    res = solver.solve(
+        callbacks=[
+            NbIterationStopper(nb_iteration_max=20),
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            ),
+        ],
+        time_limit=30,
+        solver=dp.LNBS,
+        use_callback=True,
+        threads=5,
     )
     sol, fit = res.get_best_solution_fit()
     print(rcpsp_problem.evaluate(sol))
@@ -96,3 +127,4 @@ def run_dp_mrcpsp():
 
 if __name__ == "__main__":
     run_dp_rcpsp_calendar()
+    run_dp_rcpsp_ws()

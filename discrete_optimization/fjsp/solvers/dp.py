@@ -6,13 +6,14 @@ from typing import Any
 
 from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
 
 
-class DpFjspSolver(DpSolver):
+class DpFjspSolver(DpSolver, WarmstartMixin):
     problem: FJobShopProblem
     hyperparameters = DpSolver.hyperparameters + [
         CategoricalHyperparameter(
@@ -83,6 +84,7 @@ class DpFjspSolver(DpSolver):
         finish = model.add_int_var(0)
         cur_time_total = model.add_int_resource_var(target=0, less_is_better=True)
         model.add_base_case([finish == 1, undone.is_empty()])
+        self.transitions = {}
         for i in range(len(jobs)):
             jid = job_id[i]
             m_s = machines[i]
@@ -161,6 +163,7 @@ class DpFjspSolver(DpSolver):
                     + [done.contains(j) for j in precedence_by_index[i]],
                 )
                 model.add_transition(sched)
+                self.transitions[(i, choice_machine)] = sched
         finish = dp.Transition(
             name="finish_",
             effects=[(finish, 1)],
@@ -169,6 +172,7 @@ class DpFjspSolver(DpSolver):
             preconditions=[done.len() == self.problem.n_all_jobs],
         )
         model.add_transition(finish)
+        self.transitions["finish_"] = finish
         # model.add_dual_bound()
         self.jobs = jobs
         self.prec = precedence_by_index
@@ -222,3 +226,16 @@ class DpFjspSolver(DpSolver):
             ],
         )
         return sol
+
+    def set_warm_start(self, solution: FJobShopSolution) -> None:
+        initial_solution = []
+        flatten_schedule = [
+            (i, solution.schedule[self.jobs[i][0]][self.jobs[i][1]])
+            for i in range(len(self.jobs))
+        ]
+        sorted_flatten = sorted(flatten_schedule, key=lambda x: (x[1][0], x[1][1]))
+        for index, (start, end, machine) in sorted_flatten:
+            m_ind = self.machines[index].index(machine)
+            initial_solution.append(self.transitions[(index, m_ind)])
+        initial_solution.append(self.transitions["finish_"])
+        self.initial_solution = initial_solution

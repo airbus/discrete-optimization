@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver, dp
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -16,7 +17,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 )
 from discrete_optimization.rcpsp.problem import RcpspProblem, RcpspSolution
 from discrete_optimization.rcpsp.solvers import RcpspSolver
-from discrete_optimization.rcpsp.solvers.cpm import CpmObject, CpmRcpspSolver
+from discrete_optimization.rcpsp.solvers.cpm import CpmRcpspSolver
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ def create_resource_consumption_from_calendar(
     return fake_tasks
 
 
-class DpRcpspSolver(DpSolver, RcpspSolver):
+class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
     hyperparameters = DpSolver.hyperparameters + [
         EnumHyperparameter(
             name="modeling",
@@ -68,6 +69,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
     ]
     problem: RcpspProblem
     modeling: DpRcpspModeling
+    transitions: dict
 
     def __init__(self, problem: RcpspProblem, **kwargs: Any):
         super().__init__(problem, **kwargs)
@@ -138,7 +140,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
             for t_res in range(len(res_available[i_res])):
                 model.add_state_constr(res_available[i_res][t_res] >= 0)
         current_time = model.add_int_var(target=0)
-        # current_sched_time = model.add_int_var(target=0)
+        self.transitions = {}
         for i in range(self.problem.n_jobs):
             n_z = [
                 (j, consumption[i][j])
@@ -172,6 +174,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     + [time >= starts[p] + durs[p] for p in prec_[i]],
                 )
                 model.add_transition(transition)
+                self.transitions[("sched", i, 1, time)] = transition
         model.add_dual_bound(consumption_table[unscheduled, 0])
         self.model = model
 
@@ -182,8 +185,6 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
             object_type=task_object, target=range(self.problem.n_jobs)
         )
         scheduled = model.add_set_var(object_type=task_object, target=set())
-        # res_to_index = {self.problem.resources_list[i]: i
-        #                 for i in range(len(self.problem.resources_list))}
         capacities = [
             self.problem.get_max_resource_capacity(r)
             for r in self.problem.resources_list
@@ -216,6 +217,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
         model.add_base_case([unscheduled.is_empty(), ongoing.is_empty()])
         for j in range(nb_resource):
             model.add_state_constr(current_resource_consumption[j] <= capacities[j])
+        self.transitions = {}
         for i in range(self.problem.n_jobs):
             n_z = [
                 (j, consumption[i][j])
@@ -252,6 +254,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     ],
                 )
                 model.add_transition(start_task)
+                self.transitions[("start", i, 1)] = start_task
             else:
                 start_dummy_task = dp.Transition(
                     name=f"start_{i}",
@@ -269,7 +272,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     + [current_time >= starts[p] + durs[p] for p in prec_[i]],
                 )
                 model.add_transition(start_dummy_task, forced=True)
-
+                self.transitions[("start", i, 1)] = start_dummy_task
             if dur > 0:
                 ending_task = dp.Transition(
                     name=f"end_{i}",
@@ -295,10 +298,12 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     ],
                 )
                 model.add_transition(ending_task)
+                self.transitions[("end", i, 1)] = ending_task
         # remaining = model.add_int_table([self.remaining_per_task[t] for t in self.problem.tasks_list])
         # model.add_dual_bound((~unscheduled.is_empty()).if_then_else(remaining.max(unscheduled), 0))
         # model.add_dual_bound(((unscheduled.len() < 20) & ~unscheduled.is_empty())
         #                      .if_then_else(remaining.max(unscheduled), 0))
+
         self.starts = starts
         self.model = model
 
@@ -351,6 +356,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
         # for j in range(nb_resource):
         #     model.add_state_constr(current_resource_consumption[j] <= capacities[j])
         can_start = [model.add_int_var(target=0) for i in range(self.problem.n_jobs)]
+        self.transitions = {}
         for i in range(self.problem.n_jobs):
             n_z = [
                 (j, consumption[i][j])
@@ -385,6 +391,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     ],
                 )
                 model.add_transition(start_task)
+                self.transitions[("start", i, 1)] = start_task
             else:
                 start_dummy_task = dp.Transition(
                     name=f"start_{i}",
@@ -403,6 +410,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     + [current_time >= starts[p] + durs[p] for p in prec_[i]],
                 )
                 model.add_transition(start_dummy_task, forced=True)
+                self.transitions[("start", i, 1)] = start_dummy_task
             if dur > 0:
                 ending_task = dp.Transition(
                     name=f"end_{i}",
@@ -428,11 +436,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                     ],
                 )
                 model.add_transition(ending_task)
-        # advance_time = dp.Transition(name="advance",
-        #                              cost=dp.IntExpr.state_cost(),
-        #                              effects=[(current_time, current_time+1)],
-        #                              preconditions=[sum(can_start) == 0])
-        # model.add_transition(advance_time)
+                self.transitions[("end", i, 1)] = ending_task
         compute_avail = dp.Transition(
             name="update_avail",
             cost=-2
@@ -451,6 +455,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
             preconditions=[to_update == 1],
         )
         model.add_transition(compute_avail)  # forced=True)
+        self.transitions["compute_avail"] = compute_avail
         # remaining = model.add_int_table([self.remaining_per_task[t] for t in self.problem.tasks_list])
         # model.add_dual_bound((~unscheduled.is_empty()).if_then_else(remaining.max(unscheduled), 0))
         self.starts = starts
@@ -517,6 +522,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
         model.add_base_case([unscheduled.is_empty(), ongoing.is_empty()])
         for j in range(nb_resource):
             model.add_state_constr(current_resource_consumption[j] <= capacities[j])
+        self.transitions = {}
         for i in range(self.problem.n_jobs):
             for j_mode in range(len(modes_per_task[i])):
                 n_z = [
@@ -553,6 +559,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                         ],
                     )
                     model.add_transition(start_task)
+                    self.transitions[
+                        ("start", i, modes_per_task[i][j_mode])
+                    ] = start_task
                 else:
                     start_dummy_task = dp.Transition(
                         name=f"start_{i}_mode_{j_mode}",
@@ -569,6 +578,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                         ],
                     )
                     model.add_transition(start_dummy_task, forced=True)
+                    self.transitions[
+                        ("start", i, modes_per_task[i][j_mode])
+                    ] = start_dummy_task
                 if dur > 0:
                     ending_task = dp.Transition(
                         name=f"end_{i}_mode_{j_mode}",
@@ -596,6 +608,10 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                         ],
                     )
                     model.add_transition(ending_task)
+                    self.transitions[
+                        ("end", i, modes_per_task[i][j_mode])
+                    ] = ending_task
+
         remaining = model.add_int_table(
             [self.remaining_per_task[t] for t in self.problem.tasks_list]
         )
@@ -941,6 +957,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
         consumption_table = model.add_int_table(consumption)
         predecessors = model.add_set_table(prec_, object_type=task_object)
         model.add_base_case([unscheduled.is_empty()])
+        self.transitions = {}
         for i_res in range(len(res_available)):
             for t_res in range(len(res_available[i_res])):
                 model.add_state_constr(res_available[i_res][t_res] >= 0)
@@ -987,6 +1004,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
                         ],
                     )
                     model.add_transition(transition)
+                    self.transitions[
+                        ("sched", i, modes_per_task[i][j_mode], time)
+                    ] = transition
         # model.add_dual_bound(consumption_table[unscheduled, 0])
         self.modes_per_task = modes_per_task
         self.model = model
@@ -1012,11 +1032,12 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
             x = extract_ints(t.name)
             if len(x) == 3:
                 index_task, time, j_mode = x
+                task = self.problem.tasks_list[index_task]
+                modes_dict[task] = self.modes_per_task[index_task][j_mode]
             else:
                 index_task, time = x
-                j_mode = 1
-            task = self.problem.tasks_list[index_task]
-            modes_dict[task] = self.modes_per_task[index_task][j_mode]
+                task = self.problem.tasks_list[index_task]
+                modes_dict[task] = 1
             dur = self.problem.mode_details[task][modes_dict[task]]["duration"]
             schedule[task] = {"start_time": time, "end_time": time + dur}
         return RcpspSolution(
@@ -1072,3 +1093,75 @@ class DpRcpspSolver(DpSolver, RcpspSolver):
             rcpsp_modes=[modes_dict[t] for t in self.problem.tasks_list_non_dummy],
             rcpsp_schedule=schedule,
         )
+
+    def set_warm_start(self, solution: RcpspSolution) -> None:
+        if self.modeling in {DpRcpspModeling.TASK_AND_TIME}:
+            initial_solution = []
+            sorted_tasks = sorted(
+                solution.rcpsp_schedule,
+                key=lambda x: (solution.get_start_time(x), solution.get_end_time(x)),
+            )
+            for t in sorted_tasks:
+                if t in self.problem.tasks_list_non_dummy:
+                    m = solution.get_mode(t)
+                else:
+                    m = 1
+                i_t = self.problem.index_task[t]
+                initial_solution.append(
+                    self.transitions[("sched", i_t, m, solution.get_start_time(t))]
+                )
+            self.initial_solution = initial_solution
+        if self.modeling in {
+            DpRcpspModeling.TASK_ORIGINAL,
+            DpRcpspModeling.TASK_AVAIL_TASK_UPD,
+            DpRcpspModeling.TASK_MULTIMODE,
+        }:
+            initial_solution = []
+            sorted_tasks = sorted(
+                solution.rcpsp_schedule,
+                key=lambda x: (solution.get_start_time(x), solution.get_end_time(x)),
+            )
+            flattened_schedule = []
+            for t in sorted_tasks:
+                st, end = solution.get_start_time(t), solution.get_end_time(t)
+                if st == end:
+                    continue
+                flattened_schedule.append(("start", self.problem.index_task[t], st))
+                flattened_schedule.append(("end", self.problem.index_task[t], end))
+            flattened_schedule = sorted(flattened_schedule, key=lambda x: x[2])
+            flattened_schedule = (
+                [
+                    (
+                        "start",
+                        self.problem.index_task[self.problem.source_task],
+                        solution.get_start_time(self.problem.source_task),
+                    )
+                ]
+                + flattened_schedule
+                + [
+                    (
+                        "start",
+                        self.problem.index_task[self.problem.sink_task],
+                        solution.get_start_time(self.problem.sink_task),
+                    )
+                ]
+            )
+            for tag, t, time_ in flattened_schedule:
+                task = self.problem.tasks_list[t]
+                if task in self.problem.tasks_list_non_dummy:
+                    m = solution.get_mode(task)
+                else:
+                    m = 1
+                i_t = t
+                if tag == "start":
+                    initial_solution.append(self.transitions[("start", i_t, m)])
+                else:
+                    initial_solution.append(self.transitions[("end", i_t, m)])
+        if (
+            self.modeling == DpRcpspModeling.TASK_MULTIMODE
+            and self.problem.is_varying_resource()
+        ):
+            ##  TODO.. this is boring.
+            pass
+
+        pass

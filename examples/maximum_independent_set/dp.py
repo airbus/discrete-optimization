@@ -4,14 +4,16 @@
 import logging
 import re
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
+from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.maximum_independent_set.parser import (
     dimacs_parser_nx,
     get_data_available,
 )
-from discrete_optimization.maximum_independent_set.problem import (
-    MisProblem,
-    MisSolution,
-)
+from discrete_optimization.maximum_independent_set.problem import MisProblem
+from discrete_optimization.maximum_independent_set.solvers.cpsat import CpSatMisSolver
 from discrete_optimization.maximum_independent_set.solvers.dp import (
     DpMisSolver,
     DpModeling,
@@ -56,5 +58,28 @@ def run_dip_solver():
     print(mis_model.satisfy(sol))
 
 
+def run_dip_solver_ws():
+    small_example = [f for f in get_data_available() if "1tc.1024" in f][0]
+    mis_model: MisProblem = dimacs_parser_nx(small_example)
+    solver_ws = CpSatMisSolver(problem=mis_model)
+    sol_ws = solver_ws.solve(
+        time_limit=5, callbacks=[ObjectiveLogger(step_verbosity_level=logging.INFO)]
+    )[-1][0]
+    print(solver_ws.is_optimal())
+    solver = DpMisSolver(problem=mis_model)
+    solver.init_model(modeling=DpModeling.ANY_ORDER)
+    solver.set_warm_start(sol_ws)
+    res = solver.solve(
+        solver=dp.LNBS,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        use_callback=True,
+        time_limit=100,
+    )
+    sol = res[0][0]
+    print(mis_model.evaluate(sol))
+    print(mis_model.satisfy(sol))
+    assert sol.chosen == sol_ws.chosen
+
+
 if __name__ == "__main__":
-    run_dip_solver()
+    run_dip_solver_ws()
