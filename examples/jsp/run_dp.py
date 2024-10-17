@@ -10,9 +10,7 @@ from didppy import BeamParallelizationMethod
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.problem import JobShopProblem
 from discrete_optimization.jsp.solvers.cpsat import CpSatJspSolver
 from discrete_optimization.jsp.solvers.dp import DpJspSolver
 from discrete_optimization.jsp.utils import transform_jsp_to_rcpsp
@@ -118,4 +116,4 @@ def run_dp_of_rcpsp():
 
 
 if __name__ == "__main__":
-    run_dp_jsp_ws()
+    run_dp_of_rcpsp()
