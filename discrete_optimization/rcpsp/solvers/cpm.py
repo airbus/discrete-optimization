@@ -63,6 +63,12 @@ class CpmRcpspSolver(RcpspSolver):
         self.map_node: dict[Any, CpmObject] = {
             n: CpmObject(None, None, None, None) for n in self.graph_nx.nodes()
         }
+        self.node_to_index = {
+            node: i_node for i_node, node in enumerate(self.graph_nx.nodes())
+        }
+        self.index_to_node = {
+            i_node: node for node, i_node in self.node_to_index.items()
+        }
         successors = {
             n: nx.algorithms.descendants(self.graph_nx, n)
             for n in self.graph_nx.nodes()
@@ -101,10 +107,11 @@ class CpmRcpspSolver(RcpspSolver):
             for n in current_pred
             if n not in done_forward and current_pred[n]["nb"] == 0
         }
-        queue = [(0, n) for n in available_activities]
+        queue = [(0, self.node_to_index[n]) for n in available_activities]
         forward = True
         while queue:
-            time, node = heappop(queue)
+            time, i_node = heappop(queue)
+            node = self.index_to_node[i_node]
             if forward and node in done_forward:
                 continue
             elif not forward and node in done_backward:
@@ -138,14 +145,14 @@ class CpmRcpspSolver(RcpspSolver):
                 if forward:
                     if all(self.map_node[n]._ESD is not None for n in pred):
                         max_esd = max([self.map_node[n]._EFD for n in pred])
-                        heappush(queue, (max_esd, next_node))
+                        heappush(queue, (max_esd, self.node_to_index[next_node]))
                 else:
                     if all(self.map_node[n]._LSD is not None for n in pred):
                         max_esd = min([self.map_node[n]._LSD for n in pred])
-                        heappush(queue, (-max_esd, next_node))
+                        heappush(queue, (-max_esd, self.node_to_index[next_node]))
             if node == self.sink:
                 forward = False
-                heappush(queue, (-self.map_node[node]._EFD, node))
+                heappush(queue, (-self.map_node[node]._EFD, self.node_to_index[node]))
 
         critical_path = [self.sink]
         cur_node = self.sink
