@@ -21,7 +21,7 @@ def test_dp_vrp():
 
 
 def test_dp_vrp_ws():
-    from discrete_optimization.vrp.solvers.ortools import OrtoolsVrpSolver
+    from discrete_optimization.vrp.solvers.ortools_routing import OrtoolsVrpSolver
 
     file = [f for f in get_data_available() if "vrp_135_7_1" in f][0]
     problem = parse_file(file_path=file, start_index=0, end_index=0)

@@ -34,7 +34,7 @@ def test_dp_solver_ws():
     files = [f for f in files if "tsp_100_1" in f]
     model = parse_file(files[0], start_index=0, end_index=0)
     params_objective_function = get_default_objective_setup(problem=model)
-    from discrete_optimization.tsp.solvers.ortools import ORtoolsTspSolver
+    from discrete_optimization.tsp.solvers.ortools_routing import ORtoolsTspSolver
 
     solver_ws = ORtoolsTspSolver(model)
     sol = solver_ws.solve(time_limit=5)[-1][0]
