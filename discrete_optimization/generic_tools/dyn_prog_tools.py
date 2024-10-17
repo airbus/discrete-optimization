@@ -1,6 +1,7 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import inspect
 import logging
 from abc import abstractmethod
 from typing import Any, List, Optional
@@ -104,16 +105,14 @@ class DpSolver(SolverDO):
             self.init_model(**kwargs)
         did_callback = DpCallback(do_solver=self, callback=callbacks_list)
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        solver_cls = kwargs["solver"]
         if self.initial_solution is not None:
             kwargs["initial_solution"] = self.initial_solution
-        for k in list(kwargs.keys()):
-            if k not in {"threads", "initial_solution"}:
-                kwargs.pop(k)
-            if k == "threads" and solver_cls in {dp.DDLNS, dp.DFBB}:
-                kwargs.pop(k)
-        quiet = kwargs.get("quiet", False)
-        solver = solver_cls(self.model, time_limit=time_limit, quiet=quiet, **kwargs)
+        if "quiet" not in kwargs:
+            kwargs["quiet"] = False
+        solver_cls = kwargs["solver"]
+        solver_allowed_params = inspect.signature(solver_cls).parameters
+        kwargs_solver = {k: v for k, v in kwargs.items() if k in solver_allowed_params}
+        solver = solver_cls(self.model, time_limit=time_limit, **kwargs_solver)
         if use_callback:
             while True:
                 solution, terminated = solver.search_next()
