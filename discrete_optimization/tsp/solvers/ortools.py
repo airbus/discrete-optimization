@@ -37,6 +37,9 @@ class ORtoolsTspSolver(TspSolver):
         self.list_points = self.problem.list_points
         self.start_index = self.problem.start_index
         self.end_index = self.problem.end_index
+        self.routing: pywrapcp.RoutingModel = None
+        self.manager: pywrapcp.RoutingIndexManager = None
+        self.search_parameters = None
 
     def init_model(self, **kwargs: Any) -> None:
         # Create the routing index manager.
@@ -89,8 +92,11 @@ class ORtoolsTspSolver(TspSolver):
         self.routing = routing
         self.search_parameters = search_parameters
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(self, time_limit: Optional[int] = 100, **kwargs: Any) -> ResultStorage:
         """Prints solution on console."""
+        if self.routing is None:
+            self.init_model(**kwargs)
+        self.search_parameters.time_limit.seconds = int(time_limit)
         solution = self.routing.SolveWithParameters(self.search_parameters)
         logger.debug(f"Objective: {solution.ObjectiveValue()} miles")
         index = self.routing.Start(0)
