@@ -10,7 +10,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.vrp.problem import Customer2DVrpProblem, VrpProblem
 from discrete_optimization.vrp.solvers import VrpSolver
 from discrete_optimization.vrp.solvers.lp_iterative import LPIterativeVrpSolver
-from discrete_optimization.vrp.solvers.ortools import OrtoolsVrpSolver
+from discrete_optimization.vrp.solvers.ortools_routing import OrtoolsVrpSolver
 
 solvers: dict[str, list[tuple[type[VrpSolver], dict[str, Any]]]] = {
     "ortools": [(OrtoolsVrpSolver, {"time_limit": 100})],

@@ -21,7 +21,7 @@ from discrete_optimization.tsp.solvers.lp_iterative import (
     LPIterativeTspSolver,
     MILPSolver,
 )
-from discrete_optimization.tsp.solvers.ortools import ORtoolsTspSolver
+from discrete_optimization.tsp.solvers.ortools_routing import ORtoolsTspSolver
 
 solvers: dict[str, list[tuple[type[TspSolver], dict[str, Any]]]] = {
     "lp": [

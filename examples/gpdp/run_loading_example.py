@@ -23,7 +23,7 @@ from discrete_optimization.gpdp.problem import (
     build_pruned_problem,
 )
 from discrete_optimization.gpdp.solvers.lp_iterative import GurobiLinearFlowGpdpSolver
-from discrete_optimization.gpdp.solvers.ortools import (
+from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,

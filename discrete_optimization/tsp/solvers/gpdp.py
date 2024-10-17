@@ -10,7 +10,10 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.gpdp.problem import ProxyClass
-from discrete_optimization.gpdp.solvers.ortools import GpdpSolution, OrtoolsGpdpSolver
+from discrete_optimization.gpdp.solvers.ortools_routing import (
+    GpdpSolution,
+    OrtoolsGpdpSolver,
+)
 from discrete_optimization.tsp.problem import TspSolution
 from discrete_optimization.tsp.solvers import TspSolver
 

@@ -30,7 +30,7 @@ from discrete_optimization.gpdp.builders.instance_builders import (
     GpdpProblem,
     create_selective_tsp,
 )
-from discrete_optimization.gpdp.solvers.ortools import (
+from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,

@@ -4,7 +4,7 @@
 
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.tsp.parser import get_data_available, parse_file
-from discrete_optimization.tsp.solvers.ortools import ORtoolsTspSolver
+from discrete_optimization.tsp.solvers.ortools_routing import ORtoolsTspSolver
 
 
 def test_ortools():
