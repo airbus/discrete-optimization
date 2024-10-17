@@ -3,6 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+from collections.abc import Hashable
+from dataclasses import dataclass
 from heapq import heappop, heappush
 from typing import Any
 
@@ -42,6 +44,15 @@ class CpmObject:
 
     def __str__(self):
         return str({k: getattr(self, k) for k in self.__dict__.keys()})
+
+
+@dataclass
+class TimedNode:
+    time: int
+    node: Hashable
+
+    def __lt__(self, other: "TimedNode"):
+        return self.time < other.time
 
 
 class CpmRcpspSolver(RcpspSolver):
@@ -101,10 +112,11 @@ class CpmRcpspSolver(RcpspSolver):
             for n in current_pred
             if n not in done_forward and current_pred[n]["nb"] == 0
         }
-        queue = [(0, n) for n in available_activities]
+        queue = [TimedNode(time=0, node=n) for n in available_activities]
         forward = True
         while queue:
-            time, node = heappop(queue)
+            timednode = heappop(queue)
+            time, node = timednode.time, timednode.node
             if forward and node in done_forward:
                 continue
             elif not forward and node in done_backward:
@@ -138,14 +150,14 @@ class CpmRcpspSolver(RcpspSolver):
                 if forward:
                     if all(self.map_node[n]._ESD is not None for n in pred):
                         max_esd = max([self.map_node[n]._EFD for n in pred])
-                        heappush(queue, (max_esd, next_node))
+                        heappush(queue, TimedNode(time=max_esd, node=next_node))
                 else:
                     if all(self.map_node[n]._LSD is not None for n in pred):
                         max_esd = min([self.map_node[n]._LSD for n in pred])
-                        heappush(queue, (-max_esd, next_node))
+                        heappush(queue, TimedNode(time=-max_esd, node=next_node))
             if node == self.sink:
                 forward = False
-                heappush(queue, (-self.map_node[node]._EFD, node))
+                heappush(queue, TimedNode(time=-self.map_node[node]._EFD, node=node))
 
         critical_path = [self.sink]
         cur_node = self.sink
