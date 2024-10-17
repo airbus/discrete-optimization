@@ -326,15 +326,25 @@ class BaseLns(SolverDO, WarmstartMixin):
 
         self.init_model(**kwargs)
 
-        if (
-            not skip_initial_solution_provider
-            and self.initial_solution_provider is not None
-        ):
+        if skip_initial_solution_provider:
+            best_objective = (
+                float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
+            )
+            store_lns = None
+            stopping = False
+        else:
+            if self.initial_solution_provider is None:
+                raise ValueError(
+                    "`initial_solution_provider` cannot be None "
+                    "if `skip_initial_solution_provider` is False."
+                )
             store_lns = self.initial_solution_provider.get_starting_solution()
             store_lns = self.post_process_solution.build_other_solution(store_lns)
             init_solution, objective = store_lns.get_best_solution_fit()
             if init_solution is None:
-                satisfy = False
+                raise RuntimeError(
+                    "`initial_solution_provider` + `post_process_solution` gave no solution."
+                )
             else:
                 satisfy = self.problem.satisfy(init_solution)
             logger.debug(f"Satisfy Initial solution {satisfy}")
@@ -348,12 +358,6 @@ class BaseLns(SolverDO, WarmstartMixin):
             best_objective = objective
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
-        else:
-            best_objective = (
-                float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
-            )
-            store_lns = None
-            stopping = False
 
         result_store: ResultStorage
         lsn_contraints: Optional[Iterable[Any]] = None
@@ -590,7 +594,10 @@ class ConstraintHandlerMix(ConstraintHandler):
         self.last_index_param = choice
         self.status[self.last_index_param]["nb_usage"] += 1
         logger.debug(f"Status {self.status}")
-        return ch.adding_constraint_from_results_store(solver, result_storage, **kwargs)
+        constraints = ch.adding_constraint_from_results_store(
+            solver=solver, result_storage=result_storage, **kwargs
+        )
+        return constraints
 
     def remove_constraints_from_previous_iteration(
         self, solver: SolverDO, previous_constraints: Iterable[Any], **kwargs: Any
