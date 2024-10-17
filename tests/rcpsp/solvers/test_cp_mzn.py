@@ -11,9 +11,7 @@ from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
-    TimerStopper,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     BaseMethodAggregating,
@@ -255,7 +253,7 @@ def test_ortools_with_cb(caplog, random_seed):
             logging.debug(sol.rcpsp_schedule)
             logging.debug(sol.rcpsp_modes)
 
-    callbacks = [VariablePrinterCallback(), TimerStopper(1)]
+    callbacks = [VariablePrinterCallback(), NbIterationStopper(1)]
 
     with caplog.at_level(logging.DEBUG):
         result_storage = solver.solve(callbacks=callbacks, time_limit=20)
@@ -263,8 +261,8 @@ def test_ortools_with_cb(caplog, random_seed):
     assert "Solution #1" in caplog.text
     assert (
         "stopped by user callback" in caplog.text
-    )  # stopped by timer callback instead of ortools timer
-    # only true if at least one solution found after 3s (timer cb limit) and before 10s (ortools timer limit)
+    )  # stopped by callback instead of ortools timer
+    # only true if at least one solution found before 20s (ortools timer limit)
 
 
 def test_cp_sm_intermediate_solution():
