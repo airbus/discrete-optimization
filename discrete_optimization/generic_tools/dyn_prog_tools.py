@@ -110,8 +110,20 @@ class DpSolver(SolverDO):
         if "quiet" not in kwargs:
             kwargs["quiet"] = False
         solver_cls = kwargs["solver"]
-        solver_allowed_params = inspect.signature(solver_cls).parameters
-        kwargs_solver = {k: v for k, v in kwargs.items() if k in solver_allowed_params}
+        try:
+            solver_allowed_params = inspect.signature(solver_cls).parameters
+            kwargs_solver = {
+                k: v for k, v in kwargs.items() if k in solver_allowed_params
+            }
+        except:
+            # Previous mode, for python<=3.9
+            for k in list(kwargs.keys()):
+                if k not in {"threads", "initial_solution"}:
+                    kwargs.pop(k)
+                if k == "threads" and solver_cls in {dp.DDLNS, dp.DFBB}:
+                    kwargs.pop(k)
+            kwargs_solver = kwargs
+
         solver = solver_cls(self.model, time_limit=time_limit, **kwargs_solver)
         if use_callback:
             while True:
