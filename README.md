@@ -10,19 +10,26 @@ The library contains a range of existing solvers already implemented such as:
 * metaheuristics (Genetic Algorithms, NSGA)
 * linear programming
 * constraint programming
-* hybrid methods (LNS)
+* domain independent dynamic programming
+* hybrid methods (CP and LP based Large Neighborhood Search)
 
 The library also contains implementation of several classic discrete optimization problems:
 * Travelling Salesman Problem (TSP)
 * Knapsack Problem (KP)
 * Vehicle Routing Problem (VRP)
 * Facility Location Problem (FLP)
-* Resource Constrained Project Scheduling Problem (RCPSP). Several variants of RCPSP are available
+* Resource Constrained Project Scheduling Problem (RCPSP) and its variants (MRCPSP, MSRCPSP)
 * Graph Colouring Problem (GCP)
+* Maximum independent set (MIS)
+* Job shop scheduling problem (JSP) and its flexible variant (FJSP)
 
 In addition, the library contains functionalities to enable robust optimization
 through different scenario handling mechanisms) and multi-objective optimization
 (aggregation of objectives, Pareto optimization, MO post-processing).
+
+We thank awesome optimization library or modeling language from different communities that are widely used through our library :
+
+notably [ortools](https://github.com/google/or-tools), [minizinc](https://www.minizinc.org/), [deap](https://deap.readthedocs.io/en/master/), [didp](https://didp.ai/), [gurobi](https://www.gurobi.com/)
 
 
 ## Installation
