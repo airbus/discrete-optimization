@@ -13,6 +13,7 @@ Results can be viewed on optuna-dashboard with:
 """
 
 import logging
+from operator import itemgetter
 
 import optuna
 from optuna.trial import Trial, TrialState
@@ -30,7 +31,7 @@ from discrete_optimization.gpdp.builders.instance_builders import (
     GpdpProblem,
     create_selective_tsp,
 )
-from discrete_optimization.gpdp.solvers.ortools import (
+from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,
@@ -44,6 +45,10 @@ nb_clusters = 100
 
 
 # logging.basicConfig(level=logging.DEBUG)
+print(f"Hyperparameters: {OrtoolsGpdpSolver.get_hyperparameters_names()}")
+print(
+    f"Hyperparameters: {OrtoolsGpdpSolver.get_hyperparameter('first_solution_strategy')}"
+)
 
 
 def objective(trial: Trial):
@@ -57,20 +62,34 @@ def objective(trial: Trial):
         sense_function=ModeOptim.MINIMIZATION,
     )
     # hyperparameters
-    first_solution_strategy_name = trial.suggest_categorical(
+    hyperparameters_names = [
         "first_solution_strategy",
-        choices=["AUTOMATIC", "LOCAL_CHEAPEST_INSERTION"],
-    )
-    local_search_metaheuristic_name = trial.suggest_categorical(
-        "local_search_metaheuristic", choices=[v.name for v in LocalSearchMetaheuristic]
-    )
-    local_search_metaheuristic = LocalSearchMetaheuristic[
-        local_search_metaheuristic_name
+        "local_search_metaheuristic",
+        "use_lns",
+        "use_cp_sat",
     ]
-    first_solution_strategy = FirstSolutionStrategy[first_solution_strategy_name]
-    use_lns = trial.suggest_categorical("use_lns", [True, False])
+    hyperparameters = OrtoolsGpdpSolver.suggest_hyperparameters_with_optuna(
+        names=hyperparameters_names,
+        trial=trial,
+        kwargs_by_name={
+            # restrict choices for `first_solution_strategy`
+            "first_solution_strategy": dict(
+                choices=[
+                    FirstSolutionStrategy.AUTOMATIC,
+                    FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION,
+                ]
+            )
+        },
+    )
+    # extract individual hyperparameter from the hyperparameters dict
+    (
+        first_solution_strategy,
+        local_search_metaheuristic,
+        use_lns,
+        use_cp_sat,
+    ) = itemgetter(hyperparameters_names)(hyperparameters)
+
     use_cp = True
-    use_cp_sat = trial.suggest_categorical("use_cp_sat", [True, False])
     n_solutions = trial.suggest_int("n_solutions_max", 10, 200)
 
     # solver init
@@ -112,7 +131,7 @@ def objective(trial: Trial):
 
 # create study + database to store it
 study = optuna.create_study(
-    study_name=f"selective-tsp-ortools-{nb_nodes}nodes-pruning-v4",
+    study_name=f"selective-tsp-ortools-{nb_nodes}nodes-pruning-v4-auto",
     direction="minimize",
     sampler=optuna.samplers.TPESampler(seed=SEED),
     pruner=optuna.pruners.HyperbandPruner(min_resource=1, max_resource=200),
@@ -120,7 +139,7 @@ study = optuna.create_study(
     load_if_exists=True,
 )
 study.set_metric_names(["distance"])
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=20)
 
 
 pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])

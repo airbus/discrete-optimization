@@ -11,7 +11,7 @@ from discrete_optimization.gpdp.builders.instance_builders import (
 )
 from discrete_optimization.gpdp.plot import plot_gpdp_solution
 from discrete_optimization.gpdp.problem import GpdpSolution
-from discrete_optimization.gpdp.solvers.ortools import (
+from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,

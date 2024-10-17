@@ -5,10 +5,10 @@
 import logging
 
 import matplotlib.pyplot as plt
-from classic_ortools import create_matrix_data
+from gpdp_toy_model import create_matrix_data
 
 from discrete_optimization.gpdp.plot import plot_gpdp_solution
-from discrete_optimization.gpdp.solvers.ortools import (
+from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,

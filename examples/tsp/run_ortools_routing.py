@@ -6,7 +6,7 @@ import logging
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.do_problem import get_default_objective_setup
 from discrete_optimization.gpdp.problem import ProxyClass
-from discrete_optimization.gpdp.solvers.ortools import OrtoolsGpdpSolver
+from discrete_optimization.gpdp.solvers.ortools_routing import OrtoolsGpdpSolver
 from discrete_optimization.tsp.parser import get_data_available, parse_file
 
 logging.basicConfig(level=logging.INFO)

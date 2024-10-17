@@ -2,7 +2,7 @@ import logging
 
 from discrete_optimization.vrp.parser import get_data_available, parse_file
 from discrete_optimization.vrp.solvers.greedy import GreedyVrpSolver
-from discrete_optimization.vrp.solvers.ortools import (
+from discrete_optimization.vrp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsVrpSolver,

@@ -24,7 +24,7 @@ from discrete_optimization.gpdp.builders.instance_builders import (
     create_selective_tsp,
 )
 from discrete_optimization.gpdp.problem import GpdpSolution
-from discrete_optimization.gpdp.solvers.ortools import (
+from discrete_optimization.gpdp.solvers.ortools_routing import (
     FirstSolutionStrategy,
     LocalSearchMetaheuristic,
     OrtoolsGpdpSolver,
