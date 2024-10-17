@@ -17,6 +17,7 @@ from discrete_optimization.coloring.solvers.greedy import (
     GreedyColoringSolver,
     NxGreedyColoringMethod,
 )
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
@@ -62,3 +63,30 @@ def test_dp_coloring_ws(modeling):
     print(trans_ws, solution.colors)
     assert solution.colors == trans_ws
     assert color_problem.satisfy(solution)
+
+
+class MyCallbackNok(Callback):
+    def on_step_end(self, step: int, res, solver):
+        raise RuntimeError("Explicit crash")
+
+
+def test_coloring_dp_callback_nok():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    problem: ColoringProblem = parse_file(small_example)
+    solver = DpColoringSolver(problem=problem)
+    with pytest.raises(RuntimeError, match="Explicit crash"):
+        solver.solve(solver=dp.LNBS, time_limit=5, callbacks=[MyCallbackNok()])
+
+
+def test_coloring_dp_callback_stop():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    problem: ColoringProblem = parse_file(small_example)
+    solver = DpColoringSolver(problem=problem)
+
+    kwargs = dict(solver=dp.CABS, time_limit=5, use_callback=True)
+    result_store = solver.solve(**kwargs)
+    assert len(result_store) > 1
+
+    stopper = NbIterationStopper(nb_iteration_max=1)
+    result_store = solver.solve(callbacks=[stopper], **kwargs)
+    assert len(result_store) == 1
