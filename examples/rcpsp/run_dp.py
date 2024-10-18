@@ -34,7 +34,7 @@ def run_dp_rcpsp():
         ],
         time_limit=30,
         solver=dp.LNBS,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         threads=10,
     )
     sol, fit = res.get_best_solution_fit()
@@ -62,7 +62,7 @@ def run_dp_rcpsp_ws():
         ],
         time_limit=30,
         solver=dp.LNBS,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         threads=5,
     )
     sol, fit = res.get_best_solution_fit()
@@ -96,7 +96,7 @@ def run_dp_rcpsp_calendar():
         ],
         time_limit=10,
         solver=dp.CABS,
-        use_callback=False,
+        retrieve_intermediate_solutions=False,
         threads=5,
     )
     sol, fit = res.get_best_solution_fit()

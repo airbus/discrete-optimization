@@ -41,7 +41,9 @@ def dp_facility_example_ws():
     solver = DpFacilitySolver(problem=problem)
     solver.init_model(modeling=DpFacilityModeling.CUSTOMER)
     solver.set_warm_start(g_sol)
-    res = solver.solve(solver=dp.LNBS, use_callback=True, time_limit=3)
+    res = solver.solve(
+        solver=dp.LNBS, retrieve_intermediate_solutions=True, time_limit=3
+    )
     sol: FacilitySolution = res[0][0]
     assert sol.facility_for_customers == g_sol.facility_for_customers
     print(problem.evaluate(sol))
