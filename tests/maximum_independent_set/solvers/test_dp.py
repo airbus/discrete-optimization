@@ -41,7 +41,7 @@ def test_dip_solver_ws(modeling):
     res = solver.solve(
         solver=dp.LNBS,
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         time_limit=100,
     )
     sol = res[0][0]

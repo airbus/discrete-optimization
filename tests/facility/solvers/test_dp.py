@@ -42,7 +42,7 @@ def test_facility_example_ws(modeling):
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         solver=dp.LNBS,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         time_limit=3,
     )
     sol = res[0][0]

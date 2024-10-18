@@ -63,7 +63,7 @@ def run_dp_fjsp_ws():
         callbacks=[NbIterationStopper(nb_iteration_max=20)],
         solver=dp.LNBS,
         time_limit=50,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
     )
     print(g_sol.schedule)
     print(res[0][0].schedule)

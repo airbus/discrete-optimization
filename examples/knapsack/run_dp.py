@@ -44,7 +44,7 @@ def run_ws():
     solver.set_warm_start(solution=sol)
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=100)],
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         solver=dp.LNBS,
         time_limit=100,
     )

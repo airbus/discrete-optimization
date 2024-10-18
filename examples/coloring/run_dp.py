@@ -53,7 +53,7 @@ def run_dp_coloring_ws():
         solver=dp.LNBS,
         callbacks=[NbIterationStopper(nb_iteration_max=20)],
         threads=5,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         time_limit=100,
     )
     solution, fit = result_store.get_best_solution_fit()

@@ -95,7 +95,7 @@ class DpSolver(SolverDO):
         self,
         callbacks: Optional[List[Callback]] = None,
         time_limit: Optional[float] = 100.0,
-        use_callback: bool = False,
+        retrieve_intermediate_solutions: bool = True,
         **kwargs: Any,
     ) -> ResultStorage:
         self.early_stopping_exception = None
@@ -125,7 +125,7 @@ class DpSolver(SolverDO):
             kwargs_solver = kwargs
 
         solver = solver_cls(self.model, time_limit=time_limit, **kwargs_solver)
-        if use_callback:
+        if retrieve_intermediate_solutions:
             while True:
                 solution, terminated = solver.search_next()
                 logger.info(f"Objective = {solution.cost}, {solution.is_infeasible}")

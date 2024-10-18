@@ -56,7 +56,7 @@ def run_dp_vrp_ws():
     res = solver.solve(
         solver=dp.LNBS,
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         threads=6,
         time_limit=20,
     )

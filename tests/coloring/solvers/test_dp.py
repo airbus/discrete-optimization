@@ -53,7 +53,7 @@ def test_dp_coloring_ws(modeling):
         solver=dp.DDLNS,
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         threads=1,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         time_limit=100,
     )
     solution, fit = result_store.get_best_solution_fit()
@@ -83,7 +83,7 @@ def test_coloring_dp_callback_stop():
     problem: ColoringProblem = parse_file(small_example)
     solver = DpColoringSolver(problem=problem)
 
-    kwargs = dict(solver=dp.CABS, time_limit=5, use_callback=True)
+    kwargs = dict(solver=dp.CABS, time_limit=5)
     result_store = solver.solve(**kwargs)
     assert len(result_store) > 1
 
