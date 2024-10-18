@@ -86,7 +86,7 @@ def run_dp_jsp_ws():
     solver.set_warm_start(sol_ws)
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         solver=dp.LNBS,
         time_limit=100,
     )

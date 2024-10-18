@@ -24,7 +24,9 @@ def run_dp_solver():
     params_objective_function = get_default_objective_setup(problem=model)
     solver = DpTspSolver(model, params_objective_function=params_objective_function)
     solver.init_model()
-    res = solver.solve(solver=dp.LNBS, use_callback=True, time_limit=50)
+    res = solver.solve(
+        solver=dp.LNBS, retrieve_intermediate_solutions=True, time_limit=50
+    )
     sol, fitness = res.get_best_solution_fit()
     assert model.satisfy(sol)
     fig, ax = plt.subplots(1)
@@ -54,7 +56,7 @@ def run_dp_solver_ws():
     res = solver.solve(
         solver=dp.LNBS,
         callbacks=[NbIterationStopper(nb_iteration_max=500)],
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         threads=5,
         time_limit=40,
     )

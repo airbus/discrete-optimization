@@ -60,6 +60,6 @@ def test_dp_fjsp_ws():
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         solver=dp.LNBS,
         time_limit=3,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
     )
     assert problem.satisfy(res[0][0])

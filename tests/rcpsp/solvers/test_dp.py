@@ -76,7 +76,7 @@ def test_dp_rcpsp_ws(modeling):
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         time_limit=30,
         solver=dp.LNBS,
-        use_callback=True,
+        retrieve_intermediate_solutions=True,
         threads=5,
     )
     sol, fit = res.get_best_solution_fit()
