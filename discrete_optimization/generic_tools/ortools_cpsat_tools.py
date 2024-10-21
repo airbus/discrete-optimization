@@ -14,7 +14,6 @@ from ortools.sat.python.cp_model import (
     Constraint,
     CpModel,
 )
-from ortools.sat.python.cp_model import CpSolver
 from ortools.sat.python.cp_model import CpSolver as OrtoolsInternalCpSolver
 from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
@@ -38,6 +37,7 @@ class OrtoolsCpSatSolver(CpSolver):
 
     cp_model: Optional[CpModel] = None
     solver: Optional[OrtoolsInternalCpSolver] = None
+    clb: Optional[CpSolverSolutionCallback] = None
     early_stopping_exception: Optional[Exception] = None
 
     @abstractmethod
@@ -102,6 +102,7 @@ class OrtoolsCpSatSolver(CpSolver):
             for k, v in ortools_cpsat_solver_kwargs.items():
                 setattr(solver.parameters, k, v)
         ortools_callback = OrtoolsCpSatCallback(do_solver=self, callback=callbacks_list)
+        self.clb = ortools_callback
         status = solver.Solve(self.cp_model, ortools_callback)
         self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
         if self.early_stopping_exception:
