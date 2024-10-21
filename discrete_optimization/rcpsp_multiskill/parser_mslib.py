@@ -87,13 +87,14 @@ def parse_file(file_path, skill_level_version: bool = True):
                 successors_dict[index_task] = []
         logger.debug(f"successors dict : {successors_dict}")
         logger.debug(f"mode_details : {mode_details}")
-
-        index_workforce_module = next(
-            j for j in range(len(f)) if "* Workforce Module *" in f[j]
-        )
-        index_workforce_module = next(
-            j for j in range(len(f)) if "Workforce Module with Skill Levels" in f[j]
-        )
+        if not skill_level_version:
+            index_workforce_module = next(
+                j for j in range(len(f)) if "* Workforce Module *" in f[j]
+            )
+        else:
+            index_workforce_module = next(
+                j for j in range(len(f)) if "Workforce Module with Skill Levels" in f[j]
+            )
         lines_workforce = range(
             index_workforce_module + 1, index_workforce_module + 1 + number_units
         )
