@@ -62,6 +62,7 @@ class OrtoolsCpSatSolver(CpSolver):
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
+        retrieve_stats: bool = False,
         **kwargs: Any,
     ) -> ResultStorage:
         """Solve the problem with a CpSat solver drom ortools library.
@@ -74,6 +75,8 @@ class OrtoolsCpSatSolver(CpSolver):
                 We use here only `parameters_cp.nb_process`.
             ortools_cpsat_solver_kwargs: used to customize the underlying ortools solver.
                 Each key/value will update the corresponding attribute from the ortools.sat.python.cp_model.CpSolver
+            retrieve_stats: retrieve detailed stats of cpsat solving in the cpsat callback
+            and store it in the res object.
             **kwargs: keyword arguments passed to `self.init_model()`
 
         Returns:
@@ -101,7 +104,9 @@ class OrtoolsCpSatSolver(CpSolver):
             # customize solver
             for k, v in ortools_cpsat_solver_kwargs.items():
                 setattr(solver.parameters, k, v)
-        ortools_callback = OrtoolsCpSatCallback(do_solver=self, callback=callbacks_list)
+        ortools_callback = OrtoolsCpSatCallback(
+            do_solver=self, callback=callbacks_list, retrieve_stats=retrieve_stats
+        )
         self.clb = ortools_callback
         status = solver.Solve(self.cp_model, ortools_callback)
         self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
@@ -130,11 +135,19 @@ class OrtoolsCpSatSolver(CpSolver):
 
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):
-    def __init__(self, do_solver: OrtoolsCpSatSolver, callback: Callback):
+    def __init__(
+        self,
+        do_solver: OrtoolsCpSatSolver,
+        callback: Callback,
+        retrieve_stats: bool = False,
+    ):
         super().__init__()
         self.do_solver = do_solver
         self.callback = callback
+        self.retrieve_stats = retrieve_stats
         self.res = do_solver.create_result_storage()
+        if retrieve_stats:
+            self.res.stats = []
         self.nb_solutions = 0
 
     def on_solution_callback(self) -> None:
@@ -160,6 +173,15 @@ class OrtoolsCpSatCallback(CpSolverSolutionCallback):
         sol = self.do_solver.retrieve_solution(cpsolvercb=self)
         fit = self.do_solver.aggreg_from_sol(sol)
         self.res.append((sol, fit))
+        if self.retrieve_stats:
+            self.res.stats.append(
+                {
+                    "bound": self.BestObjectiveBound(),
+                    "obj": self.ObjectiveValue(),
+                    "time": self.UserTime(),
+                    "num_conflicts": self.NumConflicts(),
+                }
+            )
 
 
 def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
