@@ -5,6 +5,8 @@ import logging
 import os
 from typing import Any
 
+from discrete_optimization.generic_tools.do_problem import Solution
+
 try:
     import pytoulbar2
 except ImportError:
@@ -13,6 +15,7 @@ else:
     toulbar_available = True
 import tqdm
 
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -26,21 +29,23 @@ this_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
 
-class ToulbarMisSolver(MisSolver):
+class ToulbarMisSolver(MisSolver, WarmstartMixin):
+    model: "pytoulbar2.CFN"
+
     def init_model(self, **kwargs):
-        Problem = pytoulbar2.CFN(kwargs.get("UB", 0))
+        model = pytoulbar2.CFN(kwargs.get("UB", 0))
         vars = [
-            Problem.AddVariable(name=f"x_{i}", values=[0, 1])
+            model.AddVariable(name=f"x_{i}", values=[0, 1])
             for i in range(self.problem.number_nodes)
         ]
         for i in range(len(vars)):
-            Problem.AddFunction([vars[i]], [0, -int(self.problem.attr_list[i])])
+            model.AddFunction([vars[i]], [0, -int(self.problem.attr_list[i])])
         # nb_neighbors = {n: len(list(self.problem.graph.neighbors(n)))
         #                 for n in self.problem.graph}
         for e in tqdm.tqdm(self.problem.edges):
             i0 = self.problem.nodes_to_index[e[0]]
             i1 = self.problem.nodes_to_index[e[1]]
-            Problem.AddSumConstraint([vars[i0], vars[i1]], "<=", 1)
+            model.AddSumConstraint([vars[i0], vars[i1]], "<=", 1)
             # Problem.AddFunction([vars[i0], vars[i1]],
             #                      [10**12 if x == y == 1 else (x*-int(100*self.problem.attr_list[i0]/nb_neighbors[e[0]])
             #                                                   + y*-int(100*self.problem.attr_list[i1]/nb_neighbors[e[1]]))
@@ -48,7 +53,7 @@ class ToulbarMisSolver(MisSolver):
             # Problem.AddFunction([vars[i0], vars[i1]],
             #                      [10 ** 12 if x == y == 1 else 0
             #                       for x in [0, 1] for y in [0, 1]])
-        self.model = Problem
+        self.model = model
 
     def solve(self, **kwargs: Any) -> ResultStorage:
         time_limit = kwargs.get("time_limit", 20)
@@ -69,3 +74,7 @@ class ToulbarMisSolver(MisSolver):
             mode_optim=self.params_objective_function.sense_function,
             list_solution_fits=[(sol, fit)],
         )
+
+    def set_warm_start(self, solution: MisSolution) -> None:
+        for i in range(self.problem.number_nodes):
+            self.model.CFN.wcsp.setBestValue(i, solution.chosen[i])
