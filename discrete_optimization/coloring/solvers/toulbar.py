@@ -4,12 +4,14 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any, Optional
 
 from discrete_optimization.coloring.problem import ColoringSolution
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
@@ -28,9 +30,11 @@ else:
 import logging
 
 logger = logging.getLogger(__name__)
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 
 
-class ToulbarColoringSolver(WithStartingSolutionColoringSolver):
+class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
+
     hyperparameters = WithStartingSolutionColoringSolver.hyperparameters + [
         CategoricalHyperparameter(
             name="value_sequence_chain", choices=[True, False], default=False
@@ -84,6 +88,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver):
         Problem.AddVariable("max_color", range(nb_colors_on_subset))
         Problem.AddFunction(["max_color"], range(nb_colors_on_subset))
         range_map = {}
+        names_var = []
         for i in range(number_nodes):
             in_subset = self.problem.is_in_subset_index(i)
             range_map[i] = self.get_range_value(
@@ -92,6 +97,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver):
                 nb_colors_all=nb_colors_all,
             )
             Problem.AddVariable(f"x_{i}", range_map[i])
+            names_var.append(f"x_{i}")
             if in_subset:
                 Problem.AddFunction(
                     [f"x_{i}", "max_color"],
@@ -101,7 +107,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver):
                         for val2 in range(nb_colors_on_subset)
                     ],
                 )  # encode that x_{i}<=max_color.
-                #  Problem.AddLinearConstraint([1, -1], [0, i+1], '>=', 0)  # max_color>x_{i} (alternative way ?)
+                # Problem.AddLinearConstraint([1, -1], [0, i+1], '>=', 0)  # max_color>x_{i} (alternative way ?)
         value_sequence_chain = kwargs["value_sequence_chain"]
         # Warning : don't use this with special "constraints"
         if value_sequence_chain:
@@ -262,7 +268,11 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver):
         if time_limit is not None:
             self.model.CFN.timer(time_limit)
         solution = self.model.Solve(showSolutions=1)
+
         logger.info(f"=== Solution === \n {solution}")
+        logger.info(
+            f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
+        )
         if solution is not None:
             rcpsp_sol = ColoringSolution(
                 problem=self.problem,
@@ -274,3 +284,9 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver):
             )
         else:
             return self.create_result_storage()
+
+    def set_warm_start(self, solution: ColoringSolution) -> None:
+        max_color = max(solution.colors)
+        self.model.CFN.wcsp.setBestValue(0, max_color)
+        for i in range(1, self.problem.number_of_nodes + 1):
+            self.model.CFN.wcsp.setBestValue(i, solution.colors[i - 1])
