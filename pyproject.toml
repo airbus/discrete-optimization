@@ -65,6 +65,7 @@ quantum = [
     "qiskit-aer>=0.14.1",
     "qiskit-ibm-runtime>=0.24"
 ]
+toulbar = ["pytoulbar2>=0.0.0.4"]
 
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"
