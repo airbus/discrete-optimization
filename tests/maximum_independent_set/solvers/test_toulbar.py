@@ -3,9 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
-from discrete_optimization.generic_tools.callbacks.early_stoppers import (
-    NbIterationStopper,
-)
 from discrete_optimization.maximum_independent_set.parser import (
     dimacs_parser_nx,
     get_data_available,
@@ -16,7 +13,17 @@ from discrete_optimization.maximum_independent_set.solvers.toulbar import (
     ToulbarMisSolver,
 )
 
+try:
+    import pytoulbar2
+except ImportError:
+    toulbar_available = False
+else:
+    toulbar_available = True
 
+
+@pytest.mark.skipif(
+    not toulbar_available, reason="You need Toulbar2 to test this solver."
+)
 def test_mis_toulbar():
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
@@ -27,6 +34,9 @@ def test_mis_toulbar():
     assert mis_model.satisfy(sol)
 
 
+@pytest.mark.skipif(
+    not toulbar_available, reason="You need Toulbar2 to test this solver."
+)
 def test_mis_toulbar_ws():
     small_example = [f for f in get_data_available() if "1dc.64" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
