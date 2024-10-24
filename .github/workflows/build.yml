@@ -210,7 +210,12 @@ jobs:
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          pip install "${wheelfile}[test, quantum, toulbar]"
+          pip install "${wheelfile}[test, quantum]"
+          if [ "${{ startsWith(matrix.os, 'windows') || (startsWith(matrix.os, 'macos') && matrix.python-version == '3.12') }}" == false ]; then
+            echo "install toulbar2"
+            pip install "${wheelfile}[toulbar]"
+            python -c "import pytoulbar2"
+          fi
           if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
             echo "install gurobi"
             pip install gurobipy
