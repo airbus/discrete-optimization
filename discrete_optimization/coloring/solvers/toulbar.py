@@ -304,8 +304,9 @@ class ToulbarColoringSolverForLns(ToulbarColoringSolver):
         self.model.SolveFirst()
         self.depth = self.model.Depth()
         self.model.Store()
+        self.initub = self.model.GetUB()
 
-    def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
+    def solve_2(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
         try:
             solution = self.model.SolveNext(showSolutions=1, timeLimit=time_limit)
             logger.info(f"=== Solution === \n {solution}")
@@ -328,6 +329,37 @@ class ToulbarColoringSolverForLns(ToulbarColoringSolver):
         except:
             self.model.Restore(self.depth)
             self.model.Store()
+            logger.info("Solve failed in given time")
+            return self.create_result_storage()
+
+    def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
+        try:
+            solution = self.model.SolveNext(showSolutions=1, timeLimit=time_limit)
+            logger.info(f"=== Solution === \n {solution}")
+            logger.info(
+                f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
+            )
+            # Reinit for next iteration.
+            self.model.Restore(self.depth)
+            self.model.Store()
+            self.model.SetUB(self.initub)
+            if solution is not None:
+                sol = ColoringSolution(
+                    problem=self.problem,
+                    colors=solution[0][1 : 1 + self.problem.number_of_nodes],
+                )
+                fit = self.aggreg_from_sol(sol)
+                return self.create_result_storage(
+                    [(sol, fit)],
+                )
+            else:
+                self.model.ClearPropagationQueues()
+                return self.create_result_storage()
+        except:
+            self.model.ClearPropagationQueues()
+            self.model.Restore(self.depth)
+            self.model.Store()
+            self.model.SetUB(self.initub)
             logger.info("Solve failed in given time")
             return self.create_result_storage()
 
