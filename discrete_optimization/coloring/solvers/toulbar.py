@@ -4,14 +4,13 @@
 
 from __future__ import annotations
 
-import time
-from typing import Any, Optional
+import random
+from typing import Any, Iterable, Optional
 
-from discrete_optimization.coloring.problem import ColoringSolution
+from discrete_optimization.coloring.problem import ColoringProblem, ColoringSolution
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
-from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
@@ -29,8 +28,10 @@ else:
 
 import logging
 
+from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
+from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
+
 logger = logging.getLogger(__name__)
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 
 
 class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
@@ -51,6 +52,9 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
             high=2,
             default=1,
             depends_on=("value_sequence_chain", [True]),
+        ),
+        CategoricalHyperparameter(
+            name="vns", choices=[None, -4, -3, -2, -1, 0], default=None
         ),
     ]
     model: Optional[pytoulbar2.CFN] = None
@@ -84,7 +88,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
         else:
             nb_colors_all = nb_colors
         # we don't have to have a very tight bound.
-        Problem = pytoulbar2.CFN(nb_colors)
+        Problem = pytoulbar2.CFN(nb_colors, vns=kwargs["vns"])
         Problem.AddVariable("max_color", range(nb_colors_on_subset))
         Problem.AddFunction(["max_color"], range(nb_colors_on_subset))
         range_map = {}
@@ -274,13 +278,13 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
             f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
         )
         if solution is not None:
-            rcpsp_sol = ColoringSolution(
+            sol = ColoringSolution(
                 problem=self.problem,
                 colors=solution[0][1 : 1 + self.problem.number_of_nodes],
             )
-            fit = self.aggreg_from_sol(rcpsp_sol)
+            fit = self.aggreg_from_sol(sol)
             return self.create_result_storage(
-                [(rcpsp_sol, fit)],
+                [(sol, fit)],
             )
         else:
             return self.create_result_storage()
@@ -290,3 +294,76 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
         self.model.CFN.wcsp.setBestValue(0, max_color)
         for i in range(1, self.problem.number_of_nodes + 1):
             self.model.CFN.wcsp.setBestValue(i, solution.colors[i - 1])
+
+
+class ToulbarColoringSolverForLns(ToulbarColoringSolver):
+    depth: int = 0
+
+    def init_model(self, **kwargs: Any) -> None:
+        super().init_model(**kwargs)
+        self.model.SolveFirst()
+        self.depth = self.model.Depth()
+        self.model.Store()
+
+    def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
+        try:
+            solution = self.model.SolveNext(showSolutions=1, timeLimit=time_limit)
+            logger.info(f"=== Solution === \n {solution}")
+            logger.info(
+                f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
+            )
+            self.model.Restore(self.depth)
+            self.model.Store()
+            if solution is not None:
+                sol = ColoringSolution(
+                    problem=self.problem,
+                    colors=solution[0][1 : 1 + self.problem.number_of_nodes],
+                )
+                fit = self.aggreg_from_sol(sol)
+                return self.create_result_storage(
+                    [(sol, fit)],
+                )
+            else:
+                return self.create_result_storage()
+        except:
+            self.model.Restore(self.depth)
+            self.model.Store()
+            logger.info("Solve failed in given time")
+            return self.create_result_storage()
+
+
+class ColoringConstraintHandlerToulbar(ConstraintHandler):
+    def remove_constraints_from_previous_iteration(
+        self, solver: SolverDO, previous_constraints: Iterable[Any], **kwargs: Any
+    ) -> None:
+        pass
+
+    def __init__(self, fraction_node: float = 0.3):
+        self.fraction_node = fraction_node
+
+    def adding_constraint_from_results_store(
+        self,
+        solver: ToulbarColoringSolverForLns,
+        result_storage: ResultStorage,
+        **kwargs: Any,
+    ) -> Iterable[Any]:
+        best_sol: ColoringSolution = result_storage.get_best_solution_fit()[0]
+        max_ = max(best_sol.colors)
+        problem: ColoringProblem = solver.problem
+        random_indexes = random.sample(
+            range(1, problem.number_of_nodes + 1),
+            k=int(self.fraction_node * problem.number_of_nodes),
+        )
+        text = ",".join(
+            f"{index}={best_sol.colors[index - 1]}"
+            for index in random_indexes
+            if best_sol.colors[index - 1] < max_
+        )
+        text = "," + text
+        # circumvent some timeout issue when calling Parse(text). TODO : investigate.
+        solver.model.CFN.timer(100)
+        try:
+            solver.model.Parse(text)
+        except Exception as e:
+            logger.warning(f"Error raised during parsing certificate : {e}")
+        solver.set_warm_start(best_sol)
