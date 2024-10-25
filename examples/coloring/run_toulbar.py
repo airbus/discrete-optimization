@@ -155,11 +155,11 @@ def run_toulbar_with_do_lns():
         problem=color_problem,
         subsolver=solver,
         initial_solution_provider=initial,
-        constraint_handler=ColoringConstraintHandlerToulbar(fraction_node=0.25),
+        constraint_handler=ColoringConstraintHandlerToulbar(fraction_node=0.5),
     )
     res = lns.solve(
         nb_iteration_lns=100,
-        time_limit_subsolver=10,
+        time_limit_subsolver=2,
         callbacks=[TimerStopper(total_seconds=200)],
     )
     sol = res[-1][0]
