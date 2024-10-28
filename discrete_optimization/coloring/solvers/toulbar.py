@@ -31,7 +31,10 @@ import logging
 
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
-from discrete_optimization.generic_tools.toulbar_tools import ToulbarSolver
+from discrete_optimization.generic_tools.toulbar_tools import (
+    ToulbarSolver,
+    to_lns_toulbar,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -272,72 +275,7 @@ class ToulbarColoringSolver(
             self.model.CFN.wcsp.setBestValue(i, solution.colors[i - 1])
 
 
-class ToulbarColoringSolverForLns(ToulbarColoringSolver):
-    depth: int = 0
-
-    def init_model(self, **kwargs: Any) -> None:
-        super().init_model(**kwargs)
-        self.model.SolveFirst()
-        self.depth = self.model.Depth()
-        self.model.Store()
-        self.initub = self.model.GetUB()
-
-    def solve_2(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
-        try:
-            solution = self.model.SolveNext(showSolutions=1, timeLimit=time_limit)
-            logger.info(f"=== Solution === \n {solution}")
-            logger.info(
-                f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
-            )
-            self.model.Restore(self.depth)
-            self.model.Store()
-            if solution is not None:
-                sol = ColoringSolution(
-                    problem=self.problem,
-                    colors=solution[0][1 : 1 + self.problem.number_of_nodes],
-                )
-                fit = self.aggreg_from_sol(sol)
-                return self.create_result_storage(
-                    [(sol, fit)],
-                )
-            else:
-                return self.create_result_storage()
-        except:
-            self.model.Restore(self.depth)
-            self.model.Store()
-            logger.info("Solve failed in given time")
-            return self.create_result_storage()
-
-    def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
-        try:
-            solution = self.model.SolveNext(showSolutions=1, timeLimit=time_limit)
-            logger.info(f"=== Solution === \n {solution}")
-            logger.info(
-                f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
-            )
-            # Reinit for next iteration.
-            self.model.Restore(self.depth)
-            self.model.Store()
-            self.model.SetUB(self.initub)
-            if solution is not None:
-                sol = ColoringSolution(
-                    problem=self.problem,
-                    colors=solution[0][1 : 1 + self.problem.number_of_nodes],
-                )
-                fit = self.aggreg_from_sol(sol)
-                return self.create_result_storage(
-                    [(sol, fit)],
-                )
-            else:
-                self.model.ClearPropagationQueues()
-                return self.create_result_storage()
-        except:
-            self.model.ClearPropagationQueues()
-            self.model.Restore(self.depth)
-            self.model.Store()
-            self.model.SetUB(self.initub)
-            logger.info("Solve failed in given time")
-            return self.create_result_storage()
+ToulbarColoringSolverForLns = to_lns_toulbar(ToulbarColoringSolver)
 
 
 class ColoringConstraintHandlerToulbar(ConstraintHandler):
