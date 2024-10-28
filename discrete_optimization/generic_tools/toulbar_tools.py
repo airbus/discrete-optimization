@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class ToulbarSolver(SolverDO):
-    model: "pytoulbar2.CFN"
+    model: "pytoulbar2.CFN" = None
     hyperparameters = [
         CategoricalHyperparameter(
             name="vns", choices=[None, -4, -3, -2, -1, 0], default=None
