@@ -80,7 +80,7 @@ def run_decomposition_asp():
 
 
 def run_decomposition_toulbar():
-    small_example = [f for f in get_data_available() if "1dc.1024" in f][0]
+    small_example = [f for f in get_data_available() if "1dc.2048" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver = DecomposedMisSolver(problem=mis_model)
     p = ParametersCp.default_cpsat()

@@ -1,12 +1,19 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 import os
 import random
 from typing import Any, Iterable, Optional
 
+from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
+    CategoricalHyperparameter,
+)
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
+from discrete_optimization.generic_tools.toulbar_tools import ToulbarSolver
 
 try:
     import pytoulbar2
@@ -30,11 +37,17 @@ this_folder = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
 
-class ToulbarMisSolver(MisSolver, WarmstartMixin):
-    model: "pytoulbar2.CFN"
+class ToulbarMisSolver(ToulbarSolver, MisSolver, WarmstartMixin):
+    hyperparameters = ToulbarSolver.hyperparameters
+
+    def retrieve_solution(
+        self, solution_from_toulbar2: tuple[list, float, int]
+    ) -> Solution:
+        return MisSolution(problem=self.problem, chosen=solution_from_toulbar2[0][:])
 
     def init_model(self, **kwargs):
-        model = pytoulbar2.CFN(kwargs.get("UB", 0))
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
+        model = pytoulbar2.CFN(kwargs.get("UB", 0), vns=kwargs["vns"])
 
         for i in range(self.problem.number_nodes):
             model.AddVariable(name=f"x_{i}", values=[0, 1])
@@ -52,26 +65,6 @@ class ToulbarMisSolver(MisSolver, WarmstartMixin):
             #                      [10 ** 12 if x == y == 1 else 0
             #                       for x in [0, 1] for y in [0, 1]])
         self.model = model
-
-    def solve(self, **kwargs: Any) -> ResultStorage:
-        time_limit = kwargs.get("time_limit", 20)
-        self.model.CFN.timer(time_limit)
-        solution = self.model.Solve(showSolutions=1)
-        logger.info(f"=== Solution === \n {solution}")
-        if solution is None:
-            return ResultStorage(
-                mode_optim=self.params_objective_function.sense_function,
-                list_solution_fits=[],
-            )
-        sol = MisSolution(
-            problem=self.problem,
-            chosen=solution[0][:],
-        )
-        fit = self.aggreg_from_sol(sol)
-        return ResultStorage(
-            mode_optim=self.params_objective_function.sense_function,
-            list_solution_fits=[(sol, fit)],
-        )
 
     def set_warm_start(self, solution: MisSolution) -> None:
         for i in range(self.problem.number_nodes):
