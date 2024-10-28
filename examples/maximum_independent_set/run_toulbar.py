@@ -59,7 +59,7 @@ def run_toulbar_solver_ws():
 
 
 def run_toulbar_lns():
-    small_example = [f for f in get_data_available() if "1dc.512.txt" in f][0]
+    small_example = [f for f in get_data_available() if "1dc.2048" in f][0]
     mis_model: MisProblem = dimacs_parser_nx(small_example)
     solver_cpsat = CpSatMisSolver(mis_model)
     solver_cpsat.init_model()
@@ -79,9 +79,10 @@ def run_toulbar_lns():
         constraint_handler=MisConstraintHandlerToulbar(fraction_node=0.5),
     )
     res = lns.solve(
-        nb_iteration_lns=100,
-        time_limit_subsolver=2,
-        callbacks=[TimerStopper(total_seconds=100)],
+        nb_iteration_lns=10000,
+        time_limit_subsolver=5,
+        skip_initial_solution_provider=True,
+        callbacks=[TimerStopper(total_seconds=500)],
     )
     sol = res[-1][0]
     print(mis_model.evaluate(sol))

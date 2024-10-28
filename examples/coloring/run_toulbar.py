@@ -22,6 +22,7 @@ from discrete_optimization.coloring.solvers.toulbar import (
     ToulbarColoringSolverForLns,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.toulbar_tools import to_lns_toulbar
 
 
 def run_toulbar_coloring():
@@ -144,7 +145,8 @@ def run_toulbar_with_do_lns():
         solver=GreedyColoringSolver(problem=color_problem),
         strategy=NxGreedyColoringMethod.best,
     )
-    solver = ToulbarColoringSolverForLns(color_problem, params_objective_function=None)
+    # solver = ToulbarColoringSolverForLns(color_problem, params_objective_function=None)
+    solver = to_lns_toulbar(ToulbarColoringSolver)(color_problem)
     solver.init_model(
         nb_colors=None,
         value_sequence_chain=False,
@@ -155,11 +157,11 @@ def run_toulbar_with_do_lns():
         problem=color_problem,
         subsolver=solver,
         initial_solution_provider=initial,
-        constraint_handler=ColoringConstraintHandlerToulbar(fraction_node=0.5),
+        constraint_handler=ColoringConstraintHandlerToulbar(fraction_node=0.4),
     )
     res = lns.solve(
         nb_iteration_lns=100,
-        time_limit_subsolver=2,
+        time_limit_subsolver=5,
         callbacks=[TimerStopper(total_seconds=200)],
     )
     sol = res[-1][0]

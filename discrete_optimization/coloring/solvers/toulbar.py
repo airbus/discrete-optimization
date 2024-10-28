@@ -11,6 +11,7 @@ from discrete_optimization.coloring.problem import ColoringProblem, ColoringSolu
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     IntegerHyperparameter,
@@ -30,34 +31,39 @@ import logging
 
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandler
+from discrete_optimization.generic_tools.toulbar_tools import ToulbarSolver
 
 logger = logging.getLogger(__name__)
 
 
-class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
-
-    hyperparameters = WithStartingSolutionColoringSolver.hyperparameters + [
-        CategoricalHyperparameter(
-            name="value_sequence_chain", choices=[True, False], default=False
-        ),
-        CategoricalHyperparameter(
-            name="hard_value_sequence_chain",
-            choices=[True, False],
-            default=False,
-            depends_on=("value_sequence_chain", [True]),
-        ),
-        IntegerHyperparameter(
-            name="tolerance_delta_max",
-            low=0,
-            high=2,
-            default=1,
-            depends_on=("value_sequence_chain", [True]),
-        ),
-        CategoricalHyperparameter(
-            name="vns", choices=[None, -4, -3, -2, -1, 0], default=None
-        ),
-    ]
-    model: Optional[pytoulbar2.CFN] = None
+class ToulbarColoringSolver(
+    ToulbarSolver, WithStartingSolutionColoringSolver, WarmstartMixin
+):
+    hyperparameters = (
+        ToulbarSolver.hyperparameters
+        + WithStartingSolutionColoringSolver.hyperparameters
+        + [
+            CategoricalHyperparameter(
+                name="value_sequence_chain", choices=[True, False], default=False
+            ),
+            CategoricalHyperparameter(
+                name="hard_value_sequence_chain",
+                choices=[True, False],
+                default=False,
+                depends_on=("value_sequence_chain", [True]),
+            ),
+            IntegerHyperparameter(
+                name="tolerance_delta_max",
+                low=0,
+                high=2,
+                default=1,
+                depends_on=("value_sequence_chain", [True]),
+            ),
+            CategoricalHyperparameter(
+                name="vns", choices=[None, -4, -3, -2, -1, 0], default=None
+            ),
+        ]
+    )
 
     def get_range_value(
         self, index_node: int, nb_colors_on_subset: int, nb_colors_all: int
@@ -73,9 +79,9 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
         return range(ub_i)
 
     def init_model(self, **kwargs: Any) -> None:
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
         number_nodes = self.problem.number_of_nodes
         index_nodes_name = self.problem.index_nodes_name
-        kwargs = self.complete_with_default_hyperparameters(kwargs)
         nb_colors = kwargs.get("nb_colors", None)
         nb_colors_on_subset = kwargs.get("nb_colors_on_subset", nb_colors)
         if nb_colors is None:
@@ -88,9 +94,9 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
         else:
             nb_colors_all = nb_colors
         # we don't have to have a very tight bound.
-        Problem = pytoulbar2.CFN(nb_colors, vns=kwargs["vns"])
-        Problem.AddVariable("max_color", range(nb_colors_on_subset))
-        Problem.AddFunction(["max_color"], range(nb_colors_on_subset))
+        model = pytoulbar2.CFN(nb_colors, vns=kwargs["vns"])
+        model.AddVariable("max_color", range(nb_colors_on_subset))
+        model.AddFunction(["max_color"], range(nb_colors_on_subset))
         range_map = {}
         names_var = []
         for i in range(number_nodes):
@@ -100,10 +106,10 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                 nb_colors_on_subset=nb_colors_on_subset,
                 nb_colors_all=nb_colors_all,
             )
-            Problem.AddVariable(f"x_{i}", range_map[i])
+            model.AddVariable(f"x_{i}", range_map[i])
             names_var.append(f"x_{i}")
             if in_subset:
-                Problem.AddFunction(
+                model.AddFunction(
                     [f"x_{i}", "max_color"],
                     [
                         10000 if val1 > val2 else 0
@@ -119,10 +125,10 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
             tolerance_delta_max = kwargs["tolerance_delta_max"]
             # play with how "fidele" should be the "max_x" variable
             for j in range(number_nodes):
-                Problem.AddVariable(f"max_x_{j}", range(nb_colors_all))
-            Problem.AddFunction([f"max_x_{0}"], [0] + [1000] * (nb_colors_all - 1))
-            Problem.AddFunction([f"x_{0}"], [0] + [1000] * (nb_colors - 1))
-            Problem.AddFunction(
+                model.AddVariable(f"max_x_{j}", range(nb_colors_all))
+            model.AddFunction([f"max_x_{0}"], [0] + [1000] * (nb_colors_all - 1))
+            model.AddFunction([f"x_{0}"], [0] + [1000] * (nb_colors - 1))
+            model.AddFunction(
                 ["max_color", f"max_x_{number_nodes-1}"],
                 [
                     1000 if val1 != val2 else 0
@@ -131,7 +137,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                 ],
             )
             for j in range(1, number_nodes):
-                Problem.AddFunction(
+                model.AddFunction(
                     [f"max_x_{j-1}", f"max_x_{j}"],
                     [
                         10000 if val1 > val2 or val2 > val1 + tolerance_delta_max else 0
@@ -139,7 +145,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                         for val2 in range(nb_colors)
                     ],
                 )  # Max is increasing but 1 by 1 only.
-                Problem.AddFunction(
+                model.AddFunction(
                     [f"max_x_{j}", f"x_{j}"],
                     [
                         10000 if val2 > val1 else 0
@@ -147,7 +153,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                         for val2 in range(nb_colors)
                     ],
                 )
-                Problem.AddFunction(
+                model.AddFunction(
                     [f"max_x_{j - 1}", f"x_{j}"],
                     [
                         10000 if val2 > val1 + tolerance_delta_max else 0
@@ -156,7 +162,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                     ],
                 )
                 if hard_value_sequence_chain:
-                    Problem.AddFunction(
+                    model.AddFunction(
                         [f"max_x_{j}", f"max_x_{j-1}", f"x_{j}"],
                         [
                             0 if val1 == max(val2, val3) else 10000
@@ -165,7 +171,7 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                             for val3 in range(nb_colors)
                         ],
                     )  # x_j <= max_x_{j}
-                    Problem.AddFunction(
+                    model.AddFunction(
                         [f"max_x_{j-1}", f"x_{j}"],
                         [
                             10000 if val2 > val1 + 1 else 0
@@ -186,9 +192,9 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
             costs_i1_i2 = self.get_costs_matrix(
                 index1=index1, index2=index2, costs=costs_dict, range_map=range_map
             )
-            Problem.AddFunction([f"x_{index1}", f"x_{index2}"], costs_i1_i2)
+            model.AddFunction([f"x_{index1}", f"x_{index2}"], costs_i1_i2)
             index += 1
-        self.model = Problem
+        self.model = model
 
     def default_costs_matrix(self, nb_colors_all: int, nb_colors_on_subset: int):
         costs = [
@@ -251,43 +257,13 @@ class ToulbarColoringSolver(WithStartingSolutionColoringSolver, WarmstartMixin):
                 for val2 in range_map[index2]
             ]
 
-    def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
-        """
-
-        Args:
-            time_limit: the solve process stops after this time limit (in seconds).
-                If None, no time limit is applied.
-            **kwargs:
-
-        Returns:
-
-        """
-        if self.model is None:
-            self.init_model()
-            if self.model is None:
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        logger.info("CFN Model init.")
-        if time_limit is not None:
-            self.model.CFN.timer(time_limit)
-        solution = self.model.Solve(showSolutions=1)
-
-        logger.info(f"=== Solution === \n {solution}")
-        logger.info(
-            f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"
+    def retrieve_solution(
+        self, solution_from_toulbar2: tuple[list, float, int]
+    ) -> Solution:
+        return ColoringSolution(
+            problem=self.problem,
+            colors=solution_from_toulbar2[0][1 : 1 + self.problem.number_of_nodes],
         )
-        if solution is not None:
-            sol = ColoringSolution(
-                problem=self.problem,
-                colors=solution[0][1 : 1 + self.problem.number_of_nodes],
-            )
-            fit = self.aggreg_from_sol(sol)
-            return self.create_result_storage(
-                [(sol, fit)],
-            )
-        else:
-            return self.create_result_storage()
 
     def set_warm_start(self, solution: ColoringSolution) -> None:
         max_color = max(solution.colors)

@@ -94,4 +94,4 @@ def dp_optuna_example():
 
 
 if __name__ == "__main__":
-    dp_facility_example_ws()
+    dp_facility_example()
