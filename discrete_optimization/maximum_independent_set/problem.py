@@ -58,7 +58,7 @@ class MisProblem(Problem):
             self.edges = self.graph.get_edges()
             self.graph_nx = self.graph.graph_nx
         else:
-            self.nodes = sorted(list(self.graph.nodes()))
+            self.nodes = list(self.graph.nodes())
             self.edges = list(self.graph.edges())
             self.graph_nx = self.graph
 
@@ -100,10 +100,6 @@ class MisProblem(Problem):
                 == variable.chosen[self.nodes_to_index[e[1]]]
                 == 1
             ):
-                print(e)
-                print(
-                    "violation ", self.nodes_to_index[e[0]], self.nodes_to_index[e[1]]
-                )
                 v += 1
         return v
 

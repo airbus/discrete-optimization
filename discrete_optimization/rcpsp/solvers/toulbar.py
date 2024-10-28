@@ -54,6 +54,14 @@ class ToulbarRcpspSolver(ToulbarSolver, RcpspSolver, WarmstartMixin):
         )
 
     def init_model(self, **kwargs: Any) -> None:
+        try:
+            assert not self.problem.is_rcpsp_multimode()
+        except AssertionError as exc:
+            logging.exception(
+                f"Your problem is multimode, and this toulbar model can't tackle it. "
+                f"Please go with ToulbarMultimodeRcpspSolver instead."
+            )
+            raise exc
         model = pytoulbar2.CFN(ubinit=self.problem.horizon)
         n_jobs = self.problem.n_jobs
         horizon = self.problem.horizon
