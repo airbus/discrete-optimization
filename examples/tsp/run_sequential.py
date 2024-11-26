@@ -40,6 +40,7 @@ from discrete_optimization.tsp.solvers.lns_cpsat import (
     SubpathTspConstraintHandler,
     TspConstraintHandler,
 )
+from discrete_optimization.tsp.solvers.toulbar import ToulbarTspSolver
 
 logging.basicConfig(level=logging.INFO)
 
@@ -141,5 +142,36 @@ def run_seq_dp():
     plt.show()
 
 
+def run_seq_toulbar():
+    files = get_data_available()
+    files = [f for f in files if "tsp_198_1" in f]
+    model = parse_file(files[0])
+    solv = SequentialMetasolver(
+        problem=model,
+        list_subbricks=[
+            SubBrick(GpdpBasedTspSolver, dict(time_limit=5)),
+            SubBrick(
+                ToulbarTspSolver,
+                dict(time_limit=100, vns=None, encoding_all_diff="salldiffkp"),
+            ),
+        ],
+    )
+    res = solv.solve(
+        callbacks=[
+            ObjectiveLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            )
+        ]
+    )
+    fig, ax = plt.subplots(1)
+    list_solution_fit = sorted(res.list_solution_fits, key=lambda x: x[1], reverse=True)
+    for sol, fit in list_solution_fit:
+        ax.clear()
+        plot_tsp_solution(tsp_model=model, solution=sol, ax=ax)
+        ax.set_title(f"Length ={fit}")
+        plt.pause(0.15)
+    plt.show()
+
+
 if __name__ == "__main__":
-    run_seq_dp()
+    run_seq_toulbar()

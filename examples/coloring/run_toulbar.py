@@ -22,7 +22,17 @@ from discrete_optimization.coloring.solvers.toulbar import (
     ToulbarColoringSolverForLns,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper
+from discrete_optimization.generic_tools.lns_tools import (
+    BaseLns,
+    InitialSolutionFromSolver,
+    TrivialInitialSolution,
+)
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    from_solutions_to_result_storage,
+)
 from discrete_optimization.generic_tools.toulbar_tools import to_lns_toulbar
+
+logging.basicConfig(level=logging.INFO)
 
 
 def run_toulbar_coloring():
@@ -192,5 +202,56 @@ def run_toulbar_with_constraints():
     plt.show()
 
 
+def run_optuna_study():
+    from discrete_optimization.generic_tools.optuna.utils import (
+        generic_optuna_experiment_monoproblem,
+    )
+
+    files_available = get_data_available()
+    file = [f for f in get_data_available() if "gc_250_9" in f][0]
+    color_problem = parse_file(file)
+    solvers_to_test = [ToulbarColoringSolver, BaseLns]
+    copy = ToulbarColoringSolver.hyperparameters
+    ToulbarColoringSolver.hyperparameters = (
+        ToulbarColoringSolver.copy_and_update_hyperparameters(
+            ["vns", "value_sequence_chain", "greedy_start"],
+            **{
+                "vns": {"choices": [None, -4]},
+                "value_sequence_chain": {"choices": [False]},
+                "greedy_start": {"choices": [True]},
+            },
+        )
+    )
+    ToulbarColoringSolver.hyperparameters += [
+        c for c in copy if c.name not in ["vns", "value_sequence_chain", "greedy_start"]
+    ]
+    generic_optuna_experiment_monoproblem(
+        problem=color_problem,
+        study_basename="study-toulbar",
+        # storage_path="./optuna-journal-toulbar.log",
+        solvers_to_test=solvers_to_test,
+        overwrite_study=True,
+        kwargs_fixed_by_solver={
+            ToulbarColoringSolver: {"time_limit": 50, "greedy_start": True},
+            BaseLns: {
+                "callbacks": [TimerStopper(total_seconds=50)],
+                "constraint_handler": ColoringConstraintHandlerToulbar(
+                    fraction_node=0.83
+                ),
+                "post_process_solution": None,
+                "initial_solution_provider": InitialSolutionFromSolver(
+                    solver=GreedyColoringSolver(problem=color_problem),
+                    strategy=NxGreedyColoringMethod.best,
+                ),
+                "nb_iteration_lns": 1000,
+                "time_limit_subsolver": 5,
+            },
+        },
+        suggest_optuna_kwargs_by_name_by_solver={
+            BaseLns: {"subsolver": {"choices": [to_lns_toulbar(ToulbarColoringSolver)]}}
+        },
+    )
+
+
 if __name__ == "__main__":
-    run_toulbar_with_do_lns()
+    run_optuna_study()
