@@ -90,6 +90,7 @@ class ToulbarColoringSolver(
         if nb_colors is None:
             # Run greedy solver to get an upper bound of the bound.
             sol = self.get_starting_solution(**kwargs)
+            self.sol = sol
             nb_colors = int(self.problem.evaluate(sol)["nb_colors"])
             nb_colors_all = self.problem.count_colors_all_index(sol.colors)
             nb_colors_on_subset = self.problem.count_colors(sol.colors)
@@ -198,6 +199,8 @@ class ToulbarColoringSolver(
             model.AddFunction([f"x_{index1}", f"x_{index2}"], costs_i1_i2)
             index += 1
         self.model = model
+        if hasattr(self, "sol") and kwargs["greedy_start"]:
+            self.set_warm_start(self.sol)
 
     def default_costs_matrix(self, nb_colors_all: int, nb_colors_on_subset: int):
         costs = [

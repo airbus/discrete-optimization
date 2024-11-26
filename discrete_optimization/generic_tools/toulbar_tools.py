@@ -36,6 +36,10 @@ class ToulbarSolver(SolverDO):
     ]
 
     @abstractmethod
+    def init_model(self, **kwargs: Any) -> None:
+        ...
+
+    @abstractmethod
     def retrieve_solution(
         self, solution_from_toulbar2: tuple[list, float, int]
     ) -> Solution:
@@ -49,7 +53,7 @@ class ToulbarSolver(SolverDO):
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(**kwargs)
-        solution = self.model.Solve(showSolutions=1, timeLimit=time_limit)
+        solution = self.model.Solve(showSolutions=1, timeLimit=int(time_limit))
         logger.info(
             f"Solution value = {solution[1]}, bound={self.model.GetDDualBound()}"
         )
@@ -71,7 +75,9 @@ def to_lns_toulbar(cls: Type[ToulbarSolver]):
 
         def solve(self, time_limit: Optional[int] = 20, **kwargs: Any) -> ResultStorage:
             try:
-                solution = self.model.SolveNext(showSolutions=1, timeLimit=time_limit)
+                solution = self.model.SolveNext(
+                    showSolutions=1, timeLimit=int(time_limit)
+                )
                 logger.info(f"=== Solution === \n {solution}")
                 logger.info(
                     f"Best solution = {solution[1]}, Bound = {self.model.GetDDualBound()}"

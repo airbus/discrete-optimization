@@ -62,7 +62,10 @@ class ToulbarRcpspSolver(ToulbarSolver, RcpspSolver, WarmstartMixin):
                 f"Please go with ToulbarMultimodeRcpspSolver instead."
             )
             raise exc
-        model = pytoulbar2.CFN(ubinit=self.problem.horizon)
+        if "vns" in kwargs:
+            model = pytoulbar2.CFN(ubinit=self.problem.horizon, vns=kwargs["vns"])
+        else:
+            model = pytoulbar2.CFN(ubinit=self.problem.horizon)
         n_jobs = self.problem.n_jobs
         horizon = self.problem.horizon
         index_var = 0
@@ -355,7 +358,7 @@ class RcpspConstraintHandlerToulbar(ConstraintHandler):
             problem=self.problem, graph=self.graph, nb_cut_part=3
         )
         neighbors_2 = NeighborRandom(
-            problem=self.problem, graph=self.graph, fraction_subproblem=0.4
+            problem=self.problem, graph=self.graph, fraction_subproblem=0.3
         )
         neighbors_3 = NeighborBuilderTimeWindow(
             problem=self.problem, graph=self.graph, time_window_length=20
