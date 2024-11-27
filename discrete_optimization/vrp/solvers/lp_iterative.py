@@ -987,7 +987,7 @@ def retrieve_solutions(
                 x_solution.copy(),
             )
         ]
-        print(f"quality of {s}-th solution", model.getAttr("PoolObjVal"))
+        logger.info(f"quality of {s}-th solution : {model.getAttr('PoolObjVal')}")
     return solutions
 
 
