@@ -146,11 +146,6 @@ class DpJspSolver(DpSolver, WarmstartMixin):
 
         for transition in sol.transitions:
             state = transition.apply(state, self.model)
-            # for i in range(len(self.cur_time_per_machine)):
-            #     print("machine", i, state[self.cur_time_per_machine[i]])
-            # for j in range(len(self.cur_time_per_job)):
-            #     print("job", j, state[self.cur_time_per_job[j]])
-            # print(transition.name)
             if "finish" not in transition.name:
                 t_number = extract_ints(transition.name)[0]
                 m = self.machines[t_number]
@@ -170,7 +165,6 @@ class DpJspSolver(DpSolver, WarmstartMixin):
                 for i in range(self.problem.n_jobs)
             ],
         )
-        print(self.problem.evaluate(sol))
         return sol
 
     def set_warm_start(self, solution: JobShopSolution) -> None:

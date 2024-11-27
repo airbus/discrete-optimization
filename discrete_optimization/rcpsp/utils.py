@@ -637,7 +637,7 @@ def get_start_bounds_from_additional_constraint(
                     )
                     ub = min(ub, ubs - min_duration)
     if ub < 0:
-        print(ub)
+        logger.debug(f"ub<0, {ub}")
     return int(lb), int(ub)
 
 

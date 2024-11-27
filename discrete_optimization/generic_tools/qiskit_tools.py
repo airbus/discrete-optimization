@@ -122,7 +122,7 @@ def cost_func(params, ansatz, hamiltonian, estimator, callback_dict):
     callback_dict["iters"] += 1
     callback_dict["prev_vector"] = params
     callback_dict["cost_history"].append(cost)
-    print(f"Iters. done: {callback_dict['iters']} [Current cost: {cost}]")
+    logger.info(f"Iters. done: {callback_dict['iters']} [Current cost: {cost}]")
 
     return cost
 
@@ -188,7 +188,7 @@ def execute_ansatz_with_Hamiltonian(
             callback_dict["iters"] += 1
             callback_dict["prev_vector"] = x
             callback_dict["cost_history"].append(cost)
-            print(f"Iters. done: {callback_dict['iters']} [Current cost: {cost}]")
+            logger.info(f"Iters. done: {callback_dict['iters']} [Current cost: {cost}]")
             return cost
 
         optimizer = kwargs["optimizer"]
