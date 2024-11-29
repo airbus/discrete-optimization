@@ -63,9 +63,11 @@ class ToulbarRcpspSolver(ToulbarSolver, RcpspSolver, WarmstartMixin):
             )
             raise exc
         if "vns" in kwargs:
-            model = pytoulbar2.CFN(ubinit=self.problem.horizon, vns=kwargs["vns"])
+            model = pytoulbar2.CFN(
+                ubinit=kwargs.get("ub", self.problem.horizon), vns=kwargs["vns"]
+            )
         else:
-            model = pytoulbar2.CFN(ubinit=self.problem.horizon)
+            model = pytoulbar2.CFN(ubinit=kwargs.get("ub", self.problem.horizon))
         n_jobs = self.problem.n_jobs
         horizon = self.problem.horizon
         index_var = 0

@@ -67,7 +67,10 @@ class ToulbarFacilitySolver(ToulbarSolver, FacilitySolver, WarmstartMixin):
         """
         nb_facilities = self.problem.facility_count
         nb_customers = self.problem.customer_count
-        model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8))
+        if "vns" in kwargs:
+            model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8), vns=kwargs["vns"])
+        else:
+            model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8))
         x: Dict[Tuple[int, int], Union[int, Any]] = {}
         key_to_index = {}
         index = 0
@@ -133,7 +136,10 @@ class ToulbarFacilitySolver(ToulbarSolver, FacilitySolver, WarmstartMixin):
         """
         nb_facilities = self.problem.facility_count
         nb_customers = self.problem.customer_count
-        model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8))
+        if "vns" in kwargs:
+            model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8), vns=kwargs["vns"])
+        else:
+            model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8))
         index = 0
         matrix_fc_indicator, matrix_length = prune_search_space(
             self.problem, n_cheapest=nb_facilities, n_shortest=nb_facilities

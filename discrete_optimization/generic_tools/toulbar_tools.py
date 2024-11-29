@@ -19,6 +19,7 @@ except ImportError as e:
 
 import logging
 
+from discrete_optimization.generic_tools.callbacks.callback import CallbackList
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -53,12 +54,16 @@ class ToulbarSolver(SolverDO):
     ) -> ResultStorage:
         if self.model is None:
             self.init_model(**kwargs)
+        callback = CallbackList(callbacks)
+        callback.on_solve_start(solver=self)
         solution = self.model.Solve(showSolutions=1, timeLimit=int(time_limit))
         logger.info(
             f"Solution value = {solution[1]}, bound={self.model.GetDDualBound()}"
         )
         sol = self.retrieve_solution(solution)
-        return self.create_result_storage([(sol, self.aggreg_from_sol(sol))])
+        res = self.create_result_storage([(sol, self.aggreg_from_sol(sol))])
+        callback.on_solve_end(res=res, solver=self)
+        return res
 
 
 def to_lns_toulbar(cls: Type[ToulbarSolver]):
