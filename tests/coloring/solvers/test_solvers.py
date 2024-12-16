@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import pytest
 from minizinc.solver import Solver
+from ortools.math_opt.python import mathopt
 
 from discrete_optimization.coloring.parser import get_data_available, parse_file
 from discrete_optimization.coloring.problem import (
@@ -563,7 +564,10 @@ def test_color_lp_gurobi_cb_exception():
 
 @pytest.mark.parametrize("use_cliques", [False, True])
 @pytest.mark.parametrize("greedy_start", [True, False])
-def test_color_lp_ortools_mathopt(use_cliques, greedy_start):
+@pytest.mark.parametrize(
+    "solver_type", [mathopt.SolverType.CP_SAT, mathopt.SolverType.HIGHS]
+)
+def test_color_lp_ortools_mathopt(use_cliques, greedy_start, solver_type):
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = MathOptColoringSolver(
@@ -574,13 +578,14 @@ def test_color_lp_ortools_mathopt(use_cliques, greedy_start):
         use_cliques=use_cliques,
         greedy_start=greedy_start,
         parameters_milp=ParametersMilp.default(),
+        mathopt_solver_type=solver_type,
     )
     result_store = solver.solve(**kwargs)
     solution = result_store.get_best_solution_fit()[0]
     assert color_problem.satisfy(solution)
 
-    # Test warm-start only once
-    if greedy_start and not use_cliques:
+    # Test warm-start only once (and not for HiGHS as only 1 solution found)
+    if greedy_start and not use_cliques and solver_type != mathopt.SolverType.HIGHS:
         # first solution is not start_solution
         assert result_store[0][0].colors != solver.start_solution.colors
 
