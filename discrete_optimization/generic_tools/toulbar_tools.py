@@ -57,6 +57,8 @@ class ToulbarSolver(SolverDO):
         callback = CallbackList(callbacks)
         callback.on_solve_start(solver=self)
         solution = self.model.Solve(showSolutions=1, timeLimit=int(time_limit))
+        if solution is None:
+            return self.create_result_storage([])
         logger.info(
             f"Solution value = {solution[1]}, bound={self.model.GetDDualBound()}"
         )
@@ -73,6 +75,7 @@ def to_lns_toulbar(cls: Type[ToulbarSolver]):
 
         def init_model(self, **kwargs: Any) -> None:
             super().init_model(**kwargs)
+            self.model.CFN.timer(100)
             self.model.SolveFirst()
             self.depth = self.model.Depth()
             self.model.Store()

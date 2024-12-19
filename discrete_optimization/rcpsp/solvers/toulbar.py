@@ -384,34 +384,37 @@ class RcpspConstraintHandlerToulbar(ConstraintHandler):
         ms = sol.get_start_time(self.problem.sink_task)
         tasks_1, tasks_2 = self.neighbors.find_subtasks(current_solution=sol)
         solver.model.CFN.timer(100)
-        for t in tasks_1:
-            st = sol.get_start_time(t)
-            ind = self.problem.index_task[t]
-            solver.model.AddLinearConstraint(
-                [1],
-                [solver.start_task_to_index[ind]],
-                operand="<=",
-                rightcoef=min(st + 100, ms),
-            )
-            solver.model.AddLinearConstraint(
-                [1],
-                [solver.start_task_to_index[ind]],
-                operand=">=",
-                rightcoef=max(0, st - 100),
-            )
-        for t in tasks_2:
-            st = sol.get_start_time(t)
-            ind = self.problem.index_task[t]
-            solver.model.AddLinearConstraint(
-                [1],
-                [solver.start_task_to_index[ind]],
-                operand="<=",
-                rightcoef=min(st + 5, ms),
-            )
-            solver.model.AddLinearConstraint(
-                [1],
-                [solver.start_task_to_index[ind]],
-                operand=">=",
-                rightcoef=max(0, st - 5),
-            )
+        try:
+            for t in tasks_1:
+                st = sol.get_start_time(t)
+                ind = self.problem.index_task[t]
+                solver.model.AddLinearConstraint(
+                    [1],
+                    [solver.start_task_to_index[ind]],
+                    operand="<=",
+                    rightcoef=min(st + 100, ms),
+                )
+                solver.model.AddLinearConstraint(
+                    [1],
+                    [solver.start_task_to_index[ind]],
+                    operand=">=",
+                    rightcoef=max(0, st - 100),
+                )
+            for t in tasks_2:
+                st = sol.get_start_time(t)
+                ind = self.problem.index_task[t]
+                solver.model.AddLinearConstraint(
+                    [1],
+                    [solver.start_task_to_index[ind]],
+                    operand="<=",
+                    rightcoef=min(st + 5, ms),
+                )
+                solver.model.AddLinearConstraint(
+                    [1],
+                    [solver.start_task_to_index[ind]],
+                    operand=">=",
+                    rightcoef=max(0, st - 5),
+                )
+        except:
+            pass
         solver.set_warm_start(solution=sol)

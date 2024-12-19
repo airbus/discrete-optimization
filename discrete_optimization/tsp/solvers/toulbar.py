@@ -52,7 +52,9 @@ class ToulbarTspSolver(ToulbarSolver, TspSolver, WarmstartMixin):
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
-        model = pytoulbar2.CFN(vns=kwargs.get("vns", None))
+        model = pytoulbar2.CFN(
+            vns=kwargs.get("vns", None), ubinit=kwargs.get("ub", None)
+        )
         nb_nodes_variable = len(self.problem.original_indices_to_permutation_indices)
         indexes = self.problem.original_indices_to_permutation_indices_dict
         rev_indexes = {indexes[i]: i for i in indexes}
