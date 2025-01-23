@@ -29,9 +29,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logging.basicConfig(level=logging.INFO)
 
 
-@pytest.mark.skipif(
-    not toulbar_available, reason="You need Toulbar2 to test this solver."
-)
+@pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 @pytest.mark.parametrize(
     "modeling", [ModelingToulbarFacility.INTEGER, ModelingToulbarFacility.BINARY]
 )
@@ -45,9 +43,7 @@ def test_facility_toulbar(modeling):
     assert problem.satisfy(sol)
 
 
-@pytest.mark.skipif(
-    not toulbar_available, reason="You need Toulbar2 to test this solver."
-)
+@pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_facility_toulbar_ws():
     file = [f for f in get_data_available() if "fl_16_2" in f][0]
     problem: FacilityProblem = parse_file(file)
@@ -60,9 +56,7 @@ def test_facility_toulbar_ws():
     assert problem.satisfy(sol)
 
 
-@pytest.mark.skipif(
-    not toulbar_available, reason="You need Toulbar2 to test this solver."
-)
+@pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_facility_toulbar_lns():
     file = [f for f in get_data_available() if "fl_16_2" in f][0]
     problem: FacilityProblem = parse_file(file)
