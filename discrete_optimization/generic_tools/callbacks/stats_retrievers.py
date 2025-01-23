@@ -66,7 +66,7 @@ class StatsCpsatCallback(BasicStatsCallback):
             }
         )
         if solver.clb.ObjectiveValue() == solver.clb.BestObjectiveBound():
-            return False
+            return True
 
     def on_solve_start(self, solver: OrtoolsCpSatSolver):
         self.starting_time = perf_counter()
