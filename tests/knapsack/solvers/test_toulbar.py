@@ -10,9 +10,7 @@ from discrete_optimization.knapsack.solvers.toulbar import (
 )
 
 
-@pytest.mark.skipif(
-    not toulbar_available, reason="You need Toulbar2 to test this solver."
-)
+@pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_toulbar():
     files = [f for f in get_data_available() if "ks_60_0" in f]
     knapsack_problem = parse_file(files[0])

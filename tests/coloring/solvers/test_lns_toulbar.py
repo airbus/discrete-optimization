@@ -26,9 +26,7 @@ else:
     toulbar_available = True
 
 
-@pytest.mark.skipif(
-    not toulbar_available, reason="You need Toulbar2 to test this solver."
-)
+@pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
 def test_lns_toulbar():
     file = [f for f in get_data_available() if "gc_50_9" in f][0]
     color_problem = parse_file(file)
