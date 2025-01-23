@@ -8,6 +8,7 @@ from typing import Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -69,3 +70,37 @@ class NbIterationStopper(Callback):
             return True
         else:
             return False
+
+
+class ObjectiveGapCpSatSolver(Callback):
+    """
+    Stop the cpsat solver according to some classical convergence criteria
+    It could be done differently (playing with parameters of cpsat directly)
+    """
+
+    def __init__(
+        self,
+        objective_gap_rel: Optional[float] = None,
+        objective_gap_abs: Optional[float] = None,
+    ):
+        self.objective_gap_rel = objective_gap_rel
+        self.objective_gap_abs = objective_gap_abs
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: OrtoolsCpSatSolver
+    ) -> Optional[bool]:
+        best_sol = solver.clb.ObjectiveValue()
+        bound = solver.clb.BestObjectiveBound()
+        if self.objective_gap_abs is not None:
+            if abs(bound - best_sol) <= self.objective_gap_abs:
+                logger.debug(
+                    f"Stopping search, absolute gap {abs(bound-best_sol)}<{self.objective_gap_abs}"
+                )
+                return True
+        if self.objective_gap_rel is not None:
+            if bound != 0:
+                if abs(bound - best_sol) / abs(bound) <= self.objective_gap_rel:
+                    logger.debug(
+                        f"Stopping search, relative gap {abs(bound-best_sol)/abs(bound)}<{self.objective_gap_rel}"
+                    )
+                    return True
