@@ -8,34 +8,15 @@ from typing import Optional
 import numpy as np
 import pytest
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
+from discrete_optimization.generic_tools.callbacks.sequential_solvers_callback import (
+    RetrieveSubRes,
 )
+from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatResourceRcpspSolver,
 )
-
-
-class RetrieveSubRes(Callback):
-    def __init__(self):
-        self.sol_per_step: list[list[Solution]] = []
-        self.all_sols = set()
-
-    def on_step_end(
-        self, step: int, res: ResultStorage, solver: SolverDO
-    ) -> Optional[bool]:
-        self.sol_per_step.append(
-            [s for s, _ in res.list_solution_fits if s not in self.all_sols]
-        )
-        self.all_sols.update(set(self.sol_per_step[-1]))
-        return False
 
 
 def check_lexico_order_on_result_storage(
