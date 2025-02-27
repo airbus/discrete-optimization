@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import BoundsProviderMixin, SolverDO
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -72,10 +72,11 @@ class NbIterationStopper(Callback):
             return False
 
 
-class ObjectiveGapCpSatSolver(Callback):
-    """
-    Stop the cpsat solver according to some classical convergence criteria
-    It could be done differently (playing with parameters of cpsat directly)
+class ObjectiveGapStopper(Callback):
+    """Stop the solver according to some classical convergence criteria: relative and absolute gap.
+
+    It assumes that the solver is able to provide the current best value and bound for the internal objective.
+
     """
 
     def __init__(
@@ -87,20 +88,30 @@ class ObjectiveGapCpSatSolver(Callback):
         self.objective_gap_abs = objective_gap_abs
 
     def on_step_end(
-        self, step: int, res: ResultStorage, solver: OrtoolsCpSatSolver
+        self, step: int, res: ResultStorage, solver: SolverDO
     ) -> Optional[bool]:
-        best_sol = solver.clb.ObjectiveValue()
-        bound = solver.clb.BestObjectiveBound()
+        if not isinstance(solver, BoundsProviderMixin):
+            raise ValueError(
+                "The ObjectiveGapStopper can be applied only to a solver deriving from BoundsProviderMixin."
+            )
+        abs_gap = None
         if self.objective_gap_abs is not None:
-            if abs(bound - best_sol) <= self.objective_gap_abs:
-                logger.debug(
-                    f"Stopping search, absolute gap {abs(bound-best_sol)}<{self.objective_gap_abs}"
-                )
-                return True
-        if self.objective_gap_rel is not None:
-            if bound != 0:
-                if abs(bound - best_sol) / abs(bound) <= self.objective_gap_rel:
+            abs_gap = solver.get_current_absolute_gap()
+            if abs_gap is not None:
+                if abs_gap <= self.objective_gap_abs:
                     logger.debug(
-                        f"Stopping search, relative gap {abs(bound-best_sol)/abs(bound)}<{self.objective_gap_rel}"
+                        f"Stopping search, absolute gap {abs_gap} <= {self.objective_gap_abs}"
                     )
                     return True
+        if self.objective_gap_rel is not None:
+            bound = solver.get_current_best_internal_objective_bound()
+            if bound is not None and bound != 0:
+                if self.objective_gap_abs is None:
+                    abs_gap = solver.get_current_absolute_gap()
+                if abs_gap is not None:  # could be still None (e.g. mathopt + cp-sat)
+                    rel_gap = abs_gap / abs(bound)
+                    if rel_gap <= self.objective_gap_rel:
+                        logger.debug(
+                            f"Stopping search, relative gap {rel_gap} <= {self.objective_gap_rel}"
+                        )
+                        return True
