@@ -5,7 +5,7 @@ from time import perf_counter
 from typing import Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import BoundsProviderMixin, SolverDO
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -42,7 +42,28 @@ class BasicStatsCallback(Callback):
         self.on_step_end(None, res, solver)
 
 
-class StatsCpsatCallback(BasicStatsCallback):
+class StatsWithBoundsCallback(BasicStatsCallback):
+    """
+    This callback is specific to BoundsProviderMixin solvers.
+    """
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: SolverDO
+    ) -> Optional[bool]:
+        if not isinstance(solver, BoundsProviderMixin):
+            raise ValueError(
+                "The ObjectiveGapStopper can be applied only to a solver deriving from BoundsProviderMixin."
+            )
+        super().on_step_end(step=step, res=res, solver=solver)
+        self.stats[-1].update(
+            {
+                "obj": solver.get_current_best_internal_objective_value(),
+                "bound": solver.get_current_best_internal_objective_bound(),
+            }
+        )
+
+
+class StatsCpsatCallback(StatsWithBoundsCallback):
     """
     This callback is specific to cpsat solver.
     """
@@ -57,32 +78,14 @@ class StatsCpsatCallback(BasicStatsCallback):
         super().on_step_end(step=step, res=res, solver=solver)
         self.stats[-1].update(
             {
-                "obj": solver.clb.ObjectiveValue(),
-                "bound": solver.clb.BestObjectiveBound(),
                 "time-cpsat": {
                     "user-time": solver.clb.UserTime(),
                     "wall-time": solver.clb.WallTime(),
                 },
             }
         )
-        if solver.clb.ObjectiveValue() == solver.clb.BestObjectiveBound():
-            return True
-
-    def on_solve_start(self, solver: OrtoolsCpSatSolver):
-        self.starting_time = perf_counter()
 
     def on_solve_end(self, res: ResultStorage, solver: OrtoolsCpSatSolver):
-        # super().on_solve_end(res=res, solver=solver)
+        super().on_solve_end(res=res, solver=solver)
         status_name = solver.solver.status_name()
-        if len(self.stats) > 0:
-            self.stats[-1].update(
-                {
-                    "obj": solver.solver.ObjectiveValue(),
-                    "bound": solver.solver.BestObjectiveBound(),
-                    "time-cpsat": {
-                        "user-time": solver.clb.UserTime(),
-                        "wall-time": solver.clb.WallTime(),
-                    },
-                }
-            )
         self.final_status = status_name
