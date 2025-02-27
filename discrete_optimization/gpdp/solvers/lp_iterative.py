@@ -1124,8 +1124,13 @@ class GurobiLinearFlowGpdpSolver(GurobiMilpSolver, BaseLinearFlowGpdpSolver):
 
 
 class TemporaryResultMathOptCallback(MathOptCallback):
-    def __init__(self, do_solver: MathOptLinearFlowGpdpSolver):
+    def __init__(
+        self,
+        do_solver: MathOptLinearFlowGpdpSolver,
+        mathopt_solver_type: mathopt.SolverType,
+    ):
         self.do_solver = do_solver
+        self.mathopt_solver_type = mathopt_solver_type
         self.temporary_results = []
 
     def __call__(self, callback_data: mathopt.CallbackData) -> mathopt.CallbackResult:
@@ -1168,7 +1173,9 @@ class MathOptLinearFlowGpdpSolver(OrtoolsMathOptMilpSolver, BaseLinearFlowGpdpSo
         **kwargs: Any,
     ) -> list[TemporaryResult]:
 
-        mathopt_cb = TemporaryResultMathOptCallback(do_solver=self)
+        mathopt_cb = TemporaryResultMathOptCallback(
+            do_solver=self, mathopt_solver_type=mathopt_solver_type
+        )
         self.optimize_model(
             parameters_milp=parameters_milp,
             time_limit=time_limit,
