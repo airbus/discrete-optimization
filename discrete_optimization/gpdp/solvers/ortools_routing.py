@@ -10,12 +10,14 @@ from functools import partial
 from typing import Any, Optional, Union
 
 import numpy as np
+import ortools
 from ortools.constraint_solver import (
     pywrapcp,
     routing_enums_pb2,
     routing_parameters_pb2,
 )
 from ortools.util.optional_boolean_pb2 import BOOL_FALSE, BOOL_TRUE
+from packaging.version import Version
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -140,19 +142,45 @@ https://developers.google.com/optimization/routing/routing_options#first_solutio
 """
 
 
-status_description = {
-    val: key
-    for key, val in pywrapcp.RoutingModel.__dict__.items()
-    if key.startswith("ROUTING_")
-}
-"""Mapping from status integer to description string.
+if Version(ortools.__version__) >= Version("9.12"):
+    # routing status became a proper enum starting from 9.12
+    RoutingSearchStatus = Enum(
+        value="RoutingSearchStatus",
+        names={
+            name: val.number
+            for name, val in routing_enums_pb2.RoutingSearchStatus.DESCRIPTOR.enum_values_by_name.items()
+        },
+        module=__name__,  # to avoid pickle issues
+    )
+    status_description = {status.value: status.name for status in RoutingSearchStatus}
+    """Mapping from status integer to description string.
 
-This maps the integer returned by routing_model.status to the corresponding string.
+    This maps the integer returned by routing_model.status to the corresponding string.
+    https://developers.google.com/optimization/routing/routing_options#search_status
 
-We use the attributes of RoutingModel to construct the dictionary.
-https://developers.google.com/optimization/routing/routing_options#search_status
+    """
 
-"""
+else:
+    # status enum was part of RoutingModel class attributes before
+    status_description = {
+        val: key
+        for key, val in pywrapcp.RoutingModel.__dict__.items()
+        if key.startswith("ROUTING_")
+    }
+    """Mapping from status integer to description string.
+
+    This maps the integer returned by routing_model.status to the corresponding string.
+
+    We use the attributes of RoutingModel to construct the dictionary.
+    https://developers.google.com/optimization/routing/routing_options#search_status
+
+    """
+
+    RoutingSearchStatus = Enum(
+        value="RoutingSearchStatus",
+        names={name: value for value, name in status_description.items()},
+        module=__name__,  # to avoid pickle issues
+    )
 
 
 class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
