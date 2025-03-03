@@ -408,7 +408,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_solutionsupdate(data_home=data_home)
     fetch_data_for_mis(data_home=data_home)
     fetch_data_from_jsplib_repo(data_home=data_home)
-    fetch_data_fjsp(data_home=data_home)
+    # fetch_data_fjsp(data_home=data_home)
 
 
 if __name__ == "__main__":
