@@ -23,7 +23,10 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 )
 from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.do_solver import (
+    BoundsProviderMixin,
+    StatusSolver,
+)
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -32,7 +35,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class OrtoolsCpSatSolver(CpSolver):
+class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
     """Generic ortools cp-sat solver."""
 
     cp_model: Optional[CpModel] = None
@@ -132,6 +135,18 @@ class OrtoolsCpSatSolver(CpSolver):
             if not isinstance(cstr, Constraint):
                 raise RuntimeError()
             cstr.proto.Clear()
+
+    def get_current_best_internal_objective_bound(self) -> Optional[float]:
+        if self.clb is None:
+            return None
+        else:
+            return self.clb.BestObjectiveBound()
+
+    def get_current_best_internal_objective_value(self) -> Optional[float]:
+        if self.clb is None:
+            return None
+        else:
+            return self.clb.ObjectiveValue()
 
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):
