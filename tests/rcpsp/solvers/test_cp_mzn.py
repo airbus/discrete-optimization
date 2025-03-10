@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import random
+import sys
 
 import numpy as np
 import pytest
@@ -353,6 +354,7 @@ def test_cp_sm_robust():
     ktd = kendall_tau_similarity((sol_average, sol_worst))
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
 def test_cp_multiscenario(random_seed):
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]
