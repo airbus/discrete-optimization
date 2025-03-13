@@ -25,6 +25,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import (
+    BoundsProviderMixin,
     SolverDO,
     StatusSolver,
     WarmstartMixin,
@@ -349,7 +350,7 @@ class MilpSolver(SolverDO):
         raise NotImplementedError()
 
 
-class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
+class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
     """Milp solver wrapping a solver from pymip library."""
 
     hyperparameters = [
@@ -372,6 +373,9 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
     """
     random_seed: Optional[int] = None
     mathopt_res: Optional[mathopt.SolveResult] = None
+
+    _current_internal_objective_best_value: Optional[float] = None
+    _current_internal_objective_best_bound: Optional[float] = None
 
     def remove_constraints(self, constraints: Iterable[Any]) -> None:
         for cstr in constraints:
@@ -483,7 +487,11 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
         callbacks_list.on_solve_start(solver=self)
 
         # wrap user callback in a mathopt callback
-        mathopt_cb = MathOptCallback(do_solver=self, callback=callbacks_list)
+        mathopt_cb = MathOptCallback(
+            do_solver=self,
+            callback=callbacks_list,
+            mathopt_solver_type=mathopt_solver_type,
+        )
 
         # optimize
         mathopt_res = self.optimize_model(
@@ -667,6 +675,12 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin):
             list_solution_fits.append((sol, fit))
         return self.create_result_storage(list(reversed(list_solution_fits)))
 
+    def get_current_best_internal_objective_bound(self) -> Optional[float]:
+        return self._current_internal_objective_best_bound
+
+    def get_current_best_internal_objective_value(self) -> Optional[float]:
+        return self._current_internal_objective_best_value
+
 
 map_mathopt_status_to_do_status: dict[mathopt.TerminationReason, StatusSolver] = {
     mathopt.TerminationReason.OPTIMAL: StatusSolver.OPTIMAL,
@@ -682,7 +696,13 @@ map_mathopt_status_to_do_status: dict[mathopt.TerminationReason, StatusSolver] =
 
 
 class MathOptCallback:
-    def __init__(self, do_solver: OrtoolsMathOptMilpSolver, callback: Callback):
+    def __init__(
+        self,
+        do_solver: OrtoolsMathOptMilpSolver,
+        callback: Callback,
+        mathopt_solver_type: mathopt.SolverType,
+    ):
+        self.solver_type = mathopt_solver_type
         self.do_solver = do_solver
         self.callback = callback
         self.res = do_solver.create_result_storage()
@@ -708,6 +728,14 @@ class MathOptCallback:
             fit = self.do_solver.aggreg_from_sol(sol)
             self.res.append((sol, fit))
             self.nb_solutions += 1
+            # store mip stats
+            if self.solver_type != mathopt.SolverType.CP_SAT:
+                self.do_solver._current_internal_objective_best_value = (
+                    callback_data.mip_stats.primal_bound
+                )
+                self.do_solver._current_internal_objective_best_bound = (
+                    callback_data.mip_stats.dual_bound
+                )
             # end of step callback: stopping?
             stopping = self.callback.on_step_end(
                 step=self.nb_solutions, res=self.res, solver=self.do_solver
@@ -721,14 +749,18 @@ class MathOptCallback:
                 self.do_solver.early_stopping_exception = SolveEarlyStop(
                     f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
                 )
+
         return mathopt.CallbackResult(terminate=stopping)
 
 
-class GurobiMilpSolver(MilpSolver, WarmstartMixin):
+class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
     """Milp solver wrapping a solver from gurobi library."""
 
     model: Optional["gurobipy.Model"] = None
     early_stopping_exception: Optional[Exception] = None
+
+    _current_internal_objective_best_value: Optional[float] = None
+    _current_internal_objective_best_bound: Optional[float] = None
 
     def remove_constraints(self, constraints: Iterable[Any]) -> None:
         self.model.remove(list(constraints))
@@ -968,6 +1000,12 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin):
             var.Start = val
             var.VarHintVal = val
 
+    def get_current_best_internal_objective_bound(self) -> Optional[float]:
+        return self._current_internal_objective_best_bound
+
+    def get_current_best_internal_objective_value(self) -> Optional[float]:
+        return self._current_internal_objective_best_value
+
 
 class GurobiCallback:
     def __init__(self, do_solver: GurobiMilpSolver, callback: Callback):
@@ -989,6 +1027,13 @@ class GurobiCallback:
                 fit = self.do_solver.aggreg_from_sol(sol)
                 self.res.append((sol, fit))
                 self.nb_solutions += 1
+                # store mip stats
+                self.do_solver._current_internal_objective_best_value = model.cbGet(
+                    gurobipy.GRB.Callback.MIPSOL_OBJBST
+                )
+                self.do_solver._current_internal_objective_best_bound = model.cbGet(
+                    gurobipy.GRB.Callback.MIPSOL_OBJBND
+                )
                 # end of step callback: stopping?
                 stopping = self.callback.on_step_end(
                     step=self.nb_solutions, res=self.res, solver=self.do_solver
