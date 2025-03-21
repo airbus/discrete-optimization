@@ -224,6 +224,35 @@ class WarmstartMixin(ABC):
         ...
 
 
+class BoundsProviderMixin(ABC):
+    """Mixin class for solvers providing bounds on objective.
+
+    e.g. to be used in callback for early stopping.
+
+    """
+
+    @abstractmethod
+    def get_current_best_internal_objective_bound(self) -> Optional[float]:
+        ...
+
+    @abstractmethod
+    def get_current_best_internal_objective_value(self) -> Optional[float]:
+        ...
+
+    def get_current_absolute_gap(self) -> Optional[float]:
+        """Get current (absolute) optimality gap.
+
+        i.e. |current_obj_value - current_obj_bound|
+
+        """
+        bound = self.get_current_best_internal_objective_bound()
+        best_sol = self.get_current_best_internal_objective_value()
+        if bound is None or best_sol is None:
+            return None
+        else:
+            return abs(best_sol - bound)
+
+
 class TrivialSolverFromResultStorage(SolverDO, WarmstartMixin):
     """Trivial solver created from an already computed result storage."""
 
