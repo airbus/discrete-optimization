@@ -1,0 +1,46 @@
+discrete\_optimization.knapsack package
+=======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.knapsack.mutation
+   discrete_optimization.knapsack.solvers
+
+Submodules
+----------
+
+discrete\_optimization.knapsack.knapsack\_model module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.knapsack_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.knapsack\_parser module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.knapsack_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.knapsack.knapsack\_solvers module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.knapsack_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.knapsack
+   :members:
+   :undoc-members:
+   :show-inheritance:
