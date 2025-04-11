@@ -1,5 +1,6 @@
 import os
 from collections.abc import Hashable
+from enum import Enum
 from typing import Any, Optional
 
 import networkx as nx
@@ -35,89 +36,64 @@ def get_data_available(
     return datasets
 
 
+class DimacsPrefixes(Enum):
+    PROBLEM = "p"
+    COMMENT = "c"
+    EDGE = "e"
+
+
 def dimacs_parser(filename: str):
     """From a file in dimacs format, initialise a MisProblem instance.
 
     Args:
-        filename: file in the dimacs format
+        filename: path to the input file using dimacs format
+
+    See http://prolland.free.fr/works/research/dsat/dimacs.html for reference about dimacs format
 
     Returns: a MisProblem instance
     """
     # parse the input
     input_data = open(filename, "r")
     lines = input_data.readlines()
-    first_line = lines[0].split()
-    node_count = int(first_line[2])
-    edge_count = int(first_line[3])
-    edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
-    nodes: list[tuple[Hashable, dict[str, Any]]] = [(i, {}) for i in range(node_count)]
-    for i in range(1, edge_count + 1):
-        line = lines[i]
-        parts = line.split()
-        edges.append((int(parts[1]), int(parts[2]), {}))
-    return MisProblem(Graph(nodes, edges, undirected=True, compute_predecessors=False))
-
-
-def basic_parser(filename: str):
-    """From a file in basic format input, initialise a MisProblem instance.
-
-    Args:
-        filename: file in the basic format (same format as for coloring problem)
-
-    Returns: a MisProblem instance
-    """
-    # parse the input
-    input_data = open(filename, "r")
-    lines = input_data.readlines()
-    first_line = lines[0].split()
-    node_count = int(first_line[0])
-    edge_count = int(first_line[1])
-    edges: list[tuple[Hashable, Hashable, dict[str, Any]]] = []
-    nodes: list[tuple[Hashable, dict[str, Any]]] = [(i, {}) for i in range(node_count)]
-    for i in range(1, edge_count + 1):
-        line = lines[i]
-        parts = line.split()
-        edges.append((int(parts[0]), int(parts[1]), {}))
-    return MisProblem(Graph(nodes, edges, undirected=True, compute_predecessors=False))
-
-
-def dimacs_parser_nx(filename: str):
-    """From a file in dimacs format, initialise a MisProblem instance.
-
-    Args:
-        filename: file in the dimacs format
-
-    Returns: a MisProblem instance
-    """
-    # parse the input
-    input_data = open(filename, "r")
-    lines = input_data.readlines()
-    first_line = lines[0].split()
-    edge_count = int(first_line[3])
+    n_nodes = 0
+    n_edges = 0
     graph = nx.Graph()
-    for i in range(1, edge_count + 1):
-        line = lines[i]
-        parts = line.split()
-        graph.add_edge(int(parts[1]), int(parts[2]))
+    problem_line_read = False
+    for line in lines:
+        tokens = line.split()
+        if len(tokens) == 0:
+            # ignore empty lines
+            continue
+        prefix = tokens[0]
+        if prefix == DimacsPrefixes.COMMENT.value:
+            # comment line: ignored
+            continue
+        elif prefix == DimacsPrefixes.PROBLEM.value:
+            assert (
+                not problem_line_read
+            ), "The dimacs file can have only one problem line."
+            problem_line_read = True
+            assert tokens[1] == "edge", "The dimacs problem format must be 'edge'."
+            n_nodes = int(tokens[2])
+            n_edges = int(tokens[3])
+            graph.add_nodes_from(range(1, 1 + n_nodes))
+        elif prefix == DimacsPrefixes.EDGE.value:
+            assert (
+                problem_line_read
+            ), "The problem line must appear before any edge descriptor."
+            graph.add_edge(int(tokens[1]), int(tokens[2]))
+        else:
+            raise NotImplementedError(
+                f"The prefix {prefix} is not allowed by dimacs format."
+            )
+    assert (
+        len(graph.edges) == n_edges
+    ), "The problem line defines a number of edges different from the number of edge lines."
+    assert (
+        len(graph.nodes) == n_nodes
+    ), "The problem line defines a number of nodes different from the max node id used by an edge."
     return MisProblem(graph)
 
 
-def basic_parser_nx(filename: str):
-    """From a file in basic format input, initialise a MisProblem instance.
-
-    Args:
-        filename: file in the basic format (same format as for coloring problem)
-
-    Returns: a MisProblem instance
-    """
-    # parse the input
-    input_data = open(filename, "r")
-    lines = input_data.readlines()
-    first_line = lines[0].split()
-    edge_count = int(first_line[1])
-    graph = nx.Graph()
-    for i in range(1, edge_count + 1):
-        line = lines[i]
-        parts = line.split()
-        graph.add_edge(int(parts[0]), int(parts[1]))
-    return MisProblem(graph)
+# alias for backward compatibility
+dimacs_parser_nx = dimacs_parser
