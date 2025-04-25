@@ -797,6 +797,47 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
 
         return res
 
+    def explain_unsat(self) -> list[Any]:
+        """Explain unsatisfiability of the problem.
+
+        Returns:
+            subset minimal list of constraints leading to unsatisfiability.
+
+        Note:
+            running several times may lead to a different (minimal) subset of constraints.
+
+        """
+        assert self.status_solver == StatusSolver.UNSATISFIABLE, (
+            "self.solve() must have been run "
+            "and self.status_solver must be SolverStatus.UNSATISFIABLE"
+        )
+        self.model.computeIIS()
+        constraints = []
+        # linear constraints
+        for cstr in self.model.getConstrs():
+            if cstr.IISConstr:
+                constraints.append(cstr)
+        # quadratic constraints
+        for cstr in self.model.getQConstrs():
+            if cstr.IISQConstr:
+                constraints.append(cstr)
+        # generic constraints
+        for cstr in self.model.getGenConstrs():
+            if cstr.IISGenConstr:
+                constraints.append(cstr)
+        # SOS constraints
+        for cstr in self.model.getSOSs():
+            if cstr.IISSOS:
+                constraints.append(cstr)
+        # lower and upper bounds
+        for var in self.model.getVars():
+            if var.IISLB:
+                constraints.append(var >= var.LB)
+            if var.IISUB:
+                constraints.append(var <= var.UB)
+
+        return constraints
+
     def set_random_seed(self, random_seed: int) -> None:
         self.model.setParam(gurobipy.GRB.Param.Seed, random_seed)
 
