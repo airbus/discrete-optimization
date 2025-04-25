@@ -6,16 +6,16 @@ from typing import Any, Optional
 
 from cpmpy import Model, boolvar
 
-from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
+from discrete_optimization.generic_tools.cpmpy_tools import CpmpySolver
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Solution,
 )
 from discrete_optimization.knapsack.problem import KnapsackProblem, KnapsackSolution
 from discrete_optimization.knapsack.solvers import KnapsackSolver
 
 
-class CpmpyKnapsackSolver(KnapsackSolver):
+class CpmpyKnapsackSolver(CpmpySolver, KnapsackSolver):
     def __init__(
         self,
         problem: KnapsackProblem,
@@ -25,7 +25,6 @@ class CpmpyKnapsackSolver(KnapsackSolver):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
-        self.model: Optional[Model] = None
         self.variables: dict[str, Any] = {}
 
     def init_model(self, **kwargs: Any) -> None:
@@ -41,30 +40,6 @@ class CpmpyKnapsackSolver(KnapsackSolver):
         self.model = Model(sum(x * weights) <= capacity, maximize=sum(x * values))
         self.variables["x"] = x
 
-    def solve(
-        self, time_limit: Optional[float] = 100.0, **kwargs: Any
-    ) -> ResultStorage:
-        """
-
-        time_limit: the solve process stops after this time limit (in seconds).
-                If None, no time limit is applied.
-        Args:
-            time_limit:
-            **kwargs:
-
-        Returns:
-
-        """
-        if self.model is None:
-            self.init_model()
-            if self.model is None:  # for mypy
-                raise RuntimeError(
-                    "self.model must not be None after self.init_model()."
-                )
-        self.model.solve(kwargs.get("solver", "ortools"), time_limit=time_limit)
+    def retrieve_current_solution(self) -> Solution:
         list_taken = self.variables["x"].value()
-        sol = KnapsackSolution(problem=self.problem, list_taken=list_taken)
-        fit = self.aggreg_from_sol(sol)
-        return self.create_result_storage(
-            [(sol, fit)],
-        )
+        return KnapsackSolution(problem=self.problem, list_taken=list_taken)
