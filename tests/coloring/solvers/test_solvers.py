@@ -22,6 +22,7 @@ from discrete_optimization.coloring.solvers.cp_mzn import (
     CpColoringModel,
     CpColoringSolver,
 )
+from discrete_optimization.coloring.solvers.cpmpy import CpmpyColoringSolver
 from discrete_optimization.coloring.solvers.cpsat import (
     CpSatColoringSolver,
     ModelingCpSat,
@@ -56,6 +57,7 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeAttribute,
     get_default_objective_setup,
 )
+from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.ea.ga import DeapMutation, Ga
 from discrete_optimization.generic_tools.ea.nsga import Nsga
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
@@ -640,6 +642,26 @@ def test_color_lp_ortools_mathopt_cb_exception():
         solver.solve(
             parameters_milp=ParametersMilp.default(), callbacks=[MyCallbackNok()]
         )
+
+
+def test_cpmpy_solver():
+    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = CpmpyColoringSolver(color_problem)
+    solver.init_model(nb_colors=20)
+    result_store = solver.solve()
+    solution, fit = result_store.get_best_solution_fit()
+    assert color_problem.satisfy(solution)
+    assert solver.status_solver == StatusSolver.OPTIMAL
+    nb_colors_optimal = solution.nb_color
+
+    # add impossible constraint (nb_colors < optimal)
+    solver = CpmpyColoringSolver(color_problem)
+    solver.init_model(nb_colors=nb_colors_optimal - 1)
+    result_store = solver.solve()
+    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+
+    assert len(solver.explain_unsat()) > 0
 
 
 if __name__ == "__main__":
