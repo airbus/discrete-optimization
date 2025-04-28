@@ -50,6 +50,7 @@ from discrete_optimization.generic_tools.cp_tools import (
     ParametersCp,
     find_right_minizinc_solver_name,
 )
+from discrete_optimization.generic_tools.cpmpy_tools import MetaCpmpyConstraint
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -658,10 +659,14 @@ def test_cpmpy_solver():
     # add impossible constraint (nb_colors < optimal)
     solver = CpmpyColoringSolver(color_problem)
     solver.init_model(nb_colors=nb_colors_optimal - 1)
-    result_store = solver.solve()
+    solver.solve()
     assert solver.status_solver == StatusSolver.UNSATISFIABLE
 
-    assert len(solver.explain_unsat()) > 0
+    assert len(solver.explain_unsat_fine()) < len(solver.get_soft_constraints())
+    metaconstraints_mus = solver.explain_unsat_meta()
+    assert len(metaconstraints_mus) < len(solver.get_soft_meta_constraints())
+    for meta in metaconstraints_mus:
+        assert isinstance(meta, MetaCpmpyConstraint)
 
 
 if __name__ == "__main__":
