@@ -210,7 +210,7 @@ jobs:
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          pip install "${wheelfile}[test, quantum]"
+          pip install "${wheelfile}[test, quantum, dashboard]"
           if [ "${{ startsWith(matrix.os, 'windows') || (startsWith(matrix.os, 'macos') && matrix.python-version == '3.12') }}" == false ]; then
             echo "install toulbar2"
             pip install "${wheelfile}[toulbar]"
