@@ -7,12 +7,12 @@ import pandas as pd
 
 from discrete_optimization.generic_tools.dashboard.config import ConfigStore
 from discrete_optimization.generic_tools.do_solver import StatusSolver
-
-# metadata keys
-STATUS = "status"
-INSTANCE = "instance"
-CONFIG = "config"
-REASON = "reason"
+from discrete_optimization.generic_tools.study.experiment import (
+    CONFIG,
+    INSTANCE,
+    REASON,
+    STATUS,
+)
 
 # data columns
 BOUND = "bound"

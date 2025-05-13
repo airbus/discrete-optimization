@@ -3,13 +3,11 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any, Optional, Union
 
+from discrete_optimization.generic_tools.study.experiment import NAME, SOLVER
+
 # type aliases
 DictConfig = Union[dict[str, "DictConfig"], Hashable]
 HashableConfig = Union[tuple[str, "HashableConfig"], Hashable]
-
-# config keys
-NAME = "name"
-SOLVER = "solver"
 
 
 def get_config_name(config: DictConfig) -> str:
