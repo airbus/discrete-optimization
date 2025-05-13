@@ -4,6 +4,8 @@
 from time import perf_counter
 from typing import Optional
 
+import pandas as pd
+
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_solver import BoundsProviderMixin, SolverDO
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
@@ -17,6 +19,9 @@ class BasicStatsCallback(Callback):
     This callback is storing the computation time at different step of the solving process,
     this can help to display the evolution of the best solution through time, and compare easily different solvers.
     """
+
+    time_column = "time"
+    metric_columns = ["fit"]
 
     def __init__(self):
         self.starting_time: int = None
@@ -41,11 +46,22 @@ class BasicStatsCallback(Callback):
         """
         self.on_step_end(None, res, solver)
 
+    def get_df_metrics(self) -> pd.DataFrame:
+        """Construct a dataframe indexed by time of the recorded metrics (fitness, bounds...)."""
+        column_names = [self.time_column] + self.metric_columns
+        df = pd.DataFrame(
+            [{k: v for k, v in st.items() if k in column_names} for st in self.stats]
+        ).set_index(self.time_column)
+        df.columns.name = "metric"
+        return df
+
 
 class StatsWithBoundsCallback(BasicStatsCallback):
     """
     This callback is specific to BoundsProviderMixin solvers.
     """
+
+    metric_columns = BasicStatsCallback.metric_columns + ["obj", "bound"]
 
     def on_step_end(
         self, step: int, res: ResultStorage, solver: SolverDO
