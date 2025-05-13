@@ -66,7 +66,7 @@ quantum = [
     "qiskit-ibm-runtime>=0.24"
 ]
 toulbar = ["pytoulbar2>=0.0.0.4"]
-dashboard = ["dash", "plotly", "dash_bootstrap_components"]
+dashboard = ["dash", "plotly", "dash_bootstrap_components", "pandas[hdf5]"]
 
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"
