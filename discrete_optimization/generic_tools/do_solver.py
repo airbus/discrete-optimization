@@ -34,6 +34,7 @@ class StatusSolver(Enum):
     UNSATISFIABLE = "UNSATISFIABLE"
     OPTIMAL = "OPTIMAL"
     UNKNOWN = "UNKNOWN"
+    ERROR = "FAILED"
 
 
 class SolverDO(Hyperparametrizable, ABC):

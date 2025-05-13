@@ -699,8 +699,8 @@ map_mathopt_status_to_do_status: dict[mathopt.TerminationReason, StatusSolver] =
     mathopt.TerminationReason.FEASIBLE: StatusSolver.SATISFIED,
     mathopt.TerminationReason.NO_SOLUTION_FOUND: StatusSolver.UNSATISFIABLE,
     mathopt.TerminationReason.IMPRECISE: StatusSolver.UNKNOWN,
-    mathopt.TerminationReason.NUMERICAL_ERROR: StatusSolver.UNKNOWN,
-    mathopt.TerminationReason.OTHER_ERROR: StatusSolver.UNKNOWN,
+    mathopt.TerminationReason.NUMERICAL_ERROR: StatusSolver.ERROR,
+    mathopt.TerminationReason.OTHER_ERROR: StatusSolver.ERROR,
 }
 
 
