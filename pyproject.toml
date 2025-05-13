@@ -52,7 +52,8 @@ dependencies = [
     "numpy>=1.21",
     "clingo>=5.6",
     "didppy>=0.8.0",
-    "setuptools"
+    "setuptools",
+    "pandas>=2"
 ]
 dynamic = ["version"]
 
