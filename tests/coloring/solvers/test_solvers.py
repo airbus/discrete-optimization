@@ -582,6 +582,23 @@ def test_color_lp_gurobi_cb_stop():
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_current_obj():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = GurobiColoringSolver(
+        color_problem,
+    )
+    stopper = NbIterationStopper(nb_iteration_max=1)
+    callbacks = [stopper]
+    result_store = solver.solve(
+        parameters_milp=ParametersMilp.default(), callbacks=callbacks
+    )
+    # check stop after 1st iteration
+    assert len(result_store) == 1
+    assert solver.get_current_best_internal_objective_value() < gurobipy.GRB.INFINITY
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
 def test_color_lp_gurobi_cb_exception():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
