@@ -62,44 +62,44 @@ if overwrite:
         os.remove(database_filepath)
     except FileNotFoundError:
         pass
-with Hdf5Database(
-    database_filepath
-) as database:  # ensure closing the database at the end of computation (even if error)
 
-    # loop over instances x configs
-    for instance in instances:
-        for config_name, solver_config in solver_configs.items():
+# loop over instances x configs
+for instance in instances:
+    for config_name, solver_config in solver_configs.items():
 
-            logging.info(f"###### Instance {instance}, config {config_name} ######\n\n")
+        logging.info(f"###### Instance {instance}, config {config_name} ######\n\n")
 
-            try:
-                # init problem
-                file = [f for f in get_data_available() if instance in f][0]
-                color_problem = parse_file(file)
-                # init solver
-                stats_cb = StatsWithBoundsCallback()
-                solver = solver_config.cls(color_problem, **solver_config.kwargs)
-                solver.init_model(**solver_config.kwargs)
-                # solve
-                result_store = solver.solve(
-                    callbacks=[
-                        stats_cb,
-                        NbIterationTracker(step_verbosity_level=logging.INFO),
-                    ],
-                    **solver_config.kwargs,
-                )
-            except Exception as e:
-                # failed experiment
-                metrics = pd.DataFrame([])
-                status = StatusSolver.ERROR
-                reason = f"{type(e).__name__}: {str(e)}"
-            else:
-                # get metrics and solver status
-                status = solver.status_solver
-                metrics = stats_cb.get_df_metrics()
-                reason = ""
+        try:
+            # init problem
+            file = [f for f in get_data_available() if instance in f][0]
+            color_problem = parse_file(file)
+            # init solver
+            stats_cb = StatsWithBoundsCallback()
+            solver = solver_config.cls(color_problem, **solver_config.kwargs)
+            solver.init_model(**solver_config.kwargs)
+            # solve
+            result_store = solver.solve(
+                callbacks=[
+                    stats_cb,
+                    NbIterationTracker(step_verbosity_level=logging.INFO),
+                ],
+                **solver_config.kwargs,
+            )
+        except Exception as e:
+            # failed experiment
+            metrics = pd.DataFrame([])
+            status = StatusSolver.ERROR
+            reason = f"{type(e).__name__}: {str(e)}"
+        else:
+            # get metrics and solver status
+            status = solver.status_solver
+            metrics = stats_cb.get_df_metrics()
+            reason = ""
 
-            # store corresponding experiment
+        # store corresponding experiment
+        with Hdf5Database(
+            database_filepath
+        ) as database:  # ensure closing the database at the end of computation (even if error)
             xp_id = database.get_new_experiment_id()
             xp = Experiment.from_solver_config(
                 xp_id=xp_id,
