@@ -582,7 +582,7 @@ def test_color_lp_gurobi_cb_stop():
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
-def test_color_lp_gurobi_current_obj():
+def test_color_lp_gurobi_current_obj_not_inf():
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem = parse_file(file)
     solver = GurobiColoringSolver(
@@ -596,6 +596,55 @@ def test_color_lp_gurobi_current_obj():
     # check stop after 1st iteration
     assert len(result_store) == 1
     assert solver.get_current_best_internal_objective_value() < gurobipy.GRB.INFINITY
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="On windows guthub runner, it finds a solution despite the time limit.",
+)
+def test_color_lp_gurobi_current_obj_timeout():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = GurobiColoringSolver(
+        color_problem,
+    )
+    result_store = solver.solve(time_limit=1e-5)
+    assert solver.get_current_best_internal_objective_value() == float("inf")
+    assert solver.get_current_best_internal_objective_bound() == -float("inf")
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_current_obj_infeasible():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = GurobiColoringSolver(
+        color_problem,
+    )
+    solver.init_model()
+    obj = solver.model.getObjective()
+    solver.add_linear_constraint(obj <= 1)
+    solver.model.update()
+    solver.solve()
+    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+    assert solver.get_current_best_internal_objective_value() is None
+    assert solver.get_current_best_internal_objective_bound() == float("inf")
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_current_bnd_optimal():
+    file = [f for f in get_data_available() if "gc_50_1" in f][0]
+    color_problem = parse_file(file)
+    solver = GurobiColoringSolver(
+        color_problem,
+    )
+    result_store = solver.solve()
+    # check stop after 1st iteration
+    assert solver.status_solver == StatusSolver.OPTIMAL
+    assert (
+        solver.get_current_best_internal_objective_value()
+        == solver.get_current_best_internal_objective_bound()
+    )
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
@@ -677,6 +726,49 @@ def test_color_lp_ortools_mathopt_stop():
     )
     # check stop after 1st iteration
     assert len(result_store) == 1
+
+
+def test_color_lp_ortools_mathopt_optimal_bnd():
+    file = [f for f in get_data_available() if "gc_50_1" in f][0]
+    color_problem = parse_file(file)
+    solver = MathOptColoringSolver(
+        color_problem,
+    )
+    result_store = solver.solve()
+    # check obj and bound
+    assert solver.status_solver == StatusSolver.OPTIMAL
+    assert solver.get_current_best_internal_objective_value() is not None
+    assert solver.get_current_best_internal_objective_bound() is not None
+    assert (
+        solver.get_current_best_internal_objective_value()
+        == solver.get_current_best_internal_objective_bound()
+    )
+
+
+def test_color_lp_ortools_mathopt_current_obj_timeout():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = MathOptColoringSolver(
+        color_problem,
+    )
+    solver.solve(time_limit=1e-5)
+    assert solver.get_current_best_internal_objective_value() == float("inf")
+    assert solver.get_current_best_internal_objective_bound() == -float("inf")
+
+
+def test_color_lp_ortools_mathopt_current_obj_infeasible():
+    file = [f for f in get_data_available() if "gc_70_1" in f][0]
+    color_problem = parse_file(file)
+    solver = MathOptColoringSolver(
+        color_problem,
+    )
+    solver.init_model()
+    obj = solver.model.objective.as_linear_expression()
+    solver.add_linear_constraint(obj <= 1)
+    solver.solve()
+    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+    assert solver.get_current_best_internal_objective_value() == float("inf")
+    assert solver.get_current_best_internal_objective_bound() == float("inf")
 
 
 def test_color_lp_ortools_mathopt_cb_exception():
