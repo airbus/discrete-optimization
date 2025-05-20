@@ -223,6 +223,36 @@ def test_cpsat_solver(modeling):
     assert result_store[0][0].colors == start_solution.colors
 
 
+def test_cpsat_solver_internal_bound_and_objective():
+    small_example = [f for f in get_data_available() if "gc_50_1" in f][0]
+    color_problem = parse_file(small_example)
+    solver = CpSatColoringSolver(color_problem)
+    # timeout => bound and obj is None (not a single solution)
+    result_store = solver.solve(time_limit=1e-5)
+    assert solver.get_current_best_internal_objective_bound() is None
+    assert solver.get_current_best_internal_objective_value() is None
+    # not optimal => obj>bound
+    result_store = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
+    assert solver.status_solver == StatusSolver.SATISFIED
+    assert 0 < solver.get_current_best_internal_objective_bound()
+    assert (
+        solver.get_current_best_internal_objective_bound()
+        < solver.get_current_best_internal_objective_value()
+    )
+    # optimal => obj == bound
+    result_store = solver.solve()
+    assert solver.status_solver == StatusSolver.OPTIMAL
+    assert (
+        solver.get_current_best_internal_objective_bound()
+        == solver.get_current_best_internal_objective_value()
+    )
+    # infeasible => None
+    solver.cp_model.add(solver.variables["nbc"] <= 1)
+    res = solver.solve()
+    assert solver.get_current_best_internal_objective_bound() is None
+    assert solver.get_current_best_internal_objective_value() is None
+
+
 def test_cpsat_solver_finetuned():
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     color_problem = parse_file(small_example)

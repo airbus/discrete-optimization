@@ -43,6 +43,9 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
     clb: Optional[CpSolverSolutionCallback] = None
     early_stopping_exception: Optional[Exception] = None
 
+    _current_internal_objective_best_value: Optional[float] = None
+    _current_internal_objective_best_bound: Optional[float] = None
+
     @abstractmethod
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
         """Construct a do solution from the cpsat solver internal solution.
@@ -92,6 +95,8 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
 
         """
         self.early_stopping_exception = None
+        self._current_internal_objective_best_bound = None
+        self._current_internal_objective_best_value = None
         callbacks_list = CallbackList(callbacks=callbacks)
         callbacks_list.on_solve_start(solver=self)
         if self.cp_model is None:
@@ -113,12 +118,21 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
         self.clb = ortools_callback
         status = solver.Solve(self.cp_model, ortools_callback)
         self.status_solver = cpstatus_to_dostatus(status_from_cpsat=status)
+        res = ortools_callback.res
+
+        # update current obj and bound
+        if (
+            len(res) > 0
+        ):  # do not update when no solution (obj and bound set to 0. by cpsat which seems wrong)
+            self._current_internal_objective_best_bound = (
+                self.solver.BestObjectiveBound()
+            )
+            self._current_internal_objective_best_value = self.solver.ObjectiveValue()
         if self.early_stopping_exception:
             if isinstance(self.early_stopping_exception, SolveEarlyStop):
                 logger.info(self.early_stopping_exception)
             else:
                 raise self.early_stopping_exception
-        res = ortools_callback.res
         callbacks_list.on_solve_end(res=res, solver=self)
         return res
 
@@ -137,16 +151,10 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
             cstr.proto.Clear()
 
     def get_current_best_internal_objective_bound(self) -> Optional[float]:
-        if self.clb is None:
-            return None
-        else:
-            return self.clb.BestObjectiveBound()
+        return self._current_internal_objective_best_bound
 
     def get_current_best_internal_objective_value(self) -> Optional[float]:
-        if self.clb is None:
-            return None
-        else:
-            return self.clb.ObjectiveValue()
+        return self._current_internal_objective_best_value
 
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):
@@ -197,6 +205,11 @@ class OrtoolsCpSatCallback(CpSolverSolutionCallback):
                     "num_conflicts": self.NumConflicts(),
                 }
             )
+        # update current bound and value
+        self.do_solver._current_internal_objective_best_value = self.ObjectiveValue()
+        self.do_solver._current_internal_objective_best_bound = (
+            self.BestObjectiveBound()
+        )
 
 
 def cpstatus_to_dostatus(status_from_cpsat) -> StatusSolver:
