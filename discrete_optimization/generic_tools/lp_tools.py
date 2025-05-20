@@ -1070,7 +1070,7 @@ class GurobiCallback:
                 self.nb_solutions += 1
                 # store mip stats
                 self.do_solver._current_internal_objective_best_value = model.cbGet(
-                    gurobipy.GRB.Callback.MIPSOL_OBJBST
+                    gurobipy.GRB.Callback.MIPSOL_OBJ
                 )
                 self.do_solver._current_internal_objective_best_bound = model.cbGet(
                     gurobipy.GRB.Callback.MIPSOL_OBJBND
