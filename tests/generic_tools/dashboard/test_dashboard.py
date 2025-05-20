@@ -317,25 +317,15 @@ def test_update_run_options(app, instance, nb_runs):
 
 
 @pytest.mark.parametrize(
-    "config, instance, i_run, nodata",
+    "config, instance, i_run, nodata, status",
     [
-        ("cpsat-binary", "gc_50_1", 0, False),
-        ("cpsat-binary", "gc_50_3", 1, False),
-        (
-            "fake",
-            "gc_50_1",
-            0,
-            True,
-        ),
-        (
-            "timeout",
-            "gc_50_1",
-            0,
-            True,
-        ),
+        ("cpsat-binary", "gc_50_1", 0, False, StatusSolver.OPTIMAL),
+        ("cpsat-binary", "gc_50_3", 1, False, StatusSolver.OPTIMAL),
+        ("fake", "gc_50_1", 0, True, StatusSolver.ERROR),
+        ("timeout", "gc_50_1", 0, True, StatusSolver.UNKNOWN),
     ],
 )
-def test_update_xp_data(app, config, instance, i_run, nodata):
+def test_update_xp_data(app, config, instance, i_run, nodata, status):
     output = app.update_xp_data(config=config, instance=instance, run=i_run)
     if nodata:
         assert len(output["data"]) == 0
@@ -343,6 +333,7 @@ def test_update_xp_data(app, config, instance, i_run, nodata):
     else:
         assert len(output["data"]) > 0
         assert output["nodata"] == "d-none"
+    assert status.value in output["status"]
 
 
 def test_empty_xps(app):

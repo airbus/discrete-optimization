@@ -195,6 +195,10 @@ def get_experiment_name(df: Union[pd.DataFrame, pd.Series], with_run_nb=True) ->
         return f"{df.attrs[CONFIG]} x {df.attrs[INSTANCE]}"
 
 
+def get_status_str(df: pd.DataFrame) -> str:
+    return df.attrs[STATUS].value
+
+
 def has_multiple_runs(results: list[pd.DataFrame]) -> bool:
     return max(df.attrs[I_RUN_LABEL] for df in results) > 0
 
