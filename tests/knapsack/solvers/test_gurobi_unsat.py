@@ -34,5 +34,5 @@ def test_knapsack_gurobi_unsat():
     assert solver.status_solver == StatusSolver.UNSATISFIABLE
 
     # explain it
-    constraints = solver.explain_unsat()
+    constraints = solver.explain_unsat_fine()
     assert len(constraints) > 0

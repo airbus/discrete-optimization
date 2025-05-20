@@ -30,6 +30,7 @@ from discrete_optimization.generic_tools.lp_tools import (
     OrtoolsMathOptMilpSolver,
     VariableType,
 )
+from discrete_optimization.generic_tools.unsat_tools import MetaConstraint
 
 try:
     import gurobipy
@@ -150,6 +151,7 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
         range_color = range(nb_colors)
         range_color_subset = range(nb_colors_subset)
         range_color_per_node = {}
+        meta_constraints = []
         for node in self.nodes_name:
             rng = self.get_range_color(
                 node_name=node,
@@ -169,6 +171,12 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
                 )
                 == 1
             )
+        meta_constraints.append(
+            MetaConstraint(
+                name="One color per node",
+                constraints=list(one_color_constraints.values()),
+            )
+        )
         cliques = []
         g = self.graph.to_networkx()
         if use_cliques:
@@ -198,23 +206,47 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
                     )
                     <= opt
                 )
+                meta_constraints.append(
+                    MetaConstraint(
+                        name=f"clique({index_c})",
+                        constraints=[
+                            cliques_constraint[index_c],
+                            cliques_constraint[(index_c, 1)],
+                        ],
+                    )
+                )
                 index_c += 1
         edges = g.edges()
         constraints_neighbors: NeighborsConstraints = {}
+        meta_constraints_neighbors = [
+            MetaConstraint(
+                name=f"neighbours colors of node {self.problem.index_to_nodes_name[i]}"
+            )
+            for i in range(self.problem.number_of_nodes)
+        ]
         for e in edges:
             for c in range_color_per_node[e[0]]:
                 if c in range_color_per_node[e[1]]:
-                    constraints_neighbors[(e[0], e[1], c)] = self.add_linear_constraint(
+                    cstr = self.add_linear_constraint(
                         colors_var[e[0], c] + colors_var[e[1], c] <= 1
                     )
+                    constraints_neighbors[(e[0], e[1], c)] = cstr
+                    meta_constraints_neighbors[e[0]].append(cstr)
+                    meta_constraints_neighbors[e[1]].append(cstr)
+        meta_constraints.extend(meta_constraints_neighbors)
+        opt_meta_constraint = MetaConstraint(
+            name="optimality constraint",
+        )
         for n in range_node:
-            self.add_linear_constraint(
+            opt_constraint = self.add_linear_constraint(
                 self.construct_linear_sum(
                     (color_i + 1) * colors_var[n, color_i]
                     for color_i in range_color_per_node[n]
                 )
                 <= opt
             )
+            opt_meta_constraint.append(opt_constraint)
+        meta_constraints.append(opt_meta_constraint)
         self.set_model_objective(opt, minimize=True)
         self.variable_decision = {"colors_var": colors_var, "nb_colors": opt}
         self.constraints_dict = {
@@ -234,6 +266,10 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
         self.description_constraint["constraints_neighbors"] = {
             "descr": "no neighbors can have same color"
         }
+        self.meta_constraints = meta_constraints
+
+    def get_meta_constraints(self) -> list[MetaConstraint]:
+        return self.meta_constraints
 
     def convert_to_variable_values(
         self, solution: ColoringSolution
@@ -294,7 +330,7 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
             return range_color_all
 
 
-class GurobiColoringSolver(GurobiMilpSolver, _BaseLpColoringSolver):
+class GurobiColoringSolver(_BaseLpColoringSolver, GurobiMilpSolver):
     """Coloring LP solver based on gurobipy library.
 
     Attributes:
@@ -331,7 +367,7 @@ class GurobiColoringSolver(GurobiMilpSolver, _BaseLpColoringSolver):
         return _BaseLpColoringSolver.convert_to_variable_values(self, solution)
 
 
-class MathOptColoringSolver(OrtoolsMathOptMilpSolver, _BaseLpColoringSolver):
+class MathOptColoringSolver(_BaseLpColoringSolver, OrtoolsMathOptMilpSolver):
     """Coloring LP solver based on pymip library.
 
     Note:
