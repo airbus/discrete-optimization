@@ -66,7 +66,9 @@ class CpSatColoringSolver(
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.modeling: Optional[ModelingCpSat] = None
-        self.variables: dict[str, Union[list[IntVar], list[dict[int, IntVar]]]] = {}
+        self.variables: dict[
+            str, Union[IntVar, list[IntVar], list[dict[int, IntVar]]]
+        ] = {}
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
         if self.modeling == ModelingCpSat.INTEGER:
@@ -191,6 +193,7 @@ class CpSatColoringSolver(
             cp_model.Minimize(sum(used))
         else:
             nbc = cp_model.NewIntVar(0, nb_colors, name="nbcolors")
+            self.variables["nbc"] = nbc
             cp_model.AddMaxEquality(
                 nbc, [variables[i] for i in self.problem.index_subset_nodes]
             )
