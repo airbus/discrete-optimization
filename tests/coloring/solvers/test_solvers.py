@@ -841,11 +841,24 @@ def test_cpmpy_solver():
     solver.solve()
     assert solver.status_solver == StatusSolver.UNSATISFIABLE
 
+    # explain (fine and meta)
     assert len(solver.explain_unsat_fine()) < len(solver.get_soft_constraints())
     metaconstraints_mus = solver.explain_unsat_meta()
     assert len(metaconstraints_mus) < len(solver.get_soft_meta_constraints())
     for meta in metaconstraints_mus:
         assert isinstance(meta, MetaCpmpyConstraint)
+
+    # correct meta
+    meta_mcs = solver.correct_unsat_meta()
+    assert 0 < len(meta_mcs) < len(solver.get_soft_meta_constraints())
+    subconstraints_mcs_ids = set()
+    for meta in meta_mcs:
+        subconstraints_mcs_ids.update({id(c) for c in meta.constraints})
+    solver.model.constraints = [
+        c for c in solver.model.constraints if id(c) not in subconstraints_mcs_ids
+    ]  # NB: solver.model.constraints.remove(cstr) not working as expected
+    solver.solve()
+    assert solver.status_solver == StatusSolver.OPTIMAL
 
 
 if __name__ == "__main__":

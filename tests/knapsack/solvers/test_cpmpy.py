@@ -5,6 +5,7 @@
 import pytest
 from cpmpy.solvers.solver_interface import ExitStatus
 
+from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.knapsack.parser import get_data_available, parse_file
 from discrete_optimization.knapsack.problem import KnapsackSolution
 from discrete_optimization.knapsack.solvers.cpmpy import CpmpyKnapsackSolver
@@ -39,3 +40,18 @@ def test_knapsack_cpmpy():
 
     with pytest.raises(NotImplementedError):
         solver.explain_unsat_meta()
+
+    # correct it
+    constraints = solver.correct_unsat_fine()
+    assert len(constraints) > 0
+
+    with pytest.raises(NotImplementedError):
+        solver.correct_unsat_meta()
+
+    # NB: solver.model.constraints.remove(cstr) not working as expected
+    constraints_ids = {id(c) for c in constraints}
+    solver.model.constraints = [
+        c for c in solver.model.constraints if id(c) not in constraints_ids
+    ]
+    solver.solve()
+    assert solver.status_solver == StatusSolver.OPTIMAL
