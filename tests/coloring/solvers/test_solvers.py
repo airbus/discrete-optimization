@@ -65,6 +65,7 @@ from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     plot_storage_2d,
 )
+from discrete_optimization.generic_tools.unsat_tools import MetaConstraint
 
 try:
     import gurobipy
@@ -513,6 +514,45 @@ def test_color_lp_gurobi(use_cliques, greedy_start):
         solver.set_warm_start(solver.start_solution)
         result_store = solver.solve(**kwargs)
         assert result_store[0][0].colors == solver.start_solution.colors
+
+
+@pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")
+def test_color_lp_gurobi_explain_unsat():
+    file = [f for f in get_data_available() if "gc_50_1" in f][0]
+    color_problem = parse_file(file)
+    solver = GurobiColoringSolver(
+        color_problem,
+    )
+    solver.solve()
+    assert solver.status_solver == StatusSolver.OPTIMAL
+
+    # add impossible constraint "improve optimal bound"
+    obj = solver.model.getObjective()
+    extra_constraint = solver.add_linear_constraint(obj <= obj.getValue() / 2)
+    extra_meta_constraint = MetaConstraint(name="extra", constraints=[extra_constraint])
+    solver.model.update()
+
+    # re-solve => unsatisfiable
+    solver.solve()
+    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+
+    # explain it
+    constraints = solver.explain_unsat_fine()
+    assert len(constraints) > 0
+
+    # explain it via meta-constraints
+    mus_meta_constraints = solver.explain_unsat_meta()
+    assert len(mus_meta_constraints) > 0
+    assert len(mus_meta_constraints) < len(solver.get_meta_constraints())
+    assert isinstance(mus_meta_constraints[0], MetaConstraint)
+
+    # custom meta-constraints
+    mus_meta_constraints_extra = solver.explain_unsat_meta(
+        meta_constraints=solver.get_meta_constraints() + [extra_meta_constraint]
+    )
+    assert mus_meta_constraints == [
+        meta for meta in mus_meta_constraints_extra if meta != extra_meta_constraint
+    ]
 
 
 @pytest.mark.skipif(not gurobi_available, reason="You need Gurobi to test this solver.")

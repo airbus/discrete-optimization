@@ -40,6 +40,7 @@ from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.generic_tools.unsat_tools import MetaConstraint
 
 try:
     import gurobipy
@@ -797,8 +798,8 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
 
         return res
 
-    def explain_unsat(self) -> list[Any]:
-        """Explain unsatisfiability of the problem.
+    def explain_unsat_fine(self) -> list[Any]:
+        """Explain unsatisfiability of the problem via fine constraints.
 
         Returns:
             subset minimal list of constraints leading to unsatisfiability.
@@ -837,6 +838,43 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
                 constraints.append(var <= var.UB)
 
         return constraints
+
+    def explain_unsat_meta(
+        self,
+        meta_constraints: Optional[list[MetaConstraint]] = None,
+    ) -> list[MetaConstraint]:
+        """Explain unsatisfiability of the problem via meta-constraints.
+
+        Meta-constraints are gathering several finer constraints in order to be more human readable.
+
+        Args:
+            meta_constraints: list of meta-constraints.
+                Default to the ones returned by `get_default_meta_constraints()`.
+
+        Returns:
+            subset minimal list of meta-constraints leading to unsatisfiability.
+
+        """
+        if meta_constraints is None:
+            meta_constraints = self.get_meta_constraints()
+        mus_constraints = self.explain_unsat_fine()
+        mus_meta_constraints = set()
+        for c in mus_constraints:
+            for meta in meta_constraints:
+                if c in meta:
+                    mus_meta_constraints.add(meta)
+        return list(mus_meta_constraints)
+
+    def get_meta_constraints(self) -> list[MetaConstraint]:
+        """Get meta-constraints defining the internal model.
+
+        To be used to explain unsatisfiability. See `explain_unsat_meta()`.
+
+        Returns:
+            default set of meta-constraints defining the problem
+
+        """
+        raise NotImplementedError("No meta constraints defined for this model.")
 
     def set_random_seed(self, random_seed: int) -> None:
         self.model.setParam(gurobipy.GRB.Param.Seed, random_seed)
