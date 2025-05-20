@@ -480,6 +480,10 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
                 mathopt_solver_type == mathopt.SolverType.HIGHS
             )
 
+        # reset best bound and obj
+        self._current_internal_objective_best_value = None
+        self._current_internal_objective_best_bound = None
+
         self.early_stopping_exception = None
         callbacks_list = CallbackList(callbacks=callbacks)
 
@@ -506,6 +510,10 @@ class OrtoolsMathOptMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         )
         if store_mathopt_res:
             self.mathopt_res = mathopt_res
+
+        # update best bound and obj
+        self._current_internal_objective_best_value = mathopt_res.primal_bound()
+        self._current_internal_objective_best_bound = mathopt_res.dual_bound()
 
         # get result storage
         if extract_solutions_from_mathopt_res:
@@ -774,6 +782,10 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
         **kwargs: Any,
     ) -> ResultStorage:
         self.early_stopping_exception = None
+        # reset best bound and obj
+        self._current_internal_objective_best_value = None
+        self._current_internal_objective_best_bound = None
+
         callbacks_list = CallbackList(callbacks=callbacks)
 
         # callback: solve start
@@ -788,6 +800,12 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
             gurobi_callback=gurobi_callback,
             **kwargs,
         )
+
+        # update best bound and obj
+        if hasattr(self.model, "ObjVal"):
+            self._current_internal_objective_best_value = self.model.ObjVal
+        if hasattr(self.model, "ObjBound"):
+            self._current_internal_objective_best_bound = self.model.ObjBound
 
         # get result storage
         res = gurobi_callback.res
