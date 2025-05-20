@@ -28,6 +28,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     extract_nbsolvedinstances_by_config,
     filter_results,
     get_experiment_name,
+    get_status_str,
     has_multiple_runs,
     map_stat_key2func,
     normalize_results,
@@ -64,6 +65,7 @@ TABLE_EMPTY_XPS_ID = "table-empty-xps"
 TABLE_EMPTY_XPS_NO_DATA_ID = "table-empty-xps-no-data"
 TABLE_XP_ID = "table-metric"
 TABLE_XP_NO_DATA_ID = "table-metric-no-data"
+TABLE_XP_STATUS_ID = "table-metric-status"
 CONFIG_MD_ID = "config-markdown"
 
 TAB_METRIC_ID = "tab-metric"
@@ -285,6 +287,7 @@ class Dashboard(Dash):
 
         config_explorer = dcc.Markdown(id=CONFIG_MD_ID)
 
+        table_xp_status = html.P(id=TABLE_XP_STATUS_ID)
         table_xp = dash_table.DataTable(page_size=20, id=TABLE_XP_ID)
         table_xp_nodata = html.P("no data", id=TABLE_XP_NO_DATA_ID)
 
@@ -333,7 +336,7 @@ class Dashboard(Dash):
                                 ),
                                 dbc.Tab(
                                     children=html.Div(
-                                        [table_xp, table_xp_nodata],
+                                        [table_xp_status, table_xp, table_xp_nodata],
                                         className="mt-3",
                                     ),
                                     label="Experiment data",
@@ -531,6 +534,9 @@ class Dashboard(Dash):
 
         @self.callback(
             output=dict(
+                status=Output(
+                    component_id=TABLE_XP_STATUS_ID, component_property="children"
+                ),
                 data=Output(component_id=TABLE_XP_ID, component_property="data"),
                 nodata=Output(
                     component_id=TABLE_XP_NO_DATA_ID, component_property="className"
@@ -544,14 +550,16 @@ class Dashboard(Dash):
         )
         def update_xp_data(config: str, instance: str, run: Optional[int]) -> Any:
             if run is None:
-                return dict(data=[], nodata=_convert_bool2classname(True))
+                return dict(data=[], nodata=_convert_bool2classname(True), status="")
             df = filter_results(
                 results=self.full_results, configs=[config], instances=[instance]
             )[run]
+            status = get_status_str(df)
             df = df.reset_index()
             return dict(
                 data=df.to_dict("records"),
                 nodata=_convert_bool2classname(len(df) == 0),
+                status=f"Status: {status}",
             )
 
         # Filters disabling
