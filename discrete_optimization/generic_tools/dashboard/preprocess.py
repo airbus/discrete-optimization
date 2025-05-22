@@ -151,15 +151,22 @@ def compute_extra_metrics_df(df: pd.DataFrame) -> None:
                 )
 
 
-def extract_instances(results) -> set[str]:
+def extract_instances(results: list[pd.DataFrame]) -> set[str]:
     return {df.attrs[INSTANCE] for df in results}
 
 
-def extract_configs(results) -> set[str]:
+def extract_configs(results: list[pd.DataFrame]) -> set[str]:
     return {df.attrs[CONFIG] for df in results}
 
 
-def extract_metrics(results) -> set[str]:
+def extract_nb_xps_by_config(results: list[pd.DataFrame]) -> dict[str, int]:
+    nb_xps_by_config = defaultdict(lambda: 0)
+    for df in results:
+        nb_xps_by_config[df.attrs[CONFIG]] += 1
+    return nb_xps_by_config
+
+
+def extract_metrics(results: list[pd.DataFrame]) -> set[str]:
     metrics = set()
     for df in results:
         metrics.update(df.columns)
@@ -296,8 +303,8 @@ def extract_solvetimes_by_config(results: list[pd.DataFrame]) -> dict[str, list[
 def convert_solvetimes2nbsolvedinstances(
     solvetimes: list[float],
     time_label: str = "time",
-    name: str = "nb of solved instances",
 ) -> pd.Series:
+    name = "nb of solved instances"
     ser = pd.Series(
         {t: n for t, n in zip(sorted(solvetimes), range(1, len(solvetimes) + 1))},
         name=name,
@@ -317,3 +324,68 @@ def extract_nbsolvedinstances_by_config(
         config: convert_solvetimes2nbsolvedinstances(solvetimes, time_label=time_label)
         for config, solvetimes in extract_solvetimes_by_config(results=results).items()
     }
+
+
+def convert_nb2percentage_solvedinstances(
+    ser: pd.Series,
+    n_xps: int,
+) -> pd.Series:
+    ser = ser * 100 / n_xps
+    ser.name = "% of solved instances"
+    return ser
+
+
+def convert_nb2percentage_solvedinstances_by_config(
+    nbsolvedinstances_by_config: dict[str, pd.Series],
+    n_xps_by_config: dict[str, int],
+) -> dict[str, pd.Series]:
+    return {
+        config: convert_nb2percentage_solvedinstances(
+            ser, n_xps=n_xps_by_config[config]
+        )
+        for config, ser in nbsolvedinstances_by_config.items()
+    }
+
+
+def construct_summary_nbsolved_instances(
+    nbsolvedinstances_by_config: dict[str, pd.Series],
+    nb_xps_by_config: dict[str, int],
+    configs: Optional[Container[str]] = None,
+) -> pd.DataFrame:
+    if configs is None:
+        configs = set(nb_xps_by_config)
+    data = []
+    for config in configs:
+        if config in nbsolvedinstances_by_config:
+            nbsolvedinstances = nbsolvedinstances_by_config[config].iloc[-1]
+        else:
+            nbsolvedinstances = 0
+        data.append((config, nbsolvedinstances, nb_xps_by_config[config]))
+
+    return pd.DataFrame(
+        data=data,
+        columns=[
+            "config",
+            "# solved xps",
+            "# xps",
+        ],
+    )
+
+
+def construct_summary_metric_agg(
+    stat_by_config: dict[str, pd.DataFrame],
+    configs: Optional[list[str]] = None,
+) -> pd.DataFrame:
+    if configs is None:
+        configs = list(stat_by_config)
+    index_config = pd.Index(configs, name="config")
+    df_stat = next(iter(stat_by_config.values()))
+    metrics = list(df_stat.columns)
+    data = (
+        stat_by_config[config].iloc[-1, :]
+        if config in stat_by_config and len(stat_by_config[config]) > 0
+        else pd.Series(index=metrics)
+        for config in configs
+    )
+    df_summary = pd.DataFrame(data, index=index_config, columns=metrics).reset_index()
+    return df_summary

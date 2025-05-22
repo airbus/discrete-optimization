@@ -247,7 +247,7 @@ def test_update_graph_metric(
 def test_update_graph_agg_metric(
     app, configs, instances, metric, stat, time_log_scale, expected_n_traces, nodata
 ):
-    plot = app.update_graph_agg_metric(
+    output = app.update_graph_agg_metric(
         configs=configs,
         instances=instances,
         metric=metric,
@@ -256,12 +256,21 @@ def test_update_graph_agg_metric(
         time_log_scale=time_log_scale,
         clip_value=1e50,
     )
+    plot = output["plot"]
     assert len(plot.data) == expected_n_traces
     if nodata:
         assert len(plot.layout.annotations) == 1
         assert plot.layout.annotations[0].text == "NO DATA"
     else:
         assert len(plot.layout.annotations) == 0
+
+    df = pd.DataFrame(output["data"])
+    assert [c["name"] for c in output["columns"]] == df.columns.tolist()
+    assert all(config in df.config.values for config in configs)
+    if len(instances) > 0:
+        assert df.loc[df.config == "cpsat-binary", "gap"].values == 0
+        if "timeout" in configs:
+            assert pd.isna(df[df.config == "timeout"].iloc[0, 1:]).all()
 
 
 @pytest.mark.parametrize(
@@ -275,16 +284,17 @@ def test_update_graph_agg_metric(
 def test_update_graph_nb_solved_instances(app, time_log_scale, transpose_value):
     configs = ["mathopt", "cpsat-integer", "timeout"]
     expected_n_traces = 2
-    plot = app.update_graph_nb_solved_instances(
+    output = app.update_graph_nb_solved_instances(
         configs=configs, time_log_scale=time_log_scale, transpose_value=transpose_value
     )
+    plot = output["plot"]
     assert len(plot.data) == expected_n_traces
     if TRANSPOSE_KEY in transpose_value:
-        assert plot.layout.xaxis.title.text == "nb of solved instances"
+        assert plot.layout.xaxis.title.text == "% of solved instances"
         assert plot.layout.yaxis.title.text == "time (s)"
         time_axes = next(plot.select_yaxes())
     else:
-        assert plot.layout.yaxis.title.text == "nb of solved instances"
+        assert plot.layout.yaxis.title.text == "% of solved instances"
         assert plot.layout.xaxis.title.text == "time (s)"
         time_axes = next(plot.select_xaxes())
 
@@ -292,6 +302,11 @@ def test_update_graph_nb_solved_instances(app, time_log_scale, transpose_value):
         assert time_axes.type == "log"
     else:
         assert time_axes.type is None
+
+    df = pd.DataFrame(output["data"])
+    assert [c["name"] for c in output["columns"]] == df.columns.tolist()
+    assert (df[df.config == "cpsat-integer"].iloc[0, 1:].values == [3, 3]).all()
+    assert (df[df.config == "timeout"].iloc[0, 1:].values == [0, 3]).all()
 
 
 @pytest.mark.parametrize(
