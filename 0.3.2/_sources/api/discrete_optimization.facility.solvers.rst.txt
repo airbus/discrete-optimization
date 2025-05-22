@@ -1,0 +1,61 @@
+discrete\_optimization.facility.solvers package
+===============================================
+
+Submodules
+----------
+
+discrete\_optimization.facility.solvers.facility\_cp\_solvers module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.facility_cp_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.facility.solvers.facility\_lp\_lns\_solver module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.facility_lp_lns_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.facility.solvers.facility\_lp\_solver module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.facility_lp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.facility.solvers.facility\_solver module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.facility_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.facility.solvers.gphh\_facility module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.gphh_facility
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.facility.solvers.greedy\_solvers module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.solvers.greedy_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.facility.solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
