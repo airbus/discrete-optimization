@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Sequence
 from typing import Any, Optional, Union
 
@@ -20,11 +19,15 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     clip_results,
     compute_extra_metrics,
     compute_stat_by_config,
+    construct_summary_metric_agg,
+    construct_summary_nbsolved_instances,
+    convert_nb2percentage_solvedinstances_by_config,
     drop_empty_results,
     extract_configs,
     extract_empty_xps_metadata,
     extract_instances,
     extract_metrics,
+    extract_nb_xps_by_config,
     extract_nbsolvedinstances_by_config,
     filter_results,
     get_experiment_name,
@@ -61,11 +64,12 @@ GRAPH_METRIC_ID = "graph-metric"
 GRAPH_AGG_METRIC_ID = "graph-agg-metric"
 GRAPH_NB_SOLVED_INSTANCES_ID = "graph-nb-solved-instances"
 
+TABLE_AGG_METRIC_ID = "table-agg-metric"
 TABLE_EMPTY_XPS_ID = "table-empty-xps"
-TABLE_EMPTY_XPS_NO_DATA_ID = "table-empty-xps-no-data"
 TABLE_XP_ID = "table-metric"
 TABLE_XP_NO_DATA_ID = "table-metric-no-data"
 TABLE_XP_STATUS_ID = "table-metric-status"
+TABLE_NB_SOLVED_INSTANCES_ID = "table-nb-solved-instances"
 CONFIG_MD_ID = "config-markdown"
 
 TAB_METRIC_ID = "tab-metric"
@@ -146,8 +150,15 @@ class Dashboard(Dash):
         self.results_by_config = aggregate_results_by_config(
             results=results, configs=self.configs
         )
+        self.nb_xps_by_config = extract_nb_xps_by_config(self.full_results)
         self.nbsolvedinstances_by_config = extract_nbsolvedinstances_by_config(
             results=results
+        )
+        self.percentsolvedinstances_by_config = (
+            convert_nb2percentage_solvedinstances_by_config(
+                nbsolvedinstances_by_config=self.nbsolvedinstances_by_config,
+                n_xps_by_config=self.nb_xps_by_config,
+            )
         )
         self.empty_xps_metadata = extract_empty_xps_metadata(self.full_results)
 
@@ -171,8 +182,8 @@ class Dashboard(Dash):
                             [
                                 dbc.Label("Configs"),
                                 dcc.Dropdown(
-                                    self.configs,
-                                    self.configs,
+                                    self.full_configs,
+                                    self.full_configs,
                                     multi=True,
                                     id=CONFIGS_ID,
                                 ),
@@ -183,7 +194,7 @@ class Dashboard(Dash):
                             [
                                 dbc.Label("Instances"),
                                 dcc.Dropdown(
-                                    [ALL_INSTANCES] + self.instances,
+                                    [ALL_INSTANCES] + self.full_instances,
                                     ALL_INSTANCES,
                                     multi=True,
                                     id=INSTANCES_ID,
@@ -282,26 +293,34 @@ class Dashboard(Dash):
         )
 
         graph_metric = dcc.Graph(id=GRAPH_METRIC_ID)
+
         graph_agg_metric = dcc.Graph(id=GRAPH_AGG_METRIC_ID)
+        table_agg_metric = dash_table.DataTable(
+            id=TABLE_AGG_METRIC_ID, **_get_dash_table_kwargs()
+        )
+
         graph_nb_solved_instances = dcc.Graph(id=GRAPH_NB_SOLVED_INSTANCES_ID)
+        table_nb_solved_instances = dash_table.DataTable(
+            id=TABLE_NB_SOLVED_INSTANCES_ID, **_get_dash_table_kwargs()
+        )
 
         config_explorer = dcc.Markdown(id=CONFIG_MD_ID)
 
         table_xp_status = html.P(id=TABLE_XP_STATUS_ID)
-        table_xp = dash_table.DataTable(page_size=20, id=TABLE_XP_ID)
+        table_xp = dash_table.DataTable(id=TABLE_XP_ID, **_get_dash_table_kwargs())
         table_xp_nodata = html.P("no data", id=TABLE_XP_NO_DATA_ID)
 
         table_empty_xps = dash_table.DataTable(
-            data=self.empty_xps_metadata.to_dict("records"),
-            columns=[{"id": c, "name": c} for c in self.empty_xps_metadata.columns],
-            page_size=20,
+            data=_extract_dash_table_data_from_df(self.empty_xps_metadata),
+            columns=_extract_dash_table_columns_from_df(self.empty_xps_metadata),
             id=TABLE_EMPTY_XPS_ID,
-            style_data={
-                "whiteSpace": "normal",
-                "height": "auto",
-            },
+            **_get_dash_table_kwargs(
+                style_data={  # wrap long columns
+                    "whiteSpace": "normal",
+                    "height": "auto",
+                }
+            ),
         )
-        table_empty_xps_nodata = html.P("no data", id=TABLE_EMPTY_XPS_NO_DATA_ID)
 
         graph_tabs = dbc.Card(
             [
@@ -320,12 +339,18 @@ class Dashboard(Dash):
                                     tab_id=TAB_METRIC_ID,
                                 ),
                                 dbc.Tab(
-                                    children=graph_agg_metric,
+                                    children=[
+                                        graph_agg_metric,
+                                        table_agg_metric,
+                                    ],
                                     label="Metric aggregation along instances",
                                     tab_id=TAB_AGG_METRIC_ID,
                                 ),
                                 dbc.Tab(
-                                    children=graph_nb_solved_instances,
+                                    children=[
+                                        graph_nb_solved_instances,
+                                        table_nb_solved_instances,
+                                    ],
                                     label="Nb of solved instances",
                                     tab_id=TAB_NB_SOLVED_INSTANCES_ID,
                                 ),
@@ -421,9 +446,19 @@ class Dashboard(Dash):
 
         # Graph graph-agg-metric-along-instance-evolution: 1 config => aggregation of a metric along instances
         @self.callback(
-            Output(
-                component_id=GRAPH_AGG_METRIC_ID,
-                component_property="figure",
+            output=dict(
+                plot=Output(
+                    component_id=GRAPH_AGG_METRIC_ID,
+                    component_property="figure",
+                ),
+                data=Output(
+                    component_id=TABLE_AGG_METRIC_ID,
+                    component_property="data",
+                ),
+                columns=Output(
+                    component_id=TABLE_AGG_METRIC_ID,
+                    component_property="columns",
+                ),
             ),
             inputs=dict(
                 configs=Input(component_id=CONFIGS_ID, component_property="value"),
@@ -458,16 +493,33 @@ class Dashboard(Dash):
                 for config, df in stat_by_config.items()
                 if metric in df
             }
-            return create_graph_from_series_dict(
-                map_label2ser=stat_metric_by_config,
-                with_time_log_scale=with_time_log_scale,
-                legend_title="Configs",
+            df_summary = construct_summary_metric_agg(
+                stat_by_config=stat_by_config, configs=configs
+            )
+            return dict(
+                plot=create_graph_from_series_dict(
+                    map_label2ser=stat_metric_by_config,
+                    with_time_log_scale=with_time_log_scale,
+                    legend_title="Configs",
+                ),
+                data=_extract_dash_table_data_from_df(df_summary),
+                columns=_extract_dash_table_columns_from_df(df_summary),
             )
 
         # Graph graph-nb-solved-instances-evolution: 1 config => nb of instances solved depending on time
         @self.callback(
-            Output(
-                component_id=GRAPH_NB_SOLVED_INSTANCES_ID, component_property="figure"
+            output=dict(
+                plot=Output(
+                    component_id=GRAPH_NB_SOLVED_INSTANCES_ID,
+                    component_property="figure",
+                ),
+                data=Output(
+                    component_id=TABLE_NB_SOLVED_INSTANCES_ID, component_property="data"
+                ),
+                columns=Output(
+                    component_id=TABLE_NB_SOLVED_INSTANCES_ID,
+                    component_property="columns",
+                ),
             ),
             inputs=dict(
                 configs=Input(component_id=CONFIGS_ID, component_property="value"),
@@ -482,16 +534,25 @@ class Dashboard(Dash):
         def update_graph_nb_solved_instances(configs, time_log_scale, transpose_value):
             transpose = TRANSPOSE_KEY in transpose_value
             with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
-            nbsolvedinstances_by_config = {
+            percentsolvedinstances_by_config = {
                 config: ser
-                for config, ser in self.nbsolvedinstances_by_config.items()
+                for config, ser in self.percentsolvedinstances_by_config.items()
                 if config in configs
             }
-            return create_graph_from_series_dict(
-                map_label2ser=nbsolvedinstances_by_config,
-                with_time_log_scale=with_time_log_scale,
-                legend_title="Configs",
-                transpose=transpose,
+            df_summary = construct_summary_nbsolved_instances(
+                nbsolvedinstances_by_config=self.nbsolvedinstances_by_config,
+                nb_xps_by_config=self.nb_xps_by_config,
+                configs=configs,
+            )
+            return dict(
+                plot=create_graph_from_series_dict(
+                    map_label2ser=percentsolvedinstances_by_config,
+                    with_time_log_scale=with_time_log_scale,
+                    legend_title="Configs",
+                    transpose=transpose,
+                ),
+                data=_extract_dash_table_data_from_df(df_summary),
+                columns=_extract_dash_table_columns_from_df(df_summary),
             )
 
         # Config explorer
@@ -557,7 +618,7 @@ class Dashboard(Dash):
             status = get_status_str(df)
             df = df.reset_index()
             return dict(
-                data=df.to_dict("records"),
+                data=_extract_dash_table_data_from_df(df),
                 nodata=_convert_bool2classname(len(df) == 0),
                 status=f"Status: {status}",
             )
@@ -721,7 +782,7 @@ class Dashboard(Dash):
 
     def _replace_allinstances_alias(self, instances: list[str]) -> list[str]:
         if ALL_INSTANCES in instances:
-            return self.instances
+            return self.full_instances
         else:
             return instances
 
@@ -732,3 +793,20 @@ def _convert_bool2classname_dict(d: dict[str, bool]) -> dict[str, str]:
 
 def _convert_bool2classname(v: bool) -> str:
     return "d-block" if v else "d-none"
+
+
+def _extract_dash_table_data_from_df(df: pd.DataFrame) -> list[dict[str, Any]]:
+    return df.to_dict("records")
+
+
+def _extract_dash_table_columns_from_df(df: pd.DataFrame) -> list[dict[str, Any]]:
+    return [{"id": c, "name": c} for c in df.columns]
+
+
+def _get_dash_table_kwargs(**kwargs):
+    kwargs_table = dict(
+        page_size=20,
+        export_format="csv",
+    )
+    kwargs_table.update(kwargs)
+    return kwargs_table
