@@ -1,4 +1,6 @@
-from typing import Any
+import re
+from collections.abc import Hashable, Iterable
+from typing import Any, Optional
 
 from cpmpy import Model, intvar
 from cpmpy.expressions.core import Expression
@@ -12,6 +14,9 @@ from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpySolver,
     MetaCpmpyConstraint,
 )
+
+SOFT_METACONSTRAINT_PREFIX = "neighbours colors of node "
+METADATA_NODE = "node"
 
 
 class CpmpyColoringSolver(
@@ -33,7 +38,8 @@ class CpmpyColoringSolver(
         soft_constraints = []
         soft_meta_constraints = [
             MetaCpmpyConstraint(
-                name=f"neighbours colors of node {self.problem.index_to_nodes_name[i]}"
+                name=f"{SOFT_METACONSTRAINT_PREFIX}{self.problem.index_to_nodes_name[i]}",
+                metadata={METADATA_NODE: self.problem.index_to_nodes_name[i]},
             )
             for i in range(n)
         ]
@@ -58,6 +64,57 @@ class CpmpyColoringSolver(
         self._hard_meta_constraint = MetaCpmpyConstraint(
             name="nb colors", constraints=[self._hard_constraint]
         )
+
+    def convert_constraint2edge(
+        self, constraint: Expression
+    ) -> Optional[tuple[Hashable, Hashable]]:
+        if not constraint.has_subexpr() and len(constraint.args) == 2:
+            try:
+                start_idx = self._convert_variable2idx(constraint.args[0])
+                end_idx = self._convert_variable2idx(constraint.args[1])
+            except ValueError:
+                pass
+            else:
+                return (
+                    self.problem.graph.nodes_name[start_idx],
+                    self.problem.graph.nodes_name[end_idx],
+                )
+
+    def convert_constraints2edges(
+        self, constraints: Iterable[Expression]
+    ) -> list[tuple[Hashable, Hashable]]:
+        edges = []
+        for c in constraints:
+            edge = self.convert_constraint2edge(c)
+            if edge is not None:
+                edges.append(edge)
+        return edges
+
+    @staticmethod
+    def _convert_variable2idx(variable: Expression) -> int:
+        match = re.match(r"x\[([0-9]*)\]", variable.name)
+        if match is None:
+            raise ValueError(
+                f"variable {variable} name has not the proper format 'x[i]'"
+            )
+        else:
+            return int(match[1])
+
+    def convert_metaconstraint2node(
+        self, meta: MetaCpmpyConstraint
+    ) -> Optional[Hashable]:
+        if METADATA_NODE in meta.metadata:
+            return meta.metadata[METADATA_NODE]
+
+    def convert_metaconstraints2nodes(
+        self, metas: list[MetaCpmpyConstraint]
+    ) -> list[Hashable]:
+        nodes = []
+        for meta in metas:
+            node = self.convert_metaconstraint2node(meta)
+            if node is not None:
+                nodes.append(node)
+        return nodes
 
     def retrieve_current_solution(self) -> ColoringSolution:
         colors = self.variables["x"].value().tolist()

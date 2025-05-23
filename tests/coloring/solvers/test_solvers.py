@@ -860,6 +860,20 @@ def test_cpmpy_solver():
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL
 
+    # tranform meta-constraints into nodes
+    meta_mcs_nodes = solver.convert_metaconstraints2nodes(meta_mcs)
+    assert len(meta_mcs_nodes) == len(meta_mcs)
+    for node in meta_mcs_nodes:
+        assert node in color_problem.graph.nodes_name
+
+    # tranform meta-constraints into edges
+    constraints = meta_mcs[0]
+    edges = solver.convert_constraints2edges(constraints)
+    assert len(constraints) == len(edges)
+    for edge in edges:
+        assert edge[0] in color_problem.graph.nodes_name
+        assert edge[1] in color_problem.graph.nodes_name
+
 
 if __name__ == "__main__":
     test_solvers()
