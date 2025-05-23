@@ -15,11 +15,16 @@ class MetaConstraint(MutableSequence[Constraint]):
 
     """
 
-    def __init__(self, name: str, constraints: Optional[list[Constraint]] = None):
+    def __init__(
+        self, name: str, constraints: Optional[list[Constraint]] = None, metadata=None
+    ):
         self.name = name
         if constraints is None:
             constraints = []
         self.constraints = constraints
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name})"
