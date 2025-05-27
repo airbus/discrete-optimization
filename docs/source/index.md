@@ -33,6 +33,7 @@ caption: Contents
 install
 getting_started
 notebooks
+dashboard
 api/modules
 contribute
 Github  <https://github.com/airbus/discrete-optimization>
