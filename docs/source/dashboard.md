@@ -42,11 +42,67 @@ stores the solver config, the instance id, the solver status and the metrics dat
 each solver config (for an easier understanding of the dashboard). The easiest way to generate the experiment is by using its alternate constructor
 `Experiment.from_solver_config()`.
 
+```python
+import pandas as pd
+
+from discrete_optimization.generic_rcpsp_tools.solvers.ls import (
+    LsGenericRcpspSolver,
+    LsSolverType,
+)
+from discrete_optimization.generic_tools.study import (
+    Experiment,
+    SolverConfig,
+)
+
+xp_id = 0  # should be unique across a given study
+instance = "j1201_10.sm"  # identifier for the problem instance
+config_name = "hc"
+solver_config = SolverConfig(
+    cls=LsGenericRcpspSolver,
+    kwargs=dict(ls_solver=LsSolverType.HC, nb_iteration_max=10000),
+)
+
+# solve + metrics retrieval as pandas.DataFrame
+problem = ... # e.g. using a filepath based on instance identifier
+solver = solver_config.cls(problem, **solver_config.kwargs)
+solver.init_model(**solver_config.kwargs)
+solver.solve(**solver_config.kwargs)
+status = solver.status_solver
+reason = ""  # string used to store the reason of an error during solve
+metrics = pd.DataFrame(...)  # see next section how to retrieve metrics
+
+xp = Experiment.from_solver_config(
+    xp_id=xp_id,
+    instance=instance,
+    config_name=config_name,
+    solver_config=solver_config,
+    metrics=metrics,
+    status=status,
+    reason=reason,
+)
+```
+
 ### Stats retriever callbacks
 You can make use of the stats retrievers callbacks to store the metrics timeseries, i.e. `BasicStatsCallback` or
 `StatsWithBoundsCallback` (if you are using a solver implementing the mixin `BoundsProviderMixin` like cpsat solvers).
 They both have the method `get_df_metrics()` to retrieve the stored metrics (fitness, best objective bound, ...) as a pandas
 DataFrame.
+
+```python
+from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
+    BasicStatsCallback,
+    StatsWithBoundsCallback,
+)
+
+stats_cb = BasicStatsCallback()  # or StatsWithBoundsCallback() if solver provides internal objective value and bound?
+result_store = solver.solve(
+    callbacks=[
+        stats_cb,
+    ],
+    **solver_config.kwargs,
+)
+metrics = stats_cb.get_df_metrics()
+```
 
 
 ### Database
@@ -84,11 +140,14 @@ with Hdf5Database(database_filepath) as database:
     results = database.load_results()
 ```
 
+### Full example
 
-Putting all that together, we got an example of such a study on rcpsp problems in the script
-["examples/dashboard/run_rcpsp_study.py"](https://github.com/airbus/discrete-optimization/blob/master/examples/dashboard/run_rcpsp_study.py)
-which makes use of the database, the stats callbacks and the experiments related classes.
+Putting all that together, we got an example of such a study on rcpsp problems
+which makes use of the database, the stats callbacks and the experiments related classes:
 
+```{literalinclude} ../../examples/dashboard/run_rcpsp_study.py
+:caption: [examples/dashboard/run_rcpsp_study.py](https://github.com/airbus/discrete-optimization/blob/master/examples/dashboard/run_rcpsp_study.py)
+```
 
 
 ## Launching the d-o dashboard
@@ -98,22 +157,9 @@ Once your study is done (or at least some results have been stored), you just ha
 - initialize a `Dashboard` object with it
 - run the dashboard
 
-It gives (as shown in ["examples/dashboard/run_dashboard_rcpsp_study.py"](https://github.com/airbus/discrete-optimization/blob/master/examples/dashboard/run_dashboard_rcpsp_study.py)):
-```python
-from discrete_optimization.generic_tools.dashboard import Dashboard
-from discrete_optimization.generic_tools.study import Hdf5Database
-
-study_name = "rcpsp-study-0"
-
-# retrieve data
-with Hdf5Database(f"{study_name}.h5") as database:
-    results = database.load_results()
-
-
-# launch dashboard with this data
-app = Dashboard(results=results)
-app.run()
-
+It gives:
+```{literalinclude} ../../examples/dashboard/run_dashboard_rcpsp_study.py
+:caption: [examples/dashboard/run_dashboard_rcpsp_study.py](https://github.com/airbus/discrete-optimization/blob/master/examples/dashboard/run_dashboard_rcpsp_study.py)
 ```
 
 By default, the dashboard will then be available at http://127.0.0.1:8050/.
