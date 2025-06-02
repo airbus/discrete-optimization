@@ -13,7 +13,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     CallbackList,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import SolverDO, StatusSolver
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -138,6 +138,12 @@ class DpSolver(SolverDO):
         logger.info(f"Is optimal {solution.is_optimal}")
         logger.info(f"Is infeasible {solution.is_infeasible}")
         logger.info(f"Best bound {solution.best_bound}")
+        if solution.is_optimal:
+            self.status_solver = StatusSolver.OPTIMAL
+        elif solution.is_infeasible:
+            self.status_solver = StatusSolver.UNSATISFIABLE
+        elif solution is not None:
+            self.status_solver = StatusSolver.SATISFIED
         if self.early_stopping_exception:
             if isinstance(self.early_stopping_exception, SolveEarlyStop):
                 logger.info(self.early_stopping_exception)
