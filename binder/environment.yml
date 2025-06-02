@@ -8,4 +8,4 @@ dependencies:
       - optuna
       - optuna-dashboard
       - jupyter-server-proxy
-      - ..  # discrete-optimization
+      - discrete-optimization==0.6.0
