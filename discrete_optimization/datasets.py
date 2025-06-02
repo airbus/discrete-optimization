@@ -84,6 +84,8 @@ MIS_FILES = [
     "https://oeis.org/A265032/a265032_1zc.4096.txt.gz",
 ]
 
+BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-codes-and-instances-1/bppc.zip/@@download/file/BPPC.zip"
+
 
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the discrete-optimization data directory.
@@ -394,6 +396,37 @@ def fetch_data_fjsp(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_bppc(data_home: Optional[str] = None):
+    """Fetch data from bin packing problem with conflicts benchmark"""
+    #  get the proper data directory
+    data_home = get_data_home(data_home=data_home)
+
+    # download in a temporary file the repo data
+    url = BPPC_ZIP
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_dir = f"{data_home}/bppc"
+            os.makedirs(dataset_dir, exist_ok=True)
+            # dataset_prefix_in_zip = f"{rootdir}/Istanze/"
+            for name in namelist:
+                if "Istanze" in name:
+                    zipf.extract(name, path=dataset_dir)
+                    print(name)
+            for datafile in glob.glob(f"{dataset_dir}/Istanze/*"):
+                os.replace(
+                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
+                )
+            os.removedirs(f"{dataset_dir}/Istanze")
+    except Exception as e:
+        print(e)
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -412,4 +445,4 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_all_datasets()
+    fetch_data_from_bppc()
