@@ -570,13 +570,17 @@ class Dashboard(Dash):
             ),
         )
         def update_config_display(config_name: str) -> str:
-            try:
-                config = self.config_store.get_config(config_name)
-            except KeyError:
-                config_str = "NOT_FOUND"
-            else:
-                config_str = json.dumps(config, indent=4)
-            return "```python\n" f"{config_str}\n" "```\n"
+            configs = self.config_store.get_configs(config_name)
+            config_str = "\n\n".join(json.dumps(config, indent=4) for config in configs)
+            md_str = "```python\n" f"{config_str}\n" "```\n"
+            if len(configs) > 1:
+                md_str = (
+                    f"> WARNING: {len(configs)} configs with same name found!\n\n"
+                    + md_str
+                )
+            elif len(configs) == 0:
+                md_str = f"> WARNING: no config found with given name!\n"
+            return md_str
 
         # Xp explorer
         @self.callback(

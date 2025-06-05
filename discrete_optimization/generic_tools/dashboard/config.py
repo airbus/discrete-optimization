@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
+from collections import defaultdict
 from collections.abc import Hashable
 from typing import Any, Optional, Union
 
 from discrete_optimization.generic_tools.study.experiment import NAME, SOLVER
+
+logger = logging.getLogger(__name__)
 
 # type aliases
 DictConfig = Union[dict[str, "DictConfig"], Hashable]
@@ -49,7 +53,7 @@ class ConfigStore:
     """Store experiments config and mapping to their names"""
 
     def __init__(self):
-        self.map_name2config: dict[str, HashableConfig] = {}
+        self.map_name2configs: dict[str, set[HashableConfig]] = defaultdict(set)
         self.map_config2name: dict[HashableConfig, str] = {}
         self.map_config2hasusername: dict[HashableConfig, bool] = {}
 
@@ -97,14 +101,21 @@ class ConfigStore:
                 self.map_config2hasusername[hashable_config] = True
             self.map_config2name[hashable_config] = name
 
-        # check that only one config corresponds to this name
-        if name in self.map_name2config:
-            assert hashable_config == self.map_name2config[name], (
-                f"Two configs share same name {name}: "
-                f"{convert_config_hashable2dict(self.map_name2config[name])} and {config}."
+        # check that only one config corresponds to this name => only warning if more than 1
+        # it is probably an error on study-side but we allow it to avoid the dashboard crashing
+        n_configs_with_name_before = len(self.map_name2configs[name])
+        self.map_name2configs[name].add(hashable_config)
+        if (
+            n_configs_with_name_before > 0
+            and len(self.map_name2configs[name]) > n_configs_with_name_before
+        ):
+            logger.warning(
+                f"More than one config share name {name}:\n"
+                + "\n".join(
+                    repr(convert_config_hashable2dict(c))
+                    for c in self.map_name2configs[name]
+                )
             )
-        else:
-            self.map_name2config[name] = hashable_config
 
     def get_name(self, config: DictConfig) -> str:
         config = dict(config)  # copy dict to avoid inplace modification
@@ -120,5 +131,5 @@ class ConfigStore:
         else:
             return self.map_config2name[hashable_config]
 
-    def get_config(self, name: str) -> DictConfig:
-        return convert_config_hashable2dict(self.map_name2config[name])
+    def get_configs(self, name: str) -> list[DictConfig]:
+        return [convert_config_hashable2dict(c) for c in self.map_name2configs[name]]

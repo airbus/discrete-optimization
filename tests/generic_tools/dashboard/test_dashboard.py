@@ -1,5 +1,6 @@
 import logging
 import os
+from copy import copy
 from typing import Any, Optional
 
 import pandas as pd
@@ -155,6 +156,10 @@ def run_study(study_name):
                     status=status,
                     reason=reason,
                 )
+                # modify fake config to create a duplicate
+                if config_name == "fake" and instance == "gc_50_1":
+                    xp.config.parameters = copy(xp.config.parameters)
+                    xp.config.parameters["toto"] = 0.5
                 database.store(xp)
 
 
@@ -192,9 +197,14 @@ def test_update_config_display_ok(app):
     assert '"multiprocess": true,' in string
 
 
-def test_update_config_display_nok(app):
+def test_update_config_display_no_config(app):
     string = app.update_config_display(config_name="toto-binary")
-    assert "NOT_FOUND" in string
+    assert "WARNING: no config" in string
+
+
+def test_update_config_display_several_configs(app):
+    string = app.update_config_display(config_name="fake")
+    assert "WARNING: 2 configs" in string
 
 
 @pytest.mark.parametrize(
