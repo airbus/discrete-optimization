@@ -113,6 +113,9 @@ def run_study(study_name):
                 logging.info(
                     f"###### Instance {instance}, config {config_name} ######\n\n"
                 )
+                # remove one xp to have solvers with less instances
+                if config_name == "mathopt" and instance == "gc_50_1":
+                    continue
 
                 try:
                     # init problem
@@ -178,8 +181,8 @@ def app(study_results):
 
 
 def test_init_app(app):
-    assert len(app.results) == 9
-    assert len(app.full_results) == 15
+    assert len(app.results) == 8
+    assert len(app.full_results) == 14
 
 
 def test_update_config_display_ok(app):
@@ -202,7 +205,7 @@ def test_update_config_display_nok(app):
             ["@all"],
             "fit",
             [],
-            9,
+            8,
             True,
         ),
         (["cpsat-binary"], ["gc_50_1"], "gap", [], 1, False),

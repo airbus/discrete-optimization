@@ -378,7 +378,7 @@ def construct_summary_metric_agg(
 ) -> pd.DataFrame:
     if configs is None:
         configs = list(stat_by_config)
-    index_config = pd.Index(configs, name="config")
+    index_config = pd.Index(configs, name=CONFIG)
     df_stat = next(iter(stat_by_config.values()))
     metrics = list(df_stat.columns)
     data = (

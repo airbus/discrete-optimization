@@ -11,6 +11,7 @@ from discrete_optimization.generic_tools.dashboard.plots import (
     create_graph_from_series_dict,
 )
 from discrete_optimization.generic_tools.dashboard.preprocess import (
+    CONFIG,
     FIT,
     MEAN,
     QUANTILE,
@@ -312,7 +313,9 @@ class Dashboard(Dash):
 
         table_empty_xps = dash_table.DataTable(
             data=_extract_dash_table_data_from_df(self.empty_xps_metadata),
-            columns=_extract_dash_table_columns_from_df(self.empty_xps_metadata),
+            columns=_extract_dash_table_columns_from_df(
+                self.empty_xps_metadata, numeric_columns=[]
+            ),
             id=TABLE_EMPTY_XPS_ID,
             **_get_dash_table_kwargs(
                 style_data={  # wrap long columns
@@ -503,7 +506,9 @@ class Dashboard(Dash):
                     legend_title="Configs",
                 ),
                 data=_extract_dash_table_data_from_df(df_summary),
-                columns=_extract_dash_table_columns_from_df(df_summary),
+                columns=_extract_dash_table_columns_from_df(
+                    df_summary, non_numeric_columns=[CONFIG]
+                ),
             )
 
         # Graph graph-nb-solved-instances-evolution: 1 config => nb of instances solved depending on time
@@ -552,7 +557,9 @@ class Dashboard(Dash):
                     transpose=transpose,
                 ),
                 data=_extract_dash_table_data_from_df(df_summary),
-                columns=_extract_dash_table_columns_from_df(df_summary),
+                columns=_extract_dash_table_columns_from_df(
+                    df_summary, non_numeric_columns=[CONFIG]
+                ),
             )
 
         # Config explorer
@@ -599,6 +606,7 @@ class Dashboard(Dash):
                     component_id=TABLE_XP_STATUS_ID, component_property="children"
                 ),
                 data=Output(component_id=TABLE_XP_ID, component_property="data"),
+                columns=Output(component_id=TABLE_XP_ID, component_property="columns"),
                 nodata=Output(
                     component_id=TABLE_XP_NO_DATA_ID, component_property="className"
                 ),
@@ -611,7 +619,9 @@ class Dashboard(Dash):
         )
         def update_xp_data(config: str, instance: str, run: Optional[int]) -> Any:
             if run is None:
-                return dict(data=[], nodata=_convert_bool2classname(True), status="")
+                return dict(
+                    data=[], columns=[], nodata=_convert_bool2classname(True), status=""
+                )
             df = filter_results(
                 results=self.full_results, configs=[config], instances=[instance]
             )[run]
@@ -619,6 +629,7 @@ class Dashboard(Dash):
             df = df.reset_index()
             return dict(
                 data=_extract_dash_table_data_from_df(df),
+                columns=_extract_dash_table_columns_from_df(df),
                 nodata=_convert_bool2classname(len(df) == 0),
                 status=f"Status: {status}",
             )
@@ -799,8 +810,21 @@ def _extract_dash_table_data_from_df(df: pd.DataFrame) -> list[dict[str, Any]]:
     return df.to_dict("records")
 
 
-def _extract_dash_table_columns_from_df(df: pd.DataFrame) -> list[dict[str, Any]]:
-    return [{"id": c, "name": c} for c in df.columns]
+def _extract_dash_table_columns_from_df(
+    df: pd.DataFrame,
+    numeric_columns: Optional[list[str]] = None,
+    non_numeric_columns: Optional[list[str]] = None,
+) -> list[dict[str, Any]]:
+    data_table_columns = []
+    for c in df.columns:
+        col = {"id": c, "name": c}
+        if (
+            numeric_columns is None
+            and (non_numeric_columns is None or c not in non_numeric_columns)
+        ) or (numeric_columns is not None and c in numeric_columns):
+            col.update(_data_table_numeric_column_extras)
+        data_table_columns.append(col)
+    return data_table_columns
 
 
 def _get_dash_table_kwargs(**kwargs):
@@ -810,3 +834,6 @@ def _get_dash_table_kwargs(**kwargs):
     )
     kwargs_table.update(kwargs)
     return kwargs_table
+
+
+_data_table_numeric_column_extras = dict(type="numeric", format={"specifier": ".5"})
