@@ -3,7 +3,9 @@ from collections.abc import Container, Iterable
 from copy import copy
 from typing import Any, Optional, Union
 
+import numpy as np
 import pandas as pd
+from pandas.core.groupby import SeriesGroupBy
 
 from discrete_optimization.generic_tools.dashboard.config import ConfigStore
 from discrete_optimization.generic_tools.do_solver import StatusSolver
@@ -29,12 +31,19 @@ MAX = "max"
 MIN = "min"
 MEDIAN = "median"
 QUANTILE = "quantile"
-map_stat_key2func = {
+map_stat_key2func_df = {
     MEAN: pd.DataFrame.mean,
     MAX: pd.DataFrame.max,
     MIN: pd.DataFrame.min,
     MEDIAN: pd.DataFrame.median,
     QUANTILE: pd.DataFrame.quantile,
+}
+map_stat_key2func_sergroupby = {
+    MEAN: SeriesGroupBy.mean,
+    MAX: SeriesGroupBy.max,
+    MIN: SeriesGroupBy.min,
+    MEDIAN: SeriesGroupBy.median,
+    QUANTILE: SeriesGroupBy.quantile,
 }
 
 # new metadata keys for empty xps
@@ -297,7 +306,7 @@ def compute_stat_from_df_config(
             empty_df.columns.name = df_config.index.names[1]
             return empty_df
     # function used to aggregate
-    stat_func = map_stat_key2func[stat]
+    stat_func = map_stat_key2func_df[stat]
     if stat_func is pd.DataFrame.quantile:
         kwargs = dict(q=q)
     else:
@@ -424,3 +433,85 @@ def construct_summary_metric_agg(
         axis=1,
     ).reset_index()
     return df_summary
+
+
+def compute_best_metrics_by_xp(
+    results: list[pd.DataFrame], metrics: list[str]
+) -> pd.DataFrame:
+    empty_ser = pd.Series(index=metrics)
+    df_best_metric_by_xp = pd.DataFrame(
+        data=(
+            df.iloc[-1, :].rename((df.attrs[CONFIG], df.attrs[INSTANCE]))
+            if len(df) > 0
+            else empty_ser.rename((df.attrs[CONFIG], df.attrs[INSTANCE]))
+            for df in results
+        ),
+        columns=metrics,
+    )
+    df_best_metric_by_xp.index.names = (CONFIG, INSTANCE)
+    return df_best_metric_by_xp
+
+
+def compute_summary_agg_ranks_and_dist_to_best_metric(
+    df_best_metric_by_xp: pd.DataFrame,
+    metric: str = "fit",
+    configs: Optional[list[str]] = None,
+    instances: Optional[list[str]] = None,
+    stat: str = MEAN,
+    q: float = 0.5,
+    minimizing: bool = False,
+) -> pd.DataFrame:
+    # filter configs and instances
+    if configs is None:
+        configs = slice(None)
+    if instances is None:
+        instances = slice(None)
+    df_best_metric_by_xp = df_best_metric_by_xp.loc[(configs, instances), :]
+    # select metric
+    ser_best_metric_by_xp = df_best_metric_by_xp[metric]
+    # get one single value by tuple config x instance
+    ser_best_metric_by_xp = ser_best_metric_by_xp.groupby(
+        level=[CONFIG, INSTANCE]
+    ).median()
+    n_configs = len(ser_best_metric_by_xp.index.levels[0])
+
+    # groupby instance
+    best_metric_groupby_instance = ser_best_metric_by_xp.groupby(level=INSTANCE)
+
+    # ranks for each instance
+    rank_by_config_instance = (
+        best_metric_groupby_instance.rank(method="min", ascending=minimizing)
+        .replace(np.nan, 0)
+        .astype(int)
+    )
+    mapper_rank = {i: f"# {i}" for i in range(1, n_configs + 1)}
+    mapper_rank[0] = "# failed"
+    rank_counts = (
+        rank_by_config_instance.groupby(level=CONFIG)
+        .value_counts()
+        .rename(mapper_rank, level=1)
+        .unstack(fill_value=0)
+    )
+
+    # distance to best metric by instance
+    if minimizing:
+        dist_to_best_metric_by_instance = best_metric_groupby_instance.transform(
+            lambda x: x - x.min()
+        )
+    else:
+        dist_to_best_metric_by_instance = best_metric_groupby_instance.transform(
+            lambda x: x.max() - x
+        )
+    # function used to aggregate
+    stat_func = map_stat_key2func_sergroupby[stat]
+    if stat_func is pd.DataFrame.quantile:
+        kwargs = dict(q=q)
+    else:
+        kwargs = dict()
+    # aggregate
+    dist_to_best_metric_agg = stat_func(
+        dist_to_best_metric_by_instance.groupby(level=CONFIG), **kwargs
+    ).rename("dist to best")
+
+    # concat dist and ranks, and put index as a column
+    return pd.concat((dist_to_best_metric_agg, rank_counts), axis=1).reset_index()

@@ -167,6 +167,12 @@ def run_study(study_name):
                 if config_name == "fake" and instance == "gc_50_1":
                     xp.config.parameters = copy(xp.config.parameters)
                     xp.config.parameters["toto"] = 0.5
+                # modify fitness to have different ranks
+                if config_name == "cpsat-binary" and instance == "gc_50_1":
+                    xp.metrics["fit"] += 1  # improve fitness
+                if config_name == "mathopt":
+                    xp.metrics["fit"] -= 1  # degrade fitness
+
                 database.store(xp)
 
 
@@ -298,6 +304,65 @@ def test_update_graph_agg_metric(
             assert (df[df.config == "cpsat-integer"]["# no sol"] == 1).all()
         if "cpsat-binary" in configs:
             assert (df[df.config == "cpsat-binary"]["# no sol"] == 0).all()
+
+
+@pytest.mark.parametrize(
+    "configs, instances, metric, stat, minimizing",
+    [
+        (
+            ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
+            ["@all"],
+            "fit",
+            "mean",
+            False,
+        ),
+        (
+            ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
+            ["@all"],
+            "fit",
+            "quantile",
+            True,
+        ),
+        (["cpsat-binary"], ["gc_50_3"], "gap", "quantile", True),
+    ],
+)
+def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing):
+    output = app.update_table_rank_agg(
+        configs=configs,
+        instances=instances,
+        metric=metric,
+        stat=stat,
+        q=0.5,
+        minimizing=minimizing,
+        clip_value=1e50,
+    )
+    df = pd.DataFrame(output["data"])
+    if "@all" in instances:
+        nb_instances = 2
+    else:
+        nb_instances = len(instances)
+    if metric == "fit":
+        if "mathopt" in configs:
+            if minimizing:
+                assert (df[df.config == "mathopt"]["dist to best"] == 0).all()
+            else:
+                assert (df[df.config == "mathopt"]["dist to best"] == 1).all()
+                assert (df[df.config == "mathopt"]["# 3"] == 1).all()
+        if "cpsat-integer" in configs:
+            assert (df[df.config == "cpsat-integer"]["dist to best"] == 0.5).all()
+            assert (df[df.config == "cpsat-integer"]["# 1"] == 1).all()
+        if minimizing:
+            assert (df[df.config == "cpsat-binary"]["dist to best"] == 1).all()
+            assert (df[df.config == "cpsat-binary"]["# 1"] == 0).all()
+        else:
+            assert (df[df.config == "cpsat-binary"]["dist to best"] == 0).all()
+            assert (df[df.config == "cpsat-binary"]["# 1"] == nb_instances).all()
+    elif metric == "gap":
+        assert (df[df.config == "cpsat-binary"]["# 1"] == nb_instances).all()
+        assert (df[df.config == "cpsat-binary"]["dist to best"] == 0).all()
+
+    if "fake" in configs:
+        assert (df[df.config == "fake"]["# failed"] == nb_instances).all()
 
 
 @pytest.mark.parametrize(
