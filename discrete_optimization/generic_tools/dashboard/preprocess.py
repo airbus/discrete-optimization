@@ -166,6 +166,23 @@ def extract_nb_xps_by_config(results: list[pd.DataFrame]) -> dict[str, int]:
     return nb_xps_by_config
 
 
+def extract_nb_xps_w_n_wo_sol_by_config(
+    results: list[pd.DataFrame], configs: list[str], instances: list[str]
+) -> tuple[dict[str, int], dict[str, int]]:
+    subresults = filter_results(results, configs=configs, instances=instances)
+
+    nb_xps_by_config = defaultdict(lambda: 0)
+    nb_xps_wo_sol_by_config = defaultdict(lambda: 0)
+
+    for df in subresults:
+        config = df.attrs[CONFIG]
+        nb_xps_by_config[config] += 1
+        if len(df) == 0:
+            nb_xps_wo_sol_by_config[config] += 1
+
+    return nb_xps_by_config, nb_xps_wo_sol_by_config
+
+
 def extract_metrics(results: list[pd.DataFrame]) -> set[str]:
     metrics = set()
     for df in results:
@@ -374,6 +391,8 @@ def construct_summary_nbsolved_instances(
 
 def construct_summary_metric_agg(
     stat_by_config: dict[str, pd.DataFrame],
+    nb_xps_by_config: dict[str, int],
+    nb_xps_wo_sol_by_config: dict[str, int],
     configs: Optional[list[str]] = None,
 ) -> pd.DataFrame:
     if configs is None:
@@ -387,5 +406,21 @@ def construct_summary_metric_agg(
         else pd.Series(index=metrics)
         for config in configs
     )
-    df_summary = pd.DataFrame(data, index=index_config, columns=metrics).reset_index()
+    df = pd.DataFrame(data, index=index_config, columns=metrics)
+    df_summary = pd.concat(
+        (
+            pd.Series(
+                data=(nb_xps_wo_sol_by_config[config] for config in configs),
+                index=index_config,
+                name="# no sol",
+            ),
+            pd.Series(
+                data=(nb_xps_by_config[config] for config in configs),
+                index=index_config,
+                name="# xps",
+            ),
+            df,
+        ),
+        axis=1,
+    ).reset_index()
     return df_summary

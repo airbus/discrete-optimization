@@ -71,6 +71,7 @@ class FakeTimeoutSolver(BoundsProviderMixin, ColoringSolver):
 
 def run_study(study_name):
     instances = ["gc_50_3", "gc_50_1", "gc_50_3"]  # test duplicates
+    cpsat_integer_timeout = False
     solver_configs = {
         "cpsat-integer": SolverConfig(
             cls=CpSatColoringSolver,
@@ -145,6 +146,12 @@ def run_study(study_name):
                     metrics = stats_cb.get_df_metrics()
                     reason = ""
 
+                # simulate a timeout for one instance of cpsat-integer
+                if config_name == "cpsat-integer" and not cpsat_integer_timeout:
+                    cpsat_integer_timeout = True
+                    metrics = pd.DataFrame([])
+                    status = StatusSolver.UNKNOWN
+
                 # store corresponding experiment
                 xp_id = database.get_new_experiment_id()
                 xp = Experiment.from_solver_config(
@@ -186,7 +193,7 @@ def app(study_results):
 
 
 def test_init_app(app):
-    assert len(app.results) == 8
+    assert len(app.results) == 7
     assert len(app.full_results) == 14
 
 
@@ -215,7 +222,7 @@ def test_update_config_display_several_configs(app):
             ["@all"],
             "fit",
             [],
-            8,
+            7,
             True,
         ),
         (["cpsat-binary"], ["gc_50_1"], "gap", [], 1, False),
@@ -283,7 +290,14 @@ def test_update_graph_agg_metric(
     if len(instances) > 0:
         assert df.loc[df.config == "cpsat-binary", "gap"].values == 0
         if "timeout" in configs:
-            assert pd.isna(df[df.config == "timeout"].iloc[0, 1:]).all()
+            assert pd.isna(df[df.config == "timeout"].iloc[0, 3:]).all()
+            assert (df[df.config == "timeout"]["# xps"] == 3).all()
+            assert (df[df.config == "timeout"]["# no sol"] == 3).all()
+        if "cpsat-integer" in configs:
+            assert (df[df.config == "cpsat-integer"]["# xps"] == 3).all()
+            assert (df[df.config == "cpsat-integer"]["# no sol"] == 1).all()
+        if "cpsat-binary" in configs:
+            assert (df[df.config == "cpsat-binary"]["# no sol"] == 0).all()
 
 
 @pytest.mark.parametrize(
@@ -318,7 +332,7 @@ def test_update_graph_nb_solved_instances(app, time_log_scale, transpose_value):
 
     df = pd.DataFrame(output["data"])
     assert [c["name"] for c in output["columns"]] == df.columns.tolist()
-    assert (df[df.config == "cpsat-integer"].iloc[0, 1:].values == [3, 3]).all()
+    assert (df[df.config == "cpsat-integer"].iloc[0, 1:].values == [2, 3]).all()
     assert (df[df.config == "timeout"].iloc[0, 1:].values == [0, 3]).all()
 
 
@@ -366,9 +380,9 @@ def test_update_xp_data(app, config, instance, i_run, nodata, status):
 
 def test_empty_xps(app):
     df = app.empty_xps_metadata
-    assert len(df) == 6
+    assert len(df) == 7
     assert sum(df["status"] == "FAILED") == 3
-    assert sum(df["status"] == "UNKNOWN") == 3
+    assert sum(df["status"] == "UNKNOWN") == 4
     assert "timeout" in df.loc[df["status"] == "UNKNOWN", "reason"].iloc[0]
     assert "fake solver" in df.loc[df["status"] == "FAILED", "reason"].iloc[0]
     assert "RuntimeError" in df.loc[df["status"] == "FAILED", "reason"].iloc[0]
