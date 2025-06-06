@@ -18,8 +18,10 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     aggregate_results_by_config,
     clip_df,
     clip_results,
+    compute_best_metrics_by_xp,
     compute_extra_metrics,
     compute_stat_by_config,
+    compute_summary_agg_ranks_and_dist_to_best_metric,
     construct_summary_metric_agg,
     construct_summary_nbsolved_instances,
     convert_nb2percentage_solvedinstances_by_config,
@@ -35,7 +37,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     get_experiment_name,
     get_status_str,
     has_multiple_runs,
-    map_stat_key2func,
+    map_stat_key2func_df,
     normalize_results,
 )
 
@@ -59,6 +61,10 @@ else:
 TIME_LOGSCALE_KEY = "time log-scale"
 TIME_LOGSCALE_ID = "time-log-scale"
 
+MINIMIZING_KEY = "minimizing"
+MINIMIZING_ID = "minimizing"
+
+
 TRANSPOSE_KEY = "transpose"
 TRANSPOSE_ID = "transpose"
 
@@ -67,6 +73,7 @@ GRAPH_AGG_METRIC_ID = "graph-agg-metric"
 GRAPH_NB_SOLVED_INSTANCES_ID = "graph-nb-solved-instances"
 
 TABLE_AGG_METRIC_ID = "table-agg-metric"
+TABLE_AGG_RANK_ID = "table-agg-rank"
 TABLE_EMPTY_XPS_ID = "table-empty-xps"
 TABLE_XP_ID = "table-metric"
 TABLE_XP_NO_DATA_ID = "table-metric-no-data"
@@ -80,6 +87,7 @@ TAB_NB_SOLVED_INSTANCES_ID = "tab-nb-solved-instances"
 TAB_CONFIG_ID = "tab-config"
 TAB_XP_ID = "tab-experiment"
 TAB_EMPTY_XPS_ID = "tab-empty-xps"
+TAB_AGG_RANK_ID = "tab-agg-rank"
 TABS_ID = "tabs"
 
 ALL_INSTANCES = "@all"
@@ -99,6 +107,7 @@ CONFIG_DIV_ID = "config-div"
 CONFIGS_DIV_ID = "configs-div"
 Q_DIV_ID = "quantile-q-div"
 TRANSPOSE_DIV_ID = "transpose-div"
+MINIMIZING_DIV_ID = "minimizing-div"
 INSTANCE_ID = "instance"
 INSTANCE_DIV_ID = "instance-div"
 RUN_ID = "run-id"
@@ -163,6 +172,9 @@ class Dashboard(Dash):
             )
         )
         self.empty_xps_metadata = extract_empty_xps_metadata(self.full_results)
+        self.df_best_metric_by_xp = compute_best_metrics_by_xp(
+            results=self.full_results, metrics=self.full_metrics
+        )
 
     def create_layout(self):
         controls = dbc.Card(
@@ -224,7 +236,9 @@ class Dashboard(Dash):
                             [
                                 dbc.Label("Aggregate with"),
                                 dcc.Dropdown(
-                                    sorted(map_stat_key2func.keys()), MEAN, id=STAT_ID
+                                    sorted(map_stat_key2func_df.keys()),
+                                    MEAN,
+                                    id=STAT_ID,
                                 ),
                             ],
                             id=STAT_DIV_ID,
@@ -254,6 +268,15 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=TRANSPOSE_DIV_ID,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Optimization sense"),
+                                dbc.Switch(
+                                    value=False, id=MINIMIZING_ID, label=MINIMIZING_KEY
+                                ),
+                            ],
+                            id=MINIMIZING_DIV_ID,
                         ),
                         html.Div(
                             [
@@ -306,6 +329,13 @@ class Dashboard(Dash):
             id=TABLE_NB_SOLVED_INSTANCES_ID, **_get_dash_table_kwargs()
         )
 
+        table_agg_rank = dash_table.DataTable(
+            id=TABLE_AGG_RANK_ID, **_get_dash_table_kwargs()
+        )
+        table_agg_rank_explanation = dcc.Markdown(
+            _explanation_table_agg_rank, className="mt-3"
+        )
+
         config_explorer = dcc.Markdown(id=CONFIG_MD_ID)
 
         table_xp_status = html.P(id=TABLE_XP_STATUS_ID)
@@ -330,7 +360,7 @@ class Dashboard(Dash):
             [
                 dbc.CardHeader(
                     [
-                        html.H2("Graph"),
+                        html.H2("Graphs and Tables"),
                     ]
                 ),
                 dbc.CardBody(
@@ -357,6 +387,14 @@ class Dashboard(Dash):
                                     ],
                                     label="Nb of solved instances",
                                     tab_id=TAB_NB_SOLVED_INSTANCES_ID,
+                                ),
+                                dbc.Tab(
+                                    children=[
+                                        table_agg_rank,
+                                        table_agg_rank_explanation,
+                                    ],
+                                    label="Solvers competition",
+                                    tab_id=TAB_AGG_RANK_ID,
                                 ),
                                 dbc.Tab(
                                     children=config_explorer,
@@ -572,6 +610,70 @@ class Dashboard(Dash):
                 ),
             )
 
+        # Table aggreated ranks + dist to best metric
+        @self.callback(
+            output=Output(
+                component_id=MINIMIZING_ID,
+                component_property="value",
+            ),
+            inputs=Input(component_id=METRIC_ID, component_property="value"),
+        )
+        def update_minimizing_button(metric):
+            if metric == "fit":
+                return False
+            else:
+                return True
+
+        @self.callback(
+            output=dict(
+                data=Output(
+                    component_id=TABLE_AGG_RANK_ID,
+                    component_property="data",
+                ),
+                columns=Output(
+                    component_id=TABLE_AGG_RANK_ID,
+                    component_property="columns",
+                ),
+            ),
+            inputs=dict(
+                configs=Input(component_id=CONFIGS_ID, component_property="value"),
+                instances=Input(component_id=INSTANCES_ID, component_property="value"),
+                stat=Input(component_id=STAT_ID, component_property="value"),
+                metric=Input(component_id=METRIC_ID, component_property="value"),
+                q=Input(component_id=Q_ID, component_property="value"),
+                clip_value=Input(component_id=CLIP_ID, component_property="value"),
+                minimizing=Input(
+                    component_id=MINIMIZING_ID, component_property="value"
+                ),
+            ),
+        )
+        def update_table_rank_agg(
+            configs, instances, stat, metric, q, clip_value, minimizing
+        ):
+            instances = self._replace_allinstances_alias(
+                instances
+            )  # interpret @all alias
+            # clip
+            df_best_metric_by_xp = clip_df(
+                self.df_best_metric_by_xp, clip_value=clip_value
+            )
+            # compute dataframe
+            df_summary = compute_summary_agg_ranks_and_dist_to_best_metric(
+                df_best_metric_by_xp=df_best_metric_by_xp,
+                configs=configs,
+                instances=instances,
+                metric=metric,
+                stat=stat,
+                q=q,
+                minimizing=minimizing,
+            )
+            return dict(
+                data=_extract_dash_table_data_from_df(df_summary),
+                columns=_extract_dash_table_columns_from_df(
+                    df_summary, non_numeric_columns=[CONFIG]
+                ),
+            )
+
         # Config explorer
         @self.callback(
             Output(component_id=CONFIG_MD_ID, component_property="children"),
@@ -676,6 +778,9 @@ class Dashboard(Dash):
                 time_log_scale=Output(
                     component_id=TIME_LOGSCALE_ID, component_property="className"
                 ),
+                minimizing=Output(
+                    component_id=MINIMIZING_DIV_ID, component_property="className"
+                ),
             ),
             inputs=dict(
                 active_tab=Input(component_id=TABS_ID, component_property="active_tab"),
@@ -697,6 +802,7 @@ class Dashboard(Dash):
                         config=False,
                         instance=False,
                         run=False,
+                        minimizing=False,
                     )
                 )
             elif active_tab == TAB_AGG_METRIC_ID:
@@ -713,6 +819,24 @@ class Dashboard(Dash):
                         config=False,
                         instance=False,
                         run=False,
+                        minimizing=False,
+                    )
+                )
+            elif active_tab == TAB_AGG_RANK_ID:
+                return _convert_bool2classname_dict(
+                    dict(
+                        time_log_scale=False,
+                        metric=True,
+                        configs=True,
+                        instances=True,
+                        stat=True,
+                        q=stat == QUANTILE,
+                        transpose=False,
+                        clip=True,
+                        config=False,
+                        instance=False,
+                        run=False,
+                        minimizing=True,
                     )
                 )
             elif active_tab == TAB_NB_SOLVED_INSTANCES_ID:
@@ -729,6 +853,7 @@ class Dashboard(Dash):
                         config=False,
                         instance=False,
                         run=False,
+                        minimizing=False,
                     )
                 )
             elif active_tab == TAB_CONFIG_ID:
@@ -745,6 +870,7 @@ class Dashboard(Dash):
                         config=True,
                         instance=False,
                         run=False,
+                        minimizing=False,
                     )
                 )
             elif active_tab == TAB_XP_ID:
@@ -761,6 +887,7 @@ class Dashboard(Dash):
                         config=True,
                         instance=True,
                         run=True,
+                        minimizing=False,
                     )
                 )
             elif active_tab == TAB_EMPTY_XPS_ID:
@@ -777,6 +904,7 @@ class Dashboard(Dash):
                         config=False,
                         instance=False,
                         run=False,
+                        minimizing=False,
                     )
                 )
             else:
@@ -792,7 +920,8 @@ class Dashboard(Dash):
                         clip=True,
                         config=True,
                         instance=True,
-                        run=False,
+                        run=True,
+                        minimizing=True,
                     )
                 )
 
@@ -802,6 +931,7 @@ class Dashboard(Dash):
         self.update_run_options = update_run_options
         self.update_graph_agg_metric = update_graph_agg_metric
         self.update_graph_metric = update_graph_metric
+        self.update_table_rank_agg = update_table_rank_agg
         self.update_config_display = update_config_display
         self.update_graph_nb_solved_instances = update_graph_nb_solved_instances
 
@@ -851,3 +981,22 @@ def _get_dash_table_kwargs(**kwargs):
 
 
 _data_table_numeric_column_extras = dict(type="numeric", format={"specifier": ".5"})
+
+_explanation_table_agg_rank = """
+In this table, given a metric,
+we compute instance by instance:
+- solver rank among all configs,
+- distance to the best metric value among all configs.
+
+Then we aggregate along instances:
+- by counting ranks #1, #2, ... and failed instances,
+- by applying the chosen aggregation method (in the "filters" panel) on the distance.
+
+The "minimizing" switch specifies whether the metric is supposed to be minimized or maximized.
+
+NB: in the case where several attempts were made for a choice "config x instance",
+we first take the median metric among all those attempts, so that we got only one (at most) value by
+"config x instance" tuple. Thus for each instance, the rankings will go at most up to the number of configs.
+In case of tied metrics, the configs share the same rankings and the other rankings will be degraded accordingly
+(e.g. #1, #1, #3, #4).
+"""
