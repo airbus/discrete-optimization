@@ -29,6 +29,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     extract_instances,
     extract_metrics,
     extract_nb_xps_by_config,
+    extract_nb_xps_w_n_wo_sol_by_config,
     extract_nbsolvedinstances_by_config,
     filter_results,
     get_experiment_name,
@@ -496,8 +497,17 @@ class Dashboard(Dash):
                 for config, df in stat_by_config.items()
                 if metric in df
             }
+            (
+                nb_xps_by_config,
+                nb_xps_wo_sol_by_config,
+            ) = extract_nb_xps_w_n_wo_sol_by_config(
+                results=self.full_results, configs=configs, instances=instances
+            )
             df_summary = construct_summary_metric_agg(
-                stat_by_config=stat_by_config, configs=configs
+                stat_by_config=stat_by_config,
+                configs=configs,
+                nb_xps_by_config=nb_xps_by_config,
+                nb_xps_wo_sol_by_config=nb_xps_wo_sol_by_config,
             )
             return dict(
                 plot=create_graph_from_series_dict(
