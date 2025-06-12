@@ -29,6 +29,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     extract_configs,
     extract_empty_xps_metadata,
     extract_instances,
+    extract_instances_with_sol_by_config,
     extract_metrics,
     extract_nb_xps_by_config,
     extract_nb_xps_w_n_wo_sol_by_config,
@@ -90,7 +91,9 @@ TAB_EMPTY_XPS_ID = "tab-empty-xps"
 TAB_AGG_RANK_ID = "tab-agg-rank"
 TABS_ID = "tabs"
 
-ALL_INSTANCES = "@all"
+ALIAS_INSTANCES_ALL = "@all"
+ALIAS_INSTANCES_WITHSOL = "@withsol"
+ALIASES_INSTANCES = [ALIAS_INSTANCES_ALL, ALIAS_INSTANCES_WITHSOL]
 
 METRIC_ID = "metric"
 INSTANCES_ID = "instances"
@@ -157,6 +160,9 @@ class Dashboard(Dash):
         self.full_configs = sorted(extract_configs(self.full_results))
         self.full_instances = sorted(extract_instances(self.full_results))
         self.full_metrics = sorted(extract_metrics(self.full_results))
+        self.instances_with_sol_by_config = extract_instances_with_sol_by_config(
+            self.full_results
+        )
         # precompute aggregated data
         self.results_by_config = aggregate_results_by_config(
             results=results, configs=self.configs
@@ -208,8 +214,8 @@ class Dashboard(Dash):
                             [
                                 dbc.Label("Instances"),
                                 dcc.Dropdown(
-                                    [ALL_INSTANCES] + self.full_instances,
-                                    ALL_INSTANCES,
+                                    ALIASES_INSTANCES + self.full_instances,
+                                    ALIAS_INSTANCES_ALL,
                                     multi=True,
                                     id=INSTANCES_ID,
                                 ),
@@ -466,8 +472,8 @@ class Dashboard(Dash):
         )
         def update_graph_metric(configs, instances, metric, time_log_scale, clip_value):
             with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
-            instances = self._replace_allinstances_alias(
-                instances
+            instances = self._replace_instances_aliases(
+                instances, configs=configs
             )  # interpret @all alias
             results = clip_results(
                 filter_results(self.results, configs=configs, instances=instances),
@@ -518,8 +524,8 @@ class Dashboard(Dash):
             configs, instances, stat, metric, q, time_log_scale, clip_value
         ):
             with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
-            instances = self._replace_allinstances_alias(
-                instances
+            instances = self._replace_instances_aliases(
+                instances, configs=configs
             )  # interpret @all alias
             # filter and clip
             results_by_config = {
@@ -650,8 +656,8 @@ class Dashboard(Dash):
         def update_table_rank_agg(
             configs, instances, stat, metric, q, clip_value, minimizing
         ):
-            instances = self._replace_allinstances_alias(
-                instances
+            instances = self._replace_instances_aliases(
+                instances, configs=configs
             )  # interpret @all alias
             # clip
             df_best_metric_by_xp = clip_df(
@@ -935,11 +941,31 @@ class Dashboard(Dash):
         self.update_config_display = update_config_display
         self.update_graph_nb_solved_instances = update_graph_nb_solved_instances
 
-    def _replace_allinstances_alias(self, instances: list[str]) -> list[str]:
-        if ALL_INSTANCES in instances:
+    def _replace_instances_aliases(
+        self, instances: list[str], configs: list[str]
+    ) -> list[str]:
+        if ALIAS_INSTANCES_ALL in instances:
             return self.full_instances
-        else:
-            return instances
+        if ALIAS_INSTANCES_WITHSOL in instances:
+            instances_with_sol = set.intersection(
+                *(self.instances_with_sol_by_config[config] for config in configs)
+            )
+            # replace @withsol, keeping instances order
+            instances_with_sol_not_yet_in_instances = [
+                instance
+                for instance in sorted(instances_with_sol)
+                if instance not in instances
+            ]
+            i = instances.index(ALIAS_INSTANCES_WITHSOL)
+            instances_before = instances[:i]
+            instances_after = instances[i + 1 :]
+            instances = (
+                instances_before
+                + instances_with_sol_not_yet_in_instances
+                + instances_after
+            )
+
+        return instances
 
 
 def _convert_bool2classname_dict(d: dict[str, bool]) -> dict[str, str]:

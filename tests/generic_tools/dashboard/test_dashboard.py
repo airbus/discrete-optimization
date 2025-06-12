@@ -70,7 +70,11 @@ class FakeTimeoutSolver(BoundsProviderMixin, ColoringSolver):
 
 
 def run_study(study_name):
-    instances = ["gc_50_3", "gc_50_1", "gc_50_3"]  # test duplicates
+    instances = [
+        "gc_50_3",
+        "gc_50_1",
+        "gc_50_3",
+    ]  # test duplicates
     cpsat_integer_timeout = False
     solver_configs = {
         "cpsat-integer": SolverConfig(
@@ -220,6 +224,36 @@ def test_update_config_display_several_configs(app):
     assert "WARNING: 2 configs" in string
 
 
+def test_replace_instances_aliases(app):
+    configs = app.full_configs
+    instances = ["@all"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_1", "gc_50_3"]
+    instances = ["@withsol"]
+    assert app._replace_instances_aliases(instances, configs) == []
+    instances = ["@withsol", "gc_50_3", "gc_50_1"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_3", "gc_50_1"]
+
+    configs = app.configs
+    instances = ["@all"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_1", "gc_50_3"]
+    instances = ["@withsol"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_3"]
+    instances = ["@withsol", "gc_50_1", "gc_50_3"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_1", "gc_50_3"]
+    instances = ["gc_50_1", "@withsol"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_1", "gc_50_3"]
+    instances = ["@withsol", "gc_50_3"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_3"]
+
+    configs = ["cpsat-binary"]
+    instances = ["@all"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_1", "gc_50_3"]
+    instances = ["@withsol"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_1", "gc_50_3"]
+    instances = ["@withsol", "gc_50_3", "gc_50_1"]
+    assert app._replace_instances_aliases(instances, configs) == ["gc_50_3", "gc_50_1"]
+
+
 @pytest.mark.parametrize(
     "configs, instances, metric, time_log_scale, expected_n_traces, attempt_in_legend",
     [
@@ -232,6 +266,14 @@ def test_update_config_display_several_configs(app):
             True,
         ),
         (["cpsat-binary"], ["gc_50_1"], "gap", [], 1, False),
+        (
+            ["cpsat-binary", "cpsat-integer", "mathopt"],
+            ["@withsol"],
+            "fit",
+            [],
+            5,
+            True,
+        ),
     ],
 )
 def test_update_graph_metric(

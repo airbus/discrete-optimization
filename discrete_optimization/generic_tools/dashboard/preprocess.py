@@ -168,6 +168,16 @@ def extract_configs(results: list[pd.DataFrame]) -> set[str]:
     return {df.attrs[CONFIG] for df in results}
 
 
+def extract_instances_with_sol_by_config(
+    results: list[pd.DataFrame],
+) -> dict[str, set[str]]:
+    instances_with_sol_by_config = defaultdict(set)
+    for df in results:
+        if len(df) > 0:
+            instances_with_sol_by_config[df.attrs[CONFIG]].add(df.attrs[INSTANCE])
+    return instances_with_sol_by_config
+
+
 def extract_nb_xps_by_config(results: list[pd.DataFrame]) -> dict[str, int]:
     nb_xps_by_config = defaultdict(lambda: 0)
     for df in results:
