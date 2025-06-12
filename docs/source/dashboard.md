@@ -166,12 +166,15 @@ By default, the dashboard will then be available at http://127.0.0.1:8050/.
 
 You will find on a left panel the different filters:
 - solver configs
-- instances ("@all" alias selecting all the instances)
+- instances, with some aliases:
+  - @all: select all the instances
+  - @withsol: select all instances for which each selected config has found at least one solution
 - metric to show
 - clip at: to avoid outliers, the data whose absolute value is above it are removed
 - on-off buttons for
   - time in log-scale
   - transposing the graph (solved instances graph only)
+  - spectifying if the metric is supposed to be minimized or maximized the metric (aggregated ranks table only)
 
 On the main panel, you have several tabs corresponding to graph type, or tables:
 - "Metric evolution": the curve for each experiment of the chosen metric
@@ -179,9 +182,11 @@ On the main panel, you have several tabs corresponding to graph type, or tables:
   A point is drawn for a given time on the curve of a given config,
   only if at least a point occurred before for each filtered instances.
   The table below gives the last point of each curve (so the aggregated metric at solve end of each experiment)
+  + number of experiments by config + number of experiments without solution (usually because of timeout)
 - "Nb of solved instances": the graph shows the time evolution of the number of solved instances (i.e. whose solver status is "optimal")
   On the graph the % is relative to the total number of experiments done for the solver config. On the table below, you get
   this total number of experiments versus the number of experiments finishing with solver status "optimal".
+- "Solvers competition": aggregated config rank along instances and aggregated distance to best metric
 - "Config explorer": displays the solver class and hyperparameters corresponding to each solver config name.
 - "Experiment data": displays the raw timeseries for each experiment
 - "Empty experiments": list the experiments with no data and the potential reason (timeout or raised error)
