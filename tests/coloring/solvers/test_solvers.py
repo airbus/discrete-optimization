@@ -571,13 +571,13 @@ def test_color_lp_gurobi_explain_unsat():
     assert len(constraints) > 0
 
     # explain it via meta-constraints
-    mus_meta_constraints = solver.explain_unsat_meta()
+    mus_meta_constraints = solver.explain_unsat_deduced_meta()
     assert len(mus_meta_constraints) > 0
     assert len(mus_meta_constraints) < len(solver.get_meta_constraints())
     assert isinstance(mus_meta_constraints[0], MetaConstraint)
 
     # custom meta-constraints
-    mus_meta_constraints_extra = solver.explain_unsat_meta(
+    mus_meta_constraints_extra = solver.explain_unsat_deduced_meta(
         meta_constraints=solver.get_meta_constraints() + [extra_meta_constraint]
     )
     assert mus_meta_constraints == [
@@ -847,6 +847,10 @@ def test_cpmpy_solver():
     assert len(metaconstraints_mus) < len(solver.get_soft_meta_constraints())
     for meta in metaconstraints_mus:
         assert isinstance(meta, MetaCpmpyConstraint)
+    metaconstraints_deduced_mus = solver.explain_unsat_deduced_meta()
+    assert len(metaconstraints_deduced_mus) < len(solver.get_soft_meta_constraints())
+    for meta in metaconstraints_deduced_mus:
+        assert isinstance(meta, MetaCpmpyConstraint)
 
     # correct meta
     meta_mcs = solver.correct_unsat_meta()
@@ -854,8 +858,24 @@ def test_cpmpy_solver():
     subconstraints_mcs_ids = set()
     for meta in meta_mcs:
         subconstraints_mcs_ids.update({id(c) for c in meta.constraints})
+    solver_model_constraints_bak = solver.model.constraints
     solver.model.constraints = [
-        c for c in solver.model.constraints if id(c) not in subconstraints_mcs_ids
+        c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
+    ]  # NB: solver.model.constraints.remove(cstr) not working as expected
+    solver.solve()
+    assert solver.status_solver == StatusSolver.OPTIMAL
+    # correct with deduced meta
+    solver.status_solver = (
+        StatusSolver.UNSATISFIABLE
+    )  # reset status solver to allow next method
+    meta_mcs = solver.correct_unsat_deduced_meta()
+    assert 0 < len(meta_mcs) < len(solver.get_soft_meta_constraints())
+    subconstraints_mcs_ids = set()
+    for meta in meta_mcs:
+        subconstraints_mcs_ids.update({id(c) for c in meta.constraints})
+    solver_model_constraints_bak = solver.model.constraints
+    solver.model.constraints = [
+        c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
     ]  # NB: solver.model.constraints.remove(cstr) not working as expected
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL
