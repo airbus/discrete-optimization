@@ -9,6 +9,7 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Any, Optional
 
+import cpmpy
 from cpmpy.expressions.core import Expression
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Model
@@ -137,7 +138,8 @@ class CpmpySolver(SolverDO):
     ) -> list[MetaCpmpyConstraint]:
         """Explain unsatisfiability of the problem via meta-constraints.
 
-        Meta-constraints are gathering several finer constraints in order to be more human readable.
+        Meta-constraints are gathering several finer constraints in order to be more human-readable.
+        We construct the corresponding cpmpy constraint via `cpmpy.all(meta.constraints)`.
 
         Args:
             soft: list of soft meta-constraints (that could be removed from model).
@@ -149,10 +151,47 @@ class CpmpySolver(SolverDO):
             **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mus.mus`)
 
         Returns:
-            subset minimal list of soft meta-constraints leading to unsatisfiability.
+            minimal subset of soft meta-constraints leading to unsatisfiability.
 
         Note:
             running several times may lead to a different (minimal) subset of meta-constraints.
+
+        """
+        fine_method = self.explain_unsat_fine
+        fine_method_kwargs = dict(cpmpy_method=cpmpy_method, **kwargs)
+        return (
+            self._compute_meta_minimal_meta_constraint_set_using_fine_constraint_method(
+                fine_method=fine_method, soft=soft, hard=hard, **fine_method_kwargs
+            )
+        )
+
+    def explain_unsat_deduced_meta(
+        self,
+        soft: Optional[list[MetaCpmpyConstraint]] = None,
+        hard: Optional[list[MetaCpmpyConstraint]] = None,
+        cpmpy_method: CpmpyExplainUnsatMethod = CpmpyExplainUnsatMethod.mus,
+        **kwargs: Any,
+    ) -> list[MetaCpmpyConstraint]:
+        """Explain unsatisfiability of the problem via meta-constraints.
+
+        Meta-constraints are gathering several finer constraints in order to be more human readable.
+        We compute the minimal subset of fine constraints included in the metaconstraints and deduce
+        the corresponding meta-constraints impacted.
+
+        Args:
+            soft: list of soft meta-constraints (that could be removed from model).
+                Default to the ones returned by `get_default_soft_meta_constraints()`.
+            hard: list of hard meta-constraints (that have no sense to be removed
+                like physical facts or modelling choices).
+                Default to the ones returned by `get_default_hard_meta_constraints()`.
+            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mus` to be used
+            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mus.mus`)
+
+        Returns:
+            subset of soft meta-constraints leading to unsatisfiability (corresponding fine constraints subset being minimal).
+
+        Note:
+            running several times may lead to a different subset of meta-constraints.
 
         """
         fine_method = self.explain_unsat_fine
@@ -207,7 +246,8 @@ class CpmpySolver(SolverDO):
     ) -> list[MetaCpmpyConstraint]:
         """Correct unsatisfiability of the problem with a minimal set of meta-constraints.
 
-        Meta-constraints are gathering several finer constraints in order to be more human readable.
+        Meta-constraints are gathering several finer constraints in order to be more human-readable.
+        We construct the corresponding cpmpy constraint via `cpmpy.all(meta.constraints)`.
 
         Args:
             soft: list of soft meta-constraints (that could be removed from model).
@@ -219,10 +259,47 @@ class CpmpySolver(SolverDO):
             **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mcs.mcs_opt`)
 
         Returns:
-            subset minimal list of soft meta-constraints leading to unsatisfiability.
+            minimal subset of soft meta-constraints leading to unsatisfiability.
 
         Note:
             running several times may lead to a different (minimal) subset of meta-constraints.
+
+        """
+        fine_method = self.correct_unsat_fine
+        fine_method_kwargs = dict(cpmpy_method=cpmpy_method, **kwargs)
+        return (
+            self._compute_meta_minimal_meta_constraint_set_using_fine_constraint_method(
+                fine_method=fine_method, soft=soft, hard=hard, **fine_method_kwargs
+            )
+        )
+
+    def correct_unsat_deduced_meta(
+        self,
+        soft: Optional[list[MetaCpmpyConstraint]] = None,
+        hard: Optional[list[MetaCpmpyConstraint]] = None,
+        cpmpy_method: CpmpyCorrectUnsatMethod = CpmpyCorrectUnsatMethod.mcs_opt,
+        **kwargs: Any,
+    ) -> list[MetaCpmpyConstraint]:
+        """Correct unsatisfiability of the problem with a set of meta-constraints.
+
+        Meta-constraints are gathering several finer constraints in order to be more human-readable.
+        We compute the minimal subset of fine constraints included in the metaconstraints and deduce
+        the corresponding meta-constraints impacted.
+
+        Args:
+            soft: list of soft meta-constraints (that could be removed from model).
+                Default to the ones returned by `get_default_soft_meta_constraints()`.
+            hard: list of hard meta-constraints (that have no sense to be removed
+                like physical facts or modelling choices).
+                Default to the ones returned by `get_default_hard_meta_constraints()`.
+            cpmpy_method: corresponding to the function of `cpmpy.tools.explain.mcs` to be used
+            **kwargs: passed to the cpmpy_method (like `cpmpy.tools.explain.mcs.mcs_opt`)
+
+        Returns:
+            subset of soft meta-constraints leading to unsatisfiability (corresponding fine constraints subset being minimal).
+
+        Note:
+            running several times may lead to a different subset of meta-constraints.
 
         """
         fine_method = self.correct_unsat_fine
@@ -299,6 +376,36 @@ class CpmpySolver(SolverDO):
                 if c in set(meta_normalized):
                     ms_meta_constraints.add(meta)
         return list(ms_meta_constraints)
+
+    def _compute_meta_minimal_meta_constraint_set_using_fine_constraint_method(
+        self,
+        fine_method: Callable[[...], list[Expression]],
+        soft: Optional[list[MetaCpmpyConstraint]] = None,
+        hard: Optional[list[MetaCpmpyConstraint]] = None,
+        **kwargs: Any,
+    ) -> list[MetaCpmpyConstraint]:
+        """
+
+        Args:
+            fine_method:  method used to extract the minimal set of fine constraints
+            soft: soft meta-constraints
+            hard: hard meta-constraints
+            **kwargs: kwargs for fine_method (apart from soft and hard parameters)
+
+        Returns:
+
+        """
+        if soft is None:
+            soft = self.get_soft_meta_constraints()
+        if hard is None:
+            hard = self.get_hard_meta_constraints()
+        soft_normalized = _normalize_metaconstraints(soft)
+        hard_normalized = _normalize_metaconstraints(hard)
+        soft_cpmpy = [cpmpy.all(meta.constraints) for meta in soft_normalized]
+        hard_cpmpy = [cpmpy.all(meta.constraints) for meta in hard_normalized]
+        cstr2meta = {cstr: meta for cstr, meta in zip(soft_cpmpy, soft)}
+        ms_constraints = fine_method(soft=soft_cpmpy, hard=hard_cpmpy, **kwargs)
+        return [cstr2meta[cstr] for cstr in ms_constraints]
 
     def get_soft_constraints(self) -> list[Expression]:
         """Get soft fine constraints defining the internal model.

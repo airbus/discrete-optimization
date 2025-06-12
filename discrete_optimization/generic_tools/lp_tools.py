@@ -857,7 +857,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
 
         return constraints
 
-    def explain_unsat_meta(
+    def explain_unsat_deduced_meta(
         self,
         meta_constraints: Optional[list[MetaConstraint]] = None,
     ) -> list[MetaConstraint]:
@@ -870,7 +870,7 @@ class GurobiMilpSolver(MilpSolver, WarmstartMixin, BoundsProviderMixin):
                 Default to the ones returned by `get_default_meta_constraints()`.
 
         Returns:
-            subset minimal list of meta-constraints leading to unsatisfiability.
+            subset of meta-constraints leading to unsatisfiability (corresponding fine constraints subset being minimal).
 
         """
         if meta_constraints is None:
