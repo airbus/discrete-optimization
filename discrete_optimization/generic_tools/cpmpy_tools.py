@@ -407,6 +407,36 @@ class CpmpySolver(SolverDO):
         ms_constraints = fine_method(soft=soft_cpmpy, hard=hard_cpmpy, **kwargs)
         return [cstr2meta[cstr] for cstr in ms_constraints]
 
+    def get_others_meta_constraint(
+        self, meta_constraints: Optional[list[MetaCpmpyConstraint]] = None
+    ) -> MetaCpmpyConstraint:
+        """Create a meta-constraint gathering all remaining constraints.
+
+        Create a meta-constraint named "others" containing all model constraints not already
+        taken into account by the given meta-constraints.
+
+        Args:
+            meta_constraints: meta constraints to consider. By default,
+                `self.get_soft_meta_constraints() + self.get_hard_meta_constraints()`.
+
+        Returns:
+            a meta constraint gathering remaining constraints
+
+        """
+        if meta_constraints is None:
+            meta_constraints = (
+                self.get_soft_meta_constraints() + self.get_hard_meta_constraints()
+            )
+        solver_constraints = _get_normalized_constraints(self.model.constraints)
+        constraints_from_meta = _convert_normalized_metaconstraints_to_constraints(
+            _normalize_metaconstraints(meta_constraints)
+        )
+        constraints_from_meta_ids = {id(c) for c in constraints_from_meta}
+        remaining_constraints = [
+            c for c in solver_constraints if id(c) not in constraints_from_meta_ids
+        ]
+        return MetaCpmpyConstraint(name="others", constraints=remaining_constraints)
+
     def get_soft_constraints(self) -> list[Expression]:
         """Get soft fine constraints defining the internal model.
 

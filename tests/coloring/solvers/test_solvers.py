@@ -835,6 +835,23 @@ def test_cpmpy_solver():
     assert solver.status_solver == StatusSolver.OPTIMAL
     nb_colors_optimal = solution.nb_color
 
+    # test get_others_meta_constraint()
+    # with default soft and hard metas
+    assert len(solver.get_others_meta_constraint()) == 0
+    # with custom metas
+    meta_constraints = [
+        MetaCpmpyConstraint(
+            "toto", solver.get_hard_meta_constraints()[0].constraints[0][:4]
+        )
+    ] + solver.get_soft_meta_constraints()[1:2]
+    meta_others = solver.get_others_meta_constraint(meta_constraints)
+    assert meta_others.name == "others"
+    constraints_strings = [str(c) for c in meta_others]
+    assert "(x[0]) != (x[16])" in constraints_strings
+    assert "(x[4]) <= (nb_colors)" in constraints_strings
+    assert "(x[1]) <= (nb_colors)" not in constraints_strings
+    assert not any("x[1]" in c for c in constraints_strings)
+
     # add impossible constraint (nb_colors < optimal)
     solver = CpmpyColoringSolver(color_problem)
     solver.init_model(nb_colors=nb_colors_optimal - 1)
