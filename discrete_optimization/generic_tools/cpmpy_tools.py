@@ -1,7 +1,7 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-# Thanks to Leuven university for the cpmyp library.
+# Thanks to Leuven university for the cpmpy library.
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -14,6 +14,7 @@ from cpmpy.expressions.core import Expression
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Model
 from cpmpy.solvers.solver_interface import ExitStatus, SolverStatus
+from cpmpy.tools import make_assump_model
 from cpmpy.tools.explain.mcs import mcs_grow, mcs_opt
 from cpmpy.tools.explain.mus import (
     mus,
@@ -29,8 +30,9 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
+from discrete_optimization.generic_tools.cp_tools import CpSolver
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import SolverDO, StatusSolver
+from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -47,6 +49,7 @@ map_exitstatus2statussolver = {
 
 
 class CpmpyExplainUnsatMethod(Enum):
+    core = "core"
     mus = "mus"
     quickxplain = "quickxplain"
     optimal_mus = "optimal_mus"
@@ -56,7 +59,18 @@ class CpmpyExplainUnsatMethod(Enum):
     optimal_mus_naive = "optimal_mus_naive"
 
 
+def get_core_constraints(soft, hard, **kwargs):
+    (m, soft, assump) = make_assump_model(soft, hard=hard)
+    s = cpmpy.SolverLookup.get(kwargs.get("solver", "ortools"), m)
+    # create dictionary from assump to soft
+    dmap = dict(zip(assump, soft))
+    assert not s.solve(assumptions=assump, **kwargs), "MUS: model must be UNSAT"
+    core = set(s.get_core())
+    return [dmap[avar] for avar in core]
+
+
 map_explainunsatmethod2fun = {
+    CpmpyExplainUnsatMethod.core: get_core_constraints,
     CpmpyExplainUnsatMethod.mus: mus,
     CpmpyExplainUnsatMethod.quickxplain: quickxplain,
     CpmpyExplainUnsatMethod.optimal_mus: optimal_mus,
@@ -78,7 +92,7 @@ map_correctunsatmethod2fun = {
 }
 
 
-class CpmpySolver(SolverDO):
+class CpmpySolver(CpSolver):
     """Generic cpmpy solver."""
 
     model: Optional[Model] = None
@@ -90,17 +104,6 @@ class CpmpySolver(SolverDO):
         time_limit: Optional[float] = 100.0,
         **kwargs: Any,
     ) -> ResultStorage:
-        """
-
-        time_limit: the solve process stops after this time limit (in seconds).
-                If None, no time limit is applied.
-        Args:
-            time_limit:
-            **kwargs:
-
-        Returns:
-
-        """
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -112,7 +115,7 @@ class CpmpySolver(SolverDO):
         callbacks_list.on_solve_start(solver=self)
 
         solver = kwargs.get("solver", "ortools")
-        self.model.solve(solver, time_limit=time_limit)
+        self.model.solve(solver, time_limit=time_limit, **kwargs)
         self.cpm_status = self.model.cpm_status
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
 
