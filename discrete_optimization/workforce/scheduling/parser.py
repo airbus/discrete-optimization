@@ -1,21 +1,44 @@
+#  Copyright (c) 2025 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
 import json
 import os
-from typing import Hashable
+from typing import Hashable, Optional
 
 import numpy as np
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
-    SpecialConstraintsDescription,
     TasksDescription,
 )
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     AdditionalCPConstraints,
 )
 
-this_folder = os.path.abspath(os.path.dirname(__file__))
-data_folder = os.path.join(this_folder, "../data")
+
+def get_data_available(
+    data_folder: Optional[str] = None, data_home: Optional[str] = None
+) -> list[str]:
+    """Get datasets available for tsp.
+
+    Params:
+        data_folder: folder where datasets for tsp whould be find.
+            If None, we look in "tsp" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/workforce"
+
+    try:
+        files = [f for f in os.listdir(data_folder) if f.endswith(".json")]
+    except FileNotFoundError:
+        files = []
+    return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
 def update_calendars_with_disruptions(
@@ -94,9 +117,6 @@ def parse_json_to_problem(json_path: str) -> AllocSchedulingProblem:
 
 
 if __name__ == "__main__":
-    pb = parse_json_to_problem(
-        os.path.join(
-            data_folder, "jsons/2023-01-01 05:00:00-2023-01-02 05:00:00-problem.json"
-        )
-    )
+    path = [f for f in get_data_available() if "instance_2.json" in f][0]
+    pb = parse_json_to_problem(path)
     print(pb)

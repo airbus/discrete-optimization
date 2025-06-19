@@ -427,6 +427,37 @@ def fetch_data_from_bppc(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_from_cp25(data_home: Optional[str] = None):
+    data_home = get_data_home(data_home=data_home)
+    CP25_REPO_URL = "https://github.com/ML-KULeuven/Explainable-Workforce-Scheduling/"
+    CP25_REPO_URL_SHA1 = "9b1fc7e38fa7e80f75de88ee206f7cd8a9cf51a9"
+    url = f"{CP25_REPO_URL}/archive/{CP25_REPO_URL_SHA1}.zip"
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_dir = f"{data_home}/workforce"
+            os.makedirs(dataset_dir, exist_ok=True)
+            dataset_prefix_in_zip = f"{rootdir}/data/anon_jsons"
+            for name in namelist:
+                if name.startswith(dataset_prefix_in_zip):
+                    zipf.extract(name, path=dataset_dir)
+            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
+                os.replace(
+                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
+                )
+                print(datafile)
+                print(f"{dataset_dir}/{os.path.basename(datafile)}")
+            print()
+            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+    except Exception as e:
+        print(e)
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -443,6 +474,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_jsplib_repo(data_home=data_home)
     fetch_data_from_bppc(data_home=data_home)
     # fetch_data_fjsp(data_home=data_home)
+    fetch_data_from_cp25(data_home=data_home)
 
 
 if __name__ == "__main__":
