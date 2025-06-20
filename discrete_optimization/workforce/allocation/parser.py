@@ -6,11 +6,11 @@ import os
 from typing import Optional
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.workforce.allocation.allocation_problem_utils import (
+from discrete_optimization.workforce.allocation.utils import (
     cut_number_of_team,
 )
 from discrete_optimization.workforce.allocation.problem import TeamAllocationProblem
-from discrete_optimization.workforce.scheduling.alloc_scheduling_utils import (
+from discrete_optimization.workforce.scheduling.utils import (
     build_allocation_problem_from_scheduling,
 )
 from discrete_optimization.workforce.scheduling.parser import parse_json_to_problem
