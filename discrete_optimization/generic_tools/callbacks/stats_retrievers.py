@@ -68,7 +68,7 @@ class StatsWithBoundsCallback(BasicStatsCallback):
     ) -> Optional[bool]:
         if not isinstance(solver, BoundsProviderMixin):
             raise ValueError(
-                "The ObjectiveGapStopper can be applied only to a solver deriving from BoundsProviderMixin."
+                "The StatsWithBoundsCallback can be applied only to a solver deriving from BoundsProviderMixin."
             )
         super().on_step_end(step=step, res=res, solver=solver)
         self.stats[-1].update(

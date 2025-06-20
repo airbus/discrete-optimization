@@ -675,6 +675,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
                 obj: self.variables["obj_dict"][obj].value()
                 for obj in self.variables["obj_dict"]
             }
+            self.cpm_solver.objective_value
             d = eval_
             d["objs"] = objectives
             self.solutions.append((time() - self.solver_start_time, d))
@@ -704,7 +705,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
             mode_optim=self.params_objective_function.sense_function,
         )
 
-    def solve(
+    def solve_custom(
         self,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: float = 20,

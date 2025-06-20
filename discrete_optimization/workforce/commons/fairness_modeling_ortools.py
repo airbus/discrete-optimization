@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Optional, Union
 
-from ortools.sat.python.cp_model import BoolVarT, CpModel, IntVar, LinearExpr
+from ortools.sat.python.cp_model import CpModel, IntVar
 
 from discrete_optimization.workforce.commons.fairness_modeling import (
     ModelisationDispersion,
