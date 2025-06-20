@@ -50,7 +50,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.workforce.allocation.allocation_problem_utils import (
+from discrete_optimization.workforce.allocation.utils import (
     compute_all_overlapping,
     compute_equivalent_teams,
 )

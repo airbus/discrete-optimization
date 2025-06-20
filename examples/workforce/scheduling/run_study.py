@@ -26,60 +26,29 @@ from discrete_optimization.generic_tools.study import (
     Hdf5Database,
     SolverConfig,
 )
-from discrete_optimization.workforce.allocation.parser import (
+from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
-    parse_to_allocation_problem,
+    parse_json_to_problem,
 )
-from discrete_optimization.workforce.allocation.solvers.cpmpy import (
-    CPMpyTeamAllocationSolver,
-)
-from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    OrtoolsTeamAllocationSolver, ModelisationAllocationOrtools
+from discrete_optimization.workforce.scheduling.solvers.cpsat import (
+    CPSatAllocSchedulingSolver
 )
 
-study_name = "allocation-study-0"
-overwrite = False  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
+study_name = "scheduling-study-0"
+overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
 instances = [os.path.basename(p) for p in get_data_available()]
 p = ParametersCp.default_cpsat()
 p.nb_process = 10
-solver_configs = {
-    "cpmpy-cpsat-1proc": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 1},
-    ),
-    "cpmpy-cpsat-10proc": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 10},
-    ),
-    "cpmpy-gurobi": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "gurobi"},
-    ),
-    "cpmpy-exact": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={
-            "time_limit": 5,
-            # "display": lambda: None,
-            "solver": "exact",
-        },
-    ),
-}
-solver_configs = {
-    "cpmpy-gurobi": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "gurobi"},
-    )
-}
-solver_configs = {"cpsat-10": SolverConfig(cls=OrtoolsTeamAllocationSolver,
+p_mono_worker = ParametersCp.default_cpsat()
+p_mono_worker.nb_process = 1
+solver_configs = {"cpsat-10": SolverConfig(cls=CPSatAllocSchedulingSolver,
                                            kwargs={"parameters_cp": p,
-                                                   "time_limit": 5,
-                                                   "add_lower_bound_nb_teams": False})}
+                                                   "time_limit": 5, "add_lower_bound": True})}
 
-solver_configs["cpsat-10-integer"] = SolverConfig(cls=OrtoolsTeamAllocationSolver,
-                                   kwargs={"parameters_cp": p,
-                                           "time_limit": 5,
-                                           "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
-                                           "add_lower_bound_nb_teams": False})
+solver_configs["cpsat-1"] = SolverConfig(cls=CPSatAllocSchedulingSolver,
+                                         kwargs={"parameters_cp": p_mono_worker,
+                                                 "time_limit": 5,
+                                                 "add_lower_bound": True})
 
 database_filepath = f"{study_name}.h5"
 if overwrite:
@@ -97,10 +66,10 @@ for instance in instances:
         try:
             # init problem
             file = [f for f in get_data_available() if instance in f][0]
-            problem = parse_to_allocation_problem(file)
+            problem = parse_json_to_problem(file)
             # init solver
-            # stats_cb = StatsWithBoundsCallback()
-            stats_cb = BasicStatsCallback()
+            stats_cb = StatsWithBoundsCallback()
+            # stats_cb = BasicStatsCallback()
             solver = solver_config.cls(
                 problem,
                 params_objective_function=ParamsObjectiveFunction(
@@ -117,7 +86,7 @@ for instance in instances:
                 callbacks=[
                     stats_cb,
                     NbIterationTracker(step_verbosity_level=logging.INFO),
-                    # ObjectiveGapStopper(objective_gap_rel=0, objective_gap_abs=0),
+                    ObjectiveGapStopper(objective_gap_rel=0, objective_gap_abs=0),
                 ],
                 **solver_config.kwargs,
             )

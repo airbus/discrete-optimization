@@ -7,9 +7,7 @@ import math
 import numpy as np
 from ortools.sat.python.cp_model import (
     CpModel,
-    CpSolver,
-    CpSolverSolutionCallback,
-    IntVar,
+    CpSolver
 )
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -18,7 +16,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
-from discrete_optimization.workforce.scheduling.alloc_scheduling_utils import (
+from discrete_optimization.workforce.scheduling.utils import (
     get_working_time_teams,
 )
 from discrete_optimization.workforce.scheduling.problem import AllocSchedulingProblem
@@ -87,6 +85,7 @@ class BoundResourceViaRelaxedProblem(Hyperparametrizable):
 
     def __init__(self, problem: AllocSchedulingProblem):
         self.problem = problem
+        self.status = None
 
     def init_model(self, **kwargs):
         model = CpModel()
@@ -165,7 +164,7 @@ class BoundResourceViaRelaxedProblem(Hyperparametrizable):
         solver = CpSolver()
         solver.parameters.max_time_in_seconds = kwargs.get("time_limit", 5)
         solver.parameters.num_workers = kwargs.get("num_workers", 16)
-        solver.parameters.log_search_progress = kwargs.get("log_search_progress", True)
+        solver.parameters.log_search_progress = kwargs.get("log_search_progress", False)
         res = solver.solve(model=model)
         bound = solver.BestObjectiveBound()
         best_sol = solver.ObjectiveValue()

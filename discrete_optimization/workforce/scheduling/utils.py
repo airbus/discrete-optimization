@@ -10,9 +10,11 @@ from typing import Any, Dict, Hashable, List, Union
 import matplotlib.patches as patches
 import networkx as nx
 import numpy as np
-import plotly.graph_objects as go
 from matplotlib import pyplot as plt
-
+try:
+    import plotly.graph_objects as go
+except:
+    pass
 from discrete_optimization.generic_tools.do_problem import TypeObjective
 from discrete_optimization.generic_tools.graph_api import Graph, from_networkx
 from discrete_optimization.workforce.allocation.problem import (
@@ -735,7 +737,8 @@ def build_allocation_problem_from_scheduling(
                     nodes_team=set(problem.team_names),
                 ),
                 allocation_additional_constraint=AllocationAdditionalConstraint(
-                    same_allocation=problem.same_allocation
+                    same_allocation=problem.same_allocation,
+                    allowed_allocation=problem.available_team_for_activity
                 ),
             )
         else:
@@ -751,7 +754,8 @@ def build_allocation_problem_from_scheduling(
                     nodes_team=set(problem.team_names),
                 ),
                 allocation_additional_constraint=AllocationAdditionalConstraint(
-                    same_allocation=problem.same_allocation
+                    same_allocation=problem.same_allocation,
+                    allowed_allocation=problem.available_team_for_activity
                 ),
                 attributes_cumul_activities=["duration"],
                 objective_doc_cumul_activities={
