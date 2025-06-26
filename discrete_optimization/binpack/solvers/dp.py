@@ -26,7 +26,7 @@ class DpBinPackSolver(DpSolver):
     problem: BinPackProblem
     transitions: dict
     modeling: ModelingDpBinPack
-    hyperparameters = [
+    hyperparameters = DpSolver.hyperparameters + [
         EnumHyperparameter(
             name="modeling",
             enum=ModelingDpBinPack,
