@@ -167,11 +167,3 @@ class CpSatBinPackSolver(OrtoolsCpSatSolver, WarmstartMixin):
                     self.cp_model.AddHint(self.variables["used"][bin], 1)
                 else:
                     self.cp_model.AddHint(self.variables["used"][bin], 0)
-
-    def set_warm_start_prev(self):
-        self.cp_model.ClearHints()
-        response = self.solver.ResponseProto()  # Get the raw response
-        for i in range(len(response.solution)):
-            var = self.cp_model.GetIntVarFromProtoIndex(i)
-            # print(f"Variable {var} = {response.solution[i]}")
-            self.cp_model.AddHint(var, response.solution[i])
