@@ -172,11 +172,17 @@ def run_study(study_name):
                     xp.config.parameters = copy(xp.config.parameters)
                     xp.config.parameters["toto"] = 0.5
                 # modify fitness to have different ranks
-                if config_name == "cpsat-binary" and instance == "gc_50_1":
-                    xp.metrics["fit"] += 1  # improve fitness
-                if config_name == "mathopt":
+                elif config_name == "mathopt":
                     xp.metrics["fit"] -= 1  # degrade fitness
-
+                    xp.status = StatusSolver.SATISFIED.value  # not optimal anymore
+                elif config_name == "cpsat-binary" and instance == "gc_50_1":
+                    xp.metrics["fit"] += 1  # improve fitness
+                elif instance == "gc_50_1" and xp.status == StatusSolver.OPTIMAL.value:
+                    xp.status = StatusSolver.SATISFIED.value  # not optimal anymore
+                elif config_name == "cpsat-binary" and instance == "gc_50_3":
+                    xp.status = (
+                        StatusSolver.SATISFIED.value
+                    )  # make it unaware of optimality
                 database.store(xp)
 
 
@@ -415,11 +421,20 @@ def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing
     "transpose_value",
     [[TRANSPOSE_KEY], []],
 )
-def test_update_graph_nb_solved_instances(app, time_log_scale, transpose_value):
-    configs = ["mathopt", "cpsat-integer", "timeout"]
+@pytest.mark.parametrize(
+    "include_solved_wo_proof",
+    [False, True],
+)
+def test_update_graph_nb_solved_instances(
+    app, time_log_scale, transpose_value, include_solved_wo_proof
+):
+    configs = ["mathopt", "cpsat-binary", "cpsat-integer", "timeout"]
     expected_n_traces = 2
     output = app.update_graph_nb_solved_instances(
-        configs=configs, time_log_scale=time_log_scale, transpose_value=transpose_value
+        configs=configs,
+        time_log_scale=time_log_scale,
+        transpose_value=transpose_value,
+        include_solved_wo_proof=include_solved_wo_proof,
     )
     plot = output["plot"]
     assert len(plot.data) == expected_n_traces
@@ -439,7 +454,11 @@ def test_update_graph_nb_solved_instances(app, time_log_scale, transpose_value):
 
     df = pd.DataFrame(output["data"])
     assert [c["name"] for c in output["columns"]] == df.columns.tolist()
-    assert (df[df.config == "cpsat-integer"].iloc[0, 1:].values == [2, 3]).all()
+    assert (df[df.config == "cpsat-integer"].iloc[0, 1:].values == [1, 3]).all()
+    if include_solved_wo_proof:
+        assert (df[df.config == "cpsat-binary"].iloc[0, 1:].values == [3, 3]).all()
+    else:
+        assert (df[df.config == "cpsat-binary"].iloc[0, 1:].values == [1, 3]).all()
     assert (df[df.config == "timeout"].iloc[0, 1:].values == [0, 3]).all()
 
 
@@ -469,7 +488,7 @@ def test_update_run_options(app, instance, nb_runs):
     "config, instance, i_run, nodata, status",
     [
         ("cpsat-binary", "gc_50_1", 0, False, StatusSolver.OPTIMAL),
-        ("cpsat-binary", "gc_50_3", 1, False, StatusSolver.OPTIMAL),
+        ("cpsat-binary", "gc_50_3", 1, False, StatusSolver.SATISFIED),
         ("fake", "gc_50_1", 0, True, StatusSolver.ERROR),
         ("timeout", "gc_50_1", 0, True, StatusSolver.UNKNOWN),
     ],

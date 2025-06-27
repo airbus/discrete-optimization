@@ -326,6 +326,30 @@ def compute_stat_from_df_config(
     return df_stat
 
 
+def extract_optimal_fit_by_instance(results: list[pd.DataFrame]) -> dict[str, float]:
+    optimal_fit_by_instance = {}
+    for df in results:
+        if df.attrs[STATUS] == StatusSolver.OPTIMAL:
+            optimal_fit_by_instance[df.attrs[INSTANCE]] = float(df[FIT].iloc[-1])
+    return optimal_fit_by_instance
+
+
+def extract_solvetimes_wo_status_by_config(
+    results: list[pd.DataFrame], optimal_fit_by_instance: dict[str, float]
+) -> dict[str, list[float]]:
+    solvetimes_by_config = defaultdict(list)
+    for df in results:
+        if (
+            df.attrs[INSTANCE] in optimal_fit_by_instance
+            and FIT in df
+            and df[FIT].iloc[-1] == optimal_fit_by_instance[df.attrs[INSTANCE]]
+        ):
+            solvetime = df.index[-1]
+            config = df.attrs[CONFIG]
+            solvetimes_by_config[config].append(solvetime)
+    return solvetimes_by_config
+
+
 def extract_solvetimes_by_config(results: list[pd.DataFrame]) -> dict[str, list[float]]:
     solvetimes_by_config = defaultdict(list)
     for df in results:
@@ -352,13 +376,34 @@ def convert_solvetimes2nbsolvedinstances(
 def extract_nbsolvedinstances_by_config(
     results: list[pd.DataFrame],
 ) -> dict[str, pd.Series]:
+    return _extract_nbsolvedinstances_by_config_from_solvetimes(
+        results=results,
+        solvetimes_by_config=extract_solvetimes_by_config(results=results),
+    )
+
+
+def extract_nbsolvedinstances_wo_status_by_config(
+    results: list[pd.DataFrame],
+) -> dict[str, pd.Series]:
+    optimal_fit_by_instance = extract_optimal_fit_by_instance(results=results)
+    return _extract_nbsolvedinstances_by_config_from_solvetimes(
+        results=results,
+        solvetimes_by_config=extract_solvetimes_wo_status_by_config(
+            results=results, optimal_fit_by_instance=optimal_fit_by_instance
+        ),
+    )
+
+
+def _extract_nbsolvedinstances_by_config_from_solvetimes(
+    results: list[pd.DataFrame], solvetimes_by_config: dict[str, list[float]]
+) -> dict[str, pd.Series]:
     if len(results) == 0:
         time_label = "time"
     else:
         time_label = results[0].index.name
     return {
         config: convert_solvetimes2nbsolvedinstances(solvetimes, time_label=time_label)
-        for config, solvetimes in extract_solvetimes_by_config(results=results).items()
+        for config, solvetimes in solvetimes_by_config.items()
     }
 
 
