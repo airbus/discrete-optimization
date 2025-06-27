@@ -19,6 +19,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     clip_df,
     clip_results,
     compute_best_metrics_by_xp,
+    compute_convergence_time_by_xp,
     compute_extra_metrics,
     compute_stat_by_config,
     compute_summary_agg_ranks_and_dist_to_best_metric,
@@ -192,6 +193,9 @@ class Dashboard(Dash):
         )
         self.empty_xps_metadata = extract_empty_xps_metadata(self.full_results)
         self.df_best_metric_by_xp = compute_best_metrics_by_xp(
+            results=self.full_results, metrics=self.full_metrics
+        )
+        self.df_convergence_time_by_xp = compute_convergence_time_by_xp(
             results=self.full_results, metrics=self.full_metrics
         )
 
@@ -717,6 +721,7 @@ class Dashboard(Dash):
             # compute dataframe
             df_summary = compute_summary_agg_ranks_and_dist_to_best_metric(
                 df_best_metric_by_xp=df_best_metric_by_xp,
+                df_convergence_time_by_xp=self.df_convergence_time_by_xp,
                 configs=configs,
                 instances=instances,
                 metric=metric,
@@ -1074,11 +1079,12 @@ _explanation_table_agg_rank = """
 In this table, given a metric,
 we compute instance by instance:
 - solver rank among all configs,
-- distance to the best metric value among all configs.
+- distance to the best metric value among all configs,
+- convergence time (first time the last metric value is reached).
 
 Then we aggregate along instances:
 - by counting ranks #1, #2, ... and failed instances,
-- by applying the chosen aggregation method (in the "filters" panel) on the distance.
+- by applying the chosen aggregation method (in the "filters" panel) on the distance and on the convergence time.
 
 The "minimizing" switch specifies whether the metric is supposed to be minimized or maximized.
 

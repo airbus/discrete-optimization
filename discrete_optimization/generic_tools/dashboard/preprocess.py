@@ -507,8 +507,28 @@ def compute_best_metrics_by_xp(
     return df_best_metric_by_xp
 
 
+def compute_convergence_time_by_xp(
+    results: list[pd.DataFrame], metrics: list[str]
+) -> pd.DataFrame:
+    empty_ser = pd.Series(index=metrics)
+    df_convergence_time_by_xp = pd.DataFrame(
+        data=(
+            (df == df.iloc[-1, :])
+            .apply(lambda ser: ser[ser].index[0])
+            .rename((df.attrs[CONFIG], df.attrs[INSTANCE]))
+            if len(df) > 0
+            else empty_ser.rename((df.attrs[CONFIG], df.attrs[INSTANCE]))
+            for df in results
+        ),
+        columns=metrics,
+    )
+    df_convergence_time_by_xp.index.names = (CONFIG, INSTANCE)
+    return df_convergence_time_by_xp
+
+
 def compute_summary_agg_ranks_and_dist_to_best_metric(
     df_best_metric_by_xp: pd.DataFrame,
+    df_convergence_time_by_xp: pd.DataFrame,
     metric: str = "fit",
     configs: Optional[list[str]] = None,
     instances: Optional[list[str]] = None,
@@ -522,8 +542,10 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
     if instances is None:
         instances = slice(None)
     df_best_metric_by_xp = df_best_metric_by_xp.loc[(configs, instances), :]
+    df_convergence_time_by_xp = df_convergence_time_by_xp.loc[(configs, instances), :]
     # select metric
     ser_best_metric_by_xp = df_best_metric_by_xp[metric]
+    ser_convergence_time_by_xp = df_convergence_time_by_xp[metric]
     # get one single value by tuple config x instance
     ser_best_metric_by_xp = ser_best_metric_by_xp.groupby(
         level=[CONFIG, INSTANCE]
@@ -568,5 +590,12 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
         dist_to_best_metric_by_instance.groupby(level=CONFIG), **kwargs
     ).rename("dist to best")
 
+    # convergence time aggregated by config
+    convergence_time_agg = stat_func(
+        ser_convergence_time_by_xp.groupby(level=CONFIG), **kwargs
+    ).rename("convergence time (s)")
+
     # concat dist and ranks, and put index as a column
-    return pd.concat((dist_to_best_metric_agg, rank_counts), axis=1).reset_index()
+    return pd.concat(
+        (convergence_time_agg, dist_to_best_metric_agg, rank_counts), axis=1
+    ).reset_index()
