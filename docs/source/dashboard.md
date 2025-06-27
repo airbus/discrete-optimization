@@ -188,7 +188,7 @@ On the main panel, you have several tabs corresponding to graph type, or tables:
   this total number of experiments versus the number of experiments finishing with solver status "optimal".
   A switch "w/o proof" allows to consider an experiment solved as soon as the fitness found is the same as another experiment
   with the same instance and for which the solver has a status "optimal".
-- "Solvers competition": aggregated config rank along instances and aggregated distance to best metric
+- "Solvers competition": aggregated config rank along instances, aggregated distance to best metric, aggregated convergence time.
 - "Config explorer": displays the solver class and hyperparameters corresponding to each solver config name.
 - "Experiment data": displays the raw timeseries for each experiment
 - "Empty experiments": list the experiments with no data and the potential reason (timeout or raised error)

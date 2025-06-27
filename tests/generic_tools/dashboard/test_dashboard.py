@@ -412,6 +412,8 @@ def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing
     if "fake" in configs:
         assert (df[df.config == "fake"]["# failed"] == nb_instances).all()
 
+    assert "convergence time (s)" in df
+
 
 @pytest.mark.parametrize(
     "time_log_scale",
