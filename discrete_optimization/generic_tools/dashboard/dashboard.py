@@ -34,6 +34,7 @@ from discrete_optimization.generic_tools.dashboard.preprocess import (
     extract_nb_xps_by_config,
     extract_nb_xps_w_n_wo_sol_by_config,
     extract_nbsolvedinstances_by_config,
+    extract_nbsolvedinstances_wo_status_by_config,
     filter_results,
     get_experiment_name,
     get_status_str,
@@ -65,6 +66,9 @@ TIME_LOGSCALE_ID = "time-log-scale"
 MINIMIZING_KEY = "minimizing"
 MINIMIZING_ID = "minimizing"
 
+SOLVED_WO_PROOF_ID = "solved-wo-proof"
+SOLVED_WO_PROOF_KEY = "w/o proof"
+SOLVED_WO_PROOF_DIV_ID = "solved-wo-proof-div"
 
 TRANSPOSE_KEY = "transpose"
 TRANSPOSE_ID = "transpose"
@@ -177,12 +181,22 @@ class Dashboard(Dash):
                 n_xps_by_config=self.nb_xps_by_config,
             )
         )
+        self.nbsolvedinstances_wo_status_by_config = (
+            extract_nbsolvedinstances_wo_status_by_config(results=results)
+        )
+        self.percentsolvedinstances_wo_status_by_config = (
+            convert_nb2percentage_solvedinstances_by_config(
+                nbsolvedinstances_by_config=self.nbsolvedinstances_wo_status_by_config,
+                n_xps_by_config=self.nb_xps_by_config,
+            )
+        )
         self.empty_xps_metadata = extract_empty_xps_metadata(self.full_results)
         self.df_best_metric_by_xp = compute_best_metrics_by_xp(
             results=self.full_results, metrics=self.full_metrics
         )
 
     def create_layout(self):
+        filter_style = {"margin-bottom": "1em"}
         controls = dbc.Card(
             [
                 dbc.CardHeader([html.H2("Filters")]),
@@ -196,7 +210,8 @@ class Dashboard(Dash):
                                     id=TIME_LOGSCALE_ID,
                                     switch=True,
                                 ),
-                            ]
+                            ],
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -209,6 +224,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=CONFIGS_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -221,6 +237,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=INSTANCES_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -228,6 +245,7 @@ class Dashboard(Dash):
                                 dcc.Dropdown(self.metrics, FIT, id=METRIC_ID),
                             ],
                             id=METRIC_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -237,6 +255,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=CLIP_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -248,6 +267,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=STAT_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -262,6 +282,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=Q_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -274,6 +295,19 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=TRANSPOSE_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Include solved xps without proof"),
+                                dbc.Switch(
+                                    value=False,
+                                    id=SOLVED_WO_PROOF_ID,
+                                    label=SOLVED_WO_PROOF_KEY,
+                                ),
+                            ],
+                            id=SOLVED_WO_PROOF_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -283,6 +317,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=MINIMIZING_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -295,6 +330,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=CONFIG_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -307,6 +343,7 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=INSTANCE_DIV_ID,
+                            style=filter_style,
                         ),
                         html.Div(
                             [
@@ -317,8 +354,9 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=RUN_DIV_ID,
+                            style=filter_style,
                         ),
-                    ]
+                    ],
                 ),
             ]
         )
@@ -588,18 +626,31 @@ class Dashboard(Dash):
                 transpose_value=Input(
                     component_id=TRANSPOSE_ID, component_property="value"
                 ),
+                include_solved_wo_proof=Input(
+                    component_id=SOLVED_WO_PROOF_ID, component_property="value"
+                ),
             ),
         )
-        def update_graph_nb_solved_instances(configs, time_log_scale, transpose_value):
+        def update_graph_nb_solved_instances(
+            configs, time_log_scale, transpose_value, include_solved_wo_proof
+        ):
             transpose = TRANSPOSE_KEY in transpose_value
             with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
+            if include_solved_wo_proof:
+                percentsolvedinstances_by_config = (
+                    self.percentsolvedinstances_wo_status_by_config
+                )
+                nbsolvedinstances_by_config = self.nbsolvedinstances_wo_status_by_config
+            else:
+                percentsolvedinstances_by_config = self.percentsolvedinstances_by_config
+                nbsolvedinstances_by_config = self.nbsolvedinstances_by_config
             percentsolvedinstances_by_config = {
                 config: ser
-                for config, ser in self.percentsolvedinstances_by_config.items()
+                for config, ser in percentsolvedinstances_by_config.items()
                 if config in configs
             }
             df_summary = construct_summary_nbsolved_instances(
-                nbsolvedinstances_by_config=self.nbsolvedinstances_by_config,
+                nbsolvedinstances_by_config=nbsolvedinstances_by_config,
                 nb_xps_by_config=self.nb_xps_by_config,
                 configs=configs,
             )
@@ -787,6 +838,9 @@ class Dashboard(Dash):
                 minimizing=Output(
                     component_id=MINIMIZING_DIV_ID, component_property="className"
                 ),
+                solved_wo_proof=Output(
+                    component_id=SOLVED_WO_PROOF_DIV_ID, component_property="className"
+                ),
             ),
             inputs=dict(
                 active_tab=Input(component_id=TABS_ID, component_property="active_tab"),
@@ -809,6 +863,7 @@ class Dashboard(Dash):
                         instance=False,
                         run=False,
                         minimizing=False,
+                        solved_wo_proof=False,
                     )
                 )
             elif active_tab == TAB_AGG_METRIC_ID:
@@ -826,6 +881,7 @@ class Dashboard(Dash):
                         instance=False,
                         run=False,
                         minimizing=False,
+                        solved_wo_proof=False,
                     )
                 )
             elif active_tab == TAB_AGG_RANK_ID:
@@ -843,6 +899,7 @@ class Dashboard(Dash):
                         instance=False,
                         run=False,
                         minimizing=True,
+                        solved_wo_proof=False,
                     )
                 )
             elif active_tab == TAB_NB_SOLVED_INSTANCES_ID:
@@ -860,6 +917,7 @@ class Dashboard(Dash):
                         instance=False,
                         run=False,
                         minimizing=False,
+                        solved_wo_proof=True,
                     )
                 )
             elif active_tab == TAB_CONFIG_ID:
@@ -877,6 +935,7 @@ class Dashboard(Dash):
                         instance=False,
                         run=False,
                         minimizing=False,
+                        solved_wo_proof=False,
                     )
                 )
             elif active_tab == TAB_XP_ID:
@@ -894,6 +953,7 @@ class Dashboard(Dash):
                         instance=True,
                         run=True,
                         minimizing=False,
+                        solved_wo_proof=False,
                     )
                 )
             elif active_tab == TAB_EMPTY_XPS_ID:
@@ -911,6 +971,7 @@ class Dashboard(Dash):
                         instance=False,
                         run=False,
                         minimizing=False,
+                        solved_wo_proof=False,
                     )
                 )
             else:
@@ -928,6 +989,7 @@ class Dashboard(Dash):
                         instance=True,
                         run=True,
                         minimizing=True,
+                        solved_wo_proof=True,
                     )
                 )
 

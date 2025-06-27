@@ -186,6 +186,8 @@ On the main panel, you have several tabs corresponding to graph type, or tables:
 - "Nb of solved instances": the graph shows the time evolution of the number of solved instances (i.e. whose solver status is "optimal")
   On the graph the % is relative to the total number of experiments done for the solver config. On the table below, you get
   this total number of experiments versus the number of experiments finishing with solver status "optimal".
+  A switch "w/o proof" allows to consider an experiment solved as soon as the fitness found is the same as another experiment
+  with the same instance and for which the solver has a status "optimal".
 - "Solvers competition": aggregated config rank along instances and aggregated distance to best metric
 - "Config explorer": displays the solver class and hyperparameters corresponding to each solver config name.
 - "Experiment data": displays the raw timeseries for each experiment
