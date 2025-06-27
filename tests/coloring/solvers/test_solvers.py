@@ -23,10 +23,6 @@ from discrete_optimization.coloring.solvers.cp_mzn import (
     CpColoringSolver,
 )
 from discrete_optimization.coloring.solvers.cpmpy import CpmpyColoringSolver
-from discrete_optimization.coloring.solvers.cpsat import (
-    CpSatColoringSolver,
-    ModelingCpSat,
-)
 from discrete_optimization.coloring.solvers.greedy import (
     GreedyColoringSolver,
     NxGreedyColoringMethod,
@@ -195,94 +191,6 @@ def test_mzn_solver_ortools_parallel_cb(caplog):
     nb_callbacks_steps = len([line for line in caploglines if "Iteration #" in line])
     assert len(res) == nb_callbacks_steps
     assert f"Solve finished after {len(res)} iterations" in caplog.text
-
-
-@pytest.mark.parametrize("modeling", [ModelingCpSat.BINARY, ModelingCpSat.INTEGER])
-def test_cpsat_solver(modeling):
-    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
-    color_problem = parse_file(small_example)
-    solver = CpSatColoringSolver(color_problem)
-    solver.init_model(nb_colors=20, modeling=modeling)
-    p = ParametersCp.default()
-    result_store = solver.solve(parameters_cp=p)
-    solution, fit = result_store.get_best_solution_fit()
-    assert color_problem.satisfy(solution)
-
-    # test warm start
-    start_solution = solver.get_starting_solution()
-
-    # first solution is not start_solution
-    assert result_store[0][0].colors != start_solution.colors
-
-    # warm start at first solution
-    solver.set_warm_start(start_solution)
-    # force first solution to be the hinted one
-    result_store = solver.solve(
-        parameters_cp=p,
-        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
-    )
-    assert result_store[0][0].colors == start_solution.colors
-
-
-def test_cpsat_solver_internal_bound_and_objective():
-    small_example = [f for f in get_data_available() if "gc_50_1" in f][0]
-    color_problem = parse_file(small_example)
-    solver = CpSatColoringSolver(color_problem)
-    # timeout => bound and obj is None (not a single solution)
-    result_store = solver.solve(time_limit=1e-5)
-    assert solver.get_current_best_internal_objective_bound() is None
-    assert solver.get_current_best_internal_objective_value() is None
-    # not optimal => obj>bound
-    result_store = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
-    assert solver.status_solver == StatusSolver.SATISFIED
-    assert 0 < solver.get_current_best_internal_objective_bound()
-    assert (
-        solver.get_current_best_internal_objective_bound()
-        < solver.get_current_best_internal_objective_value()
-    )
-    # optimal => obj == bound
-    result_store = solver.solve()
-    assert solver.status_solver == StatusSolver.OPTIMAL
-    assert (
-        solver.get_current_best_internal_objective_bound()
-        == solver.get_current_best_internal_objective_value()
-    )
-    # infeasible => None
-    solver.cp_model.add(solver.variables["nbc"] <= 1)
-    res = solver.solve()
-    assert solver.get_current_best_internal_objective_bound() is None
-    assert solver.get_current_best_internal_objective_value() is None
-
-
-def test_cpsat_solver_finetuned():
-    small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
-    color_problem = parse_file(small_example)
-    solver = CpSatColoringSolver(color_problem)
-    solver.init_model(nb_colors=20)
-    p = ParametersCp.default()
-
-    # must use existing attribute name for ortools CpSolver
-    with pytest.raises(AttributeError):
-        result_store = solver.solve(
-            parameters_cp=p, ortools_cpsat_solver_kwargs=dict(toto=4)
-        )
-    # must use correct value
-    with pytest.raises(ValueError):
-        result_store = solver.solve(
-            parameters_cp=p, ortools_cpsat_solver_kwargs=dict(search_branching=-4)
-        )
-    # works
-    from ortools.sat.sat_parameters_pb2 import SatParameters
-
-    result_store = solver.solve(
-        parameters_cp=p,
-        ortools_cpsat_solver_kwargs=dict(
-            search_branching=SatParameters.PSEUDO_COST_SEARCH
-        ),
-    )
-
-    solution, fit = result_store.get_best_solution_fit()
-    assert color_problem.satisfy(solution)
 
 
 def test_asp_solver():

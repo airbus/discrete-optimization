@@ -156,6 +156,18 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
     def get_current_best_internal_objective_value(self) -> Optional[float]:
         return self._current_internal_objective_best_value
 
+    def set_warm_start_from_previous_run(self):
+        """Set warm start from previous run of the solver."""
+        if self.solver is None:
+            raise RuntimeError(
+                "You cannot call `set_warm_start_from_previous_run()` before a first call to `solve()`"
+            )
+        self.cp_model.ClearHints()
+        response = self.solver.ResponseProto()  # Get the raw response
+        for i in range(len(response.solution)):
+            var = self.cp_model.GetIntVarFromProtoIndex(i)
+            self.cp_model.AddHint(var, response.solution[i])
+
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):
     def __init__(
