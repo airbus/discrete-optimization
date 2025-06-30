@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ except ImportError:
     plotly_available = False
 else:
     plotly_available = True
+    import plotly.express as px
     import plotly.graph_objects as go
 
 
@@ -59,6 +61,31 @@ def create_graph_from_series_dict(
         yaxis=dict(title=dict(text=y_label)),
         legend=dict(title=dict(text=legend_title)),
     )
+    if with_time_log_scale:
+        if transpose:
+            fig.update_yaxes(type="log")
+        else:
+            fig.update_xaxes(type="log")
+    return fig
+
+
+def create_solvers_competition_graph(
+    df_summary: pd.DataFrame,
+    x: str = "convergence time (s)",
+    y: str = "dist to best",
+    z: str = "config",
+    legend_title: Optional[str] = None,
+    with_time_log_scale: bool = False,
+    transpose: bool = False,
+) -> go.Figure:
+    if transpose:
+        fig = px.scatter(df_summary, x=y, y=x, color=z)
+    else:
+        fig = px.scatter(df_summary, x=x, y=y, color=z)
+    if legend_title is not None:
+        fig.update_layout(
+            legend=dict(title="Configs"),
+        )
     if with_time_log_scale:
         if transpose:
             fig.update_yaxes(type="log")

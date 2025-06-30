@@ -383,6 +383,8 @@ def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing
         q=0.5,
         minimizing=minimizing,
         clip_value=1e50,
+        transpose_value=[],
+        time_log_scale=[],
     )
     df = pd.DataFrame(output["data"])
     if "@all" in instances:
