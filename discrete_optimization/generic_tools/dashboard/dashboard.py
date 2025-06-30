@@ -9,6 +9,7 @@ import pandas as pd
 from discrete_optimization.generic_tools.dashboard.config import ConfigStore
 from discrete_optimization.generic_tools.dashboard.plots import (
     create_graph_from_series_dict,
+    create_solvers_competition_graph,
 )
 from discrete_optimization.generic_tools.dashboard.preprocess import (
     CONFIG,
@@ -77,6 +78,7 @@ TRANSPOSE_ID = "transpose"
 GRAPH_METRIC_ID = "graph-metric"
 GRAPH_AGG_METRIC_ID = "graph-agg-metric"
 GRAPH_NB_SOLVED_INSTANCES_ID = "graph-nb-solved-instances"
+GRAPH_SOLVERS_COMPETITION_ID = "graph-solvers-competition"
 
 TABLE_AGG_METRIC_ID = "table-agg-metric"
 TABLE_AGG_RANK_ID = "table-agg-rank"
@@ -290,19 +292,6 @@ class Dashboard(Dash):
                         ),
                         html.Div(
                             [
-                                dbc.Label("Transpose axes"),
-                                dbc.Checklist(
-                                    options=[TRANSPOSE_KEY],
-                                    value=[1],
-                                    id=TRANSPOSE_ID,
-                                    switch=True,
-                                ),
-                            ],
-                            id=TRANSPOSE_DIV_ID,
-                            style=filter_style,
-                        ),
-                        html.Div(
-                            [
                                 dbc.Label("Include solved xps without proof"),
                                 dbc.Switch(
                                     value=False,
@@ -321,6 +310,19 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=MINIMIZING_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Transpose axes"),
+                                dbc.Checklist(
+                                    options=[TRANSPOSE_KEY],
+                                    value=[1],
+                                    id=TRANSPOSE_ID,
+                                    switch=True,
+                                ),
+                            ],
+                            id=TRANSPOSE_DIV_ID,
                             style=filter_style,
                         ),
                         html.Div(
@@ -377,6 +379,7 @@ class Dashboard(Dash):
             id=TABLE_NB_SOLVED_INSTANCES_ID, **_get_dash_table_kwargs()
         )
 
+        graph_solvers_competition = dcc.Graph(id=GRAPH_SOLVERS_COMPETITION_ID)
         table_agg_rank = dash_table.DataTable(
             id=TABLE_AGG_RANK_ID, **_get_dash_table_kwargs()
         )
@@ -438,6 +441,7 @@ class Dashboard(Dash):
                                 ),
                                 dbc.Tab(
                                     children=[
+                                        graph_solvers_competition,
                                         table_agg_rank,
                                         table_agg_rank_explanation,
                                     ],
@@ -695,6 +699,10 @@ class Dashboard(Dash):
                     component_id=TABLE_AGG_RANK_ID,
                     component_property="columns",
                 ),
+                plot=Output(
+                    component_id=GRAPH_SOLVERS_COMPETITION_ID,
+                    component_property="figure",
+                ),
             ),
             inputs=dict(
                 configs=Input(component_id=CONFIGS_ID, component_property="value"),
@@ -706,11 +714,27 @@ class Dashboard(Dash):
                 minimizing=Input(
                     component_id=MINIMIZING_ID, component_property="value"
                 ),
+                time_log_scale=Input(
+                    component_id=TIME_LOGSCALE_ID, component_property="value"
+                ),
+                transpose_value=Input(
+                    component_id=TRANSPOSE_ID, component_property="value"
+                ),
             ),
         )
         def update_table_rank_agg(
-            configs, instances, stat, metric, q, clip_value, minimizing
+            configs,
+            instances,
+            stat,
+            metric,
+            q,
+            clip_value,
+            minimizing,
+            time_log_scale,
+            transpose_value,
         ):
+            with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
+            transpose = TRANSPOSE_KEY in transpose_value
             instances = self._replace_instances_aliases(
                 instances, configs=configs
             )  # interpret @all alias
@@ -729,11 +753,19 @@ class Dashboard(Dash):
                 q=q,
                 minimizing=minimizing,
             )
+            # create graph
+            plot = create_solvers_competition_graph(
+                df_summary=df_summary,
+                legend_title="Configs",
+                with_time_log_scale=with_time_log_scale,
+                transpose=transpose,
+            )
             return dict(
                 data=_extract_dash_table_data_from_df(df_summary),
                 columns=_extract_dash_table_columns_from_df(
                     df_summary, non_numeric_columns=[CONFIG]
                 ),
+                plot=plot,
             )
 
         # Config explorer
@@ -892,13 +924,13 @@ class Dashboard(Dash):
             elif active_tab == TAB_AGG_RANK_ID:
                 return _convert_bool2classname_dict(
                     dict(
-                        time_log_scale=False,
+                        time_log_scale=True,
                         metric=True,
                         configs=True,
                         instances=True,
                         stat=True,
                         q=stat == QUANTILE,
-                        transpose=False,
+                        transpose=True,
                         clip=True,
                         config=False,
                         instance=False,
