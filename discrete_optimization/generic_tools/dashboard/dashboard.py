@@ -67,6 +67,7 @@ else:
 
 TIME_LOGSCALE_KEY = "time log-scale"
 TIME_LOGSCALE_ID = "time-log-scale"
+TIME_LOGSCALE_DIV_ID = "time-log-scale-div"
 
 MINIMIZING_KEY = "minimizing"
 MINIMIZING_ID = "minimizing"
@@ -221,13 +222,13 @@ class Dashboard(Dash):
                     [
                         html.Div(
                             [
-                                dbc.Checklist(
-                                    options=[TIME_LOGSCALE_KEY],
-                                    value=[1],
+                                dbc.Switch(
+                                    label=TIME_LOGSCALE_KEY,
+                                    value=False,
                                     id=TIME_LOGSCALE_ID,
-                                    switch=True,
                                 ),
                             ],
+                            id=TIME_LOGSCALE_DIV_ID,
                             style=filter_style,
                         ),
                         html.Div(
@@ -362,11 +363,10 @@ class Dashboard(Dash):
                         html.Div(
                             [
                                 dbc.Label("Transpose axes"),
-                                dbc.Checklist(
-                                    options=[TRANSPOSE_KEY],
-                                    value=[1],
+                                dbc.Switch(
+                                    label=TRANSPOSE_KEY,
+                                    value=False,
                                     id=TRANSPOSE_ID,
-                                    switch=True,
                                 ),
                             ],
                             id=TRANSPOSE_DIV_ID,
@@ -558,13 +558,14 @@ class Dashboard(Dash):
                 instances=Input(component_id=INSTANCES_ID, component_property="value"),
                 metric=Input(component_id=METRIC_ID, component_property="value"),
                 clip_value=Input(component_id=CLIP_ID, component_property="value"),
-                time_log_scale=Input(
+                with_time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
                 ),
             ),
         )
-        def update_graph_metric(configs, instances, metric, time_log_scale, clip_value):
-            with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
+        def update_graph_metric(
+            configs, instances, metric, with_time_log_scale, clip_value
+        ):
             instances = self._replace_instances_aliases(
                 instances, configs=configs
             )  # interpret @all alias
@@ -608,15 +609,14 @@ class Dashboard(Dash):
                 metric=Input(component_id=METRIC_ID, component_property="value"),
                 q=Input(component_id=Q_ID, component_property="value"),
                 clip_value=Input(component_id=CLIP_ID, component_property="value"),
-                time_log_scale=Input(
+                with_time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
                 ),
             ),
         )
         def update_graph_agg_metric(
-            configs, instances, stat, metric, q, time_log_scale, clip_value
+            configs, instances, stat, metric, q, with_time_log_scale, clip_value
         ):
-            with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
             instances = self._replace_instances_aliases(
                 instances, configs=configs
             )  # interpret @all alias
@@ -675,22 +675,18 @@ class Dashboard(Dash):
             ),
             inputs=dict(
                 configs=Input(component_id=CONFIGS_ID, component_property="value"),
-                time_log_scale=Input(
+                with_time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
                 ),
-                transpose_value=Input(
-                    component_id=TRANSPOSE_ID, component_property="value"
-                ),
+                transpose=Input(component_id=TRANSPOSE_ID, component_property="value"),
                 include_solved_wo_proof=Input(
                     component_id=SOLVED_WO_PROOF_ID, component_property="value"
                 ),
             ),
         )
         def update_graph_nb_solved_instances(
-            configs, time_log_scale, transpose_value, include_solved_wo_proof
+            configs, with_time_log_scale, transpose, include_solved_wo_proof
         ):
-            transpose = TRANSPOSE_KEY in transpose_value
-            with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
             if include_solved_wo_proof:
                 percentsolvedinstances_by_config = (
                     self.percentsolvedinstances_wo_status_by_config
@@ -761,12 +757,10 @@ class Dashboard(Dash):
                 minimizing=Input(
                     component_id=MINIMIZING_ID, component_property="value"
                 ),
-                time_log_scale=Input(
+                with_time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
                 ),
-                transpose_value=Input(
-                    component_id=TRANSPOSE_ID, component_property="value"
-                ),
+                transpose=Input(component_id=TRANSPOSE_ID, component_property="value"),
                 all_xps=Input(
                     component_id=SOLVERS_COMPETITION_ALL_XPS_ID,
                     component_property="value",
@@ -787,14 +781,12 @@ class Dashboard(Dash):
             q,
             clip_value,
             minimizing,
-            time_log_scale,
-            transpose_value,
+            with_time_log_scale,
+            transpose,
             dist_label,
             time_label,
             all_xps,
         ):
-            with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
-            transpose = TRANSPOSE_KEY in transpose_value
             instances = self._replace_instances_aliases(
                 instances, configs=configs
             )  # interpret @all alias
@@ -936,7 +928,7 @@ class Dashboard(Dash):
                 ),
                 run=Output(component_id=RUN_DIV_ID, component_property="className"),
                 time_log_scale=Output(
-                    component_id=TIME_LOGSCALE_ID, component_property="className"
+                    component_id=TIME_LOGSCALE_DIV_ID, component_property="className"
                 ),
                 minimizing=Output(
                     component_id=MINIMIZING_DIV_ID, component_property="className"

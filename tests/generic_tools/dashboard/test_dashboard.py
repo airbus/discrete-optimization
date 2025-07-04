@@ -261,13 +261,13 @@ def test_replace_instances_aliases(app):
 
 
 @pytest.mark.parametrize(
-    "configs, instances, metric, time_log_scale, expected_n_traces, attempt_in_legend",
+    "configs, instances, metric, with_time_log_scale, expected_n_traces, attempt_in_legend",
     [
         (
             ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
             ["@all"],
             "fit",
-            [],
+            False,
             7,
             True,
         ),
@@ -276,7 +276,7 @@ def test_replace_instances_aliases(app):
             ["cpsat-binary", "cpsat-integer", "mathopt"],
             ["@withsol"],
             "fit",
-            [],
+            True,
             5,
             True,
         ),
@@ -287,7 +287,7 @@ def test_update_graph_metric(
     configs,
     instances,
     metric,
-    time_log_scale,
+    with_time_log_scale,
     expected_n_traces,
     attempt_in_legend,
 ):
@@ -295,7 +295,7 @@ def test_update_graph_metric(
         configs=configs,
         instances=instances,
         metric=metric,
-        time_log_scale=time_log_scale,
+        with_time_log_scale=with_time_log_scale,
         clip_value=1e50,
     )
     assert len(plot.data) == expected_n_traces
@@ -303,23 +303,30 @@ def test_update_graph_metric(
 
 
 @pytest.mark.parametrize(
-    "configs, instances, metric, stat, time_log_scale, expected_n_traces, nodata",
+    "configs, instances, metric, stat, with_time_log_scale, expected_n_traces, nodata",
     [
         (
             ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
             ["@all"],
             "fit",
             "mean",
-            [],
+            False,
             3,
             False,
         ),
-        (["cpsat-binary"], ["gc_50_3"], "gap", "quantile", [], 1, False),
-        (["cpsat-binary"], [], "gap", "quantile", [], 0, True),
+        (["cpsat-binary"], ["gc_50_3"], "gap", "quantile", False, 1, False),
+        (["cpsat-binary"], [], "gap", "quantile", True, 0, True),
     ],
 )
 def test_update_graph_agg_metric(
-    app, configs, instances, metric, stat, time_log_scale, expected_n_traces, nodata
+    app,
+    configs,
+    instances,
+    metric,
+    stat,
+    with_time_log_scale,
+    expected_n_traces,
+    nodata,
 ):
     output = app.update_graph_agg_metric(
         configs=configs,
@@ -327,7 +334,7 @@ def test_update_graph_agg_metric(
         metric=metric,
         stat=stat,
         q=0.5,
-        time_log_scale=time_log_scale,
+        with_time_log_scale=with_time_log_scale,
         clip_value=1e50,
     )
     plot = output["plot"]
@@ -397,8 +404,8 @@ def test_update_table_rank_agg(
         q=0.5,
         minimizing=minimizing,
         clip_value=1e50,
-        transpose_value=[],
-        time_log_scale=[],
+        transpose=False,
+        with_time_log_scale=False,
         time_label="convergence time (s)",
         dist_label=dist_label,
         all_xps=all_xps,
@@ -447,31 +454,31 @@ def test_update_table_rank_agg(
 
 
 @pytest.mark.parametrize(
-    "time_log_scale",
-    [[TIME_LOGSCALE_KEY], []],
+    "with_time_log_scale",
+    [True, False],
 )
 @pytest.mark.parametrize(
-    "transpose_value",
-    [[TRANSPOSE_KEY], []],
+    "transpose",
+    [True, False],
 )
 @pytest.mark.parametrize(
     "include_solved_wo_proof",
     [False, True],
 )
 def test_update_graph_nb_solved_instances(
-    app, time_log_scale, transpose_value, include_solved_wo_proof
+    app, with_time_log_scale, transpose, include_solved_wo_proof
 ):
     configs = ["mathopt", "cpsat-binary", "cpsat-integer", "timeout"]
     expected_n_traces = 2
     output = app.update_graph_nb_solved_instances(
         configs=configs,
-        time_log_scale=time_log_scale,
-        transpose_value=transpose_value,
+        with_time_log_scale=with_time_log_scale,
+        transpose=transpose,
         include_solved_wo_proof=include_solved_wo_proof,
     )
     plot = output["plot"]
     assert len(plot.data) == expected_n_traces
-    if TRANSPOSE_KEY in transpose_value:
+    if transpose:
         assert plot.layout.xaxis.title.text == "% of solved instances"
         assert plot.layout.yaxis.title.text == "time (s)"
         time_axes = next(plot.select_yaxes())
@@ -480,7 +487,7 @@ def test_update_graph_nb_solved_instances(
         assert plot.layout.xaxis.title.text == "time (s)"
         time_axes = next(plot.select_xaxes())
 
-    if TIME_LOGSCALE_KEY in time_log_scale:
+    if with_time_log_scale:
         assert time_axes.type == "log"
     else:
         assert time_axes.type is None
