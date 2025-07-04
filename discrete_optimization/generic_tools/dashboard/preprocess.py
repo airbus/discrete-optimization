@@ -25,6 +25,10 @@ GAP_REL_BOUND = "gap_rel_bound"
 GAP_REL_MAX_OBJ_BOUND = "gap_rel_max_obj_bound"
 FIT = "fit"
 
+DIST_TO_BEST = "dist to best"
+DIST_TO_BEST_REL = "dist rel to best"
+CONVERGENCE_TIME = "convergence time (s)"
+
 # available stats
 MEAN = "mean"
 MAX = "max"
@@ -535,7 +539,7 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
     stat: str = MEAN,
     q: float = 0.5,
     minimizing: bool = False,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     # filter configs and instances
     if configs is None:
         configs = slice(None)
@@ -545,19 +549,20 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
     df_convergence_time_by_xp = df_convergence_time_by_xp.loc[(configs, instances), :]
     # select metric
     ser_best_metric_by_xp = df_best_metric_by_xp[metric]
-    ser_convergence_time_by_xp = df_convergence_time_by_xp[metric]
+    ser_convergence_time_by_xp = df_convergence_time_by_xp[metric].rename(
+        CONVERGENCE_TIME
+    )
+
     # get one single value by tuple config x instance
-    ser_best_metric_by_xp = ser_best_metric_by_xp.groupby(
+    ser_best_metric_by_config_instance = ser_best_metric_by_xp.groupby(
         level=[CONFIG, INSTANCE]
     ).median()
-    n_configs = len(ser_best_metric_by_xp.index.levels[0])
-
-    # groupby instance
-    best_metric_groupby_instance = ser_best_metric_by_xp.groupby(level=INSTANCE)
+    n_configs = len(ser_best_metric_by_config_instance.index.levels[0])
 
     # ranks for each instance
     rank_by_config_instance = (
-        best_metric_groupby_instance.rank(method="min", ascending=minimizing)
+        ser_best_metric_by_config_instance.groupby(level=INSTANCE)
+        .rank(method="min", ascending=minimizing)
         .replace(np.nan, 0)
         .astype(int)
     )
@@ -572,13 +577,35 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
 
     # distance to best metric by instance
     if minimizing:
-        dist_to_best_metric_by_instance = best_metric_groupby_instance.transform(
-            lambda x: x - x.min()
-        )
+
+        def compute_best_distance_by_instance(x):
+            return x.min()
+
     else:
-        dist_to_best_metric_by_instance = best_metric_groupby_instance.transform(
-            lambda x: x.max() - x
-        )
+
+        def compute_best_distance_by_instance(x):
+            return x.max()
+
+    def compute_dist_to_best_by_instance(x):
+        best = compute_best_distance_by_instance(x)
+        d = (x - best).abs()
+        return d
+
+    def compute_dist_to_best_rel_by_instance(x):
+        best = compute_best_distance_by_instance(x)
+        d = compute_dist_to_best_by_instance(x)
+        return d / abs(best)
+
+    dist_to_best_metric_by_instance = (
+        ser_best_metric_by_xp.groupby(level=INSTANCE)
+        .transform(compute_dist_to_best_by_instance)
+        .rename(DIST_TO_BEST)
+    )
+    dist_to_best_metric_rel_by_instance = (
+        ser_best_metric_by_xp.groupby(level=INSTANCE)
+        .transform(compute_dist_to_best_rel_by_instance)
+        .rename(DIST_TO_BEST_REL)
+    )
     # function used to aggregate
     stat_func = map_stat_key2func_sergroupby[stat]
     if stat_func is pd.DataFrame.quantile:
@@ -588,14 +615,35 @@ def compute_summary_agg_ranks_and_dist_to_best_metric(
     # aggregate
     dist_to_best_metric_agg = stat_func(
         dist_to_best_metric_by_instance.groupby(level=CONFIG), **kwargs
-    ).rename("dist to best")
+    )
+    dist_to_best_metric_rel_agg = stat_func(
+        dist_to_best_metric_rel_by_instance.groupby(level=CONFIG), **kwargs
+    )
 
     # convergence time aggregated by config
     convergence_time_agg = stat_func(
         ser_convergence_time_by_xp.groupby(level=CONFIG), **kwargs
-    ).rename("convergence time (s)")
+    )
 
     # concat dist and ranks, and put index as a column
-    return pd.concat(
-        (convergence_time_agg, dist_to_best_metric_agg, rank_counts), axis=1
+    df_summary = pd.concat(
+        (
+            convergence_time_agg,
+            dist_to_best_metric_rel_agg,
+            dist_to_best_metric_agg,
+            rank_counts,
+        ),
+        axis=1,
     ).reset_index()
+
+    # df convergence_time vs dist_to_best xp by xp
+    df_by_xp = pd.concat(
+        (
+            ser_convergence_time_by_xp,
+            dist_to_best_metric_rel_by_instance,
+            dist_to_best_metric_by_instance,
+        ),
+        axis=1,
+    )
+
+    return df_summary, df_by_xp
