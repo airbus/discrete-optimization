@@ -355,7 +355,7 @@ def test_update_graph_agg_metric(
 
 
 @pytest.mark.parametrize(
-    "configs, instances, metric, stat, minimizing",
+    "configs, instances, metric, stat, minimizing, dist_label, all_xps",
     [
         (
             ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
@@ -363,6 +363,8 @@ def test_update_graph_agg_metric(
             "fit",
             "mean",
             False,
+            "dist rel to best",
+            True,
         ),
         (
             ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
@@ -370,11 +372,23 @@ def test_update_graph_agg_metric(
             "fit",
             "quantile",
             True,
+            "dist to best",
+            True,
         ),
-        (["cpsat-binary"], ["gc_50_3"], "gap", "quantile", True),
+        (
+            ["cpsat-binary"],
+            ["gc_50_3"],
+            "gap",
+            "quantile",
+            True,
+            "dist rel to best",
+            False,
+        ),
     ],
 )
-def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing):
+def test_update_table_rank_agg(
+    app, configs, instances, metric, stat, minimizing, dist_label, all_xps
+):
     output = app.update_table_rank_agg(
         configs=configs,
         instances=instances,
@@ -385,6 +399,9 @@ def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing
         clip_value=1e50,
         transpose_value=[],
         time_log_scale=[],
+        time_label="convergence time (s)",
+        dist_label=dist_label,
+        all_xps=all_xps,
     )
     df = pd.DataFrame(output["data"])
     if "@all" in instances:
@@ -395,17 +412,29 @@ def test_update_table_rank_agg(app, configs, instances, metric, stat, minimizing
         if "mathopt" in configs:
             if minimizing:
                 assert (df[df.config == "mathopt"]["dist to best"] == 0).all()
+                assert (df[df.config == "mathopt"]["dist rel to best"] == 0).all()
             else:
                 assert (df[df.config == "mathopt"]["dist to best"] == 1).all()
+                assert (df[df.config == "mathopt"]["dist rel to best"] == 1 / 6).all()
                 assert (df[df.config == "mathopt"]["# 3"] == 1).all()
         if "cpsat-integer" in configs:
+            if minimizing:
+                assert (
+                    df[df.config == "cpsat-integer"]["dist rel to best"] == 1 / 14
+                ).all()
+            else:
+                assert (
+                    df[df.config == "cpsat-integer"]["dist rel to best"] == 1 / 6
+                ).all()
             assert (df[df.config == "cpsat-integer"]["dist to best"] == 0.5).all()
             assert (df[df.config == "cpsat-integer"]["# 1"] == 1).all()
         if minimizing:
             assert (df[df.config == "cpsat-binary"]["dist to best"] == 1).all()
+            assert (df[df.config == "cpsat-binary"]["dist rel to best"] == 1 / 7).all()
             assert (df[df.config == "cpsat-binary"]["# 1"] == 0).all()
         else:
             assert (df[df.config == "cpsat-binary"]["dist to best"] == 0).all()
+            assert (df[df.config == "cpsat-binary"]["dist rel to best"] == 0).all()
             assert (df[df.config == "cpsat-binary"]["# 1"] == nb_instances).all()
     elif metric == "gap":
         assert (df[df.config == "cpsat-binary"]["# 1"] == nb_instances).all()

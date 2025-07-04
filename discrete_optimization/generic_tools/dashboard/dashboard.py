@@ -13,6 +13,9 @@ from discrete_optimization.generic_tools.dashboard.plots import (
 )
 from discrete_optimization.generic_tools.dashboard.preprocess import (
     CONFIG,
+    CONVERGENCE_TIME,
+    DIST_TO_BEST,
+    DIST_TO_BEST_REL,
     FIT,
     MEAN,
     QUANTILE,
@@ -74,6 +77,14 @@ SOLVED_WO_PROOF_DIV_ID = "solved-wo-proof-div"
 
 TRANSPOSE_KEY = "transpose"
 TRANSPOSE_ID = "transpose"
+
+SOLVERS_COMPETITION_ALL_XPS_KEY = "all xps"
+SOLVERS_COMPETITION_ALL_XPS_ID = "solvers_competition-all-xps"
+SOLVERS_COMPETITION_DIST_ID = "solvers-competition-dist"
+SOLVERS_COMPETITION_TIME_ID = "solvers-competition-time"
+SOLVERS_COMPETITION_ALL_XPS_DIV_ID = "solvers_competition-all-xps-div"
+SOLVERS_COMPETITION_DIST_DIV_ID = "solvers-competition-dist-div"
+SOLVERS_COMPETITION_TIME_DIV_ID = "solvers-competition-time-div"
 
 GRAPH_METRIC_ID = "graph-metric"
 GRAPH_AGG_METRIC_ID = "graph-agg-metric"
@@ -310,6 +321,42 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=MINIMIZING_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Distance axis"),
+                                dcc.Dropdown(
+                                    options=[DIST_TO_BEST_REL, DIST_TO_BEST],
+                                    value=DIST_TO_BEST_REL,
+                                    id=SOLVERS_COMPETITION_DIST_ID,
+                                ),
+                            ],
+                            id=SOLVERS_COMPETITION_DIST_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Time axis"),
+                                dcc.Dropdown(
+                                    options=[CONVERGENCE_TIME],
+                                    value=CONVERGENCE_TIME,
+                                    id=SOLVERS_COMPETITION_TIME_ID,
+                                ),
+                            ],
+                            id=SOLVERS_COMPETITION_TIME_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Display all xps"),
+                                dbc.Switch(
+                                    value=True,
+                                    id=SOLVERS_COMPETITION_ALL_XPS_ID,
+                                    label=SOLVERS_COMPETITION_ALL_XPS_KEY,
+                                ),
+                            ],
+                            id=SOLVERS_COMPETITION_ALL_XPS_DIV_ID,
                             style=filter_style,
                         ),
                         html.Div(
@@ -720,6 +767,16 @@ class Dashboard(Dash):
                 transpose_value=Input(
                     component_id=TRANSPOSE_ID, component_property="value"
                 ),
+                all_xps=Input(
+                    component_id=SOLVERS_COMPETITION_ALL_XPS_ID,
+                    component_property="value",
+                ),
+                time_label=Input(
+                    component_id=SOLVERS_COMPETITION_TIME_ID, component_property="value"
+                ),
+                dist_label=Input(
+                    component_id=SOLVERS_COMPETITION_DIST_ID, component_property="value"
+                ),
             ),
         )
         def update_table_rank_agg(
@@ -732,6 +789,9 @@ class Dashboard(Dash):
             minimizing,
             time_log_scale,
             transpose_value,
+            dist_label,
+            time_label,
+            all_xps,
         ):
             with_time_log_scale = TIME_LOGSCALE_KEY in time_log_scale
             transpose = TRANSPOSE_KEY in transpose_value
@@ -743,7 +803,7 @@ class Dashboard(Dash):
                 self.df_best_metric_by_xp, clip_value=clip_value
             )
             # compute dataframe
-            df_summary = compute_summary_agg_ranks_and_dist_to_best_metric(
+            df_summary, df_by_xp = compute_summary_agg_ranks_and_dist_to_best_metric(
                 df_best_metric_by_xp=df_best_metric_by_xp,
                 df_convergence_time_by_xp=self.df_convergence_time_by_xp,
                 configs=configs,
@@ -754,8 +814,14 @@ class Dashboard(Dash):
                 minimizing=minimizing,
             )
             # create graph
+            if not all_xps:
+                df_by_xp = None
             plot = create_solvers_competition_graph(
                 df_summary=df_summary,
+                df_by_xp=df_by_xp,
+                x=time_label,
+                y=dist_label,
+                z=CONFIG,
                 legend_title="Configs",
                 with_time_log_scale=with_time_log_scale,
                 transpose=transpose,
@@ -878,6 +944,18 @@ class Dashboard(Dash):
                 solved_wo_proof=Output(
                     component_id=SOLVED_WO_PROOF_DIV_ID, component_property="className"
                 ),
+                solvers_competition_all_xps=Output(
+                    component_id=SOLVERS_COMPETITION_ALL_XPS_DIV_ID,
+                    component_property="className",
+                ),
+                solvers_competition_dist=Output(
+                    component_id=SOLVERS_COMPETITION_DIST_DIV_ID,
+                    component_property="className",
+                ),
+                solvers_competition_time=Output(
+                    component_id=SOLVERS_COMPETITION_TIME_DIV_ID,
+                    component_property="className",
+                ),
             ),
             inputs=dict(
                 active_tab=Input(component_id=TABS_ID, component_property="active_tab"),
@@ -901,6 +979,9 @@ class Dashboard(Dash):
                         run=False,
                         minimizing=False,
                         solved_wo_proof=False,
+                        solvers_competition_all_xps=False,
+                        solvers_competition_dist=False,
+                        solvers_competition_time=False,
                     )
                 )
             elif active_tab == TAB_AGG_METRIC_ID:
@@ -919,6 +1000,9 @@ class Dashboard(Dash):
                         run=False,
                         minimizing=False,
                         solved_wo_proof=False,
+                        solvers_competition_all_xps=False,
+                        solvers_competition_dist=False,
+                        solvers_competition_time=False,
                     )
                 )
             elif active_tab == TAB_AGG_RANK_ID:
@@ -937,6 +1021,9 @@ class Dashboard(Dash):
                         run=False,
                         minimizing=True,
                         solved_wo_proof=False,
+                        solvers_competition_all_xps=True,
+                        solvers_competition_dist=True,
+                        solvers_competition_time=False,
                     )
                 )
             elif active_tab == TAB_NB_SOLVED_INSTANCES_ID:
@@ -955,6 +1042,9 @@ class Dashboard(Dash):
                         run=False,
                         minimizing=False,
                         solved_wo_proof=True,
+                        solvers_competition_all_xps=False,
+                        solvers_competition_dist=False,
+                        solvers_competition_time=False,
                     )
                 )
             elif active_tab == TAB_CONFIG_ID:
@@ -973,6 +1063,9 @@ class Dashboard(Dash):
                         run=False,
                         minimizing=False,
                         solved_wo_proof=False,
+                        solvers_competition_all_xps=False,
+                        solvers_competition_dist=False,
+                        solvers_competition_time=False,
                     )
                 )
             elif active_tab == TAB_XP_ID:
@@ -991,6 +1084,9 @@ class Dashboard(Dash):
                         run=True,
                         minimizing=False,
                         solved_wo_proof=False,
+                        solvers_competition_all_xps=False,
+                        solvers_competition_dist=False,
+                        solvers_competition_time=False,
                     )
                 )
             elif active_tab == TAB_EMPTY_XPS_ID:
@@ -1009,6 +1105,9 @@ class Dashboard(Dash):
                         run=False,
                         minimizing=False,
                         solved_wo_proof=False,
+                        solvers_competition_all_xps=False,
+                        solvers_competition_dist=False,
+                        solvers_competition_time=False,
                     )
                 )
             else:
@@ -1027,6 +1126,9 @@ class Dashboard(Dash):
                         run=True,
                         minimizing=True,
                         solved_wo_proof=True,
+                        solvers_competition_all_xps=True,
+                        solvers_competition_dist=True,
+                        solvers_competition_time=True,
                     )
                 )
 
@@ -1111,7 +1213,7 @@ _explanation_table_agg_rank = """
 In this table, given a metric,
 we compute instance by instance:
 - solver rank among all configs,
-- distance to the best metric value among all configs,
+- distance to the best metric value among all configs (relative and absolute),
 - convergence time (first time the last metric value is reached).
 
 Then we aggregate along instances:
@@ -1120,7 +1222,7 @@ Then we aggregate along instances:
 
 The "minimizing" switch specifies whether the metric is supposed to be minimized or maximized.
 
-NB: in the case where several attempts were made for a choice "config x instance",
+NB: in the case where several attempts were made for a choice "config x instance", before computing rankings,
 we first take the median metric among all those attempts, so that we got only one (at most) value by
 "config x instance" tuple. Thus for each instance, the rankings will go at most up to the number of configs.
 In case of tied metrics, the configs share the same rankings and the other rankings will be degraded accordingly
