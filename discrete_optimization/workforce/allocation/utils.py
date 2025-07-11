@@ -4,6 +4,7 @@
 from typing import Hashable, List, Optional, Set, Union
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 
 from discrete_optimization.generic_tools.graph_api import Graph, from_networkx
@@ -14,6 +15,11 @@ from discrete_optimization.workforce.allocation.problem import (
     TeamAllocationProblemMultiobj,
     TeamAllocationSolution,
 )
+
+try:
+    import plotly.express as px
+except ImportError as e:
+    pass
 
 
 def subgraph_teams(
@@ -234,6 +240,9 @@ def cut_number_of_team(
                 team_allocation.allocation_additional_constraint, subset_teams_keep=sub
             ),
             attributes_cumul_activities=team_allocation.attributes_cumul_activities,
+            activities_name=team_allocation.activities_name,
+            schedule_activity=team_allocation.schedule,
+            calendar_team={t: team_allocation.calendar_team[t] for t in sub},
             objective_doc_cumul_activities=team_allocation.objective_doc_cumul_activities,
         )
     return TeamAllocationProblem(
@@ -242,6 +251,8 @@ def cut_number_of_team(
         allocation_additional_constraint=additional_constraint_subset_teams(
             team_allocation.allocation_additional_constraint, subset_teams_keep=sub
         ),
+        schedule_activity=team_allocation.schedule,
+        calendar_team={t: team_allocation.calendar_team[t] for t in sub},
     )
 
 
@@ -358,8 +369,6 @@ def compute_changes_between_solution_alloc(
         problem_a = solution_a.problem
     if problem_b is None:
         problem_b = solution_b.problem
-    # print("pA", problem_a.number_of_teams, problem_a.number_of_activity)
-    # print("pB", problem_b.number_of_teams, problem_b.number_of_activity)
 
     common_activities = set(problem_a.activities_name).intersection(
         problem_b.activities_name
@@ -394,3 +403,176 @@ def compute_changes_between_solution_alloc(
             )
     # nb_changes = len(changes)
     return changes
+
+
+def plot_allocation_solution(
+    problem: TeamAllocationProblem,
+    sol: TeamAllocationSolution,
+    index_team_to_other_index: dict[int, int] = None,
+    use_color_map: bool = False,
+    category: bool = True,
+    display: bool = True,
+    plot_breaks: bool = False,
+    color_break: str = None,
+    ignore_unallocated: bool = False,
+    name_unallocated: str = "Unset",
+    text: Optional[str] = None,
+    title: Optional[str] = None,
+    ref_date: pd.Timestamp = None,
+    showlegend=True,
+):
+    df = []
+    if ref_date is None:
+        ref_date = pd.Timestamp(year=2025, month=7, day=1)
+    if index_team_to_other_index is None:
+        index_team_to_other_index = {i: i for i in problem.index_to_teams_name}
+    schedule_per_team: dict[Hashable, List[tuple]] = {}
+    for i_task in range(len(sol.allocation)):
+        if sol.allocation[i_task] is not None:
+            team = problem.index_to_teams_name[sol.allocation[i_task]]
+            activity = problem.index_to_activities_name[i_task]
+            if team not in schedule_per_team:
+                schedule_per_team[team] = []
+            df += [
+                {
+                    "team": f"Team {index_team_to_other_index[sol.allocation[i_task]]}",
+                    "team_name": problem.teams_name[sol.allocation[i_task]],
+                    "activity": activity,
+                    "activity_index": i_task,
+                    "index_team": index_team_to_other_index[sol.allocation[i_task]],
+                    "height": 20,
+                    "start": ref_date
+                    + pd.to_timedelta(
+                        problem.graph_activity.nodes_infos_dict[activity]["start"],
+                        unit="m",
+                    ),
+                    "end": ref_date
+                    + pd.to_timedelta(
+                        problem.graph_activity.nodes_infos_dict[activity]["end"],
+                        unit="m",
+                    ),
+                }
+            ]
+        else:
+            if not ignore_unallocated:
+                activity = problem.index_to_activities_name[i_task]
+                df += [
+                    {
+                        "team": f"Team {name_unallocated}",
+                        "team_name": f"Team {name_unallocated}",
+                        "activity": activity,
+                        "activity_index": i_task,
+                        "index_team": name_unallocated,
+                        "height": 20,
+                        "start": ref_date
+                        + pd.to_timedelta(
+                            problem.graph_activity.nodes_infos_dict[activity]["start"],
+                            unit="m",
+                        ),
+                        "end": ref_date
+                        + pd.to_timedelta(
+                            problem.graph_activity.nodes_infos_dict[activity]["end"],
+                            unit="m",
+                        ),
+                    }
+                ]
+    if plot_breaks:
+        for team in problem.calendar_team:
+            index = index_team_to_other_index[problem.index_teams_name[team]]
+            for i_slot in range(len(problem.calendar_team[team]) - 1):
+                df += [
+                    {
+                        "team": f"Break",
+                        "team_name": team,
+                        "activity": f"break_{index}_{i_slot}",
+                        "activity_index": "nan",
+                        "index_team": index,
+                        "height": 10,
+                        "start": ref_date
+                        + pd.to_timedelta(
+                            problem.calendar_team[team][i_slot][1], unit="m"
+                        ),
+                        "end": ref_date
+                        + pd.to_timedelta(
+                            problem.calendar_team[team][i_slot + 1][0], unit="m"
+                        ),
+                    }
+                ]
+    hover_data = {
+        "activity": True,
+        "team": True,
+        "activity_index": True,
+        "index_team": True,
+    }
+    df = pd.DataFrame(df)
+    if len(df) == 0:
+        return
+    if not use_color_map:
+        fig = px.timeline(
+            df,
+            x_start="start",
+            x_end="end",
+            y="index_team",
+            color="team",
+            text=text,
+            hover_data=hover_data,
+            # category_orders={"index_team": df["index_team"]},
+            title=title,
+        )
+    else:
+        color_mapping = {x: "rgba(0, 128, 0, 0.6)" for x in df["team"]}
+        color_mapping[f"Team {name_unallocated}"] = "rgba(255, 0, 0, 0.1)"
+        color_mapping["Break"] = "rgba(0, 0, 0, 1)"
+        if color_break is not None:
+            color_mapping["Break"] = color_break
+        fig = px.timeline(
+            df,
+            x_start="start",
+            x_end="end",
+            y="index_team",
+            color="team",
+            color_discrete_map=color_mapping,
+            text=text,
+            hover_data=hover_data,
+            # category_orders={"index_team": df["index_team"]},
+            title=title,
+        )
+    modify_graph(fig)
+    # Update the layout to reorder the legend entries alphabetically
+    if category:
+        # df = pd.DataFrame(df)
+        cat = sorted([x for x in df["index_team"] if isinstance(x, int)]) + [
+            name_unallocated
+        ]
+        fig.update_yaxes(  # type="category",
+            type="category",
+            categoryorder="array",
+            categoryarray=cat,
+            title_text="Team",
+            showgrid=True,
+        )
+        fig.update_legends()
+    if not showlegend:
+        fig.update_layout(showlegend=False)
+    if display:
+        fig.show()
+    else:
+        return fig
+
+
+def modify_graph(fig):
+    # vertical line in graph that follows cursor
+    fig.update_xaxes(
+        showgrid=False,
+        showspikes=True,
+        spikemode="across",
+        spikesnap="cursor",
+        spikecolor="gray",
+        spikedash="solid",
+        spikethickness=0.5,
+        showline=True,
+    )
+    # make borders around boxes # rgb(0, 48, 107)
+    fig.update_traces(marker_line_color="gray", marker_line_width=0.5, opacity=1)
+    # rename y axes title
+    fig.update_yaxes(title_text="Team")

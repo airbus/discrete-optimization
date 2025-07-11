@@ -42,10 +42,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
     from_solutions_to_result_storage,
 )
-from discrete_optimization.workforce.allocation.utils import (
-    compute_all_overlapping,
-    compute_equivalent_teams,
-)
 from discrete_optimization.workforce.allocation.problem import (
     AggregateOperator,
     AllocationAdditionalConstraint,
@@ -54,6 +50,10 @@ from discrete_optimization.workforce.allocation.problem import (
     TeamAllocationSolution,
 )
 from discrete_optimization.workforce.allocation.solvers import TeamAllocationSolver
+from discrete_optimization.workforce.allocation.utils import (
+    compute_all_overlapping,
+    compute_equivalent_teams,
+)
 from discrete_optimization.workforce.commons.fairness_modeling import (
     ModelisationDispersion,
 )
@@ -80,7 +80,7 @@ class ModelisationDispersionOrtools(Enum):
 logger = logging.getLogger(__name__)
 
 
-class OrtoolsTeamAllocationSolver(
+class CpsatTeamAllocationSolver(
     OrtoolsCpSatSolver, TeamAllocationSolver, WarmstartMixin
 ):
     problem: TeamAllocationProblem
@@ -192,7 +192,6 @@ class OrtoolsTeamAllocationSolver(
         if modelisation_allocation == ModelisationAllocationOrtools.BINARY:
             args["optional_activities"] = False
             args = self.complete_with_default_hyperparameters(args)
-            print("args : ", args)
             self.init_model_binary(**args)
             self.modelisation_allocation = modelisation_allocation
             self.key_main_decision_variable = "allocation_binary"
@@ -722,7 +721,6 @@ class OrtoolsTeamAllocationSolver(
         else:
             lower_bound_non_zeros = 0
             upper_bound = int(sum(dictionary_value.values()))
-        # print("lb, ub", lower_bound_non_zeros, upper_bound, key_objective)
         usage = [
             self.cp_model.NewIntVar(0, upper_bound, name=f"{key_objective}_{team}")
             for team in range(self.problem.number_of_teams)
@@ -937,9 +935,6 @@ class OrtoolsTeamAllocationSolver(
             == ModelisationDispersionOrtools.EPSILON_TO_AVG_V0
             and obj == "nb_teams"
         ):
-            # Now, we are building the variables for dispersion !!
-            # Deprecated !!!
-            print("Now building for dispersion")
             nb_team_used = sum(
                 [
                     self.solver.Value(self.variables["used"][i])
@@ -1021,11 +1016,11 @@ class OrtoolsTeamAllocationSolver(
                 VarArrayAndObjectiveSolutionPrinter.on_solution_callback(self)
                 if self.expr_threshold is None:
                     if self.ObjectiveValue() <= self.threshold_value:
-                        print("stopping search early")
+                        logger.info("stopping search early")
                         self.StopSearch()
                 else:
                     if self.Value(self.expr_threshold) <= self.threshold_value:
-                        print("stopping search early")
+                        logger.info("stopping search early")
                         self.StopSearch()
 
         variables_to_log = [

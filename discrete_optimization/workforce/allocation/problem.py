@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
+from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from itertools import product
@@ -26,6 +27,25 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.graph_api import Graph
 
 logger = logging.getLogger(__file__)
+
+
+def compute_available_teams_per_activities(
+    starts: np.ndarray,
+    ends: np.ndarray,
+    activities_name: list[Hashable],
+    calendars_team: Dict[Hashable, np.ndarray],
+):
+    available_team_per_activity = {}
+    for i in range(len(starts)):
+        available_team_per_activity[activities_name[i]] = set()
+        st, end = starts[i], ends[i]
+        for team in calendars_team:
+            if st == end:
+                if calendars_team[team][int(st)] == 1:
+                    available_team_per_activity[activities_name[i]].add(team)
+            elif np.min(calendars_team[team][int(st) : int(end)]) == 1:
+                available_team_per_activity[activities_name[i]].add(team)
+    return available_team_per_activity
 
 
 class AllocationAdditionalConstraint:
@@ -186,15 +206,79 @@ class TeamAllocationSolution(Solution):
         self.problem = new_problem
 
 
+def build_graph_allocation_from_calendar_and_schedule(
+    starts: np.ndarray,
+    ends: np.ndarray,
+    calendar_team: Dict[Hashable, List[Tuple[int, int]]],
+    horizon: int,
+    tasks_name: list[Hashable],
+    teams_name: list[Hashable],
+):
+    calendars_array = {}
+    for team in calendar_team:
+        calendars_array[team] = np.zeros(horizon)
+        for slot in calendar_team[team]:
+            calendars_array[team][
+                slot[0] : min(slot[1], calendars_array[team].shape[0])
+            ] = 1
+    available_team_per_activity = compute_available_teams_per_activities(
+        starts=starts,
+        ends=ends,
+        calendars_team=calendars_array,
+        activities_name=tasks_name,
+    )
+    nodes = [(ac, {"type": "activity"}) for ac in tasks_name]
+    nodes_activity = set({ac for ac in tasks_name})
+    nodes.extend([(team, {"type": "team"}) for team in teams_name])
+    nodes_team = set({team for team in teams_name})
+    edges = []
+    teams = teams_name
+    for ac in available_team_per_activity:
+        for team in teams:
+            if team not in available_team_per_activity[ac]:
+                edges.append((ac, team, {}))
+    graph_allocation = GraphBipartite(
+        nodes=nodes,
+        edges=edges,
+        nodes_activity=nodes_activity,
+        nodes_team=nodes_team,
+        undirected=True,
+        compute_predecessors=False,
+    )
+    return graph_allocation
+
+
+def compute_graph_coloring(starts: np.ndarray, ends: np.ndarray, task_names: list):
+    from discrete_optimization.generic_tools.graph_api import Graph, from_networkx
+
+    track_presence = defaultdict(lambda: set())
+    edges = []
+    graph_nx = nx.DiGraph()
+    for i in range(len(task_names)):
+        graph_nx.add_node(
+            task_names[i], start=starts[i], end=ends[i], duration=ends[i] - starts[i]
+        )
+    for i in range(starts.shape[0]):
+        for time in range(int(starts[i]), int(ends[i])):
+            edges.extend([(task_names[x], task_names[i]) for x in track_presence[time]])
+            track_presence[time].add(i)
+    edges = set(edges)
+    graph_nx.remove_edges_from(graph_nx.edges())
+    graph_nx.add_edges_from(list(edges))
+    return from_networkx(graph_nx=graph_nx)
+
+
 class TeamAllocationProblem(Problem):
     def __init__(
         self,
-        graph_activity: Graph,
-        graph_allocation: GraphBipartite,
+        graph_activity: Graph = None,
+        graph_allocation: GraphBipartite = None,
         allocation_additional_constraint: Optional[
             AllocationAdditionalConstraint
         ] = None,
         schedule_activity: Optional[dict[Hashable, tuple[int, int]]] = None,
+        calendar_team: Dict[Hashable, List[Tuple[int, int]]] = None,
+        activities_name: list[Hashable] = None,
     ):
         """
         :param graph_activity: graph representing coloring constraint among the activities
@@ -203,15 +287,59 @@ class TeamAllocationProblem(Problem):
         :param schedule_activity: (optional), if the underlying problem is a workforce allocation problem to some
         scheduled-activities, it is possible to specify the schedule this way. Notably, this can lead to efficient
         clique-overlap kind of constraint for some solver.
+        :param calendar_team: calendar of the teams.
         """
         self.graph_activity = graph_activity
         self.graph_allocation = graph_allocation
-        self.activities_name: List[Hashable] = self.graph_activity.nodes_name
+        if self.graph_activity is not None:
+            self.activities_name: List[Hashable] = self.graph_activity.nodes_name
+        if activities_name is not None:
+            self.activities_name = activities_name
+        self.calendar_team = calendar_team
+        if self.graph_allocation is None and self.calendar_team is not None:
+            orig_starts_arr = np.array(
+                [schedule_activity[n][0] for n in self.activities_name]
+            )
+            orig_ends_arr = np.array(
+                [schedule_activity[n][1] for n in self.activities_name]
+            )
+            self.graph_allocation = build_graph_allocation_from_calendar_and_schedule(
+                starts=orig_starts_arr,
+                ends=orig_ends_arr,
+                calendar_team=self.calendar_team,
+                horizon=int(np.max(orig_ends_arr) + 10),
+                tasks_name=self.activities_name,
+                teams_name=list(self.calendar_team.keys()),
+            )
+        if self.graph_activity is None:
+            orig_starts_arr = np.array(
+                [schedule_activity[n][0] for n in self.activities_name]
+            )
+            orig_ends_arr = np.array(
+                [schedule_activity[n][1] for n in self.activities_name]
+            )
+            self.graph_activity = compute_graph_coloring(
+                starts=orig_starts_arr,
+                ends=orig_ends_arr,
+                task_names=self.activities_name,
+            )
         self.number_of_activity = len(self.graph_activity.nodes_name)
         self.teams_name: List[Hashable] = self.graph_allocation.get_nodes_team_list()
         self.number_of_teams = len(self.teams_name)
         self.allocation_additional_constraint = allocation_additional_constraint
         self.schedule = schedule_activity
+        if self.schedule is None:
+            self.schedule = {
+                self.activities_name[i]: (
+                    self.graph_activity.nodes_infos_dict[self.activities_name[i]][
+                        "start"
+                    ],
+                    self.graph_activity.nodes_infos_dict[self.activities_name[i]][
+                        "end"
+                    ],
+                )
+                for i in range(self.number_of_activity)
+            }
         self.index_activities_name = {
             self.activities_name[i]: i for i in range(self.number_of_activity)
         }
@@ -687,11 +815,14 @@ class AggregateOperator(Enum):
 class TeamAllocationProblemMultiobj(TeamAllocationProblem):
     def __init__(
         self,
-        graph_activity: Graph,
-        graph_allocation: GraphBipartite,
+        graph_activity: Graph = None,
+        graph_allocation: GraphBipartite = None,
         allocation_additional_constraint: Optional[
             AllocationAdditionalConstraint
         ] = None,
+        schedule_activity: Optional[dict[Hashable, tuple[int, int]]] = None,
+        calendar_team: Dict[Hashable, List[Tuple[int, int]]] = None,
+        activities_name: list[Hashable] = None,
         attributes_cumul_activities: Optional[List[str]] = None,
         objective_doc_cumul_activities: Optional[
             Dict[str, Tuple[ObjectiveDoc, AggregateOperator]]
@@ -701,6 +832,9 @@ class TeamAllocationProblemMultiobj(TeamAllocationProblem):
             graph_activity=graph_activity,
             graph_allocation=graph_allocation,
             allocation_additional_constraint=allocation_additional_constraint,
+            schedule_activity=schedule_activity,
+            calendar_team=calendar_team,
+            activities_name=activities_name,
         )
         self.attributes_cumul_activities = attributes_cumul_activities
         self.attributes_of_activities: Dict[str, Dict[Hashable, float]] = {}

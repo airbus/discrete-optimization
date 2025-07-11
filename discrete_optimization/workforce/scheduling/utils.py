@@ -11,6 +11,7 @@ import matplotlib.patches as patches
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
+
 try:
     import plotly.graph_objects as go
 except:
@@ -29,6 +30,7 @@ from discrete_optimization.workforce.allocation.problem import (
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
+    TasksDescription,
     satisfy_detailed,
 )
 
@@ -359,11 +361,6 @@ def plotly_schedule_comparison(
         }
         if additional_info is not None:
             if problem.index_to_task[i] in additional_info:
-                # print("additional infos ", additional_info[problem.index_to_task[i]])
-                # """
-                # 1. Aktivitätsart (activity type), Geplanter Start (planned start), Geplantes Ende (planned end),
-                # Von Lokation (From), Nach Lokation (To), MSN, Resourcenart (resource type).
-                # """
                 for key in additional_info[problem.index_to_task[i]]:
                     hover[key] = additional_info[problem.index_to_task[i]][key]
         hover_template = ""
@@ -738,24 +735,20 @@ def build_allocation_problem_from_scheduling(
                 ),
                 allocation_additional_constraint=AllocationAdditionalConstraint(
                     same_allocation=problem.same_allocation,
-                    allowed_allocation=problem.available_team_for_activity
+                    allowed_allocation=problem.available_team_for_activity,
                 ),
+                calendar_team=calendars_team,
+                schedule_activity={
+                    t: (problem.original_start[t], problem.original_end[t])
+                    for t in problem.original_start
+                },
+                activities_name=problem.tasks_list,
             )
         else:
             problem_alloc = TeamAllocationProblemMultiobj(
-                graph_activity=Graph(
-                    nodes=[(t, {}) for t in problem.tasks_list], edges=[]
-                ),
-                graph_allocation=GraphBipartite(
-                    nodes=[(t, {}) for t in problem.tasks_list]
-                    + [(team, {}) for team in problem.team_names],
-                    edges=[],
-                    nodes_activity=set(problem.tasks_list),
-                    nodes_team=set(problem.team_names),
-                ),
                 allocation_additional_constraint=AllocationAdditionalConstraint(
                     same_allocation=problem.same_allocation,
-                    allowed_allocation=problem.available_team_for_activity
+                    allowed_allocation=problem.available_team_for_activity,
                 ),
                 attributes_cumul_activities=["duration"],
                 objective_doc_cumul_activities={
@@ -764,59 +757,68 @@ def build_allocation_problem_from_scheduling(
                         AggregateOperator.MAX_MINUS_MIN,
                     )
                 },
+                calendar_team=calendars_team,
+                schedule_activity={
+                    t: (problem.original_start[t], problem.original_end[t])
+                    for t in problem.original_start
+                },
+                activities_name=problem.tasks_list,
             )
-
-    graph_nx = problem_alloc.graph_activity.graph_nx
-    track_presence = np.array([set() for i in range(int(np.max(ends)))], dtype=set)
-    edges = []
-    for i in range(starts.shape[0]):
-        for time in range(int(starts[i]), int(ends[i])):
-            edges.extend(
-                [
-                    (problem.tasks_list[x], problem.tasks_list[i])
-                    for x in track_presence[time]
-                ]
-            )
-            track_presence[time].add(i)
-    edges = set(edges)
-    graph_nx.remove_edges_from(graph_nx.edges())
-    graph_nx.add_edges_from(list(edges))
-    for node in graph_nx.nodes:
-        graph_nx.nodes[node]["start"] = np.datetime64(
-            int(starts[problem.tasks_to_index[node]]) * 60, "s"
-        )
-        graph_nx.nodes[node]["end"] = np.datetime64(
-            int(ends[problem.tasks_to_index[node]]) * 60, "s"
-        )
-        graph_nx.nodes[node]["duration"] = (
-            ends[problem.tasks_to_index[node]] - starts[problem.tasks_to_index[node]]
-        )
-    problem_alloc.graph_activity = from_networkx(graph_nx)
-
-    # UPDATE GRAPH COLORING
-    available_team_per_activity = compute_available_teams_per_activities_alloc_problem(
-        problem=problem_alloc, starts=starts, ends=ends, calendars_team=calendars_array
-    )
-    graph = problem_alloc.graph_allocation
-    edges = []
-    teams = problem_alloc.teams_name
-    for ac in available_team_per_activity:
-        for team in teams:
-            if team not in available_team_per_activity[ac]:
-                edges.append((ac, team, {}))
-    problem_alloc.graph_allocation = GraphBipartite(
-        nodes=graph.nodes,
-        edges=edges,
-        nodes_activity=graph.nodes_activity,
-        nodes_team=graph.nodes_team,
-        undirected=graph.undirected,
-        compute_predecessors=False,
-    )
-    if multiobjective:
-        problem_alloc.update_attributes_of_activities()
-    problem_alloc: TeamAllocationProblem
-    problem_alloc
     return problem_alloc
+
+
+def build_scheduling_problem_from_allocation(
+    problem: TeamAllocationProblem,
+) -> AllocSchedulingProblem:
+    d = {}
+    if problem.allocation_additional_constraint is not None:
+        d["same_allocation"] = problem.allocation_additional_constraint.same_allocation
+
+    return AllocSchedulingProblem(
+        team_names=problem.teams_name,
+        calendar_team=problem.calendar_team,
+        horizon=10000,
+        tasks_list=problem.activities_name,
+        tasks_data={
+            t: TasksDescription(
+                duration_task=problem.graph_activity.nodes_infos_dict[t]["duration"]
+            )
+            for t in problem.activities_name
+        },
+        same_allocation=problem.allocation_additional_constraint.same_allocation,
+        precedence_constraints={},
+        available_team_for_activity={},
+        start_window={},
+        end_window={},
+        original_start={
+            t: problem.graph_activity.nodes_infos_dict[t]["start"]
+            for t in problem.activities_name
+        },
+        original_end={
+            t: problem.graph_activity.nodes_infos_dict[t]["end"]
+            for t in problem.activities_name
+        },
+    )
+
+
+def alloc_solution_to_alloc_sched_solution(
+    problem: AllocSchedulingProblem, solution: TeamAllocationSolution
+):
+    alloc_problem: TeamAllocationProblem = solution.problem
+    new_alloc = -np.ones(len(solution.allocation), dtype=int)
+    schedule = np.zeros((len(solution.allocation), 2), dtype=int)
+    for task in problem.tasks_list:
+        ind_alloc = alloc_problem.index_activities_name[task]
+        alloc = solution.allocation[ind_alloc]
+        if alloc is not None and alloc >= 0:
+            new_alloc[problem.tasks_to_index[task]] = problem.teams_to_index[
+                alloc_problem.teams_name[alloc]
+            ]
+        schedule[problem.tasks_to_index[task], 0] = problem.original_start[task]
+        schedule[problem.tasks_to_index[task], 1] = problem.original_end[task]
+    return AllocSchedulingSolution(
+        problem=problem, schedule=schedule, allocation=new_alloc
+    )
 
 
 def binary_calendar(list_available: list[tuple[int, int]], horizon: int):
