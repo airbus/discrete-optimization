@@ -5,10 +5,7 @@ import logging
 import math
 
 import numpy as np
-from ortools.sat.python.cp_model import (
-    CpModel,
-    CpSolver
-)
+from ortools.sat.python.cp_model import CpModel, CpSolver
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
@@ -16,10 +13,8 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
     Hyperparametrizable,
 )
-from discrete_optimization.workforce.scheduling.utils import (
-    get_working_time_teams,
-)
 from discrete_optimization.workforce.scheduling.problem import AllocSchedulingProblem
+from discrete_optimization.workforce.scheduling.utils import get_working_time_teams
 
 logger = logging.getLogger(__name__)
 

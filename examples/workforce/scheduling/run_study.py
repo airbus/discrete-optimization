@@ -31,7 +31,7 @@ from discrete_optimization.workforce.scheduling.parser import (
     parse_json_to_problem,
 )
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
-    CPSatAllocSchedulingSolver
+    CPSatAllocSchedulingSolver,
 )
 
 study_name = "scheduling-study-0"
@@ -41,14 +41,17 @@ p = ParametersCp.default_cpsat()
 p.nb_process = 10
 p_mono_worker = ParametersCp.default_cpsat()
 p_mono_worker.nb_process = 1
-solver_configs = {"cpsat-10": SolverConfig(cls=CPSatAllocSchedulingSolver,
-                                           kwargs={"parameters_cp": p,
-                                                   "time_limit": 5, "add_lower_bound": True})}
+solver_configs = {
+    "cpsat-10": SolverConfig(
+        cls=CPSatAllocSchedulingSolver,
+        kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound": True},
+    )
+}
 
-solver_configs["cpsat-1"] = SolverConfig(cls=CPSatAllocSchedulingSolver,
-                                         kwargs={"parameters_cp": p_mono_worker,
-                                                 "time_limit": 5,
-                                                 "add_lower_bound": True})
+solver_configs["cpsat-1"] = SolverConfig(
+    cls=CPSatAllocSchedulingSolver,
+    kwargs={"parameters_cp": p_mono_worker, "time_limit": 5, "add_lower_bound": True},
+)
 
 database_filepath = f"{study_name}.h5"
 if overwrite:

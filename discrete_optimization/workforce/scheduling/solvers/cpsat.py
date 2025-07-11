@@ -37,9 +37,6 @@ from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
     cumulate_value_per_teams_version_2,
     model_fairness,
 )
-from discrete_optimization.workforce.scheduling.utils import (
-    compute_equivalent_teams_scheduling_problem,
-)
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
     AllocSchedulingSolution,
@@ -52,6 +49,9 @@ from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb impo
     ApproximateBoundAllocScheduling,
     BoundResourceViaRelaxedProblem,
     LBoundAllocScheduling,
+)
+from discrete_optimization.workforce.scheduling.utils import (
+    compute_equivalent_teams_scheduling_problem,
 )
 
 logger = logging.getLogger(__name__)
