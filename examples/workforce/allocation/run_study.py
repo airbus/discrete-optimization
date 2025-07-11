@@ -34,7 +34,8 @@ from discrete_optimization.workforce.allocation.solvers.cpmpy import (
     CPMpyTeamAllocationSolver,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    OrtoolsTeamAllocationSolver, ModelisationAllocationOrtools
+    CpsatTeamAllocationSolver,
+    ModelisationAllocationOrtools,
 )
 
 study_name = "allocation-study-0"
@@ -70,16 +71,22 @@ solver_configs = {
         kwargs={"time_limit": 5, "solver": "gurobi"},
     )
 }
-solver_configs = {"cpsat-10": SolverConfig(cls=OrtoolsTeamAllocationSolver,
-                                           kwargs={"parameters_cp": p,
-                                                   "time_limit": 5,
-                                                   "add_lower_bound_nb_teams": False})}
+solver_configs = {
+    "cpsat-10": SolverConfig(
+        cls=CpsatTeamAllocationSolver,
+        kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound_nb_teams": False},
+    )
+}
 
-solver_configs["cpsat-10-integer"] = SolverConfig(cls=OrtoolsTeamAllocationSolver,
-                                   kwargs={"parameters_cp": p,
-                                           "time_limit": 5,
-                                           "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
-                                           "add_lower_bound_nb_teams": False})
+solver_configs["cpsat-10-integer"] = SolverConfig(
+    cls=CpsatTeamAllocationSolver,
+    kwargs={
+        "parameters_cp": p,
+        "time_limit": 5,
+        "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
+        "add_lower_bound_nb_teams": False,
+    },
+)
 
 database_filepath = f"{study_name}.h5"
 if overwrite:

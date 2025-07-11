@@ -5,6 +5,7 @@ import inspect
 import json
 import logging
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from functools import reduce
@@ -50,10 +51,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.workforce.allocation.utils import (
-    compute_all_overlapping,
-    compute_equivalent_teams,
-)
 from discrete_optimization.workforce.allocation.problem import (
     AggregateOperator,
     AllocationAdditionalConstraint,
@@ -62,6 +59,10 @@ from discrete_optimization.workforce.allocation.problem import (
     TeamAllocationSolution,
 )
 from discrete_optimization.workforce.allocation.solvers import TeamAllocationSolver
+from discrete_optimization.workforce.allocation.utils import (
+    compute_all_overlapping,
+    compute_equivalent_teams,
+)
 from discrete_optimization.workforce.commons.fairness_modeling import (
     ModelisationDispersion,
 )
@@ -100,161 +101,6 @@ class ModelisationAllocationCP(Enum):
     INTEGER = 0
     BINARY = 1
     CNF_COMPATIBLE = 2
-
-
-@dataclass
-class AllowedTeamForTask:
-    constraint: cpmpy.model.Expression
-    task: Hashable
-    teams: Set[Hashable]
-    description: str
-
-    def to_dict(self):
-        return {"task": self.task, "description": self.description}
-
-
-@dataclass
-class AllocatedTaskConstraint:
-    constraint: cpmpy.model.Expression
-    task: Hashable
-    description: str
-
-    def to_dict(self):
-        return {"task": self.task, "description": self.description}
-
-
-@dataclass
-class NoOverlapByTeamConstraint:
-    constraint: cpmpy.model.Expression
-    tasks: Set[Hashable]
-    team: Hashable
-    description: str
-
-    def to_dict(self):
-        return {
-            "tasks": list(self.tasks),
-            "team": self.team,
-            "description": self.description,
-        }
-
-
-@dataclass
-class NoOverlapConstraint:
-    """
-    Conjonction of NoOverlapByTeamConstraint in practice
-    """
-
-    constraint: cpmpy.model.Expression
-    tasks: Set[Hashable]
-    description: str
-
-    def to_dict(self):
-        return {"tasks": list(self.tasks), "description": self.description}
-
-
-@dataclass
-class UsedTeamConstraint:
-    constraint: cpmpy.model.Expression
-    team: Hashable
-    description: str
-
-    def to_dict(self):
-        return {"team": list(self.team), "description": self.description}
-
-
-@dataclass
-class SymmetryBreakingConstraint:
-    constraint: cpmpy.model.Expression
-    teams: Set[Hashable]
-    description: str
-
-    def to_dict(self):
-        return {"team": list(self.teams), "description": self.description}
-
-
-@dataclass
-class SameAllocationConstraint:
-    constraint: cpmpy.model.Expression
-    tasks: Set[Hashable]
-    description: str
-
-    def to_dict(self):
-        return {"tasks": list(self.tasks), "description": self.description}
-
-
-@dataclass
-class ForcedAllocationConstraint:
-    constraint: cpmpy.model.Expression
-    task: Hashable
-    team: Hashable
-    description: str
-
-    def to_dict(self):
-        return {"task": self.task, "team": self.team, "description": self.description}
-
-
-@dataclass
-class ForbiddenAllocationConstraint:
-    constraint: cpmpy.model.Expression
-    task: Hashable
-    teams: Set[Hashable]
-    description: str
-
-    def to_dict(self):
-        return {
-            "task": self.task,
-            "teams": list(self.teams),
-            "description": self.description,
-        }
-
-
-@dataclass
-class DisjunctionConstraint:
-    constraint: cpmpy.model.Expression
-    task_team_disjunction: List[Tuple[Hashable, Hashable]]
-    description: str
-
-    def to_dict(self):
-        return {
-            "task_team_disjunction": self.task_team_disjunction,
-            "description": self.description,
-        }
-
-
-@dataclass
-class MaxNbTeams:
-    constraint: cpmpy.model.Expression
-    nb_max_teams: int
-    description: str
-
-    def to_dict(self):
-        return {"nb_max_teams": self.nb_max_teams, "description": self.description}
-
-
-@dataclass
-class TaskChanneling:
-    constraint: cpmpy.model.Expression
-    # tasks[1] is done -> tasks[0] is done
-    tasks: tuple[Hashable, Hashable]
-    description: str
-
-    def to_dict(self):
-        return {"tasks": self.tasks, "description": self.description}
-
-
-CONSTRAINT_ABSTRACTION = Union[
-    NoOverlapConstraint,
-    NoOverlapByTeamConstraint,
-    AllocatedTaskConstraint,
-    AllowedTeamForTask,
-    UsedTeamConstraint,
-    SymmetryBreakingConstraint,
-    SameAllocationConstraint,
-    ForcedAllocationConstraint,
-    ForbiddenAllocationConstraint,
-    DisjunctionConstraint,
-    MaxNbTeams,
-]
 
 
 class CallbackWithBound(OrtSolutionCounter):
@@ -864,9 +710,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         self.solver_name = solver_name
         self.modelisation_allocation: Optional[ModelisationAllocationCP] = None
         self.variables = {}
-        self.constraints_storage: Dict[str, Dict[Any, CONSTRAINT_ABSTRACTION]] = {}
-        self.constr_to_object: Dict[Expression, CONSTRAINT_ABSTRACTION] = {}
-        self.constrs_by_type: Dict[str, List[Expression]] = {}
         self.meta_constraints = []
 
     def init_model(self, **args: Any) -> None:
@@ -890,14 +733,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     self.problem.allocation_additional_constraint,
                 )
             )
-        self.constr_to_object: Dict[Any, dataclass] = {}
-        for key in self.constraints_storage:
-            for sub_key in self.constraints_storage[key]:
-                constr = self.constraints_storage[key][sub_key].constraint
-                self.constr_to_object[constr] = self.constraints_storage[key][sub_key]
-        self.constrs_by_type = {
-            t: self.get_constr_of_given_type(t) for t in self.constraints_storage
-        }
 
     def init_model_binary(self, **kwargs):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -913,7 +748,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         assert include_pair_overlap or overlapping_advanced
         self.model = Model()
         if include_all_binary_vars:
-            self.constraints_storage["allowed_team"] = {}
             alloc = cpmpy.boolvar(
                 (self.problem.number_of_activity, self.problem.number_of_teams),
                 name="allocation",
@@ -928,12 +762,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                         if i not in allowed
                     ]
                     c: Expression = ~cpmpy.any([alloc[i, k] for k in forbidden])
-                    self.constraints_storage["allowed_team"][i] = AllowedTeamForTask(
-                        constraint=c,
-                        task=i,
-                        teams=set(allowed),
-                        description=f"Task {i} can only be done by teams {allowed}",
-                    )
                     self.meta_constraints.append(
                         MetaCpmpyConstraint(
                             name=f"allowed_team_{i}",
@@ -962,7 +790,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                 }
                 for i in range(self.problem.number_of_activity)
             ]
-        self.constraints_storage["task_allocated"] = {}
         for i in range(len(allocation_binary)):
             # One and only one allocation
             c_i: Expression = (
@@ -972,9 +799,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                 language_dict.get("task", "task")
                 + f" {i} "
                 + language_dict.get("is allocated", "is allocated")
-            )
-            self.constraints_storage["task_allocated"][i] = AllocatedTaskConstraint(
-                constraint=c_i, task=i, description=description_str
             )
             self.meta_constraints.append(
                 MetaCpmpyConstraint(
@@ -987,8 +811,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         used = boolvar(self.problem.number_of_teams, name="used")
 
         if include_pair_overlap:
-            self.constraints_storage["pair_overlap_team"] = {}
-            self.constraints_storage["pair_overlap"] = {}
             for edge in self.problem.graph_activity.edges:
                 ind1 = self.problem.index_activities_name[edge[0]]
                 ind2 = self.problem.index_activities_name[edge[1]]
@@ -997,11 +819,13 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     for team in allocation_binary[ind1]
                     if team in allocation_binary[ind2]
                 ]
+                list_const = []
                 for team in common_teams:
                     overlap_pair: Expression = (
                         ~allocation_binary[ind1][team] | ~allocation_binary[ind2][team]
                     )
                     self.model += [overlap_pair]
+                    list_const.append(overlap_pair)
                     if not cnf_comp:
                         overlap_pair_red: Expression = (
                             allocation_binary[ind1][team]
@@ -1009,51 +833,15 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                             <= 1
                         )
                         self.model += [overlap_pair_red]
-                        self.constraints_storage["pair_overlap_team"][
-                            (ind1, ind2, team)
-                        ] = NoOverlapByTeamConstraint(
-                            constraint=cpmpy.all([overlap_pair, overlap_pair_red]),
-                            team=team,
-                            tasks={ind1, ind2},
-                            description=f"Team {team} cannot do both task {ind1} and {ind2}",
-                        )
-                    else:
-                        self.constraints_storage["pair_overlap_team"][
-                            (ind1, ind2, team)
-                        ] = NoOverlapByTeamConstraint(
-                            constraint=cpmpy.all([overlap_pair]),
-                            team=team,
-                            tasks={ind1, ind2},
-                            description=f"Team {team} cannot do both task {ind1} and {ind2}",
-                        )
-
-                self.constraints_storage["pair_overlap"][
-                    (ind1, ind2)
-                ] = NoOverlapConstraint(
-                    constraint=cpmpy.all(
-                        [
-                            self.constraints_storage["pair_overlap_team"][
-                                (ind1, ind2, team)
-                            ].constraint
-                            for team in common_teams
-                        ]
-                    ),
-                    tasks={ind1, ind2},
-                    description=f"Overlapping tasks {ind1} and {ind2}",
-                )
+                        list_const.append(list_const)
                 self.meta_constraints.append(
                     MetaCpmpyConstraint(
                         name=f"overlapping_tasks_{ind1, ind2}",
-                        constraints=[
-                            self.constraints_storage["pair_overlap"][
-                                (ind1, ind2)
-                            ].constraint
-                        ],
+                        constraints=list_const,
                     )
                 )
 
         if overlapping_advanced or add_lower_bound_nb_teams:
-            self.constraints_storage["clique_overlap"] = {}
             set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
             if add_lower_bound_nb_teams:
                 max_ = max([len(o) for o in set_overlaps])
@@ -1088,21 +876,10 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     language_dict.get("overlap between tasks", "overlap between tasks")
                     + f" {sorted([self.problem.index_activities_name[x] for x in overlapping])}"
                 )
-                self.constraints_storage["clique_overlap"][
-                    overlapping
-                ] = NoOverlapConstraint(
-                    constraint=cpmpy.all(no_overlap_conj),
-                    tasks={self.problem.index_activities_name[x] for x in overlapping},
-                    description=description_str,
-                )
                 self.meta_constraints.append(
                     MetaCpmpyConstraint(
                         name="clique_overlap",
-                        constraints=[
-                            self.constraints_storage["clique_overlap"][
-                                overlapping
-                            ].constraint
-                        ],
+                        constraints=[cpmpy.all(no_overlap_conj)],
                         metadata={
                             "type": "clique_overlap",
                             "tasks_index": {
@@ -1112,10 +889,9 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                         },
                     )
                 )
-                self.model += [
-                    self.constraints_storage["clique_overlap"][overlapping].constraint
-                ]
-        self.constraints_storage["team_is_used"] = {}
+                self.model += [cpmpy.all(no_overlap_conj)]
+
+        dict_team_used = defaultdict(lambda: list())
         for i in range(len(allocation_binary)):
             for j in allocation_binary[i]:
                 if self.problem.number_of_teams == 1:
@@ -1129,10 +905,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                         self.model += [allocation_binary[i][j].implies(used[j])]
                     else:
                         self.model += [used[j] >= allocation_binary[i][j]]
-                if j not in self.constraints_storage["team_is_used"]:
-                    self.constraints_storage["team_is_used"][j] = UsedTeamConstraint(
-                        [], team=j, description=f"team {j} used"
-                    )
                 if self.problem.number_of_teams > 1:
                     used_j: Expression = used[j] >= allocation_binary[i][j]
                     used_j_red: Expression = allocation_binary[i][j].implies(used[j])
@@ -1140,23 +912,36 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     used_j: Expression = used >= allocation_binary[i][j]
                     used_j_red: Expression = allocation_binary[i][j].implies(used)
                 if cnf_comp:
-                    self.constraints_storage["team_is_used"][j].constraint += [
-                        used_j_red
-                    ]
                     self.model += [used_j_red]
+                    self.meta_constraints.append(
+                        MetaCpmpyConstraint(
+                            name=f"team_{j}_is_used",
+                            constraints=[used_j_red],
+                            metadata={"team_index": j, "type": "team_used"},
+                        )
+                    )
+                    dict_team_used[j].append(used_j_red)
                 else:
-                    self.constraints_storage["team_is_used"][j].constraint += [
-                        used_j,
-                        used_j_red,
-                    ]
                     self.model += [used_j, used_j_red]
-        for j in self.constraints_storage["team_is_used"]:
-            self.constraints_storage["team_is_used"][j].constraint = cpmpy.all(
-                self.constraints_storage["team_is_used"][j].constraint
+                    self.meta_constraints.append(
+                        MetaCpmpyConstraint(
+                            name=f"team_{j}_is_used",
+                            constraints=[used_j, used_j_red],
+                            metadata={"team_index": j, "type": "team_used"},
+                        )
+                    )
+                    dict_team_used[j].extend([used_j, used_j_red])
+
+        for j_team in dict_team_used:
+            self.meta_constraints.append(
+                MetaCpmpyConstraint(
+                    name=f"team_{j_team}_is_used",
+                    constraints=dict_team_used[j_team],
+                    metadata={"team_index": j_team, "type": "team_used"},
+                )
             )
         if symmbreak_on_used:
             groups = compute_equivalent_teams(team_allocation_problem=self.problem)
-            self.constraints_storage["symmetries"] = {}
             for group in groups:
                 symm_group = []
                 for ind1, ind2 in zip(group[:-1], group[1:]):
@@ -1166,16 +951,14 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                         symm_group += [sym_constr]
                     else:
                         symm_group += [sym_constr, sym_constr_red]
-                self.constraints_storage["symmetries"][
-                    str(group)
-                ] = SymmetryBreakingConstraint(
-                    constraint=cpmpy.all(symm_group),
-                    teams=set(group),
-                    description=f"Symmetry break on teams {group}",
+                self.model += [cpmpy.all(symm_group)]
+                self.meta_constraints.append(
+                    MetaCpmpyConstraint(
+                        name=f"symmetry_{group}",
+                        constraints=[cpmpy.all(symm_group)],
+                        metadata={"type": "symmetry", "group": group},
+                    )
                 )
-                self.model += [
-                    self.constraints_storage["symmetries"][str(group)].constraint
-                ]
         if self.problem.number_of_teams > 1:
             objectives_expr = [sum(used)]
         else:
@@ -1202,13 +985,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         self.variables["objectives_expr"] = objectives_expr
         self.variables["keys_variable_to_log"] = keys_variable_to_log
 
-    def get_constr_of_given_type(self, type: str):
-        if type in self.constraints_storage:
-            return [
-                self.constraints_storage[type][key].constraint
-                for key in self.constraints_storage[type]
-            ]
-
 
 def adding_same_allocation_constraint_binary(
     solver: Union[
@@ -1222,7 +998,6 @@ def adding_same_allocation_constraint_binary(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["same_allocation"] = {}
     index_constr = 0
     for subset_activities in same_allocation:
         index_activities = [
@@ -1243,12 +1018,12 @@ def adding_same_allocation_constraint_binary(
                 )
             constraints.append(cpmpy.all(constr_subset))
             if store_constraints:
-                solver.constraints_storage["same_allocation"][
-                    index_constr
-                ] = SameAllocationConstraint(
-                    constraint=constraints[-1],
-                    tasks=index_activities,
-                    description=f"Tasks {index_activities} allocated to same team",
+                solver.meta_constraints.append(
+                    MetaCpmpyConstraint(
+                        name=f"Tasks {index_activities} " f"allocated to same team",
+                        constraints=[constraints[-1]],
+                        metadata={"type": "same_allocation", "tasks": index_activities},
+                    )
                 )
             index_constr += 1
     return constraints
@@ -1266,7 +1041,6 @@ def adding_same_allocation_constraint_cnf(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["same_allocation"] = {}
     index_constr = 0
     for subset_activities in same_allocation:
         index_activities = [
@@ -1289,12 +1063,12 @@ def adding_same_allocation_constraint_cnf(
                 # constr_subset.append(AllEqual([variables[ind][c] for ind in index_activities]))
             constraints.append(cpmpy.all(constr_subset))
             if store_constraints:
-                solver.constraints_storage["same_allocation"][
-                    index_constr
-                ] = SameAllocationConstraint(
-                    constraint=constraints[-1],
-                    tasks=index_activities,
-                    description=f"Tasks {index_activities} allocated to same team",
+                solver.meta_constraints.append(
+                    MetaCpmpyConstraint(
+                        name=f"Tasks {index_activities} " f"allocated to same team",
+                        constraints=[constraints[-1]],
+                        metadata={"type": "same_allocation", "tasks": index_activities},
+                    )
                 )
             index_constr += 1
 
@@ -1313,14 +1087,23 @@ def adding_same_allocation_constraint_integer(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["same_allocation"] = {}
     for subset_activities in same_allocation:
         index_activities = [
             problem.index_activities_name[activity] for activity in subset_activities
         ]
+        constr_subset = []
         for i in range(len(index_activities) - 1):
             constraints.append(
                 variables[index_activities[i + 1]] == variables[index_activities[i]]
+            )
+            constr_subset.append(constraints[-1])
+        if store_constraints:
+            solver.meta_constraints.append(
+                MetaCpmpyConstraint(
+                    name=f"Tasks {index_activities} " f"allocated to same team",
+                    constraints=constr_subset,
+                    metadata={"type": "same_allocation", "tasks": index_activities},
+                )
             )
     return constraints
 
@@ -1337,7 +1120,6 @@ def adding_all_diff_allocation_binary(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["all_diff"] = {}
     index_constraint = 0
     for all_diff in all_diff_allocation:
         no_overlap_conj = []
@@ -1360,13 +1142,15 @@ def adding_all_diff_allocation_binary(
                 language_dict.get("overlap between tasks")
                 + f" {[problem.index_activities_name[x] for x in all_diff]}"
             )
-
-            solver.constraints_storage["clique_overlap"][
-                index_constraint
-            ] = NoOverlapConstraint(
-                constraint=constraint,
-                tasks={problem.index_activities_name[x] for x in all_diff},
-                description=description_str,
+            solver.meta_constraints.append(
+                MetaCpmpyConstraint(
+                    name=f"all_diff",
+                    constraints=[constraint],
+                    metadata={
+                        "type": "all_diff",
+                        "tasks": {problem.index_activities_name[x] for x in all_diff},
+                    },
+                )
             )
             index_constraint += 1
     return constraints
@@ -1384,7 +1168,6 @@ def adding_forced_allocation_binary(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["forced_alloc"] = {}
     index_constraint = 0
     for ac in forced_allocation:
         ind_ac = problem.index_activities_name[ac]
@@ -1394,8 +1177,7 @@ def adding_forced_allocation_binary(
                 "your model is likely invalid, forced allocation not possible"
             )
         else:
-            constraint_l = []
-            constraint_l.append(variables[ind_ac][ind_team] == 1)
+            constraint_l = [variables[ind_ac][ind_team] == 1]
             for team in variables[ind_ac]:
                 if team != ind_team:
                     constraint_l.append(variables[ind_ac][team] == 0)
@@ -1403,13 +1185,16 @@ def adding_forced_allocation_binary(
             if len(constraint_l) == 1:
                 constraint = constraint_l[0]
             if store_constraints:
-                solver.constraints_storage["forced_alloc"][
-                    index_constraint
-                ] = ForcedAllocationConstraint(
-                    constraint=constraint,
-                    task=ind_ac,
-                    team=ind_team,
-                    description=f"Team {ind_team} allocated to task {ind_ac}",
+                solver.meta_constraints.append(
+                    MetaCpmpyConstraint(
+                        name=f"forced_alloc_{ind_ac}",
+                        constraints=[constraint],
+                        metadata={
+                            "type": "forced_alloc",
+                            "task": ind_ac,
+                            "team": ind_team,
+                        },
+                    )
                 )
             index_constraint += 1
             constraints.append(constraint)
@@ -1428,7 +1213,6 @@ def adding_forbidden_allocation_binary(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["forbidden_alloc"] = {}
     index_constraint = 0
     for ac in forbidden_allocation:
         ind_ac = problem.index_activities_name[ac]
@@ -1443,13 +1227,16 @@ def adding_forbidden_allocation_binary(
             )
             constraints.append(c)
             if store_constraints:
-                solver.constraints_storage["forbidden_alloc"][
-                    index_constraint
-                ] = ForbiddenAllocationConstraint(
-                    constraint=c,
-                    task=ind_ac,
-                    teams=set(ind_teams),
-                    description=f"Teams {set(ind_teams)} forbidden for task {ind_ac}",
+                solver.meta_constraints.append(
+                    MetaCpmpyConstraint(
+                        name="forbidden_alloc",
+                        constraints=[c],
+                        metadata={
+                            "type": "forbidden_alloc",
+                            "task": ind_ac,
+                            "teams": ind_teams,
+                        },
+                    )
                 )
             index_constraint += 1
     return constraints
@@ -1467,7 +1254,6 @@ def adding_allowed_allocation_binary(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["allowed_alloc"] = {}
     index_constraint = 0
     for ac in allowed_allocation:
         ind_ac = problem.index_activities_name[ac]
@@ -1480,15 +1266,17 @@ def adding_allowed_allocation_binary(
             continue
         constr = cpmpy.all(constrs)
         if store_constraints:
-            solver.constraints_storage["allowed_alloc"][
-                index_constraint
-            ] = AllowedTeamForTask(
-                constraint=constr,
-                task=ac,
-                teams=allowed_allocation[ac],
-                description=f"Task {ind_ac} should be done by teams {ind_teams}",
+            solver.meta_constraints.append(
+                MetaCpmpyConstraint(
+                    name=f"allowed_alloc",
+                    constraints=[constr],
+                    metadata={
+                        "type": "allowed_alloc",
+                        "task": ind_ac,
+                        "teams": ind_teams,
+                    },
+                )
             )
-        index_constraint += 1
         constraints.append(constr)
     return constraints
 
@@ -1505,7 +1293,6 @@ def adding_disjunction_binary(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["disjunction_constr"] = {}
     index_constraint = 0
     for disj in disjunction:
         c = cpmpy.any(
@@ -1517,12 +1304,15 @@ def adding_disjunction_binary(
             ]
         )
         if store_constraints:
-            solver.constraints_storage["disjunction_constr"][
-                index_constraint
-            ] = DisjunctionConstraint(
-                constraint=c,
-                task_team_disjunction=disj,
-                description=f"Disjunctive allocation" f"of {disj}",
+            solver.meta_constraints.append(
+                MetaCpmpyConstraint(
+                    name="disjunction_constr",
+                    constraints=[c],
+                    metadata={
+                        "type": "disjunction",
+                        "tasks": {problem.index_activities_name[x[0]] for x in disj},
+                    },
+                )
             )
         index_constraint += 1
         constraints.append(c)
@@ -1537,19 +1327,19 @@ def adding_max_nb_teams(
     variables: List[cpmpy.model.Expression],
     problem: TeamAllocationProblem,
 ):
-    constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["nb_max_teams"] = {}
     constraints = []
     if nb_max_teams is not None:
         constraints = [cpmpy.sum(variables) <= nb_max_teams]
         if store_constraints:
-            solver.constraints_storage["nb_max_teams"][0] = MaxNbTeams(
-                constraint=constraints[-1],
-                nb_max_teams=nb_max_teams,
-                description=f"No more than " f"{nb_max_teams} teams used",
+            solver.meta_constraints.append(
+                MetaCpmpyConstraint(
+                    name="nb_max_teams",
+                    constraints=constraints,
+                    metadata={"type": "nb_max_teams", "nb_max_teams": nb_max_teams},
+                )
             )
     return constraints
 
@@ -1565,7 +1355,6 @@ def adding_precedence_channeling_constraint(
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
         store_constraints = True
-        solver.constraints_storage["precedences"] = {}
     constraints = []
     index_constraint = 0
     if precedences is not None:
@@ -1581,13 +1370,15 @@ def adding_precedence_channeling_constraint(
                 )
                 constraints.append(c)
                 if store_constraints:
-                    solver.constraints_storage["precedences"][
-                        index_constraint
-                    ] = TaskChanneling(
-                        constraint=c,
-                        tasks=(task_index, task_succ),
-                        description=f"{task_succ} can only be done"
-                        f"if {task_index} is also done",
+                    solver.meta_constraints.append(
+                        MetaCpmpyConstraint(
+                            name="precedences",
+                            constraints=[c],
+                            metadata={
+                                "type": "precedences",
+                                "tasks": (task_index, task_succ),
+                            },
+                        )
                     )
     logger.info("Precedence constraints added")
     return constraints

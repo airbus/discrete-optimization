@@ -10,11 +10,9 @@ import numpy as np
 from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpSolverSolutionCallback, IntVar
 
-from discrete_optimization.generic_tools.callbacks.callback import (
-    Callback,
-)
+from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.do_solver import WarmstartMixin, StatusSolver
+from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
@@ -30,16 +28,16 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.workforce.allocation.problem import TeamAllocationSolution
+from discrete_optimization.workforce.allocation.solvers.cpsat import (
+    CpsatTeamAllocationSolver,
+    ModelisationAllocationOrtools,
+)
 from discrete_optimization.workforce.commons.fairness_modeling import (
     ModelisationDispersion,
 )
 from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
     cumulate_value_per_teams_version_2,
     model_fairness,
-)
-from discrete_optimization.workforce.scheduling.utils import (
-    compute_equivalent_teams_scheduling_problem,
-    overlap_interval, build_allocation_problem_from_scheduling,
 )
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
@@ -54,9 +52,14 @@ from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb impo
     BoundResourceViaRelaxedProblem,
     LBoundAllocScheduling,
 )
-from discrete_optimization.workforce.scheduling.solvers.cpsat import AdditionalCPConstraints
-from discrete_optimization.workforce.allocation.solvers.cpsat import OrtoolsTeamAllocationSolver, \
-    ModelisationAllocationOrtools
+from discrete_optimization.workforce.scheduling.solvers.cpsat import (
+    AdditionalCPConstraints,
+)
+from discrete_optimization.workforce.scheduling.utils import (
+    build_allocation_problem_from_scheduling,
+    compute_equivalent_teams_scheduling_problem,
+    overlap_interval,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -170,10 +173,10 @@ class CPSatAllocSchedulingSolverCumulative(
                     pool = self.resource_pools[mode]
                     for team in pool:
                         if not any(
-                                overlap_interval(
-                                    (schedule[i_task, 0], schedule[i_task, 1]), x
-                                )
-                                for x in schedule_per_team[team]
+                            overlap_interval(
+                                (schedule[i_task, 0], schedule[i_task, 1]), x
+                            )
+                            for x in schedule_per_team[team]
                         ):
                             allocation[i_task] = team
                             scheduled = True
@@ -202,10 +205,10 @@ class CPSatAllocSchedulingSolverCumulative(
                     pool = self.resource_pools[mode]
                     for team in pool:
                         if not any(
-                                overlap_interval(
-                                    (schedule[i_task, 0], schedule[i_task, 1]), x
-                                )
-                                for x in schedule_per_team[team]
+                            overlap_interval(
+                                (schedule[i_task, 0], schedule[i_task, 1]), x
+                            )
+                            for x in schedule_per_team[team]
                         ):
                             allocation[i_task] = team
                             scheduled = True
@@ -471,7 +474,7 @@ class CPSatAllocSchedulingSolverCumulative(
                     )
                     for t in self.problem.tasks_data
                     if self.problem.tasks_data[t].resource_consumption.get(resource, 0)
-                       > 0
+                    > 0
                 ]
                 if len(interval_cons) > 0:
                     if capa == 1 and all(x[1] == 1 for x in interval_cons):
@@ -510,7 +513,7 @@ class CPSatAllocSchedulingSolverCumulative(
     #                                         capacity=1)
 
     def create_makespan_obj(
-            self, ends_var: Dict[int, IntVar], st_lb: List[Tuple[int, int, int, int]] = None
+        self, ends_var: Dict[int, IntVar], st_lb: List[Tuple[int, int, int, int]] = None
     ):
         if st_lb is None:
             st_lb = [
@@ -552,7 +555,7 @@ class CPSatAllocSchedulingSolverCumulative(
         self.add_objective_functions_on_cumul(objectives=objectives, **args)
 
     def init_model(
-            self, objectives: Optional[List[ObjectivesEnum]] = None, **args: Any
+        self, objectives: Optional[List[ObjectivesEnum]] = None, **args: Any
     ) -> None:
         additional_constraints: AdditionalCPConstraints = args.get(
             "additional_constraints", None
@@ -639,7 +642,7 @@ class CPSatAllocSchedulingSolverCumulative(
         self.cp_model.Minimize(sum(weights[i] * objs[i] for i in range(len(objs))))
 
     def add_objective_functions_on_cumul(
-            self, objectives: Optional[list[ObjectivesEnum]] = None, **args
+        self, objectives: Optional[list[ObjectivesEnum]] = None, **args
     ):
         modelisation_dispersion: ModelisationDispersion = args[
             "modelisation_dispersion"
@@ -688,10 +691,10 @@ class CPSatAllocSchedulingSolverCumulative(
             self.variables["objectives"][ObjectivesEnum.MIN_WORKLOAD] = min_value
 
     def create_delta_objectives(
-            self,
-            base_solution: AllocSchedulingSolution,
-            base_problem: AllocSchedulingProblem,
-            additional_constraints: Optional[AdditionalCPConstraints] = None,
+        self,
+        base_solution: AllocSchedulingSolution,
+        base_problem: AllocSchedulingProblem,
+        additional_constraints: Optional[AdditionalCPConstraints] = None,
     ):
         objs = []
         common_tasks = list(
@@ -721,15 +724,15 @@ class CPSatAllocSchedulingSolverCumulative(
             if additional_constraints is not None:
                 if additional_constraints.set_tasks_ignore_reallocation is not None:
                     if (
-                            index_in_problem
-                            in additional_constraints.set_tasks_ignore_reallocation
+                        index_in_problem
+                        in additional_constraints.set_tasks_ignore_reallocation
                     ):
                         ignore_reallocation = True
 
             index_in_base_problem = base_problem.tasks_to_index[tt]
             if (
-                    base_solution.allocation[index_in_base_problem]
-                    not in base_problem.index_to_team
+                base_solution.allocation[index_in_base_problem]
+                not in base_problem.index_to_team
             ):
                 team_of_base_solution = None
             else:
@@ -744,8 +747,8 @@ class CPSatAllocSchedulingSolverCumulative(
                     # print(index_in_problem in self.variables["is_present_var"])
                     # print(index_team in self.variables["is_present_var"][index_in_problem])
                     if (
-                            index_team
-                            not in self.variables["is_present_var"][index_in_problem]
+                        index_team
+                        not in self.variables["is_present_var"][index_in_problem]
                     ):
                         print("Problem")
                     else:
@@ -804,33 +807,45 @@ class CPSatAllocSchedulingSolverCumulative(
         }
         return objs
 
-    def solve_two_step(self,
-                       callbacks: Optional[list[Callback]] = None,
-                       parameters_cp: Optional[ParametersCp] = None,
-                       time_limit: Optional[float] = 100.0,
-                       ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
-                       retrieve_stats: bool = False):
-        res = self.solve(callbacks=callbacks,
-                         parameters_cp=parameters_cp,
-                         time_limit=time_limit,
-                         ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
-                         retrieve_stats=retrieve_stats)
-        allocation_problem = build_allocation_problem_from_scheduling(problem=self.problem,
-                                                                      solution=res[-1][0])
-        allocation_solver = OrtoolsTeamAllocationSolver(problem=allocation_problem)
-        allocation_solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
-        res_ = allocation_solver.solve(parameters_cp=parameters_cp,
-                                       time_limit=time_limit,
-                                       ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
-                                       retrieve_stats=retrieve_stats)
+    def solve_two_step(
+        self,
+        callbacks: Optional[list[Callback]] = None,
+        parameters_cp: Optional[ParametersCp] = None,
+        time_limit: Optional[float] = 100.0,
+        ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
+        retrieve_stats: bool = False,
+    ):
+        res = self.solve(
+            callbacks=callbacks,
+            parameters_cp=parameters_cp,
+            time_limit=time_limit,
+            ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
+            retrieve_stats=retrieve_stats,
+        )
+        allocation_problem = build_allocation_problem_from_scheduling(
+            problem=self.problem, solution=res[-1][0]
+        )
+        allocation_solver = CpsatTeamAllocationSolver(problem=allocation_problem)
+        allocation_solver.init_model(
+            modelisation_allocation=ModelisationAllocationOrtools.BINARY
+        )
+        res_ = allocation_solver.solve(
+            parameters_cp=parameters_cp,
+            time_limit=time_limit,
+            ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
+            retrieve_stats=retrieve_stats,
+        )
         if allocation_solver.status_solver == StatusSolver.UNSATISFIABLE:
             self.status_solver = allocation_solver.status_solver
             return self.create_result_storage([])
         else:
             sol: TeamAllocationSolution = res_[-1][0]
             rebuilt_solution: AllocSchedulingSolution = res[-1][0]
-            rebuilt_solution.allocation = [self.problem.teams_to_index[
-                                               allocation_problem.teams_name[sol.allocation[i]]]
-                                           for i in range(len(sol.allocation))]
+            rebuilt_solution.allocation = [
+                self.problem.teams_to_index[
+                    allocation_problem.teams_name[sol.allocation[i]]
+                ]
+                for i in range(len(sol.allocation))
+            ]
             fit = self.aggreg_from_sol(rebuilt_solution)
             return self.create_result_storage([(rebuilt_solution, fit)])
