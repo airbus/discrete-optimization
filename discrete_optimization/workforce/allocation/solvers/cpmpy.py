@@ -712,6 +712,8 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         self.variables = {}
         self.meta_constraints = []
 
+    def get_types_of_meta_constraints(self):
+        return {mc.metadata["type"] for mc in self.meta_constraints}
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
         if self.solver_name == "pysat":

@@ -62,7 +62,7 @@ while not done:
         if len(removed_meta) > 0:
             print(
                 f"We removed {len(removed_meta)} meta-constraint{'s' if len(removed_meta)>0 else ''}: "
-                f"{[meta.name for meta in removed_meta]}"
+                f"{[meta.metadata for meta in removed_meta]}"
             )
         break
     else:

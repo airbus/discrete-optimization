@@ -769,6 +769,7 @@ def build_allocation_problem_from_scheduling(
 
 def build_scheduling_problem_from_allocation(
     problem: TeamAllocationProblem,
+    horizon_start_shift: int = 0
 ) -> AllocSchedulingProblem:
     d = {}
     if problem.allocation_additional_constraint is not None:
@@ -778,6 +779,7 @@ def build_scheduling_problem_from_allocation(
         team_names=problem.teams_name,
         calendar_team=problem.calendar_team,
         horizon=10000,
+        horizon_start_shift=horizon_start_shift,
         tasks_list=problem.activities_name,
         tasks_data={
             t: TasksDescription(
