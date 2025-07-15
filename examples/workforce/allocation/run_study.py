@@ -43,32 +43,37 @@ overwrite = True  # do we overwrite previous study with same name or not? if Fal
 instances = [os.path.basename(p) for p in get_data_available()]
 p = ParametersCp.default_cpsat()
 p.nb_process = 10
-solver_configs = {"cpmpy-cpsat-1proc": SolverConfig(
-    cls=CPMpyTeamAllocationSolver,
-    kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 1},
-), "cpmpy-cpsat-10proc": SolverConfig(
-    cls=CPMpyTeamAllocationSolver,
-    kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 10},
-)
-, "cpmpy-exact": SolverConfig(
-    cls=CPMpyTeamAllocationSolver,
-    kwargs={
-        "time_limit": 5,
-        "display": lambda: None,
-        "solver": "exact",
-    },
-), "cpsat-10": SolverConfig(
-    cls=CpsatTeamAllocationSolver,
-    kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound_nb_teams": True},
-), "cpsat-10-integer": SolverConfig(
-    cls=CpsatTeamAllocationSolver,
-    kwargs={
-        "parameters_cp": p,
-        "time_limit": 5,
-        "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
-        "add_lower_bound_nb_teams": False,
-    },
-)}
+solver_configs = {
+    "cpmpy-cpsat-1proc": SolverConfig(
+        cls=CPMpyTeamAllocationSolver,
+        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 1},
+    ),
+    "cpmpy-cpsat-10proc": SolverConfig(
+        cls=CPMpyTeamAllocationSolver,
+        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 10},
+    ),
+    "cpmpy-exact": SolverConfig(
+        cls=CPMpyTeamAllocationSolver,
+        kwargs={
+            "time_limit": 5,
+            "display": lambda: None,
+            "solver": "exact",
+        },
+    ),
+    "cpsat-10": SolverConfig(
+        cls=CpsatTeamAllocationSolver,
+        kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound_nb_teams": True},
+    ),
+    "cpsat-10-integer": SolverConfig(
+        cls=CpsatTeamAllocationSolver,
+        kwargs={
+            "parameters_cp": p,
+            "time_limit": 5,
+            "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
+            "add_lower_bound_nb_teams": False,
+        },
+    ),
+}
 
 database_filepath = f"{study_name}.h5"
 if overwrite:
