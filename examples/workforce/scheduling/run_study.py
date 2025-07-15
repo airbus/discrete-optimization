@@ -41,17 +41,17 @@ p = ParametersCp.default_cpsat()
 p.nb_process = 10
 p_mono_worker = ParametersCp.default_cpsat()
 p_mono_worker.nb_process = 1
-solver_configs = {
-    "cpsat-10": SolverConfig(
-        cls=CPSatAllocSchedulingSolver,
-        kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound": True},
-    )
-}
-
-solver_configs["cpsat-1"] = SolverConfig(
-    cls=CPSatAllocSchedulingSolver,
-    kwargs={"parameters_cp": p_mono_worker, "time_limit": 5, "add_lower_bound": True},
-)
+solver_configs = {}
+for p_cp, label in zip([p, p_mono_worker], ["multipro-10", "monopro"]):
+    for add_lower_bound in [True, False]:
+        solver_configs[("cpsat", label, add_lower_bound)] = SolverConfig(
+            cls=CPSatAllocSchedulingSolver,
+            kwargs={
+                "parameters_cp": p_cp,
+                "time_limit": 5,
+                "add_lower_bound": add_lower_bound,
+            },
+        )
 
 database_filepath = f"{study_name}.h5"
 if overwrite:
@@ -119,7 +119,7 @@ for instance in instances:
             xp = Experiment.from_solver_config(
                 xp_id=xp_id,
                 instance=instance,
-                config_name=config_name,
+                config_name=str(config_name),
                 solver_config=solver_config,
                 metrics=metrics,
                 status=status,
