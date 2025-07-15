@@ -347,6 +347,7 @@ def fetch_data_for_mis(data_home: Optional[str] = None):
 
 
 def fetch_mis_from_repo(data_home: Optional[str] = None):
+    data_home = get_data_home(data_home=data_home)
     url_repo = "https://github.com/g-poveda/do-data"
     sha_url_repo = "b2c6e5ad16dea25e39602622ac7dd16c9e9b4c1d"
     url = f"{url_repo}/archive/{sha_url_repo}.zip"
@@ -440,7 +441,6 @@ def fetch_data_from_bppc(data_home: Optional[str] = None):
             for name in namelist:
                 if "Istanze" in name:
                     zipf.extract(name, path=dataset_dir)
-                    print(name)
             for datafile in glob.glob(f"{dataset_dir}/Istanze/*"):
                 os.replace(
                     src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
@@ -473,9 +473,6 @@ def fetch_data_from_cp25(data_home: Optional[str] = None):
                 os.replace(
                     src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
                 )
-                print(datafile)
-                print(f"{dataset_dir}/{os.path.basename(datafile)}")
-            print()
             os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
     except Exception as e:
         print(e)
@@ -504,4 +501,5 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_all_datasets()
+    fetch_mis_from_repo(data_home=None)
+    # fetch_all_datasets()
