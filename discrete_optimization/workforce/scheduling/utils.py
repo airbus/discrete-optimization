@@ -768,8 +768,7 @@ def build_allocation_problem_from_scheduling(
 
 
 def build_scheduling_problem_from_allocation(
-    problem: TeamAllocationProblem,
-    horizon_start_shift: int = 0
+    problem: TeamAllocationProblem, horizon_start_shift: int = 0
 ) -> AllocSchedulingProblem:
     d = {}
     if problem.allocation_additional_constraint is not None:
