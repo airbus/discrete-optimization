@@ -39,46 +39,28 @@ from discrete_optimization.workforce.allocation.solvers.cpsat import (
 )
 
 study_name = "allocation-study-0"
-overwrite = False  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
+overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
 instances = [os.path.basename(p) for p in get_data_available()]
 p = ParametersCp.default_cpsat()
 p.nb_process = 10
-solver_configs = {
-    "cpmpy-cpsat-1proc": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 1},
-    ),
-    "cpmpy-cpsat-10proc": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 10},
-    ),
-    "cpmpy-gurobi": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "gurobi"},
-    ),
-    "cpmpy-exact": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={
-            "time_limit": 5,
-            # "display": lambda: None,
-            "solver": "exact",
-        },
-    ),
-}
-solver_configs = {
-    "cpmpy-gurobi": SolverConfig(
-        cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "gurobi"},
-    )
-}
-solver_configs = {
-    "cpsat-10": SolverConfig(
-        cls=CpsatTeamAllocationSolver,
-        kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound_nb_teams": False},
-    )
-}
-
-solver_configs["cpsat-10-integer"] = SolverConfig(
+solver_configs = {"cpmpy-cpsat-1proc": SolverConfig(
+    cls=CPMpyTeamAllocationSolver,
+    kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 1},
+), "cpmpy-cpsat-10proc": SolverConfig(
+    cls=CPMpyTeamAllocationSolver,
+    kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 10},
+)
+, "cpmpy-exact": SolverConfig(
+    cls=CPMpyTeamAllocationSolver,
+    kwargs={
+        "time_limit": 5,
+        "display": lambda: None,
+        "solver": "exact",
+    },
+), "cpsat-10": SolverConfig(
+    cls=CpsatTeamAllocationSolver,
+    kwargs={"parameters_cp": p, "time_limit": 5, "add_lower_bound_nb_teams": True},
+), "cpsat-10-integer": SolverConfig(
     cls=CpsatTeamAllocationSolver,
     kwargs={
         "parameters_cp": p,
@@ -86,7 +68,7 @@ solver_configs["cpsat-10-integer"] = SolverConfig(
         "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
         "add_lower_bound_nb_teams": False,
     },
-)
+)}
 
 database_filepath = f"{study_name}.h5"
 if overwrite:
@@ -141,8 +123,6 @@ for instance in instances:
             print(status)
             print(result_store)
             bs, fit = result_store.get_best_solution_fit()
-            print(problem.evaluate(bs))
-            print(problem.satisfy(bs))
             metrics = stats_cb.get_df_metrics()
             reason = ""
 
