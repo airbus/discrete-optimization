@@ -156,8 +156,11 @@ class CpmpySolver(CpSolver):
         kwargs_solve = dict(kwargs)
         solver = kwargs_solve.pop("solver", "ortools")
         display = self.create_callback_function(callback=callbacks_list)
-
-        self.model.solve(solver, time_limit=time_limit, display=display, **kwargs_solve)
+        if solver == "ortools":
+            kwargs_solve["solution_callback"] = display
+        else:
+            kwargs_solve["display"] = display
+        self.model.solve(solver, time_limit=time_limit, **kwargs_solve)
         self.cpm_status = self.model.cpm_status
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
 
