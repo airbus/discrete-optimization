@@ -31,7 +31,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     CallbackList,
 )
 from discrete_optimization.generic_tools.cp_tools import CpSolver
-from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_problem import (
+    ParamsObjectiveFunction,
+    Problem,
+    Solution,
+)
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -92,11 +96,46 @@ map_correctunsatmethod2fun = {
 }
 
 
+class _CpmpyCbClass:
+    def __init__(self, do_solver: "CpmpySolver", callback: Callback):
+        super().__init__()
+        self.do_solver = do_solver
+        self.callback = callback
+        self.res = do_solver.create_result_storage()
+        self.nb_solutions = 0
+
+    def callback_func(self):
+        sol = self.do_solver.retrieve_current_solution()
+        fit = self.do_solver.aggreg_from_sol(sol)
+        self.res.append((sol, fit))
+        self.nb_solutions += 1
+        # end of step callback: stopping?
+        stopping = self.callback.on_step_end(
+            step=self.nb_solutions, res=self.res, solver=self.do_solver
+        )
+
+
 class CpmpySolver(CpSolver):
     """Generic cpmpy solver."""
 
     model: Optional[Model] = None
     cpm_status: SolverStatus = SolverStatus("Model")
+
+    def __init__(
+        self,
+        problem: Problem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        **kwargs: Any,
+    ):
+
+        super().__init__(
+            problem, params_objective_function=params_objective_function, **kwargs
+        )
+        self.cb_object: _CpmpyCbClass = None
+
+    def create_callback_function(self, callback: Callback):
+        self.cb_object = _CpmpyCbClass(do_solver=self, callback=callback)
+        return self.cb_object.callback_func
 
     def solve(
         self,
@@ -116,7 +155,9 @@ class CpmpySolver(CpSolver):
 
         kwargs_solve = dict(kwargs)
         solver = kwargs_solve.pop("solver", "ortools")
-        self.model.solve(solver, time_limit=time_limit, **kwargs_solve)
+        display = self.create_callback_function(callback=callbacks_list)
+
+        self.model.solve(solver, time_limit=time_limit, display=display, **kwargs_solve)
         self.cpm_status = self.model.cpm_status
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
 
