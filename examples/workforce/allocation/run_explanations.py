@@ -1,7 +1,11 @@
+#  Copyright (c) 2025 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+from copy import copy, deepcopy
 from datetime import datetime
-from typing import Tuple
+from typing import Optional, Tuple
 
-import networkx as nx
+import cpmpy
 import plotly.io as pio
 from cpmpy import SolverLookup
 
@@ -9,15 +13,20 @@ from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpyCorrectUnsatMethod,
     CpmpyExplainUnsatMethod,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
+from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.workforce.allocation.parser import (
     build_allocation_problem_from_scheduling,
 )
-from discrete_optimization.workforce.allocation.problem import satisfy_same_allocation
+from discrete_optimization.workforce.allocation.problem import (
+    TeamAllocationProblem,
+    TeamAllocationSolution,
+)
 from discrete_optimization.workforce.allocation.solvers.cpmpy import (
-    MetaCpmpyConstraint,
-    CPMpyTeamAllocationSolver,
     CPMpyTeamAllocationSolverStoreConstraintInfo,
+    MetaCpmpyConstraint,
     ModelisationAllocationCP,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
@@ -27,10 +36,7 @@ from discrete_optimization.workforce.allocation.solvers.cpsat import (
 from discrete_optimization.workforce.allocation.utils import plot_allocation_solution
 from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
-    create_scheduling_problem_several_resource_dropping,
-    cut_number_of_team,
     generate_allocation_disruption,
-    generate_resource_disruption_scenario_from,
 )
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
@@ -41,9 +47,7 @@ from discrete_optimization.workforce.scheduling.utils import (
     build_scheduling_problem_from_allocation,
     plotly_schedule_comparison,
 )
-from copy import copy, deepcopy
-from discrete_optimization.generic_tools.do_solver import StatusSolver
-from discrete_optimization.workforce.allocation.problem import TeamAllocationProblem, TeamAllocationSolution
+
 pio.renderers.default = "browser"  # or "vscode", "notebook", "colab", etc.
 
 
@@ -53,12 +57,16 @@ class InteractSolve:
         self.current_problem = copy(problem)
         self.solver = CPMpyTeamAllocationSolverStoreConstraintInfo(problem)
         self.solver.init_model(modelisation_allocation=ModelisationAllocationCP.BINARY)
-        soft = [copy(mc) for mc in self.solver.meta_constraints
-                if mc.metadata["type"] in {"allocated_task",
-                                           "same_allocation"}]
-        hard = [copy(mc) for mc in self.solver.meta_constraints
-                if mc.metadata["type"] not in {"allocated_task",
-                                               "same_allocation"}]
+        soft = [
+            copy(mc)
+            for mc in self.solver.meta_constraints
+            if mc.metadata["type"] in {"allocated_task", "same_allocation"}
+        ]
+        hard = [
+            copy(mc)
+            for mc in self.solver.meta_constraints
+            if mc.metadata["type"] not in {"allocated_task", "same_allocation"}
+        ]
         self.soft = soft
         self.hard = hard
         self.current_soft = soft
@@ -102,11 +110,9 @@ class InteractSolve:
         # self.solver.model.constraints = self.current_soft + self.current_hard
 
     def put_as_hard(self, constraints: list[MetaCpmpyConstraint]):
-        self.current_soft = [c for c in self.current_soft
-                             if c not in constraints]
+        self.current_soft = [c for c in self.current_soft if c not in constraints]
         # self.current_soft_str = set([str(c) for c in self.current_soft])
-        self.current_hard += [c for c in constraints
-                              if c not in self.current_hard]
+        self.current_hard += [c for c in constraints if c not in self.current_hard]
         self.current_hard_str = set([str(c) for c in self.current_hard])
         cstrs = []
         for m in self.current_soft:
@@ -117,11 +123,57 @@ class InteractSolve:
 
     def solve_current_problem(self, **kwargs) -> Tuple[StatusSolver, ResultStorage]:
         # temporary fix
-        self.solver.cpm_solver = SolverLookup.get(self.solver.solver_name, self.solver.model)
+        self.solver.cpm_solver = SolverLookup.get(
+            self.solver.solver_name, self.solver.model
+        )
         res = self.solver.solve(**kwargs)
         status = self.solver.status_solver
         # sol, fit = res.get_best_solution_fit()
         return status, res
+
+    def solve_relaxed_problem(
+        self, base_solution: Optional[TeamAllocationSolution] = None
+    ):
+        model = cpmpy.Model()
+        allocation_binary = self.solver.variables["allocation_binary"]
+        is_allocated = cpmpy.boolvar(self.problem.number_of_activity, "is_allocated")
+        for i in range(self.problem.number_of_activity):
+            model += [
+                is_allocated[i].implies(
+                    sum([allocation_binary[i][j] for j in allocation_binary[i]]) == 1
+                )
+            ]
+        weight = [1000 for i in range(self.problem.number_of_activity)]
+        for t in self.dropped_tasks:
+            weight[t] = -10
+        cstrs = []
+        for m in self.current_soft:
+            print(m.metadata["type"])
+            if m.metadata["type"] != "allocated_task":
+                cstrs.extend(m.constraints)
+        for m in self.current_hard:
+            cstrs.extend(m.constraints)
+        delta_objective = 0
+        if base_solution is not None:
+            for i in range(self.problem.number_of_activity):
+                if i not in self.dropped_tasks:
+                    for j in allocation_binary[i]:
+                        if j == base_solution.allocation[i]:
+                            delta_objective += 1 - allocation_binary[i][j]
+        model += cstrs
+        model.maximize(
+            -100 * delta_objective
+            + sum(
+                [
+                    is_allocated[i] * weight[i]
+                    for i in range(self.problem.number_of_activity)
+                ]
+            )
+        )
+        # cpm_solver = SolverLookup.get(self.solver.solver_name, model)
+        res = model.solve(solver="ortools", time_limit=2)
+        sol = self.solver.retrieve_current_solution()
+        return sol
 
     def reset(self):
         self.current_soft = deepcopy(self.soft)
@@ -129,7 +181,6 @@ class InteractSolve:
         self.current_hard_str = set([str(c) for c in self.current_hard])
         self.current_soft_str = set([str(c) for c in self.current_soft])
         self.solver.model.constraints = self.current_soft + self.current_hard
-
 
 
 def run_disruption_creation():
@@ -171,14 +222,17 @@ def run_disruption_creation():
     res = solver.solve(time_limit=2)
     print(solver.status_solver)
     print(solver.get_types_of_meta_constraints())
-    soft = [mc for mc in solver.meta_constraints
-            if mc.metadata["type"] in {"nb_max_teams",
-                                       "same_allocation",
-                                       "clique_overlap"}]
-    hard = [mc for mc in solver.meta_constraints
-            if mc.metadata["type"] not in {"nb_max_teams",
-                                           "same_allocation",
-                                           "clique_overlap"}]
+    soft = [
+        mc
+        for mc in solver.meta_constraints
+        if mc.metadata["type"] in {"nb_max_teams", "same_allocation", "clique_overlap"}
+    ]
+    hard = [
+        mc
+        for mc in solver.meta_constraints
+        if mc.metadata["type"]
+        not in {"nb_max_teams", "same_allocation", "clique_overlap"}
+    ]
     explanations = solver.explain_unsat_meta(
         soft=soft,
         hard=hard,
@@ -186,8 +240,9 @@ def run_disruption_creation():
         solver="exact",
     )
     start_shift = datetime(day=1, month=7, year=2025).timestamp()
-    sched_problem = build_scheduling_problem_from_allocation(problem=allocation_problem,
-                                                             horizon_start_shift=start_shift)
+    sched_problem = build_scheduling_problem_from_allocation(
+        problem=allocation_problem, horizon_start_shift=start_shift
+    )
     sched_scheduling = alloc_solution_to_alloc_sched_solution(
         problem=sched_problem, solution=sol
     )
@@ -211,23 +266,28 @@ def run_disruption_creation():
     for exp in explanations:
         print(exp)
 
-    soft = [mc for mc in solver.meta_constraints
-            if mc.metadata["type"] in {"same_allocation",
-                                       "allocated_task"}]
-    hard = [mc for mc in solver.meta_constraints
-            if mc.metadata["type"] not in {"same_allocation",
-                                           "allocated_task"}]
-    mcs = solver.correct_unsat_meta(soft=soft,
-                                    hard=hard,
-                                    cpmpy_method=CpmpyCorrectUnsatMethod.mcs_grow,
-                                    solver="exact")
+    soft = [
+        mc
+        for mc in solver.meta_constraints
+        if mc.metadata["type"] in {"same_allocation", "allocated_task"}
+    ]
+    hard = [
+        mc
+        for mc in solver.meta_constraints
+        if mc.metadata["type"] not in {"same_allocation", "allocated_task"}
+    ]
+    mcs = solver.correct_unsat_meta(
+        soft=soft,
+        hard=hard,
+        cpmpy_method=CpmpyCorrectUnsatMethod.mcs_grow,
+        solver="exact",
+    )
     for mc in mcs:
         print(mc.metadata)
 
 
 def interactive_solving():
-    kwargs_mus = {"solver": "exact",
-                  "cpmpy_method": CpmpyExplainUnsatMethod.mus}
+    kwargs_mus = {"solver": "exact", "cpmpy_method": CpmpyExplainUnsatMethod.mus}
     instances = [p for p in get_data_available()]
     scheduling_problem = parse_json_to_problem(instances[1])
     allocation_problem = build_allocation_problem_from_scheduling(
@@ -240,36 +300,41 @@ def interactive_solving():
     solver = CPMpyTeamAllocationSolverStoreConstraintInfo(problem=allocation_problem)
 
     start_shift = datetime(day=1, month=7, year=2025).timestamp()
-    sched_problem = build_scheduling_problem_from_allocation(problem=allocation_problem,
-                                                             horizon_start_shift=start_shift)
+    sched_problem = build_scheduling_problem_from_allocation(
+        problem=allocation_problem, horizon_start_shift=start_shift
+    )
     sched_scheduling = alloc_solution_to_alloc_sched_solution(
         problem=sched_problem, solution=sol
     )
     solver.init_model(modelisation_allocation=ModelisationAllocationCP.BINARY)
     # copy meta constraints as we will update them later
-    meta_constraints = [copy(mc) for mc in solver.meta_constraints
-            if mc.metadata["type"] in {"allocated_task",
-                                       "same_allocation",
-                                       "clique_overlap"}]
-    hard = [copy(mc) for mc in solver.meta_constraints
-            if mc.metadata["type"] not in {"allocated_task",
-                                           "same_allocation",
-                                           "clique_overlap"}]
+    meta_constraints = [
+        copy(mc)
+        for mc in solver.meta_constraints
+        if mc.metadata["type"]
+        in {"allocated_task", "same_allocation", "clique_overlap"}
+    ]
+    hard = [
+        copy(mc)
+        for mc in solver.meta_constraints
+        if mc.metadata["type"]
+        not in {"allocated_task", "same_allocation", "clique_overlap"}
+    ]
     done = False
     removed_meta = []
     while not done:
         print("Solving...")
         result_store = solver.solve()
         if solver.status_solver == StatusSolver.OPTIMAL:
-            plot_allocation_solution(problem=allocation_problem,
-                                     sol=result_store[-1][0],
-                                     display=True)
+            plot_allocation_solution(
+                problem=allocation_problem, sol=result_store[-1][0], display=True
+            )
             print(allocation_problem.evaluate(result_store[-1][0]))
         print(solver.status_solver)
         if solver.status_solver == StatusSolver.UNSATISFIABLE:
-            meta_mus = solver.explain_unsat_meta(soft=meta_constraints,
-                                                 hard=hard,
-                                                 **kwargs_mus)
+            meta_mus = solver.explain_unsat_meta(
+                soft=meta_constraints, hard=hard, **kwargs_mus
+            )
             if True:
                 tasks_in_conflict = []
                 for mc in meta_mus:
@@ -290,7 +355,8 @@ def interactive_solving():
                 )
             print("The problem is unsatisfiable.")
             str_list_meta = "\n".join(
-                f"{i_meta}: {meta.name}, {meta.metadata}" for i_meta, meta in enumerate(meta_mus)
+                f"{i_meta}: {meta.name}, {meta.metadata}"
+                for i_meta, meta in enumerate(meta_mus)
             )
             i_meta = int(
                 input(
@@ -318,7 +384,7 @@ def interactive_solving():
             print("Before", len(meta_constraints))
             meta_constraints = [m for m in meta_constraints if m is not meta]
             print("After", len(meta_constraints))
-            #for other_meta in meta_constraints:
+            # for other_meta in meta_constraints:
             #    other_meta.constraints = [
             #        c for c in other_meta.constraints if id(c) not in subconstraints_ids
             #    ]
@@ -337,8 +403,7 @@ def interactive_solving():
 
 
 def interactive_solving_mcs():
-    kwargs_mcs = {"solver": "exact",
-                  "cpmpy_method": CpmpyCorrectUnsatMethod.mcs_grow}
+    kwargs_mcs = {"solver": "exact", "cpmpy_method": CpmpyCorrectUnsatMethod.mcs_grow}
     instances = [p for p in get_data_available()]
     scheduling_problem = parse_json_to_problem(instances[1])
     allocation_problem = build_allocation_problem_from_scheduling(
@@ -351,34 +416,39 @@ def interactive_solving_mcs():
     solver = CPMpyTeamAllocationSolverStoreConstraintInfo(problem=allocation_problem)
 
     start_shift = datetime(day=1, month=7, year=2025).timestamp()
-    sched_problem = build_scheduling_problem_from_allocation(problem=allocation_problem,
-                                                             horizon_start_shift=start_shift)
+    sched_problem = build_scheduling_problem_from_allocation(
+        problem=allocation_problem, horizon_start_shift=start_shift
+    )
     sched_scheduling = alloc_solution_to_alloc_sched_solution(
         problem=sched_problem, solution=sol
     )
     solver.init_model(modelisation_allocation=ModelisationAllocationCP.BINARY)
     # copy meta constraints as we will update them later
-    meta_constraints = [copy(mc) for mc in solver.meta_constraints
-            if mc.metadata["type"] in {"allocated_task",
-                                       "same_allocation"}]
-    hard = [copy(mc) for mc in solver.meta_constraints
-            if mc.metadata["type"] not in {"allocated_task",
-                                           "same_allocation"}]
+    meta_constraints = [
+        copy(mc)
+        for mc in solver.meta_constraints
+        if mc.metadata["type"] in {"allocated_task", "same_allocation"}
+    ]
+    hard = [
+        copy(mc)
+        for mc in solver.meta_constraints
+        if mc.metadata["type"] not in {"allocated_task", "same_allocation"}
+    ]
     done = False
     removed_meta = []
     while not done:
         print("Solving...")
         result_store = solver.solve()
         if solver.status_solver == StatusSolver.OPTIMAL:
-            plot_allocation_solution(problem=allocation_problem,
-                                     sol=result_store[-1][0],
-                                     display=True)
+            plot_allocation_solution(
+                problem=allocation_problem, sol=result_store[-1][0], display=True
+            )
             print(allocation_problem.evaluate(result_store[-1][0]))
         print(solver.status_solver)
         if solver.status_solver == StatusSolver.UNSATISFIABLE:
-            meta_mus = solver.correct_unsat_meta(soft=meta_constraints,
-                                                 hard=hard,
-                                                 **kwargs_mcs)
+            meta_mus = solver.correct_unsat_meta(
+                soft=meta_constraints, hard=hard, **kwargs_mcs
+            )
             if True:
                 tasks_in_conflict = []
                 for mc in meta_mus:
@@ -399,7 +469,8 @@ def interactive_solving_mcs():
                 )
             print("The problem is unsatisfiable.")
             str_list_meta = "\n".join(
-                f"{i_meta}: {meta.name}, {meta.metadata}" for i_meta, meta in enumerate(meta_mus)
+                f"{i_meta}: {meta.name}, {meta.metadata}"
+                for i_meta, meta in enumerate(meta_mus)
             )
             i_meta = int(
                 input(
@@ -427,7 +498,7 @@ def interactive_solving_mcs():
             print("Before", len(meta_constraints))
             meta_constraints = [m for m in meta_constraints if m is not meta]
             print("After", len(meta_constraints))
-            #for other_meta in meta_constraints:
+            # for other_meta in meta_constraints:
             #    other_meta.constraints = [
             #        c for c in other_meta.constraints if id(c) not in subconstraints_ids
             #    ]
@@ -446,8 +517,7 @@ def interactive_solving_mcs():
 
 
 def interactive_solving_with_interact_obj():
-    kwargs_mus = {"solver": "exact",
-                  "cpmpy_method": CpmpyExplainUnsatMethod.mus}
+    kwargs_mus = {"solver": "exact", "cpmpy_method": CpmpyExplainUnsatMethod.mus}
     instances = [p for p in get_data_available()]
     scheduling_problem = parse_json_to_problem(instances[1])
     allocation_problem = build_allocation_problem_from_scheduling(
@@ -460,8 +530,9 @@ def interactive_solving_with_interact_obj():
     solver = CPMpyTeamAllocationSolverStoreConstraintInfo(problem=allocation_problem)
 
     start_shift = datetime(day=1, month=7, year=2025).timestamp()
-    sched_problem = build_scheduling_problem_from_allocation(problem=allocation_problem,
-                                                             horizon_start_shift=start_shift)
+    sched_problem = build_scheduling_problem_from_allocation(
+        problem=allocation_problem, horizon_start_shift=start_shift
+    )
     sched_scheduling = alloc_solution_to_alloc_sched_solution(
         problem=sched_problem, solution=sol
     )
@@ -475,15 +546,17 @@ def interactive_solving_with_interact_obj():
         print("Solving...")
         status_solver, result_store = interact_solve.solve_current_problem()
         if status_solver == StatusSolver.OPTIMAL:
-            plot_allocation_solution(problem=allocation_problem,
-                                     sol=result_store[-1][0],
-                                     display=True)
+            plot_allocation_solution(
+                problem=allocation_problem, sol=result_store[-1][0], display=True
+            )
             print(allocation_problem.evaluate(result_store[-1][0]))
         print(status_solver)
         if status_solver == StatusSolver.UNSATISFIABLE:
-            meta_mus = solver.explain_unsat_meta(soft=interact_solve.current_soft,
-                                                 hard=interact_solve.current_hard,
-                                                 **kwargs_mus)
+            meta_mus = solver.explain_unsat_meta(
+                soft=interact_solve.current_soft,
+                hard=interact_solve.current_hard,
+                **kwargs_mus,
+            )
             if True:
                 tasks_in_conflict = []
                 for mc in meta_mus:
@@ -494,17 +567,25 @@ def interactive_solving_with_interact_obj():
                         print(mc.metadata)
                         tasks_in_conflict.extend(list(mc.metadata["tasks_index"]))
                     print(mc.metadata)
+                rel_sol = interact_solve.solve_relaxed_problem(base_solution=sol)
+                upd_sol = alloc_solution_to_alloc_sched_solution(
+                    problem=sched_problem, solution=rel_sol
+                )
+                color_map = {i: "red" for i in tasks_in_conflict}
+                for t in interact_solve.dropped_tasks:
+                    color_map[t] = "orange"
                 plotly_schedule_comparison(
                     base_solution=sched_scheduling,
-                    updated_solution=sched_scheduling,
+                    updated_solution=upd_sol,
                     problem=sched_problem,
                     use_color_map_per_task=True,
-                    color_map_per_task={i: "red" for i in tasks_in_conflict},
+                    color_map_per_task=color_map,
                     display=True,
                 )
             print("The problem is unsatisfiable.")
             str_list_meta = "\n".join(
-                f"{i_meta}: {meta.name}, {meta.metadata}" for i_meta, meta in enumerate(meta_mus)
+                f"{i_meta}: {meta.name}, {meta.metadata}"
+                for i_meta, meta in enumerate(meta_mus)
             )
             i_meta = int(
                 input(
@@ -535,7 +616,6 @@ def interactive_solving_with_interact_obj():
         else:
             print(f"No solution found and status is {solver.status_solver}. Exiting.")
             break
-
 
 
 if __name__ == "__main__":
