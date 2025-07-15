@@ -501,5 +501,4 @@ def fetch_all_datasets(data_home: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    fetch_mis_from_repo(data_home=None)
-    # fetch_all_datasets()
+    fetch_all_datasets()
