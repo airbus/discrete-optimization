@@ -346,6 +346,31 @@ def fetch_data_for_mis(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_mis_from_repo(data_home: Optional[str] = None):
+    url_repo = "https://github.com/g-poveda/do-data"
+    sha_url_repo = "b2c6e5ad16dea25e39602622ac7dd16c9e9b4c1d"
+    url = f"{url_repo}/archive/{sha_url_repo}.zip"
+    try:
+        local_file_path, headers = urlretrieve(url)
+        # extract only data
+        with zipfile.ZipFile(local_file_path) as zipf:
+            namelist = zipf.namelist()
+            rootdir = namelist[0].split("/")[0]
+            dataset_dir = f"{data_home}/mis"
+            os.makedirs(dataset_dir, exist_ok=True)
+            dataset_prefix_in_zip = f"{rootdir}/mis/"
+            for name in namelist:
+                if name.startswith(dataset_prefix_in_zip):
+                    zipf.extract(name, path=dataset_dir)
+            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
+                os.replace(
+                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
+                )
+            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+    finally:
+        urlcleanup()
+
+
 def fetch_data_from_jsplib_repo(data_home: Optional[str] = None):
     """Fetch data from jsplib repo. (for jobshop problems)
 
@@ -470,7 +495,8 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_psplib(data_home=data_home)
     fetch_data_from_imopse(data_home=data_home)
     fetch_data_from_solutionsupdate(data_home=data_home)
-    fetch_data_for_mis(data_home=data_home)
+    # fetch_data_for_mis(data_home=data_home)
+    fetch_mis_from_repo(data_home=data_home)
     fetch_data_from_jsplib_repo(data_home=data_home)
     fetch_data_from_bppc(data_home=data_home)
     # fetch_data_fjsp(data_home=data_home)
