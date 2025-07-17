@@ -1,6 +1,6 @@
 import random
 from copy import deepcopy
-from typing import Dict, Hashable, Optional
+from typing import Dict, Hashable, Optional, Union
 
 import numpy as np
 
@@ -49,7 +49,9 @@ class ParamsRandomness:
         self.seed = seed
         self.random_state = RandomState(self.seed)
 
-    def generate_list(self, solution: TeamAllocationSolution):
+    def generate_list(
+        self, solution: Union[TeamAllocationSolution, AllocSchedulingSolution]
+    ):
         self.nb_disruption = self.random_state.get_discrete_truncated_uniform_sample(
             lower=self.lower_nb_disruption, upper=self.upper_nb_disruption
         )
@@ -95,13 +97,15 @@ class ParamsRandomness:
             for _ in range(self.nb_disruption)
         ]
 
-        problem = solution.problem
+        problem: Union[TeamAllocationProblem, AllocSchedulingProblem] = solution.problem
+        index_to_team = None
+        if isinstance(problem, TeamAllocationProblem):
+            index_to_team = problem.index_to_teams_name
+        if isinstance(problem, AllocSchedulingProblem):
+            index_to_team = problem.index_to_team
+
         used_teams = list(
-            {
-                i
-                for i in set(solution.allocation)
-                if int(i) in problem.index_to_teams_name
-            }
+            {i for i in set(solution.allocation) if int(i) in index_to_team}
         )
         disruptions = []
         for j in range(self.nb_disruption):
@@ -342,5 +346,54 @@ def generate_allocation_disruption(
         "original_allocation_solution": original_solution,
         "new_allocation_problem": new_alloc_problem,
         "new_solution": new_solution,
+        "list_drop_resource": list_drop_resource,
+    }
+
+
+def generate_scheduling_disruption(
+    original_scheduling_problem: AllocSchedulingProblem,
+    original_solution: AllocSchedulingSolution,
+    list_drop_resource: Optional[list[tuple[int, int, int]]] = None,
+    params_randomness: Optional[ParamsRandomness] = None,
+):
+    if list_drop_resource is None:
+        some_resource = random.choice(original_solution.allocation)
+        list_drop_resource = [(3 * 60, 9 * 60, some_resource)]
+    if params_randomness is not None:
+        list_drop_resource = params_randomness.generate_list(solution=original_solution)
+
+    new_calendar = deepcopy(original_scheduling_problem.calendar_team)
+    for from_time, to_time, index_team_name in list_drop_resource:
+        nc = []
+        team_name = original_scheduling_problem.team_names[index_team_name]
+        for st, end in new_calendar[team_name]:
+            if st <= from_time and end >= to_time:
+                nc.append((st, from_time))
+                nc.append((to_time, end))
+            elif st <= from_time and end <= from_time:
+                nc.append((st, end))
+            elif from_time <= st <= to_time:
+                if end > to_time:
+                    nc.append((to_time, end))
+            else:
+                nc.append((st, end))
+        new_calendar[team_name] = nc
+    new_scheduling_problem = deepcopy(original_scheduling_problem)
+    new_scheduling_problem.calendar_team = new_calendar
+    nb_team_used = original_scheduling_problem.evaluate(original_solution)["nb_teams"]
+    used_teams_dict = {}
+    used_team_set = set(original_solution.allocation)
+    for team in original_scheduling_problem.index_to_team:
+        if team not in used_team_set:
+            used_teams_dict[team] = False
+    additional_cp_constraints = AdditionalCPConstraints(
+        nb_teams_bounds=(None, nb_team_used),  # (nb_team_used - 1, nb_team_used),
+        team_used_constraint=used_teams_dict,
+        set_tasks_ignore_reallocation=set(),
+        forced_allocation={},
+    )
+    return {
+        "scheduling_problem": new_scheduling_problem,
+        "additional_constraint_scheduling": additional_cp_constraints,
         "list_drop_resource": list_drop_resource,
     }
