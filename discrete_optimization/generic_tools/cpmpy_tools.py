@@ -10,10 +10,12 @@ from enum import Enum
 from typing import Any, Optional
 
 import cpmpy
+from cpmpy import SolverLookup
 from cpmpy.expressions.core import Expression
-from cpmpy.expressions.variables import NDVarArray
+from cpmpy.expressions.variables import NDVarArray, _BoolVarImpl
 from cpmpy.model import Model
-from cpmpy.solvers.solver_interface import ExitStatus, SolverStatus
+from cpmpy.solvers.ortools import OrtSolutionPrinter
+from cpmpy.solvers.solver_interface import ExitStatus, SolverInterface, SolverStatus
 from cpmpy.tools import make_assump_model
 from cpmpy.tools.explain.mcs import mcs_grow, mcs_opt
 from cpmpy.tools.explain.mus import (
@@ -157,15 +159,20 @@ class CpmpySolver(CpSolver):
 
         kwargs_solve = dict(kwargs)
         solver = kwargs_solve.pop("solver", "ortools")
+        solver_obj = SolverLookup.get(solver, self.model)
         display = self.create_callback_function(callback=callbacks_list)
         if solver == "ortools":
             kwargs_solve["solution_callback"] = _OrtoolsCpSatCallbackViaCpmpy(
-                do_solver=self, callback=callbacks_list, retrieve_stats=True
+                do_solver=self,
+                solver_obj=solver_obj,
+                callback=callbacks_list,
+                retrieve_stats=True,
             )
         else:
             kwargs_solve["display"] = display
-        self.model.solve(solver, time_limit=time_limit, **kwargs_solve)
-        self.cpm_status = self.model.cpm_status
+        self.model.solve()
+        solver_obj.solve(time_limit=time_limit, **kwargs_solve)
+        self.cpm_status = solver_obj.status()
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
 
         if self.cpm_status.exitstatus in [ExitStatus.UNSATISFIABLE, ExitStatus.ERROR]:
@@ -594,10 +601,13 @@ class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
     def __init__(
         self,
         do_solver: CpmpySolver,
+        solver_obj: SolverInterface,
         callback: Callback,
         retrieve_stats: bool = False,
     ):
         super().__init__()
+        self._varmap = solver_obj._varmap
+        self._cpm_vars = solver_obj.user_vars
         self.do_solver = do_solver
         self.callback = callback
         self.retrieve_stats = retrieve_stats
@@ -626,6 +636,18 @@ class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
             self.StopSearch()
 
     def store_current_solution(self):
+        # Store the cpsat values in the cpm vars, before calling retrieve current solution (taken from
+        if len(self._cpm_vars):
+            # populate values before printing
+            for cpm_var in self._cpm_vars:
+                # it might be an NDVarArray
+                if hasattr(cpm_var, "flat"):
+                    for cpm_subvar in cpm_var.flat:
+                        cpm_subvar._value = self.Value(self._varmap[cpm_subvar])
+                elif isinstance(cpm_var, _BoolVarImpl):
+                    cpm_var._value = bool(self.Value(self._varmap[cpm_var]))
+                else:
+                    cpm_var._value = self.Value(self._varmap[cpm_var])
         sol = self.do_solver.retrieve_current_solution()
         fit = self.do_solver.aggreg_from_sol(sol)
         self.res.append((sol, fit))
@@ -643,4 +665,3 @@ class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
         self.do_solver._current_internal_objective_best_bound = (
             self.BestObjectiveBound()
         )
-
