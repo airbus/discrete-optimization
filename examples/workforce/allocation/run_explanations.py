@@ -530,12 +530,17 @@ def interactive_solving_with_interact_obj():
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
     # allocation_problem.allocation_additional_constraint.nb_max_teams = 8
-    from discrete_optimization.workforce.generators.resource_scenario import generate_allocation_disruption
-    d = generate_allocation_disruption(original_allocation_problem=allocation_problem,
-                                       original_solution=sol,
-                                       params_randomness=ParamsRandomness(upper_nb_disruption=2,
-                                                                          lower_nb_teams=1,
-                                                                          upper_nb_teams=2))
+    from discrete_optimization.workforce.generators.resource_scenario import (
+        generate_allocation_disruption,
+    )
+
+    d = generate_allocation_disruption(
+        original_allocation_problem=allocation_problem,
+        original_solution=sol,
+        params_randomness=ParamsRandomness(
+            upper_nb_disruption=2, lower_nb_teams=1, upper_nb_teams=2
+        ),
+    )
     allocation_problem = d["new_allocation_problem"]
     sol = d["new_solution"]
     solver = CPMpyTeamAllocationSolverStoreConstraintInfo(problem=allocation_problem)

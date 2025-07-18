@@ -94,6 +94,9 @@ def run_cpsat_delta():
         time_limit=10,
         ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
     )
+    changes = compute_changes_between_solution(solution_a=sol, solution_b=res[-1][0])
+    for key in ["nb_reallocated", "nb_shift", "mean_shift", "sum_shift", "max_shift"]:
+        print(key, " : ", changes[key])
     plotly_schedule_comparison(
         base_solution=sol,
         updated_solution=res[-1][0],
