@@ -4,15 +4,18 @@
 # Thanks to Leuven university for the cpmpy library.
 from __future__ import annotations
 
+import inspect
 from abc import abstractmethod
 from collections.abc import Callable
 from enum import Enum
 from typing import Any, Optional
 
 import cpmpy
+from cpmpy import SolverLookup
 from cpmpy.expressions.core import Expression
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Model
+from cpmpy.solvers import CPM_ortools
 from cpmpy.solvers.solver_interface import ExitStatus, SolverStatus
 from cpmpy.tools import make_assump_model
 from cpmpy.tools.explain.mcs import mcs_grow, mcs_opt
@@ -25,6 +28,7 @@ from cpmpy.tools.explain.mus import (
     quickxplain_naive,
     smus,
 )
+from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -37,6 +41,7 @@ from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -157,7 +162,13 @@ class CpmpySolver(CpSolver):
         solver = kwargs_solve.pop("solver", "ortools")
         display = self.create_callback_function(callback=callbacks_list)
         if solver == "ortools":
-            kwargs_solve["solution_callback"] = display
+            from discrete_optimization.generic_tools.ortools_cpsat_tools import (
+                OrtoolsCpSatCallback,
+            )
+
+            kwargs_solve["solution_callback"] = OrtoolsCpSatCallback(
+                do_solver=self, callback=callbacks_list, retrieve_stats=True
+            )
         else:
             kwargs_solve["display"] = display
         self.model.solve(solver, time_limit=time_limit, **kwargs_solve)
