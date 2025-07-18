@@ -3,7 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
+from copy import deepcopy
 
+import didppy as dp
 import pandas as pd
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
@@ -37,6 +39,7 @@ from discrete_optimization.workforce.allocation.solvers.cpsat import (
     CpsatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
+from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSolver
 
 study_name = "allocation-study-0"
 overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
@@ -70,11 +73,14 @@ solver_configs = {
             "parameters_cp": p,
             "time_limit": 5,
             "modelisation_allocation": ModelisationAllocationOrtools.INTEGER,
-            "add_lower_bound_nb_teams": False,
+            "add_lower_bound_nb_teams": True,
         },
     ),
 }
-
+for solver in ["CABS", "LNBS"]:
+    solver_configs[f"dp-{solver}"] = SolverConfig(
+        cls=DpAllocationSolver, kwargs=dict(solver=solver, time_limit=5)
+    )
 database_filepath = f"{study_name}.h5"
 if overwrite:
     try:
@@ -106,6 +112,11 @@ for instance in instances:
                 **solver_config.kwargs,
             )
             solver.init_model(**solver_config.kwargs)
+            kwargs_modif = deepcopy(solver_config.kwargs)
+            if isinstance(solver, DpAllocationSolver):
+                kwargs_modif["solver"] = {"LNBS": dp.LNBS, "CABS": dp.CABS}[
+                    kwargs_modif["solver"]
+                ]
             # solve
             result_store = solver.solve(
                 callbacks=[
@@ -113,7 +124,7 @@ for instance in instances:
                     NbIterationTracker(step_verbosity_level=logging.INFO),
                     # ObjectiveGapStopper(objective_gap_rel=0, objective_gap_abs=0),
                 ],
-                **solver_config.kwargs,
+                **kwargs_modif,
             )
         except Exception as e:
             # failed experiment
