@@ -110,4 +110,4 @@ def run_cpsat_delta():
 
 
 if __name__ == "__main__":
-    run_cpsat_delta()
+    run_cpsat()

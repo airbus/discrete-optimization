@@ -24,6 +24,7 @@ from discrete_optimization.workforce.scheduling.solvers.cpsat import (
 from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (
     CPSatAllocSchedulingSolverCumulative,
 )
+from discrete_optimization.workforce.scheduling.utils import plotly_schedule_comparison
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,6 +36,12 @@ def run_cumulative():
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
     )
+    res = solver.solve(
+        callbacks=[ObjectiveGapStopper(0, 0), BasicStatsCallback()],
+        parameters_cp=ParametersCp.default_cpsat(),
+        time_limit=10,
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
     res = solver.solve_two_step(
         callbacks=[ObjectiveGapStopper(0, 0), BasicStatsCallback()],
         parameters_cp=ParametersCp.default_cpsat(),
@@ -43,6 +50,9 @@ def run_cumulative():
     )
     sol = res[-1][0]
     print(problem.satisfy(sol), problem.evaluate(sol))
+    plotly_schedule_comparison(
+        sol, sol, problem=problem, plot_team_breaks=True, display=True
+    )
 
 
 if __name__ == "__main__":
