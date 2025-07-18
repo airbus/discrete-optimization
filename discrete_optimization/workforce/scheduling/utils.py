@@ -300,6 +300,7 @@ def plotly_schedule_comparison(
     if index_team_to_other_index is None:
         index_team_to_other_index = {i: i for i in problem.index_to_team}
     base_allocation = base_solution.allocation
+    max_time = np.max(base_solution.schedule[:, 1])
     base_schedule = base_solution.schedule + problem.horizon_start_shift // 60
     updated_schedule = updated_solution.schedule + problem.horizon_start_shift // 60
     min_ = np.min(base_schedule)
@@ -476,22 +477,24 @@ def plotly_schedule_comparison(
                 team_ = problem.team_names[team]
                 slots = problem.compute_unavailability_calendar(team_)
                 for slot in slots:
-                    print("Slot ", slot)
-                    fig.add_trace(
-                        go.Bar(
-                            x=[(slot[1] - slot[0])],
-                            y=[team_to_index[team]],
-                            dy=0.2,
-                            base=slot[0] + problem.horizon_start_shift // 60,
-                            orientation="h",
-                            # name=f"Break",
-                            # marker_color=[float(team_to_index[team_base]/len(team_to_index))],
-                            # marker_colorscale="rainbow",
-                            marker=dict(color="black", opacity=0.7),
-                            hovertemplate=f"<b>Break {team}</b> <br>",
-                            width=0.2,
+                    if slot[0]<max_time:
+                        right_side = min(slot[1], max_time+30)
+                        print("Slot ", slot)
+                        fig.add_trace(
+                            go.Bar(
+                                x=[(right_side - slot[0])],
+                                y=[team_to_index[team]],
+                                dy=0.2,
+                                base=slot[0] + problem.horizon_start_shift // 60,
+                                orientation="h",
+                                # name=f"Break",
+                                # marker_color=[float(team_to_index[team_base]/len(team_to_index))],
+                                # marker_colorscale="rainbow",
+                                marker=dict(color="black", opacity=0.7),
+                                hovertemplate=f"<b>Break {team}</b> <br>",
+                                width=0.2,
+                            )
                         )
-                    )
 
     min_date = int(np.min(base_schedule))
     max_date = int(np.max(base_schedule))
