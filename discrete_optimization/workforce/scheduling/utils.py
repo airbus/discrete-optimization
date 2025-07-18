@@ -726,23 +726,16 @@ def build_allocation_problem_from_scheduling(
     if problem_alloc is None:
         if not multiobjective:
             problem_alloc = TeamAllocationProblem(
-                graph_activity=Graph(
-                    nodes=[(t, {}) for t in problem.tasks_list], edges=[]
-                ),
-                graph_allocation=GraphBipartite(
-                    nodes=[(t, {}) for t in problem.tasks_list]
-                    + [(team, {}) for team in problem.team_names],
-                    edges=[],
-                    nodes_activity=set(problem.tasks_list),
-                    nodes_team=set(problem.team_names),
-                ),
                 allocation_additional_constraint=AllocationAdditionalConstraint(
                     same_allocation=problem.same_allocation,
                     allowed_allocation=problem.available_team_for_activity,
                 ),
                 calendar_team=calendars_team,
                 schedule_activity={
-                    t: (problem.original_start[t], problem.original_end[t])
+                    t: (
+                        solution.schedule[problem.tasks_to_index[t], 0],
+                        solution.schedule[problem.tasks_to_index[t], 1],
+                    )
                     for t in problem.original_start
                 },
                 activities_name=problem.tasks_list,
@@ -762,7 +755,10 @@ def build_allocation_problem_from_scheduling(
                 },
                 calendar_team=calendars_team,
                 schedule_activity={
-                    t: (problem.original_start[t], problem.original_end[t])
+                    t: (
+                        solution.schedule[problem.tasks_to_index[t], 0],
+                        solution.schedule[problem.tasks_to_index[t], 1],
+                    )
                     for t in problem.original_start
                 },
                 activities_name=problem.tasks_list,
