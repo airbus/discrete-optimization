@@ -105,7 +105,7 @@ def compute_changes_between_solution(
         [solution_b.allocation[problem_b.tasks_to_index[a]] for a in activities]
     )
     schedule_a = np.array(
-        [solution_b.schedule[problem_a.tasks_to_index[a], :] for a in activities]
+        [solution_a.schedule[problem_a.tasks_to_index[a], :] for a in activities]
     )
     schedule_b = np.array(
         [solution_b.schedule[problem_b.tasks_to_index[a], :] for a in activities]
@@ -477,8 +477,8 @@ def plotly_schedule_comparison(
                 team_ = problem.team_names[team]
                 slots = problem.compute_unavailability_calendar(team_)
                 for slot in slots:
-                    if slot[0]<max_time:
-                        right_side = min(slot[1], max_time+30)
+                    if slot[0] < max_time:
+                        right_side = min(slot[1], max_time + 30)
                         print("Slot ", slot)
                         fig.add_trace(
                             go.Bar(
