@@ -4,18 +4,15 @@
 # Thanks to Leuven university for the cpmpy library.
 from __future__ import annotations
 
-import inspect
 from abc import abstractmethod
 from collections.abc import Callable
 from enum import Enum
 from typing import Any, Optional
 
 import cpmpy
-from cpmpy import SolverLookup
 from cpmpy.expressions.core import Expression
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Model
-from cpmpy.solvers import CPM_ortools
 from cpmpy.solvers.solver_interface import ExitStatus, SolverStatus
 from cpmpy.tools import make_assump_model
 from cpmpy.tools.explain.mcs import mcs_grow, mcs_opt
@@ -162,11 +159,7 @@ class CpmpySolver(CpSolver):
         solver = kwargs_solve.pop("solver", "ortools")
         display = self.create_callback_function(callback=callbacks_list)
         if solver == "ortools":
-            from discrete_optimization.generic_tools.ortools_cpsat_tools import (
-                OrtoolsCpSatCallback,
-            )
-
-            kwargs_solve["solution_callback"] = OrtoolsCpSatCallback(
+            kwargs_solve["solution_callback"] = _OrtoolsCpSatCallbackViaCpmpy(
                 do_solver=self, callback=callbacks_list, retrieve_stats=True
             )
         else:
@@ -595,3 +588,59 @@ def _normalize_metaconstraints(
     meta_constraints: list[MetaCpmpyConstraint],
 ) -> list[MetaCpmpyConstraint]:
     return [meta.to_normalized() for meta in meta_constraints]
+
+
+class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
+    def __init__(
+        self,
+        do_solver: CpmpySolver,
+        callback: Callback,
+        retrieve_stats: bool = False,
+    ):
+        super().__init__()
+        self.do_solver = do_solver
+        self.callback = callback
+        self.retrieve_stats = retrieve_stats
+        self.res = do_solver.create_result_storage()
+        if retrieve_stats:
+            self.res.stats = []
+        self.nb_solutions = 0
+
+    def on_solution_callback(self) -> None:
+        self.store_current_solution()
+        self.nb_solutions += 1
+        # end of step callback: stopping?
+        try:
+            stopping = self.callback.on_step_end(
+                step=self.nb_solutions, res=self.res, solver=self.do_solver
+            )
+        except Exception as e:
+            self.do_solver.early_stopping_exception = e
+            stopping = True
+        else:
+            if stopping:
+                self.do_solver.early_stopping_exception = SolveEarlyStop(
+                    f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
+                )
+        if stopping:
+            self.StopSearch()
+
+    def store_current_solution(self):
+        sol = self.do_solver.retrieve_current_solution()
+        fit = self.do_solver.aggreg_from_sol(sol)
+        self.res.append((sol, fit))
+        if self.retrieve_stats:
+            self.res.stats.append(
+                {
+                    "bound": self.BestObjectiveBound(),
+                    "obj": self.ObjectiveValue(),
+                    "time": self.UserTime(),
+                    "num_conflicts": self.NumConflicts(),
+                }
+            )
+        # update current bound and value
+        self.do_solver._current_internal_objective_best_value = self.ObjectiveValue()
+        self.do_solver._current_internal_objective_best_bound = (
+            self.BestObjectiveBound()
+        )
+
