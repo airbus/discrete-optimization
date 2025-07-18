@@ -33,6 +33,9 @@ from discrete_optimization.workforce.scheduling.parser import (
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     CPSatAllocSchedulingSolver,
 )
+from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (
+    CPSatAllocSchedulingSolverCumulative,
+)
 
 study_name = "scheduling-study-0"
 overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
@@ -52,6 +55,7 @@ for p_cp, label in zip([p, p_mono_worker], ["multipro-10", "monopro"]):
                 "add_lower_bound": add_lower_bound,
             },
         )
+
 
 database_filepath = f"{study_name}.h5"
 if overwrite:

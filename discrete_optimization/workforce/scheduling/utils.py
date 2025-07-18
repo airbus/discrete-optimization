@@ -733,8 +733,8 @@ def build_allocation_problem_from_scheduling(
                 calendar_team=calendars_team,
                 schedule_activity={
                     t: (
-                        solution.schedule[problem.tasks_to_index[t], 0],
-                        solution.schedule[problem.tasks_to_index[t], 1],
+                        starts[problem.tasks_to_index[t]],
+                        ends[problem.tasks_to_index[t]],
                     )
                     for t in problem.original_start
                 },
@@ -756,8 +756,8 @@ def build_allocation_problem_from_scheduling(
                 calendar_team=calendars_team,
                 schedule_activity={
                     t: (
-                        solution.schedule[problem.tasks_to_index[t], 0],
-                        solution.schedule[problem.tasks_to_index[t], 1],
+                        starts[problem.tasks_to_index[t]],
+                        ends[problem.tasks_to_index[t]],
                     )
                     for t in problem.original_start
                 },
