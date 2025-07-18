@@ -260,6 +260,7 @@ def run_disruption_creation():
         updated_solution=sched_scheduling,
         problem=sched_problem,
         use_color_map_per_task=True,
+        plot_team_breaks=True,
         color_map_per_task={i: "red" for i in tasks_in_conflict},
         display=True,
     )
@@ -349,6 +350,7 @@ def interactive_solving():
                     base_solution=sched_scheduling,
                     updated_solution=sched_scheduling,
                     problem=sched_problem,
+                    plot_team_breaks=True,
                     use_color_map_per_task=True,
                     color_map_per_task={i: "red" for i in tasks_in_conflict},
                     display=True,
@@ -463,6 +465,7 @@ def interactive_solving_mcs():
                     base_solution=sched_scheduling,
                     updated_solution=sched_scheduling,
                     problem=sched_problem,
+                    plot_team_breaks=True,
                     use_color_map_per_task=True,
                     color_map_per_task={i: "red" for i in tasks_in_conflict},
                     display=True,
@@ -526,9 +529,16 @@ def interactive_solving_with_interact_obj():
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
-    allocation_problem.allocation_additional_constraint.nb_max_teams = 8
+    # allocation_problem.allocation_additional_constraint.nb_max_teams = 8
+    from discrete_optimization.workforce.generators.resource_scenario import generate_allocation_disruption
+    d = generate_allocation_disruption(original_allocation_problem=allocation_problem,
+                                       original_solution=sol,
+                                       params_randomness=ParamsRandomness(upper_nb_disruption=2,
+                                                                          lower_nb_teams=1,
+                                                                          upper_nb_teams=2))
+    allocation_problem = d["new_allocation_problem"]
+    sol = d["new_solution"]
     solver = CPMpyTeamAllocationSolverStoreConstraintInfo(problem=allocation_problem)
-
     start_shift = datetime(day=1, month=7, year=2025).timestamp()
     sched_problem = build_scheduling_problem_from_allocation(
         problem=allocation_problem, horizon_start_shift=start_shift
@@ -578,6 +588,7 @@ def interactive_solving_with_interact_obj():
                     base_solution=sched_scheduling,
                     updated_solution=upd_sol,
                     problem=sched_problem,
+                    plot_team_breaks=True,
                     use_color_map_per_task=True,
                     color_map_per_task=color_map,
                     display=True,
