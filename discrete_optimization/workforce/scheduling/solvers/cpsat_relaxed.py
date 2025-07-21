@@ -72,18 +72,6 @@ class CPSatAllocSchedulingSolverCumulative(
         CategoricalHyperparameter(
             name="optional_activities", choices=[False, True], default=False
         ),
-        CategoricalHyperparameter(
-            name="run_lexicographic", choices=[False, True], default=False
-        ),
-        CategoricalHyperparameter(
-            name="hint_lexicographic",
-            choices=[False, True],
-            default=False,
-            depends_on=("run_lexicographic", [True]),
-        ),
-        CategoricalHyperparameter(
-            name="run_multistep", choices=[False, True], default=False
-        ),
         EnumHyperparameter(
             name="modelisation_dispersion",
             enum=ModelisationDispersion,
