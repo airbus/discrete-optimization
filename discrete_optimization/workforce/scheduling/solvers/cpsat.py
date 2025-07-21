@@ -172,8 +172,6 @@ class CPSatAllocSchedulingSolver(
             for index_team in self.variables["is_present_var"][t]:
                 if cpsolvercb.Value(self.variables["is_present_var"][t][index_team]):
                     allocation[t] = index_team
-        # if np.sum(allocation == -1) > 0:
-        #     return None
         sol = AllocSchedulingSolution(
             problem=self.problem, schedule=schedule, allocation=allocation
         )
@@ -227,16 +225,11 @@ class CPSatAllocSchedulingSolver(
                         self.variables["objectives"][ObjectivesEnum.MAKESPAN],
                         int(np.max(solution.schedule[:, 1])),
                     )
-                # if ObjectivesEnum.NB_DONE_AC in self.variables["objectives"]:
-                #     self.cp_model.AddHint(self.variables["objectives"][ObjectivesEnum.NB_DONE_AC],
-                #                           len([x for x in solution.allocation
-                #                                if not np.isnan(x) and x != 1]))
         if self.solver is not None:
             self.cp_model.ClearHints()
             response = self.solver.ResponseProto()  # Get the raw response
             for i in range(len(response.solution)):
                 var = self.cp_model.GetIntVarFromProtoIndex(i)
-                # print(f"Variable {var} = {response.solution[i]}")
                 self.cp_model.AddHint(var, response.solution[i])
 
     def init_model(
@@ -366,7 +359,6 @@ class CPSatAllocSchedulingSolver(
                 opt_interval_var[x[0]][x[1]] for x in key_per_team[index_team]
             ]
             if len(fake_tasks_unavailable) + len(tasks_team) > 0:
-                # self.cp_model.AddNoOverlap(tasks_team+fake_tasks_unavailable)
                 self.cp_model.AddCumulative(
                     tasks_team + fake_tasks_unavailable,
                     [1] * (len(tasks_team) + len(fake_tasks_unavailable)),
@@ -502,25 +494,14 @@ class CPSatAllocSchedulingSolver(
             if obj == ObjectivesEnum.DISPERSION:
                 objs.append(self.variables["objectives"][ObjectivesEnum.DISPERSION])
                 weights.append(1.0)
-            if obj == ObjectivesEnum.DISPERSION_DISTANCE:
-                objs.append(
-                    self.variables["objectives"][ObjectivesEnum.DISPERSION_DISTANCE]
-                )
-                weights.append(1.0)
-            if obj == ObjectivesEnum.MIN_DISTANCE:
-                objs.append(self.variables["objectives"][ObjectivesEnum.MIN_DISTANCE])
-                weights.append(1.0)
-            if obj == ObjectivesEnum.MAX_DISTANCE:
-                objs.append(self.variables["objectives"][ObjectivesEnum.MAX_DISTANCE])
-                weights.append(1.0)
             if obj == ObjectivesEnum.MAKESPAN:
                 objs.append(self.variables["objectives"][ObjectivesEnum.MAKESPAN])
                 weights.append(1.0)
             if obj == ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION:
                 weights_dict = {
                     "reallocated": 1000,
-                    "sum_delta_schedule": 1,  # 100,
-                    "max_delta_schedule": 0,  # 10,
+                    "sum_delta_schedule": 1,
+                    "max_delta_schedule": 0,
                     "nb_shifted": 1,
                 }
                 for x in weights_dict:
@@ -586,37 +567,6 @@ class CPSatAllocSchedulingSolver(
 
             self.cp_model.AddMinEquality(min_value, variables["workload_per_team_nz"])
             self.variables["objectives"][ObjectivesEnum.MIN_WORKLOAD] = min_value
-        # if isinstance(self.problem, AllocSchedRoutingProblem):
-        #     key = "inner_distance"
-        #     inner_distance = [int(self.problem.inner_distance[t]) for t in self.problem.tasks_list]
-        #     if ObjectivesEnum.DISPERSION_DISTANCE in objectives:
-        #         dict_fairness = model_fairness(used_team=self.variables["used"],
-        #                                        allocation_variables=[self.variables["is_present_var"][i]
-        #                                                              for i in range(self.problem.number_tasks)],
-        #                                        value_per_task=inner_distance,
-        #                                        modelisation_dispersion=modelisation_dispersion,
-        #                                        cp_model=self.cp_model, number_teams=self.problem.number_teams,
-        #                                        name_value=key)
-        #         self.variables["objectives"][ObjectivesEnum.DISPERSION_DISTANCE] = dict_fairness["obj"]
-        #     if ObjectivesEnum.MIN_WORKLOAD in objectives or ObjectivesEnum.MAX_DISTANCE in objectives:
-        #         variables = cumulate_value_per_teams_version_2(used_team=self.variables["used"],
-        #                                                        allocation_variables=[self.variables["is_present_var"][i]
-        #                                                                              for i in
-        #                                                                              range(self.problem.number_tasks)],
-        #                                                        value_per_task=inner_distance,
-        #                                                        cp_model=self.cp_model,
-        #                                                        number_teams=self.problem.number_teams,
-        #                                                        name_value=key)
-        #         if ObjectivesEnum.MIN_WORKLOAD in objectives:
-        #             min_value = self.cp_model.NewIntVar(lb=0, ub=sum(dur),
-        #                                                 name="min_value_distance")
-        #             self.cp_model.AddMinEquality(min_value, variables["workload_per_team_nz"])
-        #             self.variables["objectives"][ObjectivesEnum.MIN_DISTANCE] = min_value
-        #         if ObjectivesEnum.MAX_DISTANCE in objectives:
-        #             min_value = self.cp_model.NewIntVar(lb=0, ub=sum(dur),
-        #                                                 name="max_value_distance")
-        #             self.cp_model.AddMaxEquality(min_value, variables["workload_per_team"])
-        #             self.variables["objectives"][ObjectivesEnum.MAX_DISTANCE] = min_value
 
     def set_additional_constraints(
         self, additional_constraint: AdditionalCPConstraints
@@ -712,16 +662,12 @@ class CPSatAllocSchedulingSolver(
             if team_of_base_solution is not None:
                 index_team = self.problem.teams_to_index[team_of_base_solution]
                 if not ignore_reallocation:
-                    # index_in_problem, index_team, i)
-                    # print(index_in_problem in self.variables["is_present_var"])
-                    # print(index_team in self.variables["is_present_var"][index_in_problem])
                     if (
                         index_team
                         not in self.variables["is_present_var"][index_in_problem]
                     ):
                         print("Problem")
                     else:
-                        # print(self.variables["is_present_var"][index_in_problem].keys())
                         self.cp_model.Add(
                             self.variables["is_present_var"][index_in_problem][
                                 index_team
@@ -766,8 +712,6 @@ class CPSatAllocSchedulingSolver(
         objs += [
             sum(is_shifted)
         ]  # Number of task that shifted at least by 1 unit of time.
-        # ask to minimize the maximum abs delta (shift of the schedule)
-        # self.cp_model.Minimize(max_delta_start)
         self.variables["resched_objs"] = {
             "reallocated": objs[0],
             "sum_delta_schedule": objs[1],
@@ -775,42 +719,6 @@ class CPSatAllocSchedulingSolver(
             "nb_shifted": objs[3],
         }
         return objs
-
-    # def create_workload_variables(self, values: list[int],
-    #                               is_present_var: dict[int, dict[int, IntVar]],
-    #                               key_per_team: dict[int, list[tuple[int, int]]],
-    #                               used: dict[int, IntVar],
-    #                               name_workload="workload"):
-    #     upper_bound_workload = int(sum(values))
-    #     workload = {index_team: self.cp_model.NewIntVar(lb=0, ub=upper_bound_workload,
-    #                                                     name=f"{name_workload}_{index_team}")
-    #                 for index_team in key_per_team}
-    #     workload_non_zero = {index_team: self.cp_model.NewIntVar(
-    #         0,
-    #         upper_bound_workload,
-    #         name=f"nz{name_workload}_{index_team}",
-    #     ) for index_team in key_per_team}
-    #     self.variables[f"workload_{workload}"] = workload
-    #     self.variables[f"workload_nz_{workload}"] = workload_non_zero
-    #     for index_team in workload:
-    #         self.cp_model.Add(sum([values[x[0]] * is_present_var[x[0]][x[1]]
-    #                                for x in key_per_team[index_team]]) == workload[index_team]).OnlyEnforceIf(used[index_team])
-    #         self.cp_model.Add(workload_non_zero[index_team] == workload[index_team]).OnlyEnforceIf(
-    #             used[index_team]
-    #         )
-    #         self.cp_model.Add(workload_non_zero[index_team] == upper_bound_workload).OnlyEnforceIf(
-    #             used[index_team].Not()
-    #         )
-    #     max_workload = self.cp_model.NewIntVar(
-    #         0, upper_bound_workload, name=f"max_{name_workload}"
-    #     )
-    #     self.cp_model.AddMaxEquality(max_workload, [workload[x] for x in workload])
-    #     min_workload = self.cp_model.NewIntVar(
-    #         0, upper_bound_workload, name=f"min_{name_workload}"
-    #     )
-    #     self.cp_model.AddMinEquality(min_workload, [workload_non_zero[x] for x in workload_non_zero])
-    #     # dispersion = max_workload - min_workload
-    #     return max_workload, min_workload
 
     def create_used_variable(
         self,

@@ -21,7 +21,6 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     SubBrickHyperparameter,
 )
 from discrete_optimization.generic_tools.ortools_cpsat_tools import (
-    OrtoolsCpSatCallback,
     OrtoolsCpSatSolver,
     ParametersCp,
 )
@@ -224,8 +223,6 @@ class CPSatAllocSchedulingSolverCumulative(
                     print("Still !!")
                     print(schedule[i_task, 0], schedule[i_task, 1])
                     print("Problem with task ", i_task)
-        # if np.sum(allocation == -1) > 0:
-        #     return None
         sol = AllocSchedulingSolution(
             problem=self.problem, schedule=schedule, allocation=allocation
         )
@@ -279,16 +276,11 @@ class CPSatAllocSchedulingSolverCumulative(
                         self.variables["objectives"][ObjectivesEnum.MAKESPAN],
                         int(np.max(solution.schedule[:, 1])),
                     )
-                # if ObjectivesEnum.NB_DONE_AC in self.variables["objectives"]:
-                #     self.cp_model.AddHint(self.variables["objectives"][ObjectivesEnum.NB_DONE_AC],
-                #                           len([x for x in solution.allocation
-                #                                if not np.isnan(x) and x != 1]))
         if self.solver is not None:
             self.cp_model.ClearHints()
             response = self.solver.ResponseProto()  # Get the raw response
             for i in range(len(response.solution)):
                 var = self.cp_model.GetIntVarFromProtoIndex(i)
-                # print(f"Variable {var} = {response.solution[i]}")
                 self.cp_model.AddHint(var, response.solution[i])
 
     def init_multimode_data(self, **kwargs):
@@ -478,29 +470,6 @@ class CPSatAllocSchedulingSolverCumulative(
     def add_buffers(self):
         pass
 
-    #
-    #
-    #
-    #
-    # if len(tasks_team) > 0:
-    #     if additional_constraints is not None:
-    #         if (additional_constraints.adding_margin_on_sequence[0]
-    #                 and additional_constraints.adding_margin_on_sequence[1] > 0):
-    #             margin = additional_constraints.adding_margin_on_sequence[1]
-    #             # create just additional interval for the "routing" constraint.
-    #             intervals = [
-    #                 self.cp_model.NewOptionalFixedSizeIntervalVar(
-    #                     start=starts_var[x[0]],
-    #                     size=dur[x[0]]+margin,
-    #                     is_present=is_present_var[x[0]][x[1]],
-    #                     name=f"dummy_longer_task_{x[0],x[1]}"
-    #                 )
-    #                 for x in key_per_team[index_team]
-    #             ]
-    #             self.cp_model.AddCumulative(intervals=intervals,
-    #                                         demands=[1]*len(intervals),
-    #                                         capacity=1)
-
     def create_makespan_obj(
         self, ends_var: dict[int, IntVar], st_lb: list[tuple[int, int, int, int]] = None
     ):
@@ -602,25 +571,14 @@ class CPSatAllocSchedulingSolverCumulative(
             if obj == ObjectivesEnum.DISPERSION:
                 objs.append(self.variables["objectives"][ObjectivesEnum.DISPERSION])
                 weights.append(1.0)
-            if obj == ObjectivesEnum.DISPERSION_DISTANCE:
-                objs.append(
-                    self.variables["objectives"][ObjectivesEnum.DISPERSION_DISTANCE]
-                )
-                weights.append(1.0)
-            if obj == ObjectivesEnum.MIN_DISTANCE:
-                objs.append(self.variables["objectives"][ObjectivesEnum.MIN_DISTANCE])
-                weights.append(1.0)
-            if obj == ObjectivesEnum.MAX_DISTANCE:
-                objs.append(self.variables["objectives"][ObjectivesEnum.MAX_DISTANCE])
-                weights.append(1.0)
             if obj == ObjectivesEnum.MAKESPAN:
                 objs.append(self.variables["objectives"][ObjectivesEnum.MAKESPAN])
                 weights.append(1.0)
             if obj == ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION:
                 weights_dict = {
                     "reallocated": 1000,
-                    "sum_delta_schedule": 1,  # 100,
-                    "max_delta_schedule": 0,  # 10,
+                    "sum_delta_schedule": 1,
+                    "max_delta_schedule": 0,
                     "nb_shifted": 1,
                 }
                 for x in weights_dict:
@@ -732,16 +690,12 @@ class CPSatAllocSchedulingSolverCumulative(
             if team_of_base_solution is not None:
                 index_team = self.problem.teams_to_index[team_of_base_solution]
                 if not ignore_reallocation:
-                    # index_in_problem, index_team, i)
-                    # print(index_in_problem in self.variables["is_present_var"])
-                    # print(index_team in self.variables["is_present_var"][index_in_problem])
                     if (
                         index_team
                         not in self.variables["is_present_var"][index_in_problem]
                     ):
                         print("Problem")
                     else:
-                        # print(self.variables["is_present_var"][index_in_problem].keys())
                         self.cp_model.Add(
                             self.variables["is_present_var"][index_in_problem][
                                 index_team
@@ -786,8 +740,6 @@ class CPSatAllocSchedulingSolverCumulative(
         objs += [
             sum(is_shifted)
         ]  # Number of task that shifted at least by 1 unit of time.
-        # ask to minimize the maximum abs delta (shift of the schedule)
-        # self.cp_model.Minimize(max_delta_start)
         self.variables["resched_objs"] = {
             "reallocated": objs[0],
             "sum_delta_schedule": objs[1],
