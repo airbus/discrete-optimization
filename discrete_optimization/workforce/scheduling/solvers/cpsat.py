@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import time
+from collections.abc import Iterable
 from functools import reduce
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from ortools.sat.python import cp_model
@@ -137,7 +138,7 @@ class CPSatAllocSchedulingSolver(
     ]
 
     problem: AllocSchedulingProblem
-    variables: Dict
+    variables: dict[str, dict[Any, Any]]
 
     @staticmethod
     def implements_lexico_api() -> bool:
@@ -250,7 +251,7 @@ class CPSatAllocSchedulingSolver(
                 self.cp_model.AddHint(var, response.solution[i])
 
     def init_model(
-        self, objectives: Optional[List[ObjectivesEnum]] = None, **args: Any
+        self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any
     ) -> None:
         additional_constraints: AdditionalCPConstraints = args.get(
             "additional_constraints", None
@@ -283,8 +284,8 @@ class CPSatAllocSchedulingSolver(
             self.problem.tasks_data[t].duration_task for t in self.problem.tasks_list
         ]
         key_per_team = {j: [] for j in self.problem.index_to_team}
-        compatible_teams: Dict[
-            int, Set[int]
+        compatible_teams: dict[
+            int, set[int]
         ] = self.problem.compatible_teams_index_all_activity()
         if additional_constraints is not None:
             forced_alloc = additional_constraints.forced_allocation
@@ -786,10 +787,10 @@ class CPSatAllocSchedulingSolver(
         }
         return objs
 
-    # def create_workload_variables(self, values: List[int],
-    #                               is_present_var: Dict[int, Dict[int, IntVar]],
-    #                               key_per_team: Dict[int, List[Tuple[int, int]]],
-    #                               used: Dict[int, IntVar],
+    # def create_workload_variables(self, values: list[int],
+    #                               is_present_var: dict[int, dict[int, IntVar]],
+    #                               key_per_team: dict[int, list[tuple[int, int]]],
+    #                               used: dict[int, IntVar],
     #                               name_workload="workload"):
     #     upper_bound_workload = int(sum(values))
     #     workload = {index_team: self.cp_model.NewIntVar(lb=0, ub=upper_bound_workload,
@@ -824,8 +825,8 @@ class CPSatAllocSchedulingSolver(
 
     def create_used_variable(
         self,
-        is_present_var: Dict[int, Dict[int, IntVar]],
-        key_per_team: Dict[int, List[Tuple[int, int]]],
+        is_present_var: dict[int, dict[int, IntVar]],
+        key_per_team: dict[int, list[tuple[int, int]]],
     ):
         used = {
             index_team: self.cp_model.NewBoolVar(f"used_{index_team}")
@@ -841,7 +842,7 @@ class CPSatAllocSchedulingSolver(
         return used
 
     def create_makespan_obj(
-        self, ends_var: Dict[int, IntVar], st_lb: List[Tuple[int, int, int, int]] = None
+        self, ends_var: dict[int, IntVar], st_lb: list[tuple[int, int, int, int]] = None
     ):
         if st_lb is None:
             st_lb = [
@@ -863,7 +864,7 @@ class CPSatAllocSchedulingSolver(
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         **kwargs: Any,
@@ -894,9 +895,9 @@ class CPSatAllocSchedulingSolver(
 
     def solve_lexicographic(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
-        objectives: Optional[List[ObjectivesEnum]] = None,
+        objectives: Optional[list[ObjectivesEnum]] = None,
         time_limit: Optional[float] = 100.0,
         **kwargs,
     ):
@@ -973,7 +974,7 @@ class CPSatAllocSchedulingSolver(
 
     def solve_multistep(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         **kwargs,

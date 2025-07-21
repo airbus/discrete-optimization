@@ -4,7 +4,7 @@ import json
 from collections.abc import Hashable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional, Union
 
 import pandas as pd
 

@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import time
+from collections.abc import Hashable, Iterable
 from enum import Enum
-from typing import Any, Dict, Hashable, Iterable, List, Optional, Set, Tuple
+from typing import Any, Optional
 
 from cpmpy.expressions.variables import NDVarArray
 from ortools.sat.python import cp_model
@@ -152,7 +153,7 @@ class CpsatTeamAllocationSolver(
         logger.info(
             f"Objective solver : {cpsolvercb.ObjectiveValue()}, Bound : {cpsolvercb.BestObjectiveBound()}"
         )
-        allocation: List[int] = []
+        allocation: list[int] = []
         if self.modelisation_allocation == ModelisationAllocationOrtools.INTEGER:
             allocation = [
                 int(cpsolvercb.Value(var)) for var in self.variables["allocation"]
@@ -260,7 +261,7 @@ class CpsatTeamAllocationSolver(
             self.get_hyperparameter("add_lower_bound_nb_teams").default,
         )
         assert include_pair_overlap or overlapping_advanced
-        domains_for_task: List[Domain] = []
+        domains_for_task: list[Domain] = []
         # Take into account the allocation constraints directly in domains of variable.
         for i in range(self.problem.number_of_activity):
             activity = self.problem.index_to_activities_name[i]
@@ -350,7 +351,7 @@ class CpsatTeamAllocationSolver(
         )
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
-        domains_for_task: List[List[int]] = []
+        domains_for_task: list[list[int]] = []
         # Take into account the allocation constraints directly in domains of variable.
         for i in range(self.problem.number_of_activity):
             if include_all_binary_vars:
@@ -642,7 +643,7 @@ class CpsatTeamAllocationSolver(
     def add_multiobj(
         self,
         key_objective: str,
-        allocation_binary: List[Dict[int, NDVarArray]],
+        allocation_binary: list[dict[int, NDVarArray]],
         used: NDVarArray,
         **kwargs,
     ):
@@ -697,8 +698,8 @@ class CpsatTeamAllocationSolver(
     def add_multiobj_naive(
         self,
         key_objective: str,
-        allocation_binary: List[Dict[int, IntVar]],
-        used: List[IntVar],
+        allocation_binary: list[dict[int, IntVar]],
+        used: list[IntVar],
         **kwargs,
     ):
         assert isinstance(self.problem, TeamAllocationProblemMultiobj)
@@ -783,8 +784,8 @@ class CpsatTeamAllocationSolver(
     def add_multiobj_epsilon(
         self,
         key_objective: str,
-        allocation_binary: List[Dict[int, IntVar]],
-        used: List[IntVar],
+        allocation_binary: list[dict[int, IntVar]],
+        used: list[IntVar],
         nb_teams_used: Optional[int] = None,
         **kwargs,
     ):
@@ -855,8 +856,8 @@ class CpsatTeamAllocationSolver(
     def add_multiobj_epsilon_v1(
         self,
         key_objective: str,
-        allocation_binary: List[Dict[int, IntVar]],
-        used: List[IntVar],
+        allocation_binary: list[dict[int, IntVar]],
+        used: list[IntVar],
         **kwargs,
     ):
         assert isinstance(self.problem, TeamAllocationProblemMultiobj)
@@ -964,7 +965,7 @@ class CpsatTeamAllocationSolver(
             sum([x[1] * self.variables["objs"][x[0]] for x in objs_weights])
         )
 
-    def get_lexico_objectives_available(self) -> List[str]:
+    def get_lexico_objectives_available(self) -> list[str]:
         if self.cp_model is not None:
             return list(self.variables["objs"].keys())
         objs = ["nb_teams"]
@@ -1099,7 +1100,7 @@ class CpsatTeamAllocationSolver(
 
     def solve_n_best_solution(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         n_best_solution: int = 100,
         time_limit: Optional[float] = 100.0,
@@ -1198,7 +1199,7 @@ class CpsatTeamAllocationSolver(
 
     def compute_task_relaxation_alternatives(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         time_limit_per_iteration: Optional[float] = 10.0,
@@ -1289,9 +1290,9 @@ class CpsatTeamAllocationSolver(
 
 
 def adding_same_allocation_constraint_binary(
-    same_allocation: List[Set[Hashable]],
+    same_allocation: list[set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     from functools import reduce
@@ -1326,9 +1327,9 @@ def adding_same_allocation_constraint_binary(
 
 
 def adding_same_allocation_constraint_integer(
-    same_allocation: List[Set[Hashable]],
+    same_allocation: list[set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[cp_model.IntVar],
+    variables: list[cp_model.IntVar],
     problem: TeamAllocationProblem,
 ):
     from functools import reduce
@@ -1359,9 +1360,9 @@ def adding_same_allocation_constraint_integer(
 
 
 def adding_all_diff_allocation_binary(
-    all_diff_allocation: List[Set[Hashable]],
+    all_diff_allocation: list[set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     for all_diff in all_diff_allocation:
@@ -1381,9 +1382,9 @@ def adding_all_diff_allocation_binary(
 
 
 def adding_all_diff_allocation_integer(
-    all_diff_allocation: List[Set[Hashable]],
+    all_diff_allocation: list[set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[cp_model.IntVar],
+    variables: list[cp_model.IntVar],
     problem: TeamAllocationProblem,
 ):
     for all_diff in all_diff_allocation:
@@ -1393,9 +1394,9 @@ def adding_all_diff_allocation_integer(
 
 
 def adding_forced_allocation_binary(
-    forced_allocation: Dict[Hashable, Hashable],
+    forced_allocation: dict[Hashable, Hashable],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     for ac in forced_allocation:
@@ -1411,14 +1412,14 @@ def adding_forced_allocation_binary(
                 if team != ind_team:
                     model.Add(variables[ind_ac][team] == 0)
 
-    forbidden_allocation: Optional[Dict[Hashable, Set[Hashable]]] = (None,)
-    disjunction: Optional[List[List[Tuple[Hashable, Hashable]]]] = None
+    forbidden_allocation: Optional[dict[Hashable, set[Hashable]]] = (None,)
+    disjunction: Optional[list[list[tuple[Hashable, Hashable]]]] = None
 
 
 def adding_forced_allocation_integer(
-    forced_allocation: Dict[Hashable, Hashable],
+    forced_allocation: dict[Hashable, Hashable],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     for ac in forced_allocation:
@@ -1433,9 +1434,9 @@ def adding_forced_allocation_integer(
 
 
 def adding_forbidden_allocation_binary(
-    forbidden_allocation: Dict[Hashable, Set[Hashable]],
+    forbidden_allocation: dict[Hashable, set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     for ac in forbidden_allocation:
@@ -1447,9 +1448,9 @@ def adding_forbidden_allocation_binary(
 
 
 def adding_forbidden_allocation_integer(
-    forbidden_allocation: Dict[Hashable, Set[Hashable]],
+    forbidden_allocation: dict[Hashable, set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[cp_model.IntVar],
+    variables: list[cp_model.IntVar],
     problem: TeamAllocationProblem,
 ):
     for ac in forbidden_allocation:
@@ -1462,9 +1463,9 @@ def adding_forbidden_allocation_integer(
 
 
 def adding_allowed_allocation_binary(
-    allowed_allocation: Dict[Hashable, Set[Hashable]],
+    allowed_allocation: dict[Hashable, set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     for ac in allowed_allocation:
@@ -1476,9 +1477,9 @@ def adding_allowed_allocation_binary(
 
 
 def adding_allowed_allocation_integer(
-    allowed_allocation: Dict[Hashable, Set[Hashable]],
+    allowed_allocation: dict[Hashable, set[Hashable]],
     model: cp_model.CpModel,
-    variables: List[cp_model.IntVar],
+    variables: list[cp_model.IntVar],
     problem: TeamAllocationProblem,
 ):
     for ac in allowed_allocation:
@@ -1488,9 +1489,9 @@ def adding_allowed_allocation_integer(
 
 
 def adding_disjunction_binary(
-    disjunction: List[List[Tuple[Hashable, Hashable]]],
+    disjunction: list[list[tuple[Hashable, Hashable]]],
     model: cp_model.CpModel,
-    variables: List[Dict[int, cp_model.IntVar]],
+    variables: list[dict[int, cp_model.IntVar]],
     problem: TeamAllocationProblem,
 ):
     for disj in disjunction:
@@ -1505,9 +1506,9 @@ def adding_disjunction_binary(
 
 
 def adding_disjunction_integer(
-    disjunction: List[List[Tuple[Hashable, Hashable]]],
+    disjunction: list[list[tuple[Hashable, Hashable]]],
     model: cp_model.CpModel,
-    variables: List[cp_model.IntVar],
+    variables: list[cp_model.IntVar],
     problem: TeamAllocationProblem,
 ):
     for disj in disjunction:
@@ -1525,7 +1526,7 @@ def adding_disjunction_integer(
 def adding_max_nb_teams(
     max_nb_teams: Optional[int],
     model: cp_model.CpModel,
-    variables: List[cp_model.IntVar],
+    variables: list[cp_model.IntVar],
     problem: TeamAllocationProblem,
 ):
     if max_nb_teams is not None:

@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import math
-from typing import Any, Iterable, List
+from typing import Any, Iterable
 
 import numpy as np
 from ortools.sat.python.cp_model import (
@@ -59,7 +59,7 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
     def implements_lexico_api() -> bool:
         return True
 
-    def get_lexico_objectives_available(self) -> List[str]:
+    def get_lexico_objectives_available(self) -> list[str]:
         return ["makespan"]
         # return ["makespan", "cost"]
 

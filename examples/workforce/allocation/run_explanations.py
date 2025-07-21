@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from copy import copy, deepcopy
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional
 
 import cpmpy
 import plotly.io as pio
@@ -121,7 +121,7 @@ class InteractSolve:
             cstrs.extend(m.constraints)
         self.solver.model.constraints = cstrs
 
-    def solve_current_problem(self, **kwargs) -> Tuple[StatusSolver, ResultStorage]:
+    def solve_current_problem(self, **kwargs) -> tuple[StatusSolver, ResultStorage]:
         # temporary fix
         self.solver.cpm_solver = SolverLookup.get(
             self.solver.solver_name, self.solver.model

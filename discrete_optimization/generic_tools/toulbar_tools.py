@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from abc import abstractmethod
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -68,7 +68,7 @@ class ToulbarSolver(SolverDO):
         return res
 
 
-def to_lns_toulbar(cls: Type[ToulbarSolver]):
+def to_lns_toulbar(cls: type[ToulbarSolver]):
     class ToulbarSolverLns(cls):
         depth: int
         init_ub: float

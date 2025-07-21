@@ -5,7 +5,7 @@ import datetime
 import json
 import os
 from copy import deepcopy
-from typing import Any, Dict, Hashable, List, Union
+from typing import Any, Hashable, Union
 
 import matplotlib.patches as patches
 import networkx as nx
@@ -43,7 +43,7 @@ def overlap_interval(interval_1: tuple[int, int], interval_2: tuple[int, int]):
 
 def compute_equivalent_teams_scheduling_problem(
     scheduling_problem: AllocSchedulingProblem,
-) -> List[List[int]]:
+) -> list[list[int]]:
     """
     Return a list of disjoint set of teams index, that can be considered as indistinguishable
     from a solution point of view. Example : in the pure coloring problem all the colors/team are equivalent
@@ -280,7 +280,7 @@ def plotly_schedule_comparison(
     problem: AllocSchedulingProblem,
     index_team_to_other_index: dict[int, int] = None,
     display: bool = False,
-    additional_info: Dict[Hashable, Dict[str, Any]] = None,
+    additional_info: dict[Hashable, dict[str, Any]] = None,
     use_color_scale: bool = True,
     use_color_map_per_task: bool = False,
     color_map_per_task: dict[int, Any] = None,
@@ -683,7 +683,7 @@ def compute_available_teams_per_activities_alloc_problem(
     problem: TeamAllocationProblem,
     starts: np.ndarray,
     ends: np.ndarray,
-    calendars_team: Dict[Hashable, np.ndarray],
+    calendars_team: dict[Hashable, np.ndarray],
 ):
     available_team_per_activity = {}
     for i in range(len(starts)):

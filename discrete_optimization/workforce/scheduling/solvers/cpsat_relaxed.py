@@ -3,8 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import time
+from collections.abc import Iterable
 from functools import reduce
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from ortools.sat.python import cp_model
@@ -110,7 +111,7 @@ class CPSatAllocSchedulingSolverCumulative(
     ]
 
     problem: AllocSchedulingProblem
-    variables: Dict
+    variables: dict[str, dict[Any, Any]]
 
     @staticmethod
     def implements_lexico_api() -> bool:
@@ -513,7 +514,7 @@ class CPSatAllocSchedulingSolverCumulative(
     #                                         capacity=1)
 
     def create_makespan_obj(
-        self, ends_var: Dict[int, IntVar], st_lb: List[Tuple[int, int, int, int]] = None
+        self, ends_var: dict[int, IntVar], st_lb: list[tuple[int, int, int, int]] = None
     ):
         if st_lb is None:
             st_lb = [
@@ -555,7 +556,7 @@ class CPSatAllocSchedulingSolverCumulative(
         self.add_objective_functions_on_cumul(objectives=objectives, **args)
 
     def init_model(
-        self, objectives: Optional[List[ObjectivesEnum]] = None, **args: Any
+        self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any
     ) -> None:
         additional_constraints: AdditionalCPConstraints = args.get(
             "additional_constraints", None
