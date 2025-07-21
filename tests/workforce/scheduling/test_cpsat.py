@@ -271,12 +271,6 @@ def test_cpsat_generic_lexico():
 
     # objectives to consider
     objectives = list(ObjectivesEnum)
-    objectives_to_remove = [
-        ObjectivesEnum.MAX_DISTANCE,
-        ObjectivesEnum.MIN_DISTANCE,
-        ObjectivesEnum.DISPERSION_DISTANCE,
-    ]
-    objectives = [o for o in objectives if o not in objectives_to_remove]
 
     solver.init_model(
         objectives=objectives, base_solution=base_solution, optional_activities=True

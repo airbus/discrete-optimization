@@ -14,9 +14,6 @@ class ObjectivesEnum(Enum):
     MIN_WORKLOAD = 4
     NB_DONE_AC = 5  # number of done activities
     DELTA_TO_EXISTING_SOLUTION = 6
-    DISPERSION_DISTANCE = 7
-    MIN_DISTANCE = 8
-    MAX_DISTANCE = 9
 
 
 class SolverAllocScheduling(SolverDO):
