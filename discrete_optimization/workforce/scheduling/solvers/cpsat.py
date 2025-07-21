@@ -48,6 +48,7 @@ from discrete_optimization.workforce.scheduling.solvers import (
 )
 from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb import (
     ApproximateBoundAllocScheduling,
+    BaseAllocSchedulingLowerBoundProvider,
     BoundResourceViaRelaxedProblem,
     LBoundAllocScheduling,
 )
@@ -467,7 +468,7 @@ class CPSatAllocSchedulingSolver(
         if add_lower_bound:
             lprovider: SubBrick = args["lower_bound_method"]
             t_deb = time.perf_counter()
-            lbound_provider: BoundResourceViaRelaxedProblem = lprovider.cls(
+            lbound_provider: BaseAllocSchedulingLowerBoundProvider = lprovider.cls(
                 self.problem
             )
             bound = lbound_provider.get_lb_nb_teams(**lprovider.kwargs)
