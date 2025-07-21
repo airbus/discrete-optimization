@@ -1,6 +1,6 @@
 import random
 from copy import deepcopy
-from typing import Dict, Hashable, Optional, Union
+from typing import Hashable, Optional, Union
 
 import numpy as np
 
@@ -129,7 +129,7 @@ def compute_available_teams_per_activities_alloc_problem(
     problem: TeamAllocationProblem,
     starts: np.ndarray,
     ends: np.ndarray,
-    calendars_team: Dict[Hashable, np.ndarray],
+    calendars_team: dict[Hashable, np.ndarray],
 ):
     available_team_per_activity = {}
     for i in range(len(starts)):
@@ -148,7 +148,7 @@ def update_allocation_constraint(
     starts: np.ndarray,
     ends: np.ndarray,
     problem: TeamAllocationProblem,
-    calendars_team: Dict[Hashable, np.ndarray],
+    calendars_team: dict[Hashable, np.ndarray],
 ):
     available_team_per_activity = compute_available_teams_per_activities_alloc_problem(
         problem=problem, starts=starts, ends=ends, calendars_team=calendars_team

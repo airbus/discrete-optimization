@@ -3,9 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import itertools
 import logging
-import math
+from collections.abc import Hashable
 from functools import reduce
-from typing import Dict, Hashable, List, Optional, Set, Tuple, Type
+from typing import Optional
 
 import networkx as nx
 import numpy as np
@@ -51,7 +51,7 @@ class AllocSchedulingSolution(Solution):
 
 
 class TasksDescription:
-    def __init__(self, duration_task: int, resource_consumption: Dict[str, int] = None):
+    def __init__(self, duration_task: int, resource_consumption: dict[str, int] = None):
         self.duration_task = duration_task
         self.resource_consumption = resource_consumption
         if self.resource_consumption is None:
@@ -61,22 +61,22 @@ class TasksDescription:
 class AllocSchedulingProblem(Problem):
     def __init__(
         self,
-        team_names: List[Hashable],
-        calendar_team: Dict[
-            Hashable, List[Tuple[int, int]]
+        team_names: list[Hashable],
+        calendar_team: dict[
+            Hashable, list[tuple[int, int]]
         ],  # List of available slots per team.
         horizon: int,
-        tasks_list: List[Hashable],
-        tasks_data: Dict[Hashable, TasksDescription],
-        same_allocation: List[Set[Hashable]],
-        precedence_constraints: Dict[Hashable, Set[Hashable]],
-        available_team_for_activity: Dict[Hashable, Set[Hashable]],
-        start_window: Dict[Hashable, Tuple[Optional[int], Optional[int]]],
-        end_window: Dict[Hashable, Tuple[Optional[int], Optional[int]]],
-        original_start: Dict[Hashable, int],
-        original_end: Dict[Hashable, int],
-        resources_list: List[str] = None,
-        resources_capacity: Dict[str, int] = None,
+        tasks_list: list[Hashable],
+        tasks_data: dict[Hashable, TasksDescription],
+        same_allocation: list[set[Hashable]],
+        precedence_constraints: dict[Hashable, set[Hashable]],
+        available_team_for_activity: dict[Hashable, set[Hashable]],
+        start_window: dict[Hashable, tuple[Optional[int], Optional[int]]],
+        end_window: dict[Hashable, tuple[Optional[int], Optional[int]]],
+        original_start: dict[Hashable, int],
+        original_end: dict[Hashable, int],
+        resources_list: list[str] = None,
+        resources_capacity: dict[str, int] = None,
         horizon_start_shift: Optional[int] = 0,
         objective_handling: ObjectiveHandling = ObjectiveHandling.AGGREGATE,
     ):
@@ -116,7 +116,7 @@ class AllocSchedulingProblem(Problem):
         self.objective_handling = objective_handling
 
     def update_available_team_for_activity(
-        self, available_team_for_activity: Dict[Hashable, Set[Hashable]]
+        self, available_team_for_activity: dict[Hashable, set[Hashable]]
     ):
         """Override the available team attribute and update the rcpsp accordingly"""
         self.available_team_for_activity = available_team_for_activity
@@ -136,7 +136,7 @@ class AllocSchedulingProblem(Problem):
                     self.predecessors[succ] = set()
                 self.predecessors[succ].add(t)
 
-    def evaluate(self, variable: Solution) -> Dict[str, float]:
+    def evaluate(self, variable: Solution) -> dict[str, float]:
         return evaluate_solution(solution=variable, problem=self)
 
     def satisfy(self, variable: Solution) -> bool:
@@ -153,7 +153,7 @@ class AllocSchedulingProblem(Problem):
     def get_attribute_register(self) -> EncodingRegister:
         pass
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         return AllocSchedulingSolution
 
     def get_objective_register(self) -> ObjectiveRegister:
@@ -218,21 +218,21 @@ class AllocSchedulingProblem(Problem):
             for t in self.tasks_list
         ]
 
-    def get_unavailable_teams_per_activity(self) -> Dict[Hashable, Set[Hashable]]:
+    def get_unavailable_teams_per_activity(self) -> dict[Hashable, set[Hashable]]:
         all_teams = set(self.team_names)
         return {
             t: all_teams.difference(self.available_team_for_activity[t])
             for t in self.available_team_for_activity
         }
 
-    def compatible_teams_all_activity(self) -> Dict[Hashable, Set[Hashable]]:
+    def compatible_teams_all_activity(self) -> dict[Hashable, set[Hashable]]:
         all_teams = set(self.team_names)
         d = {t: all_teams for t in self.tasks_list}
         for t in self.available_team_for_activity:
             d[t] = self.available_team_for_activity[t]
         return d
 
-    def compatible_teams_index_all_activity(self) -> Dict[int, Set[int]]:
+    def compatible_teams_index_all_activity(self) -> dict[int, set[int]]:
         all_teams = set(self.index_to_team.keys())
         d = {index_task: all_teams for index_task in self.index_to_task}
         for t in self.available_team_for_activity:
@@ -242,7 +242,7 @@ class AllocSchedulingProblem(Problem):
             }
         return d
 
-    def compute_unavailability_calendar(self, team: Hashable) -> List[Tuple[int, int]]:
+    def compute_unavailability_calendar(self, team: Hashable) -> list[tuple[int, int]]:
         # Compute the "complement" calendar of the availability calendar.
         cur_time = 0
         list_unavailable = []
@@ -257,7 +257,7 @@ class AllocSchedulingProblem(Problem):
 
 def evaluate_solution(
     solution: AllocSchedulingSolution, problem: AllocSchedulingProblem
-) -> Dict[str, float]:
+) -> dict[str, float]:
     dur_per_team = {}
     teams_used = set()
     nb_not_done = 0
@@ -414,7 +414,7 @@ def realign_calendars(calendars_dict: dict[Hashable, list[tuple[int, int]]]):
 
 
 def intervals_do_not_overlap(
-    interval1: Tuple[float, float], interval2: Tuple[float, float]
+    interval1: tuple[float, float], interval2: tuple[float, float]
 ):
     if interval1[1] <= interval2[0] or interval2[1] <= interval1[0]:
         return True
@@ -603,7 +603,7 @@ def satisfy_time_window_detailed(
 
 def satisfy_detailed_precedence(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-) -> List[Tuple[str, Hashable, Hashable, int]]:
+) -> list[tuple[str, Hashable, Hashable, int]]:
     list_violated_precedence_constraint = []
     for task in problem.precedence_constraints:
         index_task = problem.tasks_to_index[task]
@@ -637,8 +637,10 @@ def satisfy_detailed_precedence(
 
 def satisfy_detailed_same_allocation(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-) -> List[Tuple]:
-    list_violated_same_allocation_constraint = []
+) -> list[tuple[str, set[Hashable]], set[int]]:
+    list_violated_same_allocation_constraint: list[
+        tuple[str, set[Hashable]], set[int]
+    ] = []
     for set_same_alloc in problem.same_allocation:
         one_ac = next(iter(set_same_alloc))
         val = solution.allocation[problem.tasks_to_index[one_ac]]
@@ -664,10 +666,10 @@ def satisfy_detailed_same_allocation(
 
 def satisfy_detailed_available_team(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-) -> List[Tuple]:
+) -> list[tuple[str, Hashable, Hashable, int, int]]:
     list_violated_available_team = []
     for activity in problem.available_team_for_activity:
-        team = solution.allocation[problem.tasks_to_index[activity]]
+        team: int = int(solution.allocation[problem.tasks_to_index[activity]])
         if team not in problem.index_to_team:
             continue
         team_alloc = problem.index_to_team[team]
@@ -686,7 +688,7 @@ def satisfy_detailed_available_team(
 
 def satisfy_overlap_teams(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution, **kwargs
-):
+) -> bool:
     teams = set(solution.allocation)
     for team in teams:
         if team not in problem.index_to_team:
@@ -702,7 +704,7 @@ def satisfy_overlap_teams(
 
 def satisfy_overlap_teams_detailed(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-):
+) -> list[tuple[str, int, int, int]]:
     teams = set(solution.allocation)
     list_violated_overlap = []
     for team in teams:
@@ -726,7 +728,7 @@ def satisfy_overlap_teams_detailed(
 
 def compute_stats_per_team(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-):
+) -> dict[int, float]:
     teams = set(solution.allocation)
     used_time_by_team = {}
     for team in teams:
@@ -745,7 +747,7 @@ def compute_stats_per_team(
 def transform_rcpsp_solution_to_alloc_solution(
     rcpsp_solution: RcpspSolution,
     rcpsp_problem: RcpspProblem,
-    ac_mode_to_team: Dict[Tuple[Hashable, int], Hashable],
+    ac_mode_to_team: dict[tuple[Hashable, int], Hashable],
     alloc_scheduling_problem: AllocSchedulingProblem,
 ) -> AllocSchedulingSolution:
     schedule = np.zeros((alloc_scheduling_problem.number_tasks, 2), dtype=int)
@@ -768,7 +770,7 @@ def transform_rcpsp_solution_to_alloc_solution(
 def transform_alloc_solution_to_rcpsp_solution(
     alloc_solution: AllocSchedulingSolution,
     rcpsp_problem: RcpspProblem,
-    ac_mode_to_team: Dict[Tuple[Hashable, int], Hashable],
+    ac_mode_to_team: dict[tuple[Hashable, int], Hashable],
     alloc_scheduling_problem: AllocSchedulingProblem,
 ) -> RcpspSolution:
     schedule = {}
@@ -802,7 +804,7 @@ def transform_alloc_solution_to_rcpsp_solution(
 
 
 def build_calendar_array_from_availability_slot(
-    availability_slots: List[Tuple[int, int]], horizon: int, value: int = 1
+    availability_slots: list[tuple[int, int]], horizon: int, value: int = 1
 ):
     array = np.zeros(horizon, dtype=int)
     for slot in availability_slots:
@@ -815,7 +817,7 @@ def transform_to_multimode_rcpsp(
     build_calendar: bool = True,
     add_window_time_constraint: bool = True,
     add_additional_constraint: bool = True,
-) -> Tuple[RcpspProblem, Dict[Tuple[Hashable, int], Hashable]]:
+) -> tuple[RcpspProblem, dict[tuple[Hashable, int], Hashable]]:
     if build_calendar:
         resources = {
             team: build_calendar_array_from_availability_slot(
@@ -827,8 +829,8 @@ def transform_to_multimode_rcpsp(
         }
     else:
         resources = {team: 1 for team in problem.calendar_team}
-    non_renewable_resources: List[str] = []
-    mode_details: Dict[Hashable, Dict[int, Dict[str, int]]] = {}
+    non_renewable_resources: list[str] = []
+    mode_details: dict[Hashable, dict[int, dict[str, int]]] = {}
     ac_mode_to_team = {}
     for activity in problem.tasks_list:
         if activity in problem.available_team_for_activity:
@@ -845,7 +847,7 @@ def transform_to_multimode_rcpsp(
             ac_mode_to_team[(activity, modes[j])] = subset_teams[j]
     mode_details["source"] = {1: {"duration": 0}}
     mode_details["sink"] = {1: {"duration": 0}}
-    successors: Dict[Hashable, List[Hashable]] = {
+    successors: dict[Hashable, list[Hashable]] = {
         t: list(problem.precedence_constraints[t])
         for t in problem.precedence_constraints
     }
@@ -866,7 +868,7 @@ def transform_to_multimode_rcpsp(
     }
     horizon: int = problem.horizon
     horizon_multiplier: int = 1
-    tasks_list: Optional[List[Hashable]] = ["source"] + problem.tasks_list + ["sink"]
+    tasks_list: Optional[list[Hashable]] = ["source"] + problem.tasks_list + ["sink"]
     source_task: Optional[Hashable] = "source"
     sink_task: Optional[Hashable] = "sink"
     special_constraints: Optional[
@@ -898,7 +900,7 @@ def transform_to_monomode_rcpsp(
     problem: AllocSchedulingProblem,
     build_calendar: bool = True,
     add_additional_constraint: bool = True,
-) -> Tuple[RcpspProblem, Dict[Tuple[Hashable, int], Hashable]]:
+) -> tuple[RcpspProblem, dict[tuple[Hashable, int], Hashable]]:
     rcpsp, ac_mode_to_team = transform_to_multimode_rcpsp(
         problem=problem,
         build_calendar=build_calendar,
@@ -917,7 +919,7 @@ def transform_to_monomode_rcpsp(
             teams = tuple(sorted(teams))
             all_sets.add(teams)
             task_to_set[task] = teams
-    list_all_sets: List[set] = list(all_sets)
+    list_all_sets: list[set] = list(all_sets)
     res = [f"res_{i}" for i in range(len(list_all_sets))]
     teams_to_res = {list_all_sets[i]: f"res_{i}" for i in range(len(list_all_sets))}
     inclusion = {}
@@ -973,8 +975,8 @@ def transform_to_monomode_rcpsp(
 def build_pair_mode_constraint(
     problem: AllocSchedulingProblem, rcpsp: RcpspProblem, use_score: bool = False
 ):
-    modes_allowed_assignment: Dict[
-        Tuple[Hashable, Hashable], List[Tuple[Hashable, Hashable]]
+    modes_allowed_assignment: dict[
+        tuple[Hashable, Hashable], list[tuple[Hashable, Hashable]]
     ] = {}
     if problem.same_allocation is not None:
         for set_task in problem.same_allocation:

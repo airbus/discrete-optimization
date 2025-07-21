@@ -1,8 +1,6 @@
 #  Copyright (c) 2024 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from dataclasses import dataclass
-from typing import List
 
 from discrete_optimization.generic_tools.do_problem import *
 from discrete_optimization.jsp.problem import Subjob
@@ -29,7 +27,7 @@ SubjobOptions = list[Subjob]
 @dataclass
 class Job:
     job_id: int
-    sub_jobs: List[SubjobOptions]
+    sub_jobs: list[SubjobOptions]
 
 
 class FJobShopProblem(Problem):

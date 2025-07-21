@@ -4,7 +4,7 @@
 import inspect
 import logging
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import didppy as dp
 
@@ -93,7 +93,7 @@ class DpSolver(SolverDO):
 
     def solve(
         self,
-        callbacks: Optional[List[Callback]] = None,
+        callbacks: Optional[list[Callback]] = None,
         time_limit: Optional[float] = 100.0,
         retrieve_intermediate_solutions: bool = True,
         **kwargs: Any,

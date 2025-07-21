@@ -6,24 +6,15 @@ import json
 import logging
 import os
 from collections import defaultdict
-from dataclasses import dataclass
+from collections.abc import Hashable, Iterable
 from enum import Enum
 from functools import reduce
 from time import time
-from typing import Any, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 import cpmpy
 import cpmpy as cp
-from cpmpy import (
-    AllDifferent,
-    AllEqual,
-    Maximum,
-    Minimum,
-    Model,
-    SolverLookup,
-    boolvar,
-    intvar,
-)
+from cpmpy import AllDifferent, AllEqual, Model, SolverLookup, boolvar
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Expression
 from cpmpy.solvers import CPM_ortools
@@ -52,7 +43,6 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.workforce.allocation.problem import (
-    AggregateOperator,
     AllocationAdditionalConstraint,
     TeamAllocationProblem,
     TeamAllocationProblemMultiobj,
@@ -262,8 +252,8 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
         self.model = Model()
-        domains_for_task: List[
-            List[int]
+        domains_for_task: list[
+            list[int]
         ] = self.problem.compute_allowed_team_index_all_task()
         if "allocation_binary" not in kwargs:
             allocation_binary = [
@@ -429,7 +419,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
     def add_symm_waterfall_binary(
         self,
         model: cpmpy.Model,
-        allocation_binary: List[Dict[int, cpmpy.model.Expression]],
+        allocation_binary: list[dict[int, cpmpy.model.Expression]],
     ):
         groups = compute_equivalent_teams(team_allocation_problem=self.problem)
         set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
@@ -455,7 +445,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
                         )
 
     def add_symm_waterfall_integer(
-        self, model: cpmpy.Model, allocation_integer: List[cpmpy.model.Expression]
+        self, model: cpmpy.Model, allocation_integer: list[cpmpy.model.Expression]
     ):
         groups = compute_equivalent_teams(team_allocation_problem=self.problem)
         set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
@@ -472,7 +462,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
     def add_multiobj(
         self,
         key_objective: str,
-        allocation_binary: List[Dict[int, NDVarArray]],
+        allocation_binary: list[dict[int, NDVarArray]],
         used: NDVarArray,
         modelisation_dispersion: ModelisationDispersion = ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION,
     ):
@@ -615,8 +605,8 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
 
     def solve_mcs(
         self,
-        soft: List[cpmpy.expressions.core.Expression],
-        hard: List[cpmpy.expressions.core.Expression],
+        soft: list[cpmpy.expressions.core.Expression],
+        hard: list[cpmpy.expressions.core.Expression],
         parameters_cp: Optional[ParametersCp] = None,
         time_limit=30,
         **args: Any,
@@ -779,7 +769,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                 for i in range(self.problem.number_of_activity)
             ]
         else:
-            domains_for_task: List[List[int]] = []
+            domains_for_task: list[list[int]] = []
             # Take into account the allocation constraints directly in domains of variable.
             for i in range(self.problem.number_of_activity):
                 activity = self.problem.index_to_activities_name[i]
@@ -993,10 +983,10 @@ def adding_same_allocation_constraint_binary(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    same_allocation: List[Set[Hashable]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    same_allocation: list[set[Hashable]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1036,10 +1026,10 @@ def adding_same_allocation_constraint_cnf(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    same_allocation: List[Set[Hashable]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    same_allocation: list[set[Hashable]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1082,10 +1072,10 @@ def adding_same_allocation_constraint_integer(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    same_allocation: List[Set[Hashable]],
+    same_allocation: list[set[Hashable]],
     variables: cpmpy.model.NDVarArray,
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1115,10 +1105,10 @@ def adding_all_diff_allocation_binary(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    all_diff_allocation: List[Set[Hashable]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    all_diff_allocation: list[set[Hashable]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1163,10 +1153,10 @@ def adding_forced_allocation_binary(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    forced_allocation: Dict[Hashable, Hashable],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    forced_allocation: dict[Hashable, Hashable],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1208,10 +1198,10 @@ def adding_forbidden_allocation_binary(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    forbidden_allocation: Dict[Hashable, Set[Hashable]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    forbidden_allocation: dict[Hashable, set[Hashable]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1249,10 +1239,10 @@ def adding_allowed_allocation_binary(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    allowed_allocation: Dict[Hashable, Set[Hashable]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    allowed_allocation: dict[Hashable, set[Hashable]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1288,10 +1278,10 @@ def adding_disjunction_binary(
     solver: Union[
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
-    disjunction: List[List[Tuple[Hashable, Hashable]]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    disjunction: list[list[tuple[Hashable, Hashable]]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
-) -> List[cpmpy.model.Expression]:
+) -> list[cpmpy.model.Expression]:
     constraints = []
     store_constraints = False
     if isinstance(solver, CPMpyTeamAllocationSolverStoreConstraintInfo):
@@ -1327,7 +1317,7 @@ def adding_max_nb_teams(
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
     nb_max_teams: Optional[int],
-    variables: List[cpmpy.model.Expression],
+    variables: list[cpmpy.model.Expression],
     problem: TeamAllocationProblem,
 ):
     store_constraints = False
@@ -1352,7 +1342,7 @@ def adding_precedence_channeling_constraint(
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
     precedences: dict[Hashable, set[Hashable]],
-    variables: List[Dict[int, cpmpy.model.Expression]],
+    variables: list[dict[int, cpmpy.model.Expression]],
     problem: TeamAllocationProblem,
 ):
     store_constraints = False
@@ -1389,7 +1379,7 @@ def adding_precedence_channeling_constraint(
 
 def compute_soft_and_hard_set_of_constraint(
     cpmpy_solver: CPMpyTeamAllocationSolverStoreConstraintInfo,
-    dictionnary_soft_hard: Dict[str, str] = None,
+    dictionnary_soft_hard: dict[str, str] = None,
 ):
     soft, hard = [], []
     for key in dictionnary_soft_hard:

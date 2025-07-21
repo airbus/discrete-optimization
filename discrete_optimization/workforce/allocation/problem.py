@@ -3,10 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 from collections import defaultdict
+from collections.abc import Hashable
 from copy import deepcopy
 from enum import Enum
 from itertools import product
-from typing import Any, Dict, Hashable, List, Optional, Set, Tuple, Type
+from typing import Any, Optional
 
 import networkx as nx
 import numpy as np
@@ -33,7 +34,7 @@ def compute_available_teams_per_activities(
     starts: np.ndarray,
     ends: np.ndarray,
     activities_name: list[Hashable],
-    calendars_team: Dict[Hashable, np.ndarray],
+    calendars_team: dict[Hashable, np.ndarray],
 ):
     available_team_per_activity = {}
     for i in range(len(starts)):
@@ -55,40 +56,40 @@ class AllocationAdditionalConstraint:
     """
 
     # each set of activities should be allocated to same team.
-    same_allocation: List[Set[Hashable]]
+    same_allocation: list[set[Hashable]]
     # allocated team inside the set should be different : "cliques constraint".
     # It could be modeled in the coloring graph
-    all_diff_allocation: List[Set[Hashable]]
+    all_diff_allocation: list[set[Hashable]]
     # force allocation
     # could be modeled in the "allocation" graph
-    forced_allocation: Dict[Hashable, Hashable]
+    forced_allocation: dict[Hashable, Hashable]
     # forbidden allocation
     # (could be modeled in the "allocation" graph)
-    forbidden_allocation: Dict[Hashable, Set[Hashable]]
+    forbidden_allocation: dict[Hashable, set[Hashable]]
     # allowed allocation
     # (could be modeled in the allocation graph)
-    allowed_allocation: Dict[Hashable, Set[Hashable]]
+    allowed_allocation: dict[Hashable, set[Hashable]]
     # Disjunction
     # each list in disjunction : [(act, team), (act2, team2)...]
     # will mean that at least 1 act_i will need to be allocated to team_i
-    disjunction: List[List[Tuple[Hashable, Hashable]]]
+    disjunction: list[list[tuple[Hashable, Hashable]]]
     # Number of teams to be used : useful for scenario where we limit number of resource
     nb_max_teams: int
     # Precedence constraints : not necessarily useful for allocation problem
     # Except for unsat problems where task can be dropped, then the successors should be dropped too.
     # dict = {parent: set of children tasks}
-    precedences: Dict[Hashable, Set[Hashable]]
+    precedences: dict[Hashable, set[Hashable]]
 
     def __init__(
         self,
-        same_allocation: Optional[List[Set[Hashable]]] = None,
-        all_diff_allocation: Optional[List[Set[Hashable]]] = None,
-        forced_allocation: Optional[Dict[Hashable, Hashable]] = None,
-        forbidden_allocation: Optional[Dict[Hashable, Set[Hashable]]] = None,
-        allowed_allocation: Optional[Dict[Hashable, Set[Hashable]]] = None,
-        disjunction: Optional[List[List[Tuple[Hashable, Hashable]]]] = None,
+        same_allocation: Optional[list[set[Hashable]]] = None,
+        all_diff_allocation: Optional[list[set[Hashable]]] = None,
+        forced_allocation: Optional[dict[Hashable, Hashable]] = None,
+        forbidden_allocation: Optional[dict[Hashable, set[Hashable]]] = None,
+        allowed_allocation: Optional[dict[Hashable, set[Hashable]]] = None,
+        disjunction: Optional[list[list[tuple[Hashable, Hashable]]]] = None,
         nb_max_teams: Optional[int] = None,
-        precedences: Optional[Dict[Hashable, Set[Hashable]]] = None,
+        precedences: Optional[dict[Hashable, set[Hashable]]] = None,
     ):
         self.same_allocation = same_allocation
         self.all_diff_allocation = all_diff_allocation
@@ -133,10 +134,10 @@ class AllocationAdditionalConstraint:
 class GraphBipartite(Graph):
     def __init__(
         self,
-        nodes: List[Tuple[Hashable, Dict[str, Any]]],
-        edges: List[Tuple[Hashable, Hashable, Dict[str, Any]]],
-        nodes_activity: Set[Hashable],
-        nodes_team: Set[Hashable],
+        nodes: list[tuple[Hashable, dict[str, Any]]],
+        edges: list[tuple[Hashable, Hashable, dict[str, Any]]],
+        nodes_activity: set[Hashable],
+        nodes_team: set[Hashable],
         undirected: bool = True,
         compute_predecessors: bool = True,
     ):
@@ -185,7 +186,7 @@ class TeamAllocationSolution(Solution):
     def __init__(
         self,
         problem: "TeamAllocationProblem",
-        allocation: List[Optional[int]],
+        allocation: list[Optional[int]],
         **kwargs,
     ):
         self.problem = problem
@@ -209,7 +210,7 @@ class TeamAllocationSolution(Solution):
 def build_graph_allocation_from_calendar_and_schedule(
     starts: np.ndarray,
     ends: np.ndarray,
-    calendar_team: Dict[Hashable, List[Tuple[int, int]]],
+    calendar_team: dict[Hashable, list[tuple[int, int]]],
     horizon: int,
     tasks_name: list[Hashable],
     teams_name: list[Hashable],
@@ -277,7 +278,7 @@ class TeamAllocationProblem(Problem):
             AllocationAdditionalConstraint
         ] = None,
         schedule_activity: Optional[dict[Hashable, tuple[int, int]]] = None,
-        calendar_team: Dict[Hashable, List[Tuple[int, int]]] = None,
+        calendar_team: dict[Hashable, list[tuple[int, int]]] = None,
         activities_name: list[Hashable] = None,
     ):
         """
@@ -292,7 +293,7 @@ class TeamAllocationProblem(Problem):
         self.graph_activity = graph_activity
         self.graph_allocation = graph_allocation
         if self.graph_activity is not None:
-            self.activities_name: List[Hashable] = self.graph_activity.nodes_name
+            self.activities_name: list[Hashable] = self.graph_activity.nodes_name
         if activities_name is not None:
             self.activities_name = activities_name
         self.calendar_team = calendar_team
@@ -324,7 +325,7 @@ class TeamAllocationProblem(Problem):
                 task_names=self.activities_name,
             )
         self.number_of_activity = len(self.graph_activity.nodes_name)
-        self.teams_name: List[Hashable] = self.graph_allocation.get_nodes_team_list()
+        self.teams_name: list[Hashable] = self.graph_allocation.get_nodes_team_list()
         self.number_of_teams = len(self.teams_name)
         self.allocation_additional_constraint = allocation_additional_constraint
         self.schedule = schedule_activity
@@ -369,10 +370,10 @@ class TeamAllocationProblem(Problem):
             and not self.allocation_additional_constraint.is_empty()
         )
 
-    def computed_forbidden_team_for_task(self, task: Hashable) -> List[Hashable]:
+    def computed_forbidden_team_for_task(self, task: Hashable) -> list[Hashable]:
         return [team for team in self.graph_allocation.get_neighbors(task)]
 
-    def compute_allowed_team_for_task(self, task: Hashable) -> List[Hashable]:
+    def compute_allowed_team_for_task(self, task: Hashable) -> list[Hashable]:
         if self.allocation_additional_constraint is not None:
             allowed_team = [
                 team
@@ -411,31 +412,31 @@ class TeamAllocationProblem(Problem):
             if team not in self.graph_allocation.get_neighbors(task)
         ]
 
-    def compute_forbidden_team_index_for_task(self, task: Hashable) -> List[int]:
+    def compute_forbidden_team_index_for_task(self, task: Hashable) -> list[int]:
         return [
             self.index_teams_name[team]
             for team in self.computed_forbidden_team_for_task(task)
         ]
 
-    def compute_allowed_team_index_for_task(self, task: Hashable) -> List[int]:
+    def compute_allowed_team_index_for_task(self, task: Hashable) -> list[int]:
         return [
             self.index_teams_name[team]
             for team in self.compute_allowed_team_for_task(task)
         ]
 
-    def compute_forbidden_team_index_all_task(self) -> List[List[int]]:
+    def compute_forbidden_team_index_all_task(self) -> list[list[int]]:
         return [
             self.compute_forbidden_team_index_for_task(self.index_to_activities_name[i])
             for i in range(self.number_of_activity)
         ]
 
-    def compute_allowed_team_index_all_task(self) -> List[List[int]]:
+    def compute_allowed_team_index_all_task(self) -> list[list[int]]:
         return [
             self.compute_allowed_team_index_for_task(self.index_to_activities_name[i])
             for i in range(self.number_of_activity)
         ]
 
-    def compute_pair_overlap_index_task(self) -> List[Tuple[int, int]]:
+    def compute_pair_overlap_index_task(self) -> list[tuple[int, int]]:
         return [
             (self.index_activities_name[e[0]], self.index_activities_name[e[1]])
             for e in self.graph_activity.edges
@@ -450,7 +451,7 @@ class TeamAllocationProblem(Problem):
                 )
         return max_teams
 
-    def evaluate(self, variable: TeamAllocationSolution) -> Dict[str, float]:
+    def evaluate(self, variable: TeamAllocationSolution) -> dict[str, float]:
         """
         Evaluation implementation for TeamAllocationProblem.
 
@@ -570,7 +571,7 @@ class TeamAllocationProblem(Problem):
         }
         return EncodingRegister(dict_register)
 
-    def get_solution_type(self) -> Type[Solution]:
+    def get_solution_type(self) -> type[Solution]:
         """Returns the class of a solution instance for ColoringProblem."""
         return TeamAllocationSolution
 
@@ -642,8 +643,8 @@ class TeamAllocationProblem(Problem):
         return nb_violation
 
     def evaluate_from_encoding(
-        self, int_vector: List[int], encoding_name: str
-    ) -> Dict[str, float]:
+        self, int_vector: list[int], encoding_name: str
+    ) -> dict[str, float]:
         """Can be used in GA algorithm to build an object solution and evaluate from a int_vector representation.
 
         Args:
@@ -663,12 +664,12 @@ class TeamAllocationProblem(Problem):
 
     def get_natural_explanation_unsat_constraints(
         self, variable: TeamAllocationSolution
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Return a list of strings describing which constraints are not fulfilled by the given solution.
         Args:
             variable (TeamAllocationSolution): solution object we want to "analyze"
-        Returns: List[str]
+        Returns: list[str]
         """
         return self.get_natural_explanation_unsat_colors(
             variable
@@ -676,12 +677,12 @@ class TeamAllocationProblem(Problem):
 
     def get_natural_explanation_unsat_colors(
         self, variable: TeamAllocationSolution
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Return a list of strings describing which coloring constraints are not fulfilled by the given solution.
         Args:
             variable (TeamAllocationSolution): solution object we want to "analyze"
-        Returns: List[str]
+        Returns: list[str]
         """
         list_str_description = []
         if len(self.graph_activity.edges) > 0:
@@ -707,7 +708,7 @@ class TeamAllocationProblem(Problem):
 
     def get_natural_explanation_unsat_allowed_assignment(
         self, variable: TeamAllocationSolution
-    ) -> List[str]:
+    ) -> list[str]:
         list_str_description = []
         if len(self.graph_allocation.edges) > 0:
             if variable.allocation is None:
@@ -821,11 +822,11 @@ class TeamAllocationProblemMultiobj(TeamAllocationProblem):
             AllocationAdditionalConstraint
         ] = None,
         schedule_activity: Optional[dict[Hashable, tuple[int, int]]] = None,
-        calendar_team: Dict[Hashable, List[Tuple[int, int]]] = None,
+        calendar_team: dict[Hashable, list[tuple[int, int]]] = None,
         activities_name: list[Hashable] = None,
-        attributes_cumul_activities: Optional[List[str]] = None,
+        attributes_cumul_activities: Optional[list[str]] = None,
         objective_doc_cumul_activities: Optional[
-            Dict[str, Tuple[ObjectiveDoc, AggregateOperator]]
+            dict[str, tuple[ObjectiveDoc, AggregateOperator]]
         ] = None,
     ):
         super().__init__(
@@ -837,7 +838,7 @@ class TeamAllocationProblemMultiobj(TeamAllocationProblem):
             activities_name=activities_name,
         )
         self.attributes_cumul_activities = attributes_cumul_activities
-        self.attributes_of_activities: Dict[str, Dict[Hashable, float]] = {}
+        self.attributes_of_activities: dict[str, dict[Hashable, float]] = {}
         for attr in self.attributes_cumul_activities:
             self.attributes_of_activities[attr] = {}
             for t in self.activities_name:
@@ -913,7 +914,7 @@ class TeamAllocationProblemMultiobj(TeamAllocationProblem):
             fit_ = np.max(cumuls_array[non_zeros]) - np.min(cumuls_array[non_zeros])
         return fit_
 
-    def evaluate(self, variable: TeamAllocationSolution) -> Dict[str, float]:
+    def evaluate(self, variable: TeamAllocationSolution) -> dict[str, float]:
         fits = TeamAllocationProblem.evaluate(self, variable)
         cumuls = {
             attr: self.evaluate_cumul_nodes(variable, attr)
@@ -1008,7 +1009,7 @@ def satisfy_additional_constraint(
 def satisfy_same_allocation(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    same_allocation: List[Set[Hashable]],
+    same_allocation: list[set[Hashable]],
     partial_solution: bool = False,
 ):
     for set_same_alloc in same_allocation:
@@ -1046,7 +1047,7 @@ def satisfy_same_allocation(
 def satisfy_all_diff(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    all_diffs: List[Set[Hashable]],
+    all_diffs: list[set[Hashable]],
     partial_solution: bool = False,
 ):
     for all_diff in all_diffs:
@@ -1065,7 +1066,7 @@ def satisfy_all_diff(
 def satisfy_forced_allocation(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    forced_allocation: Dict[Hashable, Hashable],
+    forced_allocation: dict[Hashable, Hashable],
     partial_solution: bool = False,
 ):
     for task in forced_allocation:
@@ -1083,7 +1084,7 @@ def satisfy_forced_allocation(
 def satisfy_forbidden_allocation(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    forbidden_allocation: Dict[Hashable, Set[Hashable]],
+    forbidden_allocation: dict[Hashable, set[Hashable]],
     partial_solution: bool = False,
 ):
     for task in forbidden_allocation:
@@ -1101,7 +1102,7 @@ def satisfy_forbidden_allocation(
 def satisfy_allowed_allocation(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    allowed_allocation: Dict[Hashable, Set[Hashable]],
+    allowed_allocation: dict[Hashable, set[Hashable]],
     partial_solution: bool = False,
 ):
     for task in allowed_allocation:
@@ -1119,7 +1120,7 @@ def satisfy_allowed_allocation(
 def satisfy_disjunctions(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    disjunction: List[List[Tuple[Hashable, Hashable]]],
+    disjunction: list[list[tuple[Hashable, Hashable]]],
     partial_solution: bool = False,
 ):
     b = True
@@ -1138,7 +1139,7 @@ def satisfy_disjunctions(
 def satisfy_disjunction(
     problem: TeamAllocationProblem,
     solution: TeamAllocationSolution,
-    one_disjunction: List[Tuple[Hashable, Hashable]],
+    one_disjunction: list[tuple[Hashable, Hashable]],
     partial_solution: bool = False,
 ):
     b = False

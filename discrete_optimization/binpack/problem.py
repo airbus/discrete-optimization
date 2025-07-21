@@ -3,11 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 from collections import defaultdict
 from copy import deepcopy
-from dataclasses import dataclass
-from typing import List
 
 from discrete_optimization.generic_tools.do_problem import *
-from discrete_optimization.jsp.problem import Subjob
 
 
 class BinPackSolution(Solution):

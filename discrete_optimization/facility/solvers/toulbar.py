@@ -2,8 +2,9 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import random
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import tqdm
 
@@ -71,7 +72,7 @@ class ToulbarFacilitySolver(ToulbarSolver, FacilitySolver, WarmstartMixin):
             model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8), vns=kwargs["vns"])
         else:
             model = pytoulbar2.CFN(kwargs.get("upper_bound", 10e8))
-        x: Dict[Tuple[int, int], Union[int, Any]] = {}
+        x: dict[tuple[int, int], Union[int, Any]] = {}
         key_to_index = {}
         index = 0
         matrix_fc_indicator, matrix_length = prune_search_space(

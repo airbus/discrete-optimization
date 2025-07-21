@@ -1,10 +1,9 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from typing import Hashable, List, Optional, Set, Union
+from typing import Hashable, Optional, Union
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 
 from discrete_optimization.generic_tools.graph_api import Graph, from_networkx
@@ -25,7 +24,7 @@ except ImportError as e:
 def subgraph_teams(
     graph_allocation: GraphBipartite,
     nb_teams_keep: int = 3,
-    subset_teams_keep: Optional[Set[Hashable]] = None,
+    subset_teams_keep: Optional[set[Hashable]] = None,
 ) -> GraphBipartite:
     if subset_teams_keep is not None:
         sub = subset_teams_keep
@@ -51,14 +50,14 @@ def subgraph_teams(
     )
 
 
-def subgraph_activities(graph: Graph, subset_tasks: Set[Hashable]) -> Graph:
+def subgraph_activities(graph: Graph, subset_tasks: set[Hashable]) -> Graph:
     g = graph.graph_nx
     new_g = nx.subgraph(g, subset_tasks)
     return from_networkx(new_g, undirected=graph.undirected, compute_predecessors=False)
 
 
 def subgraph_bipartite_activities(
-    graph_allocation: GraphBipartite, subset_tasks: Set[Hashable]
+    graph_allocation: GraphBipartite, subset_tasks: set[Hashable]
 ) -> Graph:
     # g = graph.graph_nx
     # ss = subset_tasks
@@ -89,7 +88,7 @@ def subgraph_bipartite_activities(
 
 def allocation_additional_constraint_subset_tasks(
     allocation_additional_constraint: AllocationAdditionalConstraint,
-    subset_tasks: Set[Hashable],
+    subset_tasks: set[Hashable],
 ):
     args = {
         "same_allocation": allocation_additional_constraint.same_allocation,
@@ -146,7 +145,7 @@ def allocation_additional_constraint_subset_tasks(
 
 
 def create_subproblem_allocation(
-    problem: TeamAllocationProblem, subset_tasks: Set[Hashable]
+    problem: TeamAllocationProblem, subset_tasks: set[Hashable]
 ):
     g = subgraph_activities(graph=problem.graph_activity, subset_tasks=subset_tasks)
     g_alloc = subgraph_bipartite_activities(
@@ -165,7 +164,7 @@ def create_subproblem_allocation(
 
 def additional_constraint_subset_teams(
     allocation_additional_constraint: AllocationAdditionalConstraint,
-    subset_teams_keep: Set[Hashable],
+    subset_teams_keep: set[Hashable],
 ):
     if allocation_additional_constraint is None:
         allocation_additional_constraint = AllocationAdditionalConstraint()
@@ -222,7 +221,7 @@ def additional_constraint_subset_teams(
 def cut_number_of_team(
     team_allocation: TeamAllocationProblem,
     nb_teams_keep: int = 3,
-    subset_teams_keep: Optional[Set[Hashable]] = None,
+    subset_teams_keep: Optional[set[Hashable]] = None,
 ):
     if subset_teams_keep is not None:
         sub = subset_teams_keep
@@ -258,7 +257,7 @@ def cut_number_of_team(
 
 def compute_equivalent_teams(
     team_allocation_problem: TeamAllocationProblem,
-) -> List[List[int]]:
+) -> list[list[int]]:
     """
     Return a list of disjoint set of teams index, that can be considered as indistinguishable
     from a solution point of view. Example : in the pure coloring problem all the colors/team are equivalent
@@ -285,7 +284,7 @@ def compute_equivalent_teams(
 
 def compute_overlapping_activities_on_start_time(
     team_allocation_problem: TeamAllocationProblem, activity: Hashable
-) -> List[Hashable]:
+) -> list[Hashable]:
     """
     Look at overlapping task at starting time of task
     """
@@ -300,7 +299,7 @@ def compute_overlapping_activities_on_start_time(
 
 def compute_overlapping_activities_on_end_time(
     team_allocation_problem: TeamAllocationProblem, activity: Hashable
-) -> List[Hashable]:
+) -> list[Hashable]:
     """
     Look at overlapping task at starting time of task
     """
@@ -318,7 +317,7 @@ def compute_active_activities_on_time(
     team_allocation_problem: TeamAllocationProblem,
     time: Union[int, pd.Timestamp],
     side="left",
-) -> List[Hashable]:
+) -> list[Hashable]:
     if side == "left":
         return [
             n
@@ -339,7 +338,7 @@ def compute_active_activities_on_time(
 
 def compute_all_overlapping(
     team_allocation_problem: TeamAllocationProblem,
-) -> Set[frozenset]:
+) -> set[frozenset]:
     set_overlaps = set()
     for task in team_allocation_problem.activities_name:
         set_overlaps.add(
@@ -426,7 +425,7 @@ def plot_allocation_solution(
         ref_date = pd.Timestamp(year=2025, month=7, day=1)
     if index_team_to_other_index is None:
         index_team_to_other_index = {i: i for i in problem.index_to_teams_name}
-    schedule_per_team: dict[Hashable, List[tuple]] = {}
+    schedule_per_team: dict[Hashable, list[tuple]] = {}
     for i_task in range(len(sol.allocation)):
         if sol.allocation[i_task] is not None:
             team = problem.index_to_teams_name[sol.allocation[i_task]]
