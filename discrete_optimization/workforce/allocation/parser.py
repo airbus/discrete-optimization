@@ -2,39 +2,16 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import json
-import os
-from typing import Optional
 
-from discrete_optimization.datasets import get_data_home
 from discrete_optimization.workforce.allocation.problem import TeamAllocationProblem
 from discrete_optimization.workforce.allocation.utils import cut_number_of_team
-from discrete_optimization.workforce.scheduling.parser import parse_json_to_problem
+from discrete_optimization.workforce.scheduling.parser import (
+    get_data_available,
+    parse_json_to_problem,
+)
 from discrete_optimization.workforce.scheduling.utils import (
     build_allocation_problem_from_scheduling,
 )
-
-
-def get_data_available(
-    data_folder: Optional[str] = None, data_home: Optional[str] = None
-) -> list[str]:
-    """Get datasets available for tsp.
-
-    Params:
-        data_folder: folder where datasets for tsp whould be find.
-            If None, we look in "workforce" subdirectory of `data_home`.
-        data_home: root directory for all datasets. Is None, set by
-            default to "~/discrete_optimization_data "
-
-    """
-    if data_folder is None:
-        data_home = get_data_home(data_home=data_home)
-        data_folder = f"{data_home}/workforce"
-
-    try:
-        files = [f for f in os.listdir(data_folder) if f.endswith(".json")]
-    except FileNotFoundError:
-        files = []
-    return [os.path.abspath(os.path.join(data_folder, f)) for f in files]
 
 
 def parse_to_allocation_problem(
