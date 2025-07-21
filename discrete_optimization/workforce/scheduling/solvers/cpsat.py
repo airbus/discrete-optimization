@@ -121,7 +121,7 @@ class CPSatAllocSchedulingSolver(
                 BoundResourceViaRelaxedProblem,
                 kwargs=BoundResourceViaRelaxedProblem.get_default_hyperparameters(),
             ),
-            depends_on=("add_lower_bound", True),
+            depends_on=("add_lower_bound", [True]),
         ),
     ]
 
