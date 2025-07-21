@@ -3,6 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import math
+from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 import numpy as np
 from ortools.sat.python.cp_model import CpModel, CpSolver
@@ -19,11 +21,19 @@ from discrete_optimization.workforce.scheduling.utils import get_working_time_te
 logger = logging.getLogger(__name__)
 
 
-class LBoundAllocScheduling(Hyperparametrizable):
+class BaseAllocSchedulingLowerBoundProvider(Hyperparametrizable, ABC):
+    status: Optional[str] = None
+
     def __init__(self, problem: AllocSchedulingProblem):
         self.problem = problem
 
-    def get_lb_nb_teams(self, **args):
+    @abstractmethod
+    def get_lb_nb_teams(self, **kwargs: Any) -> int:
+        ...
+
+
+class LBoundAllocScheduling(BaseAllocSchedulingLowerBoundProvider):
+    def get_lb_nb_teams(self, **args) -> int:
         work_time = get_working_time_teams(problem=self.problem)
         sorted_working_time = np.array(sorted(list(work_time.values()), reverse=True))
         cumulated = np.cumsum(sorted_working_time)
@@ -36,11 +46,8 @@ class LBoundAllocScheduling(Hyperparametrizable):
         return index + 1
 
 
-class ApproximateBoundAllocScheduling(Hyperparametrizable):
-    def __init__(self, problem: AllocSchedulingProblem):
-        self.problem = problem
-
-    def get_lb_nb_teams(self, **args):
+class ApproximateBoundAllocScheduling(BaseAllocSchedulingLowerBoundProvider):
+    def get_lb_nb_teams(self, **args) -> int:
         st_lb = [
             (
                 int(self.problem.get_lb_start_window(t)),
@@ -65,7 +72,7 @@ class ApproximateBoundAllocScheduling(Hyperparametrizable):
         # return usage, int(math.ceil(bound))
 
 
-class BoundResourceViaRelaxedProblem(Hyperparametrizable):
+class BoundResourceViaRelaxedProblem(BaseAllocSchedulingLowerBoundProvider):
     """
     See add_lower_bound_nb_teams function in cpmpy_alloc_scheduling_solver
     """
@@ -74,55 +81,9 @@ class BoundResourceViaRelaxedProblem(Hyperparametrizable):
         CategoricalHyperparameter(
             name="adding_precedence_constraint", choices=[False, True], default=False
         ),
-        # CategoricalHyperparameter(name="use_team_equivalence_classes", choices=[False, True],
-        #                           default=False)
     ]
 
-    def __init__(self, problem: AllocSchedulingProblem):
-        self.problem = problem
-        self.status = None
-
-    def init_model(self, **kwargs):
-        model = CpModel()
-        st_lb = [
-            (
-                int(self.problem.get_lb_start_window(t)),
-                int(self.problem.get_ub_start_window(t)),
-                int(self.problem.get_lb_end_window(t)),
-                int(self.problem.get_ub_end_window(t)),
-            )
-            for t in self.problem.tasks_list
-        ]
-        starts = [
-            model.NewIntVar(lb=st_lb[i][0], ub=st_lb[i][1], name=f"start_{i}")
-            for i in range(len(st_lb))
-        ]
-        ends = [
-            model.NewIntVar(lb=st_lb[i][2], ub=st_lb[i][3], name=f"end_{i}")
-            for i in range(len(st_lb))
-        ]
-        intervals = [
-            model.NewIntervalVar(
-                start=starts[i],
-                end=ends[i],
-                size=self.problem.tasks_data[self.problem.tasks_list[i]].duration_task,
-                name=f"interval_{i}",
-            )
-            for i in range(len(starts))
-        ]
-        if kwargs["adding_precedence_constraint"]:
-            for t in self.problem.precedence_constraints:
-                i_t = self.problem.tasks_to_index[t]
-                for t_suc in self.problem.precedence_constraints[t]:
-                    i_t_suc = self.problem.tasks_to_index[t_suc]
-                    model.Add(starts[i_t_suc] >= ends[i_t])
-        capacity = model.NewIntVar(lb=1, ub=self.problem.number_teams, name=f"capacity")
-        model.AddCumulative(
-            intervals, demands=[1] * self.problem.number_tasks, capacity=capacity
-        )
-        model.Minimize(capacity)
-
-    def get_lb_nb_teams(self, **kwargs):
+    def get_lb_nb_teams(self, **kwargs) -> int:
         kwargs = self.complete_with_default_hyperparameters(kwargs=kwargs)
         model = CpModel()
         st_lb = [
