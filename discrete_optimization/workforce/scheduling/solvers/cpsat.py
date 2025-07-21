@@ -537,6 +537,14 @@ class CPSatAllocSchedulingSolver(
                     objs.append(self.variables["resched_objs"][x])
                     weights.append(weights_dict[x])
                     self.variables["objectives"][x] = self.variables["resched_objs"][x]
+                self.variables["objectives"][
+                    ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION
+                ] = sum(
+                    [
+                        weights_dict[x] * self.variables["resched_objs"][x]
+                        for x in weights_dict
+                    ]
+                )
         self.variables["objs"] = objs
         self.cp_model.Minimize(sum(weights[i] * objs[i] for i in range(len(objs))))
 
