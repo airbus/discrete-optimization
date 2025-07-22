@@ -19,7 +19,6 @@ from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
-    EnumHyperparameter,
     SubBrick,
     SubBrickHyperparameter,
 )
@@ -34,13 +33,6 @@ from discrete_optimization.workforce.allocation.problem import TeamAllocationSol
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
     CpsatTeamAllocationSolver,
     ModelisationAllocationOrtools,
-)
-from discrete_optimization.workforce.commons.fairness_modeling import (
-    ModelisationDispersion,
-)
-from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
-    cumulate_value_per_teams_version_2,
-    model_fairness,
 )
 from discrete_optimization.workforce.scheduling.problem import (
     AllocSchedulingProblem,
@@ -74,11 +66,6 @@ class CPSatAllocSchedulingSolverCumulative(
         CategoricalHyperparameter(
             name="optional_activities", choices=[False, True], default=False
         ),
-        EnumHyperparameter(
-            name="modelisation_dispersion",
-            enum=ModelisationDispersion,
-            default=ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION,
-        ),
         CategoricalHyperparameter(
             name="adding_redundant_cumulative", default=False, choices=[False, True]
         ),
@@ -98,6 +85,12 @@ class CPSatAllocSchedulingSolverCumulative(
             ),
             depends_on=("add_lower_bound", [True]),
         ),
+    ]
+
+    not_implemented_objectives = [
+        ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION,
+        ObjectivesEnum.DISPERSION,
+        ObjectivesEnum.MIN_WORKLOAD,
     ]
 
     problem: AllocSchedulingProblem
@@ -133,12 +126,6 @@ class CPSatAllocSchedulingSolverCumulative(
         logger.info(
             f"Obj = {cpsolvercb.ObjectiveValue()}, Bound={cpsolvercb.BestObjectiveBound()}"
         )
-        if "resched_objs" in self.variables:
-            for obj in self.variables["resched_objs"]:
-                logger.info(f"Obj :{obj}")
-                logger.info(
-                    f"Value : {cpsolvercb.Value(self.variables['resched_objs'][obj])}"
-                )
         for t in range(self.problem.number_tasks):
             start = int(cpsolvercb.Value(self.variables["starts_var"][t]))
             end = int(cpsolvercb.Value(self.variables["ends_var"][t]))
@@ -513,7 +500,6 @@ class CPSatAllocSchedulingSolverCumulative(
                     for x in self.variables["resource_pool_capacity_var"]
                 ]
             )
-        self.add_objective_functions_on_cumul(objectives=objectives, **args)
 
     def init_model(
         self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any
@@ -523,6 +509,12 @@ class CPSatAllocSchedulingSolverCumulative(
         )
         if objectives is None:
             objectives = [ObjectivesEnum.NB_TEAMS]
+        else:
+            for obj in self.not_implemented_objectives:
+                if obj in objectives:
+                    raise NotImplementedError(
+                        f"{obj} not implemented for CPSatAllocSchedulingSolverCumulative"
+                    )
         args = self.complete_with_default_hyperparameters(args)
         optional_activities = args["optional_activities"]
         adding_redundant_cumulative = args["adding_redundant_cumulative"]
@@ -568,188 +560,11 @@ class CPSatAllocSchedulingSolverCumulative(
             if obj == ObjectivesEnum.NB_TEAMS:
                 objs.append(self.variables["objectives"][ObjectivesEnum.NB_TEAMS])
                 weights.append(10000.0)
-            if obj == ObjectivesEnum.MIN_WORKLOAD:
-                objs.append(self.variables["objectives"][ObjectivesEnum.MIN_WORKLOAD])
-                weights.append(1.0)
-            if obj == ObjectivesEnum.DISPERSION:
-                objs.append(self.variables["objectives"][ObjectivesEnum.DISPERSION])
-                weights.append(1.0)
             if obj == ObjectivesEnum.MAKESPAN:
                 objs.append(self.variables["objectives"][ObjectivesEnum.MAKESPAN])
                 weights.append(1.0)
-            if obj == ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION:
-                weights_dict = {
-                    "reallocated": 1000,
-                    "sum_delta_schedule": 1,
-                    "max_delta_schedule": 0,
-                    "nb_shifted": 1,
-                }
-                for x in weights_dict:
-                    objs.append(self.variables["resched_objs"][x])
-                    weights.append(weights_dict[x])
-                    self.variables["objectives"][x] = self.variables["resched_objs"][x]
         self.variables["objs"] = objs
         self.cp_model.Minimize(sum(weights[i] * objs[i] for i in range(len(objs))))
-
-    def add_objective_functions_on_cumul(
-        self, objectives: Optional[list[ObjectivesEnum]] = None, **args
-    ):
-        modelisation_dispersion: ModelisationDispersion = args[
-            "modelisation_dispersion"
-        ]
-        dur = [
-            self.problem.tasks_data[t].duration_task for t in self.problem.tasks_list
-        ]
-        if ObjectivesEnum.DISPERSION in objectives:
-            dict_fairness = model_fairness(
-                used_team=self.variables["used"],
-                allocation_variables=[
-                    self.variables["is_present_var"][i]
-                    for i in range(self.problem.number_tasks)
-                ],
-                value_per_task=dur,
-                modelisation_dispersion=modelisation_dispersion,
-                cp_model=self.cp_model,
-                number_teams=self.problem.number_teams,
-                name_value="workload",
-            )
-            self.variables["cumul_workload"] = dict_fairness["cumulated_value"]
-            if "min_value_workload" in dict_fairness:
-                self.variables["min_workload"] = dict_fairness["min_value_workload"]
-            if "max_value_workload" in dict_fairness:
-                self.variables["max_workload"] = dict_fairness["max_value_workload"]
-            self.variables["objectives"][ObjectivesEnum.DISPERSION] = dict_fairness[
-                "obj"
-            ]
-        if ObjectivesEnum.MIN_WORKLOAD in objectives:
-            variables = cumulate_value_per_teams_version_2(
-                used_team=self.variables["used"],
-                allocation_variables=[
-                    self.variables["is_present_var"][i]
-                    for i in range(self.problem.number_tasks)
-                ],
-                value_per_task=dur,
-                cp_model=self.cp_model,
-                number_teams=self.problem.number_teams,
-                name_value="workload_",
-            )
-            min_value = self.cp_model.NewIntVar(
-                lb=0, ub=sum(dur), name="min_value_workload"
-            )
-
-            self.cp_model.AddMinEquality(min_value, variables["workload_per_team_nz"])
-            self.variables["objectives"][ObjectivesEnum.MIN_WORKLOAD] = min_value
-
-    def create_delta_objectives(
-        self,
-        base_solution: AllocSchedulingSolution,
-        base_problem: AllocSchedulingProblem,
-        additional_constraints: Optional[AdditionalCPConstraints] = None,
-    ):
-        objs = []
-        common_tasks = list(
-            set(base_problem.tasks_list).intersection(self.problem.tasks_list)
-        )
-        common_teams = list(
-            set(base_problem.team_names).intersection(self.problem.team_names)
-        )
-        len_common_tasks = len(common_tasks)
-        reallocation_bool = [
-            self.cp_model.NewBoolVar(name=f"realloc_{self.problem.tasks_to_index[t]}")
-            for t in common_tasks
-        ]
-        self.variables["reallocation"] = reallocation_bool
-        self.variables["tasks_order_in_reallocation"] = common_tasks
-        delta_starts = []
-        delta_starts_abs = []
-        is_shifted = [
-            self.cp_model.NewBoolVar(name=f"shifted_{self.problem.tasks_to_index[t]}")
-            for t in common_tasks
-        ]
-        self.variables["is_shifted"] = is_shifted
-        for i in range(len_common_tasks):
-            tt = common_tasks[i]
-            index_in_problem = self.problem.tasks_to_index[tt]
-            ignore_reallocation = False
-            if additional_constraints is not None:
-                if additional_constraints.set_tasks_ignore_reallocation is not None:
-                    if (
-                        index_in_problem
-                        in additional_constraints.set_tasks_ignore_reallocation
-                    ):
-                        ignore_reallocation = True
-
-            index_in_base_problem = base_problem.tasks_to_index[tt]
-            if (
-                base_solution.allocation[index_in_base_problem]
-                not in base_problem.index_to_team
-            ):
-                team_of_base_solution = None
-            else:
-                team_of_base_solution = base_problem.index_to_team[
-                    base_solution.allocation[index_in_base_problem]
-                ]
-
-            if team_of_base_solution is not None:
-                index_team = self.problem.teams_to_index[team_of_base_solution]
-                if not ignore_reallocation:
-                    if (
-                        index_team
-                        not in self.variables["is_present_var"][index_in_problem]
-                    ):
-                        print("Problem")
-                    else:
-                        self.cp_model.Add(
-                            self.variables["is_present_var"][index_in_problem][
-                                index_team
-                            ]
-                            == 1
-                        ).OnlyEnforceIf(reallocation_bool[i].Not())
-                        self.cp_model.Add(
-                            self.variables["is_present_var"][index_in_problem][
-                                index_team
-                            ]
-                            == 0
-                        ).OnlyEnforceIf(reallocation_bool[i])
-                else:
-                    self.cp_model.Add(reallocation_bool[i] == 0)
-
-            delta_starts.append(
-                -int(base_solution.schedule[index_in_base_problem, 0])
-                + self.variables["starts_var"][index_in_problem]
-            )
-            self.cp_model.Add(delta_starts[-1] != 0).OnlyEnforceIf(is_shifted[i])
-            self.cp_model.Add(delta_starts[-1] == 0).OnlyEnforceIf(is_shifted[i].Not())
-            delta_starts_abs.append(
-                self.cp_model.NewIntVar(
-                    lb=0,
-                    ub=self.problem.horizon,
-                    name=f"delta_abs_starts_{index_in_problem}",
-                )
-            )
-            self.cp_model.AddAbsEquality(delta_starts_abs[-1], delta_starts[-1])
-        self.variables["delta_starts_abs"] = delta_starts_abs
-        self.variables["delta_starts"] = delta_starts
-        max_delta_start = self.cp_model.NewIntVar(
-            lb=0, ub=self.problem.horizon, name=f"max_delta_starts"
-        )
-        self.variables["max_delta_start"] = max_delta_start
-        self.cp_model.AddMaxEquality(max_delta_start, delta_starts_abs)
-        objs = [
-            sum(reallocation_bool)
-        ]  # count the number of changes of team/task allocation
-        objs += [sum(delta_starts_abs)]  # sum all absolute shift on the schedule
-        objs += [max_delta_start]  # maximum of absolute shift over all tasks
-        objs += [
-            sum(is_shifted)
-        ]  # Number of task that shifted at least by 1 unit of time.
-        self.variables["resched_objs"] = {
-            "reallocated": objs[0],
-            "sum_delta_schedule": objs[1],
-            "max_delta_schedule": objs[2],
-            "nb_shifted": objs[3],
-        }
-        return objs
 
     def solve(
         self,
