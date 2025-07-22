@@ -193,7 +193,9 @@ def test_cpsat_params(
     parameters_cp = ParametersCp.default()  # keep 1 process to check stopper properly
 
     solver = CPSatAllocSchedulingSolver(problem, **kwargs)
-    solver.init_model(objectives=[ObjectivesEnum.NB_TEAMS], **kwargs)
+    solver.init_model(
+        objectives=[ObjectivesEnum.NB_TEAMS, ObjectivesEnum.NB_DONE_AC], **kwargs
+    )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         time_limit=5,
@@ -219,7 +221,9 @@ def test_cpsat_modelisation_dispersion(modelisation_dispersion):
 
     solver = CPSatAllocSchedulingSolver(problem, **kwargs)
     solver.init_model(
-        objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True, **kwargs
+        objectives=[ObjectivesEnum.DISPERSION],
+        adding_redundant_cumulative=True,
+        **kwargs
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
@@ -237,12 +241,25 @@ def test_cpsat_set_model_obj_aggregated():
     instances = [p for p in get_data_available()]
     problem = parse_json_to_problem(instances[1])
     solver = CPSatAllocSchedulingSolver(problem)
+
+    # solution to compare with for DELTA_TO_EXISTING_SOLUTION
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        time_limit=5,
+    )
+    base_solution = res.get_best_solution()
+
+    objectives = [
+        ObjectivesEnum.NB_TEAMS,
+        ObjectivesEnum.MAKESPAN,
+        ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION,
+    ]
     objs_weights = [
         (ObjectivesEnum.NB_TEAMS, 0.1),
-        (ObjectivesEnum.MAKESPAN, 0.5),
-        (ObjectivesEnum.MIN_WORKLOAD, 1.5),
+        ("MAKESPAN", 0.5),
+        ("max_delta_schedule", 1.5),
     ]
-    solver.init_model(objectives=[o for o, w in objs_weights])
+    solver.init_model(objectives=objectives, base_solution=base_solution)
     solver.set_model_obj_aggregated(objs_weights=objs_weights)
     parameters_cp = ParametersCp.default()  # keep 1 process to check stopper properly
     # test with callback
@@ -257,7 +274,7 @@ def test_cpsat_set_model_obj_aggregated():
     problem.evaluate(sol)
 
 
-def test_cpsat_generic_lexico():
+def test_cpsat_lexico():
     instances = [p for p in get_data_available()]
     problem = parse_json_to_problem(instances[1])
     solver = CPSatAllocSchedulingSolver(problem)
@@ -275,7 +292,9 @@ def test_cpsat_generic_lexico():
     solver.init_model(
         objectives=objectives, base_solution=base_solution, optional_activities=True
     )
-    print(solver.get_lexico_objectives_available())
+    objectives_available = solver.get_lexico_objectives_available()
+    for o in objectives_available:
+        assert isinstance(o, str)
     assert (
         len(solver.get_lexico_objectives_available()) == len(objectives) + 4
     )  # DELTA_TO_EXISTING_SOLUTION => add 4 sous-obj
@@ -283,6 +302,7 @@ def test_cpsat_generic_lexico():
     # generic lexico solver
     lexico_solver = LexicoSolver(problem=problem, subsolver=solver)
     parameters_cp = ParametersCp.default()  # keep 1 process to check stopper properly
+    objectives = ["MAKESPAN", "NB_TEAMS", "sum_delta_schedule"]
     res = lexico_solver.solve(
         subsolver_callbacks=[NbIterationStopper(nb_iteration_max=1)],
         time_limit=10,

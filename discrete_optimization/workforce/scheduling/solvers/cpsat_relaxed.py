@@ -5,7 +5,7 @@ import logging
 import time
 from collections.abc import Iterable
 from functools import reduce
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import numpy as np
 from ortools.sat.python import cp_model
@@ -101,21 +101,38 @@ class CPSatAllocSchedulingSolverCumulative(
         return True
 
     def get_lexico_objectives_available(self) -> list[str]:
-        return list(self.variables["objectives"].keys())
+        return [
+            obj.name if isinstance(obj, ObjectivesEnum) else obj
+            for obj in self.variables["objectives"].keys()
+        ]
 
-    def set_lexico_objective(self, obj: str) -> None:
+    def set_lexico_objective(self, obj: Union[str, ObjectivesEnum]) -> None:
+        obj = _get_variables_obj_key(obj)
         self.cp_model.Minimize(self.variables["objectives"][obj])
 
-    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Any]:
+    def add_lexico_constraint(
+        self, obj: Union[str, ObjectivesEnum], value: float
+    ) -> Iterable[Any]:
+        obj = _get_variables_obj_key(obj)
         return [self.cp_model.Add(self.variables["objectives"][obj] <= value)]
 
-    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
+    def get_lexico_objective_value(
+        self, obj: Union[str, ObjectivesEnum], res: ResultStorage
+    ) -> float:
+        obj = _get_variables_obj_key(obj)
         sol = res[-1][0]
         return sol._intern_obj[obj]
 
-    def set_model_obj_aggregated(self, objs_weights: list[tuple[str, float]]):
+    def set_model_obj_aggregated(
+        self, objs_weights: list[tuple[Union[str, ObjectivesEnum], float]]
+    ):
         self.cp_model.Minimize(
-            sum([x[1] * self.variables["objectives"][x[0]] for x in objs_weights])
+            sum(
+                [
+                    x[1] * self.variables["objectives"][_get_variables_obj_key(x[0])]
+                    for x in objs_weights
+                ]
+            )
         )
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
@@ -670,3 +687,15 @@ def _update_kwargs_subsolver(
     if kwargs_subsolver is not None:
         updated_kwargs.update(kwargs_subsolver)
     return updated_kwargs
+
+
+def _get_variables_obj_key(
+    obj: Union[str, ObjectivesEnum]
+) -> Union[str, ObjectivesEnum]:
+    if isinstance(obj, str):
+        try:
+            return ObjectivesEnum[obj]
+        except KeyError:
+            return obj
+    else:
+        return obj
