@@ -512,10 +512,10 @@ class CPSatAllocSchedulingSolverCumulative(
             if obj == ObjectivesEnum.NB_DONE_AC and optional_activities:
                 objs.append(self.variables["objectives"][ObjectivesEnum.NB_DONE_AC])
                 weights.append(100000.0)
-            if obj == ObjectivesEnum.NB_TEAMS:
+            elif obj == ObjectivesEnum.NB_TEAMS:
                 objs.append(self.variables["objectives"][ObjectivesEnum.NB_TEAMS])
                 weights.append(10000.0)
-            if obj == ObjectivesEnum.MAKESPAN:
+            elif obj == ObjectivesEnum.MAKESPAN:
                 objs.append(self.variables["objectives"][ObjectivesEnum.MAKESPAN])
                 weights.append(1.0)
         self.variables["objs"] = objs
