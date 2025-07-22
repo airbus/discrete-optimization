@@ -415,36 +415,6 @@ class CPSatAllocSchedulingSolverCumulative(
                 capacity=self.variables["resource_pool_capacity_var"][i_pool],
             )
 
-    def set_resource_constraints(self):
-        interval_var = self.variables["interval_var"]
-        # Resource constraints
-        if self.problem.resources_list is not None:
-            for resource in self.problem.resources_list:
-                capa = self.problem.resources_capacity[resource]
-                interval_cons = [
-                    (
-                        interval_var[self.problem.tasks_to_index[t]],
-                        self.problem.tasks_data[t].resource_consumption.get(
-                            resource, 0
-                        ),
-                    )
-                    for t in self.problem.tasks_data
-                    if self.problem.tasks_data[t].resource_consumption.get(resource, 0)
-                    > 0
-                ]
-                if len(interval_cons) > 0:
-                    if capa == 1 and all(x[1] == 1 for x in interval_cons):
-                        self.cp_model.AddNoOverlap([x[0] for x in interval_cons])
-                    else:
-                        self.cp_model.AddCumulative(
-                            intervals=[x[0] for x in interval_cons],
-                            demands=[x[1] for x in interval_cons],
-                            capacity=capa,
-                        )
-
-    def add_buffers(self):
-        pass
-
     def create_makespan_obj(
         self, ends_var: dict[int, IntVar], st_lb: list[tuple[int, int, int, int]] = None
     ):
