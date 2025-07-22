@@ -146,7 +146,9 @@ class CPSatAllocSchedulingSolver(
         sol = res[-1][0]
         return sol._intern_obj[obj]
 
-    def set_model_obj_aggregated(self, objs_weights: list[tuple[str, float]]):
+    def set_model_obj_aggregated(
+        self, objs_weights: list[tuple[ObjectivesEnum, float]]
+    ):
         self.cp_model.Minimize(
             sum([x[1] * self.variables["objectives"][x[0]] for x in objs_weights])
         )
