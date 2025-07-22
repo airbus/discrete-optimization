@@ -459,9 +459,6 @@ class CPSatAllocSchedulingSolverCumulative(
     def init_model(
         self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any
     ) -> None:
-        additional_constraints: AdditionalCPConstraints = args.get(
-            "additional_constraints", None
-        )
         if objectives is None:
             objectives = [ObjectivesEnum.NB_TEAMS]
         else:
