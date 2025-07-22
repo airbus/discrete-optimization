@@ -192,9 +192,9 @@ class CPSatAllocSchedulingSolverCumulative(
                         if scheduled:
                             break
                     if not scheduled:
-                        print("pool ", pool)
-                        print(schedule[i_task, 0], schedule[i_task, 1])
-                        print("Problem with task ", i_task)
+                        logger.debug("pool ", pool)
+                        logger.debug(schedule[i_task, 0], schedule[i_task, 1])
+                        logger.debug("Problem with task ", i_task)
             if not scheduled:
                 for mode in self.variables["modes_var"][i_task]:
                     pool = self.resource_pools[mode]
@@ -217,7 +217,7 @@ class CPSatAllocSchedulingSolverCumulative(
                                 if i_task in indexes:
                                     for j in indexes:
                                         if allocation[j] == -1:
-                                            print(j)
+                                            logger.debug(j)
                                             allocation[j] = team
                                             schedule_per_team[team].append(
                                                 (schedule[j, 0], schedule[j, 1])
@@ -227,9 +227,9 @@ class CPSatAllocSchedulingSolverCumulative(
                     if scheduled:
                         break
                 if not scheduled:
-                    print("Still !!")
-                    print(schedule[i_task, 0], schedule[i_task, 1])
-                    print("Problem with task ", i_task)
+                    logger.debug("Still !!")
+                    logger.debug(schedule[i_task, 0], schedule[i_task, 1])
+                    logger.debug("Problem with task ", i_task)
         sol = AllocSchedulingSolution(
             problem=self.problem, schedule=schedule, allocation=allocation
         )

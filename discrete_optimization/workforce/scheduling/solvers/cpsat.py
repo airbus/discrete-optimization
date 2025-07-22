@@ -677,7 +677,7 @@ class CPSatAllocSchedulingSolver(
                         index_team
                         not in self.variables["is_present_var"][index_in_problem]
                     ):
-                        print("Problem")
+                        logger.debug("Problem")
                     else:
                         self.cp_model.Add(
                             self.variables["is_present_var"][index_in_problem][

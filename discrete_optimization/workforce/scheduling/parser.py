@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import json
+import logging
 import os
 from typing import Hashable, Optional
 
@@ -16,6 +17,8 @@ from discrete_optimization.workforce.scheduling.problem import (
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     AdditionalCPConstraints,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_data_available(
@@ -114,9 +117,3 @@ def parse_json_to_problem(json_path: str) -> AllocSchedulingProblem:
         additional_constraint = AdditionalCPConstraints(**d["additional_constraint"])
         pb.additional_constraint = additional_constraint
     return pb
-
-
-if __name__ == "__main__":
-    path = [f for f in get_data_available() if "instance_2.json" in f][0]
-    pb = parse_json_to_problem(path)
-    print(pb)

@@ -27,6 +27,8 @@ from discrete_optimization.rcpsp.problem import (
     SpecialConstraintsDescription,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class AllocSchedulingSolution(Solution):
     def __init__(
@@ -387,7 +389,7 @@ def satisfy_available_team(
 
 def realign_calendars(calendars_dict: dict[Hashable, list[tuple[int, int]]]):
     new_cals = {}
-    # print(calendars_dict)
+    # logger.debug(calendars_dict)
     for t in calendars_dict:
         new_cal = []
         if len(calendars_dict[t]) <= 1:
@@ -409,7 +411,7 @@ def realign_calendars(calendars_dict: dict[Hashable, list[tuple[int, int]]]):
             if len(new_cal) == 0 or new_cal[-1] != current_:
                 new_cal.append(current_)
             new_cals[t] = new_cal
-    # print(new_cals)
+    # logger.debug(new_cals)
     return new_cals
 
 
@@ -495,7 +497,7 @@ def full_satisfy(
         if not func(
             problem=problem, solution=solution, partial_solution=partial_solution
         ):
-            print(func, " not satisfied !!")
+            logger.warning(func, " not satisfied !!")
     return all(
         func(problem=problem, solution=solution, partial_solution=partial_solution)
         for func in [
@@ -735,7 +737,7 @@ def compute_stats_per_team(
         if team not in problem.index_to_team:
             continue
         slots = problem.compute_unavailability_calendar(problem.index_to_team[team])
-        print("slots", slots)
+        logger.debug("slots", slots)
         ac_team = np.nonzero(solution.allocation == team)
         schedule_ = solution.schedule[ac_team[0], :]
         used_time = np.sum(schedule_[:, 1] - schedule_[:, 0])

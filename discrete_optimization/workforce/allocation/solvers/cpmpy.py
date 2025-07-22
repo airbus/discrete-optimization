@@ -96,7 +96,7 @@ class ModelisationAllocationCP(Enum):
 class CallbackWithBound(OrtSolutionCounter):
     def on_solution_callback(self):
         super().on_solution_callback()
-        print(f"Obj bound, {self.BestObjectiveBound()}")
+        logger.debug(f"Obj bound, {self.BestObjectiveBound()}")
 
 
 class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
@@ -516,7 +516,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
             d["objs"] = objectives
             self.solutions.append((time() - self.solver_start_time, d))
             if verbose:
-                print(self.solutions[-1])
+                logger.debug(self.solutions[-1])
 
         return callback
 
@@ -708,7 +708,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
         if self.solver_name == "pysat":
-            print(args["modelisation_allocation"])
+            logger.debug(args["modelisation_allocation"])
             assert (
                 args["modelisation_allocation"]
                 == ModelisationAllocationCP.CNF_COMPATIBLE

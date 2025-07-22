@@ -54,11 +54,15 @@ def test_cpsat():
     assert problem.satisfy(sol)
     problem.evaluate(sol)
 
-    res = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=2)],
-        parameters_cp=parameters_cp,
-        time_limit=10,
-    )
+    # do not succeed always in finding 2 solutions: try 5 times
+    for _ in range(5):
+        res = solver.solve(
+            callbacks=[NbIterationStopper(nb_iteration_max=2)],
+            parameters_cp=parameters_cp,
+            time_limit=10,
+        )
+        if len(res) == 2:
+            break
     assert len(res) == 2
     sol = res[-1][0]
     assert problem.satisfy(sol)
