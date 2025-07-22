@@ -37,13 +37,6 @@ def run_cumulative():
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
     )
     res = solver.solve(
-        callbacks=[ObjectiveGapStopper(0, 0), BasicStatsCallback()],
-        parameters_cp=ParametersCp.default_cpsat(),
-        time_limit=10,
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
-    )
-    res = solver.solve_two_step(
-        callbacks=[ObjectiveGapStopper(0, 0), BasicStatsCallback()],
         parameters_cp=ParametersCp.default_cpsat(),
         time_limit=10,
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
