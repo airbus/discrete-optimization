@@ -242,12 +242,6 @@ class CPSatAllocSchedulingSolver(
                         self.variables["objectives"][ObjectivesEnum.MAKESPAN],
                         int(np.max(solution.schedule[:, 1])),
                     )
-        if self.solver is not None:
-            self.cp_model.ClearHints()
-            response = self.solver.ResponseProto()  # Get the raw response
-            for i in range(len(response.solution)):
-                var = self.cp_model.GetIntVarFromProtoIndex(i)
-                self.cp_model.AddHint(var, response.solution[i])
 
     def init_model(
         self, objectives: Optional[list[ObjectivesEnum]] = None, **args: Any

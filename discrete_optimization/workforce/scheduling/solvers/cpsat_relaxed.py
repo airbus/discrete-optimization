@@ -251,44 +251,12 @@ class CPSatAllocSchedulingSolverCumulative(
                 if "actually_done" in self.variables:
                     self.cp_model.AddHint(self.variables["actually_done"][t], 1)
 
-                for index_team in self.variables["is_present_var"][t]:
-                    if solution.allocation[t] == index_team:
-                        self.cp_model.AddHint(
-                            self.variables["is_present_var"][t][index_team], 1
-                        )
-                    else:
-                        self.cp_model.AddHint(
-                            self.variables["is_present_var"][t][index_team], 0
-                        )
-            team_used = set(solution.allocation)
-            for team in range(self.problem.number_teams):
-                if team in team_used:
-                    self.cp_model.AddHint(self.variables["used"][team], 1)
-                else:
-                    self.cp_model.AddHint(self.variables["used"][team], 0)
-            if "reallocation" in self.variables:
-                for x in self.variables["reallocation"]:
-                    self.cp_model.AddHint(x, 0)
-            if "is_shifted" in self.variables:
-                for x in self.variables["is_shifted"]:
-                    self.cp_model.AddHint(x, 0)
-            if "delta_starts_abs" in self.variables:
-                for x in self.variables["delta_starts_abs"]:
-                    self.cp_model.AddHint(x, 0)
-            if "max_delta_start" in self.variables:
-                self.cp_model.AddHint(self.variables["max_delta_start"], 0)
             if "objectives" in self.variables:
                 if ObjectivesEnum.MAKESPAN in self.variables["objectives"]:
                     self.cp_model.AddHint(
                         self.variables["objectives"][ObjectivesEnum.MAKESPAN],
                         int(np.max(solution.schedule[:, 1])),
                     )
-        if self.solver is not None:
-            self.cp_model.ClearHints()
-            response = self.solver.ResponseProto()  # Get the raw response
-            for i in range(len(response.solution)):
-                var = self.cp_model.GetIntVarFromProtoIndex(i)
-                self.cp_model.AddHint(var, response.solution[i])
 
     def init_multimode_data(self, **kwargs):
         equivalent_ = compute_equivalent_teams_scheduling_problem(self.problem)
