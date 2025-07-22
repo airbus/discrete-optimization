@@ -95,9 +95,25 @@ class CpsatTeamAllocationSolver(
             name="modelisation_dispersion",
             enum=ModelisationDispersion,
             default=ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION,
+            depends_on=(
+                "modelisation_allocation",
+                [
+                    ModelisationAllocationOrtools.BINARY,
+                    ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
+                ],
+            ),
         ),
         CategoricalHyperparameter(
-            name="include_all_binary_vars", choices=[True, False], default=False
+            name="include_all_binary_vars",
+            choices=[True, False],
+            default=False,
+            depends_on=(
+                "modelisation_allocation",
+                [
+                    ModelisationAllocationOrtools.BINARY,
+                    ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
+                ],
+            ),
         ),
         CategoricalHyperparameter(
             name="include_pair_overlap", choices=[True, False], default=True
@@ -190,9 +206,15 @@ class CpsatTeamAllocationSolver(
         modelisation_allocation: ModelisationAllocationOrtools = ModelisationAllocationOrtools.BINARY,
         **args,
     ):
-        if modelisation_allocation == ModelisationAllocationOrtools.BINARY:
-            args["optional_activities"] = False
-            args = self.complete_with_default_hyperparameters(args)
+        args = self.complete_with_default_hyperparameters(args)
+        if modelisation_allocation in [
+            ModelisationAllocationOrtools.BINARY,
+            ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
+        ]:
+            args["optional_activities"] = (
+                modelisation_allocation
+                == ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
+            )
             self.init_model_binary(**args)
             self.modelisation_allocation = modelisation_allocation
             self.key_main_decision_variable = "allocation_binary"
@@ -203,29 +225,12 @@ class CpsatTeamAllocationSolver(
                         "base_problem", args["base_solution"].problem
                     ),
                 )
-        if modelisation_allocation == ModelisationAllocationOrtools.INTEGER:
+        else:
             self.init_model_integer(**args)
             self.modelisation_allocation = modelisation_allocation
             self.key_main_decision_variable = "allocation"
             if "base_solution" in args:
                 self.create_delta_to_base_solution_integer(
-                    base_solution=args["base_solution"],
-                    base_problem=args.get(
-                        "base_problem", args["base_solution"].problem
-                    ),
-                )
-
-        if (
-            modelisation_allocation
-            == ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
-        ):
-            args["optional_activities"] = True
-            args = self.complete_with_default_hyperparameters(args)
-            self.init_model_binary(**args)
-            self.modelisation_allocation = modelisation_allocation
-            self.key_main_decision_variable = "allocation_binary"
-            if "base_solution" in args:
-                self.create_delta_to_base_solution_binary(
                     base_solution=args["base_solution"],
                     base_problem=args.get(
                         "base_problem", args["base_solution"].problem
@@ -245,21 +250,10 @@ class CpsatTeamAllocationSolver(
 
     def init_model_integer(self, **kwargs):
         self.cp_model = cp_model.CpModel()
-        include_pair_overlap = kwargs.get(
-            "include_pair_overlap",
-            self.get_hyperparameter("include_pair_overlap").default,
-        )
-        overlapping_advanced = kwargs.get(
-            "overlapping_advanced",
-            self.get_hyperparameter("overlapping_advanced").default,
-        )
-        symmbreak_on_used = kwargs.get(
-            "symmbreak_on_used", self.get_hyperparameter("symmbreak_on_used").default
-        )
-        add_lower_bound_nb_teams = kwargs.get(
-            "add_lower_bound_nb_teams",
-            self.get_hyperparameter("add_lower_bound_nb_teams").default,
-        )
+        include_pair_overlap = kwargs["include_pair_overlap"]
+        overlapping_advanced = kwargs["overlapping_advanced"]
+        symmbreak_on_used = kwargs["symmbreak_on_used"]
+        add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
         domains_for_task: list[Domain] = []
         # Take into account the allocation constraints directly in domains of variable.
@@ -333,23 +327,13 @@ class CpsatTeamAllocationSolver(
 
     def init_model_binary(self, **kwargs):
         self.cp_model = cp_model.CpModel()
-        optional_activities = kwargs.get("optional_activities", False)
-        include_pair_overlap = kwargs.get(
-            "include_pair_overlap",
-            self.get_hyperparameter("include_pair_overlap").default,
-        )
-        overlapping_advanced = kwargs.get(
-            "overlapping_advanced",
-            self.get_hyperparameter("overlapping_advanced").default,
-        )
-        symmbreak_on_used = kwargs.get(
-            "symmbreak_on_used", self.get_hyperparameter("symmbreak_on_used").default
-        )
-        include_all_binary_vars = kwargs.get(
-            "include_all_binary_vars",
-            self.get_hyperparameter("include_all_binary_vars").default,
-        )
+        optional_activities = kwargs["optional_activities"]
+        include_pair_overlap = kwargs["include_pair_overlap"]
+        overlapping_advanced = kwargs["overlapping_advanced"]
+        symmbreak_on_used = kwargs["symmbreak_on_used"]
+        modelisation_dispersion = kwargs["modelisation_dispersion"]
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
+        include_all_binary_vars = kwargs["include_all_binary_vars"]
         assert include_pair_overlap or overlapping_advanced
         domains_for_task: list[list[int]] = []
         # Take into account the allocation constraints directly in domains of variable.
@@ -463,6 +447,7 @@ class CpsatTeamAllocationSolver(
         self.variables["objs"]["nb_teams"] = sum(used)
         self.variables["allocation_binary"] = allocation_binary
         self.variables["used"] = used
+
         objectives_expr = []
         keys_variable_to_log = []
         if isinstance(self.problem, TeamAllocationProblemMultiobj):
@@ -472,7 +457,7 @@ class CpsatTeamAllocationSolver(
                         key_objective=key,
                         allocation_binary=allocation_binary,
                         used=used,
-                        modelisation_dispersion=kwargs["modelisation_dispersion"],
+                        modelisation_dispersion=modelisation_dispersion,
                     )
                 ]
                 if objectives_expr[-1] is not None:
@@ -645,12 +630,10 @@ class CpsatTeamAllocationSolver(
         key_objective: str,
         allocation_binary: list[dict[int, NDVarArray]],
         used: NDVarArray,
+        modelisation_dispersion: ModelisationDispersion,
         **kwargs,
     ):
         assert isinstance(self.problem, TeamAllocationProblemMultiobj)
-        modelisation_dispersion: ModelisationDispersion = kwargs[
-            "modelisation_dispersion"
-        ]
         values = [
             int(
                 self.problem.attributes_of_activities[key_objective][
@@ -673,288 +656,11 @@ class CpsatTeamAllocationSolver(
                 self.variables[key] = dict_dispersion[key]
         return dict_dispersion["obj"]
 
-        # if modelisation_dispersion == ModelisationDispersion..EXACT_NAIVE:
-        #     self.modelisation_dispersion = modelisation_dispersion
-        #     return self.add_multiobj_naive(key_objective=key_objective,
-        #                                    allocation_binary=allocation_binary,
-        #                                    used=used)
-        # if modelisation_dispersion == ModelisationDispersionOrtools.EPSILON_TO_AVG_V0:
-        #     # normally, should not be done in the first init of the model,
-        #     # you need to have optimized in number of teams first.
-        #     self.modelisation_dispersion = modelisation_dispersion
-        #     if "nb_teams_used" in kwargs:
-        #         # if we specify a nb_teams_used, why not still doing it !!
-        #         return self.add_multiobj_epsilon(key_objective=key_objective,
-        #                                          allocation_binary=allocation_binary,
-        #                                          used=used,
-        #                                          nb_teams_used=kwargs["nb_teams_used"])
-        #     return
-        # if modelisation_dispersion == ModelisationDispersionOrtools.EPSILON_TO_AVG_V1:
-        #     self.modelisation_dispersion = modelisation_dispersion
-        #     return self.add_multiobj_epsilon_v1(key_objective=key_objective,
-        #                                         allocation_binary=allocation_binary,
-        #                                         used=used)
-
-    def add_multiobj_naive(
-        self,
-        key_objective: str,
-        allocation_binary: list[dict[int, IntVar]],
-        used: list[IntVar],
-        **kwargs,
-    ):
-        assert isinstance(self.problem, TeamAllocationProblemMultiobj)
-        min_usage = None
-        max_usage = None
-        dictionary_value = self.problem.attributes_of_activities[key_objective]
-        if key_objective != "duration":
-            for t in dictionary_value:
-                dictionary_value[t] = int(dictionary_value[t])
-        aggregate_op: AggregateOperator = self.problem.objective_doc_cumul_activities[
-            key_objective
-        ][1]
-        if key_objective == "duration" and kwargs.get("cut_duration_bounds", True):
-            lower_bound_non_zeros = int(
-                sum(dictionary_value.values()) / (4 * self.problem.number_of_teams)
-            )
-            upper_bound = int(
-                4.0 * sum(dictionary_value.values()) / self.problem.number_of_teams
-            )
-        else:
-            lower_bound_non_zeros = 0
-            upper_bound = int(sum(dictionary_value.values()))
-        usage = [
-            self.cp_model.NewIntVar(0, upper_bound, name=f"{key_objective}_{team}")
-            for team in range(self.problem.number_of_teams)
-        ]
-        usage_non_zero = None
-        if aggregate_op in {AggregateOperator.MAX_MINUS_MIN, AggregateOperator.MIN}:
-            usage_non_zero = [
-                self.cp_model.NewIntVar(
-                    lower_bound_non_zeros,
-                    upper_bound,
-                    name=f"nz_{key_objective}_{team}",
-                )
-                for team in range(self.problem.number_of_teams)
-            ]
-        for team in range(self.problem.number_of_teams):
-            task_for_team = [
-                ind
-                for ind in range(len(allocation_binary))
-                if team in allocation_binary[ind]
-            ]
-            self.cp_model.Add(
-                LinearExpr.WeightedSum(
-                    [allocation_binary[ind][team] for ind in task_for_team],
-                    [
-                        dictionary_value[self.problem.index_to_activities_name[ia]]
-                        for ia in task_for_team
-                    ],
-                )
-                == usage[team]
-            )
-            if usage_non_zero is not None:
-                self.cp_model.Add(usage_non_zero[team] == usage[team]).OnlyEnforceIf(
-                    used[team]
-                )
-                self.cp_model.Add(usage_non_zero[team] == upper_bound).OnlyEnforceIf(
-                    used[team].Not()
-                )
-        self.variables[key_objective] = usage
-        if aggregate_op in {AggregateOperator.MAX_MINUS_MIN, AggregateOperator.MAX}:
-            max_usage = self.cp_model.NewIntVar(
-                0, upper_bound, name=f"max_{key_objective}"
-            )
-            self.variables[f"max_{key_objective}"] = max_usage
-            self.cp_model.AddMaxEquality(max_usage, usage)
-        if aggregate_op in {AggregateOperator.MAX_MINUS_MIN, AggregateOperator.MIN}:
-            min_usage = self.cp_model.NewIntVar(
-                0, upper_bound, name=f"min_{key_objective}"
-            )
-            self.variables[f"min_{key_objective}"] = min_usage
-            self.cp_model.AddMinEquality(min_usage, usage_non_zero)
-        if aggregate_op == AggregateOperator.MIN:
-            return min_usage
-        if aggregate_op == AggregateOperator.MAX:
-            return max_usage
-        if aggregate_op == AggregateOperator.MEAN:
-            return LinearExpr.Sum(usage)
-        if aggregate_op == AggregateOperator.MAX_MINUS_MIN:
-            return max_usage - min_usage
-
-    def add_multiobj_epsilon(
-        self,
-        key_objective: str,
-        allocation_binary: list[dict[int, IntVar]],
-        used: list[IntVar],
-        nb_teams_used: Optional[int] = None,
-        **kwargs,
-    ):
-        if nb_teams_used is None:
-            nb_teams_used = self.problem.get_max_teams()
-        assert isinstance(self.problem, TeamAllocationProblemMultiobj)
-        dictionary_value = self.problem.attributes_of_activities[key_objective]
-        if key_objective != "duration":
-            for t in dictionary_value:
-                dictionary_value[t] = int(dictionary_value[t])
-        aggregate_op: AggregateOperator = self.problem.objective_doc_cumul_activities[
-            key_objective
-        ][1]
-        upper_bound = int(sum(dictionary_value.values()))
-        expected_val = sum(dictionary_value.values()) // nb_teams_used
-        usage = [
-            self.cp_model.NewIntVar(0, upper_bound, name=f"{key_objective}_{team}")
-            for team in range(self.problem.number_of_teams)
-        ]
-        for team in range(self.problem.number_of_teams):
-            task_for_team = [
-                ind
-                for ind in range(len(allocation_binary))
-                if team in allocation_binary[ind]
-            ]
-            self.cp_model.Add(
-                sum(
-                    [
-                        allocation_binary[ind][team]
-                        * int(
-                            dictionary_value[self.problem.index_to_activities_name[ind]]
-                        )
-                        for ind in task_for_team
-                    ]
-                )
-                == usage[team]
-            )
-        epsilon_val = self.cp_model.NewIntVar(
-            lb=0,
-            ub=max(upper_bound - expected_val, expected_val),
-            name="epsilon_to_expected_val",
-        )
-        self.variables[key_objective] = usage
-        if aggregate_op == AggregateOperator.MAX:
-            for team in range(self.problem.number_of_teams):
-                self.cp_model.Add(
-                    usage[team] <= expected_val + epsilon_val
-                ).OnlyEnforceIf(used[team])
-            return epsilon_val
-        if aggregate_op == AggregateOperator.MIN:
-            for team in range(self.problem.number_of_teams):
-                self.cp_model.Add(
-                    usage[team] >= expected_val - epsilon_val
-                ).OnlyEnforceIf(used[team])
-            return -epsilon_val
-        if aggregate_op == AggregateOperator.MAX_MINUS_MIN:
-            for team in range(self.problem.number_of_teams):
-                self.cp_model.Add(
-                    usage[team] <= expected_val + epsilon_val
-                ).OnlyEnforceIf(used[team])
-                self.cp_model.Add(
-                    usage[team] >= expected_val - epsilon_val
-                ).OnlyEnforceIf(used[team])
-            return epsilon_val
-        if aggregate_op == AggregateOperator.MEAN:  # doesn't make sense actually
-            return sum(usage)
-
-    def add_multiobj_epsilon_v1(
-        self,
-        key_objective: str,
-        allocation_binary: list[dict[int, IntVar]],
-        used: list[IntVar],
-        **kwargs,
-    ):
-        assert isinstance(self.problem, TeamAllocationProblemMultiobj)
-        dictionary_value = self.problem.attributes_of_activities[key_objective]
-        if key_objective != "duration":
-            for t in dictionary_value:
-                dictionary_value[t] = int(dictionary_value[t])
-        aggregate_op: AggregateOperator = self.problem.objective_doc_cumul_activities[
-            key_objective
-        ][1]
-        upper_bound = int(sum(dictionary_value.values()))
-        # nb_team_used = sum(used)
-        expected_val = self.cp_model.NewIntVar(
-            lb=int(upper_bound / self.problem.number_of_teams),
-            ub=upper_bound,
-            name=f"expected_val_{key_objective}",
-        )
-        # self.cp_model.AddDivisionEquality(expected_val, upper_bound, nb_team_used)
-        usage = [
-            self.cp_model.NewIntVar(0, upper_bound, name=f"{key_objective}_{team}")
-            for team in range(self.problem.number_of_teams)
-        ]
-        for team in range(self.problem.number_of_teams):
-            task_for_team = [
-                ind
-                for ind in range(len(allocation_binary))
-                if team in allocation_binary[ind]
-            ]
-            self.cp_model.Add(
-                sum(
-                    [
-                        allocation_binary[ind][team]
-                        * int(
-                            dictionary_value[self.problem.index_to_activities_name[ind]]
-                        )
-                        for ind in task_for_team
-                    ]
-                )
-                == usage[team]
-            )
-        epsilon_val = self.cp_model.NewIntVar(
-            lb=0, ub=upper_bound, name=f"epsilon_to_expected_val_{key_objective}"
-        )
-        self.variables[key_objective] = usage
-        if aggregate_op == AggregateOperator.MAX:
-            for team in range(self.problem.number_of_teams):
-                self.cp_model.Add(
-                    usage[team] <= expected_val + epsilon_val
-                ).OnlyEnforceIf(used[team])
-            return epsilon_val
-        if aggregate_op == AggregateOperator.MIN:
-            for team in range(self.problem.number_of_teams):
-                self.cp_model.Add(
-                    usage[team] >= expected_val - epsilon_val
-                ).OnlyEnforceIf(used[team])
-            return -epsilon_val
-        if aggregate_op == AggregateOperator.MAX_MINUS_MIN:
-            for team in range(self.problem.number_of_teams):
-                self.cp_model.Add(
-                    usage[team] <= expected_val + epsilon_val
-                ).OnlyEnforceIf(used[team])
-                self.cp_model.Add(
-                    usage[team] >= expected_val - epsilon_val
-                ).OnlyEnforceIf(used[team])
-            return epsilon_val
-        if aggregate_op == AggregateOperator.MEAN:  # doesn't make sense actually
-            return sum(usage)
-
     @staticmethod
     def implements_lexico_api() -> bool:
         return True
 
     def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Any]:
-        if (
-            self.modelisation_dispersion
-            == ModelisationDispersionOrtools.EPSILON_TO_AVG_V0
-            and obj == "nb_teams"
-        ):
-            nb_team_used = sum(
-                [
-                    self.solver.Value(self.variables["used"][i])
-                    for i in range(len(self.variables["used"]))
-                ]
-            )
-            assert isinstance(self.problem, TeamAllocationProblemMultiobj)
-            for key in self.problem.attributes_cumul_activities:
-                added_obj = self.add_multiobj_epsilon(
-                    key_objective=key,
-                    allocation_binary=self.variables["allocation_binary"],
-                    used=self.variables["used"],
-                    nb_teams_used=nb_team_used,
-                )
-                self.variables["objs"][key] = added_obj
-        if obj in ["duration", "distance_act_2"]:
-            return [
-                self.cp_model.Add(self.variables["objs"][obj] <= int(value) + 5)
-            ]  # Small margin...
         return [self.cp_model.Add(self.variables["objs"][obj] <= int(value))]
 
     def set_lexico_objective(self, obj: str) -> None:
@@ -981,122 +687,6 @@ class CpsatTeamAllocationSolver(
             if obj in sol._intern_objectives
         ]
         return min(values)
-
-    def solve_lexic(
-        self,
-        parameters_cp: Optional[ParametersCp] = None,
-        add_constraint_team_used_between_phase: bool = False,
-        time_limit: Optional[float] = 100.0,
-        **args: Any,
-    ) -> ResultStorage:
-        """
-        Custom code doing the multi-objective optimisation in a lexicographic manner.
-        Use of discrete-optim native functionality will probably replace it.
-        """
-        if parameters_cp is None:
-            parameters_cp = ParametersCp.default()
-        if self.cp_model is None:
-            self.init_model(**args)
-        solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = time_limit
-        solver.parameters.num_search_workers = parameters_cp.nb_process
-        verbose_callback = args.get("verbose", False)
-
-        class Stopping(VarArrayAndObjectiveSolutionPrinter):
-            """Print intermediate solutions (objective, variable values, time)."""
-
-            def __init__(
-                self, variables, expr_threshold=None, threshold_value: int = 20
-            ):
-                super().__init__(variables)
-                self.threshold_value = threshold_value
-                self.expr_threshold = expr_threshold
-
-            def on_solution_callback(self):
-                """Called on each new solution."""
-                VarArrayAndObjectiveSolutionPrinter.on_solution_callback(self)
-                if self.expr_threshold is None:
-                    if self.ObjectiveValue() <= self.threshold_value:
-                        logger.info("stopping search early")
-                        self.StopSearch()
-                else:
-                    if self.Value(self.expr_threshold) <= self.threshold_value:
-                        logger.info("stopping search early")
-                        self.StopSearch()
-
-        variables_to_log = [
-            self.variables["objs"][key]
-            for key in self.variables["keys_variable_to_log"]
-        ]
-        callback = (
-            Stopping(
-                variables=variables_to_log,
-                threshold_value=args.get("early_stop_vals", [10, 30, 10])[0],
-            )
-            if verbose_callback
-            else None
-        )
-        self.cp_model.Minimize(self.variables["objectives_expr"][0])
-        status = solver.Solve(self.cp_model, callback)
-        logger.info(
-            f"Status of the solver : {solver.StatusName(status)}, obj={solver.ObjectiveValue()}"
-        )
-        if len(self.variables["objectives_expr"]) > 1:
-            for j in range(1, len(self.variables["objectives_expr"])):
-
-                solver.parameters.max_time_in_seconds = time_limit
-                self.cp_model.Add(
-                    self.variables["objectives_expr"][j - 1]
-                    <= solver.Value(self.variables["objectives_expr"][j - 1])
-                )
-                # Heuristic :
-                if add_constraint_team_used_between_phase and j == 1:
-                    for color in range(len(self.variables["used"])):
-                        if not solver.BooleanValue(self.variables["used"][color]):
-                            self.cp_model.Add(self.variables["used"][color] == False)
-                            task_for_team = [
-                                ind
-                                for ind in range(
-                                    len(self.variables["allocation_binary"])
-                                )
-                                if color in self.variables["allocation_binary"][ind]
-                            ]
-                            for i in task_for_team:
-                                self.cp_model.Add(
-                                    self.variables["allocation_binary"][i][color]
-                                    == False
-                                )
-                self.cp_model.Minimize(
-                    100 * self.variables["objectives_expr"][0]
-                    + self.variables["objectives_expr"][j]
-                )
-                if self.modelisation_allocation == ModelisationAllocationOrtools.BINARY:
-                    if j > 1:
-                        self.cp_model.ClearHints()
-                    for i in range(len(self.variables["allocation_binary"])):
-                        for team in self.variables["allocation_binary"][i]:
-                            self.cp_model.AddHint(
-                                self.variables["allocation_binary"][i][team],
-                                solver.BooleanValue(
-                                    self.variables["allocation_binary"][i][team]
-                                ),
-                            )
-                status = solver.Solve(
-                    self.cp_model,
-                    Stopping(
-                        variables=variables_to_log,
-                        expr_threshold=self.variables["objectives_expr"][j],
-                        threshold_value=args.get("early_stop_vals", [10, 30, 10])[j],
-                    ),
-                )
-                logger.info(f"{j}-th objective, status={solver.StatusName(status)}")
-        logger.info(
-            f"Solver finished, status={solver.StatusName(status)}, objective = {solver.ObjectiveValue()},"
-            f"best obj bound = {solver.BestObjectiveBound()}"
-        )
-        return from_solutions_to_result_storage(
-            [self.retrieve_solution(solver)], problem=self.problem
-        )
 
     def solve_n_best_solution(
         self,
@@ -1270,6 +860,8 @@ class CpsatTeamAllocationSolver(
             modelisation_allocation=ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
             **kwargs,
         )
+        if parameters_cp is None:
+            parameters_cp = ParametersCp.default_cpsat()
         solver = CpSolver()
         solver.parameters.max_time_in_seconds = time_limit
         solver.parameters.num_workers = parameters_cp.nb_process
@@ -1285,8 +877,8 @@ class CpsatTeamAllocationSolver(
             #      f'{solver.SufficientAssumptionsForInfeasibility()}')
             # logger.debug("Len of assumption : ", len(solver.SufficientAssumptionsForInfeasibility()))
             for var_index in solver.SufficientAssumptionsForInfeasibility():
-                logger.debug("Infeasible = ")
-                logger.debug(var_index, self.cp_model.var_index_to_var_proto(var_index))
+                print("Infeasible = ")
+                print(var_index, self.cp_model.var_index_to_var_proto(var_index))
 
 
 def adding_same_allocation_constraint_binary(
