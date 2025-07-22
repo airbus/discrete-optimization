@@ -12,4 +12,3 @@ class ModelisationDispersion(Enum):
     PROXY_MIN_MAX = 4
     PROXY_SUM = 5
     PROXY_SLACK = 6
-    PROXY_GINI_INDICATOR = 7
