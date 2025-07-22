@@ -1016,7 +1016,7 @@ def satisfy_same_allocation(
         if not partial_solution:
             one_ac = next(iter(set_same_alloc))
             val = solution.allocation[problem.index_activities_name[one_ac]]
-            # print([solution.allocation[problem.index_activities_name[x]] for x in set_same_alloc])
+            # logger.debug([solution.allocation[problem.index_activities_name[x]] for x in set_same_alloc])
             if any(
                 solution.allocation[problem.index_activities_name[x]] != val
                 for x in set_same_alloc

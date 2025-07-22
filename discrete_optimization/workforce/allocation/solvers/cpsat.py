@@ -1280,13 +1280,13 @@ class CpsatTeamAllocationSolver(
         from ortools.sat.python.cp_model import INFEASIBLE, MODEL_INVALID
 
         if status in {MODEL_INVALID, INFEASIBLE}:
-            # print(solver.ResponseProto().sufficient_assumptions_for_infeasibility)
-            # print('SufficientAssumptionsForInfeasibility = '
+            # logger.debug(solver.ResponseProto().sufficient_assumptions_for_infeasibility)
+            # logger.debug('SufficientAssumptionsForInfeasibility = '
             #      f'{solver.SufficientAssumptionsForInfeasibility()}')
-            # print("Len of assumption : ", len(solver.SufficientAssumptionsForInfeasibility()))
+            # logger.debug("Len of assumption : ", len(solver.SufficientAssumptionsForInfeasibility()))
             for var_index in solver.SufficientAssumptionsForInfeasibility():
-                print("Infeasible = ")
-                print(var_index, self.cp_model.var_index_to_var_proto(var_index))
+                logger.debug("Infeasible = ")
+                logger.debug(var_index, self.cp_model.var_index_to_var_proto(var_index))
 
 
 def adding_same_allocation_constraint_binary(
@@ -1552,4 +1552,3 @@ def adding_precedence_channeling_constraint(
                 model.Add(is_allocated[task_index] >= is_allocated[task_succ])
                 model.AddImplication(is_allocated[task_succ], is_allocated[task_index])
         logger.info("Precedence constraints added")
-        print("Precedence constraints added")

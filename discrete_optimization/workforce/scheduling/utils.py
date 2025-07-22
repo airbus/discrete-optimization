@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import datetime
-import json
+import logging
 import os
 from copy import deepcopy
 from typing import Any, Hashable, Union
@@ -12,16 +12,10 @@ import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 
-try:
-    import plotly.graph_objects as go
-except:
-    pass
 from discrete_optimization.generic_tools.do_problem import TypeObjective
-from discrete_optimization.generic_tools.graph_api import Graph, from_networkx
 from discrete_optimization.workforce.allocation.problem import (
     AggregateOperator,
     AllocationAdditionalConstraint,
-    GraphBipartite,
     ObjectiveDoc,
     TeamAllocationProblem,
     TeamAllocationProblemMultiobj,
@@ -33,6 +27,13 @@ from discrete_optimization.workforce.scheduling.problem import (
     TasksDescription,
     satisfy_detailed,
 )
+
+try:
+    import plotly.graph_objects as go
+except:
+    pass
+
+logger = logging.getLogger(__name__)
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
 
@@ -479,7 +480,7 @@ def plotly_schedule_comparison(
                 for slot in slots:
                     if slot[0] < max_time:
                         right_side = min(slot[1], max_time + 30)
-                        print("Slot ", slot)
+                        logger.debug("Slot ", slot)
                         fig.add_trace(
                             go.Bar(
                                 x=[(right_side - slot[0])],

@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import json
+import logging
 
 from discrete_optimization.workforce.allocation.problem import TeamAllocationProblem
 from discrete_optimization.workforce.allocation.utils import cut_number_of_team
@@ -12,6 +13,8 @@ from discrete_optimization.workforce.scheduling.parser import (
 from discrete_optimization.workforce.scheduling.utils import (
     build_allocation_problem_from_scheduling,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def parse_to_allocation_problem(
@@ -42,7 +45,7 @@ def parse_to_allocation_problem_additional_constraint(
             ]
             if len(subset_teams) > 0:
                 subset_teams = [allocation_pb.teams_name[i] for i in subset_teams]
-            print(subset_teams)
+            logger.debug(subset_teams)
             return cut_number_of_team(
                 team_allocation=allocation_pb,
                 nb_teams_keep=None,
