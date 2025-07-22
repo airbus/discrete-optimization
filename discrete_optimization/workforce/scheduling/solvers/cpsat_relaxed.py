@@ -11,7 +11,10 @@ import numpy as np
 from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpSolverSolutionCallback, IntVar
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import StatusSolver, WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -748,40 +751,74 @@ class CPSatAllocSchedulingSolverCumulative(
         }
         return objs
 
-    def solve_two_step(
+    def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
         retrieve_stats: bool = False,
+        kwargs_scheduling: Optional[dict[str, Any]] = None,
+        kwargs_allocation: Optional[dict[str, Any]] = None,
+        **kwargs,
     ):
-        res = self.solve(
-            callbacks=callbacks,
+        """Solve the problem with a CpSat scheduling solver chained to a cpsat allocation solver
+
+        Args:
+            callbacks: list of callbacks used to hook into the various stage of the solve
+            parameters_cp: used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation
+            time_limit: used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation
+            ortools_cpsat_solver_kwargs: used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation
+            retrieve_stats: used by subsolvers if not defined in kwargs_scheduling or kwargs_allocation
+            kwargs_scheduling: kwargs passed to scheduling solver's `solve()` (including parameters_cp, callbacks, ...)
+            kwargs_allocation: kwargs passed to allocation solver's `solve()` (including parameters_cp, callbacks, ...)
+            **kwargs: passed to both subsolvers but params are overriden by the one in kwargs_scheduling or kwargs_allocation
+
+        Returns:
+
+        """
+        kwargs_allocation = _update_kwargs_subsolver(
+            kwargs_subsolver=kwargs_allocation,
             parameters_cp=parameters_cp,
             time_limit=time_limit,
             ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
             retrieve_stats=retrieve_stats,
+            **kwargs,
         )
+        kwargs_scheduling = _update_kwargs_subsolver(
+            kwargs_subsolver=kwargs_scheduling,
+            parameters_cp=parameters_cp,
+            time_limit=time_limit,
+            ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
+            retrieve_stats=retrieve_stats,
+            **kwargs,
+        )
+
+        callbacks_list = CallbackList(callbacks=callbacks)
+        callbacks_list.on_solve_start(solver=self)
+
+        ## step 1: solve with scheduling solver
+        res = super().solve(
+            **kwargs_scheduling,
+        )
+        sol1: AllocSchedulingSolution = res[-1][0]
+        callbacks_list.on_step_end(step=1, res=res, solver=self)
+
+        ## step 2: solve with allocation solver
         allocation_problem = build_allocation_problem_from_scheduling(
-            problem=self.problem, solution=res[-1][0]
+            problem=self.problem, solution=sol1
         )
         allocation_solver = CpsatTeamAllocationSolver(problem=allocation_problem)
         allocation_solver.init_model(
             modelisation_allocation=ModelisationAllocationOrtools.BINARY
         )
-        res_ = allocation_solver.solve(
-            parameters_cp=parameters_cp,
-            time_limit=time_limit,
-            ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
-            retrieve_stats=retrieve_stats,
-        )
+        res_ = allocation_solver.solve(**kwargs_allocation)
         if allocation_solver.status_solver == StatusSolver.UNSATISFIABLE:
             self.status_solver = allocation_solver.status_solver
-            return self.create_result_storage([])
+            sol_fits = []
         else:
             sol: TeamAllocationSolution = res_[-1][0]
-            rebuilt_solution: AllocSchedulingSolution = res[-1][0]
+            rebuilt_solution: AllocSchedulingSolution = sol1
             rebuilt_solution.allocation = [
                 self.problem.teams_to_index[
                     allocation_problem.teams_name[sol.allocation[i]]
@@ -789,4 +826,32 @@ class CPSatAllocSchedulingSolverCumulative(
                 for i in range(len(sol.allocation))
             ]
             fit = self.aggreg_from_sol(rebuilt_solution)
-            return self.create_result_storage([(rebuilt_solution, fit)])
+            sol_fits = [(rebuilt_solution, fit)]
+
+        res = self.create_result_storage(sol_fits)
+        callbacks_list.on_step_end(step=2, res=res, solver=self)
+
+        callbacks_list.on_solve_end(res=res, solver=self)
+        return res
+
+
+def _update_kwargs_subsolver(
+    kwargs_subsolver: Optional[dict[str, Any]] = None,
+    callbacks: Optional[list[Callback]] = None,
+    parameters_cp: Optional[ParametersCp] = None,
+    time_limit: Optional[float] = 100.0,
+    ortools_cpsat_solver_kwargs: Optional[dict[str, Any]] = None,
+    retrieve_stats: bool = False,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    updated_kwargs = dict(
+        callbacks=callbacks,
+        parameters_cp=parameters_cp,
+        time_limit=time_limit,
+        ortools_cpsat_solver_kwargs=ortools_cpsat_solver_kwargs,
+        retrieve_stats=retrieve_stats,
+        **kwargs,
+    )
+    if kwargs_subsolver is not None:
+        updated_kwargs.update(kwargs_subsolver)
+    return updated_kwargs
