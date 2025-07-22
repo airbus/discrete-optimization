@@ -146,13 +146,15 @@ def define_fairness_criteria_from_cumulated_value(
             "obj": cp.max(cumulated_value_per_team) - cp.min(cumulated_value_per_team),
             "constraints": [],
         }
-    if modelisation_dispersion == ModelisationDispersion.EXACT_MODELING_DUPLICATED_VARS:
+    elif (
+        modelisation_dispersion == ModelisationDispersion.EXACT_MODELING_DUPLICATED_VARS
+    ):
         return {
             "obj": cp.max(cumulated_value_per_team)
             - cp.min(cumulated_value_per_team_nz),
             "constraints": [],
         }
-    if modelisation_dispersion == ModelisationDispersion.MAX_DIFF:
+    elif modelisation_dispersion == ModelisationDispersion.MAX_DIFF:
         return {
             "obj": cp.max(
                 [
@@ -196,6 +198,9 @@ def define_fairness_criteria_from_cumulated_value(
                 )
             )
         return {"obj": slack, "constraints": constraints}
+
+    else:
+        raise NotImplementedError(f"Method {modelisation_dispersion} unknown")
 
 
 def model_fairness(

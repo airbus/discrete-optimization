@@ -154,7 +154,9 @@ def define_fairness_criteria_from_cumulated_value(
             f"max_value_{name_value}": max_value,
             f"min_value_{name_value}": min_value,
         }
-    if modelisation_dispersion == ModelisationDispersion.EXACT_MODELING_DUPLICATED_VARS:
+    elif (
+        modelisation_dispersion == ModelisationDispersion.EXACT_MODELING_DUPLICATED_VARS
+    ):
         upper_bound = sum(value_per_task)
         max_value = cp_model.NewIntVar(
             lb=0,  # upper_bound // len(used_team),
@@ -173,7 +175,7 @@ def define_fairness_criteria_from_cumulated_value(
             f"max_value_{name_value}": max_value,
             f"min_value_{name_value}": min_value,
         }
-    if modelisation_dispersion == ModelisationDispersion.MAX_DIFF:
+    elif modelisation_dispersion == ModelisationDispersion.MAX_DIFF:
         upper_bound = sum(value_per_task)
         max_diff = cp_model.NewIntVar(
             lb=0, ub=upper_bound, name=f"max_diff_{name_value}"
@@ -246,6 +248,8 @@ def define_fairness_criteria_from_cumulated_value(
                 ).OnlyEnforceIf(used_team[index_team])
             )
         return {"obj": slack}
+    else:
+        raise NotImplementedError(f"Method {modelisation_dispersion} unknown")
 
 
 def model_fairness(
