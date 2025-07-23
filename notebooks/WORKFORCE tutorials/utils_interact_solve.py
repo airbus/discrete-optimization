@@ -1,16 +1,23 @@
 from copy import copy, deepcopy
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
+
 import cpmpy
 from cpmpy import SolverLookup
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
-from discrete_optimization.workforce.allocation.problem import TeamAllocationProblem, TeamAllocationSolution
+
+from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
+from discrete_optimization.workforce.allocation.problem import (
+    TeamAllocationProblem,
+    TeamAllocationSolution,
+)
 from discrete_optimization.workforce.allocation.solvers.cpmpy import (
     CPMpyTeamAllocationSolverStoreConstraintInfo,
-    ModelisationAllocationCP,
     MetaCpmpyConstraint,
+    ModelisationAllocationCP,
 )
-from discrete_optimization.generic_tools.do_solver import StatusSolver
 
 
 class InteractSolve:

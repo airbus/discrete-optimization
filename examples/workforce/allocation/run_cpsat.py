@@ -55,7 +55,7 @@ def run_lexico():
         objectives=["nb_teams", "duration"],
         subsolver_callbacks=[stats_cb],
         time_limit=5,
-        ortools_cpsat_solver_kwargs=dict(log_search_progress=True)
+        ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
     )
     fig, ax = plt.subplots(2)
     fits = [
@@ -67,7 +67,6 @@ def run_lexico():
     ax[0].set_title("Phase optim Nb teams")
     ax[1].set_title("Phase optim fairness duration")
     print(fits)
-
 
     fig, ax = plt.subplots(2)
     fits = [allocation_problem.evaluate(s) for s, _ in res.list_solution_fits]
