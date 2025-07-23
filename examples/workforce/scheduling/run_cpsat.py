@@ -204,6 +204,9 @@ def run_cpsat_lexico_delta():
         callbacks=[retrieve_sub_res],
         objectives=[
             ObjectivesEnum.NB_DONE_AC,
+            "reallocated",
+            "max_shift",
+            "mean_shift",
             ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION,
             ObjectivesEnum.NB_TEAMS,
             ObjectivesEnum.DISPERSION,
