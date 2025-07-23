@@ -61,17 +61,6 @@ from discrete_optimization.workforce.commons.fairness_modeling_cpmpy import (
 )
 
 logger = logging.getLogger(__name__)
-this_folder = os.path.abspath(os.path.dirname(__file__))
-root_folder = os.path.join(this_folder, "../../")
-path_translation = os.path.join(
-    root_folder, "scheduling_hhcs/app/study_tabs/german_translation.json"
-)
-if os.path.exists(path_translation):
-    with open(path_translation, "r") as file:
-        data = file.read()
-        language_dict = json.loads(data)
-else:
-    language_dict = {}
 
 
 def from_solver_status_cpmpy_to_status_solver(
@@ -511,7 +500,6 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
                 obj: self.variables["obj_dict"][obj].value()
                 for obj in self.variables["obj_dict"]
             }
-            self.cpm_solver.objective_value
             d = eval_
             d["objs"] = objectives
             self.solutions.append((time() - self.solver_start_time, d))
@@ -788,11 +776,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
             c_i: Expression = (
                 cpmpy.sum([allocation_binary[i][j] for j in allocation_binary[i]]) == 1
             )
-            description_str = (
-                language_dict.get("task", "task")
-                + f" {i} "
-                + language_dict.get("is allocated", "is allocated")
-            )
             self.meta_constraints.append(
                 MetaCpmpyConstraint(
                     name=f"task_allocated_{i}",
@@ -865,10 +848,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     )
                     no_overlap_conj.append(overlap_clique)
 
-                description_str = (
-                    language_dict.get("overlap between tasks", "overlap between tasks")
-                    + f" {sorted([self.problem.index_activities_name[x] for x in overlapping])}"
-                )
                 self.meta_constraints.append(
                     MetaCpmpyConstraint(
                         name="clique_overlap",
@@ -1131,10 +1110,6 @@ def adding_all_diff_allocation_binary(
         constraint = cpmpy.all(no_overlap_conj)
         constraints.append(constraint)
         if store_constraints:
-            description_str = (
-                language_dict.get("overlap between tasks")
-                + f" {[problem.index_activities_name[x] for x in all_diff]}"
-            )
             solver.meta_constraints.append(
                 MetaCpmpyConstraint(
                     name=f"all_diff",

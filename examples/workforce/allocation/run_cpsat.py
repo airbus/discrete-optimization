@@ -40,13 +40,12 @@ def run_cpsat():
 
 def run_lexico():
     instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    allocation_problem = parse_to_allocation_problem(instances[2])
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model(
         modelisation_allocation=ModelisationAllocationOrtools.BINARY,
-        modelisation_dispersion=ModelisationDispersion.PROXY_MAX_MIN,
+        modelisation_dispersion=ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION,
     )
-
     lexico = LexicoSolver(subsolver=solver, problem=allocation_problem)
 
     retrieve_sub_res = RetrieveSubRes()
@@ -56,6 +55,7 @@ def run_lexico():
         objectives=["nb_teams", "duration"],
         subsolver_callbacks=[stats_cb],
         time_limit=5,
+        ortools_cpsat_solver_kwargs=dict(log_search_progress=True)
     )
     fig, ax = plt.subplots(2)
     fits = [
@@ -66,6 +66,8 @@ def run_lexico():
     ax[1].plot([f["duration"] for f in fits[1]])
     ax[0].set_title("Phase optim Nb teams")
     ax[1].set_title("Phase optim fairness duration")
+    print(fits)
+
 
     fig, ax = plt.subplots(2)
     fits = [allocation_problem.evaluate(s) for s, _ in res.list_solution_fits]
