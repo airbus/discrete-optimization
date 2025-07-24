@@ -100,9 +100,25 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
             name="modelisation_dispersion",
             enum=ModelisationDispersion,
             default=ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION,
+            depends_on=(
+                "modelisation_allocation",
+                [
+                    ModelisationAllocationCP.BINARY,
+                    ModelisationAllocationCP.CNF_COMPATIBLE,
+                ],
+            ),
         ),
         CategoricalHyperparameter(
-            name="include_all_binary_vars", choices=[True, False], default=False
+            name="include_all_binary_vars",
+            choices=[True, False],
+            default=False,
+            depends_on=(
+                "modelisation_allocation",
+                [
+                    ModelisationAllocationCP.BINARY,
+                    ModelisationAllocationCP.CNF_COMPATIBLE,
+                ],
+            ),
         ),
         CategoricalHyperparameter(
             name="include_pair_overlap", choices=[True, False], default=False
@@ -601,7 +617,6 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
         time_limit=30,
         **args: Any,
     ):
-        """"""
         soft = toplevel_list(soft, merge_and=False)
         assumptions = cpmpy.boolvar(shape=len(soft))
         solver: cpmpy.solvers.solver_interface.SolverInterface = cpmpy.SolverLookup.get(
