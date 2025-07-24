@@ -47,6 +47,7 @@ while not done:
         solver.model.constraints = [
             c for c in solver.model.constraints if c is not cstr
         ]
+        solver.reset_cpm_solver()  # so that model changes are take into account in next solve
         soft_constraints = [c for c in soft_constraints if c is not cstr]
         removed_constraints.append(cstr)
     elif len(result_store) > 0:

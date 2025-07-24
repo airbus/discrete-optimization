@@ -51,6 +51,7 @@ while not done:
         solver.model.constraints = [
             c for c in solver.model.constraints if id(c) not in subconstraints_ids
         ]
+        solver.reset_cpm_solver()  # so that model changes are take into account in next solve
         meta_constraints = [m for m in meta_constraints if m is not meta]
         for other_meta in meta_constraints:
             other_meta.constraints = [
