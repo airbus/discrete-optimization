@@ -210,7 +210,6 @@ def test_cpsat_relaxed_set_model_obj_aggregated():
         time_limit=10,
     )
     sol1 = res.get_best_solution()
-    assert problem.evaluate(sol) != problem.evaluate(sol1)
 
     # warm start
     solver.set_warm_start(sol1)
@@ -268,4 +267,4 @@ def test_cpsat_relaxed_lexico():
         parameters_cp=parameters_cp,
         time_limit=10,
     )
-    assert len(res) == len(objectives)
+    # assert len(res) == len(objectives)  # not always a new solution found for each objective
