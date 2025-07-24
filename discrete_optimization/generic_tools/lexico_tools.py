@@ -106,8 +106,10 @@ class LexicoSolver(SolverDO):
 
             # optimize next objective
             self.subsolver.set_lexico_objective(obj)
+            kwargs_subsolver = dict(kwargs)
+            subsolver_callbacks = kwargs_subsolver.pop("subsolver_callbacks")
             res.extend(
-                self.subsolver.solve(callbacks=kwargs["subsolver_callbacks"], **kwargs)
+                self.subsolver.solve(callbacks=subsolver_callbacks, **kwargs_subsolver)
             )
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=i_obj, res=res, solver=self)
