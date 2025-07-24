@@ -787,12 +787,14 @@ def test_cpmpy_solver():
     solver.model.constraints = [
         c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
     ]  # NB: solver.model.constraints.remove(cstr) not working as expected
+    solver.reset_cpm_solver()
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL
     # correct with deduced meta
     solver.status_solver = (
         StatusSolver.UNSATISFIABLE
     )  # reset status solver to allow next method
+    solver.model.constraints = solver_model_constraints_bak
     meta_mcs = solver.correct_unsat_deduced_meta()
     assert 0 < len(meta_mcs) < len(solver.get_soft_meta_constraints())
     subconstraints_mcs_ids = set()
@@ -802,6 +804,7 @@ def test_cpmpy_solver():
     solver.model.constraints = [
         c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
     ]  # NB: solver.model.constraints.remove(cstr) not working as expected
+    solver.reset_cpm_solver()
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL
 

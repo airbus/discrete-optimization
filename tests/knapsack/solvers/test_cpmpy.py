@@ -25,9 +25,9 @@ def test_knapsack_cpmpy_explain(method):
 
     file = [f for f in get_data_available() if "ks_30_0" in f][0]
     problem = parse_file(file)
-    solver = CpmpyKnapsackSolver(problem=problem)
+    solver = CpmpyKnapsackSolver(problem=problem, solver_name="ortools")
     solver.init_model()
-    res = solver.solve(solver="ortools", time_limit=20)
+    res = solver.solve(time_limit=20)
     sol = res.get_best_solution()
     assert isinstance(sol, KnapsackSolution)
     assert problem.satisfy(sol)
@@ -40,6 +40,7 @@ def test_knapsack_cpmpy_explain(method):
         sum(solver.variables["x"] * values)
         > sum(solver.variables["x"] * values).value()
     ]
+    solver.reset_cpm_solver()  # so that model changes are take into account in next solve
 
     # re-solve => unsatisfiable
     solver.solve()
@@ -64,6 +65,7 @@ def test_knapsack_cpmpy_explain(method):
     solver.model.constraints = [
         c for c in solver.model.constraints if id(c) not in constraints_ids
     ]
+    solver.reset_cpm_solver()  # so that model changes are take into account in next solve
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL
 
@@ -78,9 +80,9 @@ def test_knapsack_cpmpy_correct(method):
 
     file = [f for f in get_data_available() if "ks_30_0" in f][0]
     problem = parse_file(file)
-    solver = CpmpyKnapsackSolver(problem=problem)
+    solver = CpmpyKnapsackSolver(problem=problem, solver_name="ortools")
     solver.init_model()
-    res = solver.solve(solver="ortools", time_limit=20)
+    res = solver.solve(time_limit=20)
     sol = res.get_best_solution()
     assert isinstance(sol, KnapsackSolution)
     assert problem.satisfy(sol)
@@ -93,6 +95,7 @@ def test_knapsack_cpmpy_correct(method):
         sum(solver.variables["x"] * values)
         > sum(solver.variables["x"] * values).value()
     ]
+    solver.reset_cpm_solver()  # take into account model changes
 
     # re-solve => unsatisfiable
     solver.solve()
@@ -110,5 +113,6 @@ def test_knapsack_cpmpy_correct(method):
     solver.model.constraints = [
         c for c in solver.model.constraints if id(c) not in constraints_ids
     ]
+    solver.reset_cpm_solver()  # take into account model changes
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL

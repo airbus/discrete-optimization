@@ -125,10 +125,12 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
         solver_name: Optional[str] = None,
         **kwargs: Any,
     ):
-        CpSolver.__init__(self, problem, params_objective_function, **kwargs)
-        self.model: Optional[Model] = None
-        self.solver_name = solver_name
-        self.cpm_solver = None
+        super().__init__(
+            problem=problem,
+            params_objective_function=params_objective_function,
+            solver_name=solver_name,
+            **kwargs,
+        )
         self.modelisation_allocation: Optional[ModelisationAllocationCP] = None
         self.variables = {}
         self.key_main_decision_variable: Optional[str] = None
@@ -672,24 +674,6 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
 
 
 class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
-    problem: TeamAllocationProblem
-    hyperparameters = CPMpyTeamAllocationSolver.hyperparameters
-
-    def __init__(
-        self,
-        problem: TeamAllocationProblem,
-        params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        solver_name: Optional[str] = None,
-        **kwargs: Any,
-    ):
-        super().__init__(problem, params_objective_function, **kwargs)
-        self.problem: TeamAllocationProblem
-        self.model: Optional[Model] = None
-        self.solver_name = solver_name
-        self.modelisation_allocation: Optional[ModelisationAllocationCP] = None
-        self.variables = {}
-        self.meta_constraints = []
-
     def get_types_of_meta_constraints(self):
         return {mc.metadata["type"] for mc in self.meta_constraints}
 

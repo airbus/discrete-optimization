@@ -4,6 +4,7 @@
 # Thanks to Leuven university for the cpmpy library.
 from __future__ import annotations
 
+import inspect
 from abc import abstractmethod
 from collections.abc import Callable
 from enum import Enum
@@ -33,7 +34,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.cp_tools import CpSolver
+from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
@@ -124,29 +125,47 @@ class CpmpySolver(CpSolver):
 
     model: Optional[Model] = None
     cpm_status: SolverStatus = SolverStatus("Model")
+    cpm_solver: Optional[SolverInterface] = None
 
     def __init__(
         self,
         problem: Problem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        solver_name: Optional[str] = None,
         **kwargs: Any,
     ):
 
         super().__init__(
             problem, params_objective_function=params_objective_function, **kwargs
         )
+        if solver_name is None:
+            self.solver_name = "ortools"
+        else:
+            self.solver_name = solver_name
         self.cb_object: _CpmpyCbClass = None
 
     def create_callback_function(self, callback: Callback):
         self.cb_object = _CpmpyCbClass(do_solver=self, callback=callback)
         return self.cb_object.callback_func
 
+    def reset_cpm_solver(self):
+        """Reset wrapped solver.
+
+        Call it so that modifications on `self.model` will be taken into account by next call to `self.solve()`.
+        Else, the cpmpy wrapped solver initialized at first solve will be used and not taken into account model changes.
+
+        """
+        self.cpm_solver = None
+
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
+        parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
         **kwargs: Any,
     ) -> ResultStorage:
+        if parameters_cp is None:
+            parameters_cp = ParametersCp.default_cpsat()
         if self.model is None:
             self.init_model(**kwargs)
             if self.model is None:  # for mypy
@@ -157,22 +176,41 @@ class CpmpySolver(CpSolver):
         callbacks_list = CallbackList(callbacks=callbacks)
         callbacks_list.on_solve_start(solver=self)
 
-        kwargs_solve = dict(kwargs)
-        solver = kwargs_solve.pop("solver", "ortools")
-        solver_obj = SolverLookup.get(solver, self.model)
-        display = self.create_callback_function(callback=callbacks_list)
-        if solver == "ortools":
-            kwargs_solve["solution_callback"] = _OrtoolsCpSatCallbackViaCpmpy(
+        solver_kwargs = dict(kwargs)
+        if self.cpm_solver is None:  # this is the first solve call
+            self.cpm_solver = SolverLookup.get(self.solver_name, self.model)
+        solver_allowed_params = inspect.signature(self.cpm_solver.solve).parameters
+        if "display" in solver_allowed_params.keys():
+            solver_kwargs["display"] = self.create_callback_function(
+                callback=callbacks_list
+            )
+
+        if self.solver_name == "ortools":
+            solver_kwargs["solution_callback"] = _OrtoolsCpSatCallbackViaCpmpy(
                 do_solver=self,
-                solver_obj=solver_obj,
+                solver_obj=self.cpm_solver,
                 callback=callbacks_list,
                 retrieve_stats=True,
             )
-        else:
-            kwargs_solve["display"] = display
-        self.model.solve()
-        solver_obj.solve(time_limit=time_limit, **kwargs_solve)
-        self.cpm_status = solver_obj.status()
+            verbose = solver_kwargs.pop("verbose", False)
+            solver_kwargs.update(
+                dict(
+                    num_search_workers=parameters_cp.nb_process
+                    if parameters_cp.multiprocess
+                    else 1,
+                    log_search_progress=verbose,
+                )
+            )
+        elif self.solver_name == "gurobi":
+            solver_kwargs.update(
+                dict(
+                    Threads=parameters_cp.nb_process
+                    if parameters_cp.multiprocess
+                    else 1
+                )
+            )
+        self.cpm_solver.solve(time_limit=time_limit, **solver_kwargs)
+        self.cpm_status = self.cpm_solver.status()
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
 
         if self.cpm_status.exitstatus in [ExitStatus.UNSATISFIABLE, ExitStatus.ERROR]:
