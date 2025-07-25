@@ -1,3 +1,4 @@
+import didppy as dp
 import pytest
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
@@ -21,7 +22,15 @@ from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSo
         (True, False, True),
     ],
 )
-def test_dp_params(multiobjective, symmbreak_on_used, force_allocation_when_possible):
+@pytest.mark.parametrize("solver_cls", [dp.CABS, dp.LNBS, dp.DDLNS])
+def test_dp_params(
+    solver_cls, multiobjective, symmbreak_on_used, force_allocation_when_possible
+):
+    import logging
+
+    from discrete_optimization.generic_tools.dyn_prog_tools import logger
+
+    logger.setLevel(logging.DEBUG)
     instances = [p for p in get_data_available()]
     allocation_problem = parse_to_allocation_problem(
         instances[1], multiobjective=multiobjective
@@ -36,6 +45,7 @@ def test_dp_params(multiobjective, symmbreak_on_used, force_allocation_when_poss
     res = solver.solve(
         time_limit=5,
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        solver=solver_cls,
     )
     assert len(res) == 1
     sol = res.get_best_solution()
