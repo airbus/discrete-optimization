@@ -6,6 +6,6 @@ from discrete_optimization.workforce.allocation.problem import TeamAllocationPro
 
 
 def test_problem():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     assert isinstance(allocation_problem, TeamAllocationProblem)

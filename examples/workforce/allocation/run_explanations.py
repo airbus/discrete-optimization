@@ -186,8 +186,8 @@ class InteractSolve:
 
 
 def run_disruption_creation():
-    instances = [p for p in get_data_available()]
-    scheduling_problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    scheduling_problem = parse_json_to_problem(instance)
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
@@ -291,8 +291,8 @@ def run_disruption_creation():
 
 def interactive_solving():
     kwargs_mus = {"solver": "exact", "cpmpy_method": CpmpyExplainUnsatMethod.mus}
-    instances = [p for p in get_data_available()]
-    scheduling_problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    scheduling_problem = parse_json_to_problem(instance)
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
@@ -408,8 +408,8 @@ def interactive_solving():
 
 def interactive_solving_mcs():
     kwargs_mcs = {"solver": "exact", "cpmpy_method": CpmpyCorrectUnsatMethod.mcs_grow}
-    instances = [p for p in get_data_available()]
-    scheduling_problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    scheduling_problem = parse_json_to_problem(instance)
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
@@ -523,8 +523,8 @@ def interactive_solving_mcs():
 
 def interactive_solving_with_interact_obj():
     kwargs_mus = {"solver": "exact", "cpmpy_method": CpmpyExplainUnsatMethod.mus}
-    instances = [p for p in get_data_available()]
-    scheduling_problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    scheduling_problem = parse_json_to_problem(instance)
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )

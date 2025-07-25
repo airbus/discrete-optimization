@@ -28,8 +28,8 @@ from discrete_optimization.workforce.scheduling.parser import (
 
 
 def run_cpsat():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(
@@ -39,8 +39,8 @@ def run_cpsat():
 
 
 def run_lexico():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[2])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model(
         modelisation_allocation=ModelisationAllocationOrtools.BINARY,
