@@ -586,12 +586,14 @@ class CPSatAllocSchedulingSolverCumulative(
         else:
             sol: TeamAllocationSolution = res_[-1][0]
             rebuilt_solution: AllocSchedulingSolution = sol1
-            rebuilt_solution.allocation = [
-                self.problem.teams_to_index[
-                    allocation_problem.teams_name[sol.allocation[i]]
+            rebuilt_solution.allocation = np.array(
+                [
+                    self.problem.teams_to_index[
+                        allocation_problem.teams_name[sol.allocation[i]]
+                    ]
+                    for i in range(len(sol.allocation))
                 ]
-                for i in range(len(sol.allocation))
-            ]
+            )
             fit = self.aggreg_from_sol(rebuilt_solution)
             sol_fits = [(rebuilt_solution, fit)]
 
