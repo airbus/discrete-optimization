@@ -45,8 +45,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_cpsat():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
@@ -66,8 +66,8 @@ def run_cpsat_delta():
         compute_changes_between_solution,
     )
 
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
@@ -116,8 +116,8 @@ def run_cpsat_delta():
 
 
 def run_cpsat_lexico():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[
@@ -164,8 +164,8 @@ def run_cpsat_lexico_delta():
         compute_changes_between_solution,
     )
 
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_204.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True

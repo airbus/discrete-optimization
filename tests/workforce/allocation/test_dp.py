@@ -31,9 +31,9 @@ def test_dp_params(
     from discrete_optimization.generic_tools.dyn_prog_tools import logger
 
     logger.setLevel(logging.DEBUG)
-    instances = [p for p in get_data_available()]
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     allocation_problem = parse_to_allocation_problem(
-        instances[1], multiobjective=multiobjective
+        instance, multiobjective=multiobjective
     )
     kwargs = dict(
         symmbreak_on_used=symmbreak_on_used,

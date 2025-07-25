@@ -32,8 +32,8 @@ else:
 
 
 def test_cpmpy_multiobj():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     solver = CPMpyTeamAllocationSolver(allocation_problem)
     solver.init_model()
     # check solve
@@ -53,8 +53,8 @@ def test_cpmpy_multiobj():
 
 
 def test_cpmpy_monoobj():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=False)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=False)
     solver = CPMpyTeamAllocationSolver(allocation_problem)
     solver.init_model()
     sol = solver.solve(
@@ -71,8 +71,8 @@ def test_cpmpy_monoobj():
 
 
 def test_cpmpy_cnf_compatible_nok():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     solver = CPMpyTeamAllocationSolver(allocation_problem)
     with pytest.raises(NotImplementedError):
         solver.init_model(
@@ -94,8 +94,8 @@ def test_cpmpy_integer_params(
     symmbreak_on_used,
     add_lower_bound_nb_teams,
 ):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
 
     kwargs = dict(
         modelisation_allocation=ModelisationAllocationCP.INTEGER,
@@ -131,8 +131,8 @@ def test_cpmpy_binary_params(
     add_lower_bound_nb_teams,
     include_all_binary_vars,
 ):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
 
     kwargs = dict(
         modelisation_allocation=ModelisationAllocationCP.BINARY,
@@ -154,8 +154,8 @@ def test_cpmpy_binary_params(
 
 @pytest.mark.parametrize("modelisation_dispersion", list(ModelisationDispersion))
 def test_cpmpy_dispersion(modelisation_dispersion):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     kwargs = dict(
         modelisation_allocation=ModelisationAllocationCP.BINARY,
         modelisation_dispersion=modelisation_dispersion,
@@ -176,9 +176,9 @@ def test_cpmpy_additional_constraints(modelisation_allocation, multiobjective):
         pytest.skip(
             "cnf_compatible modelisation not available for CPMpyTeamAllocationSolver."
         )
-    instances = [p for p in get_data_available()]
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     allocation_problem = parse_to_allocation_problem(
-        instances[1], multiobjective=multiobjective
+        instance, multiobjective=multiobjective
     )
     solver = CPMpyTeamAllocationSolver(allocation_problem)
     sol = solver.solve(
@@ -214,8 +214,8 @@ def test_cpmpy_additional_constraints(modelisation_allocation, multiobjective):
 
 
 def test_cpmpy_lexico():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CPMpyTeamAllocationSolver(allocation_problem)
     solver.init_model()
     objectives = solver.get_lexico_objectives_available()
@@ -249,8 +249,8 @@ def test_cpmpy_storeconstraintinfo(
     add_lower_bound_nb_teams,
     include_all_binary_vars,
 ):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     solver = CPMpyTeamAllocationSolverStoreConstraintInfo(allocation_problem)
     kwargs = dict(
         modelisation_allocation=modelisation_allocation,

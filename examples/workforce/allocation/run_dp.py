@@ -13,8 +13,8 @@ from discrete_optimization.workforce.scheduling.parser import (
 
 
 def run_dp():
-    instances = [p for p in get_data_available()]
-    scheduling_problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    scheduling_problem = parse_json_to_problem(instance)
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem, multiobjective=False
     )

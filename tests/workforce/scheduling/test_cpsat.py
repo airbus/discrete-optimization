@@ -36,8 +36,8 @@ from discrete_optimization.workforce.scheduling.utils import (
 
 
 def test_cpsat():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
@@ -180,8 +180,8 @@ def test_cpsat_params(
     add_lower_bound,
     lower_bound_method,
 ):
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
 
     kwargs = dict(
         symmbreak_on_used=symmbreak_on_used,
@@ -211,8 +211,8 @@ def test_cpsat_params(
 
 @pytest.mark.parametrize("modelisation_dispersion", list(ModelisationDispersion))
 def test_cpsat_modelisation_dispersion(modelisation_dispersion):
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
 
     kwargs = dict(
         modelisation_dispersion=modelisation_dispersion,
@@ -238,8 +238,8 @@ def test_cpsat_modelisation_dispersion(modelisation_dispersion):
 
 
 def test_cpsat_set_model_obj_aggregated():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
 
     # solution to compare with for DELTA_TO_EXISTING_SOLUTION
@@ -275,8 +275,8 @@ def test_cpsat_set_model_obj_aggregated():
 
 
 def test_cpsat_lexico():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
 
     # solution to compare with for DELTA_TO_EXISTING_SOLUTION

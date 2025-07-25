@@ -33,8 +33,8 @@ from discrete_optimization.workforce.generators.resource_scenario import (
 
 
 def test_cpsat_multiobj():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model()
     parameters_cp = ParametersCp.default()  # 1 process for exact iteration stop
@@ -57,8 +57,8 @@ def test_cpsat_multiobj():
 
 
 def test_cpsat_monoobj():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=False)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=False)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model()
     sol = solver.solve(
@@ -89,8 +89,8 @@ def test_cpsat_integer_params(
     symmbreak_on_used,
     add_lower_bound_nb_teams,
 ):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
 
     kwargs = dict(
         modelisation_allocation=ModelisationAllocationOrtools.INTEGER,
@@ -135,8 +135,8 @@ def test_cpsat_binary_params(
     add_lower_bound_nb_teams,
     include_all_binary_vars,
 ):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
 
     kwargs = dict(
         modelisation_allocation=modelisation_allocation,
@@ -162,8 +162,8 @@ def test_cpsat_binary_params(
 
 @pytest.mark.parametrize("modelisation_dispersion", list(ModelisationDispersion))
 def test_cpsat_dispersion(modelisation_dispersion):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     kwargs = dict(
         modelisation_allocation=ModelisationAllocationOrtools.BINARY,
         modelisation_dispersion=modelisation_dispersion,
@@ -179,8 +179,8 @@ def test_cpsat_dispersion(modelisation_dispersion):
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_cpsat_warm_start(modelisation_allocation):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance, multiobjective=True)
     kwargs = dict(
         modelisation_allocation=modelisation_allocation,
     )
@@ -203,9 +203,9 @@ def test_cpsat_warm_start(modelisation_allocation):
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 @pytest.mark.parametrize("multiobjective", [True, False])
 def test_cpsat_additional_constraints(modelisation_allocation, multiobjective):
-    instances = [p for p in get_data_available()]
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     allocation_problem = parse_to_allocation_problem(
-        instances[1], multiobjective=multiobjective
+        instance, multiobjective=multiobjective
     )
     solver = CpsatTeamAllocationSolver(allocation_problem)
     sol = solver.solve(
@@ -246,8 +246,8 @@ def test_cpsat_additional_constraints(modelisation_allocation, multiobjective):
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_cpsat_delta(modelisation_allocation):
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     base_solution = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -269,8 +269,8 @@ def test_cpsat_delta(modelisation_allocation):
 
 
 def test_cpsat_agg_obj():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.init_model()
     solver.set_model_obj_aggregated([("nb_teams", 10), ("duration", 5)])
@@ -284,8 +284,8 @@ def test_cpsat_agg_obj():
 
 
 def test_cpsat_lexico():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     objectives = solver.get_lexico_objectives_available()
     for o in objectives:
@@ -313,8 +313,8 @@ def test_cpsat_lexico():
 
 
 def test_cpsat_solve_n_best_solution():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     res = solver.solve_n_best_solution(
         time_limit=5,
@@ -324,8 +324,8 @@ def test_cpsat_solve_n_best_solution():
 
 
 def test_cpsat_solve_n_best_solution_with_priority():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     res = solver.solve_n_best_solution(
         time_limit=5, n_best_solution=3, priority={0: 5, 2: 3}
@@ -334,8 +334,8 @@ def test_cpsat_solve_n_best_solution_with_priority():
 
 
 def test_compute_task_relaxation_alternatives():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     res_final, res_optim = solver.compute_task_relaxation_alternatives(
         time_limit=5,
@@ -346,8 +346,8 @@ def test_compute_task_relaxation_alternatives():
 
 
 def test_compute_sufficient_assumptions():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    allocation_problem = parse_to_allocation_problem(instance)
     solver = CpsatTeamAllocationSolver(allocation_problem)
     solver.compute_sufficient_assumptions(
         time_limit=5,

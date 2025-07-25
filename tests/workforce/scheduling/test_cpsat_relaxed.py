@@ -30,8 +30,8 @@ from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (
 
 
 def test_cpsat_relaxed():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
 
     solver = CPSatAllocSchedulingSolverCumulative(problem)
     solver.init_model()
@@ -113,8 +113,8 @@ def test_cpsat_relaxed_params(
     add_lower_bound,
     lower_bound_method,
 ):
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
 
     kwargs = dict(
         optional_activities=optional_activities,
@@ -161,8 +161,8 @@ def test_cpsat_relaxed_params(
 
 
 def test_cpsat_relaxed_set_model_obj_aggregated():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
 
     solver = CPSatAllocSchedulingSolverCumulative(problem)
     kwargs = dict(optional_activities=True)
@@ -232,16 +232,16 @@ def test_cpsat_relaxed_set_model_obj_aggregated():
     "obj", CPSatAllocSchedulingSolverCumulative.not_implemented_objectives
 )
 def test_cpsat_relaxed_not_impl_objs(obj):
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolverCumulative(problem)
     with pytest.raises(NotImplementedError):
         solver.init_model(objectives=[obj])
 
 
 def test_cpsat_relaxed_lexico():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolverCumulative(problem)
 
     # objectives to consider

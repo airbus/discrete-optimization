@@ -40,6 +40,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 def test_problem():
-    instances = [p for p in get_data_available()]
-    problem = parse_json_to_problem(instances[1])
+    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    problem = parse_json_to_problem(instance)
     assert isinstance(problem, AllocSchedulingProblem)
