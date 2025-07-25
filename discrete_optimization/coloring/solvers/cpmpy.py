@@ -32,7 +32,7 @@ class CpmpyColoringSolver(
 
         n = self.problem.number_of_nodes
         self.variables = {}
-        x = intvar(0, nb_colors - 1, shape=n, name="x")
+        x = intvar(0, nb_colors - 1, shape=(n,), name="x")
         nbc = intvar(0, nb_colors - 1, shape=1, name="nb_colors")
 
         soft_constraints = []

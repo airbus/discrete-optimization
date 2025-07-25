@@ -34,7 +34,7 @@ def cumulate_value_per_teams(
     workload_per_team = cp.intvar(
         lb=0,
         ub=upper_bound_values,
-        shape=number_teams,
+        shape=(number_teams,),
         name=f"cumulated_value_{name_value}",
     )
     constraints = []
@@ -84,13 +84,13 @@ def cumulate_value_per_teams_version_2(
     workload_per_team = cp.intvar(
         lb=0,
         ub=upper_bound_values,
-        shape=number_teams,
+        shape=(number_teams,),
         name=f"cumulated_value_{name_value}",
     )
     workload_per_team_non_zeros = cp.intvar(
         lb=0,
         ub=upper_bound_values,
-        shape=number_teams,
+        shape=(number_teams,),
         name=f"cumulated_value_non_zeros_{name_value}",
     )
     constraints = []

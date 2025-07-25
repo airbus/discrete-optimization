@@ -286,7 +286,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
                             ~allocation_binary[i1][team] | ~allocation_binary[i2][team]
                         )
                         # cannot be both assigned
-        used = boolvar(self.problem.number_of_teams, name="used")
+        used = boolvar(shape=(self.problem.number_of_teams,), name="used")
         for i in range(len(allocation_binary)):
             for j in allocation_binary[i]:  # if a team has a task, it is used
                 self.model += [allocation_binary[i][j].implies(used[j])]
@@ -366,14 +366,14 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
             allocation = cpmpy.intvar(
                 lb=0,
                 ub=number_of_teams - 1,
-                shape=self.problem.number_of_activity,
+                shape=(self.problem.number_of_activity,),
                 name="allocation",
             )
         domains_for_tasks = self.problem.compute_allowed_team_index_all_task()
         for i in range(number_of_activities):
             if len(domains_for_tasks[i]) < number_of_teams:
                 self.model += [cpmpy.InDomain(allocation[i], domains_for_tasks[i])]
-        used = cpmpy.boolvar(shape=number_of_teams, name="used")
+        used = cpmpy.boolvar(shape=(number_of_teams,), name="used")
         if include_pair_overlap:
             overlaps_pair = self.problem.compute_pair_overlap_index_task()
             for i1, i2 in overlaps_pair:
@@ -632,7 +632,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         self.model = Model()
         if include_all_binary_vars:
             alloc = cpmpy.boolvar(
-                (self.problem.number_of_activity, self.problem.number_of_teams),
+                shape=(self.problem.number_of_activity, self.problem.number_of_teams),
                 name="allocation",
             )
             for i in range(self.problem.number_of_activity):
@@ -686,7 +686,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                 )
             )
             self.model += [c_i]
-        used = boolvar(self.problem.number_of_teams, name="used")
+        used = boolvar(shape=(self.problem.number_of_teams,), name="used")
 
         if include_pair_overlap:
             for edge in self.problem.graph_activity.edges:
