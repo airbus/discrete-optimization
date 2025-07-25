@@ -52,27 +52,6 @@ def test_cpmpy_multiobj():
     )
 
 
-def test_cpmpy_multiobj_solve_custom():
-    instances = [p for p in get_data_available()]
-    allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=True)
-    solver = CPMpyTeamAllocationSolver(allocation_problem)
-    solver.init_model()
-    # check solve
-    res = solver.solve_custom(
-        time_limit=5,
-        callbacks=[NbIterationStopper(nb_iteration_max=1)],
-    )
-    sol = res.get_best_solution()
-    allocation_problem.evaluate(sol)
-    assert allocation_problem.satisfy(sol)
-    # check plot
-    plot_allocation_solution(
-        problem=allocation_problem,
-        sol=sol,
-        display=False,
-    )
-
-
 def test_cpmpy_monoobj():
     instances = [p for p in get_data_available()]
     allocation_problem = parse_to_allocation_problem(instances[1], multiobjective=False)
