@@ -97,7 +97,9 @@ class InteractSolve:
     ):
         model = cpmpy.Model()
         allocation_binary = self.solver.variables["allocation_binary"]
-        is_allocated = cpmpy.boolvar(self.problem.number_of_activity, "is_allocated")
+        is_allocated = cpmpy.boolvar(
+            shape=(self.problem.number_of_activity,), name="is_allocated"
+        )
         for i in range(self.problem.number_of_activity):
             model += [
                 is_allocated[i].implies(
