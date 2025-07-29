@@ -45,7 +45,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_cpsat():
-    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    instance = [p for p in get_data_available() if "instance_0.json" in p][0]
     problem = parse_json_to_problem(instance)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
@@ -123,7 +123,7 @@ def run_cpsat_lexico():
         objectives=[
             ObjectivesEnum.NB_TEAMS,
             ObjectivesEnum.DISPERSION,
-            ObjectivesEnum.MAKESPAN,
+            # ObjectivesEnum.MAKESPAN,
         ],
         adding_redundant_cumulative=True,
     )
@@ -134,9 +134,9 @@ def run_cpsat_lexico():
         objectives=[
             ObjectivesEnum.NB_TEAMS,
             ObjectivesEnum.DISPERSION,
-            ObjectivesEnum.MAKESPAN,
+            # ObjectivesEnum.MAKESPAN,
         ],
-        time_limit=5,
+        time_limit=10,
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol = res[-1][0]
@@ -259,4 +259,4 @@ def run_cpsat_lexico_delta():
 
 
 if __name__ == "__main__":
-    run_cpsat_lexico_delta()
+    run_cpsat_lexico()
