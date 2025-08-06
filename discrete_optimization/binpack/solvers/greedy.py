@@ -4,23 +4,15 @@
 from collections import defaultdict
 from enum import Enum
 from typing import Any, Optional, Union
-
 import networkx as nx
 
 from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_problem import (
-    ParamsObjectiveFunction,
-    Solution,
-)
 from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
-    CategoricalHyperparameter,
-    EnumHyperparameter,
-)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
+from discrete_optimization.generic_tools.callbacks.callback import CallbackList
 
 
 class GreedyBinPackSolver(SolverDO):
@@ -39,6 +31,8 @@ class GreedyBinPackSolver(SolverDO):
     def solve(
         self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
     ) -> ResultStorage:
+        callback = CallbackList(callbacks=callbacks)
+        callback.on_solve_start(self)
         allocation = [None for i in range(self.problem.nb_items)]
         capa_per_bins = defaultdict(lambda: 0)
         used_bins = []
@@ -75,4 +69,69 @@ class GreedyBinPackSolver(SolverDO):
         sol = BinPackSolution(problem=self.problem, allocation=allocation)
         fit = self.aggreg_from_sol(sol)
         res.append((sol, fit))
+        callback.on_solve_end(res, self)
+        return res
+
+
+class GreedyBinPackOpenEvolve(SolverDO):
+    problem: BinPackProblem
+    def __init__(self, problem: BinPackProblem, **kwargs: Any):
+        super().__init__(problem, **kwargs)
+        graph = nx.Graph()
+        graph.add_nodes_from(range(self.problem.nb_items))
+        if self.problem.has_constraint:
+            graph.add_edges_from(list(self.problem.incompatible_items))
+        self.graph = graph
+        self.neighbors = {n: set(self.graph.neighbors(n)) for n in self.graph.nodes}
+
+    def solve(self, callbacks: Optional[list[Callback]] = None, **kwargs):
+        """
+        - list_weights: give for each item its size.
+        - set_conflicts: {(index1, index2), (index0, index4)...} : means that index1 and index2 are not put in the same bin etc
+        - capacity_bin : is the size of each bin
+        Returns a list of int (corresponding to bin index for each item index), the len of the list should be len(list_weights).
+        """
+        callback = CallbackList(callbacks=callbacks)
+        callback.on_solve_start(self)
+
+        list_weights = [item.weight for item in self.problem.list_items]
+        n = self.problem.nb_items
+        bin_assignment = [0] * n
+        bin_weights = [0]  # Keeps track of weights in each bin.
+        bin_conflicts = [set()]  # Keeps track of items in each bin for conflict checking.
+
+        # Heuristic: Sort by decreasing weight, then decreasing number of conflicts
+        sorted_items = sorted(range(n), key=lambda i: (list_weights[i], -len(self.neighbors[i])),
+                              reverse=True)
+
+        for i in sorted_items:
+            best_bin = -1
+            min_weight_increase = float('inf')  # Minimizes the increase in bin weight
+
+            for j in range(len(bin_weights)):
+                valid_placement = True
+                # Efficient conflict check using sets
+                for k in bin_conflicts[j]:
+                    if k in self.neighbors[i]:
+                        valid_placement = False
+                        break
+
+                if valid_placement and bin_weights[j] + list_weights[i] <= self.problem.capacity_bin:
+                    # Prioritize bins with less increase in weight
+                    if bin_weights[j] + list_weights[i] < min_weight_increase:
+                        min_weight_increase = bin_weights[j] + list_weights[i]
+                        best_bin = j
+
+            if best_bin != -1:
+                bin_assignment[i] = best_bin
+                bin_weights[best_bin] += list_weights[i]
+                bin_conflicts[best_bin].add(i)
+            else:
+                bin_assignment[i] = len(bin_weights)
+                bin_weights.append(list_weights[i])
+                bin_conflicts.append({i})
+        sol = BinPackSolution(problem=self.problem, allocation=bin_assignment)
+        fit = self.aggreg_from_sol(sol)
+        res = self.create_result_storage([(sol, fit)])
+        callback.on_solve_end(res, self)
         return res

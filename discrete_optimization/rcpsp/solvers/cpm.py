@@ -4,11 +4,12 @@
 
 import logging
 from heapq import heappop, heappush
-from typing import Any
+from typing import Any, Optional
 
 import networkx as nx
 import numpy as np
 
+from discrete_optimization.generic_tools.callbacks.callback import Callback, CallbackList
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -352,7 +353,7 @@ class CpmRcpspSolver(RcpspSolver):
                     if time >= self.map_node[j]._LSD - 5:
                         for task in set_task:
                             resource_links_to_add += [(j, task)]
-        logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
+        #logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
         self.unlock_task_transition = unlock_task_transition
         return (
             current_schedule,
@@ -514,7 +515,9 @@ class CpmRcpspSolver(RcpspSolver):
             causes_of_delay,
         )
 
-    def solve(self, **kwargs) -> ResultStorage:
+    def solve(self, callbacks: Optional[list[Callback]] = None, **kwargs: Any) -> ResultStorage:
+        cb = CallbackList(callbacks)
+        cb.on_solve_start(self)
         cpath = self.run_classic_cpm()
         order = sorted(
             self.map_node,
@@ -558,6 +561,7 @@ class CpmRcpspSolver(RcpspSolver):
         res = self.create_result_storage(
             [(solution_sgs_0, fit_0), (solution_1, fit_1)],
         )
+        cb.on_solve_end(res, self)
         return res
 
 

@@ -1126,3 +1126,34 @@ def correct_schedule_avoid_overlap(
     return AllocSchedulingSolution(
         problem=problem, schedule=new_schedule, allocation=solution.allocation
     )
+
+
+def export_scheduling_problem_json(problem: AllocSchedulingProblem) -> dict:
+    d = dict()
+    d["teams"] = problem.team_names
+    d["tasks"] = [str(x) for x in problem.tasks_list]
+    d["calendar"] = problem.calendar_team
+    for t in d["calendar"]:
+        d["calendar"][t] = [(int(x[0]), int(x[1])) for x in d["calendar"][t]]
+    d["teams_to_index"] = problem.teams_to_index
+    d["tasks_data"] = {
+        int(t): {"duration": problem.tasks_data[t].duration_task}
+        for t in problem.tasks_data
+    }
+    d["same_allocation"] = [[str(y) for y in x] for x in problem.same_allocation]
+    d["compatible_teams"] = {
+        str(t): list(problem.available_team_for_activity[t])
+        for t in problem.available_team_for_activity
+    }
+    d["start_window"] = {str(t): problem.start_window[t] for t in problem.start_window}
+    d["end_window"] = {str(t): problem.end_window[t] for t in problem.end_window}
+    d["successors"] = {
+        str(t): [str(succ) for succ in problem.precedence_constraints[t]]
+        for t in problem.precedence_constraints
+    }
+    d["horizon_shift"] = int(problem.horizon_start_shift)
+    d["original_start"] = {
+        int(x): problem.original_start[x] for x in problem.original_start
+    }
+    d["original_end"] = {int(x): problem.original_end[x] for x in problem.original_end}
+    return d

@@ -11,6 +11,7 @@ from discrete_optimization.binpack.solvers.cpsat import (
     CpSatBinPackSolver,
     ModelingBinPack,
 )
+from discrete_optimization.binpack.solvers.greedy import GreedyBinPackSolver, GreedyBinPackOpenEvolve
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,
 )
@@ -30,8 +31,8 @@ from discrete_optimization.generic_tools.study import (
 logging.basicConfig(level=logging.INFO)
 
 study_name = "bppc-study-0"
-overwrite = False  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
-instances = [os.path.basename(p) for p in get_data_available_bppc() if "BPPC_2" in p]
+overwrite = True  # do we overwrite previous study with same name or not? if False, we possibly add duplicates
+instances = [os.path.basename(p) for p in get_data_available_bppc()][:100]
 p = ParametersCp.default_cpsat()
 p.nb_process = 10
 solver_configs = {}
@@ -42,13 +43,16 @@ for proc in [16]:
         solver_configs[f"cpsat-proc-{proc}-{modeling.name}"] = SolverConfig(
             cls=CpSatBinPackSolver,
             kwargs={
-                "time_limit": 60,
+                "time_limit": 10,
                 "upper_bound": 250,
                 "modeling": modeling,
                 "ortools_cpsat_solver_kwargs": {"log_search_progress": True},
                 "parameters_cp": p,
             },
         )
+solver_configs = {}
+solver_configs["greedy-1"] = SolverConfig(cls=GreedyBinPackSolver, kwargs={})
+solver_configs["greedy-open-evolve"] = SolverConfig(cls=GreedyBinPackOpenEvolve, kwargs={})
 
 database_filepath = f"{study_name}.h5"
 if overwrite:
@@ -68,7 +72,10 @@ for instance in instances:
             file = [f for f in get_data_available_bppc() if instance in f][0]
             color_problem = parse_bin_packing_constraint_file(file)
             # init solver
-            stats_cb = StatsWithBoundsCallback()
+            if solver_config.cls == CpSatBinPackSolver:
+                stats_cb = StatsWithBoundsCallback()
+            else:
+                stats_cb = BasicStatsCallback()
             solver = solver_config.cls(color_problem, **solver_config.kwargs)
             solver.init_model(**solver_config.kwargs)
             # solve

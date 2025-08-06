@@ -1,7 +1,7 @@
 from discrete_optimization.generic_tools.dashboard import Dashboard
 from discrete_optimization.generic_tools.study import Hdf5Database
 
-study_name = "scheduling-study-0"
+study_name = "scheduling-study-final-_teams"
 
 # retrieve data
 with Hdf5Database(f"{study_name}.h5") as database:
