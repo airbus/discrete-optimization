@@ -356,7 +356,6 @@ class CpmRcpspSolver(RcpspSolver):
                     if time >= self.map_node[j]._LSD - 5:
                         for task in set_task:
                             resource_links_to_add += [(j, task)]
-        # logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
         self.unlock_task_transition = unlock_task_transition
         return (
             current_schedule,

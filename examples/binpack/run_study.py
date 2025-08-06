@@ -58,7 +58,6 @@ solver_configs["greedy-1"] = SolverConfig(cls=GreedyBinPackSolver, kwargs={})
 solver_configs["greedy-open-evolve"] = SolverConfig(
     cls=GreedyBinPackOpenEvolve, kwargs={}
 )
-
 database_filepath = f"{study_name}.h5"
 if overwrite:
     try:
