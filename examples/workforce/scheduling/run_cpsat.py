@@ -20,14 +20,9 @@ from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     StatsCpsatCallback,
     StatsWithBoundsCallback,
 )
-from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
-    Callback,
-    WarmStartCallback,
-)
+from discrete_optimization.generic_tools.callbacks.warm_start_callback import Callback
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -43,9 +38,6 @@ from discrete_optimization.workforce.scheduling.parser import (
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     CPSatAllocSchedulingSolver,
     ObjectivesEnum,
-)
-from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (
-    CPSatAllocSchedulingSolverCumulative,
 )
 from discrete_optimization.workforce.scheduling.utils import (
     compute_changes_between_solution,
@@ -177,8 +169,6 @@ def run_cpsat_lexico_delta_objective():
     files = get_data_available()
     file_path = files[1]
     problem_original = parse_json_to_problem(file_path)
-
-    # 1. Solve the original problem to get a baseline optimal solution
     solver_original = CPSatAllocSchedulingSolver(problem_original)
     solver_original.init_model(objectives=[ObjectivesEnum.NB_TEAMS])
     result_original = solver_original.solve(
@@ -187,8 +177,6 @@ def run_cpsat_lexico_delta_objective():
     sol_original, fit_original = result_original.get_best_solution_fit()
     fits = problem_original.evaluate(sol_original)
     print(f"Original optimal solution found with {fits['nb_teams']} teams.")
-
-    # 2. Generate a disruption scenario
     disruption_scenario = generate_scheduling_disruption(
         original_scheduling_problem=problem_original,
         original_solution=sol_original,
@@ -201,7 +189,6 @@ def run_cpsat_lexico_delta_objective():
                 [1],
             ),
         ),
-        # seed=42 # for reproducibility
     )
     problem_disrupted = disruption_scenario["scheduling_problem"]
     additional_constraints = disruption_scenario["additional_constraint_scheduling"]
@@ -268,7 +255,6 @@ def run_cpsat_lexico_delta_objective():
     print("--- Strategy A: Reallocation First ---")
     for key in ["nb_reallocated", "nb_shift", "sum_shift", "max_shift"]:
         print(f"{key}: {changes_realloc[key]}")
-
     plotly_schedule_comparison(
         sol_original,
         sol_realloc_first,
@@ -280,4 +266,4 @@ def run_cpsat_lexico_delta_objective():
 
 
 if __name__ == "__main__":
-    debug_stuff()
+    run_cpsat_lexico_delta_objective()

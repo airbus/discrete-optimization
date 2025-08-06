@@ -2,8 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from collections import defaultdict
-from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import networkx as nx
 
@@ -27,7 +26,6 @@ class GreedyBinPackSolver(SolverDO):
         graph.add_nodes_from(range(self.problem.nb_items))
         if self.problem.has_constraint:
             graph.add_edges_from(list(self.problem.incompatible_items))
-            neighs = graph.adj
         self.graph = graph
         self.neighbors = {n: set(self.graph.neighbors(n)) for n in self.graph.nodes}
 
@@ -52,14 +50,14 @@ class GreedyBinPackSolver(SolverDO):
                 item_per_bins[0].add(j)
             else:
                 success = False
-                for bin in used_bins:
-                    if weight + capa_per_bins[bin] > self.problem.capacity_bin:
+                for bin_ in used_bins:
+                    if weight + capa_per_bins[bin_] > self.problem.capacity_bin:
                         continue
-                    if any(n in item_per_bins[bin] for n in neighbors):
+                    if any(n in item_per_bins[bin_] for n in neighbors):
                         continue
-                    capa_per_bins[bin] += weight
-                    allocation[j] = bin
-                    item_per_bins[bin].add(j)
+                    capa_per_bins[bin_] += weight
+                    allocation[j] = bin_
+                    item_per_bins[bin_].add(j)
                     success = True
                     break
                 if not success:
@@ -116,20 +114,30 @@ class GreedyBinPackOpenEvolve(SolverDO):
         for i in sorted_items:
             best_bin = -1
             min_weight_increase = float("inf")  # Minimizes the increase in bin weight
+        bin_conflicts = [
+            set()
+        ]  # Keeps track of items in each bin for conflict checking.
 
+        # Heuristic: Sort by decreasing weight, then decreasing number of conflicts
+        sorted_items = sorted(
+            range(n),
+            key=lambda i: (list_weights[i], -len(self.neighbors[i])),
+            reverse=True,
+        )
+
+        for i in sorted_items:
+            best_bin = -1
+            min_weight_increase = float("inf")
             for j in range(len(bin_weights)):
                 valid_placement = True
-                # Efficient conflict check using sets
                 for k in bin_conflicts[j]:
                     if k in self.neighbors[i]:
                         valid_placement = False
                         break
-
                 if (
                     valid_placement
                     and bin_weights[j] + list_weights[i] <= self.problem.capacity_bin
                 ):
-                    # Prioritize bins with less increase in weight
                     if bin_weights[j] + list_weights[i] < min_weight_increase:
                         min_weight_increase = bin_weights[j] + list_weights[i]
                         best_bin = j
