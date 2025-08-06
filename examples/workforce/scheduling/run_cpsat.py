@@ -20,10 +20,17 @@ from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     StatsCpsatCallback,
     StatsWithBoundsCallback,
 )
+from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
+    Callback,
+    WarmStartCallback,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
-from discrete_optimization.generic_tools.result_storage.result_storage import ResultStorage
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
+)
 from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
     create_scheduling_problem_several_resource_dropping,
@@ -40,10 +47,11 @@ from discrete_optimization.workforce.scheduling.solvers.cpsat import (
 from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (
     CPSatAllocSchedulingSolverCumulative,
 )
-from discrete_optimization.workforce.scheduling.utils import plotly_schedule_comparison, \
-    compute_changes_between_solution
-from discrete_optimization.generic_tools.callbacks.warm_start_callback import WarmStartCallback, Callback
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
+from discrete_optimization.workforce.scheduling.utils import (
+    compute_changes_between_solution,
+    plotly_schedule_comparison,
+)
+
 pio.renderers.default = "browser"  # or "vscode", "notebook", "colab", etc.
 
 logging.basicConfig(level=logging.INFO)
@@ -173,7 +181,9 @@ def run_cpsat_lexico_delta_objective():
     # 1. Solve the original problem to get a baseline optimal solution
     solver_original = CPSatAllocSchedulingSolver(problem_original)
     solver_original.init_model(objectives=[ObjectivesEnum.NB_TEAMS])
-    result_original = solver_original.solve(time_limit=5, parameters_cp=ParametersCp.default_cpsat())
+    result_original = solver_original.solve(
+        time_limit=5, parameters_cp=ParametersCp.default_cpsat()
+    )
     sol_original, fit_original = result_original.get_best_solution_fit()
     fits = problem_original.evaluate(sol_original)
     print(f"Original optimal solution found with {fits['nb_teams']} teams.")
@@ -189,7 +199,7 @@ def run_cpsat_lexico_delta_objective():
             duration_discrete_distribution=(
                 [60],
                 [1],
-            )
+            ),
         ),
         # seed=42 # for reproducibility
     )
@@ -199,8 +209,14 @@ def run_cpsat_lexico_delta_objective():
 
     # 3. Plot the original, now-infeasible plan for reference
     print("\nOriginal plan (now likely infeasible due to disruption):")
-    plotly_schedule_comparison(sol_original, sol_original, problem_disrupted,
-                               title="Original Plan (Now Infeasible)", display=True, plot_team_breaks=True)
+    plotly_schedule_comparison(
+        sol_original,
+        sol_original,
+        problem_disrupted,
+        title="Original Plan (Now Infeasible)",
+        display=True,
+        plot_team_breaks=True,
+    )
 
     # Define the objective order: first reallocations, then shifts.
     objectives_realloc_first = [
@@ -209,7 +225,7 @@ def run_cpsat_lexico_delta_objective():
         "nb_shifted",
         "sum_delta_schedule",
         "max_delta_schedule",
-        ObjectivesEnum.NB_TEAMS
+        ObjectivesEnum.NB_TEAMS,
     ]
 
     # Set up the solver with all possible similarity objectives
@@ -218,19 +234,21 @@ def run_cpsat_lexico_delta_objective():
         objectives=[
             ObjectivesEnum.NB_DONE_AC,
             ObjectivesEnum.DELTA_TO_EXISTING_SOLUTION,
-            ObjectivesEnum.NB_TEAMS
+            ObjectivesEnum.NB_TEAMS,
         ],
         additional_constraints=additional_constraints,
         optional_activities=True,
-        base_solution=sol_original
+        base_solution=sol_original,
     )
+
     class LexicoCpsatPrevStartCallback(Callback):
-        def on_step_end(self, step: int, res: ResultStorage, solver: LexicoSolver) -> Optional[bool]:
+        def on_step_end(
+            self, step: int, res: ResultStorage, solver: LexicoSolver
+        ) -> Optional[bool]:
             subsolver: CPSatAllocSchedulingSolver = solver.subsolver
             subsolver.set_warm_start_from_previous_run()
 
-    lexico_solver = LexicoSolver(subsolver=solver_realloc,
-                                 problem=problem_disrupted)
+    lexico_solver = LexicoSolver(subsolver=solver_realloc, problem=problem_disrupted)
     retrieve_sub_res = RetrieveSubRes()
     lexico_cpsat_warm_start = LexicoCpsatPrevStartCallback()
     cbs = [retrieve_sub_res, lexico_cpsat_warm_start]
@@ -241,7 +259,7 @@ def run_cpsat_lexico_delta_objective():
         parameters_cp=parameters_cp,
         objectives=objectives_realloc_first,
         time_limit=10,
-        ortools_cpsat_solver_kwargs={"log_search_progress": True}
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol_realloc_first = result_realloc[-1][0]
 
@@ -251,10 +269,14 @@ def run_cpsat_lexico_delta_objective():
     for key in ["nb_reallocated", "nb_shift", "sum_shift", "max_shift"]:
         print(f"{key}: {changes_realloc[key]}")
 
-    plotly_schedule_comparison(sol_original, sol_realloc_first, problem_disrupted,
-                               title="Repaired Plan: Prioritizing Fewest Reallocations",
-                               display=True,
-                               plot_team_breaks=True)
+    plotly_schedule_comparison(
+        sol_original,
+        sol_realloc_first,
+        problem_disrupted,
+        title="Repaired Plan: Prioritizing Fewest Reallocations",
+        display=True,
+        plot_team_breaks=True,
+    )
 
 
 if __name__ == "__main__":

@@ -71,8 +71,6 @@ class BinPackProblem(Problem):
                     return False
         return True
 
-
-
     def get_attribute_register(self) -> EncodingRegister:
         return EncodingRegister(
             dict_attribute_to_type={

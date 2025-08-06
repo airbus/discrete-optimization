@@ -9,7 +9,10 @@ from typing import Any, Optional
 import networkx as nx
 import numpy as np
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback, CallbackList
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -353,7 +356,7 @@ class CpmRcpspSolver(RcpspSolver):
                     if time >= self.map_node[j]._LSD - 5:
                         for task in set_task:
                             resource_links_to_add += [(j, task)]
-        #logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
+        # logger.debug(f"Final time : {current_schedule[critical_path[-1]]}")
         self.unlock_task_transition = unlock_task_transition
         return (
             current_schedule,
@@ -515,7 +518,9 @@ class CpmRcpspSolver(RcpspSolver):
             causes_of_delay,
         )
 
-    def solve(self, callbacks: Optional[list[Callback]] = None, **kwargs: Any) -> ResultStorage:
+    def solve(
+        self, callbacks: Optional[list[Callback]] = None, **kwargs: Any
+    ) -> ResultStorage:
         cb = CallbackList(callbacks)
         cb.on_solve_start(self)
         cpath = self.run_classic_cpm()
