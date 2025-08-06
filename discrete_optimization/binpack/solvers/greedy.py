@@ -4,15 +4,18 @@
 from collections import defaultdict
 from enum import Enum
 from typing import Any, Optional, Union
+
 import networkx as nx
 
 from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolution
-from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
-from discrete_optimization.generic_tools.callbacks.callback import CallbackList
 
 
 class GreedyBinPackSolver(SolverDO):
@@ -75,6 +78,7 @@ class GreedyBinPackSolver(SolverDO):
 
 class GreedyBinPackOpenEvolve(SolverDO):
     problem: BinPackProblem
+
     def __init__(self, problem: BinPackProblem, **kwargs: Any):
         super().__init__(problem, **kwargs)
         graph = nx.Graph()
@@ -98,15 +102,20 @@ class GreedyBinPackOpenEvolve(SolverDO):
         n = self.problem.nb_items
         bin_assignment = [0] * n
         bin_weights = [0]  # Keeps track of weights in each bin.
-        bin_conflicts = [set()]  # Keeps track of items in each bin for conflict checking.
+        bin_conflicts = [
+            set()
+        ]  # Keeps track of items in each bin for conflict checking.
 
         # Heuristic: Sort by decreasing weight, then decreasing number of conflicts
-        sorted_items = sorted(range(n), key=lambda i: (list_weights[i], -len(self.neighbors[i])),
-                              reverse=True)
+        sorted_items = sorted(
+            range(n),
+            key=lambda i: (list_weights[i], -len(self.neighbors[i])),
+            reverse=True,
+        )
 
         for i in sorted_items:
             best_bin = -1
-            min_weight_increase = float('inf')  # Minimizes the increase in bin weight
+            min_weight_increase = float("inf")  # Minimizes the increase in bin weight
 
             for j in range(len(bin_weights)):
                 valid_placement = True
@@ -116,7 +125,10 @@ class GreedyBinPackOpenEvolve(SolverDO):
                         valid_placement = False
                         break
 
-                if valid_placement and bin_weights[j] + list_weights[i] <= self.problem.capacity_bin:
+                if (
+                    valid_placement
+                    and bin_weights[j] + list_weights[i] <= self.problem.capacity_bin
+                ):
                     # Prioritize bins with less increase in weight
                     if bin_weights[j] + list_weights[i] < min_weight_increase:
                         min_weight_increase = bin_weights[j] + list_weights[i]

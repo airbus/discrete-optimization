@@ -11,7 +11,10 @@ from discrete_optimization.binpack.solvers.cpsat import (
     CpSatBinPackSolver,
     ModelingBinPack,
 )
-from discrete_optimization.binpack.solvers.greedy import GreedyBinPackSolver, GreedyBinPackOpenEvolve
+from discrete_optimization.binpack.solvers.greedy import (
+    GreedyBinPackOpenEvolve,
+    GreedyBinPackSolver,
+)
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,
 )
@@ -52,7 +55,9 @@ for proc in [16]:
         )
 solver_configs = {}
 solver_configs["greedy-1"] = SolverConfig(cls=GreedyBinPackSolver, kwargs={})
-solver_configs["greedy-open-evolve"] = SolverConfig(cls=GreedyBinPackOpenEvolve, kwargs={})
+solver_configs["greedy-open-evolve"] = SolverConfig(
+    cls=GreedyBinPackOpenEvolve, kwargs={}
+)
 
 database_filepath = f"{study_name}.h5"
 if overwrite:
