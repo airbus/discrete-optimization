@@ -13,9 +13,6 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,
 )
 from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
-from discrete_optimization.generic_tools.callbacks.sequential_solvers_callback import (
-    RetrieveSubRes,
-)
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     BasicStatsCallback,
     StatsWithBoundsCallback,
@@ -48,6 +45,14 @@ from discrete_optimization.workforce.scheduling.solvers.tempo import (
     TempoLogsCallback,
     TempoScheduler,
 )
+
+
+class LexicoCpsatPrevStartCallback(Callback):
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: LexicoSolver
+    ) -> Optional[bool]:
+        subsolver: CPSatAllocSchedulingSolver = solver.subsolver
+        subsolver.set_warm_start_from_previous_run()
 
 
 class StatsCallbackForLexico(Callback):
@@ -132,6 +137,7 @@ solver_configs["tempo-nolns-0greedy"] = SolverConfig(
     },
 )
 
+
 database_nb_teams_filepath = f"{study_name}_teams.h5"
 database_workload_filepath = f"{study_name}_workload.h5"
 
@@ -183,13 +189,9 @@ for instance in instances:
                 stats_cp_for_lexico = StatsCallbackForLexico(
                     solver=solver, callback_factory=lambda: StatsWithBoundsCallback()
                 )
-                from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
-                    WarmStartCallback,
-                )
-
                 callbacks = [
                     NbIterationTracker(step_verbosity_level=logging.INFO),
-                    WarmStartCallback(),
+                    LexicoCpsatPrevStartCallback(),
                 ]
                 # solve
                 result_store = solver.solve(
