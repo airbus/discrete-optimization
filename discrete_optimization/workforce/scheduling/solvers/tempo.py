@@ -231,6 +231,7 @@ class TempoScheduler(SolverAllocScheduling):
             for log_entry in extracted_logs:
                 logger.info(str(log_entry))
             self.extracted_log: list[dict] = extracted_logs
+            print(self.extracted_log)
             res = json.load(open(output_json_file, "r"))
             schedule = np.zeros((self.problem.number_tasks, 2))
             allocation = np.zeros(self.problem.number_tasks)

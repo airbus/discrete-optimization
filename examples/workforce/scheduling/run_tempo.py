@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_tempo():
-    instance = [p for p in get_data_available() if "instance_0.json" in p][0]
+    instance = [p for p in get_data_available() if "instance_196.json" in p][0]
     problem = parse_json_to_problem(instance)
     solver = TempoScheduler(problem, path_to_tempo_scheduler=os.environ["TEMPO_PATH"])
     callback = TempoLogsCallback()

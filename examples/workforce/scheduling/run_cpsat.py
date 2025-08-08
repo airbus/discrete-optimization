@@ -11,7 +11,6 @@ from matplotlib import pyplot as plt
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,
 )
-from discrete_optimization.generic_tools.callbacks.loggers import NbIterationTracker
 from discrete_optimization.generic_tools.callbacks.sequential_solvers_callback import (
     RetrieveSubRes,
 )
@@ -50,8 +49,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_cpsat():
-    instance = [p for p in get_data_available() if "instance_0.json" in p][0]
+    instance = [p for p in get_data_available() if "instance_196.json" in p][0]
     problem = parse_json_to_problem(instance)
+    print(problem.number_tasks)
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
@@ -64,6 +64,7 @@ def run_cpsat():
     )
     sol = res[-1][0]
     print(problem.satisfy(sol), problem.evaluate(sol))
+    plotly_schedule_comparison(sol, sol, problem, display=True)
 
 
 def run_cpsat_delta():

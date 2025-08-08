@@ -209,10 +209,10 @@ class Dashboard(Dash):
         self.df_best_metric_by_xp = compute_best_metrics_by_xp(
             results=self.full_results, metrics=self.full_metrics
         )
-        # self.df_convergence_time_by_xp = None
-        self.df_convergence_time_by_xp = compute_convergence_time_by_xp(
-            results=self.full_results, metrics=self.full_metrics
-        )
+        self.df_convergence_time_by_xp = None
+        # self.df_convergence_time_by_xp = compute_convergence_time_by_xp(
+        #    results=self.full_results, metrics=self.full_metrics
+        # )
 
     def create_layout(self):
         filter_style = {"margin-bottom": "1em"}
