@@ -163,9 +163,21 @@ def parse_solver_log_robust(file_content: str) -> tuple[list[pd.DataFrame], list
     return list_of_dfs, phase_statuses
 
 
+class TempoLogsCallback(Callback):
+    def __init__(self):
+        self.logs: list[dict] = None
+
+    def on_solve_end(self, res: ResultStorage, solver: "TempoSchedulingSolver"):
+        self.logs = solver._processed_logs
+
+    def get_df_metrics(self, phase: int = 0) -> pd.DataFrame:
+        """Construct a dataframe indexed by time of the recorded metrics (fitness, bounds...)."""
+        return self.logs[phase]
+
+
 class TempoSchedulingSolver(SolverDO):
     hyperparameters = [
-        CategoricalHyperparameter(name="use_lns", choices=[True, False], default=True),
+        CategoricalHyperparameter(name="use_lns", choices=[True, False], default=False),
         IntegerHyperparameter(name="greedy_runs", low=0, high=100, step=1, default=1),
     ]
     _input_format: Optional[FormatEnum]
@@ -232,6 +244,8 @@ class TempoSchedulingSolver(SolverDO):
         output_json_file = os.path.join(
             self.get_tmp_folder_path(), f"results_{now}.json"
         )
+        if not os.path.exists(self.get_tmp_folder_path()):
+            os.makedirs(self.get_tmp_folder_path())
         # Command to run the external C++ solver
         path_to_tempo = self._path_to_tempo_executable
         command = [
@@ -262,7 +276,7 @@ class TempoSchedulingSolver(SolverDO):
             # Execute the command and capture stdout and stderr
             process = subprocess.run(
                 command,
-                capture_output=False,
+                capture_output=True,
                 text=True,  # Decode stdout/stderr as text
                 # check=True,  # Raise a CalledProcessError if the command returns a non-zero exit code
                 timeout=time_limit
@@ -286,6 +300,8 @@ class TempoSchedulingSolver(SolverDO):
             callback.on_solve_end(result_store, solver=self)
             # Clean up temporary files after successful execution
             os.remove(self._file_input)
+            if os.path.exists(output_json_file):
+                os.remove(output_json_file)
             # Return the result storage, potentially including the extracted logs in the 'infos' dictionary
             # The 'infos' dictionary can be used to pass additional data alongside the solution.
             return result_store

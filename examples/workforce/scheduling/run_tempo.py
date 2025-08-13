@@ -1,29 +1,16 @@
 import logging
 import os
 
-import pandas as pd
 import plotly.io as pio
 
-from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_solver import SolverDO
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
+from discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools import (
+    TempoLogsCallback,
 )
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
     parse_json_to_problem,
 )
-from discrete_optimization.workforce.scheduling.solvers.cpsat import (
-    CPSatAllocSchedulingSolver,
-    ObjectivesEnum,
-)
-from discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed import (
-    CPSatAllocSchedulingSolverCumulative,
-)
-from discrete_optimization.workforce.scheduling.solvers.tempo import (
-    TempoLogsCallback,
-    TempoScheduler,
-)
+from discrete_optimization.workforce.scheduling.solvers.tempo import TempoScheduler
 from discrete_optimization.workforce.scheduling.utils import plotly_schedule_comparison
 
 pio.renderers.default = "browser"  # or "vscode", "notebook", "colab", etc.
