@@ -1,6 +1,7 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import json
 import os
 import re
 from typing import Any
@@ -186,31 +187,21 @@ class TempoRcpspSolver(TempoSchedulingSolver, RcpspSolver):
 
     def retrieve_solution(self, path_to_output: str, process_stdout: str) -> Solution:
         if os.path.exists(path_to_output):
-            with open(path_to_output, "r") as f:
-                str_content = f.read()
-                print(str_content)
-                task_in_right_order = [
-                    self.problem.source_task,
-                    self.problem.sink_task,
-                ] + [
-                    t
-                    for t in self.problem.tasks_list
-                    if t not in {self.problem.source_task, self.problem.sink_task}
-                ]
-                schedule = parse_solver_output(
-                    str_content,
-                    makespan=int(self.get_processed_logs()[0].iloc[-1]["fit"]),
-                    tasks_list_in_output_order=task_in_right_order,
-                )
+            dict_ = json.load(open(path_to_output, "r"))
+            rcpsp_schedule = {
+                self.problem.source_task: {"start_time": 0, "end_time": 0},
+                self.problem.sink_task: {
+                    "start_time": dict_["tasks"][0]["end"][0],
+                    "end_time": dict_["tasks"][0]["end"][0],
+                },
+            }
+            for i in range(1, len(dict_["tasks"])):
+                rcpsp_schedule[self.problem.tasks_list[i]] = {
+                    "start_time": dict_["tasks"][i]["start"][0],
+                    "end_time": dict_["tasks"][i]["end"][0],
+                }
             return RcpspSolution(
                 problem=self.problem,
-                rcpsp_schedule={
-                    t: {
-                        "start_time": schedule[t],
-                        "end_time": schedule[t]
-                        + self.problem.mode_details[t][1]["duration"],
-                    }
-                    for t in self.problem.tasks_list
-                },
+                rcpsp_schedule=rcpsp_schedule,
                 rcpsp_modes=[1] * self.problem.n_jobs_non_dummy,
             )

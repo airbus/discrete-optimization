@@ -39,4 +39,4 @@ def run_tempo_multimode():
 
 
 if __name__ == "__main__":
-    run_tempo_multimode()
+    run_tempo()
