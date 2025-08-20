@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any, Iterable, Optional
 
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools import (
     NeighborBuilderMix,
     NeighborBuilderSubPart,
     NeighborBuilderTimeWindow,

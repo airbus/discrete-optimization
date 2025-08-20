@@ -14,7 +14,7 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools import (
     GraphRcpsp,
     GraphSpecialConstraintsRcpsp,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools import (
     BaseSchedulingMznConstraintHandler,
     ParamsConstraintBuilder,
     constraint_unit_used_subset_employees_preemptive,

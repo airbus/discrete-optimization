@@ -8,7 +8,7 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools import (
     GraphRcpsp,
     build_graph_rcpsp_object,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools import (
     BasicConstraintBuilder,
     ConstraintHandlerMultiskillAllocation,
     ConstraintHandlerScheduling,
