@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 import logging
+import math
 from enum import Enum
 from functools import partial
 from typing import Any, Optional, Union
@@ -715,10 +716,10 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
                     mini, maxi = self.problem.time_windows_nodes[node]
                     if mini is not None and maxi is not None:
                         time_dimension.SetCumulVarSoftLowerBound(
-                            index, self.factor_multiplier_time * mini, 10000
+                            index, math.floor(self.factor_multiplier_time * mini), 10000
                         )
                         time_dimension.SetCumulVarSoftUpperBound(
-                            index, self.factor_multiplier_time * maxi, 10000
+                            index, math.floor(self.factor_multiplier_time * maxi), 10000
                         )
                     elif mini is not None:
                         time_dimension.SetCumulVarSoftLowerBound(

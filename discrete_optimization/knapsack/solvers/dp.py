@@ -56,7 +56,8 @@ class DpKnapsackSolver(KnapsackSolver, DpSolver, WarmstartMixin):
         capacity = self.problem.max_capacity
         model = dp.Model(maximize=True, float_cost=False)
         item = model.add_object_type(number=self.problem.nb_items)
-        r = model.add_int_var(target=capacity)
+        # For a given value of knapsack and item index state,
+        r = model.add_int_resource_var(target=capacity, less_is_better=False)
         i = model.add_element_var(object_type=item, target=0)
 
         w = model.add_int_table(weights)

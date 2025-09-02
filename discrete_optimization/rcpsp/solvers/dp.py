@@ -299,6 +299,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                 )
                 model.add_transition(ending_task)
                 self.transitions[("end", i, 1)] = ending_task
+                model.add_transition_dominance()
         # remaining = model.add_int_table([self.remaining_per_task[t] for t in self.problem.tasks_list])
         # model.add_dual_bound((~unscheduled.is_empty()).if_then_else(remaining.max(unscheduled), 0))
         # model.add_dual_bound(((unscheduled.len() < 20) & ~unscheduled.is_empty())
