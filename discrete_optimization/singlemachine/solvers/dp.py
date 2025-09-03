@@ -35,40 +35,31 @@ class DpWTSolver(DpSolver, WarmstartMixin):
     def init_model(self, **kwargs: Any) -> None:
         self.transitions_names_to_info = {}
         self.variables = {}
-        model = dp.Model(maximize=False, float_cost=False)
-        max_time = sum(self.problem.processing_times)
-        tasks = model.add_object_type(self.problem.num_jobs)
-        current_time = model.add_int_resource_var(target=0, less_is_better=True)
-        unscheduled = model.add_set_var(
-            object_type=tasks, target=range(self.problem.num_jobs)
+        model = dp.Model()
+        tasks = model.add_object_type(number=self.problem.num_jobs)
+        scheduled = model.add_set_var(object_type=tasks, target=[])
+        all_jobs = model.create_set_const(
+            object_type=tasks, value=list(range(self.problem.num_jobs))
         )
+        processing_time = model.add_int_table(self.problem.processing_times)
+        current_time = model.add_int_state_fun(processing_time[scheduled])
         for i in range(self.problem.num_jobs):
+            tardiness = dp.max(
+                0, current_time + processing_time[i] - self.problem.due_dates[i]
+            )
             transition = dp.Transition(
                 name=f"schedule_{i}",
-                cost=self.problem.weights[i]
-                * dp.max(
-                    current_time
-                    + self.problem.processing_times[i]
-                    - self.problem.due_dates[i],
-                    0,
-                )
-                + dp.IntExpr.state_cost(),
-                effects=[
-                    (unscheduled, unscheduled.remove(i)),
-                    (current_time, current_time + self.problem.processing_times[i]),
-                ],
-                preconditions=[unscheduled.contains(i)],
+                cost=self.problem.weights[i] * tardiness + dp.IntExpr.state_cost(),
+                effects=[(scheduled, scheduled.add(i))],
+                preconditions=[~scheduled.contains(i)],
             )
             model.add_transition(transition)
             self.transitions_names_to_info[f"schedule_{i}"] = {
                 "task": i,
                 "tr": transition,
             }
-
-        model.add_base_case([unscheduled.is_empty()])
-        due_date = model.add_int_table(self.problem.due_dates)
-        weights = model.add_int_table(self.problem.weights)
-        model.add_dual_bound(dp.max(current_time - due_date[unscheduled], 0))
+        model.add_base_case([scheduled == all_jobs])
+        model.add_dual_bound(0)
         self.variables["current_time"] = current_time
         self.model = model
 
@@ -76,10 +67,10 @@ class DpWTSolver(DpSolver, WarmstartMixin):
         schedule = [None for i in range(self.problem.num_jobs)]
         state = self.model.target_state
         for t in sol.transitions:
-            current_time = state[self.variables["current_time"]]
+            current_time = self.variables["current_time"].eval(state, self.model)
             task = self.transitions_names_to_info[t.name]["task"]
             state = t.apply(state, self.model)
-            new_time = state[self.variables["current_time"]]
+            new_time = self.variables["current_time"].eval(state, self.model)
             schedule[task] = (current_time, new_time)
         return WTSolution(problem=self.problem, schedule=schedule)
 

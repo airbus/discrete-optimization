@@ -13,18 +13,21 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_dp():
-    problem = parse_file(get_data_available()[0])[0]
+    problems = parse_file(get_data_available()[0])
+    print(len(problems), " problems in the file")
+    problem = parse_file(get_data_available()[0])[1]
     subsolver = CpsatWTSolver(problem)
     subsolver.init_model()
     sol = subsolver.solve(time_limit=3).get_best_solution()
     print(problem.evaluate(sol), " value of warm-start")
     solver = DpWTSolver(problem)
     solver.init_model()
-    solver.set_warm_start(sol)
+    # solver.set_warm_start(sol)
     res = solver.solve(
         time_limit=100,
-        threads=10,
-        solver=dp.LNBS,
+        threads=16,
+        retrieve_intermediate_solutions=True,
+        solver="LNBS",
         callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
