@@ -232,11 +232,3 @@ class LocalMovesOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
             lns_constraints.append(solver.cp_model.Add(in_set[idx] == 1))
         lns_constraints.append(solver.cp_model.Add(sum(change) <= self.nb_moves))
         return lns_constraints
-
-    # def remove_constraints_from_previous_iteration(
-    #     self,
-    #     solver: OrtoolsCpSatSolver,
-    #     previous_constraints: Iterable[Constraint],
-    #     **kwargs: Any,
-    # ) -> None:
-    #     solver.init_model()

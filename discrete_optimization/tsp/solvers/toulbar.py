@@ -128,8 +128,3 @@ class TspConstraintHandlerToulbar(ConstraintHandler):
         text = "," + text
         solver.model.Parse(text)
         solver.set_warm_start(sol)
-
-    def remove_constraints_from_previous_iteration(
-        self, solver: SolverDO, previous_constraints: Iterable[Any], **kwargs: Any
-    ) -> None:
-        pass

@@ -291,14 +291,6 @@ class FacilityConstraintHandlerToulbar(ConstraintHandler):
             solver.model.Parse(text)
         solver.set_warm_start(solution=sol)
 
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ToulbarFacilitySolverForLns,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        pass
-
 
 class FacilityConstraintHandlerDestroyFacilityToulbar(ConstraintHandler):
     """
@@ -346,11 +338,3 @@ class FacilityConstraintHandlerDestroyFacilityToulbar(ConstraintHandler):
             text = "," + text
             solver.model.Parse(text)
         solver.set_warm_start(solution=sol)
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ToulbarFacilitySolverForLns,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        pass

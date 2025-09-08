@@ -75,14 +75,6 @@ ToulbarMisSolverForLns = to_lns_toulbar(ToulbarMisSolver)
 
 
 class MisConstraintHandlerToulbar(ConstraintHandler):
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: ToulbarMisSolverForLns,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        pass
-
     def __init__(self, fraction_node: float = 0.3):
         self.fraction_node = fraction_node
 
