@@ -157,16 +157,6 @@ class OrtoolsCpSatConstraintHandler(ConstraintHandler):
     ) -> Iterable[Constraint]:
         ...
 
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: OrtoolsCpSatSolver,
-        previous_constraints: Iterable[Constraint],
-        **kwargs: Any,
-    ) -> None:
-        """Clear specified cpsat constraints."""
-        for cstr in previous_constraints:
-            cstr.proto.Clear()
-
 
 class MznConstraintHandler(ConstraintHandler):
     @abstractmethod
@@ -179,19 +169,6 @@ class MznConstraintHandler(ConstraintHandler):
         **kwargs: Any,
     ) -> Iterable[Any]:
         ...
-
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: SolverDO,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        """Remove previous constraints.
-
-        Nothing to do for minizinc solvers as the constraints were added only to the child instance.
-
-        """
-        pass
 
 
 class LnsCpMzn(BaseLnsCp):

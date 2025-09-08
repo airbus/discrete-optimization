@@ -47,15 +47,6 @@ class ConstraintHandler(Hyperparametrizable):
     ) -> Iterable[Any]:
         ...
 
-    @abstractmethod
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: SolverDO,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        ...
-
 
 class InitialSolution(Hyperparametrizable):
     @abstractmethod
@@ -360,7 +351,7 @@ class BaseLns(SolverDO, WarmstartMixin):
             stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
 
         result_store: ResultStorage
-        lsn_contraints: Optional[Iterable[Any]] = None
+        lns_contraints: Optional[Iterable[Any]] = None
         if not stopping:
             # time_limit subsolver warning (only once)
             if "time_limit" in kwargs:
@@ -379,7 +370,7 @@ class BaseLns(SolverDO, WarmstartMixin):
                         and not skip_initial_solution_provider
                         or iteration >= 1
                     ):
-                        lsn_contraints = self.constraint_handler.adding_constraint_from_results_store(
+                        lns_contraints = self.constraint_handler.adding_constraint_from_results_store(
                             solver=self.subsolver,
                             child_instance=child,
                             result_storage=store_lns,
@@ -476,10 +467,9 @@ class BaseLns(SolverDO, WarmstartMixin):
                     ):
                         logger.info("Finish LNS with maximum no improvement iteration ")
                         break
-                if lsn_contraints is not None:
-                    self.constraint_handler.remove_constraints_from_previous_iteration(
-                        solver=self.subsolver, previous_constraints=lsn_contraints
-                    )
+                if lns_contraints is not None:
+                    self.subsolver.remove_constraints(lns_contraints)
+
                 # end of step callback: stopping?
                 if skip_initial_solution_provider:
                     step = iteration
@@ -598,11 +588,3 @@ class ConstraintHandlerMix(ConstraintHandler):
             solver=solver, result_storage=result_storage, **kwargs
         )
         return constraints
-
-    def remove_constraints_from_previous_iteration(
-        self, solver: SolverDO, previous_constraints: Iterable[Any], **kwargs: Any
-    ) -> None:
-        ch = self.list_constraints_handler[int(self.last_index_param)]
-        ch.remove_constraints_from_previous_iteration(
-            solver=solver, previous_constraints=previous_constraints, **kwargs
-        )

@@ -148,9 +148,7 @@ def test_knapsack_ortools_constraint_handler():
     assert fit == 0.0
 
     # remove constraint + solve => should find a better solution
-    constraint_handler.remove_constraints_from_previous_iteration(
-        solver=solver, previous_constraints=constraints
-    )
+    solver.remove_constraints(constraints)
     res = solver.solve(
         parameters_cp=params_cp,
         time_limit=10,

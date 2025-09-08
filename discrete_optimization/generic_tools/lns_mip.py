@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+from abc import abstractmethod
 from collections.abc import Iterable
 from typing import Any, Optional
 
@@ -31,23 +32,22 @@ logger = logging.getLogger(__name__)
 
 
 class GurobiConstraintHandler(ConstraintHandler):
-    def remove_constraints_from_previous_iteration(
-        self,
-        solver: GurobiMilpSolver,
-        previous_constraints: Iterable[Any],
-        **kwargs: Any,
-    ) -> None:
-        solver.remove_constraints(previous_constraints)
+    @abstractmethod
+    def adding_constraint_from_results_store(
+        self, solver: GurobiMilpSolver, result_storage: ResultStorage, **kwargs: Any
+    ) -> Iterable[Any]:
+        ...
 
 
 class OrtoolsMathOptConstraintHandler(ConstraintHandler):
-    def remove_constraints_from_previous_iteration(
+    @abstractmethod
+    def adding_constraint_from_results_store(
         self,
         solver: OrtoolsMathOptMilpSolver,
-        previous_constraints: Iterable[Any],
+        result_storage: ResultStorage,
         **kwargs: Any,
-    ) -> None:
-        solver.remove_constraints(previous_constraints)
+    ) -> Iterable[Any]:
+        ...
 
 
 class LnsMilp(BaseLns):

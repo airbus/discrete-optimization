@@ -224,9 +224,7 @@ def test_constraint_handler_all_vars():
     assert all(c == 0 for c in sol.chosen)
 
     # check that w/o constraint another solution is found
-    constraint_handler.remove_constraints_from_previous_iteration(
-        solver=solver, previous_constraints=constraints
-    )
+    solver.remove_constraints(constraints)
     res = solver.solve(
         parameters_cp=params_cp,
         time_limit=10,

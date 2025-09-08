@@ -282,11 +282,6 @@ ToulbarColoringSolverForLns = to_lns_toulbar(ToulbarColoringSolver)
 
 
 class ColoringConstraintHandlerToulbar(ConstraintHandler):
-    def remove_constraints_from_previous_iteration(
-        self, solver: SolverDO, previous_constraints: Iterable[Any], **kwargs: Any
-    ) -> None:
-        pass
-
     def __init__(self, fraction_node: float = 0.3):
         self.fraction_node = fraction_node
 
