@@ -172,7 +172,6 @@ class CpmpySolver(CpSolver):
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
-
         callbacks_list = CallbackList(callbacks=callbacks)
         callbacks_list.on_solve_start(solver=self)
 
@@ -184,6 +183,8 @@ class CpmpySolver(CpSolver):
             solver_kwargs["display"] = self.create_callback_function(
                 callback=callbacks_list
             )
+            if self.solver_name == "exact":
+                solver_kwargs.pop("display")
 
         if self.solver_name == "ortools":
             solver_kwargs["solution_callback"] = _OrtoolsCpSatCallbackViaCpmpy(

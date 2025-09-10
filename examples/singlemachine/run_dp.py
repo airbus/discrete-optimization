@@ -26,8 +26,8 @@ def run_dp():
     res = solver.solve(
         time_limit=100,
         threads=16,
-        retrieve_intermediate_solutions=True,
-        solver="LNBS",
+        retrieve_intermediate_solutions=False,
+        solver="CABS",
         callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO

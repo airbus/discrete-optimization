@@ -1,7 +1,7 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
@@ -38,6 +38,7 @@ class WeightedTardinessProblem(Problem):
         processing_times: List[int],
         weights: List[int],
         due_dates: List[int],
+        release_dates: Optional[List[int]] = None,
     ):
         if not (len(processing_times) == len(weights) == len(due_dates) == num_jobs):
             raise ValueError(f"All lists must contain {num_jobs} elements.")
@@ -45,6 +46,13 @@ class WeightedTardinessProblem(Problem):
         self.processing_times = processing_times
         self.weights = weights
         self.due_dates = due_dates
+        self.release_dates = release_dates
+        if self.release_dates is None:
+            self.has_release = False
+            self.release_dates = [0 for i in range(self.num_jobs)]
+            # We still put some dummy values in case we use models considering release...
+        else:
+            self.has_release = True
 
     def __repr__(self):
         return (
