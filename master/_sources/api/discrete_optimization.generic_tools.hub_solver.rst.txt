@@ -1,0 +1,18 @@
+discrete\_optimization.generic\_tools.hub\_solver package
+=========================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_tools.hub_solver.tempo
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.hub_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
