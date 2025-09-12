@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 import cpmpy
 from cpmpy import SolverLookup
-from cpmpy.expressions.core import Expression
+from cpmpy.expressions.core import BoolVal, Expression
 from cpmpy.expressions.variables import NDVarArray, _BoolVarImpl
 from cpmpy.model import Model
 from cpmpy.solvers.ortools import OrtSolutionPrinter
@@ -366,7 +366,11 @@ class CpmpySolver(CpSolver):
         fine_method_kwargs = dict(cpmpy_method=cpmpy_method, **kwargs)
         return (
             self._compute_meta_minimal_meta_constraint_set_using_fine_constraint_method(
-                fine_method=fine_method, soft=soft, hard=hard, **fine_method_kwargs
+                fine_method=fine_method,
+                soft=soft,
+                hard=hard,
+                include_all_trivial_false_constraints=True,
+                **fine_method_kwargs,
             )
         )
 
@@ -472,6 +476,9 @@ class CpmpySolver(CpSolver):
             for meta, meta_normalized in zip(soft, soft_normalized):
                 if c in set(meta_normalized):
                     ms_meta_constraints.add(meta)
+                elif isinstance(c, BoolVal):  # manage False <-> BoolVal(False)
+                    if c.value() in set(meta_normalized):
+                        ms_meta_constraints.add(meta)
         return list(ms_meta_constraints)
 
     def _compute_meta_minimal_meta_constraint_set_using_fine_constraint_method(
@@ -479,6 +486,7 @@ class CpmpySolver(CpSolver):
         fine_method: Callable[[...], list[Expression]],
         soft: Optional[list[MetaCpmpyConstraint]] = None,
         hard: Optional[list[MetaCpmpyConstraint]] = None,
+        include_all_trivial_false_constraints: bool = False,
         **kwargs: Any,
     ) -> list[MetaCpmpyConstraint]:
         """
@@ -487,6 +495,8 @@ class CpmpySolver(CpSolver):
             fine_method:  method used to extract the minimal set of fine constraints
             soft: soft meta-constraints
             hard: hard meta-constraints
+            include_all_trivial_false_constraints: whether to include all trivial False constraints (for mcs) or only
+                first one (for mus)
             **kwargs: kwargs for fine_method (apart from soft and hard parameters)
 
         Returns:
@@ -500,9 +510,24 @@ class CpmpySolver(CpSolver):
         hard_normalized = _normalize_metaconstraints(hard)
         soft_cpmpy = [cpmpy.all(meta.constraints) for meta in soft_normalized]
         hard_cpmpy = [cpmpy.all(meta.constraints) for meta in hard_normalized]
-        cstr2meta = {cstr: meta for cstr, meta in zip(soft_cpmpy, soft)}
-        ms_constraints = fine_method(soft=soft_cpmpy, hard=hard_cpmpy, **kwargs)
-        return [cstr2meta[cstr] for cstr in ms_constraints]
+        # handle trivial False constraints
+        soft_with_trivial_false = [
+            meta for cstr, meta in zip(soft_cpmpy, soft) if not cstr
+        ]
+        soft_wo_trivial_false = [
+            meta for meta in soft if meta not in soft_with_trivial_false
+        ]
+        soft_cpmpy_wo_trivial_false = [cstr for cstr in soft_cpmpy if cstr]
+        if (
+            len(soft_with_trivial_false) > 0
+            and not include_all_trivial_false_constraints
+        ):
+            return soft_wo_trivial_false[:1]  # only first meta containing False
+        cstr2meta = dict(zip(soft_cpmpy, soft))
+        ms_constraints = fine_method(
+            soft=soft_cpmpy_wo_trivial_false, hard=hard_cpmpy, **kwargs
+        )
+        return soft_with_trivial_false + [cstr2meta[cstr] for cstr in ms_constraints]
 
     def get_others_meta_constraint(
         self, meta_constraints: Optional[list[MetaCpmpyConstraint]] = None
