@@ -36,7 +36,6 @@ def test_fjsp_solver_on_jsp():
     assert fproblem.satisfy(sol)
 
 
-@pytest.mark.skip("fjsp datasets temporary not available.")
 def test_dp_fjsp():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke60.fjs" in f][0]
@@ -50,7 +49,6 @@ def test_dp_fjsp():
     assert problem.satisfy(sol)
 
 
-@pytest.mark.skip("fjsp datasets temporary not available.")
 def test_dp_fjsp_ws():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke4.fjs" in f][0]

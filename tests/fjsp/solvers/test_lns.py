@@ -20,7 +20,6 @@ from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
 
 
-@pytest.mark.skip("fjsp datasets temporary not available.")
 def test_lnscpsat_fjsp():
     files = get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
