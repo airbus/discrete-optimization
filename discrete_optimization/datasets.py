@@ -496,7 +496,7 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_mis_from_repo(data_home=data_home)
     fetch_data_from_jsplib_repo(data_home=data_home)
     fetch_data_from_bppc(data_home=data_home)
-    # fetch_data_fjsp(data_home=data_home)
+    fetch_data_fjsp(data_home=data_home)
     fetch_data_from_cp25(data_home=data_home)
 
 

@@ -96,7 +96,6 @@ def test_fjsp_solver_on_jsp():
     assert fproblem.satisfy(sol)
 
 
-@pytest.mark.skip("fjsp datasets temporary not available.")
 def test_cpsat_fjsp():
     files = fjsp_parser.get_data_available()
     print(files)
@@ -118,7 +117,6 @@ def test_cpsat_fjsp():
     assert problem.satisfy(sol)
 
 
-@pytest.mark.skip("fjsp datasets temporary not available.")
 def test_cpsat_retrieve_stats():
     files = fjsp_parser.get_data_available()
     print(files)
@@ -144,7 +142,6 @@ def test_cpsat_retrieve_stats():
     assert problem.satisfy(sol)
 
 
-@pytest.mark.skip("fjsp datasets temporary not available.")
 def test_cpsat_retrieve_stats_via_clb():
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke60.fjs" in f][0]
