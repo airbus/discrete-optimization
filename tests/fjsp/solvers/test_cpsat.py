@@ -6,13 +6,14 @@ import logging
 import time
 from typing import Optional
 
-import pytest
-
 import discrete_optimization.fjsp.parser as fjsp_parser
 import discrete_optimization.jsp.parser as jsp_parser
 from discrete_optimization.fjsp.problem import Job
 from discrete_optimization.fjsp.solvers.cpsat import CpSatFjspSolver, FJobShopProblem
 from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -90,8 +91,10 @@ def test_fjsp_solver_on_jsp():
         n_machines=problem.n_machines,
     )
     solver = CpSatFjspSolver(problem=fproblem)
-    p = ParametersCp.default_cpsat()
-    res = solver.solve(parameters_cp=p, time_limit=20)
+    p = ParametersCp.default()
+    res = solver.solve(
+        parameters_cp=p, callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    )
     sol, _ = res.get_best_solution_fit()
     assert fproblem.satisfy(sol)
 
@@ -104,11 +107,10 @@ def test_cpsat_fjsp():
     problem = fjsp_parser.parse_file(file)
     print(problem)
     solver = CpSatFjspSolver(problem=problem)
-    p = ParametersCp.default_cpsat()
-    p.nb_process = 10
+    p = ParametersCp.default()
     res = solver.solve(
         parameters_cp=p,
-        time_limit=30,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
         ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
         duplicate_temporal_var=True,
         add_cumulative_constraint=True,
@@ -125,11 +127,10 @@ def test_cpsat_retrieve_stats():
     problem = fjsp_parser.parse_file(file)
     print(problem)
     solver = CpSatFjspSolver(problem=problem)
-    p = ParametersCp.default_cpsat()
-    p.nb_process = 10
+    p = ParametersCp.default()
     res = solver.solve(
         parameters_cp=p,
-        time_limit=5,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
         ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
         duplicate_temporal_var=True,
         add_cumulative_constraint=True,
@@ -147,13 +148,11 @@ def test_cpsat_retrieve_stats_via_clb():
     file = [f for f in files if "Behnke60.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
-    p = ParametersCp.default_cpsat()
-    p.nb_process = 10
+    p = ParametersCp.default()
     stats_clb = StatsCpsatCallback()
     res = solver.solve(
-        callbacks=[stats_clb],
+        callbacks=[stats_clb, NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=p,
-        time_limit=20,
         ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
         duplicate_temporal_var=True,
         add_cumulative_constraint=True,
