@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 import os
-from copy import deepcopy
+from copy import copy, deepcopy
 
 import didppy as dp
 import pandas as pd
@@ -49,18 +49,18 @@ p.nb_process = 10
 solver_configs = {
     "cpmpy-cpsat-1proc": SolverConfig(
         cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 1},
+        kwargs={"time_limit": 5, "solver_name": "ortools", "num_search_workers": 1},
     ),
     "cpmpy-cpsat-10proc": SolverConfig(
         cls=CPMpyTeamAllocationSolver,
-        kwargs={"time_limit": 5, "solver": "ortools", "num_search_workers": 10},
+        kwargs={"time_limit": 5, "solver_name": "ortools", "num_search_workers": 10},
     ),
     "cpmpy-exact": SolverConfig(
         cls=CPMpyTeamAllocationSolver,
         kwargs={
             "time_limit": 5,
             "display": lambda: None,
-            "solver": "exact",
+            "solver_name": "exact",
         },
     ),
     "cpsat-10": SolverConfig(
@@ -78,8 +78,13 @@ solver_configs = {
     ),
 }
 for solver in ["CABS", "LNBS"]:
-    solver_configs[f"dp-{solver}"] = SolverConfig(
-        cls=DpAllocationSolver, kwargs=dict(solver=solver, time_limit=5)
+    solver_configs[f"dp-{solver}-0"] = SolverConfig(
+        cls=DpAllocationSolver,
+        kwargs=dict(solver=solver, force_allocation_when_possible=False, time_limit=5),
+    )
+    solver_configs[f"dp-{solver}-1"] = SolverConfig(
+        cls=DpAllocationSolver,
+        kwargs=dict(solver=solver, force_allocation_when_possible=True, time_limit=5),
     )
 database_filepath = f"{study_name}.h5"
 if overwrite:
@@ -97,7 +102,7 @@ for instance in instances:
         try:
             # init problem
             file = [f for f in get_data_available() if instance in f][0]
-            problem = parse_to_allocation_problem(file)
+            problem = parse_to_allocation_problem(file, multiobjective=False)
             # init solver
             # stats_cb = StatsWithBoundsCallback()
             stats_cb = BasicStatsCallback()
@@ -111,12 +116,20 @@ for instance in instances:
                 ),
                 **solver_config.kwargs,
             )
-            solver.init_model(**solver_config.kwargs)
+            if solver_config.cls == CPMpyTeamAllocationSolver:
+                continue
+                tr_kwargs = copy(solver_config.kwargs)
+                tr_kwargs.pop("solver_name")
+                solver.init_model(**tr_kwargs)
+            else:
+                solver.init_model(**solver_config.kwargs)
             kwargs_modif = deepcopy(solver_config.kwargs)
             if isinstance(solver, DpAllocationSolver):
                 kwargs_modif["solver"] = {"LNBS": dp.LNBS, "CABS": dp.CABS}[
                     kwargs_modif["solver"]
                 ]
+            if solver_config.cls == CPMpyTeamAllocationSolver:
+                kwargs_modif = tr_kwargs
             # solve
             result_store = solver.solve(
                 callbacks=[

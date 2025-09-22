@@ -25,7 +25,10 @@ def run_dp_rcpsp():
     file = [f for f in files_patterson if "Pat8.rcp" in f][0]
     # rcpsp_problem.horizon = 55
     solver = DpRcpspSolver(problem=rcpsp_problem)
-    solver.init_model_multimode()
+    solver.init_model(
+        modeling=DpRcpspModeling.TASK_ORIGINAL, add_dominated_transition=True
+    )
+    # solver.init_model_multimode()
     res = solver.solve(
         callbacks=[
             ObjectiveLogger(
@@ -33,7 +36,7 @@ def run_dp_rcpsp():
             )
         ],
         time_limit=30,
-        solver=dp.LNBS,
+        solver=dp.CABS,
         retrieve_intermediate_solutions=True,
         threads=10,
     )
@@ -126,5 +129,4 @@ def run_dp_mrcpsp():
 
 
 if __name__ == "__main__":
-    run_dp_rcpsp_calendar()
-    run_dp_rcpsp_ws()
+    run_dp_rcpsp()

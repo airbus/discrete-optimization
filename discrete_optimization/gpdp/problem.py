@@ -762,3 +762,90 @@ class ProxyClass:
             coordinates_2d=coordinates,
             compute_graph=compute_graph,
         )
+
+    @staticmethod
+    def from_tsptw_to_gpdp(
+        tsptw_problem: "TSPTWProblem", compute_graph: bool = False
+    ) -> GpdpProblem:
+        """
+        Converts a TSPTWProblem to a GpdpProblem instance.
+
+        This method maps the single-vehicle TSP-TW to the more general multi-vehicle
+        pickup and delivery framework by:
+        1. Creating distinct virtual origin and target nodes for the single vehicle,
+           both corresponding to the original depot.
+        2. Mapping customers and time windows to the new node structure.
+        3. Setting up the distance and time matrices based on the original problem.
+        """
+        # A TSP-TW is a single-vehicle problem
+        nb_vehicle = 1
+
+        # Node mapping: TSP-TW customers -> GPDP transportation nodes
+        # We create new virtual nodes for the vehicle's start and end points
+        # to fit the GPDP model, even though they both represent the same depot.
+
+        # Original customer nodes from TSP-TW
+        tsptw_customers = tsptw_problem.customers
+        nb_customers = len(tsptw_customers)
+
+        # GPDP nodes for transportation (customers)
+        gpdp_customer_nodes = list(range(nb_customers))
+
+        # Create virtual start/end nodes for the vehicle
+        gpdp_origin_node = nb_customers
+        gpdp_target_node = nb_customers + 1
+
+        # Map GPDP nodes back to original TSP-TW nodes
+        gpdp_to_tsptw_map = {
+            gpdp_customer_nodes[i]: tsptw_customers[i] for i in range(nb_customers)
+        }
+        gpdp_to_tsptw_map[gpdp_origin_node] = tsptw_problem.depot_node
+        gpdp_to_tsptw_map[gpdp_target_node] = tsptw_problem.depot_node
+
+        all_gpdp_nodes = gpdp_customer_nodes + [gpdp_origin_node, gpdp_target_node]
+
+        # Build distance and time matrices for GPDP nodes
+        distance_delta: dict[Node, dict[Node, float]] = {n: {} for n in all_gpdp_nodes}
+        time_delta: dict[Node, dict[Node, float]] = {n: {} for n in all_gpdp_nodes}
+
+        for u in all_gpdp_nodes:
+            for v in all_gpdp_nodes:
+                if u == v:
+                    continue
+                original_u = gpdp_to_tsptw_map[u]
+                original_v = gpdp_to_tsptw_map[v]
+                dist = tsptw_problem.distance_matrix[original_u, original_v]
+                distance_delta[u][v] = dist
+                time_delta[u][
+                    v
+                ] = dist  # In TSP-TW, the matrix value is effectively the travel time
+
+        # Map time windows to GPDP nodes
+        time_windows_nodes = {
+            gpdp_node: tsptw_problem.time_windows[original_node]
+            for gpdp_node, original_node in gpdp_to_tsptw_map.items()
+        }
+
+        # TSP-TW has no explicit resources, capacities, or pickup/delivery pairs
+        empty_resources = set()
+        empty_capacities = {0: {}}
+        empty_flow = {}
+        empty_pickup_delivery = []
+
+        return GpdpProblem(
+            number_vehicle=nb_vehicle,
+            nodes_transportation=set(gpdp_customer_nodes),
+            nodes_origin={gpdp_origin_node},
+            nodes_target={gpdp_target_node},
+            origin_vehicle={0: gpdp_origin_node},
+            target_vehicle={0: gpdp_target_node},
+            list_pickup_deliverable=empty_pickup_delivery,
+            resources_set=empty_resources,
+            capacities=empty_capacities,
+            resources_flow_node=empty_flow,
+            resources_flow_edges=empty_flow,
+            distance_delta=distance_delta,
+            time_delta=time_delta,
+            time_windows_nodes=time_windows_nodes,
+            compute_graph=compute_graph,
+        )

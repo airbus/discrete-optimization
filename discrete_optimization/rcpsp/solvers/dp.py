@@ -64,6 +64,12 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
             default=DpRcpspModeling.TASK_MULTIMODE,
         ),
         CategoricalHyperparameter(
+            "add_dominated_transition",
+            choices=[True, False],
+            default=False,
+            depends_on=[("modeling", DpRcpspModeling.TASK_ORIGINAL)],
+        ),
+        CategoricalHyperparameter(
             name="dual_bound", choices=[True, False], default=False
         ),
     ]
@@ -175,7 +181,6 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                 )
                 model.add_transition(transition)
                 self.transitions[("sched", i, 1, time)] = transition
-        model.add_dual_bound(consumption_table[unscheduled, 0])
         self.model = model
 
     def init_model_task(self, **kwargs: Any) -> None:
@@ -218,6 +223,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
         for j in range(nb_resource):
             model.add_state_constr(current_resource_consumption[j] <= capacities[j])
         self.transitions = {}
+        self.transitions_id = {}
         for i in range(self.problem.n_jobs):
             n_z = [
                 (j, consumption[i][j])
@@ -253,8 +259,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                         for j, cons in n_z
                     ],
                 )
-                model.add_transition(start_task)
+                id_t = model.add_transition(start_task)
                 self.transitions[("start", i, 1)] = start_task
+                self.transitions_id[("start", i, 1)] = id_t
             else:
                 start_dummy_task = dp.Transition(
                     name=f"start_{i}",
@@ -271,8 +278,10 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                     ]
                     + [current_time >= starts[p] + durs[p] for p in prec_[i]],
                 )
-                model.add_transition(start_dummy_task, forced=True)
+                id_t = model.add_transition(start_dummy_task, forced=True)
                 self.transitions[("start", i, 1)] = start_dummy_task
+                self.transitions_id[("start", i, 1)] = id_t
+
             if dur > 0:
                 ending_task = dp.Transition(
                     name=f"end_{i}",
@@ -297,13 +306,24 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                         starts[i] + durs[i] >= current_time,
                     ],
                 )
-                model.add_transition(ending_task)
+                id_t = model.add_transition(ending_task)
                 self.transitions[("end", i, 1)] = ending_task
-        # remaining = model.add_int_table([self.remaining_per_task[t] for t in self.problem.tasks_list])
-        # model.add_dual_bound((~unscheduled.is_empty()).if_then_else(remaining.max(unscheduled), 0))
-        # model.add_dual_bound(((unscheduled.len() < 20) & ~unscheduled.is_empty())
-        #                      .if_then_else(remaining.max(unscheduled), 0))
-
+                self.transitions_id[("end", i, 1)] = id_t
+        if kwargs["add_dominated_transition"]:
+            for i in range(self.problem.n_jobs):
+                for j in range(self.problem.n_jobs):
+                    if i == j:
+                        continue
+                    if durs[i] == 0 or durs[j] == 0:
+                        continue
+                    cond1 = ongoing.contains(i)
+                    cond2 = ongoing.contains(j)
+                    cond3 = starts[i] + durs[i] <= starts[j] + durs[j]
+                    model.add_transition_dominance(
+                        self.transitions_id[("end", i, 1)],
+                        self.transitions_id[("end", j, 1)],
+                        [cond1, cond2, cond3],
+                    )
         self.starts = starts
         self.model = model
 

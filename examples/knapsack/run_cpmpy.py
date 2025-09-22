@@ -11,14 +11,18 @@ from discrete_optimization.knapsack.solvers.cpmpy import CpmpyKnapsackSolver
 
 
 def run():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     file = [f for f in get_data_available() if "ks_60_0" in f][0]
     knapsack_problem = parse_file(file)
     a = SolverLookup.base_solvers()
     print(SolverLookup.base_solvers())
-    solver = CpmpyKnapsackSolver(problem=knapsack_problem, solver_name="ortools")
+    solver = CpmpyKnapsackSolver(problem=knapsack_problem, solver_name="exact")
     solver.init_model()
-    res = solver.solve(time_limit=20)
+    from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
+
+    res = solver.solve(
+        time_limit=20, verbose=True, parameters_cp=ParametersCp.default_cpsat()
+    )
     sol = res.get_best_solution()
     print(knapsack_problem.satisfy(sol))
     print(knapsack_problem.max_capacity)

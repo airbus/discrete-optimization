@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from collections import defaultdict
 from copy import deepcopy
+from dataclasses import field
 
 from discrete_optimization.generic_tools.do_problem import *
 
@@ -23,8 +24,8 @@ class BinPackSolution(Solution):
 
 @dataclass(frozen=True)
 class ItemBinPack:
-    index: int
-    weight: float
+    index: int = field(init=True)
+    weight: float = field(init=True)
 
     def __str__(self) -> str:
         return "ind: " + str(self.index) + " weight: " + str(self.weight)

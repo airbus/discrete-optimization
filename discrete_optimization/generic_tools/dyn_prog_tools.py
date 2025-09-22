@@ -109,7 +109,10 @@ class DpSolver(SolverDO):
             kwargs["initial_solution"] = self.initial_solution
         if "quiet" not in kwargs:
             kwargs["quiet"] = False
-        solver_cls = kwargs["solver"]
+        if isinstance(kwargs["solver"], str):
+            solver_cls = solvers.get(kwargs["solver"], None)
+        else:
+            solver_cls = kwargs["solver"]
         try:
             solver_allowed_params = inspect.signature(solver_cls).parameters
             kwargs_solver = {
@@ -135,6 +138,7 @@ class DpSolver(SolverDO):
             while True:
                 solution, terminated = solver.search_next()
                 logger.info(f"Objective = {solution.cost}, {solution.is_infeasible}")
+                logger.info(f"Bound = {solution.best_bound}")
                 stopping = did_callback.on_solution_callback(solution)
                 if terminated or stopping:
                     break

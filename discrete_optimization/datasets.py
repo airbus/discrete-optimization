@@ -9,6 +9,7 @@ import glob
 import gzip
 import os
 import shutil
+import tarfile
 import tempfile
 import zipfile
 from typing import Optional
@@ -16,6 +17,8 @@ from urllib.request import urlcleanup, urlretrieve
 
 DO_DEFAULT_DATAHOME = "~/discrete_optimization_data"
 DO_DEFAULT_DATAHOME_ENVVARNAME = "DISCRETE_OPTIMIZATION_DATA"
+
+OR_LIBRARY_ROOT_URL = "https://people.brunel.ac.uk/~mastjjb/jeb/orlib/files/"
 
 COURSERA_REPO_URL = "https://github.com/discreteoptimization/assignment"
 COURSERA_REPO_URL_SHA1 = "f69378420ce2bb845abaef0f448eab303aa7a7e7"
@@ -480,6 +483,50 @@ def fetch_data_from_cp25(data_home: Optional[str] = None):
         urlcleanup()
 
 
+def fetch_data_weighted_tardiness_single_machine(data_home: Optional[str] = None):
+    data_home = get_data_home(data_home=data_home)
+    folder = os.path.join(data_home, "wt/")
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    for file in ["wt40", "wt50", "wt100"]:
+        try:
+            urlretrieve(
+                url=OR_LIBRARY_ROOT_URL + file + ".txt",
+                filename=os.path.join(folder, file + ".txt"),
+            )
+        except Exception as e:
+            print(e)
+        finally:
+            urlcleanup()
+
+
+def fetch_data_tsptw(data_home: Optional[str] = None):
+    data_home = get_data_home(data_home=data_home)
+    tsp_tw_folder = os.path.join(data_home, "tsptw")
+    if not os.path.exists(tsp_tw_folder):
+        os.makedirs(tsp_tw_folder)
+    urls = [
+        "SolomonPotvinBengio.tar.gz",
+        "Langevin.tar.gz",
+        "Dumas.tar.gz",
+        "GendreauDumasExtended.tar.gz",
+        "OhlmannThomas.tar.gz",
+        "AFG.tar.gz",
+        "SolomonPesant.tar.gz",
+    ]
+    base_url = "https://lopez-ibanez.eu/files/TSPTW/"
+    try:
+        for url in urls:
+            # base_name = url.removesuffix(".tar.gz")
+            file_name = os.path.join(tsp_tw_folder, url)
+            urlretrieve(base_url + url, filename=file_name)
+            with tarfile.open(file_name, "r:gz") as tar:
+                tar.extractall(path=tsp_tw_folder)
+            os.remove(file_name)
+    finally:
+        urlcleanup()
+
+
 def fetch_all_datasets(data_home: Optional[str] = None):
     """Fetch data used by examples for all packages.
 
@@ -498,6 +545,8 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_bppc(data_home=data_home)
     fetch_data_fjsp(data_home=data_home)
     fetch_data_from_cp25(data_home=data_home)
+    fetch_data_weighted_tardiness_single_machine(data_home=data_home)
+    fetch_data_tsptw(data_home=data_home)
 
 
 if __name__ == "__main__":
