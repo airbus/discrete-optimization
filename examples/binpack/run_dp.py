@@ -23,6 +23,7 @@ logging.basicConfig(level=logging.INFO)
 def run_dp():
     f = [ff for ff in get_data_available_bppc() if "BPPC_2_2_1.txt" in ff][0]
     problem = parse_bin_packing_constraint_file(f)
+    problem.has_constraint = False
     solver = DpBinPackSolver(problem=problem)
     solver.init_model(
         upper_bound=min(500, problem.nb_items),

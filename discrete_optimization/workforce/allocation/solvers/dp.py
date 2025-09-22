@@ -126,10 +126,14 @@ class DpAllocationSolver(DpSolver, TeamAllocationSolver, WarmstartMixin):
             preconditions=[current_task == self.problem.number_of_activity],
         )
         transitions_dict["finish"] = finish_transition
-        # from discrete_optimization.workforce.allocation.utils import compute_all_overlapping
-        # overlaps = compute_all_overlapping(self.problem)
-        # model.add_dual_bound(max([len(x) for x in overlaps])-sum(used_team))
+        from discrete_optimization.workforce.allocation.utils import (
+            compute_all_overlapping,
+        )
+
+        overlaps = compute_all_overlapping(self.problem)
+        model.add_dual_bound(max([len(x) for x in overlaps]) - sum(used_team))
         model.add_transition(finish_transition)
+        model.add_dual_bound(0)
         self.model = model
         self.transitions = transitions_dict
 

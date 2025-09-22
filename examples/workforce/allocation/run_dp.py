@@ -21,10 +21,10 @@ def run_dp():
     solver = DpAllocationSolver(allocation_problem)
     solver.init_model(force_allocation_when_possible=False, symmbreak_on_used=False)
     sol = solver.solve(
-        solver=dp.CABS, time_limit=10, threads=5, retrieve_intermediate_solutions=True
+        solver=dp.LNBS, time_limit=10, threads=5, retrieve_intermediate_solutions=True
     ).get_best_solution()
-    plot_allocation_solution(problem=allocation_problem, sol=sol)
-    plt.show()
+    # plot_allocation_solution(problem=allocation_problem, sol=sol)
+    # plt.show()
 
 
 if __name__ == "__main__":

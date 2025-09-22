@@ -78,4 +78,4 @@ def run_lexico():
 
 
 if __name__ == "__main__":
-    run_lexico()
+    run_cpsat()
