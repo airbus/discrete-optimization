@@ -1,0 +1,29 @@
+{
+  "name": "optalcp-benchmarks",
+  "description": "Various benchmarks for Optal CP solver",
+  "private": true,
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ScheduleOpt/optalcp-benchmarks.git"
+  },
+  "keywords": [
+    "optalcp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ScheduleOpt/optalcp-benchmarks/issues"
+  },
+  "homepage": "https://github.com/ScheduleOpt/optalcp-benchmarks#readme",
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^22.7.9",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@scheduleopt/optalcp-bin-academic": "github:scheduleopt/optalcp-js-bin-academic#v2025.8.0",
+    "chalk": "^5.3.0",
+    "csv-parse": "^5.5.6"
+  }
+}
