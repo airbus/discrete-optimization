@@ -87,6 +87,9 @@ class OptalSolver(CpSolver):
         self._script_model: str = None
         self._is_init: bool = False
 
+    def init_model(self, **args: Any) -> None:
+        self._is_init = True
+
     def build_command(
         self,
         parameters_cp: Optional[ParametersCp] = None,
@@ -133,7 +136,6 @@ class OptalSolver(CpSolver):
             dict_ = json.load(open(self._result_path, "r"))
             sol = self.retrieve_current_solution(dict_results=dict_)
             fit = self.aggreg_from_sol(sol)
-            # self._stats = json.load(open(self._logs_path, "r"))
             self._stats = dict_
             if (
                 self._stats["lowerBoundHistory"][-1]["value"]
@@ -144,19 +146,31 @@ class OptalSolver(CpSolver):
                 self.status_solver = StatusSolver.SATISFIED
             res = self.create_result_storage(list_solution_fits=[(sol, fit)])
             cb_list.on_solve_end(res=res, solver=self)
+            # Clean results file
+            if os.path.exists(self._logs_path):
+                os.remove(self._logs_path)
+            if os.path.exists(self._result_path):
+                os.remove(self._result_path)
+            if os.path.exists(self._file_input):
+                os.remove(self._file_input)
             return res
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             logger.error(
                 f"Error: The command 'node' or script '{self._script_model}' was not found."
             )
+            logger.error(f"Error: The command {str_command} failed")
             logger.error(
                 "Please ensure Node.js is installed and the path to your script is correct."
             )
+            # if os.path.exists(self._file_input):
+            #    os.remove(self._file_input)
             return None
         except subprocess.CalledProcessError as e:
             logger.error(f"Error: Command failed with exit code {e.returncode}")
             logger.error(f"STDOUT: {e.stdout}")
             logger.error(f"STDERR: {e.stderr}")
+            if os.path.exists(self._file_input):
+                os.remove(self._file_input)
             return None
 
     def get_output_stats(self):
