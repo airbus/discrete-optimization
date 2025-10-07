@@ -243,7 +243,8 @@ class CpSatRcpspSolver(OrtoolsCpSatSolver, RcpspSolver, WarmstartMixin):
         include_special_constraints = kwargs.get(
             "include_special_constraints", self.problem.includes_special_constraint()
         )
-        model = CpModel()
+        super().init_model(**kwargs)
+        model = self.cp_model
         (
             starts_var,
             ends_var,
@@ -411,7 +412,8 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
         )
         weight_on_makespan = kwargs.get("weight_on_makespan", 1)
         weight_on_used_resource = kwargs.get("weight_on_used_resource", 10000)
-        model = CpModel()
+        super().init_model(**kwargs)
+        model = self.cp_model
         (
             starts_var,
             ends_var,
@@ -452,7 +454,6 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
             * sum([is_used_resource[x] for x in is_used_resource])
             + weight_on_makespan * starts_var[self.problem.sink_task]
         )
-        self.cp_model = model
         self.variables = {
             "start": starts_var,
             "end": ends_var,
@@ -636,7 +637,8 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
         use_overlap_for_disjunctive_resource = kwargs.get(
             "use_overlap_for_disjunctive_resource", True
         )
-        model = CpModel()
+        super().init_model(**kwargs)
+        model = self.cp_model
         (
             starts_var,
             ends_var,
@@ -680,7 +682,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             * sum([resource_capacity_var[x] for x in resource_capacity_var])
             + weight_on_makespan * starts_var[self.problem.sink_task]
         )
-        self.cp_model = model
         self.variables = {
             "start": starts_var,
             "end": ends_var,

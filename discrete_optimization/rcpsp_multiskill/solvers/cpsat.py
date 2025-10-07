@@ -8,7 +8,6 @@ from typing import Any, Iterable
 import numpy as np
 from ortools.sat.python.cp_model import (
     Constraint,
-    CpModel,
     CpSolverSolutionCallback,
     Domain,
     LinearExpr,
@@ -71,7 +70,7 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
         one_skill_per_task = args.get("one_skill_per_task", False)
         redundant_skill_cumulative = args["redundant_skill_cumulative"]
         redundant_worker_cumulative = args["redundant_worker_cumulative"]
-        self.cp_model = CpModel()
+        super().init_model(**args)
         self.variables = {}
         self.create_base_variable()
         self.create_opt_variable_modes()

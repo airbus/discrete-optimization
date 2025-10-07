@@ -7,7 +7,6 @@ from typing import Any, Optional
 
 from ortools.sat.python.cp_model import (
     Constraint,
-    CpModel,
     CpSolverSolutionCallback,
     IntVar,
     LinearExpr,
@@ -40,12 +39,12 @@ class CpSatKnapsackSolver(OrtoolsCpSatSolver, KnapsackSolver, WarmstartMixin):
 
     def init_model(self, **args: Any) -> None:
         """Init CP model."""
-        model = CpModel()
+        super().init_model(**args)
+        model = self.cp_model
         variables = [
             model.NewBoolVar(name=f"x_{i}") for i in range(self.problem.nb_items)
         ]
         self.variables["taken"] = variables
-        self.cp_model = model
 
         model.Add(-self._internal_weight() <= self.problem.max_capacity)
 

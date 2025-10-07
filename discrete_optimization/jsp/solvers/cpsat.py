@@ -23,7 +23,7 @@ class CpSatJspSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self.variables = {}
 
     def init_model(self, **args: Any) -> None:
-        self.cp_model = CpModel()
+        super().init_model(**args)
         # dummy value, todo : compute a better bound
         max_time = args.get(
             "max_time",
