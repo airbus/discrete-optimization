@@ -168,6 +168,10 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
             var = self.cp_model.GetIntVarFromProtoIndex(i)
             self.cp_model.AddHint(var, response.solution[i])
 
+    def init_model(self, **kwargs: Any) -> None:
+        """Init cp model and reset stored variables if any."""
+        self.cp_model = CpModel()
+
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):
     def __init__(

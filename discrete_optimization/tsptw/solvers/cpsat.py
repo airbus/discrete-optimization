@@ -4,7 +4,7 @@
 import logging
 from typing import Any, Dict, Optional
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback
+from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -45,7 +45,7 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self, scaling_factor: float = 10.0, relaxed: bool = False, **kwargs: Any
     ) -> None:
         """Initialise the CP-SAT model."""
-        self.cp_model = CpModel()
+        super().init_model(**kwargs)
         n = self.problem.nb_nodes
         depot = self.problem.depot_node
         if relaxed:

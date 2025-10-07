@@ -4,7 +4,7 @@
 from enum import Enum
 from typing import Any, Optional, Union
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, IntVar
+from ortools.sat.python.cp_model import CpSolverSolutionCallback, IntVar
 
 from discrete_optimization.coloring.problem import ColoringSolution
 from discrete_optimization.coloring.solvers.starting_solution import (
@@ -94,7 +94,8 @@ class CpSatColoringSolver(
             return ColoringSolution(problem=self.problem, colors=colors)
 
     def init_model_binary(self, nb_colors: int, **kwargs):
-        cp_model = CpModel()
+        super().init_model(**kwargs)
+        cp_model = self.cp_model
         allocation_binary = [
             {
                 j: cp_model.NewBoolVar(name=f"allocation_{i}_{j}")
@@ -133,7 +134,6 @@ class CpSatColoringSolver(
             for j in allocation_binary[i]:
                 cp_model.Add(used[j] >= allocation_binary[i][j])
         cp_model.Minimize(sum(used))
-        self.cp_model = cp_model
         self.variables["colors"] = allocation_binary
         self.variables["used"] = used
 
@@ -141,7 +141,8 @@ class CpSatColoringSolver(
         used_variable = kwargs["used_variable"]
         value_sequence_chain = kwargs["value_sequence_chain"]
         symmetry_on_used = kwargs["symmetry_on_used"]
-        cp_model = CpModel()
+        super().init_model(**kwargs)
+        cp_model = self.cp_model
         variables = [
             cp_model.NewIntVar(0, nb_colors - 1, name=f"c_{i}")
             for i in range(self.problem.number_of_nodes)
@@ -198,7 +199,6 @@ class CpSatColoringSolver(
                 nbc, [variables[i] for i in self.problem.index_subset_nodes]
             )
             cp_model.Minimize(nbc)
-        self.cp_model = cp_model
         self.variables["colors"] = variables
         self.variables["used"] = used
 

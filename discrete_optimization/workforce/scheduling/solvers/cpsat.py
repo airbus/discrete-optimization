@@ -8,7 +8,6 @@ from functools import reduce
 from typing import Any, Optional, Union
 
 import numpy as np
-from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpSolver, CpSolverSolutionCallback, IntVar
 
 from discrete_optimization.generic_tools.callbacks.callback import (
@@ -255,7 +254,7 @@ class CPSatAllocSchedulingSolver(
         add_lower_bound = args["add_lower_bound"]
         optional_activities = args["optional_activities"]
         adding_redundant_cumulative = args["adding_redundant_cumulative"]
-        self.cp_model = cp_model.CpModel()
+        super().init_model(**args)
         starts_var = {}
         ends_var = {}
         is_present_var = {}

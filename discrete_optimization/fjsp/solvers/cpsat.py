@@ -5,7 +5,7 @@
 import logging
 from typing import Any
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, Domain
+from ortools.sat.python.cp_model import CpSolverSolutionCallback, Domain
 
 from discrete_optimization.fjsp.problem import FJobShopProblem, FJobShopSolution
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -35,7 +35,7 @@ class CpSatFjspSolver(OrtoolsCpSatSolver, WarmstartMixin):
 
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
-        self.cp_model = CpModel()
+        super().init_model(**args)
         self.create_vars(**args)
         self.create_precedence_constraints()
         self.create_is_present_constraints()

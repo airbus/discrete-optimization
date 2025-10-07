@@ -249,7 +249,7 @@ class CpsatTeamAllocationSolver(
             )
 
     def init_model_integer(self, **kwargs):
-        self.cp_model = cp_model.CpModel()
+        super().init_model(**kwargs)
         include_pair_overlap = kwargs["include_pair_overlap"]
         overlapping_advanced = kwargs["overlapping_advanced"]
         symmbreak_on_used = kwargs["symmbreak_on_used"]
@@ -326,7 +326,7 @@ class CpsatTeamAllocationSolver(
         self.cp_model.Minimize(self.variables["objs"]["nb_teams"])
 
     def init_model_binary(self, **kwargs):
-        self.cp_model = cp_model.CpModel()
+        super().init_model(**kwargs)
         optional_activities = kwargs["optional_activities"]
         include_pair_overlap = kwargs["include_pair_overlap"]
         overlapping_advanced = kwargs["overlapping_advanced"]

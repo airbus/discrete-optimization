@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, LinearExpr
+from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExpr
 
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -28,7 +28,7 @@ class CpsatWTSolver(OrtoolsCpSatSolver, WarmstartMixin):
 
     def init_model(self, **args: Any) -> None:
         self.variables = {"starts": [], "intervals": [], "lateness": []}
-        self.cp_model = CpModel()
+        super().init_model(**args)
         max_time = sum(self.problem.processing_times)
         for i in range(self.problem.num_jobs):
             start = self.cp_model.NewIntVar(lb=0, ub=max_time, name=f"start_{i}")

@@ -4,7 +4,7 @@
 import logging
 from typing import Any, Optional
 
-from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback
+from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -177,7 +177,8 @@ class CpSatVrpSolver(OrtoolsCpSatSolver, VrpSolver, WarmstartMixin):
 
     def init_model(self, **args: Any) -> None:
         args = self.complete_with_default_hyperparameters(args)
-        model = CpModel()
+        super().init_model(**args)
+        model = self.cp_model
         """Entry point of the program."""
         num_nodes = self.problem.customer_count
         all_nodes = range(num_nodes)
@@ -269,7 +270,6 @@ class CpSatVrpSolver(OrtoolsCpSatSolver, VrpSolver, WarmstartMixin):
         self.variables["arc_literals_per_vehicles"] = arc_literals_per_vehicles
         self.variables["ingoing_arc_per_node"] = ingoing_arc_per_node
         self.variables["visited"] = visited_per_vehicle
-        self.cp_model = model
         self.variables["optional_node"] = args["optional_node"]
         if args["optional_node"]:
             self.variables["nb_nodes"] = sum(
