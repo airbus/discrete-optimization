@@ -21,7 +21,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import (
+    CpSolver,
+    ParametersCp,
+    SignEnum,
+)
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import (
     BoundsProviderMixin,
@@ -171,6 +175,25 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
     def init_model(self, **kwargs: Any) -> None:
         """Init cp model and reset stored variables if any."""
         self.cp_model = CpModel()
+
+    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
+        if sign == SignEnum.LEQ:
+            cstr_tmp = var <= value
+        elif sign == SignEnum.UEQ:
+            cstr_tmp = var >= value
+        elif sign == SignEnum.EQUAL:
+            cstr_tmp = var == value
+        elif sign == SignEnum.LESS:
+            cstr_tmp = var < value
+        elif sign == SignEnum.UP:
+            cstr_tmp = var > value
+        else:
+            raise NotImplementedError(sign)
+        cstr = self.cp_model.add(cstr_tmp)
+        return [cstr]
+
+    def minimize_variable(self, var: Any) -> None:
+        self.cp_model.minimize(var)
 
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):
