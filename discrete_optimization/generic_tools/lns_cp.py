@@ -153,8 +153,24 @@ class OrtoolsCpSatConstraintHandler(ConstraintHandler):
 
     @abstractmethod
     def adding_constraint_from_results_store(
-        self, solver: OrtoolsCpSatSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: OrtoolsCpSatSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         ...
 
 
@@ -163,11 +179,24 @@ class MznConstraintHandler(ConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: MinizincCpSolver,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
         ...
 
 

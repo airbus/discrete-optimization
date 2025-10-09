@@ -180,7 +180,9 @@ def run_constraint_handler():
         problem=mis_model, fraction_to_fix=1.0
     )
     constraints = constraint_handler.adding_constraint_from_results_store(
-        solver=solver, result_storage=res
+        solver=solver,
+        result_storage=res,
+        result_storage_last_iteration=res,
     )
 
     # solve => should take forced node

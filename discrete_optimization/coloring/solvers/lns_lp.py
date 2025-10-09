@@ -100,8 +100,21 @@ class _BaseFixColorsConstraintHandler(ConstraintHandler):
         self,
         solver: Union[GurobiColoringSolver, MathOptColoringSolver],
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         subpart_color = set(
             random.sample(
                 solver.nodes_name,
@@ -109,7 +122,10 @@ class _BaseFixColorsConstraintHandler(ConstraintHandler):
             )
         )
         dict_color_fixed = {}
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -149,7 +165,7 @@ class _BaseFixColorsConstraintHandler(ConstraintHandler):
 
 
 class FixColorsGurobiConstraintHandler(
-    GurobiConstraintHandler, _BaseFixColorsConstraintHandler
+    _BaseFixColorsConstraintHandler, GurobiConstraintHandler
 ):
     """Constraint builder used in LNS+LP (using gurobi solver) for coloring problem.
 
@@ -161,19 +177,37 @@ class FixColorsGurobiConstraintHandler(
     """
 
     def adding_constraint_from_results_store(
-        self, solver: GurobiColoringSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: GurobiColoringSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
-        constraints = (
-            _BaseFixColorsConstraintHandler.adding_constraint_from_results_store(
-                self, solver=solver, result_storage=result_storage, **kwargs
-            )
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        constraints = super().adding_constraint_from_results_store(
+            solver=solver,
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+            **kwargs
         )
         solver.model.update()
         return constraints
 
 
 class FixColorsMathOptConstraintHandler(
-    OrtoolsMathOptConstraintHandler, _BaseFixColorsConstraintHandler
+    _BaseFixColorsConstraintHandler,
+    OrtoolsMathOptConstraintHandler,
 ):
     """Constraint builder used in LNS+LP (using mathopt solver) for coloring problem.
 
@@ -184,15 +218,4 @@ class FixColorsMathOptConstraintHandler(
         fraction_to_fix (float): float between 0 and 1, representing the proportion of nodes to constrain.
     """
 
-    def adding_constraint_from_results_store(
-        self,
-        solver: MathOptColoringSolver,
-        result_storage: ResultStorage,
-        **kwargs: Any
-    ) -> Iterable[Any]:
-        constraints = (
-            _BaseFixColorsConstraintHandler.adding_constraint_from_results_store(
-                self, solver=solver, result_storage=result_storage, **kwargs
-            )
-        )
-        return constraints
+    ...

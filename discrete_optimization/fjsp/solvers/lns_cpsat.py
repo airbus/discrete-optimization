@@ -60,10 +60,28 @@ class FjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         self.fraction_segment_to_fix = fraction_segment_to_fix
 
     def adding_constraint_from_results_store(
-        self, solver: CpSatFjspSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: CpSatFjspSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Constraint]:
-        sol, _ = result_storage.get_best_solution_fit()
-        sol: FJobShopSolution
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: FJobShopSolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         keys = random.sample(
             list(solver.variables["starts"]),
             k=int(self.fraction_segment_to_fix * len(solver.variables["starts"])),
@@ -92,8 +110,24 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         self.neighbor_builder = neighbor_builder
 
     def adding_constraint_from_results_store(
-        self, solver: CpSatFjspSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: CpSatFjspSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         sol, _ = result_storage[-1]
         sol: FJobShopSolution
         makespan = self.problem.evaluate(sol)["makespan"]

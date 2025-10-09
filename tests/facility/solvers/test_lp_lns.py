@@ -113,7 +113,9 @@ def test_facility_constraint_handler(solver_cls, constraint_handler_cls):
     solution = greedy_solver.solve().get_best_solution()
     dummy_result_storage = solver.create_result_storage([(solution, 0.0)])
     constraints = constraint_handler.adding_constraint_from_results_store(
-        solver=solver, result_storage=dummy_result_storage
+        solver=solver,
+        result_storage=dummy_result_storage,
+        result_storage_last_iteration=dummy_result_storage,
     )
     assert len(constraints) > 0
 

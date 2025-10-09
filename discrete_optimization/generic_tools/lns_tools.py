@@ -43,9 +43,52 @@ logger = logging.getLogger(__name__)
 class ConstraintHandler(Hyperparametrizable):
     @abstractmethod
     def adding_constraint_from_results_store(
-        self, solver: SolverDO, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: SolverDO,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         ...
+
+    def extract_best_solution_from_last_iteration(
+        self,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
+    ) -> Optional[Solution]:
+        """Extract the best solution from last LNS iteration
+
+        If `result_storage_last_iteration` is empty, take the best solution of the whole result storage.
+
+        Args:
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            Best solution from result_storage_last_iteration if not empty,
+            else best solution from result_storage_last_iteration if not empty,
+            else None
+
+        """
+        if len(result_storage_last_iteration) > 0:
+            sol, _ = result_storage_last_iteration.get_last_best_solution()
+        else:
+            sol, _ = result_storage.get_last_best_solution()
+        return sol
 
 
 class InitialSolution(Hyperparametrizable):
@@ -317,11 +360,14 @@ class BaseLns(SolverDO, WarmstartMixin):
 
         self.init_model(**kwargs)
 
+        store_lns: ResultStorage  # all solutions from start
+        store_last_iteration: ResultStorage  # solutions from last iteration
+
         if skip_initial_solution_provider:
             best_objective = (
                 float("inf") if sense == ModeOptim.MINIMIZATION else -float("inf")
             )
-            store_lns = None
+            store_lns = self.create_result_storage()
             stopping = False
         else:
             if self.initial_solution_provider is None:
@@ -350,7 +396,7 @@ class BaseLns(SolverDO, WarmstartMixin):
             # end of step callback: stopping?
             stopping = callbacks_list.on_step_end(step=0, res=store_lns, solver=self)
 
-        result_store: ResultStorage
+        store_last_iteration = store_lns
         lns_contraints: Optional[Iterable[Any]] = None
         if not stopping:
             # time_limit subsolver warning (only once)
@@ -374,9 +420,7 @@ class BaseLns(SolverDO, WarmstartMixin):
                             solver=self.subsolver,
                             child_instance=child,
                             result_storage=store_lns,
-                            last_result_store=store_lns
-                            if iteration == 0
-                            else result_store,
+                            result_storage_last_iteration=store_last_iteration,
                         )
                     try:
                         if (
@@ -388,15 +432,15 @@ class BaseLns(SolverDO, WarmstartMixin):
                         else:
                             kwargs_subsolver["time_limit"] = time_limit_subsolver
 
-                        result_store = self.subsolver.solve(
+                        store_last_iteration = self.subsolver.solve(
                             instance=child, **kwargs_subsolver
                         )
                         logger.info(f"iteration n° {iteration} Solved !!!")
                         if hasattr(self.subsolver, "status_solver"):
                             logger.info(self.subsolver.status_solver)
-                        if len(result_store) > 0:
+                        if len(store_last_iteration) > 0:
                             logger.debug("Solved !!!")
-                            bsol, fit = result_store.get_best_solution_fit()
+                            bsol, fit = store_last_iteration.get_best_solution_fit()
                             logger.debug(f"Fitness Before = {fit}")
                             if bsol is not None:
                                 logger.debug(
@@ -405,12 +449,12 @@ class BaseLns(SolverDO, WarmstartMixin):
                             else:
                                 logger.debug(f"Satisfaction Before = {False}")
                             logger.debug("Post Process..")
-                            result_store = (
+                            store_last_iteration = (
                                 self.post_process_solution.build_other_solution(
-                                    result_store
+                                    store_last_iteration
                                 )
                             )
-                            bsol, fit = result_store.get_best_solution_fit()
+                            bsol, fit = store_last_iteration.get_best_solution_fit()
                             if bsol is not None:
                                 logger.debug(
                                     f"Satisfaction After = {self.problem.satisfy(bsol)}"
@@ -439,11 +483,8 @@ class BaseLns(SolverDO, WarmstartMixin):
                                 best_objective = fit
                             elif sense == ModeOptim.MINIMIZATION:
                                 current_nb_iteration_no_improvement += 1
-                            if skip_initial_solution_provider and iteration == 0:
-                                store_lns = result_store
-                            else:
-                                for s, f in list(result_store):
-                                    store_lns.append((s, f))
+                            for s, f in list(store_last_iteration):
+                                store_lns.append((s, f))
                         else:
                             current_nb_iteration_no_improvement += 1
                         if (
@@ -536,8 +577,21 @@ class ConstraintHandlerMix(ConstraintHandler):
         self,
         solver: SolverDO,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Any]:
+        """Add constraints taken at random from one of the wrapped constraint handlers
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         new_fitness = result_storage.get_best_solution_fit()[1]
         if self.last_index_param is not None:
             if new_fitness != self.last_fitness:
@@ -585,6 +639,9 @@ class ConstraintHandlerMix(ConstraintHandler):
         self.status[self.last_index_param]["nb_usage"] += 1
         logger.debug(f"Status {self.status}")
         constraints = ch.adding_constraint_from_results_store(
-            solver=solver, result_storage=result_storage, **kwargs
+            solver=solver,
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+            **kwargs,
         )
         return constraints

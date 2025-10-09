@@ -108,15 +108,31 @@ class _BaseFacilityConstraintHandler(ConstraintHandler):
         self,
         solver: Union[GurobiFacilitySolver, MathOptFacilitySolver],
         result_storage: ResultStorage,
-        **kwargs: Any,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         subpart_customer = set(
             random.sample(
                 range(self.problem.customer_count),
                 int(self.fraction_to_fix * self.problem.customer_count),
             )
         )
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -154,7 +170,8 @@ class _BaseFacilityConstraintHandler(ConstraintHandler):
 
 
 class GurobiFacilityConstraintHandler(
-    GurobiConstraintHandler, _BaseFacilityConstraintHandler
+    _BaseFacilityConstraintHandler,
+    GurobiConstraintHandler,
 ):
     """Constraint builder used in LNS+LP for coloring problem with gurobi solver.
 
@@ -168,19 +185,36 @@ class GurobiFacilityConstraintHandler(
     """
 
     def adding_constraint_from_results_store(
-        self, solver: GurobiFacilitySolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: GurobiFacilitySolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
-        constraints = (
-            _BaseFacilityConstraintHandler.adding_constraint_from_results_store(
-                self, solver=solver, result_storage=result_storage, **kwargs
-            )
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        constraints = super().adding_constraint_from_results_store(
+            solver=solver,
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+            **kwargs
         )
         solver.model.update()
         return constraints
 
 
 class MathOptConstraintHandlerFacility(
-    OrtoolsMathOptConstraintHandler, _BaseFacilityConstraintHandler
+    _BaseFacilityConstraintHandler, OrtoolsMathOptConstraintHandler
 ):
     """Constraint builder used in LNS+LP for coloring problem with mathopt solver.
 
@@ -193,15 +227,4 @@ class MathOptConstraintHandlerFacility(
 
     """
 
-    def adding_constraint_from_results_store(
-        self,
-        solver: MathOptFacilitySolver,
-        result_storage: ResultStorage,
-        **kwargs: Any,
-    ) -> Iterable[Any]:
-        constraints = (
-            _BaseFacilityConstraintHandler.adding_constraint_from_results_store(
-                self, solver=solver, result_storage=result_storage, **kwargs
-            )
-        )
-        return constraints
+    ...

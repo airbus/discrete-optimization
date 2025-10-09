@@ -38,11 +38,24 @@ class KnapsackMznConstraintHandler(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: MinizincCpSolver,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
         if not isinstance(solver, Cp2KnapsackSolver):
             raise ValueError("cp_solver must a CPKnapsackMZN2 for this constraint.")
         subpart_item = set(
@@ -51,11 +64,10 @@ class KnapsackMznConstraintHandler(MznConstraintHandler):
                 int(self.fraction_to_fix * self.problem.nb_items),
             )
         )
-        current_solution = result_storage.get_best_solution()
-        if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if not isinstance(current_solution, KnapsackSolution):
             raise ValueError(
                 "result_storage.get_best_solution() " "should be a KnapsackSolution."
@@ -87,9 +99,21 @@ class OrtoolsCpSatKnapsackConstraintHandler(OrtoolsCpSatConstraintHandler):
         self,
         solver: OrtoolsCpSatSolver,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         if not isinstance(solver, CpSatKnapsackSolver):
             raise ValueError(
                 "cp_solver must a CpSatKnapsackSolver for this constraint."
@@ -101,7 +125,10 @@ class OrtoolsCpSatKnapsackConstraintHandler(OrtoolsCpSatConstraintHandler):
                 int(self.fraction_to_fix * self.problem.nb_items),
             )
         )
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."

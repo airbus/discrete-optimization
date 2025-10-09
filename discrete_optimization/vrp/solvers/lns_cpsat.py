@@ -21,10 +21,28 @@ class VrpConstraintHandler(OrtoolsCpSatConstraintHandler):
         self.fraction_segment_to_fix = fraction_segment_to_fix
 
     def adding_constraint_from_results_store(
-        self, solver: CpSatVrpSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: CpSatVrpSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Constraint]:
-        sol, _ = result_storage.get_best_solution_fit()
-        sol: VrpSolution
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: VrpSolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         constraints = []
         for v in range(len(sol.list_paths)):
             path = (
@@ -49,10 +67,28 @@ class SubpathVrpConstraintHandler(OrtoolsCpSatConstraintHandler):
         self.fraction_segment_to_fix = fraction_segment_to_fix
 
     def adding_constraint_from_results_store(
-        self, solver: CpSatVrpSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: CpSatVrpSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Constraint]:
-        sol, _ = result_storage.get_best_solution_fit()
-        sol: VrpSolution
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: VrpSolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         constraints = []
         for v in range(len(sol.list_paths)):
             path = (

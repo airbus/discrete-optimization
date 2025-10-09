@@ -80,15 +80,31 @@ class MathOptKnapsackConstraintHandler(OrtoolsMathOptConstraintHandler):
         self,
         solver: MathOptKnapsackSolver,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         subpart_item = set(
             random.sample(
                 range(self.problem.nb_items),
                 int(self.fraction_to_fix * self.problem.nb_items),
             )
         )
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."

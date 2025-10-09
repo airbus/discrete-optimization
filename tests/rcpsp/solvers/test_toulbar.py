@@ -87,7 +87,7 @@ def test_toulbar_rcpsp_lns():
     )
     res = solver_lns.solve(
         nb_iteration_lns=2,
-        time_limit_subsolver=5,
+        time_limit_subsolver=10,
         callbacks=[
             ObjectiveLogger(
                 step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
