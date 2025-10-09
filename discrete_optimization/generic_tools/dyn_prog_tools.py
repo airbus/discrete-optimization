@@ -139,12 +139,16 @@ class DpSolver(SolverDO):
                 solution, terminated = solver.search_next()
                 logger.info(f"Objective = {solution.cost}, {solution.is_infeasible}")
                 logger.info(f"Bound = {solution.best_bound}")
-                stopping = did_callback.on_solution_callback(solution)
+                if solution.cost is not None:
+                    stopping = did_callback.on_solution_callback(solution)
+                else:
+                    stopping = False
                 if terminated or stopping:
                     break
         else:
             solution = solver.search()
-            did_callback.on_solution_callback(solution)
+            if solution.cost is not None:
+                did_callback.on_solution_callback(solution)
         logger.info(f"Is optimal {solution.is_optimal}")
         logger.info(f"Is infeasible {solution.is_infeasible}")
         logger.info(f"Best bound {solution.best_bound}")
