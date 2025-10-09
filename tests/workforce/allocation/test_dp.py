@@ -1,4 +1,7 @@
+import random
+
 import didppy as dp
+import numpy as np
 import pytest
 
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
@@ -9,6 +12,14 @@ from discrete_optimization.workforce.allocation.parser import (
     parse_to_allocation_problem,
 )
 from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSolver
+
+
+@pytest.fixture
+def random_seed():
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    return seed
 
 
 @pytest.mark.parametrize(
@@ -24,14 +35,18 @@ from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSo
 )
 @pytest.mark.parametrize("solver_cls", [dp.CABS, dp.LNBS, dp.DDLNS])
 def test_dp_params(
-    solver_cls, multiobjective, symmbreak_on_used, force_allocation_when_possible
+    random_seed,
+    solver_cls,
+    multiobjective,
+    symmbreak_on_used,
+    force_allocation_when_possible,
 ):
     import logging
 
     from discrete_optimization.generic_tools.dyn_prog_tools import logger
 
     logger.setLevel(logging.DEBUG)
-    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
+    instance = [p for p in get_data_available() if "instance_0.json" in p][0]
     allocation_problem = parse_to_allocation_problem(
         instance, multiobjective=multiobjective
     )
@@ -39,6 +54,8 @@ def test_dp_params(
         symmbreak_on_used=symmbreak_on_used,
         force_allocation_when_possible=force_allocation_when_possible,
     )
+    if solver_cls in [dp.CABS, dp.DDLNS]:
+        kwargs["seed"] = random_seed
     solver = DpAllocationSolver(allocation_problem)
     solver.init_model(**kwargs)
     # check solve
