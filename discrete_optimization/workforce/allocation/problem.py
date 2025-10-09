@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from collections.abc import Hashable
@@ -14,6 +16,10 @@ import numpy as np
 from networkx import bipartite
 
 from discrete_optimization.coloring.problem import ColoringConstraints, ColoringProblem
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -28,6 +34,10 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.graph_api import Graph
 
 logger = logging.getLogger(__file__)
+
+
+Task = Hashable
+UnaryResource = Hashable
 
 
 def compute_available_teams_per_activities(
@@ -182,10 +192,12 @@ class GraphBipartite(Graph):
         return self.nodes_activity
 
 
-class TeamAllocationSolution(Solution):
+class TeamAllocationSolution(AllocationSolution[Task, UnaryResource]):
+    problem: TeamAllocationProblem
+
     def __init__(
         self,
-        problem: "TeamAllocationProblem",
+        problem: TeamAllocationProblem,
         allocation: list[Optional[int]],
         **kwargs,
     ):
@@ -205,6 +217,11 @@ class TeamAllocationSolution(Solution):
 
     def change_problem(self, new_problem: "Problem") -> None:
         self.problem = new_problem
+
+    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        i_task = self.problem.index_activities_name[task]
+        i_team = self.problem.index_teams_name[unary_resource]
+        return self.allocation[i_task] == i_team
 
 
 def build_graph_allocation_from_calendar_and_schedule(
@@ -269,17 +286,17 @@ def compute_graph_coloring(starts: np.ndarray, ends: np.ndarray, task_names: lis
     return from_networkx(graph_nx=graph_nx)
 
 
-class TeamAllocationProblem(Problem):
+class TeamAllocationProblem(AllocationProblem[Task, UnaryResource]):
     def __init__(
         self,
-        graph_activity: Graph = None,
-        graph_allocation: GraphBipartite = None,
+        graph_activity: Optional[Graph] = None,
+        graph_allocation: Optional[GraphBipartite] = None,
         allocation_additional_constraint: Optional[
             AllocationAdditionalConstraint
         ] = None,
-        schedule_activity: Optional[dict[Hashable, tuple[int, int]]] = None,
-        calendar_team: dict[Hashable, list[tuple[int, int]]] = None,
-        activities_name: list[Hashable] = None,
+        schedule_activity: Optional[dict[Task, tuple[int, int]]] = None,
+        calendar_team: Optional[dict[UnaryResource, list[tuple[int, int]]]] = None,
+        activities_name: Optional[list[Task]] = None,
     ):
         """
         :param graph_activity: graph representing coloring constraint among the activities
@@ -290,29 +307,45 @@ class TeamAllocationProblem(Problem):
         clique-overlap kind of constraint for some solver.
         :param calendar_team: calendar of the teams.
         """
-        self.graph_activity = graph_activity
-        self.graph_allocation = graph_allocation
-        if self.graph_activity is not None:
-            self.activities_name: list[Hashable] = self.graph_activity.nodes_name
-        if activities_name is not None:
+        if activities_name is None:
+            if graph_activity is None:
+                raise ValueError(
+                    "activities_name and graph_activity cannot be both None."
+                )
+            else:
+                self.activities_name = graph_activity.nodes_name
+        else:
             self.activities_name = activities_name
+            if graph_activity is not None:
+                assert set(activities_name) == set(graph_activity.nodes_name), (
+                    "activities_name must have same names as in graph_activity.nodes_name"
+                )
         self.calendar_team = calendar_team
-        if self.graph_allocation is None and self.calendar_team is not None:
-            orig_starts_arr = np.array(
-                [schedule_activity[n][0] for n in self.activities_name]
-            )
-            orig_ends_arr = np.array(
-                [schedule_activity[n][1] for n in self.activities_name]
-            )
-            self.graph_allocation = build_graph_allocation_from_calendar_and_schedule(
-                starts=orig_starts_arr,
-                ends=orig_ends_arr,
-                calendar_team=self.calendar_team,
-                horizon=int(np.max(orig_ends_arr) + 10),
-                tasks_name=self.activities_name,
-                teams_name=list(self.calendar_team.keys()),
-            )
-        if self.graph_activity is None:
+        if graph_allocation is None:
+            if calendar_team is None:
+                raise ValueError(
+                    "graph_allocation and calendar_team cannot be both None."
+                )
+            else:
+                orig_starts_arr = np.array(
+                    [schedule_activity[n][0] for n in self.activities_name]
+                )
+                orig_ends_arr = np.array(
+                    [schedule_activity[n][1] for n in self.activities_name]
+                )
+                self.graph_allocation = (
+                    build_graph_allocation_from_calendar_and_schedule(
+                        starts=orig_starts_arr,
+                        ends=orig_ends_arr,
+                        calendar_team=self.calendar_team,
+                        horizon=int(np.max(orig_ends_arr) + 10),
+                        tasks_name=self.activities_name,
+                        teams_name=list(self.calendar_team.keys()),
+                    )
+                )
+        else:
+            self.graph_allocation = graph_allocation
+        if graph_activity is None:
             orig_starts_arr = np.array(
                 [schedule_activity[n][0] for n in self.activities_name]
             )
@@ -324,12 +357,13 @@ class TeamAllocationProblem(Problem):
                 ends=orig_ends_arr,
                 task_names=self.activities_name,
             )
+        else:
+            self.graph_activity = graph_activity
         self.number_of_activity = len(self.graph_activity.nodes_name)
         self.teams_name: list[Hashable] = self.graph_allocation.get_nodes_team_list()
         self.number_of_teams = len(self.teams_name)
         self.allocation_additional_constraint = allocation_additional_constraint
-        self.schedule = schedule_activity
-        if self.schedule is None:
+        if schedule_activity is None:
             self.schedule = {
                 self.activities_name[i]: (
                     self.graph_activity.nodes_infos_dict[self.activities_name[i]][
@@ -341,6 +375,8 @@ class TeamAllocationProblem(Problem):
                 )
                 for i in range(self.number_of_activity)
             }
+        else:
+            self.schedule = schedule_activity
         self.index_activities_name = {
             self.activities_name[i]: i for i in range(self.number_of_activity)
         }
@@ -353,6 +389,20 @@ class TeamAllocationProblem(Problem):
         self.index_to_teams_name = {
             i: self.teams_name[i] for i in range(self.number_of_teams)
         }
+        self.compatibility_task_team = self.compute_compatibility_for_all_tasks()
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return self.activities_name
+
+    @property
+    def unary_resources_list(self) -> list[UnaryResource]:
+        return self.teams_name
+
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        return unary_resource in self.compatibility_task_team[task]
 
     def reorder_teams_name(self, new_order_teams_name: list[Hashable]):
         self.teams_name = new_order_teams_name
@@ -371,15 +421,25 @@ class TeamAllocationProblem(Problem):
         )
 
     def computed_forbidden_team_for_task(self, task: Hashable) -> list[Hashable]:
-        return [team for team in self.graph_allocation.get_neighbors(task)]
+        return [
+            team
+            for team in self.index_teams_name
+            if team not in self.compute_allowed_team_for_task(task)
+        ]
 
-    def compute_allowed_team_for_task(self, task: Hashable) -> list[Hashable]:
+    def compute_compatibility_for_all_tasks(self) -> dict[Task, set[UnaryResource]]:
+        return {
+            task: set(self.compute_allowed_team_for_task(task))
+            for task in self.tasks_list
+        }
+
+    def compute_allowed_team_for_task(self, task: Task) -> list[UnaryResource]:
+        allowed_team = [
+            team
+            for team in self.index_teams_name
+            if team not in self.graph_allocation.get_neighbors(task)
+        ]
         if self.allocation_additional_constraint is not None:
-            allowed_team = [
-                team
-                for team in self.index_teams_name
-                if team not in self.graph_allocation.get_neighbors(task)
-            ]
             if self.allocation_additional_constraint.forced_allocation is not None:
                 if task in self.allocation_additional_constraint.forced_allocation:
                     allowed_team = [
@@ -405,12 +465,7 @@ class TeamAllocationProblem(Problem):
                             task
                         ]
                     ]
-            return allowed_team
-        return [
-            team
-            for team in self.index_teams_name
-            if team not in self.graph_allocation.get_neighbors(task)
-        ]
+        return allowed_team
 
     def compute_forbidden_team_index_for_task(self, task: Hashable) -> list[int]:
         return [

@@ -2,23 +2,66 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from discrete_optimization.generic_tools.do_problem import *
-from discrete_optimization.jsp.problem import Subjob
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+
+from discrete_optimization.generic_tasks_tools.multimode import (
+    MultimodeProblem,
+    MultimodeSolution,
+)
+from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    EncodingRegister,
+    ModeOptim,
+    ObjectiveDoc,
+    ObjectiveHandling,
+    ObjectiveRegister,
+    Solution,
+    TypeObjective,
+)
+from discrete_optimization.jsp.problem import Subjob, Task
+
+logger = logging.getLogger(__name__)
 
 
-class FJobShopSolution(Solution):
+class FJobShopSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
+    problem: FJobShopProblem
+
     def __init__(
-        self, problem: "FJobShopProblem", schedule: list[list[tuple[int, int, int]]]
+        self, problem: FJobShopProblem, schedule: list[list[tuple[int, int, int, int]]]
     ):
-        # For each job and sub-job, start, end time and machine id choice given as tuple of int.
+        # For each job and sub-job, start, end time, machine id, and option choice given as tuple of int.
         self.problem = problem
         self.schedule = schedule
 
-    def copy(self) -> "Solution":
+    def copy(self) -> FJobShopSolution:
         return FJobShopSolution(problem=self.problem, schedule=self.schedule)
 
-    def change_problem(self, new_problem: "Problem") -> None:
+    def change_problem(self, new_problem: FJobShopProblem) -> None:
         self.problem = new_problem
+
+    def get_end_time(self, task: Task) -> int:
+        j, k = task
+        return self.schedule[j][k][1]
+
+    def get_start_time(self, task: Task) -> int:
+        j, k = task
+        return self.schedule[j][k][0]
+
+    def get_machine(self, task: Task) -> int:
+        j, k = task
+        return self.schedule[j][k][2]
+
+    def get_mode(self, task: Task) -> int:
+        """Get 'mode' of given task, aka chosen machine."""
+        j, k = task
+        return self.schedule[j][k][-1]
 
 
 SubjobOptions = list[Subjob]
@@ -30,7 +73,9 @@ class Job:
     sub_jobs: list[SubjobOptions]
 
 
-class FJobShopProblem(Problem):
+class FJobShopProblem(
+    SchedulingProblem[Task], MultimodeProblem[Task], PrecedenceProblem[Task]
+):
     n_jobs: int
     n_machines: int
     list_jobs: list[Job]
@@ -91,13 +136,38 @@ class FJobShopProblem(Problem):
             for (i, j) in self.subjob_possible_machines
         }
 
+    def get_makespan_upper_bound(self) -> int:
+        return self.horizon
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return [
+            (j, k)
+            for j, job in enumerate(self.list_jobs)
+            for k in range(len(job.sub_jobs))
+        ]
+
+    def get_precedence_constraints(self) -> dict[Task, list[Task]]:
+        return {
+            (j, k): [(j, k + 1)] if k + 1 < len(job.sub_jobs) else []
+            for j, job in enumerate(self.list_jobs)
+            for k in range(len(job.sub_jobs))
+        }
+
+    def get_task_modes(self, task: Task) -> set[int]:
+        j, k = task
+        return set(range(len(self.list_jobs[j].sub_jobs[k])))
+
+    def get_last_tasks(self) -> list[Task]:
+        return [(j, len(job.sub_jobs) - 1) for j, job in enumerate(self.list_jobs)]
+
     def evaluate(self, variable: FJobShopSolution) -> dict[str, float]:
-        return {"makespan": max(x[-1][1] for x in variable.schedule)}
+        return {"makespan": variable.get_max_end_time()}
 
     def satisfy(self, variable: FJobShopSolution) -> bool:
         if not all(
-            variable.schedule[i][j][2] in self.subjob_possible_machines[(i, j)]
-            for (i, j) in self.subjob_possible_machines
+            variable.get_machine(task=task) in machines
+            for task, machines in self.subjob_possible_machines.items()
         ):
             logger.info("Unallowed machine used for some subjob")
             return False
@@ -116,13 +186,20 @@ class FJobShopProblem(Problem):
                     logger.info("Overlapping task on same machines")
                     return False
         for job in range(self.n_jobs):
-            m = variable.schedule[job][0][2]
+            s_j = 0
+            i_opt = variable.schedule[job][s_j][-1]
+            machine_id = variable.schedule[job][s_j][2]
+            if self.list_jobs[job].sub_jobs[s_j][i_opt].machine_id != machine_id:
+                logger.info(
+                    f"Machine choice and option choice does not match for task {job, s_j}."
+                )
+                return False
             if not (
-                variable.schedule[job][0][1] - variable.schedule[job][0][0]
-                == self.duration_per_machines[(job, 0)][m]
+                variable.schedule[job][s_j][1] - variable.schedule[job][s_j][0]
+                == self.duration_per_machines[(job, s_j)][machine_id]
             ):
                 logger.info(
-                    f"Duration of task {job, 0} not coherent with the machine choice "
+                    f"Duration of task {job, s_j} not coherent with the machine choice "
                 )
             for s_j in range(1, len(variable.schedule[job])):
                 if variable.schedule[job][s_j][0] < variable.schedule[job][s_j - 1][1]:
@@ -131,16 +208,22 @@ class FJobShopProblem(Problem):
                         f"and {job, s_j - 1}"
                     )
                     return False
+                machine_id = variable.schedule[job][s_j][2]
                 if not (
                     variable.schedule[job][s_j][1] - variable.schedule[job][s_j][0]
-                    == self.duration_per_machines[(job, s_j)][
-                        variable.schedule[job][s_j][2]
-                    ]
+                    == self.duration_per_machines[(job, s_j)][machine_id]
                 ):
                     logger.info(
                         f"Duration of task {job, s_j} not coherent with the machine choice "
                     )
                     return False
+                i_opt = variable.schedule[job][s_j][-1]
+                if self.list_jobs[job].sub_jobs[s_j][i_opt].machine_id != machine_id:
+                    logger.info(
+                        f"Machine choice and option choice does not match for task {job, s_j}."
+                    )
+                    return False
+
         return True
 
     def get_attribute_register(self) -> EncodingRegister:

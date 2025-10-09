@@ -88,7 +88,7 @@ class CallbackWithBound(OrtSolutionCounter):
         logger.debug(f"Obj bound, {self.BestObjectiveBound()}")
 
 
-class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
+class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
     problem: TeamAllocationProblem
     hyperparameters = [
         EnumHyperparameter(

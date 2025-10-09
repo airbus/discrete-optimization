@@ -11,19 +11,28 @@ from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
     Domain,
     LinearExpr,
+    LinearExprT,
 )
 
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+    AllocationCpSatSolver,
+    MultimodeCpSatSolver,
+    SchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tools.cp_tools import SignEnum
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
 from discrete_optimization.rcpsp_multiskill.problem import (
     MultiskillRcpspProblem,
     MultiskillRcpspSolution,
+    Task,
+    UnaryResource,
     compute_discretize_calendar_skills,
     create_fake_tasks_multiskills,
     discretize_calendar_,
@@ -32,7 +41,11 @@ from discrete_optimization.rcpsp_multiskill.problem import (
 logger = logging.getLogger(__name__)
 
 
-class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
+class CpSatMultiskillRcpspSolver(
+    SchedulingCpSatSolver[Task],
+    MultimodeCpSatSolver[Task],
+    AllocationCpSatSolver[Task, UnaryResource],
+):
     hyperparameters = [
         CategoricalHyperparameter(
             name="redundant_skill_cumulative", choices=[True, False], default=True
@@ -45,7 +58,34 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
 
     def __init__(self, problem: Problem, **kwargs: Any):
         super().__init__(problem, **kwargs)
+        if self.problem.is_preemptive():
+            raise NotImplementedError()
         self.variables = {}
+
+    def get_task_start_or_end_variable(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> LinearExprT:
+        if start_or_end == StartOrEnd.START:
+            key = "starts"
+        else:
+            key = "ends"
+
+        return self.variables["base_variable"][key][task]
+
+    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> LinearExprT:
+        return self.variables["mode_variable"]["is_present"][task][mode]
+
+    def get_global_makespan_variable(self) -> Any:
+        self.remove_constraints_on_objective()
+        return self.variables["makespan"]
+
+    def get_task_unary_resource_is_present_variable(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> LinearExprT:
+        try:
+            return self.variables["worker_variable"]["is_present"][task][unary_resource]
+        except KeyError:
+            return 0
 
     def set_lexico_objective(self, obj: str) -> None:
         self.cp_model.Minimize(self.variables[obj])
@@ -96,7 +136,8 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
             self.problem.sink_task
         ]
         self.create_workload_variables()
-        self.cp_model.Minimize(self.variables["makespan"])
+        objective = self.get_global_makespan_variable()
+        self.minimize_variable(objective)
 
     def create_base_variable(self):
         start_var = {}
@@ -153,6 +194,7 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
                     is_present=is_present_var[task][mode],
                     name=f"opt_{task}_{mode}",
                 )
+            self.cp_model.AddExactlyOne(is_present_var[task].values())
         self.variables["mode_variable"] = {
             "is_present": is_present_var,
             "opt_intervals": opt_interval_var,
@@ -164,13 +206,6 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
         opt_interval_var = {}
         is_present_var = {}
         skills_used_var = {}
-        employees_per_skill = {}
-        for s in self.problem.skills_set:
-            employees_per_skill[s] = {
-                e
-                for e in self.problem.employees
-                if s in self.problem.employees[e].get_non_zero_skills()
-            }
         for task in self.problem.tasks_list:
             skills_of_task = set()
             for mode in self.problem.mode_details[task]:
@@ -194,7 +229,10 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
                         )
                         for mode in self.problem.mode_details[task]
                     )
-                ) or any(worker in employees_per_skill[s] for s in skills_of_task):
+                ) or any(
+                    worker in self.problem.employees_per_skill[s]
+                    for s in skills_of_task
+                ):
                     skills_used_var[task][worker] = {}
                     is_present_var[task][worker] = self.cp_model.NewBoolVar(
                         name=f"used_{task}_{worker}"

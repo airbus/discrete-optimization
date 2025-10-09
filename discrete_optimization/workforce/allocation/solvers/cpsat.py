@@ -15,9 +15,13 @@ from ortools.sat.python.cp_model import (
     Domain,
     IntVar,
     LinearExpr,
-    VarArrayAndObjectiveSolutionPrinter,
+    LinearExprT,
 )
 
+from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+    AllocationBinaryOrIntegerModellingCpSatSolver,
+    AllocationModelling,
+)
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
@@ -35,20 +39,17 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import (
-    OrtoolsCpSatCallback,
-    OrtoolsCpSatSolver,
-)
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatCallback
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
-    from_solutions_to_result_storage,
 )
 from discrete_optimization.workforce.allocation.problem import (
-    AggregateOperator,
     AllocationAdditionalConstraint,
+    Task,
     TeamAllocationProblem,
     TeamAllocationProblemMultiobj,
     TeamAllocationSolution,
+    UnaryResource,
 )
 from discrete_optimization.workforce.allocation.solvers import TeamAllocationSolver
 from discrete_optimization.workforce.allocation.utils import (
@@ -59,7 +60,6 @@ from discrete_optimization.workforce.commons.fairness_modeling import (
     ModelisationDispersion,
 )
 from discrete_optimization.workforce.commons.fairness_modeling_ortools import (
-    cumulate_value_per_teams_version_2,
     model_fairness,
 )
 
@@ -82,7 +82,9 @@ logger = logging.getLogger(__name__)
 
 
 class CpsatTeamAllocationSolver(
-    OrtoolsCpSatSolver, TeamAllocationSolver, WarmstartMixin
+    AllocationBinaryOrIntegerModellingCpSatSolver[Task, UnaryResource],
+    TeamAllocationSolver,
+    WarmstartMixin,
 ):
     problem: TeamAllocationProblem
     hyperparameters = [
@@ -129,13 +131,15 @@ class CpsatTeamAllocationSolver(
         ),
     ]
 
+    at_most_one_unary_resource_per_task = True
+
     def __init__(
         self,
         problem: TeamAllocationProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-        OrtoolsCpSatSolver.__init__(self, problem, params_objective_function, **kwargs)
+        super().__init__(problem, params_objective_function, **kwargs)
         self.modelisation_allocation: Optional[ModelisationAllocationOrtools] = None
         self.modelisation_dispersion: Optional[ModelisationDispersion] = None
         self.model_max_and_min: bool = False
@@ -144,10 +148,10 @@ class CpsatTeamAllocationSolver(
 
     def set_warm_start(self, solution: TeamAllocationSolution) -> None:
         self.cp_model.ClearHints()
-        if self.modelisation_allocation in {
+        if self.modelisation_allocation in (
             ModelisationAllocationOrtools.BINARY,
             ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
-        }:
+        ):
             variables = self.variables["allocation_binary"]
             for i in range(len(solution.allocation)):
                 alloc = solution.allocation[i]
@@ -201,22 +205,37 @@ class CpsatTeamAllocationSolver(
         }
         return sol
 
+    def get_binary_allocation_variable(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> LinearExprT:
+        i_task = self.problem.index_activities_name[task]
+        i_team = self.problem.index_teams_name[unary_resource]
+        try:
+            return self.variables["allocation_binary"][i_task][i_team]
+        except KeyError:
+            return 0
+
+    def get_integer_allocation_variable(self, task: Task) -> LinearExprT:
+        i_task = self.problem.index_activities_name[task]
+        return self.variables["allocation"][i_task]
+
     def init_model(
         self,
         modelisation_allocation: ModelisationAllocationOrtools = ModelisationAllocationOrtools.BINARY,
         **args,
     ):
         args = self.complete_with_default_hyperparameters(args)
+        self.modelisation_allocation = modelisation_allocation
         if modelisation_allocation in [
             ModelisationAllocationOrtools.BINARY,
             ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES,
         ]:
+            self.allocation_modelling = AllocationModelling.BINARY
             args["optional_activities"] = (
                 modelisation_allocation
                 == ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
             )
             self.init_model_binary(**args)
-            self.modelisation_allocation = modelisation_allocation
             self.key_main_decision_variable = "allocation_binary"
             if "base_solution" in args:
                 self.create_delta_to_base_solution_binary(
@@ -226,8 +245,8 @@ class CpsatTeamAllocationSolver(
                     ),
                 )
         else:
+            self.allocation_modelling = AllocationModelling.INTEGER
             self.init_model_integer(**args)
-            self.modelisation_allocation = modelisation_allocation
             self.key_main_decision_variable = "allocation"
             if "base_solution" in args:
                 self.create_delta_to_base_solution_integer(
@@ -259,17 +278,9 @@ class CpsatTeamAllocationSolver(
         # Take into account the allocation constraints directly in domains of variable.
         for i in range(self.problem.number_of_activity):
             activity = self.problem.index_to_activities_name[i]
-            forbidden = {
-                self.problem.index_teams_name[team]
-                for team in self.problem.graph_allocation.get_neighbors(activity)
-            }
             domains_for_task.append(
                 Domain.FromValues(
-                    [
-                        i
-                        for i in range(self.problem.number_of_teams)
-                        if i not in forbidden
-                    ]
+                    self.problem.compute_allowed_team_index_for_task(activity)
                 )
             )
         allocation = [
@@ -278,27 +289,15 @@ class CpsatTeamAllocationSolver(
             )
             for i in range(self.problem.number_of_activity)
         ]
+        self.variables["allocation"] = allocation
+
         if include_pair_overlap:
             for edge in self.problem.graph_activity.edges:
                 ind1 = self.problem.index_activities_name[edge[0]]
                 ind2 = self.problem.index_activities_name[edge[1]]
                 self.cp_model.Add(allocation[ind1] != allocation[ind2])
 
-        def add_indicator(vars, value, presence_value, model):
-            bool_vars = []
-            for var in vars:
-                boolvar = model.NewBoolVar("")
-                model.Add(var == value).OnlyEnforceIf(boolvar)
-                model.Add(var != value).OnlyEnforceIf(boolvar.Not())
-                bool_vars.append(boolvar)
-            model.AddMaxEquality(presence_value, bool_vars)
-
-        used = [
-            self.cp_model.NewBoolVar(f"used_{j}")
-            for j in range(self.problem.number_of_teams)
-        ]
-        for j in range(self.problem.number_of_teams):
-            add_indicator(allocation, j, used[j], self.cp_model)
+        used = self.create_used_variables_list()
         if symmbreak_on_used:
             groups = compute_equivalent_teams(team_allocation_problem=self.problem)
             for group in groups:
@@ -320,7 +319,6 @@ class CpsatTeamAllocationSolver(
                     )
         self.variables["objs"] = {}
         self.variables["objs"]["nb_teams"] = sum(used)
-        self.variables["allocation"] = allocation
         self.variables["used"] = used
         self.variables["keys_variable_to_log"] = []
         self.cp_model.Minimize(self.variables["objs"]["nb_teams"])
@@ -352,6 +350,8 @@ class CpsatTeamAllocationSolver(
             }
             for i in range(self.problem.number_of_activity)
         ]
+        # store allocation_binary used by other methods like create_used_variables()
+        self.variables["allocation_binary"] = allocation_binary
         if include_all_binary_vars:
             for i in range(self.problem.number_of_activity):
                 activity = self.problem.index_to_activities_name[i]
@@ -365,25 +365,13 @@ class CpsatTeamAllocationSolver(
                     for f in forbidden:
                         self.cp_model.Add(allocation_binary[i][f] == 0)
         if optional_activities:
-            is_allocated = [
-                self.cp_model.NewBoolVar(name=f"is_alloc_{i}")
-                for i in range(self.problem.number_of_activity)
-            ]
-        for i in range(len(allocation_binary)):
-            if not optional_activities:
+            is_allocated = self.create_is_allocated_variables()
+        else:
+            for i in range(len(allocation_binary)):
                 self.cp_model.AddExactlyOne(
                     [allocation_binary[i][j] for j in allocation_binary[i]]
                 )
-            else:
-                self.cp_model.AddAtMostOne(
-                    [allocation_binary[i][j] for j in allocation_binary[i]]
-                )
-                (
-                    self.cp_model.Add(
-                        sum([allocation_binary[i][j] for j in allocation_binary[i]])
-                        == 1
-                    ).OnlyEnforceIf(is_allocated[i])
-                )
+
         if include_pair_overlap:
             for edge in self.problem.graph_activity.edges:
                 ind1 = self.problem.index_activities_name[edge[0]]
@@ -406,13 +394,8 @@ class CpsatTeamAllocationSolver(
                             ],
                             [(1, 1)],
                         )
-        used = [
-            self.cp_model.NewBoolVar(f"used_{j}")
-            for j in range(self.problem.number_of_teams)
-        ]
-        for i in range(len(allocation_binary)):
-            for j in allocation_binary[i]:
-                self.cp_model.Add(used[j] >= allocation_binary[i][j])
+        used = self.create_used_variables_list()
+
         if overlapping_advanced or add_lower_bound_nb_teams:
             set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
             if add_lower_bound_nb_teams:
@@ -444,8 +427,7 @@ class CpsatTeamAllocationSolver(
                     self.cp_model.AddImplication(used[ind2], used[ind1])
                     self.cp_model.Add(used[ind1] >= used[ind2])
         self.variables["objs"] = {}
-        self.variables["objs"]["nb_teams"] = sum(used)
-        self.variables["allocation_binary"] = allocation_binary
+        self.variables["objs"]["nb_teams"] = self.get_nb_unary_resources_used_variable()
         self.variables["used"] = used
 
         objectives_expr = []
@@ -467,15 +449,27 @@ class CpsatTeamAllocationSolver(
             objectives_expr = [o for o in objectives_expr if o is not None]
 
         if optional_activities:
-            self.variables["objs"]["nb_allocated"] = sum(is_allocated)
-            objectives_expr = [sum(is_allocated)] + objectives_expr
+            nb_activities_done = self.get_nb_tasks_done_variable()
+            self.variables["objs"]["nb_allocated"] = nb_activities_done
+            objectives_expr = [nb_activities_done] + objectives_expr
             self.variables["allocated"] = is_allocated
-            self.cp_model.Maximize(objectives_expr[0])
+            self.cp_model.Maximize(nb_activities_done)
         else:
-            objectives_expr = [sum(used)] + objectives_expr
-            self.cp_model.Minimize(objectives_expr[0])
+            nb_teams = self.variables["objs"]["nb_teams"]
+            objectives_expr = [nb_teams] + objectives_expr
+            self.cp_model.Minimize(nb_teams)
         self.variables["objectives_expr"] = objectives_expr
         self.variables["keys_variable_to_log"] = keys_variable_to_log
+
+    def create_is_allocated_variables(self) -> list[IntVar]:
+        self.create_done_variables()
+        return [self.done_variables[task] for task in self.problem.tasks_list]
+
+    def create_used_variables_list(
+        self,
+    ) -> list[IntVar]:
+        self.create_used_variables()
+        return [self.used_variables[team] for team in self.problem.teams_name]
 
     def additional_constraint(
         self, additional_constraint: AllocationAdditionalConstraint

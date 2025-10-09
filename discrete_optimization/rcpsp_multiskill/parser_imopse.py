@@ -138,7 +138,7 @@ def parse_imopse(
     task_id_to_new_name = {
         sorted_task_names[i]: i + 2 for i in range(len(sorted_task_names))
     }
-    new_tame_to_original_task_id = {
+    new_name_to_original_task_id = {
         task_id_to_new_name[ind]: ind for ind in task_id_to_new_name
     }
     mode_details = {
@@ -149,7 +149,7 @@ def parse_imopse(
     skills = real_skills_found
     for task_id in task_dict:
         for skill in skills:
-            req_squill = task_dict[task_id]["skills"].get(skill, 0.0)
+            req_squill = task_dict[task_id]["skills"].get(skill, 0)
             mode_details[task_id_to_new_name[task_id]][1][skill] = req_squill
     mode_details[1] = {1: {"duration": 0}}
     for skill in skills:
@@ -200,7 +200,7 @@ def parse_imopse(
             one_unit_per_task_max=one_unit_per_task,
             preemptive=preemptive,
         ),
-        new_tame_to_original_task_id,
+        new_name_to_original_task_id,
     )
 
 
