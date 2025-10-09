@@ -34,13 +34,28 @@ class OrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
         self,
         solver: CpSatMisSolver,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         if not isinstance(solver, CpSatMisSolver):
             raise ValueError("solver must a CpSatMisSolver for this constraint.")
         lns_constraints = []
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -77,13 +92,28 @@ class DestroyOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
         self,
         solver: CpSatMisSolver,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         if not isinstance(solver, CpSatMisSolver):
             raise ValueError("solver must a CpSatMisSolver for this constraint.")
         lns_constraints = []
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -136,13 +166,25 @@ class AllVarsOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
         self,
         solver: CpSatMisSolver,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         if not isinstance(solver, CpSatMisSolver):
             raise ValueError("solver must a CpSatMisSolver for this constraint.")
         lns_constraints = []
-        current_solution, _ = result_storage.list_solution_fits[-1]
+        current_solution, _ = result_storage[-1]
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -182,13 +224,28 @@ class LocalMovesOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
         self,
         solver: CpSatMisSolver,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Constraint]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         if not isinstance(solver, CpSatMisSolver):
             raise ValueError("solver must a CpSatMisSolver for this constraint.")
         lns_constraints = []
-        current_solution, _ = result_storage.get_last_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."

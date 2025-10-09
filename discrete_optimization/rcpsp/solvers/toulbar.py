@@ -373,9 +373,25 @@ class RcpspConstraintHandlerToulbar(ConstraintHandler):
         self,
         solver: ToulbarRcpspSolverForLns,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        sol: RcpspSolution = result_storage.get_best_solution_fit()[0]
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: RcpspSolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         ms = sol.get_start_time(self.problem.sink_task)
         tasks_1, tasks_2 = self.neighbors.find_subtasks(current_solution=sol)
         solver.model.CFN.timer(100)
@@ -413,3 +429,4 @@ class RcpspConstraintHandlerToulbar(ConstraintHandler):
         except:
             pass
         solver.set_warm_start(solution=sol)
+        return []

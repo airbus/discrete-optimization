@@ -111,9 +111,28 @@ class TspConstraintHandlerToulbar(ConstraintHandler):
         self.fraction_nodes = fraction_nodes
 
     def adding_constraint_from_results_store(
-        self, solver: ToulbarTspSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: ToulbarTspSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
     ) -> Iterable[Any]:
-        sol: TspSolution = result_storage.get_best_solution_fit()[0]
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: TspSolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
 
         list_ = find_intersection(
             variable=sol, points=solver.problem.list_points, nb_tests=1000
@@ -128,3 +147,4 @@ class TspConstraintHandlerToulbar(ConstraintHandler):
         text = "," + text
         solver.model.Parse(text)
         solver.set_warm_start(sol)
+        return []

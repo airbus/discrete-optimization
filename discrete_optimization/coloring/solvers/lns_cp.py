@@ -167,24 +167,28 @@ class FixColorsMznConstraintHandler(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: MinizincCpSolver,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
         """Include constraint that fix decision on a subset of nodes, according to current solutions found.
 
         Args:
             solver: a coloring CpSolver
-            child_instance: minizinc instance where to include the constraint
-            result_storage: current pool of solutions
-            last_result_store: pool of solutions found in previous LNS iteration (optional)
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
 
         Returns: an empty list, unused.
 
         """
         range_node = range(1, self.problem.number_of_nodes + 1)
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."
@@ -250,21 +254,29 @@ class FixColorsCpSatConstraintHandler(OrtoolsCpSatConstraintHandler):
         self.fraction_to_fix = fraction_to_fix
 
     def adding_constraint_from_results_store(
-        self, solver: CpSatColoringSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: CpSatColoringSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Include constraint that fix decision on a subset of nodes, according to current solutions found.
 
         Args:
             solver: a coloring CpSolver
-            child_instance: minizinc instance where to include the constraint
             result_storage: current pool of solutions
-            last_result_store: pool of solutions found in previous LNS iteration (optional)
+            result_storage_last_iteration: pool of solutions found in previous LNS iteration
+            **kwargs:
 
-        Returns: an empty list, unused.
+        Returns:
+            list of added constraints
 
         """
         range_node = range(self.problem.number_of_nodes)
-        current_solution = result_storage.get_best_solution()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         if current_solution is None:
             raise ValueError(
                 "result_storage.get_best_solution() " "should not be None."

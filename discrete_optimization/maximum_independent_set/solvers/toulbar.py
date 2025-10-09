@@ -82,9 +82,25 @@ class MisConstraintHandlerToulbar(ConstraintHandler):
         self,
         solver: ToulbarMisSolverForLns,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        best_sol: MisSolution = result_storage.get_best_solution_fit()[0]
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        best_sol: MisSolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         problem: MisProblem = solver.problem
         random_indexes = random.sample(
             range(problem.number_nodes),
@@ -102,3 +118,4 @@ class MisConstraintHandlerToulbar(ConstraintHandler):
             solver.model.ClearPropagationQueues()
             logger.warning(f"Error raised during parsing certificate : {e}")
         solver.set_warm_start(best_sol)
+        return []

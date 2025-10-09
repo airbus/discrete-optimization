@@ -26,6 +26,7 @@ from discrete_optimization.generic_rcpsp_tools.typing import (
     ANY_SOLUTION_PREEMPTIVE,
 )
 from discrete_optimization.generic_tools.cp_tools import SignEnum
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     FloatHyperparameter,
@@ -35,6 +36,9 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable imp
     Hyperparametrizable,
 )
 from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
+from discrete_optimization.generic_tools.result_storage.multiobj_utils import (
+    TupleFitness,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -1361,7 +1365,50 @@ class ObjectiveSubproblem(Enum):
     GLOBAL_MAKESPAN = 3
 
 
-class ConstraintHandlerScheduling(MznConstraintHandler):
+def _is_labelled_as_opti(sol: Solution) -> bool:
+    return "opti_from_cp" in sol.__dict__.keys()
+
+
+def extract_labelled_opti_solfit(
+    res: ResultStorage,
+) -> tuple[Optional[Solution], Optional[TupleFitness]]:
+    current_solution, current_fit = next(
+        ((sol, fit) for sol, fit in res if _is_labelled_as_opti(sol)),
+        (None, None),
+    )
+    return current_solution, current_fit
+
+
+class BaseSchedulingMznConstraintHandler(MznConstraintHandler):
+    def extract_best_solution_from_last_iteration(
+        self,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
+    ) -> Optional[Solution]:
+        """Extract best solution from last iteration or whole lns.
+
+        Use the label "opti_from_cp" if available.
+
+        """
+        current_solution, current_fit = extract_labelled_opti_solfit(
+            result_storage_last_iteration
+        )
+        if current_fit is None:
+            current_solution, current_fit = extract_labelled_opti_solfit(
+                result_storage_last_iteration
+            )
+        if (
+            current_fit is None
+            or current_fit != result_storage.get_best_solution_fit()[1]
+        ):
+            return super().extract_best_solution_from_last_iteration(
+                result_storage, result_storage_last_iteration, **kwargs
+            )
+        return current_solution
+
+
+class ConstraintHandlerScheduling(BaseSchedulingMznConstraintHandler):
     def __init__(
         self,
         problem: ANY_RCPSP,
@@ -1411,32 +1458,30 @@ class ConstraintHandlerScheduling(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: ANY_CP_SOLVER,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        if last_result_store is not None:
-            current_solution, fit = next(
-                (
-                    last_result_store[j]
-                    for j in range(len(last_result_store))
-                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
-                ),
-                (None, None),
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
+        current_solution: PreemptiveRcpspSolution = (
+            self.extract_best_solution_from_last_iteration(
+                result_storage=result_storage,
+                result_storage_last_iteration=result_storage_last_iteration,
             )
-        else:
-            current_solution, fit = next(
-                (
-                    result_storage[j]
-                    for j in range(len(result_storage))
-                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
-            current_solution, fit = result_storage.get_last_best_solution()
-        current_solution: PreemptiveRcpspSolution = current_solution
+        )
         evaluation = self.problem.evaluate(current_solution)
         logger.debug(self.__class__.__name__)
         logger.debug(f"Current Eval : {evaluation}")
@@ -1529,7 +1574,7 @@ class ConstraintHandlerScheduling(MznConstraintHandler):
         return list_strings
 
 
-class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
+class ConstraintHandlerMultiskillAllocation(BaseSchedulingMznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
@@ -1541,33 +1586,28 @@ class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: ANY_CP_SOLVER,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        if last_result_store is not None:
-            current_solution, fit = next(
-                (
-                    last_result_store[j]
-                    for j in range(len(last_result_store))
-                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        else:
-            current_solution, fit = next(
-                (
-                    result_storage[j]
-                    for j in range(len(result_storage))
-                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
-            current_solution, fit = result_storage.get_last_best_solution()
-        current_solution = current_solution
-        evaluation = self.problem.evaluate(current_solution)
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         list_strings = constraints_strings(
             current_solution=current_solution,
             cp_solver=solver,
@@ -1601,7 +1641,7 @@ class ConstraintHandlerMultiskillAllocation(MznConstraintHandler):
         return list_strings
 
 
-class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
+class EquilibrateMultiskillAllocationNonPreemptive(BaseSchedulingMznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
@@ -1613,32 +1653,28 @@ class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: ANY_CP_SOLVER,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        if last_result_store is not None:
-            current_solution, fit = next(
-                (
-                    last_result_store[j]
-                    for j in range(len(last_result_store))
-                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        else:
-            current_solution, fit = next(
-                (
-                    result_storage[j]
-                    for j in range(len(result_storage))
-                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
-            current_solution, fit = result_storage.get_last_best_solution()
-        current_solution = current_solution
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         evaluation = current_solution.problem.evaluate(current_solution)
         s = """array[Units] of var 0..max_time: res_load = [sum(a in Tasks)( adur[a] * unit_used[w,a] )| w in Units ];\n"""
         ss = """array[Tasks] of var int: overskill = [sum(sk in Skill where array_skills_required[sk, i]>0)(sum(w in Units)(unit_used[w, i]*skillunits[w, sk])-array_skills_required[sk, i])|i in Tasks];\n"""
@@ -1686,7 +1722,7 @@ class EquilibrateMultiskillAllocationNonPreemptive(MznConstraintHandler):
         return []
 
 
-class EquilibrateMultiskillAllocation(MznConstraintHandler):
+class EquilibrateMultiskillAllocation(BaseSchedulingMznConstraintHandler):
     def __init__(
         self,
         problem: ANY_MSRCPSP,
@@ -1698,32 +1734,28 @@ class EquilibrateMultiskillAllocation(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: ANY_CP_SOLVER,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        if last_result_store is not None:
-            current_solution, fit = next(
-                (
-                    last_result_store[j]
-                    for j in range(len(last_result_store))
-                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        else:
-            current_solution, fit = next(
-                (
-                    result_storage[j]
-                    for j in range(len(result_storage))
-                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        if current_solution is None or fit != result_storage.get_best_solution_fit()[1]:
-            current_solution, fit = result_storage.get_last_best_solution()
-        current_solution = current_solution
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         evaluation = current_solution.problem.evaluate(current_solution)
         overskill = compute_overskill(
             problem=current_solution.problem, solution=current_solution

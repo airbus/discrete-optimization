@@ -321,22 +321,39 @@ class KnapsackConstraintHandler(MznConstraintHandler):
     def adding_constraint_from_results_store(
         self,
         solver: MinizincCpSolver,
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
         if not isinstance(solver, CpMultidimensionalMultiScenarioKnapsackSolver):
             raise ValueError(
                 "cp_solver must a CPMultidimensionalMultiScenarioSolver for this constraint."
             )
-        if last_result_store is None:
-            raise ValueError("This constraint need last_result_store to be not None.")
+        if len(result_storage_last_iteration) == 0:
+            raise ValueError(
+                "This constraint need result_storage_last_iteration to be not empty."
+            )
         strings = []
         nb_item = solver.problem.list_problem[0].nb_items
         range_item = range(nb_item)
         subpart_item = set(random.sample(range_item, int(self.fraction_fix * nb_item)))
-        current_best_solution = last_result_store.get_last_best_solution()[0]
+        current_best_solution = result_storage_last_iteration.get_last_best_solution()[
+            0
+        ]
         if not isinstance(
             current_best_solution, (KnapsackSolution, MultidimensionalKnapsackSolution)
         ):

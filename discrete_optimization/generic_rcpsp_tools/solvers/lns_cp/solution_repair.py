@@ -15,12 +15,12 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools import (
     GraphSpecialConstraintsRcpsp,
 )
 from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools import (
+    BaseSchedulingMznConstraintHandler,
     ParamsConstraintBuilder,
     constraint_unit_used_subset_employees_preemptive,
     constraint_unit_used_to_tasks_preemptive,
 )
 from discrete_optimization.generic_tools.cp_tools import SignEnum
-from discrete_optimization.generic_tools.lns_cp import MznConstraintHandler
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -406,7 +406,7 @@ def post_process_solution(model, solution):
     problem = find_possible_problems_preemptive(model, solution)
 
 
-class NeighborRepairProblems(MznConstraintHandler):
+class NeighborRepairProblems(BaseSchedulingMznConstraintHandler):
     def __init__(
         self,
         problem: Union[
@@ -452,33 +452,30 @@ class NeighborRepairProblems(MznConstraintHandler):
             CpPreemptiveMultiskillRcpspSolver,
             CpMultimodePreemptiveRcpspSolver,
         ],
-        child_instance: Instance,
         result_storage: ResultStorage,
-        last_result_store: Optional[ResultStorage] = None,
+        result_storage_last_iteration: ResultStorage,
+        child_instance: Instance,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        if last_result_store is not None:
-            current_solution, fit = next(
-                (
-                    last_result_store[j]
-                    for j in range(len(last_result_store))
-                    if "opti_from_cp" in last_result_store[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
-        else:
-            current_solution, fit = next(
-                (
-                    result_storage[j]
-                    for j in range(len(result_storage))
-                    if "opti_from_cp" in result_storage[j][0].__dict__.keys()
-                ),
-                (None, None),
-            )
+        """Add constraints to the internal model of a solver based on previous solutions
 
-        if current_solution is None:
-            current_solution, fit = result_storage.get_last_best_solution()
-        current_solution: PreemptiveRcpspSolution = current_solution
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            child_instance: minizinc instance where to include the constraints
+            **kwargs:
+
+        Returns:
+            empty list, not used
+
+        """
+        current_solution: PreemptiveRcpspSolution = (
+            self.extract_best_solution_from_last_iteration(
+                result_storage=result_storage,
+                result_storage_last_iteration=result_storage_last_iteration,
+            )
+        )
         logger.debug(f"{current_solution.get_nb_task_preemption()} task preempted")
         logger.debug(f"{current_solution.get_max_preempted()} most preempted task")
         logger.debug(f"{current_solution.total_number_of_cut()} total number of cut")

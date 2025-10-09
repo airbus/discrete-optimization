@@ -82,7 +82,9 @@ def test_knapsack_constraint_handler():
         problem=model, fraction_to_fix=0.95
     )
     constraints = constraint_handler.adding_constraint_from_results_store(
-        solver=solver, result_storage=dummy_result_storage
+        solver=solver,
+        result_storage=dummy_result_storage,
+        result_storage_last_iteration=dummy_result_storage,
     )
     assert len(constraints) > 0
 

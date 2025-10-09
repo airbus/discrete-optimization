@@ -264,9 +264,25 @@ class FacilityConstraintHandlerToulbar(ConstraintHandler):
         self,
         solver: ToulbarFacilitySolverForLns,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        sol: FacilitySolution = result_storage.get_best_solution_fit()[0]
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: FacilitySolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         customers = random.sample(
             range(self.problem.customer_count),
             k=int(self.fraction_of_customers * self.problem.customer_count),
@@ -290,6 +306,7 @@ class FacilityConstraintHandlerToulbar(ConstraintHandler):
             text = "," + text
             solver.model.Parse(text)
         solver.set_warm_start(solution=sol)
+        return []
 
 
 class FacilityConstraintHandlerDestroyFacilityToulbar(ConstraintHandler):
@@ -305,9 +322,25 @@ class FacilityConstraintHandlerDestroyFacilityToulbar(ConstraintHandler):
         self,
         solver: ToulbarFacilitySolverForLns,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Any]:
-        sol: FacilitySolution = result_storage.get_best_solution_fit()[0]
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        sol: FacilitySolution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         facilities_used = set(sol.facility_for_customers)
         nb_facilities = len(facilities_used)
         facilities_to_dst = random.sample(
@@ -338,3 +371,4 @@ class FacilityConstraintHandlerDestroyFacilityToulbar(ConstraintHandler):
             text = "," + text
             solver.model.Parse(text)
         solver.set_warm_start(solution=sol)
+        return []

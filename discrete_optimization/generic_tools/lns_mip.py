@@ -34,8 +34,24 @@ logger = logging.getLogger(__name__)
 class GurobiConstraintHandler(ConstraintHandler):
     @abstractmethod
     def adding_constraint_from_results_store(
-        self, solver: GurobiMilpSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: GurobiMilpSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any,
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         ...
 
 
@@ -45,8 +61,21 @@ class OrtoolsMathOptConstraintHandler(ConstraintHandler):
         self,
         solver: OrtoolsMathOptMilpSolver,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any,
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         ...
 
 

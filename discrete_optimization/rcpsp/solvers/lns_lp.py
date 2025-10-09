@@ -142,12 +142,31 @@ class MathoptFixStartTimeRcpspConstraintHandler(OrtoolsMathOptConstraintHandler)
         self.fraction_fix_start_time = fraction_fix_start_time
 
     def adding_constraint_from_results_store(
-        self, solver: MathOptRcpspSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: MathOptRcpspSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
 
         nb_jobs = self.problem.n_jobs + 2
         lns_constraints = []
-        current_solution, fit = result_storage.get_best_solution_fit()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         # Starting point
         solver.set_warm_start(current_solution)
 
@@ -189,10 +208,29 @@ class MathoptStartTimeIntervalRcpspConstraintHandler(OrtoolsMathOptConstraintHan
         self.plus_delta = plus_delta
 
     def adding_constraint_from_results_store(
-        self, solver: MathOptRcpspSolver, result_storage: ResultStorage, **kwargs: Any
+        self,
+        solver: MathOptRcpspSolver,
+        result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
+        **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         lns_constraints = []
-        current_solution, fit = result_storage.get_best_solution_fit()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         # Starting point
         solver.set_warm_start(current_solution)
         # Avoid fixing last jobs to allow makespan reduction
@@ -249,10 +287,26 @@ class _BaseStartTimeIntervalMultimodeRcpspConstraintHandler(ConstraintHandler):
         self,
         solver: Union[GurobiMultimodeRcpspSolver, MathOptMultimodeRcpspSolver],
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any
     ) -> Iterable[Any]:
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
         # set a good start: either solver.start_solution or result_storage.best_solution()
-        current_solution, fit = result_storage.get_best_solution_fit()
+        current_solution = self.extract_best_solution_from_last_iteration(
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+        )
         st = solver.start_solution
         if (
             self.problem.evaluate(st)["makespan"]
@@ -296,32 +350,39 @@ class _BaseStartTimeIntervalMultimodeRcpspConstraintHandler(ConstraintHandler):
 
 
 class GurobiStartTimeIntervalMultimodeRcpspConstraintHandler(
-    GurobiConstraintHandler, _BaseStartTimeIntervalMultimodeRcpspConstraintHandler
+    _BaseStartTimeIntervalMultimodeRcpspConstraintHandler, GurobiConstraintHandler
 ):
     def adding_constraint_from_results_store(
         self,
         solver: GurobiMultimodeRcpspSolver,
         result_storage: ResultStorage,
+        result_storage_last_iteration: ResultStorage,
         **kwargs: Any
     ) -> Iterable[Any]:
-        constraints = _BaseStartTimeIntervalMultimodeRcpspConstraintHandler.adding_constraint_from_results_store(
-            self, solver=solver, result_storage=result_storage, **kwargs
+        """Add constraints to the internal model of a solver based on previous solutions
+
+        Args:
+            solver: solver whose internal model is updated
+            result_storage: all results so far
+            result_storage_last_iteration: results from last LNS iteration only
+            **kwargs:
+
+        Returns:
+            list of added constraints
+
+        """
+        constraints = super().adding_constraint_from_results_store(
+            solver=solver,
+            result_storage=result_storage,
+            result_storage_last_iteration=result_storage_last_iteration,
+            **kwargs
         )
         solver.model.update()
         return constraints
 
 
 class MathOptStartTimeIntervalMultimodeRcpspConstraintHandler(
-    OrtoolsMathOptConstraintHandler,
     _BaseStartTimeIntervalMultimodeRcpspConstraintHandler,
+    OrtoolsMathOptConstraintHandler,
 ):
-    def adding_constraint_from_results_store(
-        self,
-        solver: MathOptMultimodeRcpspSolver,
-        result_storage: ResultStorage,
-        **kwargs: Any
-    ) -> Iterable[Any]:
-        constraints = _BaseStartTimeIntervalMultimodeRcpspConstraintHandler.adding_constraint_from_results_store(
-            self, solver=solver, result_storage=result_storage, **kwargs
-        )
-        return constraints
+    ...
