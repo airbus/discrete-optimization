@@ -36,7 +36,10 @@ def create_dummy_fjsp_and_sol():
     )
     sol = FJobShopSolution(
         problem=problem,
-        schedule=[[(0, 1, 0), (1, 2, 3), (2, 4, 2)], [(0, 2, 1), (2, 4, 4), (4, 6, 2)]],
+        schedule=[
+            [(0, 1, 0, 0), (1, 2, 3, 0), (2, 4, 2, 1)],
+            [(0, 2, 1, 1), (2, 4, 4, 1), (4, 6, 2, 1)],
+        ],
     )
     return problem, sol
 
@@ -47,7 +50,10 @@ def test_fjsp_satisfy():
     # Overlap of machine 0 at time 0 !
     sol = FJobShopSolution(
         problem=problem,
-        schedule=[[(0, 1, 0), (1, 2, 3), (2, 4, 2)], [(0, 1, 0), (2, 4, 4), (4, 6, 2)]],
+        schedule=[
+            [(0, 1, 0, 0), (1, 2, 3, 0), (2, 4, 2, 1)],
+            [(0, 1, 0, 0), (2, 4, 4, 1), (4, 6, 2, 1)],
+        ],
     )
     assert not problem.satisfy(sol)
 
@@ -55,13 +61,29 @@ def test_fjsp_satisfy():
 
     sol = FJobShopSolution(
         problem=problem,
-        schedule=[[(0, 1, 0), (1, 2, 3), (2, 4, 2)], [(0, 2, 5), (2, 4, 4), (4, 6, 2)]],
+        schedule=[
+            [(0, 1, 0, 0), (1, 2, 3, 0), (2, 4, 2, 1)],
+            [(0, 2, 5, 0), (2, 4, 4, 1), (4, 6, 2, 1)],
+        ],
     )
     assert not problem.satisfy(sol)
 
     # Precedence constraint broken between (1, 2) and (1, 1)
     sol = FJobShopSolution(
         problem=problem,
-        schedule=[[(0, 1, 0), (1, 2, 3), (2, 4, 2)], [(0, 2, 1), (4, 6, 4), (2, 4, 2)]],
+        schedule=[
+            [(0, 1, 0, 0), (1, 2, 3, 0), (2, 4, 2, 1)],
+            [(0, 2, 1, 1), (4, 6, 4, 1), (2, 4, 2, 1)],
+        ],
+    )
+    assert not problem.satisfy(sol)
+
+    # incoherency between i_opt and machine_id
+    sol = FJobShopSolution(
+        problem=problem,
+        schedule=[
+            [(0, 1, 0, 1), (1, 2, 3, 0), (2, 4, 2, 1)],
+            [(0, 2, 1, 1), (2, 4, 4, 1), (4, 6, 2, 1)],
+        ],
     )
     assert not problem.satisfy(sol)

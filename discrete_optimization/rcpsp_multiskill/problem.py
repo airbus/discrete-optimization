@@ -14,6 +14,19 @@ from typing import Iterable, Optional, Union
 import numpy as np
 import scipy.stats as ss
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
+from discrete_optimization.generic_tasks_tools.multimode import (
+    MultimodeProblem,
+    MultimodeSolution,
+)
+from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -90,7 +103,15 @@ class TaskDetailsPreemptive:
         )
 
 
-class MultiskillRcpspSolution(Solution):
+Task = Hashable
+UnaryResource = Hashable
+
+
+class MultiskillRcpspSolution(
+    SchedulingSolution[Task],
+    MultimodeSolution[Task],
+    AllocationSolution[Task, UnaryResource],
+):
     def __init__(
         self,
         problem: Problem,
@@ -109,10 +130,10 @@ class MultiskillRcpspSolution(Solution):
         return 1
 
     def get_start_times_list(self, task):
-        return [self.schedule.get(task, {"start_time": None})["start_time"]]
+        return [self.get_start_time(task)]
 
     def get_end_times_list(self, task):
-        return [self.schedule.get(task, {"end_time": None})["end_time"]]
+        return [self.get_end_time(task)]
 
     def employee_used(self, task):
         if task not in self.employee_usage:
@@ -138,16 +159,23 @@ class MultiskillRcpspSolution(Solution):
         self.problem = new_problem
 
     def get_start_time(self, task):
-        return self.schedule.get(task, {"start_time": None})["start_time"]
+        return self.schedule[task]["start_time"]
 
     def get_end_time(self, task):
-        return self.schedule.get(task, {"end_time": None})["end_time"]
+        return self.schedule[task]["end_time"]
 
     def get_active_time(self, task):
         return list(range(self.get_start_time(task), self.get_end_time(task)))
 
-    def get_max_end_time(self):
-        return max([self.get_end_time(x) for x in self.schedule])
+    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        return (
+            task in self.employee_usage
+            and unary_resource in self.employee_usage[task]
+            and len(self.employee_usage[task][unary_resource]) > 0
+        )
+
+    def get_mode(self, task: Task) -> int:
+        return self.modes[task]
 
 
 class PreemptiveMultiskillRcpspSolution(MultiskillRcpspSolution):
@@ -312,7 +340,7 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
                 )
             else:
                 workers = []
-                for i in sorted(self.problem.tasks)[1:-1]:
+                for i in sorted(self.problem.tasks_list)[1:-1]:
                     w = []
                     if len(self.employee_usage.get(i, {})) > 0:
                         w = [w for w in self.employee_usage.get(i)]
@@ -1919,7 +1947,12 @@ def intersect(i1, i2):
         return [s, e]
 
 
-class MultiskillRcpspProblem(Problem):
+class MultiskillRcpspProblem(
+    SchedulingProblem[Task],
+    MultimodeProblem[Task],
+    AllocationProblem[Task, UnaryResource],
+    PrecedenceProblem[Task],
+):
     sgs: ScheduleGenerationScheme
     skills_set: set[str]
     resources_set: set[str]
@@ -1933,7 +1966,7 @@ class MultiskillRcpspProblem(Problem):
     partial_preemption_data: dict[Hashable, dict[int, dict[str, bool]]]
     resource_blocking_data: list[tuple[list[Hashable], set[str]]]
     # List task 1, task 2, resource : resource should be blocked between start of task 1 and end of task 2
-    # {task_id: {mode: {ressource: is_releasable during preemption }
+    # {task_id: {mode: {resource: is_releasable during preemption }
     strictly_disjunctive_subtasks: bool
     # only used in preemptive mode, specifies that subtasks of tasks should be strictly disjunctive or not (i.e (st1, end1), (st2, end2), in strictly disjunctive case, st2>end1+1)
 
@@ -1943,24 +1976,24 @@ class MultiskillRcpspProblem(Problem):
         resources_set: set[str],
         non_renewable_resources: set[str],
         resources_availability: dict[str, list[int]],
-        employees: dict[Hashable, Employee],
-        mode_details: dict[Hashable, dict[int, dict[str, int]]],
-        successors: dict[Hashable, list[Hashable]],
-        horizon,
-        employees_availability: list[int] = None,
-        tasks_list: list[Hashable] = None,
-        employees_list: list[Hashable] = None,
-        horizon_multiplier=1,
-        sink_task: Optional[Hashable] = None,
-        source_task: Optional[Hashable] = None,
+        employees: dict[UnaryResource, Employee],
+        mode_details: dict[Task, dict[int, dict[str, int]]],
+        successors: dict[Task, list[Task]],
+        horizon: int,
+        employees_availability: Optional[list[int]] = None,
+        tasks_list: Optional[list[Task]] = None,
+        employees_list: Optional[list[UnaryResource]] = None,
+        horizon_multiplier: int = 1,
+        sink_task: Optional[Task] = None,
+        source_task: Optional[Task] = None,
         one_unit_per_task_max: bool = False,
         preemptive: bool = False,
-        preemptive_indicator: dict[Hashable, bool] = None,
-        special_constraints: SpecialConstraintsDescription = None,
-        partial_preemption_data: dict[Hashable, dict[int, dict[str, bool]]] = None,
+        preemptive_indicator: dict[Task, bool] = None,
+        special_constraints: Optional[SpecialConstraintsDescription] = None,
+        partial_preemption_data: dict[Task, dict[int, dict[str, bool]]] = None,
         always_releasable_resources: set[str] = None,
         never_releasable_resources: set[str] = None,
-        resource_blocking_data: list[tuple[list[Hashable], set[str]]] = None,
+        resource_blocking_data: list[tuple[list[Task], set[str]]] = None,
         strictly_disjunctive_subtasks: bool = True,
     ):
         self.skills_set = skills_set
@@ -1980,13 +2013,20 @@ class MultiskillRcpspProblem(Problem):
         self.horizon = horizon
         self.horizon_multiplier = horizon_multiplier
         self.nb_tasks = len(self.mode_details)
-        self.tasks = list(self.mode_details.keys())
-        self.tasks_list = tasks_list
-        if self.tasks_list is None:
-            self.tasks_list = self.tasks
-        self.employees_list = employees_list
-        if self.employees_list is None:
-            self.employees_list = list(self.employees.keys())
+        if tasks_list is None:
+            self.tasks_list = list(self.mode_details)
+        else:
+            assert set(tasks_list) == set(self.mode_details), (
+                "tasks_list must contain same ids as mode_details"
+            )
+            self.tasks_list = tasks_list
+        if employees_list is None:
+            self.employees_list = list(self.employees)
+        else:
+            assert set(employees_list) == set(self.employees), (
+                "employees_list must contain same ids as employees"
+            )
+            self.employees_list = employees_list
         self.index_task = {self.tasks_list[i]: i for i in range(self.n_jobs)}
         self.source_task = source_task
         if source_task is None:
@@ -2005,16 +2045,6 @@ class MultiskillRcpspProblem(Problem):
             self.tasks_list_non_dummy[i]: i for i in range(self.n_jobs_non_dummy)
         }
         self.one_unit_per_task_max = one_unit_per_task_max
-
-        self.is_multimode = (
-            max(
-                [
-                    len(self.mode_details[key1].keys())
-                    for key1 in self.mode_details.keys()
-                ]
-            )
-            > 1
-        )
         self.is_calendar = False
         if any(
             isinstance(self.resources_availability[res], Iterable)
@@ -2040,9 +2070,6 @@ class MultiskillRcpspProblem(Problem):
                 self.max_resource_capacity[r] = max(self.resources_availability[r])
             else:
                 self.max_resource_capacity[r] = self.resources_availability[r]
-        self.max_number_of_mode = max(
-            [len(self.mode_details[x]) for x in self.mode_details]
-        )
         self.preemptive = preemptive
         self.preemptive_indicator = preemptive_indicator
         if self.preemptive_indicator is None:
@@ -2136,12 +2163,64 @@ class MultiskillRcpspProblem(Problem):
                 ):
                     self.always_releasable_resources.add(r)
         self.strictly_disjunctive_subtasks = strictly_disjunctive_subtasks
-        self.func_sgs, self.func_sgs_partial = create_np_data_and_jit_functions(
-            rcpsp_problem=self
-        )
-        self.resource_blocking_data = resource_blocking_data
-        if self.resource_blocking_data is None:
+        if resource_blocking_data is None:
             self.resource_blocking_data = []
+        else:
+            self.resource_blocking_data = resource_blocking_data
+
+        self.create_employee_task_compatibility()
+        self.update_functions()
+
+    def create_employee_task_compatibility(self) -> None:
+        self.employees_per_skill: dict[str, set[UnaryResource]] = {
+            s: {
+                e
+                for e in self.employees
+                if s in self.employees[e].get_non_zero_skills()
+            }
+            for s in self.skills_set
+        }
+        self.compatibility_task_employee: dict[Task, dict[UnaryResource, bool]] = {}
+        for task in self.tasks_list:
+            self.compatibility_task_employee[task] = {}
+            skills_of_task = set()
+            for mode in self.mode_details[task]:
+                for skill in self.skills_set:
+                    if self.mode_details[task][mode].get(skill, 0) > 0:
+                        skills_of_task.add(skill)
+            for employee in self.employees:
+                if any(employee in self.employees_per_skill[s] for s in skills_of_task):
+                    self.compatibility_task_employee[task][employee] = True
+                else:
+                    self.compatibility_task_employee[task][employee] = False
+
+    def get_precedence_constraints(self) -> dict[Task, list[Task]]:
+        return self.successors
+
+    def get_last_tasks(self) -> list[Task]:
+        return [self.sink_task]
+
+    def get_task_modes(self, task: Task) -> set[int]:
+        return set(self.mode_details[task])
+
+    def get_makespan_upper_bound(self) -> int:
+        return self.horizon
+
+    @property
+    def unary_resources_list(self) -> list[UnaryResource]:
+        """Get available unary resources for allocation.
+
+        Warning: This is inherited from `AllocationProblem`
+        which is used here for the employees allocation.
+        Thus "resource" means "employee" in that particular case.
+
+        """
+        return self.employees_list
+
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        return self.compatibility_task_employee[task][unary_resource]
 
     def get_resource_available(self, res, time):
         return self.resources_availability[res][time]
@@ -2182,7 +2261,7 @@ class MultiskillRcpspProblem(Problem):
         return self.do_special_constraints
 
     def build_multimode_rcpsp_calendar_representative(self):
-        # put skills as ressource.
+        # put skills as resource.
         if len(self.resources_list) == 0:
             skills_availability = {s: [0] * int(self.horizon) for s in self.skills_set}
         else:
@@ -2221,7 +2300,7 @@ class MultiskillRcpspProblem(Problem):
             successors=self.successors,
             horizon=self.horizon,
             horizon_multiplier=self.horizon_multiplier,
-            name_task={i: str(i) for i in self.tasks},
+            name_task={i: str(i) for i in self.tasks_list},
         )
         return rcpsp_problem
 
@@ -2289,7 +2368,7 @@ class MultiskillRcpspProblem(Problem):
         # check the skills :
         if len(rcpsp_sol.schedule) != self.nb_tasks:
             return False
-        for task in self.tasks:
+        for task in self.tasks_list:
             mode = rcpsp_sol.modes[task]
             required_skills = {
                 s: self.mode_details[task][mode][s]
@@ -2341,8 +2420,8 @@ class MultiskillRcpspProblem(Problem):
                             return False
         overlaps = [
             (t1, t2)
-            for t1 in self.tasks
-            for t2 in self.tasks
+            for t1 in self.tasks_list
+            for t2 in self.tasks_list
             if self.index_task[t2] > self.index_task[t1]
             and intersect(
                 (
@@ -2381,7 +2460,7 @@ class MultiskillRcpspProblem(Problem):
             resource_usage = {}
             for res in self.resources_set:
                 resource_usage[res] = 0
-            for act_id in self.tasks:
+            for act_id in self.tasks_list:
                 start = rcpsp_sol.schedule[act_id]["start_time"]
                 end = rcpsp_sol.schedule[act_id]["end_time"]
                 mode = rcpsp_sol.modes[act_id]
@@ -2409,7 +2488,7 @@ class MultiskillRcpspProblem(Problem):
         # Check for non-renewable resource violation
         for res in self.non_renewable_resources:
             usage = 0
-            for act_id in self.tasks:
+            for act_id in self.tasks_list:
                 mode = rcpsp_sol.modes[act_id]
                 usage += self.mode_details[act_id][mode][res]
             if usage > self.resources_availability[res][0]:
@@ -2449,7 +2528,7 @@ class MultiskillRcpspProblem(Problem):
         # check the skills :
         if len(rcpsp_sol.schedule) != self.nb_tasks:
             return False
-        for task in self.tasks:
+        for task in self.tasks_list:
             mode = rcpsp_sol.modes[task]
             required_skills = {
                 s: self.mode_details[task][mode][s]
@@ -2526,7 +2605,7 @@ class MultiskillRcpspProblem(Problem):
             resource_usage = {}
             for res in self.resources_set:
                 resource_usage[res] = 0
-            for act_id in self.tasks:
+            for act_id in self.tasks_list:
                 starts = rcpsp_sol.schedule[act_id]["starts"]
                 ends = rcpsp_sol.schedule[act_id]["ends"]
                 mode = rcpsp_sol.modes[act_id]
@@ -2554,7 +2633,7 @@ class MultiskillRcpspProblem(Problem):
         # Check for non-renewable resource violation
         for res in self.non_renewable_resources:
             usage = 0
-            for act_id in self.tasks:
+            for act_id in self.tasks_list:
                 mode = rcpsp_sol.modes[act_id]
                 usage += self.mode_details[act_id][mode][res]
             if usage > self.resources_availability[res][0]:
@@ -3629,7 +3708,7 @@ def compute_skills_missing_problem(
     solution: Union[MultiskillRcpspSolution, PreemptiveMultiskillRcpspSolution],
 ):
     problems = []
-    for task in problem.tasks:
+    for task in problem.tasks_list:
         mode = solution.modes[task]
         required_skills = {
             s: problem.mode_details[task][mode][s]

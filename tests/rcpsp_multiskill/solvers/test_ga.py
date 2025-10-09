@@ -195,7 +195,7 @@ def test_alternating_ga_specific_mode_arity(random_seed):
     initial_resource_permutation = [
         i
         for i in range(
-            len(msrcpsp_problem.tasks) * len(msrcpsp_problem.employees.keys())
+            len(msrcpsp_problem.tasks_list) * len(msrcpsp_problem.employees.keys())
         )
     ]
     msrcpsp_problem.set_fixed_priority_worker_per_task_from_permutation(
