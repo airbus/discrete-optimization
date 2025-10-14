@@ -13,10 +13,14 @@ from typing import TYPE_CHECKING, Any, Optional
 import numpy as np
 from numpy import typing as npt
 
-from discrete_optimization.generic_tools.do_problem import RobustProblem, Solution
+from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
+from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
+from discrete_optimization.generic_tools.do_problem import RobustProblem
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
     from discrete_optimization.rcpsp.problem import RcpspProblem
+
+Task = Hashable
 
 
 class TaskDetails:
@@ -25,7 +29,7 @@ class TaskDetails:
         self.end = end
 
 
-class RcpspSolution(Solution):
+class RcpspSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
     """Solution to RcpspProblem problems.
 
     Attributes:
@@ -63,6 +67,8 @@ class RcpspSolution(Solution):
         fast: boolean indicating if we us the fast functions to generate schedule from permutation.
 
     """
+
+    problem: RcpspProblem
 
     def __init__(
         self,
@@ -341,7 +347,7 @@ class RcpspSolution(Solution):
             self._schedule_to_recompute = False
 
     def get_max_end_time(self) -> int:
-        return max([self.get_end_time(x) for x in self.rcpsp_schedule])
+        return self.rcpsp_schedule[self.problem.sink_task]["end_time"]
 
     def get_start_time(self, task: Hashable) -> int:
         return self.rcpsp_schedule[task]["start_time"]
@@ -359,6 +365,10 @@ class RcpspSolution(Solution):
         return list(range(self.get_start_time(task), self.get_end_time(task)))
 
     def get_mode(self, task: Hashable) -> int:
+        if task in (self.problem.source_task, self.problem.sink_task):
+            # should have only 1 mode (no particular meaning)
+            return next(iter(self.problem.mode_details[task]))
+
         return self.rcpsp_modes[self.problem.index_task_non_dummy[task]]
 
     def __hash__(self) -> int:

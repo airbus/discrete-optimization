@@ -3,10 +3,10 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
     LnsCpMznGenericRcpspSolver,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_builder import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder import (
     mix,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper

@@ -4,10 +4,10 @@
 import logging
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
     LnsCpMznGenericRcpspSolver,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools import (
     ParamsConstraintBuilder,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import TimerStopper

@@ -3,24 +3,51 @@
 #  LICENSE file in the root directory of this source tree.
 #  Job shop model, this was initially implemented in a course material
 #  here https://github.com/erachelson/seq_dec_mak/blob/main/scheduling_newcourse/correction/nb2_jobshopsolver.py
+from __future__ import annotations
+
+from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    EncodingRegister,
+    ModeOptim,
+    ObjectiveDoc,
+    ObjectiveHandling,
+    ObjectiveRegister,
+    Solution,
+    TypeObjective,
+)
+
+Task = tuple[int, int]
+"""Task representation: (job index, subjob index)."""
 
 
-from discrete_optimization.generic_tools.do_problem import *
+class JobShopSolution(SchedulingSolution[Task]):
+    problem: JobShopProblem
 
-
-class JobShopSolution(Solution):
-    def __init__(
-        self, problem: "JobShopProblem", schedule: list[list[tuple[int, int]]]
-    ):
+    def __init__(self, problem: JobShopProblem, schedule: list[list[tuple[int, int]]]):
         # For each job and sub-job, start and end time given as tuple of int.
         self.problem = problem
         self.schedule = schedule
 
-    def copy(self) -> "Solution":
+    def copy(self) -> JobShopSolution:
         return JobShopSolution(problem=self.problem, schedule=self.schedule)
 
-    def change_problem(self, new_problem: "Problem") -> None:
+    def change_problem(self, new_problem: JobShopProblem) -> None:
         self.problem = new_problem
+
+    def get_end_time(self, task: Task) -> int:
+        j, k = task
+        return self.schedule[j][k][1]
+
+    def get_start_time(self, task: Task) -> int:
+        j, k = task
+        return self.schedule[j][k][0]
+
+    def get_max_end_time(self) -> int:
+        return max(job[-1][1] for job in self.schedule)
 
 
 class Subjob:
@@ -33,7 +60,7 @@ class Subjob:
         self.processing_time = processing_time
 
 
-class JobShopProblem(Problem):
+class JobShopProblem(SchedulingProblem[Task], PrecedenceProblem[Task]):
     n_jobs: int
     n_machines: int
     list_jobs: list[list[Subjob]]
@@ -66,8 +93,25 @@ class JobShopProblem(Problem):
                 sum(subjob.processing_time for subjob in job) for job in self.list_jobs
             )
 
+    @property
+    def tasks_list(self) -> list[Task]:
+        return [(j, k) for j, job in enumerate(self.list_jobs) for k in range(len(job))]
+
+    def get_precedence_constraints(self) -> dict[Task, list[Task]]:
+        return {
+            (j, k): [(j, k + 1)] if k + 1 < len(job) else []
+            for j, job in enumerate(self.list_jobs)
+            for k in range(len(job))
+        }
+
+    def get_makespan_upper_bound(self) -> int:
+        return self.horizon
+
+    def get_last_tasks(self) -> list[Task]:
+        return [(j, len(job) - 1) for j, job in enumerate(self.list_jobs)]
+
     def evaluate(self, variable: JobShopSolution) -> dict[str, float]:
-        return {"makespan": max(x[-1][1] for x in variable.schedule)}
+        return {"makespan": variable.get_max_end_time()}
 
     def satisfy(self, variable: JobShopSolution) -> bool:
         for m in self.job_per_machines:

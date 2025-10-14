@@ -211,6 +211,27 @@ class CpSolver(SolverDO):
         **args: Any,
     ) -> ResultStorage: ...
 
+    @abstractmethod
+    def minimize_variable(self, var: Any) -> None:
+        """Set the cp solver objective as minimizing `var`."""
+        pass
+
+    @abstractmethod
+    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
+        """Add constraint of bound type on an integer variable (or expression) of the underlying cp model.
+
+        `var` must compare to `value` according to `value`.
+
+        Args:
+            var:
+            sign:
+            value:
+
+        Returns:
+
+        """
+        ...
+
 
 class MinizincCpSolver(CpSolver):
     """CP solver wrapping a minizinc solver."""
@@ -223,6 +244,13 @@ class MinizincCpSolver(CpSolver):
     instance: Optional[Instance] = None
     silent_solve_error: bool = False
     """If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned."""
+
+    def minimize_variable(self, var: Any) -> None:
+        """Set the cp solver objective as minimizing `var`."""
+        raise NotImplementedError()
+
+    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
+        raise NotImplementedError()
 
     def solve(
         self,

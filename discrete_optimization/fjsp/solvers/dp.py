@@ -204,7 +204,7 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
                     start = max(start, schedules[(j[0], j[1] - 1)][1])
                 end = start + self.duration[t_number][choice]
                 schedule_per_machine[m].append((start, end))
-                schedules[j] = (start, end, m)
+                schedules[j] = (start, end, m, choice)
         sol = FJobShopSolution(
             problem=self.problem,
             schedule=[
@@ -224,7 +224,7 @@ class DpFjspSolver(DpSolver, WarmstartMixin):
             for i in range(len(self.jobs))
         ]
         sorted_flatten = sorted(flatten_schedule, key=lambda x: (x[1][0], x[1][1]))
-        for index, (start, end, machine) in sorted_flatten:
+        for index, (start, end, machine, i_opt) in sorted_flatten:
             m_ind = self.machines[index].index(machine)
             initial_solution.append(self.transitions[(index, m_ind)])
         initial_solution.append(self.transitions["finish_"])

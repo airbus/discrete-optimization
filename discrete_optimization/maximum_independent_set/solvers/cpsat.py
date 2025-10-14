@@ -2,7 +2,6 @@ import logging
 from typing import Any, Optional
 
 import tqdm
-from ortools.sat.python import cp_model
 from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.do_problem import (
@@ -31,7 +30,8 @@ class CpSatMisSolver(MisSolver, OrtoolsCpSatSolver, WarmstartMixin):
         self.variables = None
 
     def init_model(self, **kwargs):
-        model = cp_model.CpModel()
+        super().init_model(**kwargs)
+        model = self.cp_model
         in_set = [
             model.NewBoolVar(f"in_set_{i}") for i in range(self.problem.number_nodes)
         ]
@@ -73,7 +73,6 @@ class CpSatMisSolver(MisSolver, OrtoolsCpSatSolver, WarmstartMixin):
                 )
             )
         model.Maximize(objective)
-        self.cp_model = model
         self.variables = {"in_set": in_set, "objective": objective}
 
     def set_warm_start(self, solution: MisSolution) -> None:

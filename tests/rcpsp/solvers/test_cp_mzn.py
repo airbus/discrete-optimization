@@ -1,7 +1,6 @@
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-import logging
 import random
 import sys
 
@@ -9,7 +8,6 @@ import numpy as np
 import pytest
 
 from discrete_optimization.datasets import get_data_home
-from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
@@ -19,7 +17,6 @@ from discrete_optimization.generic_tools.do_problem import (
     MethodAggregating,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
     result_storage_to_pareto_front,
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
@@ -39,15 +36,6 @@ from discrete_optimization.rcpsp.solvers.cp_mzn import (
 )
 from discrete_optimization.rcpsp.solvers.cp_mzn_multiscenario import (
     CpMultiscenarioRcpspSolver,
-)
-from discrete_optimization.rcpsp.solvers.cpsat import (
-    CpSatCumulativeResourceRcpspSolver,
-    CpSatRcpspSolver,
-    CpSatResourceRcpspSolver,
-)
-from discrete_optimization.rcpsp.solvers.pile import (
-    PileCalendarRcpspSolver,
-    PileRcpspSolver,
 )
 from discrete_optimization.rcpsp.utils import kendall_tau_similarity, plot_task_gantt
 
@@ -115,155 +103,6 @@ def test_cp_rcp(optimisation_level):
     assert rcpsp_problem.satisfy(solution)
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
-
-
-@pytest.mark.parametrize(
-    "model",
-    ["j301_1.sm", "j1010_1.mm"],
-)
-def test_ortools(model):
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=100)
-    solution, fit = result_storage.get_best_solution_fit()
-    solution_rebuilt = RcpspSolution(
-        problem=rcpsp_problem,
-        rcpsp_permutation=solution.rcpsp_permutation,
-        rcpsp_modes=solution.rcpsp_modes,
-    )
-    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
-    assert rcpsp_problem.satisfy(solution)
-    rcpsp_problem.plot_ressource_view(solution)
-    plot_task_gantt(rcpsp_problem, solution)
-
-    # test warm start
-    start_solution = (
-        PileRcpspSolver(problem=rcpsp_problem).solve().get_best_solution_fit()[0]
-    )
-
-    # first solution is not start_solution
-    assert result_storage[0][0].rcpsp_schedule != start_solution.rcpsp_schedule
-
-    # warm start at first solution
-    solver.set_warm_start(start_solution)
-    # force first solution to be the hinted one
-    result_storage = solver.solve(
-        time_limit=100,
-        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
-    )
-    assert result_storage[0][0].rcpsp_schedule == start_solution.rcpsp_schedule
-
-
-@pytest.mark.parametrize(
-    "model",
-    ["j301_1.sm", "j1010_1.mm"],
-)
-def test_ortools_with_calendar_resource(model):
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    for resource in rcpsp_problem.resources:
-        rcpsp_problem.resources[resource] = np.array(
-            rcpsp_problem.get_resource_availability_array(resource)
-        )
-        rcpsp_problem.resources[resource][10:15] = 0
-    rcpsp_problem.is_calendar = True
-    rcpsp_problem.update_functions()
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=100)
-    solution, fit = result_storage.get_best_solution_fit()
-    solution_rebuilt = RcpspSolution(
-        problem=rcpsp_problem,
-        rcpsp_permutation=solution.rcpsp_permutation,
-        rcpsp_modes=solution.rcpsp_modes,
-    )
-    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
-    assert rcpsp_problem.satisfy(solution)
-    rcpsp_problem.plot_ressource_view(solution)
-    plot_task_gantt(rcpsp_problem, solution)
-
-    # test warm start
-    start_solution = (
-        PileCalendarRcpspSolver(problem=rcpsp_problem)
-        .solve()
-        .get_best_solution_fit()[0]
-    )
-
-    # first solution is not start_solution
-    assert result_storage[0][0].rcpsp_schedule != start_solution.rcpsp_schedule
-
-    # warm start at first solution
-    solver.set_warm_start(start_solution)
-    # force first solution to be the hinted one
-    result_storage = solver.solve(
-        time_limit=100,
-        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
-    )
-    assert result_storage[0][0].rcpsp_schedule == start_solution.rcpsp_schedule
-
-
-@pytest.mark.parametrize(
-    "model",
-    ["j301_1.sm", "j1010_1.mm"],
-)
-def test_ortools_cumulativeresource_optim(model):
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatCumulativeResourceRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=50)
-    solution, fit = result_storage.get_best_solution_fit()
-    assert rcpsp_problem.satisfy(solution)
-
-
-@pytest.mark.parametrize(
-    "model",
-    ["j301_1.sm", "j1010_1.mm"],
-)
-def test_ortools_resource_optim(model):
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatResourceRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=50)
-    solution, fit = result_storage.get_best_solution_fit()
-    assert rcpsp_problem.satisfy(solution)
-
-
-def test_ortools_with_cb(caplog, random_seed):
-    model = "j1201_1.sm"
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
-
-    class VariablePrinterCallback(Callback):
-        def __init__(self) -> None:
-            super().__init__()
-            self.nb_solution = 0
-
-        def on_step_end(self, step: int, res: ResultStorage, solver: CpSatRcpspSolver):
-            self.nb_solution += 1
-            sol: RcpspSolution
-            sol, fit = res.list_solution_fits[-1]
-            logging.debug(f"Solution #{self.nb_solution}:")
-            logging.debug(sol.rcpsp_schedule)
-            logging.debug(sol.rcpsp_modes)
-
-    callbacks = [VariablePrinterCallback(), NbIterationStopper(1)]
-
-    with caplog.at_level(logging.DEBUG):
-        result_storage = solver.solve(callbacks=callbacks, time_limit=20)
-
-    assert "Solution #1" in caplog.text
-    assert (
-        "stopped by user callback" in caplog.text
-    )  # stopped by callback instead of ortools timer
-    # only true if at least one solution found before 20s (ortools timer limit)
 
 
 def test_cp_sm_intermediate_solution():

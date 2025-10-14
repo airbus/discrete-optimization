@@ -17,10 +17,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import (
-    CpModel,
-    OrtoolsCpSatSolver,
-)
+from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 
 
 class ModelingBinPack(Enum):
@@ -69,7 +66,7 @@ class CpSatBinPackSolver(OrtoolsCpSatSolver, WarmstartMixin):
             self.modeling = args["modeling"]
 
     def init_model_binary(self, **args: Any):
-        self.cp_model = CpModel()
+        super().init_model(**args)
         variables_allocation = {}
         used_bin = {}
         upper_bound = args.get("upper_bound", self.problem.nb_items)
@@ -115,7 +112,7 @@ class CpSatBinPackSolver(OrtoolsCpSatSolver, WarmstartMixin):
         self.cp_model.Minimize(sum([used_bin[bin] for bin in used_bin]))
 
     def init_model_scheduling(self, **args: Any):
-        self.cp_model = CpModel()
+        super().init_model(**args)
         weights = [
             self.problem.list_items[i].weight for i in range(self.problem.nb_items)
         ]

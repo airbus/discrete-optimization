@@ -1,6 +1,8 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import itertools
 import logging
 from collections.abc import Hashable
@@ -10,6 +12,15 @@ from typing import Optional
 import networkx as nx
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
+from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -30,10 +41,18 @@ from discrete_optimization.rcpsp.problem import (
 logger = logging.getLogger(__name__)
 
 
-class AllocSchedulingSolution(Solution):
+Task = Hashable
+UnaryResource = Hashable
+
+
+class AllocSchedulingSolution(
+    SchedulingSolution[Task], AllocationSolution[Task, UnaryResource]
+):
+    problem: AllocSchedulingProblem
+
     def __init__(
         self,
-        problem: "AllocSchedulingProblem",
+        problem: AllocSchedulingProblem,
         schedule: np.ndarray,
         allocation: np.ndarray,
     ):
@@ -51,6 +70,19 @@ class AllocSchedulingSolution(Solution):
     def change_problem(self, new_problem: "Problem") -> None:
         self.problem = new_problem
 
+    def get_end_time(self, task: Task) -> int:
+        i_task = self.problem.tasks_to_index[task]
+        return int(self.schedule[i_task, 1])
+
+    def get_start_time(self, task: Task) -> int:
+        i_task = self.problem.tasks_to_index[task]
+        return int(self.schedule[i_task, 0])
+
+    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        i_task = self.problem.tasks_to_index[task]
+        i_team = self.problem.teams_to_index[unary_resource]
+        return int(self.allocation[i_task]) == i_team
+
 
 class TasksDescription:
     def __init__(self, duration_task: int, resource_consumption: dict[str, int] = None):
@@ -60,23 +92,27 @@ class TasksDescription:
             self.resource_consumption = {}
 
 
-class AllocSchedulingProblem(Problem):
+class AllocSchedulingProblem(
+    SchedulingProblem[Task],
+    AllocationProblem[Task, UnaryResource],
+    PrecedenceProblem[Task],
+):
     def __init__(
         self,
-        team_names: list[Hashable],
+        team_names: list[UnaryResource],
         calendar_team: dict[
-            Hashable, list[tuple[int, int]]
+            UnaryResource, list[tuple[int, int]]
         ],  # List of available slots per team.
         horizon: int,
-        tasks_list: list[Hashable],
-        tasks_data: dict[Hashable, TasksDescription],
-        same_allocation: list[set[Hashable]],
-        precedence_constraints: dict[Hashable, set[Hashable]],
-        available_team_for_activity: dict[Hashable, set[Hashable]],
-        start_window: dict[Hashable, tuple[Optional[int], Optional[int]]],
-        end_window: dict[Hashable, tuple[Optional[int], Optional[int]]],
-        original_start: dict[Hashable, int],
-        original_end: dict[Hashable, int],
+        tasks_list: list[Task],
+        tasks_data: dict[Task, TasksDescription],
+        same_allocation: list[set[Task]],
+        precedence_constraints: dict[Task, set[Task]],
+        available_team_for_activity: dict[Task, set[UnaryResource]],
+        start_window: dict[Task, tuple[Optional[int], Optional[int]]],
+        end_window: dict[Task, tuple[Optional[int], Optional[int]]],
+        original_start: dict[Task, int],
+        original_end: dict[Task, int],
         resources_list: list[str] = None,
         resources_capacity: dict[str, int] = None,
         horizon_start_shift: Optional[int] = 0,
@@ -113,6 +149,25 @@ class AllocSchedulingProblem(Problem):
         self.resources_list = resources_list
         self.resources_capacity = resources_capacity
         self.horizon_start_shift = horizon_start_shift
+        self.compatible_teams_per_activity = self.compatible_teams_all_activity()
+
+    @property
+    def unary_resources_list(self) -> list[UnaryResource]:
+        return self.team_names
+
+    def get_precedence_constraints(self) -> dict[Task, set[Task]]:
+        return self.precedence_constraints
+
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        return unary_resource in self.compatible_teams_per_activity[task]
+
+    def get_makespan_lower_bound(self) -> int:
+        return max(int(self.get_lb_end_window(t)) for t in self.tasks_list)
+
+    def get_makespan_upper_bound(self) -> int:
+        return max(int(self.get_ub_end_window(t)) for t in self.tasks_list)
 
     def set_objective_handling(self, objective_handling: ObjectiveHandling):
         self.objective_handling = objective_handling
@@ -130,7 +185,6 @@ class AllocSchedulingProblem(Problem):
         )
 
     def compute_predecessors(self):
-        self.successors = self.precedence_constraints
         self.predecessors = {}
         for t in self.precedence_constraints:
             for succ in self.precedence_constraints[t]:
@@ -485,6 +539,7 @@ def full_satisfy(
     solution: AllocSchedulingSolution,
     partial_solution: bool = False,
 ) -> bool:
+    is_satisfied = True
     for func in [
         satisfy_all_done,
         satisfy_precedence,
@@ -498,18 +553,8 @@ def full_satisfy(
             problem=problem, solution=solution, partial_solution=partial_solution
         ):
             logger.warning(func, " not satisfied !!")
-    return all(
-        func(problem=problem, solution=solution, partial_solution=partial_solution)
-        for func in [
-            satisfy_all_done,
-            satisfy_precedence,
-            satisfy_available_team,
-            satisfy_same_allocation,
-            satisfy_time_window,
-            satisfy_calendars,
-            satisfy_overlap_teams,
-        ]
-    )
+            is_satisfied = False
+    return is_satisfied
 
 
 def satisfy_detailed(

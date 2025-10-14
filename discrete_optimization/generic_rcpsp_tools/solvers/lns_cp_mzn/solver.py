@@ -9,14 +9,14 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools import (
     build_graph_rcpsp_object,
 )
 from discrete_optimization.generic_rcpsp_tools.solvers import GenericRcpspSolver
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_builder import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder import (
     OptionNeighborRandom,
     build_neighbor_mixing_cut_parts,
     build_neighbor_mixing_methods,
     build_neighbor_random,
     mix_both,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools import (
     BasicConstraintBuilder,
     ConstraintHandlerScheduling,
     NeighborBuilderMix,
@@ -25,7 +25,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.neighbor_tools imp
     NeighborRandomAndNeighborGraph,
     ParamsConstraintBuilder,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp.solution_repair import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair import (
     NeighborRepairProblems,
 )
 from discrete_optimization.generic_rcpsp_tools.solvers.ls import (

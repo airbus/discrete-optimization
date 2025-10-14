@@ -87,7 +87,7 @@ class FjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         )
         constraints = []
         for k in keys:
-            st, end, machine = sol.schedule[k[0]][k[1]]
+            st, end, machine, i_opt = sol.schedule[k[0]][k[1]]
             constraints.append(
                 solver.cp_model.Add(solver.variables["starts"][k] <= st + 20)
             )
@@ -133,7 +133,7 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         keys_part, keys = self.neighbor_builder.find_subtasks(current_solution=sol)
         constraints = []
         for k in keys:
-            st, end, machine = sol.schedule[k[0]][k[1]]
+            st, end, machine, i_opt = sol.schedule[k[0]][k[1]]
             constraints.append(
                 solver.cp_model.Add(solver.variables["starts"][k] <= st + 2)
             )

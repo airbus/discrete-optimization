@@ -5,8 +5,6 @@
 import logging
 from typing import Any, Optional
 
-from ortools.sat.python.cp_model import CpModel
-
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
@@ -101,7 +99,8 @@ class CpSatTspSolver(OrtoolsCpSatSolver, TspSolver, WarmstartMixin):
         )
 
     def init_model(self, **args: Any) -> None:
-        model = CpModel()
+        super().init_model(**args)
+        model = self.cp_model
         num_nodes = self.problem.node_count
         all_nodes = range(num_nodes)
         obj_vars = []
@@ -124,4 +123,3 @@ class CpSatTspSolver(OrtoolsCpSatSolver, TspSolver, WarmstartMixin):
             )
         model.minimize(sum(obj_vars[i] * obj_coeffs[i] for i in range(len(obj_vars))))
         self.variables["arc_literals"] = arc_literals
-        self.cp_model = model

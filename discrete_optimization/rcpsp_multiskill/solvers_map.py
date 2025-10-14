@@ -5,7 +5,7 @@
 from discrete_optimization.generic_rcpsp_tools.solvers.gphh import (
     GphhGenericRcpspSolver,
 )
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
     LnsCpMznGenericRcpspSolver,
 )
 from discrete_optimization.generic_rcpsp_tools.solvers.ls import LsGenericRcpspSolver

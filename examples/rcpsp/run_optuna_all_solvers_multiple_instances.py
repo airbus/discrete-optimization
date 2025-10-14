@@ -15,7 +15,7 @@ from collections import defaultdict
 from os.path import basename
 from typing import Any
 
-from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp import (
+from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn import (
     LnsCpMznGenericRcpspSolver,
 )
 from discrete_optimization.generic_tools.cp_tools import (

@@ -34,7 +34,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
     CallbackList,
 )
-from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import (
+    CpSolver,
+    ParametersCp,
+    SignEnum,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
@@ -142,6 +146,25 @@ class CpmpySolver(CpSolver):
         else:
             self.solver_name = solver_name
         self.cb_object: _CpmpyCbClass = None
+
+    def minimize_variable(self, var: Any) -> None:
+        self.model.minimize(var)
+
+    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
+        if sign == SignEnum.LEQ:
+            cstr = var <= value
+        elif sign == SignEnum.UEQ:
+            cstr = var >= value
+        elif sign == SignEnum.EQUAL:
+            cstr = var == value
+        elif sign == SignEnum.LESS:
+            cstr = var < value
+        elif sign == SignEnum.UP:
+            cstr = var > value
+        else:
+            raise NotImplementedError(sign)
+        self.model.add(cstr)
+        return [cstr]
 
     def create_callback_function(self, callback: Callback):
         self.cb_object = _CpmpyCbClass(do_solver=self, callback=callback)

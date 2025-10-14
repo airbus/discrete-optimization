@@ -13,13 +13,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
+from discrete_optimization.generic_tasks_tools.multimode import MultimodeProblem
+from discrete_optimization.generic_tasks_tools.precedence import PrecedenceProblem
+from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
     ObjectiveDoc,
     ObjectiveHandling,
     ObjectiveRegister,
-    Problem,
     Solution,
     TupleFitness,
     TypeAttribute,
@@ -31,7 +33,7 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast,
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
-from discrete_optimization.rcpsp.solution import RcpspSolution
+from discrete_optimization.rcpsp.solution import RcpspSolution, Task
 from discrete_optimization.rcpsp.special_constraints import (
     PairModeConstraint,
     SpecialConstraintsDescription,
@@ -46,7 +48,9 @@ class ScheduleGenerationScheme(Enum):
     PARALLEL_SGS = 1
 
 
-class RcpspProblem(Problem):
+class RcpspProblem(
+    MultimodeProblem[Task], SchedulingProblem[Task], PrecedenceProblem[Task]
+):
     """
 
     Attributes:
@@ -121,8 +125,11 @@ class RcpspProblem(Problem):
         else:
             self.name_task = name_task
         if tasks_list is None:
-            self.tasks_list = list(self.mode_details.keys())
+            self.tasks_list = list(self.mode_details)
         else:
+            assert set(tasks_list) == set(self.mode_details), (
+                "tasks_list must contain same ids as mode_details"
+            )
             self.tasks_list = tasks_list
         self.n_jobs = len(self.mode_details.keys())
         self.n_jobs_non_dummy = self.n_jobs - 2
@@ -152,10 +159,6 @@ class RcpspProblem(Problem):
         self.index_task_non_dummy = {
             self.tasks_list_non_dummy[i]: i for i in range(self.n_jobs_non_dummy)
         }
-        self.max_number_of_mode = max(
-            [len(self.mode_details[key1].keys()) for key1 in self.mode_details.keys()]
-        )
-        self.is_multimode = self.max_number_of_mode > 1
         self.is_calendar = False
         if any(isinstance(self.resources[res], Iterable) for res in self.resources):
             self.is_calendar = (
@@ -221,6 +224,18 @@ class RcpspProblem(Problem):
         self.relax_the_start_at_end = relax_the_start_at_end
         self.fixed_permutation = fixed_permutation
         self.fixed_modes = fixed_modes
+
+    def get_task_modes(self, task: Task) -> set[int]:
+        return set(self.mode_details[task])
+
+    def get_last_tasks(self) -> list[Task]:
+        return [self.sink_task]
+
+    def get_precedence_constraints(self) -> dict[Task, Iterable[Task]]:
+        return self.successors
+
+    def get_makespan_upper_bound(self) -> int:
+        return self.horizon
 
     def update_functions(self) -> None:
         (
