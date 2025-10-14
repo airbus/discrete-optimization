@@ -8,6 +8,7 @@ Results can be viewed on optuna-dashboard with:
     optuna-dashboard optuna-journal.log
 
 """
+
 import logging
 from collections import defaultdict
 from typing import Any

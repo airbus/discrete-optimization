@@ -399,7 +399,9 @@ class MultidimensionalKnapsackProblem(Problem):
         objectives = self.evaluate(kp_sol)
         return objectives
 
-    def evaluate(self, knapsack_solution: MultidimensionalKnapsackSolution) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
+    def evaluate(
+        self, knapsack_solution: MultidimensionalKnapsackSolution
+    ) -> dict[str, float]:  # type: ignore  # avoid isinstance checks for efficiency
         if knapsack_solution.value is None or self.force_recompute_values:
             val = self.evaluate_value(knapsack_solution)
         else:

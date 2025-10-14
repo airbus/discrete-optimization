@@ -130,7 +130,7 @@ def test_cpsat_relaxed_params(
             ObjectivesEnum.MAKESPAN,
             ObjectivesEnum.NB_DONE_AC,
         ],
-        **kwargs
+        **kwargs,
     )
     # solve + cb
     parameters_cp = ParametersCp.default()

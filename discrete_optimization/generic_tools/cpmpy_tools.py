@@ -134,7 +134,6 @@ class CpmpySolver(CpSolver):
         solver_name: Optional[str] = None,
         **kwargs: Any,
     ):
-
         super().__init__(
             problem, params_objective_function=params_objective_function, **kwargs
         )

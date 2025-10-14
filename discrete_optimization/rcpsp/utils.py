@@ -57,8 +57,7 @@ def compute_resource_consumption(
                 consumptions[
                     ir,
                     rcpsp_sol.rcpsp_schedule[act_id]["start_time"]
-                    + 1 : rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
-                    + 1,
+                    + 1 : rcpsp_sol.rcpsp_schedule[act_id]["end_time"] + 1,
                 ] += use_ir
             else:
                 consumptions[
@@ -357,12 +356,12 @@ def compute_schedule_per_resource_individual(
                     array_ressource_usage[r]["total_activity"][resource] += (
                         end_time - start_time
                     )
-                    array_ressource_usage[r]["activity_last_n_hours"][
-                        :, resource
-                    ] = np.convolve(
-                        array_ressource_usage[r]["binary_activity"][:, resource],
-                        np.array([1] * nhour + [0] + [0] * nhour),
-                        mode="same",
+                    array_ressource_usage[r]["activity_last_n_hours"][:, resource] = (
+                        np.convolve(
+                            array_ressource_usage[r]["binary_activity"][:, resource],
+                            np.array([1] * nhour + [0] + [0] * nhour),
+                            mode="same",
+                        )
                     )
                     array_ressource_usage[r]["boxes_time"] += [
                         [
@@ -489,7 +488,7 @@ def intersect(i1: Sequence[int], i2: Sequence[int]) -> Optional[list[int]]:
 
 
 def all_diff_start_time(
-    rcpsp_sols: tuple[RcpspSolution, RcpspSolution]
+    rcpsp_sols: tuple[RcpspSolution, RcpspSolution],
 ) -> dict[Hashable, int]:
     sol1 = rcpsp_sols[0]
     sol2 = rcpsp_sols[1]
@@ -565,7 +564,7 @@ def create_fake_tasks(rcpsp_problem: RcpspProblem) -> list[dict[str, int]]:
 
 
 def get_max_time_solution(
-    solution: Union[PreemptiveRcpspSolution, RcpspSolution]
+    solution: Union[PreemptiveRcpspSolution, RcpspSolution],
 ) -> int:
     if isinstance(solution, PreemptiveRcpspSolution):
         max_time = max(

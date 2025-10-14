@@ -111,7 +111,7 @@ def run_toulbar_lns_manual():
             k=int(0.25 * color_problem.number_of_nodes),
         )
         text = ",".join(
-            f"{index}={current_sol.colors[index-1]}"
+            f"{index}={current_sol.colors[index - 1]}"
             for index in random_indexes
             if current_sol.colors[index - 1] < max_
         )

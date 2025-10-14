@@ -889,7 +889,6 @@ def test_suggest_with_optuna_with_list():
 
 def test_suggest_with_optuna_with_list_subsolvers_wo_replacement():
     def objective(trial: optuna.Trial) -> float:
-
         # restrict some hyperparameters
         kwargs_by_name_dummysolver = {
             "coeff": dict(low=1),

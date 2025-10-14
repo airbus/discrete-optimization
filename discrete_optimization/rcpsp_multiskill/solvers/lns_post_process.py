@@ -360,7 +360,6 @@ def sgs_variant_preemptive(
                         t, t + problem.mode_details[task][modes_dict[task]]["duration"]
                     )
                 ) and all(worker_avail_in_time[e][t] >= 1 for e in emp):
-
                     new_starting_time = t
                     break
             new_proposed_schedule[task] = {

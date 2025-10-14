@@ -122,8 +122,7 @@ class MilpSolver(SolverDO):
     model: Optional[Any]
 
     @abstractmethod
-    def init_model(self, **kwargs: Any) -> None:
-        ...
+    def init_model(self, **kwargs: Any) -> None: ...
 
     def retrieve_solutions(self, parameters_milp: ParametersMilp) -> ResultStorage:
         """Retrieve solutions found by internal solver.
@@ -197,8 +196,7 @@ class MilpSolver(SolverDO):
         callbacks: Optional[list[Callback]] = None,
         parameters_milp: Optional[ParametersMilp] = None,
         **kwargs: Any,
-    ) -> ResultStorage:
-        ...
+    ) -> ResultStorage: ...
 
     @abstractmethod
     def get_var_value_for_ith_solution(self, var: Any, i: int) -> float:
@@ -723,12 +721,16 @@ class MathOptCallback:
             # retrieve and store new solution
             get_var_value_for_current_solution = lambda var: cb_sol[var]
             if self.do_solver.has_quadratic_objective:
-                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_quadratic_expression().evaluate(
-                    cb_sol
+                get_obj_value_for_current_solution = (
+                    lambda: self.do_solver.model.objective.as_quadratic_expression().evaluate(
+                        cb_sol
+                    )
                 )
             else:
-                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_linear_expression().evaluate(
-                    cb_sol
+                get_obj_value_for_current_solution = (
+                    lambda: self.do_solver.model.objective.as_linear_expression().evaluate(
+                        cb_sol
+                    )
                 )
             sol = self.do_solver.retrieve_current_solution(
                 get_var_value_for_current_solution=get_var_value_for_current_solution,

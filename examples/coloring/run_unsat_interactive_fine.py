@@ -54,8 +54,8 @@ while not done:
         print(f"The problem was solved with status {solver.status_solver.value}.")
         if len(removed_constraints) > 0:
             print(
-                f"We removed {len(removed_constraints)} meta-constraint{'s' if len(removed_constraints)>0 else ''}: "
-                f"{ removed_constraints}"
+                f"We removed {len(removed_constraints)} meta-constraint{'s' if len(removed_constraints) > 0 else ''}: "
+                f"{removed_constraints}"
             )
         break
     else:

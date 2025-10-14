@@ -12,7 +12,6 @@ from discrete_optimization.maximum_independent_set.solvers.gurobi import GurobiM
 
 
 def quantum_generalQAOA():
-
     # we construct a little graph with 6 nodes and 8 edges
     # here the mis is {1,5,6}
 
@@ -51,7 +50,6 @@ def quantum_generalQAOA():
 
 
 def quantum_generalVQE():
-
     # we construct a little graph with 6 nodes and 8 edges
     # here the mis is {1,5,6}
 

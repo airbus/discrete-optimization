@@ -126,8 +126,7 @@ class TspSolution(Solution):
         self.permutation_from0 = list(self.permutation_from0)
 
 
-class Point:
-    ...
+class Point: ...
 
 
 class TspProblem(Problem):
@@ -166,12 +165,12 @@ class TspProblem(Problem):
 
     # for a given tsp kind of problem, you should provide a custom evaluate function, for now still abstract.
     @abstractmethod
-    def evaluate_function(self, var_tsp: TspSolution) -> tuple[Iterable[float], float]:
-        ...
+    def evaluate_function(
+        self, var_tsp: TspSolution
+    ) -> tuple[Iterable[float], float]: ...
 
     @abstractmethod
-    def evaluate_function_indexes(self, index_1: int, index_2: int) -> float:
-        ...
+    def evaluate_function_indexes(self, index_1: int, index_2: int) -> float: ...
 
     def evaluate_from_encoding(
         self, int_vector: Iterable[int], encoding_name: str

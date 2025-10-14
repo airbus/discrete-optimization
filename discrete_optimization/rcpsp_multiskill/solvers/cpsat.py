@@ -45,7 +45,6 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
     problem: MultiskillRcpspProblem
 
     def __init__(self, problem: Problem, **kwargs: Any):
-
         super().__init__(problem, **kwargs)
         self.variables = {}
 
@@ -201,14 +200,14 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
                     is_present_var[task][worker] = self.cp_model.NewBoolVar(
                         name=f"used_{task}_{worker}"
                     )
-                    opt_interval_var[task][
-                        worker
-                    ] = self.cp_model.NewOptionalIntervalVar(
-                        start=self.variables["base_variable"]["starts"][task],
-                        size=self.variables["base_variable"]["durations"][task],
-                        end=self.variables["base_variable"]["ends"][task],
-                        is_present=is_present_var[task][worker],
-                        name=f"opt_{task}_{worker}",
+                    opt_interval_var[task][worker] = (
+                        self.cp_model.NewOptionalIntervalVar(
+                            start=self.variables["base_variable"]["starts"][task],
+                            size=self.variables["base_variable"]["durations"][task],
+                            end=self.variables["base_variable"]["ends"][task],
+                            is_present=is_present_var[task][worker],
+                            name=f"opt_{task}_{worker}",
+                        )
                     )
                     skills_of_worker = self.problem.employees[
                         worker
@@ -223,10 +222,10 @@ class CpSatMultiskillRcpspSolver(OrtoolsCpSatSolver):
                                     worker
                                 ]
                             else:
-                                skills_used_var[task][worker][
-                                    s
-                                ] = self.cp_model.NewBoolVar(
-                                    name=f"skill_{task}_{worker}_{s}"
+                                skills_used_var[task][worker][s] = (
+                                    self.cp_model.NewBoolVar(
+                                        name=f"skill_{task}_{worker}_{s}"
+                                    )
                                 )
                     for s in skills_used_var[task][worker]:
                         self.cp_model.Add(

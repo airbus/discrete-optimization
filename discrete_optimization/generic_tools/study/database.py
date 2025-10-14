@@ -47,8 +47,7 @@ class Database(ABC):
     """
 
     @abstractmethod
-    def get_new_experiment_id(self) -> int:
-        ...
+    def get_new_experiment_id(self) -> int: ...
 
     @abstractmethod
     def store(self, xp: Experiment) -> None:

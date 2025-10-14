@@ -44,7 +44,6 @@ class KamisMisSolver(MisSolver):
     ]
 
     def init_model(self, **kwargs):
-
         t = time.time_ns()
         file = os.path.join(tmp_dir, f"file_{t}.graph")
         if not os.path.exists(tmp_dir):
@@ -77,7 +76,6 @@ class KamisMisSolver(MisSolver):
         self.current_file = file
 
     def solve(self, **kwargs) -> ResultStorage:
-
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         if folder_ is None:

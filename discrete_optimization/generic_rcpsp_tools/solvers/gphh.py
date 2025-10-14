@@ -350,7 +350,7 @@ class ParametersGphh:
         pset.addPrimitive(protected_div, 2)
         pset.addPrimitive(max_operator, 2)
         pset.addPrimitive(min_operator, 2)
-        pset.addPrimitive(operator.neg, 1),
+        (pset.addPrimitive(operator.neg, 1),)
         pset.addEphemeralConstant(lambda: random.uniform(-1, 1), float)
         pset.addEphemeralConstant(lambda: random.uniform(-1, 1), float)
         pset.addTerminal(1.0, float)

@@ -126,9 +126,9 @@ def add_fake_task_cp_data(
                 [fake_tasks_unit[i].get(res, 0) for i in range(n_fake_tasks_unit)]
                 for res in rcpsp_problem.employees_list
             ]
-            dict_to_add_in_instance[
-                "max_duration_fake_task_unit"
-            ] = max_duration_fake_task_unit
+            dict_to_add_in_instance["max_duration_fake_task_unit"] = (
+                max_duration_fake_task_unit
+            )
             dict_to_add_in_instance["n_fake_task_unit"] = n_fake_tasks_unit
             dict_to_add_in_instance["fakestart_unit"] = fakestart_unit
             dict_to_add_in_instance["fakedur_unit"] = fake_dur_unit
@@ -458,9 +458,9 @@ class CpMultiskillRcpspSolver(MinizincCpSolver):
         instance["add_objective_makespan"] = add_objective_makespan
         instance["ignore_sec_objective"] = ignore_sec_objective
         instance["include_cumulative_resource"] = include_cumulative_resource
-        instance[
-            "include_constraint_on_start_value"
-        ] = include_constraint_on_start_value
+        instance["include_constraint_on_start_value"] = (
+            include_constraint_on_start_value
+        )
         n_res = len(resources_list)
         keys = []
         if not no_ressource:
@@ -1199,9 +1199,9 @@ class CpPreemptiveMultiskillRcpspSolver(MinizincCpSolver):
                             )
                             intersection = skills_needed.intersection(skills_worker)
                             if len(intersection) > 0:
-                                usage[task_id][j][
-                                    self.employees_position[w]
-                                ] = intersection
+                                usage[task_id][j][self.employees_position[w]] = (
+                                    intersection
+                                )
 
         return PreemptiveMultiskillRcpspSolution(
             problem=self.problem,
@@ -1230,9 +1230,9 @@ class CpPartialPreemptiveMultiskillRcpspSolver(CpPreemptiveMultiskillRcpspSolver
         n_res = len(resources_list)
         keys = []
         instance["nb_preemptive"] = args.get("nb_preemptive", 2)
-        instance[
-            "include_constraint_on_start_value"
-        ] = include_constraint_on_start_value
+        instance["include_constraint_on_start_value"] = (
+            include_constraint_on_start_value
+        )
         self.nb_preemptive = instance["nb_preemptive"]
         keys += ["nb_preemptive"]
         instance["possibly_preemptive"] = args.get(

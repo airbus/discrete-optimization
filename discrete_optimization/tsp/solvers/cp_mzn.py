@@ -35,7 +35,7 @@ class CpTspSolver(MinizincCpSolver, TspSolver):
         cp_solver_name: CpSolverName = CpSolverName.CHUFFED,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         silent_solve_error: bool = False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

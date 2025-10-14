@@ -192,7 +192,9 @@ class IntegerHyperparameter(Hyperparameter):
             step = self.step
         if log is None:
             log = self.log
-        return trial.suggest_int(name=prefix + self.name, low=low, high=high, step=step, log=log, **kwargs)  # type: ignore
+        return trial.suggest_int(
+            name=prefix + self.name, low=low, high=high, step=step, log=log, **kwargs
+        )  # type: ignore
 
 
 @dataclass
@@ -336,7 +338,12 @@ class FloatHyperparameter(Hyperparameter):
                 low = high  # restrict range to a singleton {high}
 
         return trial.suggest_float(
-            name=prefix + self.name, low=low, high=high, log=log, step=step, **kwargs  # type: ignore
+            name=prefix + self.name,
+            low=low,
+            high=high,
+            log=log,
+            step=step,
+            **kwargs,  # type: ignore
         )
 
 
@@ -394,7 +401,9 @@ class CategoricalHyperparameter(Hyperparameter):
         elif not isinstance(choices, Mapping):
             choices = {c: c for c in choices}
 
-        label = trial.suggest_categorical(name=prefix + self.name, choices=choices.keys(), **kwargs)  # type: ignore
+        label = trial.suggest_categorical(
+            name=prefix + self.name, choices=choices.keys(), **kwargs
+        )  # type: ignore
         return choices[label]
 
 
@@ -924,7 +933,7 @@ class ListHyperparameter(Hyperparameter):
         list_hp = []
         for i in range(list_length):
             hp = self.hyperparameter_template.copy_and_update_attributes(
-                name=f"{self.hyperparameter_template.name}_{i+numbering_start}"
+                name=f"{self.hyperparameter_template.name}_{i + numbering_start}"
             )
             list_hp.append(hp.suggest_with_optuna(trial=trial, prefix=prefix, **kwargs))
         return list_hp
@@ -1112,5 +1121,4 @@ class SubBrickListWithoutReplacementHyperparameter(
         return False
 
 
-class TrialDropped(Exception):
-    ...
+class TrialDropped(Exception): ...

@@ -42,7 +42,9 @@ class KnapsackMutationSingleBitFlip(Mutation):
         s, m, f = self.mutate_and_compute_obj(solution)
         return s, m
 
-    def mutate_and_compute_obj(self, solution: KnapsackSolution) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(
+        self, solution: KnapsackSolution
+    ) -> tuple[KnapsackSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         n = len(solution.list_taken)
         i = random.randint(0, n - 1)
         move = SingleBitFlipMove(i, self.problem)
@@ -64,7 +66,9 @@ class KnapsackMutationSingleBitFlip(Mutation):
         return new_sol, move, obj
 
     @staticmethod
-    def build(knapsack_problem: KnapsackProblem, solution: Solution) -> "KnapsackMutatio.nSingleBitFlip":  # type: ignore # avoid isinstance checks for efficiency
+    def build(
+        knapsack_problem: KnapsackProblem, solution: Solution
+    ) -> "KnapsackMutatio.nSingleBitFlip":  # type: ignore # avoid isinstance checks for efficiency
         return KnapsackMutationSingleBitFlip(knapsack_problem)
 
 
@@ -105,7 +109,9 @@ class BitFlipMoveKP(LocalMove):
 
 class MutationKnapsack(Mutation):
     @staticmethod
-    def build(knapsack_problem: KnapsackProblem, solution: Solution) -> "MutationKnapsack":  # type: ignore # avoid isinstance checks for efficiency
+    def build(
+        knapsack_problem: KnapsackProblem, solution: Solution
+    ) -> "MutationKnapsack":  # type: ignore # avoid isinstance checks for efficiency
         return MutationKnapsack(knapsack_problem)
 
     def __init__(

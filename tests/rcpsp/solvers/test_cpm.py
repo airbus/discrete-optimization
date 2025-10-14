@@ -76,7 +76,6 @@ def test_cpm_sm():
             delayed = schedule[j]["start_time"] > cpm.map_node[j]._ESD
             if delayed:
                 for res, time, set_task in causes_of_delay[j]["res_t_other_task"]:
-
                     if time >= cpm.map_node[j]._LSD - 5:
                         if j not in graph_of_possible_conflicts:
                             graph_of_possible_conflicts.add_node(j)

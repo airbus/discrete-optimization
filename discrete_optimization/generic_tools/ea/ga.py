@@ -252,10 +252,8 @@ class Ga(SolverDO, WarmstartMixin):
         if (objective_weights is None) or (
             objective_weights is not None
             and (
-                (
-                    len(objective_weights) != len(self._objectives)
-                    and self._objective_handling == ObjectiveHandling.AGGREGATE
-                )
+                len(objective_weights) != len(self._objectives)
+                and self._objective_handling == ObjectiveHandling.AGGREGATE
             )
         ):
             logger.warning(

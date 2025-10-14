@@ -47,7 +47,7 @@ class GpdpBasedTspSolver(TspSolver, WarmstartMixin):
         self,
         callbacks: Optional[list[Callback]] = None,
         time_limit: Optional[float] = 100.0,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ResultStorage:
         if self.solver is None:
             self.init_model(time_limit=time_limit, **kwargs)

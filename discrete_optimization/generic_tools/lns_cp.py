@@ -201,7 +201,6 @@ class MznConstraintHandler(ConstraintHandler):
 
 
 class LnsCpMzn(BaseLnsCp):
-
     subsolver: MinizincCpSolver
     """Sub-solver used by this lns solver at each iteration."""
 

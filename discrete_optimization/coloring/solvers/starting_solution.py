@@ -54,7 +54,7 @@ class WithStartingSolutionColoringSolver(ColoringSolver):
             solution = result_store.get_best_solution()
             if solution is None:
                 raise RuntimeError(
-                    "greedy_solver.solve().get_best_solution() " "should not be None."
+                    "greedy_solver.solve().get_best_solution() should not be None."
                 )
             if not isinstance(solution, ColoringSolution):
                 raise RuntimeError(

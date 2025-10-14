@@ -710,8 +710,7 @@ class PreemptiveRcpspProblem(Problem):
                     ir,
                     rcpsp_sol.rcpsp_schedule[act_id][
                         "start_time"
-                    ] : rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
-                    + 1,
+                    ] : rcpsp_sol.rcpsp_schedule[act_id]["end_time"] + 1,
                 ] += self.mode_details[act_id][modes_dict[act_id]][
                     self.resources_list[ir]
                 ]
@@ -910,13 +909,11 @@ def generate_schedule_from_permutation_serial_sgs(
                             and t == end_t - 1
                         ):
                             for tt in range(end_t, new_horizon):
-                                resource_avail_in_time[res][
-                                    tt
-                                ] -= rcpsp_problem.mode_details[act_id][
-                                    modes_dict[act_id]
-                                ][
-                                    res
-                                ]
+                                resource_avail_in_time[res][tt] -= (
+                                    rcpsp_problem.mode_details[act_id][
+                                        modes_dict[act_id]
+                                    ][res]
+                                )
                                 if resource_avail_in_time[res][tt] < 0:
                                     unfeasible_non_renewable_resources = True
 
@@ -1000,10 +997,10 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                     ].get(res, 0)
                     if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
                         for tt in range(end_t, new_horizon):
-                            resource_avail_in_time[res][
-                                tt
-                            ] -= rcpsp_problem.mode_details[task][modes_dict[task]].get(
-                                res, 0
+                            resource_avail_in_time[res][tt] -= (
+                                rcpsp_problem.mode_details[task][modes_dict[task]].get(
+                                    res, 0
+                                )
                             )
                             if resource_avail_in_time[res][tt] < 0:
                                 unfeasible_non_renewable_resources = True
@@ -1106,12 +1103,10 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                             and t == end_t - 1
                         ):
                             for tt in range(end_t, new_horizon):
-                                resource_avail_in_time[res][
-                                    tt
-                                ] -= rcpsp_problem.mode_details[act_id][
-                                    modes_dict[act_id]
-                                ].get(
-                                    res, 0
+                                resource_avail_in_time[res][tt] -= (
+                                    rcpsp_problem.mode_details[act_id][
+                                        modes_dict[act_id]
+                                    ].get(res, 0)
                                 )
                                 if resource_avail_in_time[res][tt] < 0:
                                     unfeasible_non_renewable_resources = True
@@ -1172,9 +1167,9 @@ def compute_mean_resource_reserve(
                     ][mode][res]
                     if res in rcpsp_problem.non_renewable_resources and t == e - 1:
                         for tt in range(e, makespan):
-                            resource_avail_in_time[res][
-                                tt
-                            ] -= rcpsp_problem.mode_details[act_id][mode][res]
+                            resource_avail_in_time[res][tt] -= (
+                                rcpsp_problem.mode_details[act_id][mode][res]
+                            )
     mean_avail = {}
     for res in resource_avail_in_time:
         mean_avail[res] = np.mean(resource_avail_in_time[res])

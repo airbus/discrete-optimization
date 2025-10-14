@@ -19,7 +19,7 @@ def get_config_name(config: DictConfig) -> str:
         if NAME in config:
             return config[NAME]
         elif SOLVER in config:
-            return f"{config[SOLVER]}-{get_config_name({k: v for k,v in config.items() if k != SOLVER})}"
+            return f"{config[SOLVER]}-{get_config_name({k: v for k, v in config.items() if k != SOLVER})}"
         else:
             return "-".join(f"{k}-{get_config_name(v)}" for k, v in config.items())
     else:

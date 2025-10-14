@@ -179,7 +179,7 @@ class GphhKnapsackSolver(SolverDO):
         weight: int = 1,
         params_gphh: Optional[ParametersGphh] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

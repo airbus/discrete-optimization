@@ -72,7 +72,6 @@ class SgsWithoutArray:
         time_end: int,
         liberate: bool = True,
     ) -> None:
-
         for t in [k for k in sdict if time_start <= k < time_end]:
             sdict[t] += delta
         i = sdict.bisect_right(time_start)
@@ -161,7 +160,8 @@ class SgsWithoutArray:
                     else:
                         if (
                             self.get_available_from_absolute(
-                                sdict=resource_avail_in_time[res], time=current_min_time  # type: ignore
+                                sdict=resource_avail_in_time[res],
+                                time=current_min_time,  # type: ignore
                             )
                             < need
                         ):

@@ -45,7 +45,7 @@ def test_solvers_coloring(solver_class):
         method=solver_class,
         problem=coloring_problem,
         nb_color=nb_colors,
-        **solvers_map_coloring[solver_class][1]
+        **solvers_map_coloring[solver_class][1],
     )
     sol, fit = results.get_best_solution_fit()
 
@@ -87,7 +87,7 @@ def test_solvers_facility(solver_class):
     results = solve(
         method=solver_class,
         problem=facilityProblem,
-        **solvers_map_facility[solver_class][1]
+        **solvers_map_facility[solver_class][1],
     )
     sol, fit = results.get_best_solution_fit()
 
@@ -97,7 +97,6 @@ def test_solvers_facility(solver_class):
 )
 @pytest.mark.parametrize("solver_class", solvers_map_tsp)
 def test_solver_tsp(solver_class):
-
     p1 = Point2D(0, 0)
     p2 = Point2D(-1, 1)
     p3 = Point2D(1, -1)
@@ -117,7 +116,6 @@ def test_solver_tsp(solver_class):
 )
 @pytest.mark.parametrize("solver_class", solvers_map_knapsack)
 def test_solver_Knapsack(solver_class):
-
     max_capacity = 10
 
     i1 = Item(0, 4, 2)
@@ -130,7 +128,7 @@ def test_solver_Knapsack(solver_class):
     results = solve(
         method=solver_class,
         problem=knapsackProblem,
-        **solvers_map_knapsack[solver_class][1]
+        **solvers_map_knapsack[solver_class][1],
     )
     sol, fit = results.get_best_solution_fit()
 

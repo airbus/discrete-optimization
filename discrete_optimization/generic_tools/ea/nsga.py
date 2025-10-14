@@ -360,7 +360,6 @@ class Nsga(SolverDO, WarmstartMixin):
         return newind
 
     def solve(self, **kwargs: Any) -> ResultStorage:
-
         #  Define the statistics to collect at each generation
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("avg", np.mean, axis=0)

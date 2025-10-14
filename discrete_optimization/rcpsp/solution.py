@@ -475,11 +475,11 @@ def generate_schedule_from_permutation_serial_sgs(
                     ][modes_dict[act_id]][res]
                     if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
                         for tt in range(end_t, new_horizon):
-                            resource_avail_in_time[res][
-                                tt
-                            ] -= rcpsp_problem.mode_details[act_id][modes_dict[act_id]][
-                                res
-                            ]
+                            resource_avail_in_time[res][tt] -= (
+                                rcpsp_problem.mode_details[act_id][modes_dict[act_id]][
+                                    res
+                                ]
+                            )
                             if resource_avail_in_time[res][tt] < 0:
                                 unfeasible_non_renewable_resources = True
             activity_end_times[act_id] = end_t
@@ -573,17 +573,13 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
                     if pred in perm_extended:
                         respected = False
                         break
-                for (
-                    pred
-                ) in rcpsp_problem.special_constraints.dict_start_at_end_offset_reverse.get(
+                for pred in rcpsp_problem.special_constraints.dict_start_at_end_offset_reverse.get(
                     task_id, {}
                 ):
                     if pred in perm_extended:
                         respected = False
                         break
-                for (
-                    pred
-                ) in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
+                for pred in rcpsp_problem.special_constraints.dict_start_after_nunit_reverse.get(
                     task_id, {}
                 ):
                     if pred in perm_extended:
@@ -843,12 +839,10 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
                     ][modes_dict[act_id]].get(res, 0)
                     if res in rcpsp_problem.non_renewable_resources and t == end_t - 1:
                         for tt in range(end_t + 1, new_horizon):
-                            resource_avail_in_time[res][
-                                tt
-                            ] -= rcpsp_problem.mode_details[act_id][
-                                modes_dict[act_id]
-                            ].get(
-                                res, 0
+                            resource_avail_in_time[res][tt] -= (
+                                rcpsp_problem.mode_details[act_id][
+                                    modes_dict[act_id]
+                                ].get(res, 0)
                             )
                             if resource_avail_in_time[res][tt] < 0:
                                 unfeasible_non_renewable_resources = True

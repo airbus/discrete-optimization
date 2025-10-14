@@ -96,9 +96,9 @@ def parse_psplib(input_data: str) -> RcpspProblem:
         mode_details[int(task_id)][mode_id] = {}  # dict[int, dict[str, int]]
         mode_details[int(task_id)][mode_id]["duration"] = duration
         for i in range(n_resources):
-            mode_details[int(task_id)][mode_id][
-                list(resources.keys())[i]
-            ] = resources_usage[i]
+            mode_details[int(task_id)][mode_id][list(resources.keys())[i]] = (
+                resources_usage[i]
+            )
 
     return RcpspProblem(
         resources=resources,
@@ -159,9 +159,9 @@ def parse_patterson(input_data: str) -> RcpspProblem:
         horizon += duration
 
         for res in range(n_renewable_resources):
-            mode_details[int(task_id)][mode_id][
-                list(resources.keys())[res]
-            ] = parsed_values.pop(0)
+            mode_details[int(task_id)][mode_id][list(resources.keys())[res]] = (
+                parsed_values.pop(0)
+            )
 
         n_successors = parsed_values.pop(0)
         task_successors = []

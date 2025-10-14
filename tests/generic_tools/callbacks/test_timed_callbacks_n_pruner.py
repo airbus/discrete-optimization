@@ -98,7 +98,7 @@ def test_optuna_timed_callback_timed_pruner(random_seed):
                     report_time_unit=0.001,
                 )
             ],
-            **kwargs
+            **kwargs,
         ).get_best_solution_fit()
         return fit
 
@@ -145,7 +145,7 @@ def test_optuna_step_callback_step_pruner(random_seed):
                     report_time=False,
                 )
             ],
-            **kwargs
+            **kwargs,
         ).get_best_solution_fit()
         return fit
 

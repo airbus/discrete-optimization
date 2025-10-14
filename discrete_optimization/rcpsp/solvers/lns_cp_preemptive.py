@@ -55,7 +55,7 @@ class PostProLeftShift(PostProcessSolution):
         problem: PreemptiveRcpspProblem,
         params_objective_function: ParamsObjectiveFunction = None,
         do_ls: bool = False,
-        **kwargs
+        **kwargs,
     ):
         self.problem = problem
         self.params_objective_function = params_objective_function

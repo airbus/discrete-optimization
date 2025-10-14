@@ -102,9 +102,9 @@ class Hyperparametrizable:
             names = cls.get_hyperparameters_names()
         hyperparameters_by_names = cls.get_hyperparameters_by_name()
         return {
-            hyperparameters_by_names[name]
-            .name_in_kwargs: hyperparameters_by_names[name]
-            .default
+            hyperparameters_by_names[name].name_in_kwargs: hyperparameters_by_names[
+                name
+            ].default
             for name in names
         }
 
@@ -242,18 +242,18 @@ class Hyperparametrizable:
             # subbrickkwargs: add subbrick choice
             if isinstance(hyperparameter, SubBrickKwargsHyperparameter):
                 if hyperparameter.subbrick_hyperparameter is None:
-                    kwargs_for_optuna_suggestion[
-                        "subbrick"
-                    ] = hyperparameter.subbrick_cls
+                    kwargs_for_optuna_suggestion["subbrick"] = (
+                        hyperparameter.subbrick_cls
+                    )
                 elif (
                     hyperparameter.subbrick_hyperparameter
                     in suggested_and_fixed_hyperparameters
                 ):
-                    kwargs_for_optuna_suggestion[
-                        "subbrick"
-                    ] = suggested_and_fixed_hyperparameters[
-                        hyperparameter.subbrick_hyperparameter
-                    ]
+                    kwargs_for_optuna_suggestion["subbrick"] = (
+                        suggested_and_fixed_hyperparameters[
+                            hyperparameter.subbrick_hyperparameter
+                        ]
+                    )
                 elif hyperparameter.subbrick_hyperparameter in skipped_hyperparameters:
                     # subbrick_kwargs must be skipped if subbrick itself is skipped
                     skipped_hyperparameters.add(name)
@@ -274,10 +274,10 @@ class Hyperparametrizable:
                     key = name
                 else:
                     key = hyperparameter.name_in_kwargs
-                suggested_and_fixed_hyperparameters[
-                    key
-                ] = cls.suggest_hyperparameter_with_optuna(
-                    trial=trial, name=name, **kwargs_for_optuna_suggestion
+                suggested_and_fixed_hyperparameters[key] = (
+                    cls.suggest_hyperparameter_with_optuna(
+                        trial=trial, name=name, **kwargs_for_optuna_suggestion
+                    )
                 )
 
         return dict(suggested_and_fixed_hyperparameters)

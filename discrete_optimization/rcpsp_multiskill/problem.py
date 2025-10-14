@@ -860,9 +860,9 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
                 - 1
             )
             for res in resource_avail_in_time.keys():
-                resource_avail_in_time[res][
-                    current_min_time : end_t + 1
-                ] -= problem.mode_details[act_id][modes_dict[act_id]].get(res, 0)
+                resource_avail_in_time[res][current_min_time : end_t + 1] -= (
+                    problem.mode_details[act_id][modes_dict[act_id]].get(res, 0)
+                )
                 if res in problem.non_renewable_resources:
                     resource_avail_in_time[res][end_t + 1 :] -= problem.mode_details[
                         act_id
@@ -1155,9 +1155,9 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
                         modes_dict[act_id]
                     ].get(res, 0)
                     if res in problem.non_renewable_resources and e == end_t:
-                        resource_avail_in_time[res][
-                            end_t + 1 :
-                        ] -= problem.mode_details[act_id][modes_dict[act_id]][res]
+                        resource_avail_in_time[res][end_t + 1 :] -= (
+                            problem.mode_details[act_id][modes_dict[act_id]][res]
+                        )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                 current_skills = {skill: 0.0 for skill in required_skills}
@@ -1262,9 +1262,9 @@ def sgs_multi_skill_preemptive_partial_schedule(
                     modes_dict[c]
                 ].get(res, 0)
                 if res in problem.non_renewable_resources and e == end_time[-1]:
-                    resource_avail_in_time[res][
-                        end_time[-1] + 1 :
-                    ] -= problem.mode_details[c][modes_dict[c]][res]
+                    resource_avail_in_time[res][end_time[-1] + 1 :] -= (
+                        problem.mode_details[c][modes_dict[c]][res]
+                    )
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
             for unit in ws:
@@ -1298,9 +1298,9 @@ def sgs_multi_skill_preemptive_partial_schedule(
                     modes_dict[c]
                 ].get(res, 0)
                 if res in problem.non_renewable_resources and e == end_time[-1]:
-                    resource_avail_in_time[res][
-                        end_time[-1] + 1 :
-                    ] -= problem.mode_details[c][modes_dict[c]][res]
+                    resource_avail_in_time[res][end_time[-1] + 1 :] -= (
+                        problem.mode_details[c][modes_dict[c]][res]
+                    )
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
             for unit in ws:
@@ -1491,9 +1491,9 @@ def sgs_multi_skill_preemptive_partial_schedule(
                         modes_dict[act_id]
                     ].get(res, 0)
                     if res in problem.non_renewable_resources and e == end_t:
-                        resource_avail_in_time[res][
-                            end_t + 1 :
-                        ] -= problem.mode_details[act_id][modes_dict[act_id]][res]
+                        resource_avail_in_time[res][end_t + 1 :] -= (
+                            problem.mode_details[act_id][modes_dict[act_id]][res]
+                        )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                 current_skills = {skill: 0.0 for skill in required_skills}
@@ -1752,9 +1752,9 @@ def sgs_multi_skill_partial_schedule(
                 - 1
             )
             for res in resource_avail_in_time.keys():
-                resource_avail_in_time[res][
-                    current_min_time : end_t + 1
-                ] -= problem.mode_details[act_id][modes_dict[act_id]].get(res, 0)
+                resource_avail_in_time[res][current_min_time : end_t + 1] -= (
+                    problem.mode_details[act_id][modes_dict[act_id]].get(res, 0)
+                )
                 if res in problem.non_renewable_resources:
                     resource_avail_in_time[res][end_t + 1 :] -= problem.mode_details[
                         act_id
@@ -2198,7 +2198,7 @@ class MultiskillRcpspProblem(Problem):
                     for s in self.employees[emp].dict_skill:
                         skills_availability[s][
                             min(j, len(skills_availability[s]) - 1)
-                        ] += (self.employees[emp].dict_skill[s].skill_value)
+                        ] += self.employees[emp].dict_skill[s].skill_value
         res_availability = deepcopy(self.resources_availability)
         for s in skills_availability:
             res_availability[s] = [int(x) for x in skills_availability[s]]
@@ -2262,8 +2262,7 @@ class MultiskillRcpspProblem(Problem):
         return makespan
 
     @abstractmethod
-    def evaluate_from_encoding(self, int_vector, encoding_name):
-        ...
+    def evaluate_from_encoding(self, int_vector, encoding_name): ...
 
     def evaluate(self, rcpsp_sol: MultiskillRcpspSolution) -> dict[str, float]:
         obj_makespan = self.evaluate_function(rcpsp_sol)
@@ -3012,7 +3011,7 @@ def build_partial_vectors_preemptive(
 
 
 def create_fake_tasks_multiskills(
-    rcpsp_problem: Union[MultiskillRcpspProblem, VariantMultiskillRcpspSolution]
+    rcpsp_problem: Union[MultiskillRcpspProblem, VariantMultiskillRcpspSolution],
 ):
     ressources_arrays = {
         r: np.array(rcpsp_problem.get_resource_availability_array(r))
@@ -3143,7 +3142,7 @@ def cluster_employees_to_resource_types(ms_rcpsp_problem: MultiskillRcpspProblem
 
 
 def create_np_data_and_jit_functions(
-    rcpsp_problem: Union[MultiskillRcpspProblem, VariantMultiskillRcpspProblem]
+    rcpsp_problem: Union[MultiskillRcpspProblem, VariantMultiskillRcpspProblem],
 ):
     consumption_array = np.zeros(
         (
@@ -3219,9 +3218,9 @@ def create_np_data_and_jit_functions(
     if rcpsp_problem.includes_special_constraint():
         for t in rcpsp_problem.special_constraints.start_times_window:
             if rcpsp_problem.special_constraints.start_times_window[t][0] is not None:
-                minimum_starting_time_array[
-                    rcpsp_problem.index_task[t]
-                ] = rcpsp_problem.special_constraints.start_times_window[t][0]
+                minimum_starting_time_array[rcpsp_problem.index_task[t]] = (
+                    rcpsp_problem.special_constraints.start_times_window[t][0]
+                )
     task_index = {rcpsp_problem.tasks_list[i]: i for i in range(rcpsp_problem.n_jobs)}
     for k in range(len(rcpsp_problem.resources_list)):
         ressource_available[k, :] = rcpsp_problem.resources_availability[
@@ -3426,7 +3425,7 @@ def compute_constraints_details(
     start_after_nunit = constraints.start_after_nunit
     disjunctive = constraints.disjunctive_tasks
     list_constraints_not_respected = []
-    for (t1, t2) in start_together:
+    for t1, t2 in start_together:
         time1 = solution.get_start_time(t1)
         time2 = solution.get_start_time(t2)
         b = time1 == time2
@@ -3434,7 +3433,7 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_together", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for (t1, t2) in start_at_end:
+    for t1, t2 in start_at_end:
         time1 = solution.get_end_time(t1)
         time2 = solution.get_start_time(t2)
         b = time1 == time2
@@ -3442,7 +3441,7 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for (t1, t2, off) in start_at_end_plus_offset:
+    for t1, t2, off in start_at_end_plus_offset:
         time1 = solution.get_end_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
@@ -3450,7 +3449,7 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for (t1, t2, off) in start_after_nunit:
+    for t1, t2, off in start_after_nunit:
         time1 = solution.get_start_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
@@ -3532,7 +3531,7 @@ def start_together_problem_description(
 ):
     start_together = constraints.start_together
     list_constraints_not_respected = []
-    for (t1, t2) in start_together:
+    for t1, t2 in start_together:
         time1 = solution.get_start_time(t1)
         time2 = solution.get_start_time(t2)
         b = time1 == time2
@@ -3569,23 +3568,23 @@ def check_solution(
     start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
     start_after_nunit = problem.special_constraints.start_after_nunit
     disjunctive = problem.special_constraints.disjunctive_tasks
-    for (t1, t2) in start_together:
+    for t1, t2 in start_together:
         if not relax_the_start_at_end:
             b = solution.get_start_time(t1) == solution.get_start_time(t2)
             if not b:
                 return False
-    for (t1, t2) in start_at_end:
+    for t1, t2 in start_at_end:
         if relax_the_start_at_end:
             b = solution.get_start_time(t2) >= solution.get_end_time(t1)
         else:
             b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             return False
-    for (t1, t2, off) in start_at_end_plus_offset:
+    for t1, t2, off in start_at_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
         if not b:
             return False
-    for (t1, t2, off) in start_after_nunit:
+    for t1, t2, off in start_after_nunit:
         b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
         if not b:
             return False

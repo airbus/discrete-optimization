@@ -509,8 +509,7 @@ class RcpspProblem(Problem):
                 consumptions[
                     ir,
                     rcpsp_sol.rcpsp_schedule[act_id]["start_time"]
-                    + 1 : rcpsp_sol.rcpsp_schedule[act_id]["end_time"]
-                    + 1,
+                    + 1 : rcpsp_sol.rcpsp_schedule[act_id]["end_time"] + 1,
                 ] += self.mode_details[act_id][modes_dict[act_id]][
                     self.resources_list[ir]
                 ]
@@ -654,9 +653,9 @@ def create_np_data_and_jit_functions(
     if "special_constraints" in rcpsp_problem.__dict__.keys():
         for t in rcpsp_problem.special_constraints.start_times_window:
             if rcpsp_problem.special_constraints.start_times_window[t][0] is not None:
-                minimum_starting_time_array[
-                    rcpsp_problem.index_task[t]
-                ] = rcpsp_problem.special_constraints.start_times_window[t][0]
+                minimum_starting_time_array[rcpsp_problem.index_task[t]] = (
+                    rcpsp_problem.special_constraints.start_times_window[t][0]
+                )
     func_sgs = partial(
         sgs_fast,
         consumption_array=consumption_array,
@@ -710,7 +709,7 @@ def compute_constraints_details(
     list_constraints_not_respected: list[
         tuple[str, Hashable, Hashable, Optional[int], Optional[int], int]
     ] = []
-    for (t1, t2) in start_together:
+    for t1, t2 in start_together:
         time1 = solution.get_start_time(t1)
         time2 = solution.get_start_time(t2)
         b = time1 == time2
@@ -718,7 +717,7 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_together", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for (t1, t2) in start_at_end:
+    for t1, t2 in start_at_end:
         time1 = solution.get_end_time(t1)
         time2 = solution.get_start_time(t2)
         b = time1 == time2
@@ -726,7 +725,7 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for (t1, t2, off) in start_at_end_plus_offset:
+    for t1, t2, off in start_at_end_plus_offset:
         time1 = solution.get_end_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
@@ -734,7 +733,7 @@ def compute_constraints_details(
             list_constraints_not_respected += [
                 ("start_at_end_plus_offset", t1, t2, time1, time2, abs(time2 - time1))
             ]
-    for (t1, t2, off) in start_after_nunit:
+    for t1, t2, off in start_after_nunit:
         time1 = solution.get_start_time(t1) + off
         time2 = solution.get_start_time(t2)
         b = time2 >= time1
@@ -825,19 +824,19 @@ def check_solution_with_special_constraints(
     start_at_end_plus_offset = problem.special_constraints.start_at_end_plus_offset
     start_after_nunit = problem.special_constraints.start_after_nunit
     disjunctive = problem.special_constraints.disjunctive_tasks
-    for (t1, t2) in start_together:
+    for t1, t2 in start_together:
         if not relax_the_start_at_end:
             b = solution.get_start_time(t1) == solution.get_start_time(t2)
             if not b:
                 return False
-    for (t1, t2) in start_at_end:
+    for t1, t2 in start_at_end:
         if relax_the_start_at_end:
             b = solution.get_start_time(t2) >= solution.get_end_time(t1)
         else:
             b = solution.get_start_time(t2) == solution.get_end_time(t1)
         if not b:
             return False
-    for (t1, t2, off) in start_at_end_plus_offset:
+    for t1, t2, off in start_at_end_plus_offset:
         b = solution.get_start_time(t2) >= solution.get_end_time(t1) + off
         if not b:
             logger.debug(("start_at_end_plus_offset NOT respected: ", t1, t2, off))
@@ -851,7 +850,7 @@ def check_solution_with_special_constraints(
                 )
             )
             return False
-    for (t1, t2, off) in start_after_nunit:
+    for t1, t2, off in start_after_nunit:
         b = solution.get_start_time(t2) >= solution.get_start_time(t1) + off
         if not b:
             logger.debug(("start_after_nunit NOT respected: ", t1, t2, off))

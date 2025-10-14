@@ -853,7 +853,6 @@ class CpMultimodePreemptiveRcpspSolver(MinizincCpSolver, RcpspSolver):
         silent_solve_error: bool = True,
         **kwargs,
     ):
-
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )
@@ -1469,7 +1468,6 @@ class CpPreemptiveRcpspSolver(CpMultimodePreemptiveRcpspSolver):
 
 
 class CpNoBoolMultimodeRcpspSolver(MinizincCpSolver, RcpspSolver):
-
     problem: RcpspProblem
 
     def __init__(
@@ -1694,9 +1692,9 @@ class CpNoBoolMultimodeRcpspSolver(MinizincCpSolver, RcpspSolver):
 
         modes_dict = {}
         for j in range(len(kwargs["mode_chosen"])):
-            modes_dict[
-                self.modeindex_map[kwargs["mode_chosen"][j]]["task"]
-            ] = self.modeindex_map[kwargs["mode_chosen"][j]]["original_mode_index"]
+            modes_dict[self.modeindex_map[kwargs["mode_chosen"][j]]["task"]] = (
+                self.modeindex_map[kwargs["mode_chosen"][j]]["original_mode_index"]
+            )
         rcpsp_schedule = {}
         start_times = kwargs["start"]
         for i in range(len(start_times)):
@@ -1715,7 +1713,6 @@ class CpNoBoolMultimodeRcpspSolver(MinizincCpSolver, RcpspSolver):
 
 
 class CpModesMultimodeRcpspSolver:
-
     problem: RcpspProblem
 
     def __init__(

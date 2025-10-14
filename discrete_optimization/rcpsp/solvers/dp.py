@@ -174,7 +174,7 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                     ],
                     preconditions=[
                         unscheduled.contains(i),
-                        predecessors[i].issubset(scheduled)  # ,
+                        predecessors[i].issubset(scheduled),  # ,
                         # time >= current_sched_time
                     ]
                     + [time >= starts[p] + durs[p] for p in prec_[i]],
@@ -579,9 +579,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                         ],
                     )
                     model.add_transition(start_task)
-                    self.transitions[
-                        ("start", i, modes_per_task[i][j_mode])
-                    ] = start_task
+                    self.transitions[("start", i, modes_per_task[i][j_mode])] = (
+                        start_task
+                    )
                 else:
                     start_dummy_task = dp.Transition(
                         name=f"start_{i}_mode_{j_mode}",
@@ -598,9 +598,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                         ],
                     )
                     model.add_transition(start_dummy_task, forced=True)
-                    self.transitions[
-                        ("start", i, modes_per_task[i][j_mode])
-                    ] = start_dummy_task
+                    self.transitions[("start", i, modes_per_task[i][j_mode])] = (
+                        start_dummy_task
+                    )
                 if dur > 0:
                     ending_task = dp.Transition(
                         name=f"end_{i}_mode_{j_mode}",
@@ -628,9 +628,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                         ],
                     )
                     model.add_transition(ending_task)
-                    self.transitions[
-                        ("end", i, modes_per_task[i][j_mode])
-                    ] = ending_task
+                    self.transitions[("end", i, modes_per_task[i][j_mode])] = (
+                        ending_task
+                    )
 
         remaining = model.add_int_table(
             [self.remaining_per_task[t] for t in self.problem.tasks_list]
@@ -1024,9 +1024,9 @@ class DpRcpspSolver(DpSolver, RcpspSolver, WarmstartMixin):
                         ],
                     )
                     model.add_transition(transition)
-                    self.transitions[
-                        ("sched", i, modes_per_task[i][j_mode], time)
-                    ] = transition
+                    self.transitions[("sched", i, modes_per_task[i][j_mode], time)] = (
+                        transition
+                    )
         # model.add_dual_bound(consumption_table[unscheduled, 0])
         self.modes_per_task = modes_per_task
         self.model = model

@@ -52,7 +52,6 @@ class MisQiskit(OptimizationApplication):
         return MisSolution(problem=self.problem, chosen=self._result_to_x(result))
 
     def to_quadratic_program(self) -> QuadraticProgram:
-
         adj = nx.to_numpy_array(self.problem.graph_nx)
         J = np.identity(self.problem.number_nodes)
         A = J - adj

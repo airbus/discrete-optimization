@@ -27,7 +27,7 @@ class TspConstraintHandler(OrtoolsCpSatConstraintHandler):
         solver: CpSatTspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -71,7 +71,7 @@ class SubpathTspConstraintHandler(OrtoolsCpSatConstraintHandler):
         solver: CpSatTspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Add constraints to the internal model of a solver based on previous solutions
 

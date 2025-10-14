@@ -31,7 +31,6 @@ from discrete_optimization.rcpsp.solution import RcpspSolution
 
 
 def run_single_mode_moo_benchmark():
-
     # Problem initialisation
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP
@@ -113,7 +112,6 @@ def run_single_mode_moo_benchmark():
 
 
 def run_single_mode_robustness_benchmark():
-
     # Problem initialisation
     files = get_data_available()
     files = [f for f in files if "j301_1.sm" in f]  # Single mode RCPSP

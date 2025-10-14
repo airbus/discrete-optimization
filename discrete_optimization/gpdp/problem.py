@@ -508,9 +508,9 @@ def build_matrix_distance(problem: GpdpProblem) -> npt.NDArray[np.float64]:
     )
     for j in problem.distance_delta:
         for k in problem.distance_delta[j]:
-            matrix_distance[
-                problem.index_nodes[j], problem.index_nodes[k]
-            ] = problem.distance_delta[j][k]
+            matrix_distance[problem.index_nodes[j], problem.index_nodes[k]] = (
+                problem.distance_delta[j][k]
+            )
     return matrix_distance
 
 
@@ -520,9 +520,9 @@ def build_matrix_time(problem: GpdpProblem) -> npt.NDArray[np.float64]:
     )
     for j in problem.time_delta:
         for k in problem.time_delta[j]:
-            matrix_time[
-                problem.index_nodes[j], problem.index_nodes[k]
-            ] = problem.time_delta[j][k]
+            matrix_time[problem.index_nodes[j], problem.index_nodes[k]] = (
+                problem.time_delta[j][k]
+            )
     return matrix_time
 
 
@@ -588,10 +588,10 @@ class ProxyClass:
                     prev_node2 = virtual_to_initial[node2]
                 else:  # node2 in virtual_to_end:
                     prev_node2 = virtual_to_end[node2]
-                dictionnary_distance[node1][
-                    node2
-                ] = vrp_problem.evaluate_function_indexes(
-                    index_1=prev_node1, index_2=prev_node2
+                dictionnary_distance[node1][node2] = (
+                    vrp_problem.evaluate_function_indexes(
+                        index_1=prev_node1, index_2=prev_node2
+                    )
                 )
 
                 time_delta[node1][node2] = dictionnary_distance[node1][node2] / 2
@@ -709,10 +709,10 @@ class ProxyClass:
                     prev_node2 = virtual_to_initial[node2]
                 else:  # node2 in virtual_to_end:
                     prev_node2 = virtual_to_end[node2]
-                dictionnary_distance[node1][
-                    node2
-                ] = tsp_model.evaluate_function_indexes(
-                    index_1=prev_node1, index_2=prev_node2
+                dictionnary_distance[node1][node2] = (
+                    tsp_model.evaluate_function_indexes(
+                        index_1=prev_node1, index_2=prev_node2
+                    )
                 )
 
                 time_delta[node1][node2] = dictionnary_distance[node1][node2] / 2
@@ -816,9 +816,9 @@ class ProxyClass:
                 original_v = gpdp_to_tsptw_map[v]
                 dist = tsptw_problem.distance_matrix[original_u, original_v]
                 distance_delta[u][v] = dist
-                time_delta[u][
-                    v
-                ] = dist  # In TSP-TW, the matrix value is effectively the travel time
+                time_delta[u][v] = (
+                    dist  # In TSP-TW, the matrix value is effectively the travel time
+                )
 
         # Map time windows to GPDP nodes
         time_windows_nodes = {

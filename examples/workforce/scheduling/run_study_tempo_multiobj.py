@@ -150,7 +150,6 @@ if overwrite:
 # loop over instances x configs
 for instance in instances:
     for config_name, solver_config in solver_configs.items():
-
         logging.info(f"###### Instance {instance}, config {config_name} ######\n\n")
 
         try:
@@ -244,9 +243,9 @@ for instance in instances:
             reason = ""
 
         # store corresponding experiment
-        with Hdf5Database(
-            database_nb_teams_filepath
-        ) as database:  # ensure closing the database at the end of computation (even if error)
+        with (
+            Hdf5Database(database_nb_teams_filepath) as database
+        ):  # ensure closing the database at the end of computation (even if error)
             xp_id = database.get_new_experiment_id()
             xp = Experiment.from_solver_config(
                 xp_id=xp_id,
@@ -260,9 +259,9 @@ for instance in instances:
             database.store(xp)
 
             # store corresponding experiment
-        with Hdf5Database(
-            database_workload_filepath
-        ) as database:  # ensure closing the database at the end of computation (even if error)
+        with (
+            Hdf5Database(database_workload_filepath) as database
+        ):  # ensure closing the database at the end of computation (even if error)
             xp_id = database.get_new_experiment_id()
             xp = Experiment.from_solver_config(
                 xp_id=xp_id,

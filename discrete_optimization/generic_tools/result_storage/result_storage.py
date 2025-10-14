@@ -251,7 +251,9 @@ class ParetoFront(ResultStorage):
         number_fitness = self.list_solution_fits[0][1].size  # type: ignore
         extreme_points: list[tuple[Solution, TupleFitness]] = []
         for i in range(number_fitness):
-            extr: tuple[Solution, TupleFitness] = function_used(self.paretos, key=lambda x: x[1].vector_fitness[i])  # type: ignore
+            extr: tuple[Solution, TupleFitness] = function_used(
+                self.paretos, key=lambda x: x[1].vector_fitness[i]
+            )  # type: ignore
             extreme_points += [extr]
         return extreme_points
 

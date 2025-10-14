@@ -224,7 +224,7 @@ class CpColoringSolver(MinizincCpSolver, ColoringSolver):
         for n in coloring_constraint.color_constraint:
             index = self.index_nodes_name[n]
             value_color = coloring_constraint.color_constraint[n]
-            s.append(f"constraint color_graph[{index+1}]=={value_color+1};\n")
+            s.append(f"constraint color_graph[{index + 1}]=={value_color + 1};\n")
         return s
 
     def get_solution(self, **kwargs: Any) -> ColoringSolution:
@@ -251,7 +251,7 @@ class CpColoringSolver(MinizincCpSolver, ColoringSolver):
             solution = result_store.get_best_solution()
             if solution is None:
                 raise RuntimeError(
-                    "greedy_solver.solve().get_best_solution() " "should not be None."
+                    "greedy_solver.solve().get_best_solution() should not be None."
                 )
             if not isinstance(solution, ColoringSolution):
                 raise RuntimeError(

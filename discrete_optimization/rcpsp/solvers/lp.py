@@ -139,7 +139,7 @@ class _BaseLpRcpspSolver(MilpSolver, RcpspSolver):
                 self.construct_linear_sum(self.x[task][t] for t in self.index_time) == 1
             )
 
-        for (r, t) in product(self.index_resource, self.index_time):
+        for r, t in product(self.index_resource, self.index_time):
             self.add_linear_constraint(
                 self.construct_linear_sum(
                     u[j][r] * self.x[j][t2]
@@ -149,7 +149,7 @@ class _BaseLpRcpspSolver(MilpSolver, RcpspSolver):
                 <= c[r]
             )
 
-        for (j, s) in S:
+        for j, s in S:
             self.add_linear_constraint(
                 self.construct_linear_sum(
                     t * self.x[self.index_in_var[s]][t]
@@ -292,7 +292,7 @@ class _BaseLpRcpspSolver(MilpSolver, RcpspSolver):
         get_obj_value_for_current_solution: Callable[[], float],
     ) -> RcpspSolution:
         rcpsp_schedule = {}
-        for (task_index, time) in product(self.index_task, self.index_time):
+        for task_index, time in product(self.index_task, self.index_time):
             value = get_var_value_for_current_solution(self.x[task_index][time])
             if value >= 0.5:
                 task = self.problem.tasks_list[task_index]
@@ -446,7 +446,7 @@ class _BaseLpMultimodeRcpspSolver(MilpSolver, RcpspSolver):
                 r: [non_renewable[r]] * len(self.index_time) for r in non_renewable
             }
 
-        for (r, t) in product(renewable, self.index_time):
+        for r, t in product(renewable, self.index_time):
             self.add_linear_constraint(
                 self.construct_linear_sum(
                     int(self.problem.mode_details[key[0]][key[1]][r]) * self.x[key]
@@ -477,7 +477,7 @@ class _BaseLpMultimodeRcpspSolver(MilpSolver, RcpspSolver):
                 )
                 == durations[j]
             )
-        for (j, s) in S:
+        for j, s in S:
             self.add_linear_constraint(
                 self.construct_linear_sum(
                     key[2] * self.x[key] for key in variable_per_task[s]

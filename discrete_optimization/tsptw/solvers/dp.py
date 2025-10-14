@@ -22,7 +22,6 @@ from discrete_optimization.tsptw.problem import TSPTWProblem, TSPTWSolution
 
 
 class DpTspTwSolver(DpSolver):
-
     problem: TSPTWProblem
     transitions: dict
     hyperparameters = [

@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-"""Easy Large neighborhood search solver for coloring. """
+"""Easy Large neighborhood search solver for coloring."""
 
 import random
 from enum import Enum
@@ -190,16 +190,14 @@ class FixColorsMznConstraintHandler(MznConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, ColoringSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a ColoringSolution."
+                "result_storage.get_best_solution() should be a ColoringSolution."
             )
         if current_solution.colors is None:
             raise ValueError(
-                "result_storage.get_best_solution().colors " "should not be None."
+                "result_storage.get_best_solution().colors should not be None."
             )
         subpart_color = set(
             random.sample(
@@ -278,16 +276,14 @@ class FixColorsCpSatConstraintHandler(OrtoolsCpSatConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, ColoringSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a ColoringSolution."
+                "result_storage.get_best_solution() should be a ColoringSolution."
             )
         if current_solution.colors is None:
             raise ValueError(
-                "result_storage.get_best_solution().colors " "should not be None."
+                "result_storage.get_best_solution().colors should not be None."
             )
         subpart_color = set(
             random.sample(
@@ -339,16 +335,14 @@ class PostProcessSolutionColoring(PostProcessSolution):
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
         bs = result_storage.get_best_solution()
         if bs is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(bs, ColoringSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a ColoringSolution."
+                "result_storage.get_best_solution() should be a ColoringSolution."
             )
         if bs.colors is None:
             raise ValueError(
-                "result_storage.get_best_solution().colors " "should not be None."
+                "result_storage.get_best_solution().colors should not be None."
             )
         colors = bs.colors
         set_colors = sorted(set(colors))

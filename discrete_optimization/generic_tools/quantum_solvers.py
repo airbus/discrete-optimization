@@ -163,7 +163,6 @@ def solve(
     """
     solver_ = method(problem, **kwargs)
     try:
-
         solver_.init_model(**kwargs)
     except AttributeError:
         pass
@@ -186,7 +185,6 @@ def solve_coloring(
     """
     solver_ = method(problem, nb_color, **kwargs)
     try:
-
         solver_.init_model(**kwargs)
     except AttributeError:
         pass

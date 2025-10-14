@@ -211,7 +211,7 @@ def return_solver(
 
 
 def get_solver_default_arguments(
-    method: Union[type[RcpspSolver], type[GenericRcpspSolver]]
+    method: Union[type[RcpspSolver], type[GenericRcpspSolver]],
 ) -> dict[str, Any]:
     try:
         return solvers_map[method][1]

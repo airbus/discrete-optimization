@@ -91,8 +91,7 @@ class ResultComparator:
         )
         return fig
 
-    def print_test_distribution(self) -> None:
-        ...
+    def print_test_distribution(self) -> None: ...
 
     def get_best_by_objective_by_result_storage(
         self, objectif_str: str
@@ -134,7 +133,6 @@ class ResultComparator:
     def plot_all_2d_paretos_single_plot(
         self, objectives_str: Optional[list[str]] = None
     ) -> Axes:
-
         if objectives_str is None:
             objecives_names = self.objectives_str[:2]
             objectives_index = [0, 1]
@@ -169,7 +167,6 @@ class ResultComparator:
     def plot_all_2d_paretos_subplots(
         self, objectives_str: Optional[list[str]] = None
     ) -> Figure:
-
         if objectives_str is None:
             objectives_names = self.objectives_str[:2]
             objectives_index = [0, 1]

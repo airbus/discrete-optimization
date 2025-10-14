@@ -83,7 +83,6 @@ class CpSatMisSolver(MisSolver, OrtoolsCpSatSolver, WarmstartMixin):
             self.cp_model.AddHint(self.variables["in_set"][i], solution.chosen[i])
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> MisSolution:
-
         chosen = [0] * self.problem.number_nodes
 
         for i in range(0, self.problem.number_nodes):

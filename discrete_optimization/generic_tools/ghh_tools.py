@@ -50,13 +50,11 @@ def protected_div(left: float, right: float) -> float:
 
 
 class SupportsDunderLT(Protocol):
-    def __lt__(self, __other: Any) -> Any:
-        ...
+    def __lt__(self, __other: Any) -> Any: ...
 
 
 class SupportsDunderGT(Protocol):
-    def __gt__(self, __other: Any) -> Any:
-        ...
+    def __gt__(self, __other: Any) -> Any: ...
 
 
 SupportsRichComparison = Union[SupportsDunderLT, SupportsDunderGT]

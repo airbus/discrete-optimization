@@ -198,7 +198,6 @@ def test_cp_toy_model():
 
 
 def test_cp_imopse():
-
     file = [f for f in get_data_available() if "100_5_20_9_D3.def" in f][0]
     model_msrcpsp, new_tame_to_original_task_id = parse_file(file, max_horizon=1000)
     cp_model = CpMultiskillRcpspSolver(

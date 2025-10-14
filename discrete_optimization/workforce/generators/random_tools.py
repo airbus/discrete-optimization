@@ -20,13 +20,12 @@ class RandomState:
         return list[self.get_discrete_truncated_uniform_sample(0, len(list) - 1)]
 
     def get_random_element_prop(self, list: list[T], probs: list[float]) -> T:
-
         assert len(list) > 0
         assert len(list) == len(probs)
         sum_props = sum(probs)
-        assert (
-            1 - epsilon <= sum_props <= 1 + epsilon
-        ), f"Sum of probabilities must be 1 +-{epsilon} but is {sum(probs)}"
+        assert 1 - epsilon <= sum_props <= 1 + epsilon, (
+            f"Sum of probabilities must be 1 +-{epsilon} but is {sum(probs)}"
+        )
 
         sample = uniform.rvs()
         index = 0

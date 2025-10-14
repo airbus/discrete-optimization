@@ -150,7 +150,7 @@ def plot_coloring_solution(
         label=[str(solution.colors[i]) for i in range(len(problem.graph.nodes_name))],
         node_color=[solution.colors[i] for i in range(len(problem.graph.nodes_name))],
         ax=ax,
-        **normal_node_style
+        **normal_node_style,
     )
     # plot "normal" edges
     normal_edges = [e for e in graph_nx.edges if e not in highlighted_edges]

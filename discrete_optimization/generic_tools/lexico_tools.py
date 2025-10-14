@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 """Tools for lexicographic optimization."""
+
 import logging
 from collections.abc import Iterable
 from typing import Any, Optional
@@ -25,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class LexicoSolver(SolverDO):
-
     subsolver: SolverDO
 
     def __init__(
@@ -100,7 +100,6 @@ class LexicoSolver(SolverDO):
         if "subsolver_callbacks" not in kwargs:
             kwargs["subsolver_callbacks"] = None
         for i_obj, obj in enumerate(objectives):
-
             # log
             logger.debug(f"Optimizing on {obj}")
 

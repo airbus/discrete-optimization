@@ -795,7 +795,6 @@ def constraints_strings_multiskill_preemptive(
         params_constraints=params_constraints,
     )
     if random.random() < 0.99 and params_constraints.first_method_multiskill:
-
         constraint_description = start_together_problem_description(
             solution=current_solution,
             constraints=current_solution.problem.special_constraints,
@@ -891,7 +890,7 @@ def constraint_unit_used_subset_employees(
         )
     strings = []
     for e in employees_set:
-        for (task, j) in employees_usage_dict[e]:
+        for task, j in employees_usage_dict[e]:
             strings += cp_solver.constraint_used_employee(
                 task=task, employee=e, indicator=True
             )
@@ -959,7 +958,7 @@ def constraint_unit_used_subset_employees_preemptive(
         )
     strings = []
     for e in employees_set:
-        for (task, j) in employees_usage_dict[e]:
+        for task, j in employees_usage_dict[e]:
             if (task, j) in exceptions:
                 continue
             strings += cp_solver.constraint_used_employee(
@@ -1026,8 +1025,7 @@ class NeighborBuilderSubPart(NeighborBuilder):
             self.problem.tasks_list, key=lambda x: current_solution.get_end_time(x)
         )
         task_of_interest = task_of_interest[
-            self.current_sub_part
-            * nb_job_sub : (self.current_sub_part + 1)
+            self.current_sub_part * nb_job_sub : (self.current_sub_part + 1)
             * nb_job_sub
         ]
         if subtasks is None:
@@ -1191,12 +1189,14 @@ class NeighborConstraintBreaks(NeighborBuilder):
 
             if len(sorted_constraints) == 1:
                 t1, t2 = sorted_constraints[0][1], sorted_constraints[0][2]
-                st1, end1 = current_solution.get_start_time(
-                    t1
-                ), current_solution.get_end_time(t1)
-                st2, end2 = current_solution.get_start_time(
-                    t2
-                ), current_solution.get_end_time(t2)
+                st1, end1 = (
+                    current_solution.get_start_time(t1),
+                    current_solution.get_end_time(t1),
+                )
+                st2, end2 = (
+                    current_solution.get_start_time(t2),
+                    current_solution.get_end_time(t2),
+                )
                 st_min = min(st1, st2)
                 st_max = max(end1, end2)
                 tasks = [
@@ -1421,7 +1421,10 @@ class ConstraintHandlerScheduling(BaseSchedulingMznConstraintHandler):
         self.problem = problem
         self.basic_constraint_builder = basic_constraint_builder
 
-        if isinstance(self.problem, SpecialConstraintsPreemptiveRcpspProblem,) or (
+        if isinstance(
+            self.problem,
+            SpecialConstraintsPreemptiveRcpspProblem,
+        ) or (
             isinstance(self.problem, RcpspProblem)
             and self.problem.do_special_constraints
         ):

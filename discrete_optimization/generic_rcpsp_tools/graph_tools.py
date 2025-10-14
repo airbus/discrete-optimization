@@ -160,7 +160,7 @@ def build_unrelated_task(graph: GraphRcpsp):
 
 
 def build_graph_rcpsp_object(
-    rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem]
+    rcpsp_problem: Union[RcpspProblem, PreemptiveRcpspProblem],
 ):
     if (
         hasattr(rcpsp_problem, "do_special_constraints")

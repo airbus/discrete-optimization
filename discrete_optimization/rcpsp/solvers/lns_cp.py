@@ -33,28 +33,28 @@ class PostProcessLeftShift(PostProcessSolution):
                 start_at_end = partial_solution.start_at_end
                 start_at_end_plus_offset = partial_solution.start_at_end_plus_offset
                 start_after_nunit = partial_solution.start_after_nunit
-                for (t1, t2) in start_together:
+                for t1, t2 in start_together:
                     b = (
                         solution.rcpsp_schedule[t1]["start_time"]
                         == solution.rcpsp_schedule[t2]["start_time"]
                     )
                     if not b:
                         return False
-                for (t1, t2) in start_at_end:
+                for t1, t2 in start_at_end:
                     b = (
                         solution.rcpsp_schedule[t2]["start_time"]
                         == solution.rcpsp_schedule[t1]["end_time"]
                     )
                     if not b:
                         return False
-                for (t1, t2, off) in start_at_end_plus_offset:
+                for t1, t2, off in start_at_end_plus_offset:
                     b = (
                         solution.rcpsp_schedule[t2]["start_time"]
                         >= solution.rcpsp_schedule[t1]["end_time"] + off
                     )
                     if not b:
                         return False
-                for (t1, t2, off) in start_after_nunit:
+                for t1, t2, off in start_after_nunit:
                     b = (
                         solution.rcpsp_schedule[t2]["start_time"]
                         >= solution.rcpsp_schedule[t1]["start_time"] + off

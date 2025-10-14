@@ -467,12 +467,9 @@ class TeamAllocationProblem(Problem):
             if variable.allocation is None:
                 raise ValueError("variable.allocation must not be None when evaluating")
             else:
-                variable.kpis[
-                    "nb_violations"
-                ] = self.count_allowed_assignment_violations(
-                    variable
-                ) + self.count_color_constraints_violations(
-                    variable
+                variable.kpis["nb_violations"] = (
+                    self.count_allowed_assignment_violations(variable)
+                    + self.count_color_constraints_violations(variable)
                 )
         if self.do_add_cons:
             keys.append("nb_violations_add_cons")
@@ -842,9 +839,9 @@ class TeamAllocationProblemMultiobj(TeamAllocationProblem):
         for attr in self.attributes_cumul_activities:
             self.attributes_of_activities[attr] = {}
             for t in self.activities_name:
-                self.attributes_of_activities[attr][
-                    t
-                ] = self.graph_activity.get_attr_node(t, attr)
+                self.attributes_of_activities[attr][t] = (
+                    self.graph_activity.get_attr_node(t, attr)
+                )
         self.attributes_cumul_activities = attributes_cumul_activities
         self.objective_doc_cumul_activities = objective_doc_cumul_activities
         if (
@@ -863,9 +860,9 @@ class TeamAllocationProblemMultiobj(TeamAllocationProblem):
         for attr in self.attributes_cumul_activities:
             self.attributes_of_activities[attr] = {}
             for t in self.activities_name:
-                self.attributes_of_activities[attr][
-                    t
-                ] = self.graph_activity.get_attr_node(t, attr)
+                self.attributes_of_activities[attr][t] = (
+                    self.graph_activity.get_attr_node(t, attr)
+                )
 
     def get_objective_register(self) -> ObjectiveRegister:
         """Specifies the default objective settings to be used with the evaluate function output."""

@@ -110,7 +110,6 @@ class MinimizeNbColorColoringQiskit(OptimizationApplication):
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
-
         x = self._result_to_x(result)
 
         colors = [None] * self.problem.number_of_nodes
@@ -147,7 +146,7 @@ class MinimizeNbColorQaoaColoringSolver(ColoringSolver, QiskitQaoaSolver):
         problem: ColoringProblem,
         nb_max_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = MinimizeNbColorColoringQiskit(
@@ -167,7 +166,7 @@ class MinimizeNbColorVqeColoringSolver(ColoringSolver, QiskitVqeSolver):
         problem: ColoringProblem,
         nb_max_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = MinimizeNbColorColoringQiskit(
@@ -229,7 +228,6 @@ class FeasibleNbColorColoringQiskit(OptimizationApplication):
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
-
         x = self._result_to_x(result)
 
         colors = [None] * self.problem.number_of_nodes
@@ -257,7 +255,7 @@ class FeasibleNbColorQaoaColoringSolver(ColoringSolver, QiskitQaoaSolver):
         problem: ColoringProblem,
         nb_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = FeasibleNbColorColoringQiskit(problem, nb_color=nb_color)
@@ -275,7 +273,7 @@ class FeasibleNbColorVqeColoringSolver(ColoringSolver, QiskitVqeSolver):
         problem: ColoringProblem,
         nb_color=None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.coloring_qiskit = FeasibleNbColorColoringQiskit(problem, nb_color=nb_color)

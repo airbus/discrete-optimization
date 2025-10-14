@@ -11,6 +11,7 @@ Results can be viewed on optuna-dashboard with:
     optuna-dashboard optuna-journal.log
 
 """
+
 import logging
 import time
 from collections import defaultdict

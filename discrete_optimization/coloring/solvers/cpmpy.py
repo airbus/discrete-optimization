@@ -23,7 +23,6 @@ class CpmpyColoringSolver(
     CpmpySolver, WithStartingSolutionColoringSolver, ColoringSolver
 ):
     def init_model(self, **kwargs: Any) -> None:
-
         if "nb_colors" not in kwargs:
             solution = self.get_starting_solution(**kwargs)
             nb_colors = self.problem.count_colors_all_index(solution.colors)

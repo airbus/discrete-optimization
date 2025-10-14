@@ -93,8 +93,7 @@ class ConstraintHandler(Hyperparametrizable):
 
 class InitialSolution(Hyperparametrizable):
     @abstractmethod
-    def get_starting_solution(self) -> ResultStorage:
-        ...
+    def get_starting_solution(self) -> ResultStorage: ...
 
 
 class InitialSolutionFromSolver(InitialSolution):
@@ -124,13 +123,11 @@ class PostProcessSolution(Hyperparametrizable):
     # you can also do mall changes (filling gap in a schedule) to try to improve the solution
     # you can also run algorithms from the new found solution.
     @abstractmethod
-    def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
-        ...
+    def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage: ...
 
 
 class TrivialPostProcessSolution(PostProcessSolution):
-    def __init__(self, **kwargs):
-        ...
+    def __init__(self, **kwargs): ...
 
     def build_other_solution(self, result_storage: ResultStorage) -> ResultStorage:
         return result_storage

@@ -137,7 +137,6 @@ def define_fairness_criteria_from_cumulated_value(
     cumulated_value_per_team_nz: NDVarArray = None,
     name_value: Optional[str] = "",
 ):
-
     if (
         modelisation_dispersion
         == ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION

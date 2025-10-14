@@ -24,13 +24,13 @@ class CpmpyKnapsackSolver(CpmpySolver, KnapsackSolver):
         problem: KnapsackProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         solver_name: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem,
             params_objective_function=params_objective_function,
             solver_name=solver_name,
-            **kwargs
+            **kwargs,
         )
         self.variables: dict[str, Any] = {}
 

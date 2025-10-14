@@ -188,7 +188,6 @@ def get_repo_n_branches_for_binder_n_github_links() -> Tuple[
 
 
 if __name__ == "__main__":
-
     # List existing notebooks and write Notebooks page
     notebook_filepaths = sorted(glob.glob(f"{notebooksdir}/**/*.ipynb", recursive=True))
     notebooks_list_text = ""

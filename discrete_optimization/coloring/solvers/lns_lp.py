@@ -101,7 +101,7 @@ class _BaseFixColorsConstraintHandler(ConstraintHandler):
         solver: Union[GurobiColoringSolver, MathOptColoringSolver],
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -127,16 +127,14 @@ class _BaseFixColorsConstraintHandler(ConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, ColoringSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a ColoringSolution."
+                "result_storage.get_best_solution() should be a ColoringSolution."
             )
         if current_solution.colors is None:
             raise ValueError(
-                "result_storage.get_best_solution().colors " "should not be None."
+                "result_storage.get_best_solution().colors should not be None."
             )
         max_color = max(current_solution.colors)
         solver.set_warm_start(current_solution)
@@ -181,7 +179,7 @@ class FixColorsGurobiConstraintHandler(
         solver: GurobiColoringSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -199,7 +197,7 @@ class FixColorsGurobiConstraintHandler(
             solver=solver,
             result_storage=result_storage,
             result_storage_last_iteration=result_storage_last_iteration,
-            **kwargs
+            **kwargs,
         )
         solver.model.update()
         return constraints

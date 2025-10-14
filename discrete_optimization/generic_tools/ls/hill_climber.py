@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class HillClimber(SolverDO, WarmstartMixin):
-
     initial_solution: Optional[Solution] = None
     """Initial solution used for warm start."""
 
