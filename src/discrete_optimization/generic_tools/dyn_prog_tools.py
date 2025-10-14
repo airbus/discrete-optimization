@@ -112,25 +112,10 @@ class DpSolver(SolverDO):
             solver_cls = solvers.get(kwargs["solver"], None)
         else:
             solver_cls = kwargs["solver"]
-        try:
-            solver_allowed_params = inspect.signature(solver_cls).parameters
-            kwargs_solver = {
-                k: v for k, v in kwargs.items() if k in solver_allowed_params
-            }
-        except Exception as e:
-            # Previous mode, for python<=3.9
-            logger.info(
-                f"clever kwargs management for {solver_cls} failed: "
-                f"{e.__class__.__name__}: {e}"
-            )
-            for k in list(kwargs.keys()):
-                if k not in {"threads", "initial_solution", "weight"}:
-                    kwargs.pop(k)
-                if k == "threads" and solver_cls not in {dp.CABS, dp.LNBS}:
-                    kwargs.pop(k)
-                if k == "initial_solution" and solver_cls not in {dp.DDLNS, dp.LNBS}:
-                    kwargs.pop(k)
-            kwargs_solver = kwargs
+
+        # remove unallowed kwargs
+        solver_allowed_params = inspect.signature(solver_cls).parameters
+        kwargs_solver = {k: v for k, v in kwargs.items() if k in solver_allowed_params}
 
         solver = solver_cls(self.model, time_limit=time_limit, **kwargs_solver)
         if retrieve_intermediate_solutions:
