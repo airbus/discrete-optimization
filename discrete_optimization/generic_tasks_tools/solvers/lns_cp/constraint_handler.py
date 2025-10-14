@@ -175,30 +175,17 @@ class TasksConstraintHandler(ConstraintHandler, Generic[Task]):
                 objective = solver.get_subtasks_makespan_variable(
                     subtasks=tasks_primary
                 )
-                current_max = max(
-                    [current_solution.get_end_time(t) for t in tasks_primary]
-                )
-                constraints += solver.add_bound_constraint(
-                    var=objective, sign=SignEnum.LEQ, value=current_max
-                )
         elif self.objective_subproblem == ObjectiveSubproblem.GLOBAL_MAKESPAN:
             if isinstance(current_solution, SchedulingSolution) and isinstance(
                 solver, SchedulingCpSolver
             ):
                 objective = solver.get_global_makespan_variable()
-
         elif self.objective_subproblem == ObjectiveSubproblem.SUM_START_SUBTASKS:
             if isinstance(current_solution, SchedulingSolution) and isinstance(
                 solver, SchedulingCpSolver
             ):
                 objective = solver.get_subtasks_sum_start_time_variable(
                     subtasks=tasks_primary
-                )
-                sum_start = sum(
-                    (current_solution.get_start_time(t) for t in tasks_primary)
-                )
-                constraints += solver.add_bound_constraint(
-                    var=objective, sign=SignEnum.LEQ, value=sum_start
                 )
         elif self.objective_subproblem == ObjectiveSubproblem.SUM_END_SUBTASKS:
             if isinstance(current_solution, SchedulingSolution) and isinstance(
@@ -207,31 +194,16 @@ class TasksConstraintHandler(ConstraintHandler, Generic[Task]):
                 objective = solver.get_subtasks_sum_end_time_variable(
                     subtasks=tasks_primary
                 )
-                sum_start = sum(
-                    (current_solution.get_end_time(t) for t in tasks_primary)
-                )
-                constraints += solver.add_bound_constraint(
-                    var=objective, sign=SignEnum.LEQ, value=sum_start
-                )
         elif self.objective_subproblem == ObjectiveSubproblem.NB_TASKS_DONE:
             if isinstance(current_solution, AllocationSolution) and isinstance(
                 solver, AllocationCpSolver
             ):
                 objective = -solver.get_nb_tasks_done_variable()
-                current_val = -current_solution.compute_nb_tasks_done()
-                constraints += solver.add_bound_constraint(
-                    var=objective, sign=SignEnum.LEQ, value=current_val
-                )
         elif self.objective_subproblem == ObjectiveSubproblem.NB_UNARY_RESOURCES_USED:
             if isinstance(current_solution, AllocationSolution) and isinstance(
                 solver, AllocationCpSolver
             ):
                 objective = solver.get_nb_unary_resources_used_variable()
-                current_val = current_solution.compute_nb_unary_resources_used()
-                constraints += solver.add_bound_constraint(
-                    var=objective, sign=SignEnum.LEQ, value=current_val
-                )
-
         if objective is not None:
             solver.minimize_variable(objective)
 
