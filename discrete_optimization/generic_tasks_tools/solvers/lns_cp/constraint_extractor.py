@@ -44,18 +44,6 @@ class ParamsConstraintExtractor(Hyperparametrizable):
         IntegerHyperparameter(name="plus_delta_primary", low=0, default=5, high=20),
         IntegerHyperparameter(name="minus_delta_secondary", low=0, default=0, high=10),
         IntegerHyperparameter(name="plus_delta_secondary", low=0, default=0, high=10),
-        CategoricalHyperparameter(
-            name="constraint_to_current_solution_makespan",
-            choices=[True, False],
-            default=True,
-        ),
-        FloatHyperparameter(
-            name="margin_rel_to_current_solution_makespan",
-            default=0.05,
-            low=0.0,
-            high=1.0,
-            depends_on=("constraint_to_current_solution_makespan", [True]),
-        ),
         # scheduling preemptive
         IntegerHyperparameter(
             name="minus_delta_primary_duration", default=5, low=0, high=10
@@ -299,18 +287,10 @@ class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
         plus_delta_primary: int = 5,
         minus_delta_secondary: int = 0,
         plus_delta_secondary: int = 0,
-        constraint_to_current_solution_makespan: bool = True,
-        margin_rel_to_current_solution_makespan: float = 0.05,
     ):
         self.plus_delta_primary = plus_delta_primary
         self.minus_delta_secondary = minus_delta_secondary
         self.plus_delta_secondary = plus_delta_secondary
-        self.constraint_to_current_solution_makespan = (
-            constraint_to_current_solution_makespan
-        )
-        self.margin_rel_to_current_solution_makespan = (
-            margin_rel_to_current_solution_makespan
-        )
         self.minus_delta_primary = minus_delta_primary
 
     def add_constraints(
@@ -375,15 +355,6 @@ class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
                         start_time_j + self.plus_delta_secondary,
                     ),
                 )
-        if self.constraint_to_current_solution_makespan:
-            max_time_with_margin = int(
-                (1.0 + self.margin_rel_to_current_solution_makespan) * max_time
-            )
-            constraints += solver.add_bound_constraint(
-                var=solver.get_global_makespan_variable(),
-                sign=SignEnum.LEQ,
-                value=max_time_with_margin,
-            )
         return constraints
 
 
@@ -628,8 +599,6 @@ def build_default_constraint_extractor(
                 minus_delta_primary=params_constraint_extractor.minus_delta_primary,
                 plus_delta_secondary=params_constraint_extractor.plus_delta_secondary,
                 minus_delta_secondary=params_constraint_extractor.minus_delta_secondary,
-                constraint_to_current_solution_makespan=params_constraint_extractor.constraint_to_current_solution_makespan,
-                margin_rel_to_current_solution_makespan=params_constraint_extractor.margin_rel_to_current_solution_makespan,
             )
         )
         if params_constraint_extractor.chaining:
