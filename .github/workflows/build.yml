@@ -153,24 +153,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: pyproject.toml
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          name: dist
-          path: dist
-      - name: Install only discrete-optimization
-        run: |
-          python -m pip install -U pip
-          wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          python_version=${{ matrix.python-version }}
-          if [ "$python_version" = "3.9" ]; then
-            pip install ${wheelfile} "numpy<2"  # for compatibility with pytables available for python 3.9
-          else
-            pip install ${wheelfile}
-          fi
+          # Install a specific version of uv.
+          version: "0.9.2"
+          python-version: ${{ matrix.python-version }}
       - name: Check minizinc based solvers fails without minizinc binary
         run: |
-          python -c "
+          uv run python  -c "
           try:
             from discrete_optimization.generic_tools.cp_tools import find_right_minizinc_solver_name, CpSolverName
             find_right_minizinc_solver_name(CpSolverName.CHUFFED)
@@ -211,21 +202,29 @@ jobs:
           # configure minizinc
           ${{ matrix.minizinc_config_cmdline }}
           # check imports
-          python tests/test_import_all_submodules.py
+          uv run python tests/test_import_all_submodules.py
       - name: Install test dependencies
         run: |
-          wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          pip install "${wheelfile}[test, quantum, dashboard]"
-          if [ "${{ startsWith(matrix.os, 'windows') || (startsWith(matrix.os, 'macos') && matrix.python-version == '3.12') }}" == false ]; then
+          extras="--extra=test --extra=quantum --extra=dashboard"
+          wo_toulbar="${{ startsWith(matrix.os, 'windows') || (startsWith(matrix.os, 'macos') && matrix.python-version == '3.12') }}"
+          echo wo_toulbar=${wo_toulbar}
+          if [ ${wo_toulbar} == false ]; then
             echo "install toulbar2"
-            pip install "${wheelfile}[toulbar]"
-            python -c "import pytoulbar2"
+            extras="${extras}  --extra=toulbar"
           fi
           if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
             echo "install gurobi"
-            pip install gurobipy
-            python -c "import gurobipy"
+            uv add --dev gurobipy
           fi
+          echo uv sync ${extras}
+          uv sync ${extras}
+          if [ ${wo_toulbar} == false ]; then
+            uv run python -c "import pytoulbar2"
+          fi
+          if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
+            uv run python -c "import gurobipy"
+          fi
+
       - name: Restore tests data cache
         id: cache-data
         uses: actions/cache@v4
@@ -236,16 +235,16 @@ jobs:
         if: steps.cache-data.outputs.cache-hit != 'true'
         run: |
           ${{ matrix.minizinc_config_cmdline }}
-          python -m discrete_optimization.datasets
+          uv run python -m discrete_optimization.datasets
       - name: Test with pytest (no coverage)
         if: ${{ !matrix.coverage }}
         run: |
           # configure minizinc
           ${{ matrix.minizinc_config_cmdline }}
           # show library path used
-          pytest -s tests/show_do_path.py
+          uv run pytest -s tests/show_do_path.py
           # run test suite
-          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
+          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 uv run pytest \
             -v --durations=0 --durations-min=10 \
             tests
       - name: Test with pytest (with coverage)
@@ -258,9 +257,9 @@ jobs:
           # instead of the source directory in the repository (which would lead to a coverage of 0%)
           mkdir -p tmp && cd tmp
           # show library path used
-          pytest -s ../tests/show_do_path.py
+          uv run pytest -s ../tests/show_do_path.py
           # run test suite
-          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
+          MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 uv run pytest \
             --cov discrete_optimization  \
             --cov-report xml:coverage.xml \
             --cov-report html:coverage_html \
