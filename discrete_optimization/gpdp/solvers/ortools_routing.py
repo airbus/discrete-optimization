@@ -103,7 +103,8 @@ def apply_cost(
             if p.different_coefficient:
                 for i in range(len(p.coefficient_vehicles)):  # type: ignore
                     dimension_dict[p.dimension_name].SetSpanCostCoefficientForVehicle(
-                        p.coefficient_vehicles[i], i  # type: ignore
+                        p.coefficient_vehicles[i],
+                        i,  # type: ignore
                     )
             else:
                 dimension_dict[p.dimension_name].SetSpanCostCoefficientForAllVehicles(
@@ -399,9 +400,7 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
                     {ressource: 0},
                 )[ressource] + problem.resources_flow_node.get(
                     to_node, {ressource: 0}
-                ).get(
-                    ressource, 0
-                )
+                ).get(ressource, 0)
                 return int(l)
 
             demand_callback_index_dict = {
@@ -595,7 +594,7 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
             intervals = {}
             time_dimension = routing.GetDimensionOrDie("Time")
             i = 0
-            for (set_of_task, limit) in self.problem.cumulative_constraints:
+            for set_of_task, limit in self.problem.cumulative_constraints:
                 list_of_tasks = list(set_of_task)
                 index_tasks = [
                     manager.NodeToIndex(self.problem.index_nodes[t])

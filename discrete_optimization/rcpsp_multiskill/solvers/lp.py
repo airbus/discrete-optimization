@@ -160,10 +160,10 @@ class MathOptMultiskillRcpspSolver(OrtoolsMathOptMilpSolver):
                         continue
                     for s in required_skills:
                         for t in range(max_duration):
-                            self.employee_usage[
-                                (employee, task, mode, t, s)
-                            ] = self.add_binary_variable(
-                                name=f"employee_{employee}{task}{mode}{t}{s}",
+                            self.employee_usage[(employee, task, mode, t, s)] = (
+                                self.add_binary_variable(
+                                    name=f"employee_{employee}{task}{mode}{t}{s}",
+                                )
                             )
                             task_in_employee_usage.add(task)
                             self.add_linear_constraint(
@@ -214,7 +214,7 @@ class MathOptMultiskillRcpspSolver(OrtoolsMathOptMilpSolver):
                 <= 1
             )
         # ressource usage limit
-        for (r, t) in product(renewable, times):
+        for r, t in product(renewable, times):
             self.add_linear_constraint(
                 self.construct_linear_sum(
                     int(self.problem.mode_details[task][mode][r])
@@ -265,7 +265,7 @@ class MathOptMultiskillRcpspSolver(OrtoolsMathOptMilpSolver):
                         for mode in self.modes[task]
                     )
                 )
-        for (j, s) in list_edges:
+        for j, s in list_edges:
             self.add_linear_constraint(
                 self.start_times_task[s] - self.end_times_task[j] >= 0
             )

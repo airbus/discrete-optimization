@@ -511,7 +511,7 @@ def plotly_schedule_comparison(
             type="linear",  # Keep the scale as numeric
             tickvals=list(tickvals),  # Numeric positions for ticks
             ticktext=ticktext if plot_xticks else None,  # Custom labels for the ticks
-            showticklabels=plot_xticks
+            showticklabels=plot_xticks,
             # tickformat="%Y-%m-%d %H:%M:%S",  # Format tick labels as datetime
         ),
         yaxis=dict(

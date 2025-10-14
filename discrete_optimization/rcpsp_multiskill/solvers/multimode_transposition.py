@@ -46,7 +46,7 @@ class MultimodeTranspositionMultiskillRcpspSolver(SolverDO):
         worker_type_to_worker: dict[str, set[Union[str, int]]] = None,
         params_objective_function: ParamsObjectiveFunction = None,
         solver_multimode_rcpsp: SolverDO = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

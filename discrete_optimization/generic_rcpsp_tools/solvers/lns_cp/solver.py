@@ -415,7 +415,6 @@ def build_constraint_handler_helper(rcpsp_problem: ANY_RCPSP, graph, **kwargs):
             ),
         )
     if option == 2:
-
         constraint_handler = build_neighbor_mixing_methods(
             rcpsp_problem=rcpsp_problem,
             graph=graph,

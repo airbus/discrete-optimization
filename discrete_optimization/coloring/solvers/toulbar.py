@@ -133,7 +133,7 @@ class ToulbarColoringSolver(
             model.AddFunction([f"max_x_{0}"], [0] + [1000] * (nb_colors_all - 1))
             model.AddFunction([f"x_{0}"], [0] + [1000] * (nb_colors - 1))
             model.AddFunction(
-                ["max_color", f"max_x_{number_nodes-1}"],
+                ["max_color", f"max_x_{number_nodes - 1}"],
                 [
                     1000 if val1 != val2 else 0
                     for val1 in range(nb_colors)
@@ -142,7 +142,7 @@ class ToulbarColoringSolver(
             )
             for j in range(1, number_nodes):
                 model.AddFunction(
-                    [f"max_x_{j-1}", f"max_x_{j}"],
+                    [f"max_x_{j - 1}", f"max_x_{j}"],
                     [
                         10000 if val1 > val2 or val2 > val1 + tolerance_delta_max else 0
                         for val1 in range(nb_colors)
@@ -167,7 +167,7 @@ class ToulbarColoringSolver(
                 )
                 if hard_value_sequence_chain:
                     model.AddFunction(
-                        [f"max_x_{j}", f"max_x_{j-1}", f"x_{j}"],
+                        [f"max_x_{j}", f"max_x_{j - 1}", f"x_{j}"],
                         [
                             0 if val1 == max(val2, val3) else 10000
                             for val1 in range(nb_colors)
@@ -176,7 +176,7 @@ class ToulbarColoringSolver(
                         ],
                     )  # x_j <= max_x_{j}
                     model.AddFunction(
-                        [f"max_x_{j-1}", f"x_{j}"],
+                        [f"max_x_{j - 1}", f"x_{j}"],
                         [
                             10000 if val2 > val1 + 1 else 0
                             for val1 in range(nb_colors)

@@ -61,7 +61,6 @@ def test_solver_from_result_storage(problem):
 
 
 def test_mutablesequence_behaviour(problem):
-
     # default value for list_solution_fits
     res = ResultStorage(mode_optim=ModeOptim.MAXIMIZATION)
     # mesuring length of res

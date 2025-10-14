@@ -76,7 +76,7 @@ class ToulbarTspSolver(ToulbarSolver, TspSolver, WarmstartMixin):
         )
 
         model.AddFunction(
-            [f"perm_{nb_nodes_variable-1}"],
+            [f"perm_{nb_nodes_variable - 1}"],
             [
                 self.distance_matrix[rev_indexes[i], self.problem.end_index]
                 for i in range(nb_nodes_variable)
@@ -84,7 +84,7 @@ class ToulbarTspSolver(ToulbarSolver, TspSolver, WarmstartMixin):
         )
         for i in range(nb_nodes_variable - 1):
             model.AddFunction(
-                [f"perm_{i}", f"perm_{i+1}"],
+                [f"perm_{i}", f"perm_{i + 1}"],
                 [
                     self.distance_matrix[rev_indexes[ii], rev_indexes[jj]]
                     for ii in range(nb_nodes_variable)

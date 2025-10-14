@@ -81,7 +81,7 @@ class MathOptKnapsackConstraintHandler(OrtoolsMathOptConstraintHandler):
         solver: MathOptKnapsackSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -106,12 +106,10 @@ class MathOptKnapsackConstraintHandler(OrtoolsMathOptConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, KnapsackSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a KnapsackSolution."
+                "result_storage.get_best_solution() should be a KnapsackSolution."
             )
         solver.set_warm_start(current_solution)
 

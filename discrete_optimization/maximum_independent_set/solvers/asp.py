@@ -73,7 +73,7 @@ class AspMisSolver(MisSolver, AspClingoSolver):
         self.ctl.add("base", [], string_data_input)
 
     def build_data_string(self):
-        s = f"vertex(0..{self.problem.number_nodes-1}).\n"
+        s = f"vertex(0..{self.problem.number_nodes - 1}).\n"
         s += "% Define the edges in the graph. Modify this according to your graph structure.\n"
         for edge in self.problem.edges:
             s += f"edge({self.problem.nodes_to_index[edge[0]]},{self.problem.nodes_to_index[edge[1]]}).\n"

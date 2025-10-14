@@ -25,7 +25,7 @@ class VrpConstraintHandler(OrtoolsCpSatConstraintHandler):
         solver: CpSatVrpSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -71,7 +71,7 @@ class SubpathVrpConstraintHandler(OrtoolsCpSatConstraintHandler):
         solver: CpSatVrpSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Add constraints to the internal model of a solver based on previous solutions
 

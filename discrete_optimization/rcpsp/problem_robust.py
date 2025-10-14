@@ -243,14 +243,14 @@ class UncertainRcpspProblem:
                     self.probas[activity][mode][detail]["proba"] /= np.sum(
                         self.probas[activity][mode][detail]["proba"]
                     )
-                    self.probas[activity][mode][detail][
-                        "prob-distribution"
-                    ] = rv_discrete(
-                        name=str(activity) + "-" + str(mode) + "-" + str(detail),
-                        values=(
-                            self.probas[activity][mode][detail]["value"],
-                            self.probas[activity][mode][detail]["proba"],
-                        ),
+                    self.probas[activity][mode][detail]["prob-distribution"] = (
+                        rv_discrete(
+                            name=str(activity) + "-" + str(mode) + "-" + str(detail),
+                            values=(
+                                self.probas[activity][mode][detail]["value"],
+                                self.probas[activity][mode][detail]["proba"],
+                            ),
+                        )
                     )
 
     def create_rcpsp_problem(

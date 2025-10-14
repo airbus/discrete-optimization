@@ -419,7 +419,10 @@ class NeighborRepairProblems(BaseSchedulingMznConstraintHandler):
         params_list: list[ParamsConstraintBuilder] = None,
     ):
         self.problem = problem
-        if isinstance(self.problem, SpecialConstraintsPreemptiveRcpspProblem,) or (
+        if isinstance(
+            self.problem,
+            SpecialConstraintsPreemptiveRcpspProblem,
+        ) or (
             isinstance(self.problem, RcpspProblem)
             and self.problem.do_special_constraints
         ):

@@ -42,8 +42,7 @@ class NeighborBuilderSubPart:
             self.keys, key=lambda x: current_solution.schedule[x[0]][x[1]][0]
         )
         task_of_interest = task_of_interest[
-            self.current_sub_part
-            * nb_job_sub : (self.current_sub_part + 1)
+            self.current_sub_part * nb_job_sub : (self.current_sub_part + 1)
             * nb_job_sub
         ]
         if subtasks is None:
@@ -64,7 +63,7 @@ class FjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         solver: CpSatFjspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -114,7 +113,7 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         solver: CpSatFjspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Constraint]:
         """Add constraints to the internal model of a solver based on previous solutions
 

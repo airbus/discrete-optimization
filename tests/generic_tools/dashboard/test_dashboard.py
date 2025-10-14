@@ -108,14 +108,12 @@ def run_study(study_name):
         os.remove(database_filepath)
     except FileNotFoundError:
         pass
-    with Hdf5Database(
-        database_filepath
-    ) as database:  # ensure closing the database at the end of computation (even if error)
-
+    with (
+        Hdf5Database(database_filepath) as database
+    ):  # ensure closing the database at the end of computation (even if error)
         # loop over instances x configs
         for instance in instances:
             for config_name, solver_config in solver_configs.items():
-
                 logging.info(
                     f"###### Instance {instance}, config {config_name} ######\n\n"
                 )

@@ -336,7 +336,7 @@ class CPSatAllocSchedulingSolverCumulative(
             "modes_var": modes_var,
             "interval_var": interval_var,
             "opt_interval_var": opt_interval_var,
-            "opt" "objectives": {},
+            "optobjectives": {},
             "key_per_mode": keys_per_mode,
         }
         if optional_activities:
@@ -387,10 +387,10 @@ class CPSatAllocSchedulingSolverCumulative(
         self.variables["resource_pool_capacity_var"] = {}
         for i_pool in range(len(pools)):
             capacity = len(pools[i_pool])
-            self.variables["resource_pool_capacity_var"][
-                i_pool
-            ] = self.cp_model.NewIntVar(
-                lb=0, ub=capacity, name=f"capacity_pool_{i_pool}"
+            self.variables["resource_pool_capacity_var"][i_pool] = (
+                self.cp_model.NewIntVar(
+                    lb=0, ub=capacity, name=f"capacity_pool_{i_pool}"
+                )
             )
             keys = self.variables["key_per_mode"][i_pool]
             intervals = [self.variables["opt_interval_var"][x[0]][x[1]] for x in keys]
@@ -627,7 +627,7 @@ def _update_kwargs_subsolver(
 
 
 def _get_variables_obj_key(
-    obj: Union[str, ObjectivesEnum]
+    obj: Union[str, ObjectivesEnum],
 ) -> Union[str, ObjectivesEnum]:
     if isinstance(obj, str):
         try:

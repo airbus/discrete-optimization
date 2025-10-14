@@ -68,8 +68,7 @@ def parse_file(file_path) -> MultiskillRcpspProblem:
     non_renewable_resources = set()
     resources_availability = {}
     employees = {
-        "employee_"
-        + str(j): Employee(
+        "employee_" + str(j): Employee(
             {
                 "S_" + str(k): SkillDetail(1, 0, 0)
                 for k in range(len(master[j]))

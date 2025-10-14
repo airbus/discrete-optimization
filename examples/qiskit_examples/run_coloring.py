@@ -8,7 +8,6 @@ from discrete_optimization.generic_tools.graph_api import Graph
 
 
 def quantum_coloring():
-
     """
     in this example we solve a small coloring problem using a quantum hybrid algorithm : QAOA
     this algorithm is an approximate algorithm and it's not deterministic

@@ -58,7 +58,7 @@ class AlternatingGa(SolverDO, WarmstartMixin):
         tournament_size: Optional[float] = None,
         deap_verbose: bool = False,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
@@ -99,7 +99,8 @@ class AlternatingGa(SolverDO, WarmstartMixin):
         if self.encodings is not None:
             for i in range(len(self.encodings)):
                 self.problem.set_fixed_attributes(  # type: ignore
-                    self.encodings[i], start_solution  # type: ignore
+                    self.encodings[i],
+                    start_solution,  # type: ignore
                 )
         while count_evals < self.max_evals:
             kwargs_ga: dict[str, Any] = {}
@@ -129,7 +130,7 @@ class AlternatingGa(SolverDO, WarmstartMixin):
                 objectives=self.objectives,
                 objective_weights=self.objective_weights,
                 deap_verbose=self.deap_verbose,
-                **kwargs_ga
+                **kwargs_ga,
             )
             # manage warm_start for first step
             if count_evals == 0 and self.initial_solution is not None:

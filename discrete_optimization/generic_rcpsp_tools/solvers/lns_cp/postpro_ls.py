@@ -26,7 +26,7 @@ class LocalSearchPostProcessSolution(PostProcessSolution):
         self,
         problem: ANY_RCPSP,
         params_objective_function: ParamsObjectiveFunction = None,
-        **kwargs
+        **kwargs,
     ):
         self.problem = problem
         self.params_objective_function = params_objective_function

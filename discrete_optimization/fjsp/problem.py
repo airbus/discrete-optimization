@@ -128,7 +128,7 @@ class FJobShopProblem(Problem):
                 if variable.schedule[job][s_j][0] < variable.schedule[job][s_j - 1][1]:
                     logger.info(
                         f"Precedence constraint not respected between {job, s_j}"
-                        f"and {job, s_j-1}"
+                        f"and {job, s_j - 1}"
                     )
                     return False
                 if not (

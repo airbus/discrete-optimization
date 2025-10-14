@@ -134,23 +134,23 @@ class CpSatFjspSolver(OrtoolsCpSatSolver, WarmstartMixin):
                             opt_starts_var[(i, sub_i, opt_i)] = self.cp_model.NewIntVar(
                                 lb=lb, ub=max_time, name=f"start_{i, sub_i, opt_i}"
                             )
-                            opt_intervals_var[
-                                (i, sub_i, opt_i)
-                            ] = self.cp_model.NewOptionalFixedSizeIntervalVar(
-                                start=opt_starts_var[(i, sub_i, opt_i)],
-                                size=options[opt_i].processing_time,
-                                is_present=is_present_var[(i, sub_i, opt_i)],
-                                name=f"opt_interval_{i,sub_i,opt_i}",
+                            opt_intervals_var[(i, sub_i, opt_i)] = (
+                                self.cp_model.NewOptionalFixedSizeIntervalVar(
+                                    start=opt_starts_var[(i, sub_i, opt_i)],
+                                    size=options[opt_i].processing_time,
+                                    is_present=is_present_var[(i, sub_i, opt_i)],
+                                    name=f"opt_interval_{i, sub_i, opt_i}",
+                                )
                             )
                         else:
-                            opt_intervals_var[
-                                (i, sub_i, opt_i)
-                            ] = self.cp_model.NewOptionalIntervalVar(
-                                start=st,
-                                size=options[opt_i].processing_time,
-                                end=end,
-                                is_present=is_present_var[(i, sub_i, opt_i)],
-                                name=f"opt_interval_{i, sub_i, opt_i}",
+                            opt_intervals_var[(i, sub_i, opt_i)] = (
+                                self.cp_model.NewOptionalIntervalVar(
+                                    start=st,
+                                    size=options[opt_i].processing_time,
+                                    end=end,
+                                    is_present=is_present_var[(i, sub_i, opt_i)],
+                                    name=f"opt_interval_{i, sub_i, opt_i}",
+                                )
                             )
                         keys_per_machines[options[opt_i].machine_id].add(
                             (i, sub_i, opt_i)

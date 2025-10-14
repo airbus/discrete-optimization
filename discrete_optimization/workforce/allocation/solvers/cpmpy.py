@@ -259,9 +259,9 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
         self.model = Model()
-        domains_for_task: list[
-            list[int]
-        ] = self.problem.compute_allowed_team_index_all_task()
+        domains_for_task: list[list[int]] = (
+            self.problem.compute_allowed_team_index_all_task()
+        )
         if "allocation_binary" not in kwargs:
             allocation_binary = [
                 {
@@ -508,7 +508,6 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
         return allocation
 
     def store_objective_and_time(self, verbose=False):
-
         self.solutions = []
 
         def callback():
@@ -562,9 +561,9 @@ class CPMpyTeamAllocationSolver(CpmpySolver, CpSolver, TeamAllocationSolver):
 
     def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Any]:
         c = self.variables["obj_dict"][obj] <= value
-        assert hasattr(
-            self, "cpm_solver"
-        ), "solver should exist! (initialized during `def solve()`)"
+        assert hasattr(self, "cpm_solver"), (
+            "solver should exist! (initialized during `def solve()`)"
+        )
         self.cpm_solver += c
         # set solution hint of previous solution, if it supports it
         if "solution_hint" in self.cpm_solver.__dict__:
@@ -894,7 +893,7 @@ def adding_same_allocation_constraint_binary(
             if store_constraints:
                 solver.meta_constraints.append(
                     MetaCpmpyConstraint(
-                        name=f"Tasks {index_activities} " f"allocated to same team",
+                        name=f"Tasks {index_activities} allocated to same team",
                         constraints=[constraints[-1]],
                         metadata={"type": "same_allocation", "tasks": index_activities},
                     )
@@ -939,7 +938,7 @@ def adding_same_allocation_constraint_cnf(
             if store_constraints:
                 solver.meta_constraints.append(
                     MetaCpmpyConstraint(
-                        name=f"Tasks {index_activities} " f"allocated to same team",
+                        name=f"Tasks {index_activities} allocated to same team",
                         constraints=[constraints[-1]],
                         metadata={"type": "same_allocation", "tasks": index_activities},
                     )
@@ -974,7 +973,7 @@ def adding_same_allocation_constraint_integer(
         if store_constraints:
             solver.meta_constraints.append(
                 MetaCpmpyConstraint(
-                    name=f"Tasks {index_activities} " f"allocated to same team",
+                    name=f"Tasks {index_activities} allocated to same team",
                     constraints=constr_subset,
                     metadata={"type": "same_allocation", "tasks": index_activities},
                 )

@@ -836,7 +836,7 @@ class Dashboard(Dash):
         def update_config_display(config_name: str) -> str:
             configs = self.config_store.get_configs(config_name)
             config_str = "\n\n".join(json.dumps(config, indent=4) for config in configs)
-            md_str = "```python\n" f"{config_str}\n" "```\n"
+            md_str = f"```python\n{config_str}\n```\n"
             if len(configs) > 1:
                 md_str = (
                     f"> WARNING: {len(configs)} configs with same name found!\n\n"

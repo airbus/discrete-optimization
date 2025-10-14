@@ -10,12 +10,10 @@ from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
 class LocalMove:
     @abstractmethod
-    def apply_local_move(self, solution: Solution) -> Solution:
-        ...
+    def apply_local_move(self, solution: Solution) -> Solution: ...
 
     @abstractmethod
-    def backtrack_local_move(self, solution: Solution) -> Solution:
-        ...
+    def backtrack_local_move(self, solution: Solution) -> Solution: ...
 
 
 class LocalMoveDefault(LocalMove):
@@ -43,11 +41,9 @@ class Mutation:
         raise NotImplementedError("Please implement it !")
 
     @abstractmethod
-    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
-        ...
+    def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]: ...
 
     @abstractmethod
     def mutate_and_compute_obj(
         self, solution: Solution
-    ) -> tuple[Solution, LocalMove, dict[str, float]]:
-        ...
+    ) -> tuple[Solution, LocalMove, dict[str, float]]: ...

@@ -218,8 +218,9 @@ class TempoSchedulingSolver(SolverDO):
         return os.path.join(this_folder, f"{self._input_format.name}/")
 
     @abstractmethod
-    def retrieve_solution(self, path_to_output: str, process_stdout: str) -> Solution:
-        ...
+    def retrieve_solution(
+        self, path_to_output: str, process_stdout: str
+    ) -> Solution: ...
 
     @abstractmethod
     def init_model(self, **kwargs: Any) -> None:

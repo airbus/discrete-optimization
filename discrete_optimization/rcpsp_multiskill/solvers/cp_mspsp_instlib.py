@@ -164,9 +164,9 @@ class CpMspspMznMultiskillRcpspSolver(MinizincCpSolver):
     def init_from_model(self, **args):
         dict_data = {}
         list_skills = sorted(list(self.problem.skills_set))
-        dict_data[
-            "mint"
-        ] = 10  # here put a better number (from critical path method for example)
+        dict_data["mint"] = (
+            10  # here put a better number (from critical path method for example)
+        )
         dict_data["nActs"] = self.problem.n_jobs
         dict_data["dur"] = [
             self.problem.mode_details[t][1]["duration"] for t in self.problem.tasks_list

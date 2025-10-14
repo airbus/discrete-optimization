@@ -345,7 +345,6 @@ def test_ga_coloring_3(random_seed):
 
 
 def test_coloring_nsga_1():
-
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
@@ -396,7 +395,6 @@ def test_coloring_nsga_1():
 
 
 def test_coloring_nsga_2():
-
     file = [f for f in get_data_available() if "gc_70_1" in f][0]
     color_problem: ColoringProblem = parse_file(file)
 
@@ -442,7 +440,6 @@ def test_color_lp_gurobi(use_cliques, greedy_start):
 
     # Test warm-start only once
     if greedy_start and not use_cliques:
-
         # first solution is not start_solution
         assert result_store[0][0].colors != solver.start_solution.colors
 

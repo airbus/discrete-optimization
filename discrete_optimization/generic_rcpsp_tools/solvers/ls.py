@@ -73,7 +73,7 @@ class LsGenericRcpspSolver(GenericRcpspSolver):
         problem: ANY_RCPSP,
         params_objective_function: ParamsObjectiveFunction = None,
         ls_solver: LsSolverType = LsSolverType.SA,
-        **args
+        **args,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

@@ -233,12 +233,10 @@ class BoundsProviderMixin(ABC):
     """
 
     @abstractmethod
-    def get_current_best_internal_objective_bound(self) -> Optional[float]:
-        ...
+    def get_current_best_internal_objective_bound(self) -> Optional[float]: ...
 
     @abstractmethod
-    def get_current_best_internal_objective_value(self) -> Optional[float]:
-        ...
+    def get_current_best_internal_objective_value(self) -> Optional[float]: ...
 
     def get_current_absolute_gap(self) -> Optional[float]:
         """Get current (absolute) optimality gap.

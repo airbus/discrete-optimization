@@ -53,7 +53,6 @@ class KnapsackQiskit(OptimizationApplication):
         self.problem = problem
 
     def to_quadratic_program(self) -> QuadraticProgram:
-
         quadratic_program = QuadraticProgram()
         var_names = {}
         for x in range(0, self.problem.nb_items):
@@ -92,31 +91,24 @@ class KnapsackQiskit(OptimizationApplication):
         row = quadratic_program.get_linear_constraint(0).linear.to_dict()
 
         for i in range(0, quadratic_program.get_num_vars()):
-
             weight = 2 * row[i] * self.problem.max_capacity - row[i] ** 2
             if i < self.problem.nb_items:
                 quadratic[
                     quadratic_program.get_variable(i).name,
                     quadratic_program.get_variable(i).name,
-                ] += (
-                    p * weight
-                )
+                ] += p * weight
             else:
                 quadratic[
                     quadratic_program.get_variable(i).name,
                     quadratic_program.get_variable(i).name,
-                ] = (
-                    p * weight
-                )
+                ] = p * weight
 
             for j in range(i + 1, (quadratic_program.get_num_vars())):
                 weight = row[i] * row[j]
                 quadratic[
                     quadratic_program.get_variable(i).name,
                     quadratic_program.get_variable(j).name,
-                ] = (
-                    -2 * p * weight
-                )
+                ] = -2 * p * weight
 
         quadratic_program.remove_linear_constraint(0)
 
@@ -127,7 +119,6 @@ class KnapsackQiskit(OptimizationApplication):
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
-
         list_taken = list(self._result_to_x(result))[: self.problem.nb_items]
 
         objective = 0
@@ -153,7 +144,7 @@ class QaoaKnapsackSolver(KnapsackSolver, QiskitQaoaSolver):
         self,
         problem: KnapsackProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.knapsack_qiskit = KnapsackQiskit(problem)
@@ -170,7 +161,7 @@ class VqeKnapsackSolver(KnapsackSolver, QiskitVqeSolver):
         self,
         problem: KnapsackProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.knapsack_qiskit = KnapsackQiskit(problem)

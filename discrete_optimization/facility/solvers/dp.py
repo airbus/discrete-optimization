@@ -36,7 +36,6 @@ class DpFacilitySolver(DpSolver, FacilitySolver, WarmstartMixin):
     ]
 
     def __init__(self, problem: FacilityProblem, **kwargs: Any):
-
         super().__init__(problem, **kwargs)
         self.modeling: DpFacilityModeling = None
 

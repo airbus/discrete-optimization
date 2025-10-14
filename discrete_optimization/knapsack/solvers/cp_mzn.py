@@ -263,9 +263,9 @@ class CpMultidimensionalMultiScenarioKnapsackSolver(MinizincCpSolver):
         )
         solver = Solver.lookup(find_right_minizinc_solver_name(cp_solver_name))
         instance = Instance(solver, model)
-        list_problems: Sequence[
-            MultidimensionalKnapsackProblem
-        ] = self.problem.list_problem
+        list_problems: Sequence[MultidimensionalKnapsackProblem] = (
+            self.problem.list_problem
+        )
         instance["nb_items"] = list_problems[0].nb_items
         instance["nb_dimension"] = len(list_problems[0].max_capacities)
         instance["nb_scenario"] = len(list_problems)

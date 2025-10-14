@@ -181,10 +181,10 @@ class GurobiGanttMultimodeRcpspSolver(
                         )
                         if available:
                             key_variable = (k, individual, task)
-                            self.ressource_id_usage[k][individual][
-                                task
-                            ] = self.model.addVar(
-                                name=str(key_variable), vtype=gurobi.GRB.BINARY
+                            self.ressource_id_usage[k][individual][task] = (
+                                self.model.addVar(
+                                    name=str(key_variable), vtype=gurobi.GRB.BINARY
+                                )
                             )
                             if task not in variables_per_task:
                                 variables_per_task[task] = set()
@@ -222,16 +222,16 @@ class GurobiGanttMultimodeRcpspSolver(
                         if variable[2] in tasks
                     ]
                     if len(keys_variable) > 0:
-                        overlaps_constraints[
-                            (i, k, individual)
-                        ] = self.model.addLConstr(
-                            gurobi.quicksum(
-                                [
-                                    self.ressource_id_usage[key[0]][key[1]][key[2]]
-                                    for key in keys_variable
-                                ]
+                        overlaps_constraints[(i, k, individual)] = (
+                            self.model.addLConstr(
+                                gurobi.quicksum(
+                                    [
+                                        self.ressource_id_usage[key[0]][key[1]][key[2]]
+                                        for key in keys_variable
+                                    ]
+                                )
+                                <= 1
                             )
-                            <= 1
                         )
         self.model.modelSense = gurobi.GRB.MINIMIZE
 

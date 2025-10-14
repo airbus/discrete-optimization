@@ -71,9 +71,7 @@ def test_facility_lp_ortools_mathopt(use_matrix_indicator_heuristic):
 
     # test warm start
     start_solution = (
-        GreedyFacilitySolver(problem=color_problem)
-        .solve()
-        .get_best_solution()
+        GreedyFacilitySolver(problem=color_problem).solve().get_best_solution()
         # FacilitySolution(problem=color_problem, facility_for_customers=[1,1,2,0])
     )
 

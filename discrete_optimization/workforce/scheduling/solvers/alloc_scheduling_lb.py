@@ -28,8 +28,7 @@ class BaseAllocSchedulingLowerBoundProvider(Hyperparametrizable, ABC):
         self.problem = problem
 
     @abstractmethod
-    def get_lb_nb_teams(self, **kwargs: Any) -> int:
-        ...
+    def get_lb_nb_teams(self, **kwargs: Any) -> int: ...
 
 
 class LBoundAllocScheduling(BaseAllocSchedulingLowerBoundProvider):

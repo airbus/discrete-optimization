@@ -62,7 +62,7 @@ while not done:
         print(f"The problem was solved with status {solver.status_solver.value}.")
         if len(removed_meta) > 0:
             print(
-                f"We removed {len(removed_meta)} meta-constraint{'s' if len(removed_meta)>0 else ''}: "
+                f"We removed {len(removed_meta)} meta-constraint{'s' if len(removed_meta) > 0 else ''}: "
                 f"{[meta.metadata for meta in removed_meta]}"
             )
         break

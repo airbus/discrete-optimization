@@ -5,6 +5,7 @@
 Contains common utilities to plot solution,
 for now it's mainly to patch API break happening with matplotlib3.9.0 on colors.
 """
+
 import matplotlib
 import matplotlib.cm
 

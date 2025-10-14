@@ -9,7 +9,6 @@ Results can be viewed on optuna-dashboard with:
 
 """
 
-
 import logging
 import time
 from typing import Any

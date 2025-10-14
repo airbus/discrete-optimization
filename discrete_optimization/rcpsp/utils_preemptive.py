@@ -205,7 +205,6 @@ def plot_task_gantt(
     current_t=None,
 ):
     if fig is None or ax is None:
-
         fig, ax = plt.subplots(1, figsize=(7, 7))
         ax.set_title("Gantt Task")
     if title is None:

@@ -237,16 +237,16 @@ class SwapMove(LocalMove):
         )
         solution.list_paths[self.index_vehicle_from][self.index_from] = city_to
         solution.list_paths[self.index_vehicle_to][self.index_to] = city_from
-        solution.lengths[self.index_vehicle_from][
-            self.index_from
-        ] = new_length_vehicle_from_1
-        solution.lengths[self.index_vehicle_from][
-            self.index_from + 1
-        ] = new_length_vehicle_from_2
+        solution.lengths[self.index_vehicle_from][self.index_from] = (
+            new_length_vehicle_from_1
+        )
+        solution.lengths[self.index_vehicle_from][self.index_from + 1] = (
+            new_length_vehicle_from_2
+        )
         solution.lengths[self.index_vehicle_to][self.index_to] = new_length_vehicle_to_1
-        solution.lengths[self.index_vehicle_to][
-            self.index_to + 1
-        ] = new_length_vehicle_to_2
+        solution.lengths[self.index_vehicle_to][self.index_to + 1] = (
+            new_length_vehicle_to_2
+        )
         solution.capacities[self.index_vehicle_from] += (
             solution.problem.customers[city_to].demand
             - solution.problem.customers[city_from].demand
@@ -352,7 +352,7 @@ class MutationTwoOptVrp(Mutation):
         test_all: bool = False,
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         self.node_count = vrp_problem.customer_count
         self.points = vrp_problem.customers
@@ -399,7 +399,9 @@ class MutationTwoOptVrp(Mutation):
             j_after = perm[jt + 1]
         return i_before, i, j, j_after
 
-    def mutate_and_compute_obj(self, variable: VrpSolution) -> tuple[VrpSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(
+        self, variable: VrpSolution
+    ) -> tuple[VrpSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if (
             variable.length is None
             or variable.lengths is None

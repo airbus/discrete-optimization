@@ -474,13 +474,13 @@ class CpmRcpspSolver(RcpspSolver):
                             done.add(j)
                             for res in resource_avail_in_time:
                                 for t in range(time, time + duration):
-                                    resource_avail_in_time[res][
-                                        t
-                                    ] -= ressource_consumption[res]
+                                    resource_avail_in_time[res][t] -= (
+                                        ressource_consumption[res]
+                                    )
                                     if ressource_consumption[res] > 0:
-                                        ressource_usage[res][t][
-                                            j
-                                        ] = ressource_consumption[res]
+                                        ressource_usage[res][t][j] = (
+                                            ressource_consumption[res]
+                                        )
                             for task in self.successors_map[j]["succs"]:
                                 prev = min_time_to_schedule[task]
                                 min_time_to_schedule[task] = max(

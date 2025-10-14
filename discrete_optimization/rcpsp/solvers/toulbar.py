@@ -114,7 +114,7 @@ class ToulbarRcpspSolver(ToulbarSolver, RcpspSolver, WarmstartMixin):
             for time_a in range(horizon + 1):
                 params = ""
                 scope = []
-                for (i_t, val, dur) in tasks:
+                for i_t, val, dur in tasks:
                     paramval = ""
                     nbval = 0
                     for time_b in range(horizon + 1):
@@ -320,7 +320,7 @@ class ToulbarMultimodeRcpspSolver(ToulbarSolver, RcpspSolver, WarmstartMixin):
                 for time_a in range(horizon + 1):
                     params = ""
                     scope = []
-                    for (i_t, i_mode, val, dur) in tasks:
+                    for i_t, i_mode, val, dur in tasks:
                         paramval = ""
                         nbval = 0
                         for time_b in range(horizon + 1):

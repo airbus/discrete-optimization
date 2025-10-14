@@ -85,7 +85,9 @@ class Mutation2Opt(Mutation):
     points: Sequence[Point2D]
 
     @staticmethod
-    def build(problem: Point2DTspProblem, solution: TspSolution, **kwargs) -> "Mutation2Opt":  # type: ignore # avoid isinstance checks for efficiency
+    def build(
+        problem: Point2DTspProblem, solution: TspSolution, **kwargs
+    ) -> "Mutation2Opt":  # type: ignore # avoid isinstance checks for efficiency
         return Mutation2Opt(problem, **kwargs)
 
     def __init__(
@@ -94,7 +96,7 @@ class Mutation2Opt(Mutation):
         test_all: bool = False,
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         self.node_count = tsp_model.node_count
         self.length_permutation = tsp_model.length_permutation
@@ -140,7 +142,9 @@ class Mutation2Opt(Mutation):
             j_after = perm[jt + 1]
         return i_before, i, j, j_after
 
-    def mutate_and_compute_obj(self, variable: TspSolution) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(
+        self, variable: TspSolution
+    ) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.length is None or variable.lengths is None:
             raise RuntimeError(
                 "length and lengths variable's attributes should not be None at this point."
@@ -222,7 +226,9 @@ class Mutation2OptIntersection(Mutation2Opt):
     points: Sequence[Point2D]
 
     @staticmethod
-    def build(problem: Point2DTspProblem, solution: TspSolution, **kwargs) -> "Mutation2OptIntersection":  # type: ignore # avoid isinstance checks for efficiency
+    def build(
+        problem: Point2DTspProblem, solution: TspSolution, **kwargs
+    ) -> "Mutation2OptIntersection":  # type: ignore # avoid isinstance checks for efficiency
         return Mutation2OptIntersection(problem, **kwargs)
 
     def __init__(
@@ -232,7 +238,7 @@ class Mutation2OptIntersection(Mutation2Opt):
         nb_test: Optional[int] = None,
         return_only_improvement: bool = False,
         i_j_pairs: Optional[list[tuple[int, int]]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         Mutation2Opt.__init__(
             self, tsp_model, test_all, nb_test, return_only_improvement
@@ -240,7 +246,9 @@ class Mutation2OptIntersection(Mutation2Opt):
         self.tsp_model = tsp_model
         self.i_j_pairs = i_j_pairs
 
-    def mutate_and_compute_obj(self, variable: TspSolution) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
+    def mutate_and_compute_obj(
+        self, variable: TspSolution
+    ) -> tuple[TspSolution, LocalMove, dict[str, float]]:  # type: ignore # avoid isinstance checks for efficiency
         if variable.length is None or variable.lengths is None:
             raise RuntimeError(
                 "length and lengths variable's attributes should not be None at this point."
@@ -356,7 +364,9 @@ class SwapTspMove(LocalMove):
 
 class MutationSwapTsp(Mutation):
     @staticmethod
-    def build(problem: TspProblem, solution: TspSolution, **kwargs) -> "MutationSwapTsp":  # type: ignore # avoid isinstance checks for efficiency
+    def build(
+        problem: TspProblem, solution: TspSolution, **kwargs
+    ) -> "MutationSwapTsp":  # type: ignore # avoid isinstance checks for efficiency
         return MutationSwapTsp(problem)
 
     def __init__(self, tsp_model: TspProblem):

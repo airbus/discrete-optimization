@@ -146,7 +146,7 @@ class MathoptFixStartTimeRcpspConstraintHandler(OrtoolsMathOptConstraintHandler)
         solver: MathOptRcpspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -212,7 +212,7 @@ class MathoptStartTimeIntervalRcpspConstraintHandler(OrtoolsMathOptConstraintHan
         solver: MathOptRcpspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -288,7 +288,7 @@ class _BaseStartTimeIntervalMultimodeRcpspConstraintHandler(ConstraintHandler):
         solver: Union[GurobiMultimodeRcpspSolver, MathOptMultimodeRcpspSolver],
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -357,7 +357,7 @@ class GurobiStartTimeIntervalMultimodeRcpspConstraintHandler(
         solver: GurobiMultimodeRcpspSolver,
         result_storage: ResultStorage,
         result_storage_last_iteration: ResultStorage,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Iterable[Any]:
         """Add constraints to the internal model of a solver based on previous solutions
 
@@ -375,7 +375,7 @@ class GurobiStartTimeIntervalMultimodeRcpspConstraintHandler(
             solver=solver,
             result_storage=result_storage,
             result_storage_last_iteration=result_storage_last_iteration,
-            **kwargs
+            **kwargs,
         )
         solver.model.update()
         return constraints
@@ -384,5 +384,4 @@ class GurobiStartTimeIntervalMultimodeRcpspConstraintHandler(
 class MathOptStartTimeIntervalMultimodeRcpspConstraintHandler(
     _BaseStartTimeIntervalMultimodeRcpspConstraintHandler,
     OrtoolsMathOptConstraintHandler,
-):
-    ...
+): ...

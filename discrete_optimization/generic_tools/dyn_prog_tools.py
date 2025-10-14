@@ -84,12 +84,10 @@ class DpSolver(SolverDO):
     initial_solution: Optional[list[dp.Transition]] = None
 
     @abstractmethod
-    def init_model(self, **kwargs: Any) -> None:
-        ...
+    def init_model(self, **kwargs: Any) -> None: ...
 
     @abstractmethod
-    def retrieve_solution(self, sol: dp.Solution) -> Solution:
-        ...
+    def retrieve_solution(self, sol: dp.Solution) -> Solution: ...
 
     def solve(
         self,

@@ -23,7 +23,7 @@ class RcpspBasedMultiskillRcpspSolver(SolverDO):
         problem: Union[MultiskillRcpspProblem, VariantMultiskillRcpspProblem],
         method,
         params_objective_function: ParamsObjectiveFunction = None,
-        **args
+        **args,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

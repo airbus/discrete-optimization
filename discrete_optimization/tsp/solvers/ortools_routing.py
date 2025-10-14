@@ -29,7 +29,6 @@ class ORtoolsTspSolver(TspSolver):
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
         **kwargs: Any,
     ):
-
         super().__init__(
             problem=problem, params_objective_function=params_objective_function
         )

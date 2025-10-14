@@ -82,9 +82,9 @@ def sgs_fast(
             end_t = current_min_time + duration_array[act_id, modes_array[act_id]]
             for res in range(ressource_available.shape[0]):
                 if ressource_renewable[res]:
-                    resource_avail_in_time[res][
-                        current_min_time:end_t
-                    ] -= consumption_array[act_id, modes_array[act_id], res]
+                    resource_avail_in_time[res][current_min_time:end_t] -= (
+                        consumption_array[act_id, modes_array[act_id], res]
+                    )
                 else:
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
@@ -229,14 +229,14 @@ def sgs_fast_preemptive(
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
-                        resource_avail_in_time[res][
-                            starts[i] : ends[i]
-                        ] -= consumption_array[act_id, modes_array[act_id], res]
+                        resource_avail_in_time[res][starts[i] : ends[i]] -= (
+                            consumption_array[act_id, modes_array[act_id], res]
+                        )
                     else:
                         if i == 0:
-                            resource_avail_in_time[res][
-                                starts[i] :
-                            ] -= consumption_array[act_id, modes_array[act_id], res]
+                            resource_avail_in_time[res][starts[i] :] -= (
+                                consumption_array[act_id, modes_array[act_id], res]
+                            )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
@@ -399,14 +399,14 @@ def sgs_fast_preemptive_some_special_constraints(
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
-                        resource_avail_in_time[res][
-                            starts[i] : ends[i]
-                        ] -= consumption_array[act_id, modes_array[act_id], res]
+                        resource_avail_in_time[res][starts[i] : ends[i]] -= (
+                            consumption_array[act_id, modes_array[act_id], res]
+                        )
                     else:
                         if i == 0:
-                            resource_avail_in_time[res][
-                                starts[i] :
-                            ] -= consumption_array[act_id, modes_array[act_id], res]
+                            resource_avail_in_time[res][starts[i] :] -= (
+                                consumption_array[act_id, modes_array[act_id], res]
+                            )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
@@ -571,14 +571,14 @@ def sgs_fast_preemptive_minduration(
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
-                        resource_avail_in_time[res][
-                            starts[i] : ends[i]
-                        ] -= consumption_array[act_id, modes_array[act_id], res]
+                        resource_avail_in_time[res][starts[i] : ends[i]] -= (
+                            consumption_array[act_id, modes_array[act_id], res]
+                        )
                     else:
                         if i == 0:
-                            resource_avail_in_time[res][
-                                starts[i] :
-                            ] -= consumption_array[act_id, modes_array[act_id], res]
+                            resource_avail_in_time[res][starts[i] :] -= (
+                                consumption_array[act_id, modes_array[act_id], res]
+                            )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
@@ -643,9 +643,9 @@ def sgs_fast_partial_schedule(
                         scheduled_task[t] : activity_end_times[t]
                     ] -= consumption_array[t, modes_array[t], res]
                 else:
-                    resource_avail_in_time[res][
-                        scheduled_task[t] :
-                    ] -= consumption_array[t, modes_array[t], res]
+                    resource_avail_in_time[res][scheduled_task[t] :] -= (
+                        consumption_array[t, modes_array[t], res]
+                    )
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
@@ -703,9 +703,9 @@ def sgs_fast_partial_schedule(
             end_t = current_min_time + duration_array[act_id, modes_array[act_id]]
             for res in range(ressource_available.shape[0]):
                 if ressource_renewable[res]:
-                    resource_avail_in_time[res][
-                        current_min_time:end_t
-                    ] -= consumption_array[act_id, modes_array[act_id], res]
+                    resource_avail_in_time[res][current_min_time:end_t] -= (
+                        consumption_array[act_id, modes_array[act_id], res]
+                    )
                 else:
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
@@ -783,9 +783,9 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
                         scheduled_task[t] : activity_end_times[t]
                     ] -= consumption_array[t, modes_array[t], res]
                 else:
-                    resource_avail_in_time[res][
-                        scheduled_task[t] :
-                    ] -= consumption_array[t, modes_array[t], res]
+                    resource_avail_in_time[res][scheduled_task[t] :] -= (
+                        consumption_array[t, modes_array[t], res]
+                    )
                     if resource_avail_in_time[res][-1] < 0:
                         unfeasible_non_renewable_resources = True
                         break
@@ -847,9 +847,9 @@ def sgs_fast_partial_schedule_incomplete_permutation_tasks(
             end_t = current_min_time + duration_array[act_id, modes_array[act_id]]
             for res in range(ressource_available.shape[0]):
                 if ressource_renewable[res]:
-                    resource_avail_in_time[res][
-                        current_min_time:end_t
-                    ] -= consumption_array[act_id, modes_array[act_id], res]
+                    resource_avail_in_time[res][current_min_time:end_t] -= (
+                        consumption_array[act_id, modes_array[act_id], res]
+                    )
                 else:
                     resource_avail_in_time[res][current_min_time:] -= consumption_array[
                         act_id, modes_array[act_id], res
@@ -1038,14 +1038,14 @@ def sgs_fast_partial_schedule_preemptive(
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
-                        resource_avail_in_time[res][
-                            starts[i] : ends[i]
-                        ] -= consumption_array[act_id, modes_array[act_id], res]
+                        resource_avail_in_time[res][starts[i] : ends[i]] -= (
+                            consumption_array[act_id, modes_array[act_id], res]
+                        )
                     else:
                         if i == 0:
-                            resource_avail_in_time[res][
-                                starts[i] :
-                            ] -= consumption_array[act_id, modes_array[act_id], res]
+                            resource_avail_in_time[res][starts[i] :] -= (
+                                consumption_array[act_id, modes_array[act_id], res]
+                            )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
@@ -1247,14 +1247,14 @@ def sgs_fast_partial_schedule_preemptive_minduration(
             for i in range(len(starts)):
                 for res in range(ressource_available.shape[0]):
                     if ressource_renewable[res]:
-                        resource_avail_in_time[res][
-                            starts[i] : ends[i]
-                        ] -= consumption_array[act_id, modes_array[act_id], res]
+                        resource_avail_in_time[res][starts[i] : ends[i]] -= (
+                            consumption_array[act_id, modes_array[act_id], res]
+                        )
                     else:
                         if i == 0:
-                            resource_avail_in_time[res][
-                                starts[i] :
-                            ] -= consumption_array[act_id, modes_array[act_id], res]
+                            resource_avail_in_time[res][starts[i] :] -= (
+                                consumption_array[act_id, modes_array[act_id], res]
+                            )
                         if resource_avail_in_time[res][-1] < 0:
                             unfeasible_non_renewable_resources = True
                             break
@@ -1305,9 +1305,9 @@ def compute_mean_ressource(
         end_time = end_array[t]
         for res_index in resource_avail_in_time:
             if ressource_renewable[res_index]:
-                resource_avail_in_time[res_index][
-                    start_time:end_time
-                ] -= consumption_array[t, modes_array[t], res_index]
+                resource_avail_in_time[res_index][start_time:end_time] -= (
+                    consumption_array[t, modes_array[t], res_index]
+                )
             else:
                 resource_avail_in_time[res_index][start_time:] -= consumption_array[
                     t, modes_array[t], res_index
@@ -1348,9 +1348,9 @@ def compute_ressource_consumption(
         end_time = end_array[t]
         for res_index in resource_avail_in_time:
             if ressource_renewable[res_index]:
-                resource_avail_in_time[res_index][
-                    start_time:end_time
-                ] += consumption_array[t, modes_array[t], res_index]
+                resource_avail_in_time[res_index][start_time:end_time] += (
+                    consumption_array[t, modes_array[t], res_index]
+                )
             else:
                 resource_avail_in_time[res_index][start_time:] += consumption_array[
                     t, modes_array[t], res_index

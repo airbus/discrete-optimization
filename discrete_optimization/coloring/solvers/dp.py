@@ -102,7 +102,7 @@ class DpColoringSolver(DpSolver, ColoringSolver, WarmstartMixin):
             ]
             for c in range(nb_colors):
                 color = dp.Transition(
-                    name=f"{i,c}",
+                    name=f"{i, c}",
                     cost=dp.max(c, cur_color) - cur_color + dp.IntExpr.state_cost(),
                     effects=[
                         (uncolored, uncolored.remove(i)),

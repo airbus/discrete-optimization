@@ -398,11 +398,11 @@ class BaseLinearFlowGpdpSolver(MilpSolver, GpdpSolver):
         constraints_order: dict[Node, dict[Edge, ConstraintType]] = defaultdict(dict)
         for vehicle in range(self.problem.number_vehicle):
             node_origin = self.problem.origin_vehicle[vehicle]
-            constraints_order[node_origin][
-                (node_origin, node_origin)
-            ] = self.add_linear_constraint(
-                variables_order[node_origin] == 0,
-                name="order_" + str(node_origin),
+            constraints_order[node_origin][(node_origin, node_origin)] = (
+                self.add_linear_constraint(
+                    variables_order[node_origin] == 0,
+                    name="order_" + str(node_origin),
+                )
             )
         self.variables_order = variables_order
         self.constraints_order = constraints_order
@@ -426,17 +426,17 @@ class BaseLinearFlowGpdpSolver(MilpSolver, GpdpSolver):
                     if edge[0] == edge[1]:
                         continue
                     if self.subtour_use_indicator:
-                        constraints_order[node][
-                            edge
-                        ] = self.add_linear_constraint_with_indicator(
-                            binvar=self.variable_decisions["variables_edges"][vehicle][
-                                edge
-                            ],
-                            binval=1,
-                            lhs=variables_order[node],
-                            sense=InequalitySense.EQUAL,
-                            rhs=variables_order[edge[0]] + 1,
-                            name=f"order_{node}_{edge}",
+                        constraints_order[node][edge] = (
+                            self.add_linear_constraint_with_indicator(
+                                binvar=self.variable_decisions["variables_edges"][
+                                    vehicle
+                                ][edge],
+                                binval=1,
+                                lhs=variables_order[node],
+                                sense=InequalitySense.EQUAL,
+                                rhs=variables_order[edge[0]] + 1,
+                                name=f"order_{node}_{edge}",
+                            )
                         )
                     else:
                         constraints_order[node][edge] = add_constraint_fn(
@@ -559,30 +559,30 @@ class BaseLinearFlowGpdpSolver(MilpSolver, GpdpSolver):
         ) = construct_edges_in_out_dict(
             variables_edges=variables_edges, clusters_dict=self.problem.clusters_dict
         )
-        self.edges_in_all_vehicles: dict[
-            Node, set[tuple[int, Edge]]
-        ] = edges_in_all_vehicles
-        self.edges_out_all_vehicles: dict[
-            Node, set[tuple[int, Edge]]
-        ] = edges_out_all_vehicles
-        self.edges_in_per_vehicles: dict[
-            int, dict[Node, set[Edge]]
-        ] = edges_in_per_vehicles
-        self.edges_out_per_vehicles: dict[
-            int, dict[Node, set[Edge]]
-        ] = edges_out_per_vehicles
-        self.edges_in_all_vehicles_cluster: dict[
-            Hashable, set[tuple[int, Edge]]
-        ] = edges_in_all_vehicles_cluster
-        self.edges_out_all_vehicles_cluster: dict[
-            Hashable, set[tuple[int, Edge]]
-        ] = edges_out_all_vehicles_cluster
-        self.edges_in_per_vehicles_cluster: dict[
-            int, dict[Hashable, set[Edge]]
-        ] = edges_in_per_vehicles_cluster
-        self.edges_out_per_vehicles_cluster: dict[
-            int, dict[Hashable, set[Edge]]
-        ] = edges_out_per_vehicles_cluster
+        self.edges_in_all_vehicles: dict[Node, set[tuple[int, Edge]]] = (
+            edges_in_all_vehicles
+        )
+        self.edges_out_all_vehicles: dict[Node, set[tuple[int, Edge]]] = (
+            edges_out_all_vehicles
+        )
+        self.edges_in_per_vehicles: dict[int, dict[Node, set[Edge]]] = (
+            edges_in_per_vehicles
+        )
+        self.edges_out_per_vehicles: dict[int, dict[Node, set[Edge]]] = (
+            edges_out_per_vehicles
+        )
+        self.edges_in_all_vehicles_cluster: dict[Hashable, set[tuple[int, Edge]]] = (
+            edges_in_all_vehicles_cluster
+        )
+        self.edges_out_all_vehicles_cluster: dict[Hashable, set[tuple[int, Edge]]] = (
+            edges_out_all_vehicles_cluster
+        )
+        self.edges_in_per_vehicles_cluster: dict[int, dict[Hashable, set[Edge]]] = (
+            edges_in_per_vehicles_cluster
+        )
+        self.edges_out_per_vehicles_cluster: dict[int, dict[Hashable, set[Edge]]] = (
+            edges_out_per_vehicles_cluster
+        )
 
         constraints_out_flow: dict[tuple[int, Node], Any] = {}
         constraints_in_flow: dict[Union[tuple[int, Node], Node], Any] = {}
@@ -661,33 +661,37 @@ class BaseLinearFlowGpdpSolver(MilpSolver, GpdpSolver):
             same_node = node_origin == node_target
             for node in edges_in_per_vehicles[vehicle]:
                 if same_node or node not in {node_origin, node_target}:
-                    constraints_flow_conservation[
-                        (vehicle, node)
-                    ] = self.add_linear_constraint(
-                        self.construct_linear_sum(
-                            variables_edges[vehicle][e]
-                            for e in edges_in_per_vehicles[vehicle].get(node, set())
-                            if e[1] != e[0]
-                        )
-                        + self.construct_linear_sum(
-                            -variables_edges[vehicle][e]
-                            for e in edges_out_per_vehicles[vehicle].get(node, set())
-                            if e[1] != e[0]
-                        )
-                        == 0,
-                        name="convflow_" + str((vehicle, node)),
-                    )
-                    if unique_visit:
-                        constraints_flow_conservation[
-                            (vehicle, node, "in")
-                        ] = self.add_linear_constraint(
+                    constraints_flow_conservation[(vehicle, node)] = (
+                        self.add_linear_constraint(
                             self.construct_linear_sum(
                                 variables_edges[vehicle][e]
                                 for e in edges_in_per_vehicles[vehicle].get(node, set())
                                 if e[1] != e[0]
                             )
-                            <= 1,
-                            name="valueflow_" + str((vehicle, node)),
+                            + self.construct_linear_sum(
+                                -variables_edges[vehicle][e]
+                                for e in edges_out_per_vehicles[vehicle].get(
+                                    node, set()
+                                )
+                                if e[1] != e[0]
+                            )
+                            == 0,
+                            name="convflow_" + str((vehicle, node)),
+                        )
+                    )
+                    if unique_visit:
+                        constraints_flow_conservation[(vehicle, node, "in")] = (
+                            self.add_linear_constraint(
+                                self.construct_linear_sum(
+                                    variables_edges[vehicle][e]
+                                    for e in edges_in_per_vehicles[vehicle].get(
+                                        node, set()
+                                    )
+                                    if e[1] != e[0]
+                                )
+                                <= 1,
+                                name="valueflow_" + str((vehicle, node)),
+                            )
                         )
 
         if include_backward:
@@ -728,16 +732,18 @@ class BaseLinearFlowGpdpSolver(MilpSolver, GpdpSolver):
                     if len(neigh_2[node_neigh]) >= 1:
                         for node_neigh_neigh in neigh_2[node_neigh]:
                             for vehicle in range(nb_vehicle):
-                                constraint_triangle[
-                                    cnt_triangle
-                                ] = self.add_linear_constraint(
-                                    variables_edges[vehicle][(node, node_neigh)]
-                                    + variables_edges[vehicle][
-                                        (node_neigh, node_neigh_neigh)
-                                    ]
-                                    + variables_edges[vehicle][(node_neigh_neigh, node)]
-                                    <= 2,
-                                    name="triangle_" + str(cnt_triangle),
+                                constraint_triangle[cnt_triangle] = (
+                                    self.add_linear_constraint(
+                                        variables_edges[vehicle][(node, node_neigh)]
+                                        + variables_edges[vehicle][
+                                            (node_neigh, node_neigh_neigh)
+                                        ]
+                                        + variables_edges[vehicle][
+                                            (node_neigh_neigh, node)
+                                        ]
+                                        <= 2,
+                                        name="triangle_" + str(cnt_triangle),
+                                    )
                                 )
                                 cnt_triangle += 1
 
@@ -829,8 +835,7 @@ class BaseLinearFlowGpdpSolver(MilpSolver, GpdpSolver):
         parameters_milp: Optional[ParametersMilp] = None,
         time_limit: Optional[float] = 30.0,
         **kwargs: Any,
-    ) -> list[TemporaryResult]:
-        ...
+    ) -> list[TemporaryResult]: ...
 
     def solve_iterative(
         self,
@@ -1080,7 +1085,6 @@ class GurobiLinearFlowGpdpSolver(GurobiMilpSolver, BaseLinearFlowGpdpSolver):
         time_limit: Optional[float] = 30.0,
         **kwargs: Any,
     ) -> list[TemporaryResult]:
-
         gurobi_callback = TemporaryResultGurobiCallback(do_solver=self)
         self.optimize_model(
             parameters_milp=parameters_milp,
@@ -1139,12 +1143,16 @@ class TemporaryResultMathOptCallback(MathOptCallback):
             # retrieve and store new solution
             get_var_value_for_current_solution = lambda var: cb_sol[var]
             if self.do_solver.has_quadratic_objective:
-                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_quadratic_expression().evaluate(
-                    cb_sol
+                get_obj_value_for_current_solution = (
+                    lambda: self.do_solver.model.objective.as_quadratic_expression().evaluate(
+                        cb_sol
+                    )
                 )
             else:
-                get_obj_value_for_current_solution = lambda: self.do_solver.model.objective.as_linear_expression().evaluate(
-                    cb_sol
+                get_obj_value_for_current_solution = (
+                    lambda: self.do_solver.model.objective.as_linear_expression().evaluate(
+                        cb_sol
+                    )
                 )
             self.temporary_results.append(
                 self.do_solver.retrieve_current_temporaryresult(
@@ -1172,7 +1180,6 @@ class MathOptLinearFlowGpdpSolver(OrtoolsMathOptMilpSolver, BaseLinearFlowGpdpSo
         mathopt_additional_solve_parameters: Optional[mathopt.SolveParameters] = None,
         **kwargs: Any,
     ) -> list[TemporaryResult]:
-
         mathopt_cb = TemporaryResultMathOptCallback(
             do_solver=self, mathopt_solver_type=mathopt_solver_type
         )
@@ -1379,11 +1386,11 @@ class GurobiLazyConstraintLinearFlowGpdpSolver(GurobiLinearFlowGpdpSolver):
                 for k in range(len(solution)):
                     if solution[k] > 0.5:
                         flow_solution[indexes_edges[k][0]][indexes_edges[k][1]] = 1
-                        cost[
-                            indexes_edges[k][0]
-                        ] += self.problem.graph.edges_infos_dict[indexes_edges[k][1]][
-                            "distance"
-                        ]
+                        cost[indexes_edges[k][0]] += (
+                            self.problem.graph.edges_infos_dict[indexes_edges[k][1]][
+                                "distance"
+                            ]
+                        )
                 list_temporary_results = build_graph_solutions(
                     solutions=[({"variables_edges": flow_solution}, 0)],
                     graph=self.problem.graph,
@@ -1552,11 +1559,7 @@ class SubtourAddingConstraint:
                                                 [
                                                     self.linear_solver.variable_decisions[
                                                         "variables_edges"
-                                                    ][
-                                                        vv
-                                                    ][
-                                                        key
-                                                    ]
+                                                    ][vv][key]
                                                     for key in keys
                                                 ]
                                             )
@@ -1729,14 +1732,14 @@ class ConstraintHandlerOrWarmStart:
                             and v in edges_to_constraint
                             and e in edges_to_constraint[v]
                         ):
-                            self.linear_solver.constraint_on_edge[
-                                iedge
-                            ] = self.linear_solver.add_linear_constraint(
-                                self.linear_solver.variable_decisions[
-                                    "variables_edges"
-                                ][v][e]
-                                == val,
-                                name="c_" + str(v) + "_" + str(e) + "_" + str(val),
+                            self.linear_solver.constraint_on_edge[iedge] = (
+                                self.linear_solver.add_linear_constraint(
+                                    self.linear_solver.variable_decisions[
+                                        "variables_edges"
+                                    ][v][e]
+                                    == val,
+                                    name="c_" + str(v) + "_" + str(e) + "_" + str(val),
+                                )
                             )
                             iedge += 1
         self.linear_solver.set_warm_start_from_values(variable_values=hinted_values)
@@ -1981,7 +1984,7 @@ def reevaluate_result(
 ) -> TemporaryResult:
     if problem.graph is None:
         raise RuntimeError(
-            "problem.graph cannot be None " "when calling reeavaluate_result()."
+            "problem.graph cannot be None when calling reeavaluate_result()."
         )
     if variant_rebuilt:
         rout = rebuild_routine_variant

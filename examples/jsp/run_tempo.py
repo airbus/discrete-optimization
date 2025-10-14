@@ -1,9 +1,9 @@
 import logging
 
+from discrete_optimization.jsp.solvers.tempo import TempoJspScheduler
 from matplotlib import pyplot as plt
 
 from discrete_optimization.jsp.parser import get_data_available, parse_file
-from discrete_optimization.jsp.solvers.tempo import TempoJspScheduler
 from discrete_optimization.jsp.utils import plot_jobshop_solution
 
 logging.basicConfig(level=logging.DEBUG)

@@ -95,7 +95,7 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
             "colors_vars": {
                 "shape": (0, 0),
                 "type": bool,
-                "descr": "for each node and each color," " a binary indicator",
+                "descr": "for each node and each color, a binary indicator",
             }
         }
         self.description_constraint: dict[str, dict[str, str]] = {}
@@ -257,11 +257,11 @@ class _BaseLpColoringSolver(MilpSolver, ColoringSolver):
             "colors_var": {
                 "shape": (self.number_of_nodes, nb_colors),
                 "type": bool,
-                "descr": "for each node and each color," " a binary indicator",
+                "descr": "for each node and each color, a binary indicator",
             }
         }
         self.description_constraint["one_color_constraints"] = {
-            "descr": "one and only one color " "should be assignated to a node"
+            "descr": "one and only one color should be assignated to a node"
         }
         self.description_constraint["constraints_neighbors"] = {
             "descr": "no neighbors can have same color"

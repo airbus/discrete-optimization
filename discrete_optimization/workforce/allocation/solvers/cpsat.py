@@ -696,9 +696,9 @@ class CpsatTeamAllocationSolver(
         time_limit: Optional[float] = 100.0,
         **kwargs,
     ):
-        kwargs[
-            "modelisation_allocation"
-        ] = ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
+        kwargs["modelisation_allocation"] = (
+            ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
+        )
         if self.cp_model is None:
             self.init_model(**kwargs)
         if "priority" in kwargs:
@@ -795,9 +795,9 @@ class CpsatTeamAllocationSolver(
         time_limit_per_iteration: Optional[float] = 10.0,
         **kwargs,
     ):
-        kwargs[
-            "modelisation_allocation"
-        ] = ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
+        kwargs["modelisation_allocation"] = (
+            ModelisationAllocationOrtools.BINARY_OPTIONAL_ACTIVITIES
+        )
         if self.cp_model is None:
             self.init_model(**kwargs)
         assert (

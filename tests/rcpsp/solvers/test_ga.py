@@ -103,7 +103,6 @@ def test_multi_mode_alternating_ga(random_seed):
 
 
 def test_multi_mode_alternating_ga_specific_mode_arity(random_seed):
-
     files = get_data_available()
     files = [f for f in files if "j1010_10.mm" in f]  # Multi-mode RCPSP
     file_path = files[0]

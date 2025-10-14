@@ -62,7 +62,6 @@ class Tsp2dQiskit(OptimizationApplication):
         quadratic = {}
 
         for i in range(0, self.problem.length_permutation):
-
             var = var_names[(i, 0)]
             coeff = length(
                 self.problem.list_points[
@@ -121,7 +120,6 @@ class Tsp2dQiskit(OptimizationApplication):
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
-
         x = self._result_to_x(result)
 
         start_index = self.problem.start_index
@@ -150,7 +148,7 @@ class QaoaTspSolver(TspSolver, QiskitQaoaSolver):
         self,
         problem: Point2DTspProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.tsp_qiskit = Tsp2dQiskit(problem)
@@ -167,7 +165,7 @@ class VqeTspSolver(TspSolver, QiskitVqeSolver):
         self,
         problem: Point2DTspProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.tsp_qiskit = Tsp2dQiskit(problem)

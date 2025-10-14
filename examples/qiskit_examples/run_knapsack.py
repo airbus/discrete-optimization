@@ -3,7 +3,6 @@ from discrete_optimization.knapsack.solvers.quantum import VqeKnapsackSolver
 
 
 def knapsack_example():
-
     """
     We are using a quantum simulator here, these simulator can assume a very low number of variable,
     so we can use it only on very little example

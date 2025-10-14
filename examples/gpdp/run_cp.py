@@ -465,19 +465,17 @@ def init_model_resources():
         for i in range(instance["min_capacity_resource"].shape[0])
     ]
     for v in range(n_vehicles):
-        instance["resource_flow_node"][
-            index_start[v], 0
-        ] = 80  # all vehicles loaded with 10
+        instance["resource_flow_node"][index_start[v], 0] = (
+            80  # all vehicles loaded with 10
+        )
         instance["resource_flow_node"][index_start[v], 1] = 30
     instance["resource_flow_edges"][:, :, 0] = np.maximum(
         -distance_delta / 2, -5
     )  # negative flow for resource 0
     carburant_node = random.sample(range(number_of_nodes_transportation), n_vehicles)
     instance["cut_to_max"] = [True, False]
-    instance["resource_flow_node"][
-        0:number_of_nodes_transportation, 1
-    ] = np.random.randint(
-        -5, 5, size=number_of_nodes_transportation
+    instance["resource_flow_node"][0:number_of_nodes_transportation, 1] = (
+        np.random.randint(-5, 5, size=number_of_nodes_transportation)
     )  # random depot/delivery.
     for i in carburant_node:
         instance["resource_flow_node"][i, 0] = 20
@@ -913,19 +911,17 @@ def init_model_ortools():
     instance["weight_objective"] = [10, 1]
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
     for v in range(n_vehicles):
-        instance["resource_flow_node"][
-            index_start[v], 0
-        ] = 80  # all vehicles loaded with 10
+        instance["resource_flow_node"][index_start[v], 0] = (
+            80  # all vehicles loaded with 10
+        )
         instance["resource_flow_node"][index_start[v], 1] = 30
     instance["resource_flow_edges"][:, :, 0] = np.maximum(
         -distance_delta / 2, -5
     )  # negative flow for resource 0
     carburant_node = random.sample(range(number_of_nodes_transportation), n_vehicles)
     instance["cut_to_max"] = [True, False]
-    instance["resource_flow_node"][
-        0:number_of_nodes_transportation, 1
-    ] = np.random.randint(
-        -5, 5, size=number_of_nodes_transportation
+    instance["resource_flow_node"][0:number_of_nodes_transportation, 1] = (
+        np.random.randint(-5, 5, size=number_of_nodes_transportation)
     )  # random depot/delivery.
     for i in carburant_node:
         instance["resource_flow_node"][i, 0] = 2
@@ -1353,19 +1349,17 @@ def init_model_ortools_tsp():
     instance["weight_objective"] = [10, 1]
     index_start = {v: number_of_nodes_transportation + v for v in range(n_vehicles)}
     for v in range(n_vehicles):
-        instance["resource_flow_node"][
-            index_start[v], 0
-        ] = 80  # all vehicles loaded with 10
+        instance["resource_flow_node"][index_start[v], 0] = (
+            80  # all vehicles loaded with 10
+        )
         instance["resource_flow_node"][index_start[v], 1] = 30
     instance["resource_flow_edges"][:, :, 0] = np.maximum(
         -distance_delta / 2, -5
     )  # negative flow for resource 0
     carburant_node = random.sample(range(number_of_nodes_transportation), n_vehicles)
     instance["cut_to_max"] = [True, False]
-    instance["resource_flow_node"][
-        0:number_of_nodes_transportation, 1
-    ] = np.random.randint(
-        -5, 5, size=number_of_nodes_transportation
+    instance["resource_flow_node"][0:number_of_nodes_transportation, 1] = (
+        np.random.randint(-5, 5, size=number_of_nodes_transportation)
     )  # random depot/delivery.
     for i in carburant_node:
         instance["resource_flow_node"][i, 0] = 2

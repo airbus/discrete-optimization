@@ -51,7 +51,6 @@ def dp_facility_example_ws():
 
 
 def dp_optuna_example():
-
     s = """fl_100_14
        fl_3_1
        fl_16_1

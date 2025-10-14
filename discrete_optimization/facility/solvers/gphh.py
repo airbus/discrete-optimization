@@ -1,5 +1,4 @@
-"""Genetic programming based solver for facility location problem.
-"""
+"""Genetic programming based solver for facility location problem."""
 
 #  Copyright (c) 2022 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
@@ -206,7 +205,7 @@ class GphhFacilitySolver(FacilitySolver):
         weight: int = 1,
         params_gphh: Optional[ParametersGphh] = None,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             problem=problem, params_objective_function=params_objective_function

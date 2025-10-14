@@ -14,7 +14,6 @@ class BaseLpMisSolver(MisSolver, MilpSolver):
     vars_node: list[Any]
 
     def init_model(self, **kwargs: Any) -> None:
-
         # Create a new model
         self.model = self.create_empty_model()
 
@@ -46,7 +45,6 @@ class BaseLpMisSolver(MisSolver, MilpSolver):
         get_var_value_for_current_solution: Callable[[Any], float],
         get_obj_value_for_current_solution: Callable[[], float],
     ) -> MisSolution:
-
         chosen = [0] * self.problem.number_nodes
 
         for i in range(0, self.problem.number_nodes):

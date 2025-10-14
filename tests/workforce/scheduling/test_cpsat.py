@@ -200,7 +200,7 @@ def test_cpsat_params(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         time_limit=5,
         parameters_cp=parameters_cp,
-        **kwargs
+        **kwargs,
     )
     assert len(res) == 1
     sol = res[-1][0]
@@ -223,13 +223,13 @@ def test_cpsat_modelisation_dispersion(modelisation_dispersion):
     solver.init_model(
         objectives=[ObjectivesEnum.DISPERSION],
         adding_redundant_cumulative=True,
-        **kwargs
+        **kwargs,
     )
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         time_limit=5,
         parameters_cp=parameters_cp,
-        **kwargs
+        **kwargs,
     )
     assert len(res) == 1
     sol = res[-1][0]

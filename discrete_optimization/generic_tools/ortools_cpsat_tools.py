@@ -13,9 +13,9 @@ from ortools.sat.python.cp_model import (
     UNKNOWN,
     Constraint,
     CpModel,
+    CpSolverSolutionCallback,
 )
 from ortools.sat.python.cp_model import CpSolver as OrtoolsInternalCpSolver
-from ortools.sat.python.cp_model import CpSolverSolutionCallback
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,

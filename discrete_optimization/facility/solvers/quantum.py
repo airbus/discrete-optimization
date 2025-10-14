@@ -117,26 +117,20 @@ class FacilityQiskit(OptimizationApplication):
         quadratic_program = conv.convert(quadratic_program)
 
         for j in range(0, self.problem.facility_count):
-
             row = quadratic_program.get_linear_constraint(0).linear.to_dict()
 
             for i in row.keys():
-
                 weight = 2 * row[i] * self.problem.facilities[j].capacity - row[i] ** 2
                 if i < self.problem.customer_count:
                     quadratic[
                         quadratic_program.get_variable(i).name,
                         quadratic_program.get_variable(i).name,
-                    ] += (
-                        -p * weight
-                    )
+                    ] += -p * weight
                 else:
                     quadratic[
                         quadratic_program.get_variable(i).name,
                         quadratic_program.get_variable(i).name,
-                    ] = (
-                        -p * weight
-                    )
+                    ] = -p * weight
 
                 for k in row.keys():
                     if k > i:
@@ -144,9 +138,7 @@ class FacilityQiskit(OptimizationApplication):
                         quadratic[
                             quadratic_program.get_variable(i).name,
                             quadratic_program.get_variable(k).name,
-                        ] = (
-                            2 * p * weight
-                        )
+                        ] = 2 * p * weight
 
             quadratic_program.remove_linear_constraint(0)
 
@@ -165,7 +157,6 @@ class FacilityQiskit(OptimizationApplication):
         return quadratic_program
 
     def interpret(self, result: Union[OptimizationResult, np.ndarray]):
-
         x = self._result_to_x(result)
 
         facility_for_customers = [-1] * self.problem.customer_count
@@ -187,7 +178,7 @@ class QaoaFacilitySolver(FacilitySolver, QiskitQaoaSolver):
         self,
         problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.facility_qiskit = FacilityQiskit(problem)
@@ -204,7 +195,7 @@ class VqeFacilitySolver(FacilitySolver, QiskitVqeSolver):
         self,
         problem: FacilityProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.facility_qiskit = FacilityQiskit(problem)

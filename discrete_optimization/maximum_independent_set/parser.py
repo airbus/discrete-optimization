@@ -69,29 +69,29 @@ def dimacs_parser(filename: str):
             # comment line: ignored
             continue
         elif prefix == DimacsPrefixes.PROBLEM.value:
-            assert (
-                not problem_line_read
-            ), "The dimacs file can have only one problem line."
+            assert not problem_line_read, (
+                "The dimacs file can have only one problem line."
+            )
             problem_line_read = True
             assert tokens[1] == "edge", "The dimacs problem format must be 'edge'."
             n_nodes = int(tokens[2])
             n_edges = int(tokens[3])
             graph.add_nodes_from(range(1, 1 + n_nodes))
         elif prefix == DimacsPrefixes.EDGE.value:
-            assert (
-                problem_line_read
-            ), "The problem line must appear before any edge descriptor."
+            assert problem_line_read, (
+                "The problem line must appear before any edge descriptor."
+            )
             graph.add_edge(int(tokens[1]), int(tokens[2]))
         else:
             raise NotImplementedError(
                 f"The prefix {prefix} is not allowed by dimacs format."
             )
-    assert (
-        len(graph.edges) == n_edges
-    ), "The problem line defines a number of edges different from the number of edge lines."
-    assert (
-        len(graph.nodes) == n_nodes
-    ), "The problem line defines a number of nodes different from the max node id used by an edge."
+    assert len(graph.edges) == n_edges, (
+        "The problem line defines a number of edges different from the number of edge lines."
+    )
+    assert len(graph.nodes) == n_nodes, (
+        "The problem line defines a number of nodes different from the max node id used by an edge."
+    )
     return MisProblem(graph)
 
 

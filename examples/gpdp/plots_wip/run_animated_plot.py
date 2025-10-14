@@ -202,7 +202,6 @@ def plot_flights(
         if len(ressources) > 0:
             k = int(10 / len(ressources))
             for j in range(len(ressources)):
-
                 if j == len(ressources) - 1:
                     dict_ax_ressources[ressources[j]] = fig.add_subplot(gs[5:, j * k :])
                 else:

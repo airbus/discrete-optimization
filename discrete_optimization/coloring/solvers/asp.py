@@ -104,7 +104,9 @@ class AspColoringSolver(AspClingoSolver, WithStartingSolutionColoringSolver):
         edges = ""
         index_nodes_name = self.problem.index_nodes_name
         for e in self.problem.graph.edges:
-            edges += f"edge({index_nodes_name[e[0]]+1}, {index_nodes_name[e[1]]+1}). "
+            edges += (
+                f"edge({index_nodes_name[e[0]] + 1}, {index_nodes_name[e[1]] + 1}). "
+            )
         types = ""
         if self.problem.use_subset:
             # TODO : make this work.
@@ -127,7 +129,7 @@ class AspColoringSolver(AspClingoSolver, WithStartingSolutionColoringSolver):
             for node in self.problem.constraints_coloring.color_constraint:
                 value = self.problem.constraints_coloring.color_constraint[node]
                 index_node = self.problem.index_nodes_name[node]
-                s += f"fixed_color({index_node+1}, c_{value}). "
+                s += f"fixed_color({index_node + 1}, c_{value}). "
         return s
 
     def compute_clever_colors_map(self, colors_name: list[str]):

@@ -277,9 +277,9 @@ class CPSatAllocSchedulingSolver(
             self.problem.tasks_data[t].duration_task for t in self.problem.tasks_list
         ]
         key_per_team = {j: [] for j in self.problem.index_to_team}
-        compatible_teams: dict[
-            int, set[int]
-        ] = self.problem.compatible_teams_index_all_activity()
+        compatible_teams: dict[int, set[int]] = (
+            self.problem.compatible_teams_index_all_activity()
+        )
         if additional_constraints is not None:
             forced_alloc = additional_constraints.forced_allocation
             if forced_alloc is not None:
@@ -388,7 +388,7 @@ class CPSatAllocSchedulingSolver(
                                 start=starts_var[x[0]],
                                 size=dur[x[0]] + margin,
                                 is_present=is_present_var[x[0]][x[1]],
-                                name=f"dummy_longer_task_{x[0],x[1]}",
+                                name=f"dummy_longer_task_{x[0], x[1]}",
                             )
                             for x in key_per_team[index_team]
                         ]
@@ -772,7 +772,7 @@ class CPSatAllocSchedulingSolver(
 
 
 def _get_variables_obj_key(
-    obj: Union[str, ObjectivesEnum]
+    obj: Union[str, ObjectivesEnum],
 ) -> Union[str, ObjectivesEnum]:
     if isinstance(obj, str):
         try:

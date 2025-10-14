@@ -873,11 +873,13 @@ def transform_to_multimode_rcpsp(
     tasks_list: Optional[list[Hashable]] = ["source"] + problem.tasks_list + ["sink"]
     source_task: Optional[Hashable] = "source"
     sink_task: Optional[Hashable] = "sink"
-    special_constraints: Optional[
-        SpecialConstraintsDescription
-    ] = SpecialConstraintsDescription(
-        start_times_window=problem.start_window if add_window_time_constraint else None,
-        end_times_window=problem.end_window if add_window_time_constraint else None,
+    special_constraints: Optional[SpecialConstraintsDescription] = (
+        SpecialConstraintsDescription(
+            start_times_window=problem.start_window
+            if add_window_time_constraint
+            else None,
+            end_times_window=problem.end_window if add_window_time_constraint else None,
+        )
     )
     rcpsp = RcpspProblem(
         resources=resources,

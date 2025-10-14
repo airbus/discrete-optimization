@@ -199,7 +199,6 @@ def execute_ansatz_with_Hamiltonian(
         )
 
     else:
-
         method = kwargs["method"]
         if kwargs.get("options"):
             options = kwargs["options"]
@@ -291,7 +290,6 @@ class QiskitQaoaSolver(QiskitSolver, Hyperparametrizable):
         use_session: Optional[bool] = False,
         **kwargs: Any,
     ) -> ResultStorage:
-
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         reps = kwargs["reps"]
@@ -364,8 +362,7 @@ class QiskitQaoaSolver(QiskitSolver, Hyperparametrizable):
         )
 
     @abstractmethod
-    def init_model(self, **kwargs: any) -> None:
-        ...
+    def init_model(self, **kwargs: any) -> None: ...
 
     @abstractmethod
     def retrieve_current_solution(self, result) -> Solution:
@@ -413,7 +410,6 @@ class QiskitVqeSolver(QiskitSolver):
         use_session: Optional[bool] = False,
         **kwargs: Any,
     ) -> ResultStorage:
-
         kwargs = self.complete_with_default_hyperparameters(kwargs)
 
         if backend is not None:
@@ -456,8 +452,7 @@ class QiskitVqeSolver(QiskitSolver):
         )
 
     @abstractmethod
-    def init_model(self, **kwargs: Any) -> None:
-        ...
+    def init_model(self, **kwargs: Any) -> None: ...
 
     @abstractmethod
     def retrieve_current_solution(self, result) -> Solution:

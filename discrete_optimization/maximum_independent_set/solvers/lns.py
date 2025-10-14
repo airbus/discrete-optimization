@@ -57,12 +57,10 @@ class OrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, MisSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a MisSolution."
+                "result_storage.get_best_solution() should be a MisSolution."
             )
         nb_chosen = sum(current_solution.chosen)
         idx_chosen = list(np.where(current_solution.chosen)[0])
@@ -115,12 +113,10 @@ class DestroyOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, MisSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a MisSolution."
+                "result_storage.get_best_solution() should be a MisSolution."
             )
         nb_chosen = sum(current_solution.chosen)
         idx_chosen = list(np.where(current_solution.chosen)[0])
@@ -186,12 +182,10 @@ class AllVarsOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
         lns_constraints = []
         current_solution, _ = result_storage[-1]
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, MisSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a MisSolution."
+                "result_storage.get_best_solution() should be a MisSolution."
             )
         subpart_chosen = set(
             random.sample(
@@ -247,12 +241,10 @@ class LocalMovesOrtoolsCpSatMisConstraintHandler(OrtoolsCpSatConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         if current_solution is None:
-            raise ValueError(
-                "result_storage.get_best_solution() " "should not be None."
-            )
+            raise ValueError("result_storage.get_best_solution() should not be None.")
         if not isinstance(current_solution, MisSolution):
             raise ValueError(
-                "result_storage.get_best_solution() " "should be a MisSolution."
+                "result_storage.get_best_solution() should be a MisSolution."
             )
         change = [
             solver.cp_model.NewBoolVar(name=f"change_{k}")

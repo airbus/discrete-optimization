@@ -209,8 +209,7 @@ class CpSolver(SolverDO):
         callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         **args: Any,
-    ) -> ResultStorage:
-        ...
+    ) -> ResultStorage: ...
 
 
 class MinizincCpSolver(CpSolver):

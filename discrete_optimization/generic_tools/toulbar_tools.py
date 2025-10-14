@@ -37,14 +37,12 @@ class ToulbarSolver(SolverDO):
     ]
 
     @abstractmethod
-    def init_model(self, **kwargs: Any) -> None:
-        ...
+    def init_model(self, **kwargs: Any) -> None: ...
 
     @abstractmethod
     def retrieve_solution(
         self, solution_from_toulbar2: tuple[list, float, int]
-    ) -> Solution:
-        ...
+    ) -> Solution: ...
 
     def solve(
         self,

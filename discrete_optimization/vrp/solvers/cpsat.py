@@ -62,7 +62,7 @@ class CpSatVrpSolver(OrtoolsCpSatSolver, VrpSolver, WarmstartMixin):
             start_index = self.problem.start_indexes[vehicle]
             end_index = self.problem.end_indexes[vehicle]
 
-            for (i, j) in arc_literals_vehicle:
+            for i, j in arc_literals_vehicle:
                 if i == j:
                     hints[i, j] = 1
                 else:
@@ -94,7 +94,7 @@ class CpSatVrpSolver(OrtoolsCpSatSolver, VrpSolver, WarmstartMixin):
                 self.cp_model.AddHint(lit, hints[i, j])
                 if debug_mode:
                     self.variables["to_hint"][vehicle][i, j] = self.cp_model.NewBoolVar(
-                        f"{vehicle}, {i,j}"
+                        f"{vehicle}, {i, j}"
                     )
                     self.cp_model.Add(lit == hints[i, j]).OnlyEnforceIf(
                         self.variables["to_hint"][vehicle][i, j]

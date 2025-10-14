@@ -80,8 +80,8 @@ class ToulbarFacilitySolver(ToulbarSolver, FacilitySolver, WarmstartMixin):
         )
         for f in range(nb_facilities):
             for c in range(nb_customers):
-                x[f, c] = model.AddVariable(name=f"x_{(f,c)}", values=[0, 1])
-                model.AddFunction([f"x_{(f,c)}"], [0, matrix_length[f, c]])
+                x[f, c] = model.AddVariable(name=f"x_{(f, c)}", values=[0, 1])
+                model.AddFunction([f"x_{(f, c)}"], [0, matrix_length[f, c]])
                 key_to_index[(f, c)] = index
                 index += 1
         for c in range(nb_customers):
@@ -298,7 +298,7 @@ class FacilityConstraintHandlerToulbar(ConstraintHandler):
         if solver.modeling == ModelingToulbarFacility.BINARY:
             text = ",".join(
                 [
-                    f"{solver.key_to_index[f,c]}={1 if sol.facility_for_customers[c]==f else 0}"
+                    f"{solver.key_to_index[f, c]}={1 if sol.facility_for_customers[c] == f else 0}"
                     for c in customers
                     for f in range(self.problem.facility_count)
                 ]
@@ -362,7 +362,7 @@ class FacilityConstraintHandlerDestroyFacilityToulbar(ConstraintHandler):
         if solver.modeling == ModelingToulbarFacility.BINARY:
             text = ",".join(
                 [
-                    f"{solver.key_to_index[f,c]}={1 if sol.facility_for_customers[c]==f else 0}"
+                    f"{solver.key_to_index[f, c]}={1 if sol.facility_for_customers[c] == f else 0}"
                     for c in range(self.problem.customer_count)
                     for f in range(self.problem.facility_count)
                     if f not in facilities_to_dst

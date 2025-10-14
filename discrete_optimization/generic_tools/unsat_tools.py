@@ -1,4 +1,5 @@
 """Tools for explaining unsatisfiability."""
+
 from abc import abstractmethod
 from collections.abc import MutableSequence
 from typing import Any, Iterable, Optional, overload
@@ -37,39 +38,33 @@ class MetaConstraint(MutableSequence[Constraint]):
 
     @overload
     @abstractmethod
-    def __getitem__(self, index: int) -> Constraint:
-        ...
+    def __getitem__(self, index: int) -> Constraint: ...
 
     @overload
     @abstractmethod
-    def __getitem__(self, index: slice) -> MutableSequence[Constraint]:
-        ...
+    def __getitem__(self, index: slice) -> MutableSequence[Constraint]: ...
 
     def __getitem__(self, index: int) -> Constraint:
         return self.constraints[index]
 
     @overload
     @abstractmethod
-    def __setitem__(self, index: int, value: Constraint) -> None:
-        ...
+    def __setitem__(self, index: int, value: Constraint) -> None: ...
 
     @overload
     @abstractmethod
-    def __setitem__(self, index: slice, value: Iterable[Constraint]) -> None:
-        ...
+    def __setitem__(self, index: slice, value: Iterable[Constraint]) -> None: ...
 
     def __setitem__(self, index: int, value: Constraint) -> None:
         self.constraints[index] = value
 
     @overload
     @abstractmethod
-    def __delitem__(self, index: int) -> None:
-        ...
+    def __delitem__(self, index: int) -> None: ...
 
     @overload
     @abstractmethod
-    def __delitem__(self, index: slice) -> None:
-        ...
+    def __delitem__(self, index: slice) -> None: ...
 
     def __delitem__(self, index: int) -> None:
         del self.constraints[index]
