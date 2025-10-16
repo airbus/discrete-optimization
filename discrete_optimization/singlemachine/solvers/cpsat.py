@@ -6,6 +6,7 @@ from typing import Any
 from ortools.sat.python.cp_model import CpModel, CpSolverSolutionCallback, LinearExpr
 
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.singlemachine.problem import (
     WeightedTardinessProblem,
@@ -13,7 +14,7 @@ from discrete_optimization.singlemachine.problem import (
 )
 
 
-class CpsatWTSolver(OrtoolsCpSatSolver):
+class CpsatWTSolver(OrtoolsCpSatSolver, WarmstartMixin):
     problem: WeightedTardinessProblem
     variables: dict
 
@@ -55,3 +56,12 @@ class CpsatWTSolver(OrtoolsCpSatSolver):
         self.cp_model.Minimize(
             LinearExpr.weighted_sum(self.variables["lateness"], self.problem.weights)
         )
+
+    def set_warm_start(self, solution: WTSolution) -> None:
+        self.cp_model.clear_hints()
+        for i in range(self.problem.num_jobs):
+            self.cp_model.add_hint(self.variables["starts"][i], solution.schedule[i][0])
+            self.cp_model.add_hint(
+                self.variables["lateness"][i],
+                max(0, solution.schedule[i][1] - self.problem.due_dates[i]),
+            )

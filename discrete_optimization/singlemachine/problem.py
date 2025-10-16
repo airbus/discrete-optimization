@@ -21,10 +21,35 @@ from discrete_optimization.generic_tools.do_problem import (
 
 class WTSolution(Solution):
     def __init__(
-        self, problem: "WeightedTardinessProblem", schedule: list[tuple[int, int]]
+        self,
+        problem: "WeightedTardinessProblem",
+        schedule: list[tuple[int, int]] = None,
+        permutation: list[int] = None,
     ):
         self.problem = problem
         self.schedule = schedule
+        if self.schedule is None:
+            assert permutation is not None
+            current_time = 0
+            schedule = [None for i in range(self.problem.num_jobs)]
+            for j in permutation:
+                schedule[j] = (
+                    current_time,
+                    current_time + self.problem.processing_times[j],
+                )
+                current_time = schedule[j][1]
+            self.schedule = schedule
+        self.permutation = permutation
+
+    def lazy_copy(self) -> "Solution":
+        return WTSolution(
+            problem=self.problem,
+            # schedule=self.schedule,
+            permutation=self.permutation,
+        )
+
+    def copy(self) -> "Solution":
+        return self.lazy_copy()
 
 
 class WeightedTardinessProblem(Problem):
@@ -66,10 +91,24 @@ class WeightedTardinessProblem(Problem):
                 [
                     self.weights[i]
                     * max(variable.schedule[i][-1] - self.due_dates[i], 0)
-                    for i in range(len(self.due_dates))
+                    for i in range(self.num_jobs)
                 ]
-            )
+            ),
+            "penalty": sum(
+                [
+                    max(self.release_dates[i] - variable.schedule[i][0], 0)
+                    for i in range(self.num_jobs)
+                ]
+            ),
         }
+
+    def evaluate_from_encoding(self, permutation: list[int], encoding_name):
+        if encoding_name == "permutation":
+            kp_sol = WTSolution(problem=self, permutation=permutation, schedule=None)
+        else:
+            raise NotImplementedError("encoding_name must be 'permutation'")
+        objectives = self.evaluate(kp_sol)
+        return objectives
 
     def satisfy(self, variable: WTSolution) -> bool:
         max_t = max([x[1] for x in variable.schedule])
@@ -78,31 +117,39 @@ class WeightedTardinessProblem(Problem):
             active_machine[variable.schedule[i][0] : variable.schedule[i][1]] += 1
             if np.max(active_machine) > 1:
                 return False
+            if variable.schedule[i][0] < self.release_dates[i]:
+                return False
         return True
 
     def get_attribute_register(self) -> EncodingRegister:
         return EncodingRegister(
-            dict_attribute_to_type={"schedule": {"n": self.num_jobs}}
+            dict_attribute_to_type={
+                "schedule": {"n": self.num_jobs},
+                "permutation": {
+                    "type": [TypeAttribute.PERMUTATION],
+                    "n": self.num_jobs,
+                    "name": "permutation",
+                    "range": range(self.num_jobs),
+                },
+            }
         )
 
     def get_solution_type(self) -> type[Solution]:
         return WTSolution
 
+    def get_dummy_solution(self):
+        return WTSolution(problem=self, permutation=list(range(self.num_jobs)))
+
     def get_objective_register(self) -> ObjectiveRegister:
         return ObjectiveRegister(
             objective_sense=ModeOptim.MINIMIZATION,
-            objective_handling=ObjectiveHandling.SINGLE,
+            objective_handling=ObjectiveHandling.AGGREGATE,
             dict_objective_to_doc={
                 "tardiness": ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
-                )
+                ),
+                "penalty": ObjectiveDoc(
+                    type=TypeObjective.PENALTY, default_weight=10000
+                ),
             },
         )
-
-    def get_dummy_solution(self) -> WTSolution:
-        schedule = []
-        time_ = 0
-        for i in range(self.num_jobs):
-            schedule.append((time_, time_ + self.processing_times[i]))
-            time_ = schedule[-1][1]
-        return WTSolution(problem=self, schedule=schedule)
