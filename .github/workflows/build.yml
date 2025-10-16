@@ -159,6 +159,7 @@ jobs:
           # Install a specific version of uv.
           version: "0.9.2"
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Check minizinc based solvers fails without minizinc binary
         run: |
           uv run python  -c "
