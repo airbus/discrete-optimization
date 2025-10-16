@@ -224,6 +224,7 @@ jobs:
           if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
             uv run python -c "import gurobipy"
           fi
+          uv pip list
 
       - name: Restore tests data cache
         id: cache-data
