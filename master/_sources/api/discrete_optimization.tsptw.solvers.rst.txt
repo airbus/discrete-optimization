@@ -1,0 +1,29 @@
+discrete\_optimization.tsptw.solvers package
+============================================
+
+Submodules
+----------
+
+discrete\_optimization.tsptw.solvers.cpsat module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.tsptw.solvers.cpsat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.tsptw.solvers.dp module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.tsptw.solvers.dp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.tsptw.solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
