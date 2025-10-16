@@ -67,7 +67,7 @@ quantum = [
     "qiskit-aer>=0.14.1",
     "qiskit-ibm-runtime>=0.24"
 ]
-toulbar = ["pytoulbar2>=0.0.0.4"]
+toulbar = ["pytoulbar2>=0.0.0.4; python_version < '3.13'"]
 dashboard = ["dash", "plotly", "dash_bootstrap_components", "pandas[hdf5]"]
 
 [project.urls]
