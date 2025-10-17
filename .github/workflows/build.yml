@@ -26,7 +26,7 @@ jobs:
         run: echo "pre-commit" > requirements_precommit.txt
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.12"
           cache: "pip"
           cache-dependency-path: requirements_precommit.txt
       - name: install pre-commit
@@ -64,7 +64,7 @@ jobs:
           echo "build" > requirements_build.txt
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.12"
           cache: "pip"
           cache-dependency-path: requirements_build.txt
       - name: Install build dependencies
@@ -90,7 +90,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.12"]
+        python-version: ["3.10", "3.13"]
         wo_gurobi: ["", "without gurobi"]
         include:
           - os: "ubuntu-latest"
@@ -124,7 +124,7 @@ jobs:
           - coverage: false  # generally no coverage to avoid multiple reports
           - coverage: true  # coverage only for one entry of the matrix
             os: "ubuntu-latest"
-            python-version: "3.12"
+            python-version: "3.13"
             wo_gurobi: ""
         exclude:
           - os: "windows-latest"
@@ -135,11 +135,11 @@ jobs:
             wo_gurobi: "without gurobi"
           - os: "ubuntu-latest"
             wo_gurobi: "without gurobi"
-            python-version: "3.9"
+            python-version: "3.10"
           - os: "macos-latest"
-            python-version: "3.9"
+            python-version: "3.10"
           - os: "macos-15-intel"
-            python-version: "3.12"
+            python-version: "3.13"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -162,12 +162,7 @@ jobs:
         run: |
           python -m pip install -U pip
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          python_version=${{ matrix.python-version }}
-          if [ "$python_version" = "3.9" ]; then
-            pip install ${wheelfile} "numpy<2"  # for compatibility with pytables available for python 3.9
-          else
-            pip install ${wheelfile}
-          fi
+          pip install ${wheelfile}
       - name: Check minizinc based solvers fails without minizinc binary
         run: |
           python -c "
@@ -216,7 +211,7 @@ jobs:
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
           pip install "${wheelfile}[test, quantum, dashboard]"
-          if [ "${{ startsWith(matrix.os, 'windows') || (startsWith(matrix.os, 'macos') && matrix.python-version == '3.12') }}" == false ]; then
+          if [ "${{ startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macos') || matrix.python-version == '3.13' }}" == false ]; then
             echo "install toulbar2"
             pip install "${wheelfile}[toulbar]"
             python -c "import pytoulbar2"

@@ -45,7 +45,7 @@ jobs:
       doc_version: ${{ steps.sphinx-build.outputs.doc_version }}
     runs-on: ubuntu-latest
     env:
-      python-version: "3.9"
+      python-version: "3.12"
     steps:
       - name: Set env variables for github links in doc
         run: |

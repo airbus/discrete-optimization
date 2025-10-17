@@ -32,7 +32,7 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "shapely>=1.7",
     "minizinc>=0.6.0",
