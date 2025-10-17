@@ -512,17 +512,19 @@ class CpmpySolver(CpSolver):
         hard_cpmpy = [cpmpy.all(meta.constraints) for meta in hard_normalized]
         # handle trivial False constraints
         soft_with_trivial_false = [
-            meta for cstr, meta in zip(soft_cpmpy, soft) if not cstr
+            meta for cstr, meta in zip(soft_cpmpy, soft) if is_trivially_false(cstr)
         ]
         soft_wo_trivial_false = [
             meta for meta in soft if meta not in soft_with_trivial_false
         ]
-        soft_cpmpy_wo_trivial_false = [cstr for cstr in soft_cpmpy if cstr]
+        soft_cpmpy_wo_trivial_false = [
+            cstr for cstr in soft_cpmpy if not (is_trivially_false(cstr))
+        ]
         if (
             len(soft_with_trivial_false) > 0
             and not include_all_trivial_false_constraints
         ):
-            return soft_wo_trivial_false[:1]  # only first meta containing False
+            return soft_with_trivial_false[:1]  # only first meta containing False
         cstr2meta = dict(zip(soft_cpmpy, soft))
         ms_constraints = fine_method(
             soft=soft_cpmpy_wo_trivial_false, hard=hard_cpmpy, **kwargs
@@ -728,3 +730,15 @@ class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
         self.do_solver._current_internal_objective_best_bound = (
             self.BestObjectiveBound()
         )
+
+
+def is_trivially_false(cstr: Expression) -> bool:
+    """Check if a cpmpy constraint is trivially False.
+
+    This means it is always equal to False.
+
+    """
+    if isinstance(cstr, BoolVal) or isinstance(cstr, bool):
+        return not cstr
+    else:
+        return False
