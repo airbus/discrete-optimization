@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 from abc import abstractmethod
 from typing import Any, Optional
 
@@ -17,7 +18,11 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     BasicStatsCallback,
 )
-from discrete_optimization.generic_tools.cp_tools import CpSolver, ParametersCp
+from discrete_optimization.generic_tools.cp_tools import (
+    CpSolver,
+    ParametersCp,
+    SignEnum,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Problem,
@@ -31,6 +36,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 this_folder = os.path.abspath(os.path.dirname(__file__))
+
+NO_SOLUTION_STR = "No solution found."
+INFEASIBLE_STR = "The problem is infeasible."
 
 
 class OptalBasicCallback(BasicStatsCallback):
@@ -87,6 +95,12 @@ class OptalSolver(CpSolver):
         self._script_model: str = None
         self._is_init: bool = False
 
+    def minimize_variable(self, var: Any) -> None:
+        pass
+
+    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
+        pass
+
     def init_model(self, **args: Any) -> None:
         self._is_init = True
 
@@ -101,24 +115,30 @@ class OptalSolver(CpSolver):
         for example : searchType=fds, worker0-1.noOverlapPropagationLevel=4 if you want worker 0 and 1 to use this
         parameters etc. TODO : list such parameters in hyperparameter of this wrapped solver.
         """
+        if parameters_cp is None:
+            parameters_cp = ParametersCp.default()
         arguments = [
-            f"--timeLimit {time_limit}",
-            f"--nbWorkers {parameters_cp.nb_process}",
+            "--timeLimit",
+            str(time_limit),
+            "--nbWorkers",
+            str(parameters_cp.nb_process),
         ]
         for k in args:
-            arguments.append(f"--{k} {args[k]}")
+            arguments += [f"--{k}", str(args[k])]
         command = ["node", self._script_model, self._file_input, *arguments]
         return command
 
     @abstractmethod
-    def retrieve_current_solution(self, dict_results: dict) -> Solution:
-        ...
+    def retrieve_current_solution(self, dict_results: dict) -> Solution: ...
 
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: int = 10,
+        do_not_retrieve_solutions: bool = False,
+        verbose: bool = True,
+        debug: bool = False,
         **args: Any,
     ) -> ResultStorage:
         if not self._is_init:
@@ -129,31 +149,39 @@ class OptalSolver(CpSolver):
         command = self.build_command(
             parameters_cp=parameters_cp, time_limit=time_limit, **args
         )
-
+        res = self.create_result_storage()
         try:
             str_command = " ".join(command)
-            res_command = os.system(str_command)
-            dict_ = json.load(open(self._result_path, "r"))
-            sol = self.retrieve_current_solution(dict_results=dict_)
-            fit = self.aggreg_from_sol(sol)
-            self._stats = dict_
+            if debug:
+                print(f"\nLaunching:\n{str_command}\n")
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, encoding="utf8")
+            for line in iter(process.stdout.readline, ""):
+                if NO_SOLUTION_STR in line:
+                    self.status_solver = StatusSolver.UNKNOWN  # timeout
+                if INFEASIBLE_STR in line:
+                    self.status_solver = StatusSolver.UNSATISFIABLE
+                if verbose:
+                    sys.stdout.write(line)
+
+            dict_results = json.load(open(self._result_path, "r"))
+            if not do_not_retrieve_solutions:
+                sol = self.retrieve_current_solution(dict_results=dict_results)
+                fit = self.aggreg_from_sol(sol)
+                res.append((sol, fit))
+            self._stats = dict_results
             if (
-                self._stats["lowerBoundHistory"][-1]["value"]
-                == self._stats["objectiveHistory"][-1]["objective"]
+                len(self._stats["lowerBoundHistory"]) > 0
+                and len(self._stats["objectiveHistory"]) > 0
             ):
-                self.status_solver = StatusSolver.OPTIMAL
-            else:
-                self.status_solver = StatusSolver.SATISFIED
-            res = self.create_result_storage(list_solution_fits=[(sol, fit)])
+                if (
+                    self._stats["lowerBoundHistory"][-1]["value"]
+                    == self._stats["objectiveHistory"][-1]["objective"]
+                ):
+                    self.status_solver = StatusSolver.OPTIMAL
+                else:
+                    self.status_solver = StatusSolver.SATISFIED
             cb_list.on_solve_end(res=res, solver=self)
-            # Clean results file
-            if os.path.exists(self._logs_path):
-                os.remove(self._logs_path)
-            if os.path.exists(self._result_path):
-                os.remove(self._result_path)
-            if os.path.exists(self._file_input):
-                os.remove(self._file_input)
-            return res
+
         except FileNotFoundError as e:
             logger.error(
                 f"Error: The command 'node' or script '{self._script_model}' was not found."
@@ -162,16 +190,22 @@ class OptalSolver(CpSolver):
             logger.error(
                 "Please ensure Node.js is installed and the path to your script is correct."
             )
-            # if os.path.exists(self._file_input):
-            #    os.remove(self._file_input)
-            return None
+            self.status_solver = StatusSolver.ERROR
         except subprocess.CalledProcessError as e:
             logger.error(f"Error: Command failed with exit code {e.returncode}")
             logger.error(f"STDOUT: {e.stdout}")
             logger.error(f"STDERR: {e.stderr}")
-            if os.path.exists(self._file_input):
-                os.remove(self._file_input)
-            return None
+            self.status_solver = StatusSolver.ERROR
+        finally:
+            if not debug:
+                # Clean temporary files
+                if os.path.exists(self._logs_path):
+                    os.remove(self._logs_path)
+                if os.path.exists(self._result_path):
+                    os.remove(self._result_path)
+                if os.path.exists(self._file_input):
+                    os.remove(self._file_input)
+        return res
 
     def get_output_stats(self):
         return self._stats
