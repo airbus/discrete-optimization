@@ -290,10 +290,15 @@ def compute_stat_by_config(
     stat: str = MEAN,
     q: float = 0.5,
     instances: Optional[list[str]] = None,
+    min_xp_proportion: float = 0.5,
 ) -> dict[str, pd.DataFrame]:
     return {
         config: compute_stat_from_df_config(
-            df_config, stat=stat, q=q, instances=instances
+            df_config,
+            stat=stat,
+            q=q,
+            instances=instances,
+            min_xp_proportion=min_xp_proportion,
         )
         for config, df_config in results_by_config.items()
         if len(df_config) > 0
@@ -305,8 +310,8 @@ def compute_stat_from_df_config(
     stat: str = MEAN,
     q: float = 0.5,
     instances: Optional[list[str]] = None,
+    min_xp_proportion: float = 0.0,  # <-- ADD THIS PARAMETER
 ) -> pd.DataFrame:
-    # filter instances to aggregate
     if instances is not None:
         # intersection with instances present in df_config (some could be missing for a given config)
         df_config_instances = set(df_config.columns.get_level_values("instance"))
@@ -325,8 +330,24 @@ def compute_stat_from_df_config(
         kwargs = dict(q=q)
     else:
         kwargs = dict()
-    # aggregate
-    df_stat = stat_func(df_config.dropna(), axis=1, **kwargs).unstack()
+
+    # 1. Perform the aggregation (pandas ignores NaNs by default)
+    df_agg = stat_func(df_config, axis=1, **kwargs)
+
+    # 2. Count non-NaN values for each timestamp to check our threshold
+    counts = df_config.notna().sum(axis=1)
+    nb_total_exp = len(df_config.columns)
+    thresh = int(nb_total_exp * min_xp_proportion)
+
+    # We should require at least 1 data point if the proportion is not exactly 0
+    if min_xp_proportion > 0 and thresh == 0:
+        thresh = 1
+
+    # 3. Mask the aggregated result where the count of data points is below the threshold
+    df_agg_masked = df_agg.where(counts >= thresh)
+
+    # 4. Unstack the final result
+    df_stat = df_agg_masked.unstack()
     return df_stat
 
 
@@ -515,10 +536,17 @@ def compute_convergence_time_by_xp(
     results: list[pd.DataFrame], metrics: list[str]
 ) -> pd.DataFrame:
     empty_ser = pd.Series(index=metrics)
+
+    def lambda_(ser):
+        try:
+            return ser[ser].index[0]
+        except:
+            return ser[ser].index
+
     df_convergence_time_by_xp = pd.DataFrame(
         data=(
             (df == df.iloc[-1, :])
-            .apply(lambda ser: ser[ser].index[0])
+            .apply(lambda ser: lambda_(ser))
             .rename((df.attrs[CONFIG], df.attrs[INSTANCE]))
             if len(df) > 0
             else empty_ser.rename((df.attrs[CONFIG], df.attrs[INSTANCE]))
