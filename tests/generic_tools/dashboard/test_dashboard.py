@@ -259,21 +259,23 @@ def test_replace_instances_aliases(app):
 
 
 @pytest.mark.parametrize(
-    "configs, instances, metric, with_time_log_scale, expected_n_traces, attempt_in_legend",
+    "configs, instances, metric, time_log_scale, metric_log_scale, expected_n_traces, attempt_in_legend",
     [
         (
             ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
             ["@all"],
             "fit",
             False,
+            False,
             7,
             True,
         ),
-        (["cpsat-binary"], ["gc_50_1"], "gap", [], 1, False),
+        (["cpsat-binary"], ["gc_50_1"], "gap", False, False, 1, False),
         (
             ["cpsat-binary", "cpsat-integer", "mathopt"],
             ["@withsol"],
             "fit",
+            True,
             True,
             5,
             True,
@@ -285,7 +287,8 @@ def test_update_graph_metric(
     configs,
     instances,
     metric,
-    with_time_log_scale,
+    time_log_scale,
+    metric_log_scale,
     expected_n_traces,
     attempt_in_legend,
 ):
@@ -293,7 +296,8 @@ def test_update_graph_metric(
         configs=configs,
         instances=instances,
         metric=metric,
-        with_time_log_scale=with_time_log_scale,
+        time_log_scale=time_log_scale,
+        metric_log_scale=metric_log_scale,
         clip_value=1e50,
     )
     assert len(plot.data) == expected_n_traces
@@ -301,7 +305,7 @@ def test_update_graph_metric(
 
 
 @pytest.mark.parametrize(
-    "configs, instances, metric, stat, with_time_log_scale, expected_n_traces, nodata",
+    "configs, instances, metric, stat, time_log_scale, metric_log_scale, min_xp_proportion, expected_n_traces, nodata",
     [
         (
             ["cpsat-binary", "cpsat-integer", "fake", "mathopt", "timeout"],
@@ -309,11 +313,14 @@ def test_update_graph_metric(
             "fit",
             "mean",
             False,
+            False,
+            1.0,
             3,
             False,
         ),
-        (["cpsat-binary"], ["gc_50_3"], "gap", "quantile", False, 1, False),
-        (["cpsat-binary"], [], "gap", "quantile", True, 0, True),
+        (["cpsat-binary"], ["gc_50_3"], "gap", "quantile", False, False, 1.0, 1, False),
+        (["cpsat-binary"], [], "gap", "quantile", True, True, 1.0, 0, True),
+        (["cpsat-binary"], [], "gap", "quantile", True, True, 0.5, 0, True),
     ],
 )
 def test_update_graph_agg_metric(
@@ -322,7 +329,9 @@ def test_update_graph_agg_metric(
     instances,
     metric,
     stat,
-    with_time_log_scale,
+    time_log_scale,
+    metric_log_scale,
+    min_xp_proportion,
     expected_n_traces,
     nodata,
 ):
@@ -332,7 +341,9 @@ def test_update_graph_agg_metric(
         metric=metric,
         stat=stat,
         q=0.5,
-        with_time_log_scale=with_time_log_scale,
+        time_log_scale=time_log_scale,
+        metric_log_scale=metric_log_scale,
+        min_xp_proportion=min_xp_proportion,
         clip_value=1e50,
     )
     plot = output["plot"]
@@ -403,7 +414,7 @@ def test_update_table_rank_agg(
         minimizing=minimizing,
         clip_value=1e50,
         transpose=False,
-        with_time_log_scale=False,
+        time_log_scale=False,
         time_label="convergence time (s)",
         dist_label=dist_label,
         all_xps=all_xps,
@@ -452,7 +463,7 @@ def test_update_table_rank_agg(
 
 
 @pytest.mark.parametrize(
-    "with_time_log_scale",
+    "time_log_scale",
     [True, False],
 )
 @pytest.mark.parametrize(
@@ -464,13 +475,13 @@ def test_update_table_rank_agg(
     [False, True],
 )
 def test_update_graph_nb_solved_instances(
-    app, with_time_log_scale, transpose, include_solved_wo_proof
+    app, time_log_scale, transpose, include_solved_wo_proof
 ):
     configs = ["mathopt", "cpsat-binary", "cpsat-integer", "timeout"]
     expected_n_traces = 2
     output = app.update_graph_nb_solved_instances(
         configs=configs,
-        with_time_log_scale=with_time_log_scale,
+        time_log_scale=time_log_scale,
         transpose=transpose,
         include_solved_wo_proof=include_solved_wo_proof,
     )
@@ -485,7 +496,7 @@ def test_update_graph_nb_solved_instances(
         assert plot.layout.xaxis.title.text == "time (s)"
         time_axes = next(plot.select_xaxes())
 
-    if with_time_log_scale:
+    if time_log_scale:
         assert time_axes.type == "log"
     else:
         assert time_axes.type is None

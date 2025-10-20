@@ -134,6 +134,12 @@ INSTANCE_ID = "instance"
 INSTANCE_DIV_ID = "instance-div"
 RUN_ID = "run-id"
 RUN_DIV_ID = "run-id-div"
+MIN_XP_PROP_ID = "min-exp-proportion-slider"
+MIN_XP_PROP_DIV_ID = "min-exp-proportion-div"
+
+Y_LOGSCALE_KEY = "metric log-scale"
+Y_LOGSCALE_ID = "y-log-scale"
+Y_LOGSCALE_DIV_ID = "y-log-scale-div"
 
 
 class Dashboard(Dash):
@@ -233,6 +239,17 @@ class Dashboard(Dash):
                         ),
                         html.Div(
                             [
+                                dbc.Switch(
+                                    label=Y_LOGSCALE_KEY,
+                                    value=False,
+                                    id=Y_LOGSCALE_ID,
+                                ),
+                            ],
+                            id=Y_LOGSCALE_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
                                 dbc.Label("Configs"),
                                 dcc.Dropdown(
                                     self.full_configs,
@@ -300,6 +317,21 @@ class Dashboard(Dash):
                                 ),
                             ],
                             id=Q_DIV_ID,
+                            style=filter_style,
+                        ),
+                        html.Div(
+                            [
+                                dbc.Label("Min. proportion of data for aggregation"),
+                                dcc.Slider(
+                                    min=0.0,
+                                    max=1.0,
+                                    step=0.05,
+                                    value=1.0,
+                                    marks={i / 100: f"{i}%" for i in (0, 50, 100)},
+                                    id=MIN_XP_PROP_ID,
+                                ),
+                            ],
+                            id=MIN_XP_PROP_DIV_ID,
                             style=filter_style,
                         ),
                         html.Div(
@@ -558,13 +590,16 @@ class Dashboard(Dash):
                 instances=Input(component_id=INSTANCES_ID, component_property="value"),
                 metric=Input(component_id=METRIC_ID, component_property="value"),
                 clip_value=Input(component_id=CLIP_ID, component_property="value"),
-                with_time_log_scale=Input(
+                time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
+                ),
+                metric_log_scale=Input(
+                    component_id=Y_LOGSCALE_ID, component_property="value"
                 ),
             ),
         )
         def update_graph_metric(
-            configs, instances, metric, with_time_log_scale, clip_value
+            configs, instances, metric, time_log_scale, metric_log_scale, clip_value
         ):
             instances = self._replace_instances_aliases(
                 instances, configs=configs
@@ -582,7 +617,8 @@ class Dashboard(Dash):
             }
             return create_graph_from_series_dict(
                 map_label2ser=map_xp2metric,
-                with_time_log_scale=with_time_log_scale,
+                time_log_scale=time_log_scale,
+                y_log_scale=metric_log_scale,
                 legend_title="Experiments",
             )
 
@@ -609,13 +645,27 @@ class Dashboard(Dash):
                 metric=Input(component_id=METRIC_ID, component_property="value"),
                 q=Input(component_id=Q_ID, component_property="value"),
                 clip_value=Input(component_id=CLIP_ID, component_property="value"),
-                with_time_log_scale=Input(
+                time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
+                ),
+                metric_log_scale=Input(
+                    component_id=Y_LOGSCALE_ID, component_property="value"
+                ),
+                min_xp_proportion=Input(
+                    component_id=MIN_XP_PROP_ID, component_property="value"
                 ),
             ),
         )
         def update_graph_agg_metric(
-            configs, instances, stat, metric, q, with_time_log_scale, clip_value
+            configs,
+            instances,
+            stat,
+            metric,
+            q,
+            time_log_scale,
+            clip_value,
+            min_xp_proportion,
+            metric_log_scale,
         ):
             instances = self._replace_instances_aliases(
                 instances, configs=configs
@@ -627,7 +677,11 @@ class Dashboard(Dash):
                 if config in configs
             }
             stat_by_config = compute_stat_by_config(
-                results_by_config=results_by_config, stat=stat, q=q, instances=instances
+                results_by_config=results_by_config,
+                stat=stat,
+                q=q,
+                instances=instances,
+                min_xp_proportion=min_xp_proportion,
             )
             stat_metric_by_config = {
                 config: df[metric]
@@ -649,8 +703,9 @@ class Dashboard(Dash):
             return dict(
                 plot=create_graph_from_series_dict(
                     map_label2ser=stat_metric_by_config,
-                    with_time_log_scale=with_time_log_scale,
+                    time_log_scale=time_log_scale,
                     legend_title="Configs",
+                    y_log_scale=metric_log_scale,
                 ),
                 data=_extract_dash_table_data_from_df(df_summary),
                 columns=_extract_dash_table_columns_from_df(
@@ -675,7 +730,7 @@ class Dashboard(Dash):
             ),
             inputs=dict(
                 configs=Input(component_id=CONFIGS_ID, component_property="value"),
-                with_time_log_scale=Input(
+                time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
                 ),
                 transpose=Input(component_id=TRANSPOSE_ID, component_property="value"),
@@ -685,7 +740,7 @@ class Dashboard(Dash):
             ),
         )
         def update_graph_nb_solved_instances(
-            configs, with_time_log_scale, transpose, include_solved_wo_proof
+            configs, time_log_scale, transpose, include_solved_wo_proof
         ):
             if include_solved_wo_proof:
                 percentsolvedinstances_by_config = (
@@ -708,7 +763,7 @@ class Dashboard(Dash):
             return dict(
                 plot=create_graph_from_series_dict(
                     map_label2ser=percentsolvedinstances_by_config,
-                    with_time_log_scale=with_time_log_scale,
+                    time_log_scale=time_log_scale,
                     legend_title="Configs",
                     transpose=transpose,
                 ),
@@ -757,7 +812,7 @@ class Dashboard(Dash):
                 minimizing=Input(
                     component_id=MINIMIZING_ID, component_property="value"
                 ),
-                with_time_log_scale=Input(
+                time_log_scale=Input(
                     component_id=TIME_LOGSCALE_ID, component_property="value"
                 ),
                 transpose=Input(component_id=TRANSPOSE_ID, component_property="value"),
@@ -781,7 +836,7 @@ class Dashboard(Dash):
             q,
             clip_value,
             minimizing,
-            with_time_log_scale,
+            time_log_scale,
             transpose,
             dist_label,
             time_label,
@@ -815,7 +870,7 @@ class Dashboard(Dash):
                 y=dist_label,
                 z=CONFIG,
                 legend_title="Configs",
-                with_time_log_scale=with_time_log_scale,
+                time_log_scale=time_log_scale,
                 transpose=transpose,
             )
             return dict(
@@ -930,6 +985,12 @@ class Dashboard(Dash):
                 time_log_scale=Output(
                     component_id=TIME_LOGSCALE_DIV_ID, component_property="className"
                 ),
+                metric_log_scale=Output(
+                    component_id=Y_LOGSCALE_ID, component_property="className"
+                ),
+                min_xp_prop=Output(
+                    component_id=MIN_XP_PROP_DIV_ID, component_property="className"
+                ),
                 minimizing=Output(
                     component_id=MINIMIZING_DIV_ID, component_property="className"
                 ),
@@ -959,6 +1020,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=True,
+                        metric_log_scale=True,
+                        min_xp_prop=False,
                         metric=True,
                         configs=True,
                         instances=True,
@@ -980,6 +1043,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=True,
+                        metric_log_scale=True,
+                        min_xp_prop=True,
                         metric=True,
                         configs=True,
                         instances=True,
@@ -1001,6 +1066,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=True,
+                        metric_log_scale=False,
+                        min_xp_prop=False,
                         metric=True,
                         configs=True,
                         instances=True,
@@ -1022,6 +1089,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=True,
+                        metric_log_scale=False,
+                        min_xp_prop=False,
                         metric=False,
                         configs=True,
                         instances=False,
@@ -1043,6 +1112,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=False,
+                        metric_log_scale=False,
+                        min_xp_prop=False,
                         metric=False,
                         configs=False,
                         instances=False,
@@ -1064,6 +1135,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=False,
+                        metric_log_scale=False,
+                        min_xp_prop=False,
                         metric=False,
                         configs=False,
                         instances=False,
@@ -1085,6 +1158,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=False,
+                        metric_log_scale=False,
+                        min_xp_prop=False,
                         metric=False,
                         configs=False,
                         instances=False,
@@ -1106,6 +1181,8 @@ class Dashboard(Dash):
                 return _convert_bool2classname_dict(
                     dict(
                         time_log_scale=True,
+                        metric_log_scale=True,
+                        min_xp_prop=True,
                         metric=True,
                         configs=True,
                         instances=True,
