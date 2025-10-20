@@ -70,9 +70,10 @@ class DpCallback:
             return stopping
 
     def store_current_solution(self, sol: dp.Solution):
-        solution = self.do_solver.retrieve_solution(sol)
-        fit = self.do_solver.aggreg_from_sol(solution)
-        self.res.append((solution, fit))
+        if sol.cost is not None:
+            solution = self.do_solver.retrieve_solution(sol)
+            fit = self.do_solver.aggreg_from_sol(solution)
+            self.res.append((solution, fit))
 
 
 class DpSolver(SolverDO):
@@ -118,12 +119,12 @@ class DpSolver(SolverDO):
             }
         except Exception as e:
             # Previous mode, for python<=3.9
-            logger.debug(
+            logger.info(
                 f"clever kwargs management for {solver_cls} failed: "
                 f"{e.__class__.__name__}: {e}"
             )
             for k in list(kwargs.keys()):
-                if k not in {"threads", "initial_solution"}:
+                if k not in {"threads", "initial_solution", "weight"}:
                     kwargs.pop(k)
                 if k == "threads" and solver_cls not in {dp.CABS, dp.LNBS}:
                     kwargs.pop(k)
@@ -135,6 +136,7 @@ class DpSolver(SolverDO):
         if retrieve_intermediate_solutions:
             while True:
                 solution, terminated = solver.search_next()
+                solution: dp.Solution
                 logger.info(f"Objective = {solution.cost}, {solution.is_infeasible}")
                 logger.info(f"Bound = {solution.best_bound}")
                 if solution.cost is not None:
