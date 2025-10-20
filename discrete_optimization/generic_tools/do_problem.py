@@ -77,7 +77,7 @@ class EncodingRegister:
         return [
             t
             for k in self.dict_attribute_to_type
-            for t in self.dict_attribute_to_type[k]["type"]
+            for t in self.dict_attribute_to_type[k].get("type", [])
         ]
 
     def __str__(self) -> str:

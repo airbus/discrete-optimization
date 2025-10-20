@@ -10,6 +10,10 @@ from typing import Any, Optional, Union
 import numpy as np
 from deap import algorithms, base, creator, tools
 
+from discrete_optimization.generic_tools.callbacks.callback import (
+    Callback,
+    CallbackList,
+)
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -126,7 +130,7 @@ class Ga(SolverDO, WarmstartMixin):
             problem=problem, params_objective_function=params_objective_function
         )
         if not hasattr(self.problem, "evaluate_from_encoding"):
-            raise ValueError("self.problem shoud define an evaluate_from_encoding()")
+            raise ValueError("self.problem should define an evaluate_from_encoding()")
             # self.problem.evaluate_from_encoding: Callable[[list[int], str], dict[str, float]]
 
         self._pop_size = pop_size
@@ -463,7 +467,9 @@ class Ga(SolverDO, WarmstartMixin):
         """
         self.initial_solution = solution
 
-    def solve(self, **kwargs: Any) -> ResultStorage:
+    def solve(self, callbacks: list[Callback] = None, **kwargs: Any) -> ResultStorage:
+        callback = CallbackList(callbacks)
+        callback.on_solve_start(self)
         if self.initial_population is None:
             # Initialise the population (here at random)
             population = self._toolbox.population()
@@ -508,4 +514,5 @@ class Ga(SolverDO, WarmstartMixin):
         result_storage = self.create_result_storage(
             [(problem_sol, self.aggreg_from_sol(problem_sol))],
         )
+        callback.on_solve_end(result_storage, self)
         return result_storage
