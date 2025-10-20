@@ -153,7 +153,6 @@ class TSPTWProblem(Problem):
         2. Start of service at v = max(Arrival at v, Earliest time for v)
         3. Violation at v = max(0, Start of service at v - Latest time for v)
         """
-        path = [self.depot_node] + solution.permutation
 
         # Initialize at depot
         current_node = self.depot_node

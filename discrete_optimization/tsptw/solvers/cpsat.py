@@ -41,12 +41,26 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
         )
         self.variables: Dict[str, Any] = {}
 
-    def init_model(self, scaling_factor: float = 10.0, **kwargs: Any) -> None:
+    def init_model(
+        self, scaling_factor: float = 10.0, relaxed: bool = False, **kwargs: Any
+    ) -> None:
         """Initialise the CP-SAT model."""
         self.cp_model = CpModel()
         n = self.problem.nb_nodes
         depot = self.problem.depot_node
-
+        if relaxed:
+            horizon = int(
+                10
+                * max([int(scaling_factor * x[1]) for x in self.problem.time_windows])
+            )
+            bounds = [
+                (int(scaling_factor * x[0]), horizon) for x in self.problem.time_windows
+            ]
+        else:
+            bounds = [
+                (int(scaling_factor * x[0]), int(scaling_factor * x[1]))
+                for x in self.problem.time_windows
+            ]
         # --- Create variables ---
 
         # Arc variables: x_arc[i, j] is true if the tour includes the arc from i to j
@@ -55,25 +69,27 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
             for i in range(n)
             for j in range(n)
             if i != j
+            and bounds[j][1]
+            >= bounds[i][0] + int(scaling_factor * self.problem.distance_matrix[i][j])
         }
 
         # Time variables: t_time[i] is the time at which service starts at node i
         t_time = [
             self.cp_model.NewIntVar(
-                lb=int(scaling_factor * self.problem.time_windows[i][0]),
-                ub=int(scaling_factor * self.problem.time_windows[i][1]),
+                lb=bounds[i][0],
+                ub=bounds[i][1],
                 name=f"t_{i}",
             )
             for i in range(n)
         ]
         t_time_return_depot = self.cp_model.NewIntVar(
-            lb=int(scaling_factor * self.problem.time_windows[depot][0]),
-            ub=int(scaling_factor * self.problem.time_windows[depot][1]),
+            lb=bounds[depot][0],
+            ub=bounds[depot][1],
             name=f"t_return_depot",
         )
 
         # Makespan variable: represents the total tour duration (arrival back at depot)
-        makespan_ub = int(scaling_factor * self.problem.time_windows[depot][1])
+        makespan_ub = bounds[depot][1]
         makespan = self.cp_model.NewIntVar(0, makespan_ub, "makespan")
 
         self.variables = {
@@ -86,11 +102,7 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
         # --- Add constraints ---
 
         # Build arcs list for the circuit constraint
-        arcs = []
-        for i in range(n):
-            for j in range(n):
-                if i != j:
-                    arcs.append((i, j, x_arc[i, j]))
+        arcs = [(i, j, x_arc[(i, j)]) for i, j in x_arc]
 
         # Add a single tour visiting all nodes
         self.cp_model.AddCircuit(arcs)
@@ -103,7 +115,7 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
         # Time window propagation constraints
         for i in range(n):
             for j in range(n):
-                if i == j:
+                if (i, j) not in x_arc:
                     continue
 
                 # The time to get from i to j, including service time at i
@@ -133,7 +145,35 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
             )
 
         # --- Set objective ---
-        self.cp_model.Minimize(makespan)
+        if not relaxed:
+            self.cp_model.Minimize(makespan)
+        else:
+            horizon = int(
+                10
+                * max([int(scaling_factor * x[1]) for x in self.problem.time_windows])
+            )
+            lateness = {
+                i: self.cp_model.NewIntVar(
+                    lb=0,
+                    ub=horizon - int(scaling_factor * self.problem.time_windows[i][1]),
+                    name=f"lateness_{i}",
+                )
+                for i in range(self.problem.nb_nodes)
+            }
+            self.variables["lateness"] = lateness
+            for i in lateness:
+                if i == self.problem.depot_node:
+                    self.cp_model.AddMaxEquality(
+                        lateness[i],
+                        [0, t_time_return_depot - self.problem.time_windows[i][1]],
+                    )
+                else:
+                    self.cp_model.AddMaxEquality(
+                        lateness[i], [0, t_time[i] - self.problem.time_windows[i][1]]
+                    )
+            self.cp_model.Minimize(
+                10000 * sum([lateness[x] for x in lateness]) + makespan
+            )
         logger.info("CP-SAT model initialized.")
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> TSPTWSolution:
@@ -150,11 +190,21 @@ class CpSatTSPTWSolver(OrtoolsCpSatSolver, WarmstartMixin):
         permutation = []
 
         current_node = self.problem.depot_node
+        if "lateness" in self.variables:
+            sum_ = sum(
+                [
+                    cpsolvercb.Value(self.variables["lateness"][x])
+                    for x in self.variables["lateness"]
+                ]
+            )
+            logger.info(f"Lateness : {sum_}")
         for _ in range(self.problem.nb_nodes - 1):
             for j in range(self.problem.nb_nodes):
                 if current_node == j:
                     continue
-                if cpsolvercb.Value(self.variables["x_arc"][current_node, j]):
+                if (current_node, j) in self.variables["x_arc"] and cpsolvercb.Value(
+                    self.variables["x_arc"][current_node, j]
+                ):
                     permutation.append(j)
                     current_node = j
                     break
