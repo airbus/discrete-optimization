@@ -14,7 +14,7 @@ def get_attribute_for_type(
     attributes = [
         k
         for k in register.dict_attribute_to_type
-        for t in register.dict_attribute_to_type[k]["type"]
+        for t in register.dict_attribute_to_type[k].get("type", [])
         if t == type_attribute
     ]
     if len(attributes) > 0:
