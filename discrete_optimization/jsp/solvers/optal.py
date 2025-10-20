@@ -71,7 +71,7 @@ class OptalJspSolver(OptalSolver):
         command_list = super().build_command(
             parameters_cp=parameters_cp, time_limit=time_limit, **args
         )
-        command_list.append(f"--outputjsp {self._result_path}")
+        command_list += ["--outputjsp", self._result_path]
         return command_list
 
     def init_model(self, **args: Any) -> None:

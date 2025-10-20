@@ -76,7 +76,7 @@ class OptalAllocSchedulingSolver(OptalSolver):
             command.append("--model-dispersion")
         if self.run_lexico:
             command.append("--run-lexico")
-        command.append(f"--output-json {self._result_path}")
+        command += ["--output-json", self._result_path]
         return command
 
     def retrieve_current_solution(self, dict_results: dict) -> AllocSchedulingSolution:
