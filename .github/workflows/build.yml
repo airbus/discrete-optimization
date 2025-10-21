@@ -226,6 +226,23 @@ jobs:
             pip install gurobipy
             python -c "import gurobipy"
           fi
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: install optal
+        run: |
+          cd tests
+          optal_dir=$(python -c "
+          import discrete_optimization.generic_tools.hub_solver.optal as optal
+          import os
+          print(os.path.dirname(optal.__file__))
+          ")
+          cd ${optal_dir}
+          npm --version
+          node --version
+          npm install 'scheduleopt/optalcp-js-bin-preview#latest'
+          npm ls
+          npx optalcp --version
       - name: Restore tests data cache
         id: cache-data
         uses: actions/cache@v4
