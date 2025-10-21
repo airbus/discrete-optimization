@@ -90,6 +90,10 @@ MIS_FILES = [
 BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-codes-and-instances-1/bppc.zip/@@download/file/BPPC.zip"
 
 
+FJSP_DATASET_PREFIX = "jfsp_openhsu"
+MIS_DATASET_PREFIX = "mis"
+
+
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the discrete-optimization data directory.
 
@@ -336,7 +340,7 @@ def fetch_data_for_mis(data_home: Optional[str] = None):
     data_home = get_data_home(data_home=data_home)
 
     # get mis data directory
-    mis_dir = f"{data_home}/mis"
+    mis_dir = f"{data_home}/{MIS_DATASET_PREFIX}"
     os.makedirs(mis_dir, exist_ok=True)
 
     try:
@@ -349,30 +353,56 @@ def fetch_data_for_mis(data_home: Optional[str] = None):
         urlcleanup()
 
 
-def fetch_mis_from_repo(data_home: Optional[str] = None):
-    data_home = get_data_home(data_home=data_home)
+def fetch_mis_from_repo(data_home: Optional[str] = None) -> None:
+    """Fetch mis dataset stored in g-poveda repo."""
+    fetch_datasets_from_repo(data_home=data_home, dataset_prefixes=[MIS_DATASET_PREFIX])
+
+
+def fetch_fjsp_from_repo(data_home: Optional[str] = None) -> None:
+    """Fetch fjsp dataset stored in g-poveda repo."""
+    fetch_datasets_from_repo(
+        data_home=data_home, dataset_prefixes=[FJSP_DATASET_PREFIX]
+    )
+
+
+def fetch_datasets_from_repo(
+    data_home: Optional[str] = None, dataset_prefixes: Optional[list[str]] = None
+) -> None:
+    """Fetch all datasets stored in g-poveda repo."""
     url_repo = "https://github.com/g-poveda/do-data"
-    sha_url_repo = "b2c6e5ad16dea25e39602622ac7dd16c9e9b4c1d"
+    sha_url_repo = "38bb03e4e5859a205cbb133132eaabca03592e74"
     url = f"{url_repo}/archive/{sha_url_repo}.zip"
+    if dataset_prefixes is None:
+        dataset_prefixes = [FJSP_DATASET_PREFIX, MIS_DATASET_PREFIX]
     try:
         local_file_path, headers = urlretrieve(url)
-        # extract only data
-        with zipfile.ZipFile(local_file_path) as zipf:
-            namelist = zipf.namelist()
-            rootdir = namelist[0].split("/")[0]
-            dataset_dir = f"{data_home}/mis"
-            os.makedirs(dataset_dir, exist_ok=True)
-            dataset_prefix_in_zip = f"{rootdir}/mis/"
-            for name in namelist:
-                if name.startswith(dataset_prefix_in_zip):
-                    zipf.extract(name, path=dataset_dir)
-            for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
-                os.replace(
-                    src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}"
-                )
-            os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+        for dataset_prefix in dataset_prefixes:
+            _extract_dataset_from_zipped_repo(
+                zipped_repo_path=local_file_path,
+                dataset_prefix=dataset_prefix,
+                data_home=data_home,
+            )
     finally:
         urlcleanup()
+
+
+def _extract_dataset_from_zipped_repo(
+    zipped_repo_path: str, dataset_prefix: str, data_home: Optional[str] = None
+):
+    data_home = get_data_home(data_home=data_home)
+    # extract only dataset with given prefix
+    with zipfile.ZipFile(zipped_repo_path) as zipf:
+        namelist = zipf.namelist()
+        rootdir = namelist[0].split("/")[0]
+        dataset_dir = f"{data_home}/{dataset_prefix}"
+        os.makedirs(dataset_dir, exist_ok=True)
+        dataset_prefix_in_zip = f"{rootdir}/{dataset_prefix}/"
+        for name in namelist:
+            if name.startswith(dataset_prefix_in_zip):
+                zipf.extract(name, path=dataset_dir)
+        for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
+            os.replace(src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}")
+        os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
 
 
 def fetch_data_from_jsplib_repo(data_home: Optional[str] = None):
@@ -417,7 +447,7 @@ def fetch_data_fjsp(data_home: Optional[str] = None):
     try:
         local_file_path, headers = urlretrieve(url)
         # extract only data
-        dataset_dir = f"{data_home}/jfsp_openhsu"
+        dataset_dir = f"{data_home}/{FJSP_DATASET_PREFIX}"
         os.makedirs(dataset_dir, exist_ok=True)
         with zipfile.ZipFile(local_file_path) as zipf:
             zipf.extractall(path=dataset_dir)
@@ -427,7 +457,7 @@ def fetch_data_fjsp(data_home: Optional[str] = None):
 
 def fetch_data_from_bppc(data_home: Optional[str] = None):
     """Fetch data from bin packing problem with conflicts benchmark"""
-    #  get the proper data directory
+    # get the proper data directory
     data_home = get_data_home(data_home=data_home)
 
     # download in a temporary file the repo data
@@ -539,14 +569,13 @@ def fetch_all_datasets(data_home: Optional[str] = None):
     fetch_data_from_psplib(data_home=data_home)
     fetch_data_from_imopse(data_home=data_home)
     fetch_data_from_solutionsupdate(data_home=data_home)
-    # fetch_data_for_mis(data_home=data_home)
-    fetch_mis_from_repo(data_home=data_home)
+    fetch_datasets_from_repo(data_home=data_home)
     fetch_data_from_jsplib_repo(data_home=data_home)
     fetch_data_from_bppc(data_home=data_home)
-    fetch_data_fjsp(data_home=data_home)
     fetch_data_from_cp25(data_home=data_home)
     fetch_data_weighted_tardiness_single_machine(data_home=data_home)
     fetch_data_tsptw(data_home=data_home)
+    fetch_data_from_mslib(data_home=data_home)
 
 
 if __name__ == "__main__":

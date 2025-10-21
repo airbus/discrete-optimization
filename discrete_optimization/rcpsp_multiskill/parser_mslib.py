@@ -32,7 +32,7 @@ def get_data_available(
     if not os.path.exists(data_folder):
         logger.info(f"Fetching data from MSLIB webpage.")
         fetch_data_from_mslib(data_home)
-    mslib_folder = os.path.join(data_folder, "MSLIB/")
+    mslib_folder = data_folder
     subfolders = [
         os.path.join(mslib_folder, "MSLIB1/Instances1"),
         os.path.join(mslib_folder, "MSLIB2/Instances2"),
