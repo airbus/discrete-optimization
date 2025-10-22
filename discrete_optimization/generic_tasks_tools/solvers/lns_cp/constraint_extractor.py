@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Generic
+from typing import Any, Generic, Union
+
+import numpy as np
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationCpSolver,
@@ -251,6 +253,21 @@ class BaseConstraintExtractor(ABC, Generic[Task]):
         ...
 
 
+class DummyConstraintExtractor(BaseConstraintExtractor[Task]):
+    """Does not add any constraint.
+    Can be useful during LNS to let run the solver without neighborhood constraint"""
+
+    def add_constraints(
+        self,
+        current_solution: TasksSolution[Task],
+        solver: TasksCpSolver[Task],
+        tasks_primary: set[Task],
+        tasks_secondary: set[Task],
+        **kwargs: Any,
+    ) -> list[Any]:
+        return []
+
+
 class ConstraintExtractorList(BaseConstraintExtractor[Task]):
     """Extractor adding constraints from multiple sub-extractors."""
 
@@ -278,6 +295,45 @@ class ConstraintExtractorList(BaseConstraintExtractor[Task]):
                 **kwargs,
             )
         return constraints
+
+
+class ConstraintExtractorPortfolio(BaseConstraintExtractor[Task]):
+    """Extractor adding constraints from multiple sub-extractors."""
+
+    def __init__(
+        self,
+        extractors: list[BaseConstraintExtractor[Task]],
+        weights: Union[list[float], np.array] = None,
+        verbose: bool = False,
+    ):
+        self.extractors = extractors
+        self.weights = weights
+        if self.weights is None:
+            self.weights = [
+                1 / len(self.extractors) for _ in range(len(self.extractors))
+            ]
+        if isinstance(self.weights, list):
+            self.weights = np.array(self.weights)
+        self.weights = self.weights / np.sum(self.weights)
+        self.index_np = np.array(range(len(self.extractors)), dtype=np.int_)
+        self.verbose = verbose
+
+    def add_constraints(
+        self,
+        current_solution: TasksSolution[Task],
+        solver: TasksCpSolver[Task],
+        tasks_primary: set[Task],
+        tasks_secondary: set[Task],
+        **kwargs: Any,
+    ) -> list[Any]:
+        choice = np.random.choice(self.index_np, size=1, p=self.weights)[0]
+        return self.extractors[choice].add_constraints(
+            current_solution=current_solution,
+            solver=solver,
+            tasks_primary=tasks_primary,
+            tasks_secondary=tasks_secondary,
+            **kwargs,
+        )
 
 
 class SchedulingConstraintExtractor(BaseConstraintExtractor[Task]):
