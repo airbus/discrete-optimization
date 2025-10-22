@@ -1,20 +1,31 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import logging
 from typing import Any
 
-from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExpr
+from ortools.sat.python.cp_model import (
+    CpSolverSolutionCallback,
+    LinearExpr,
+    LinearExprT,
+)
 
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.solvers.cpsat import (
+    SchedulingCpSatSolver,
+)
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 from discrete_optimization.singlemachine.problem import (
+    Task,
     WeightedTardinessProblem,
     WTSolution,
 )
 
+logger = logging.getLogger(__name__)
 
-class CpsatWTSolver(OrtoolsCpSatSolver, WarmstartMixin):
+
+class CpsatWTSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
     problem: WeightedTardinessProblem
     variables: dict
 
@@ -24,6 +35,7 @@ class CpsatWTSolver(OrtoolsCpSatSolver, WarmstartMixin):
             st = cpsolvercb.value(self.variables["starts"][i])
             end = st + self.problem.processing_times[i]
             schedule.append((st, end))
+        logger.info(f"Obj = {cpsolvercb.objective_value}")
         return WTSolution(problem=self.problem, schedule=schedule)
 
     def init_model(self, **args: Any) -> None:
@@ -65,3 +77,11 @@ class CpsatWTSolver(OrtoolsCpSatSolver, WarmstartMixin):
                 self.variables["lateness"][i],
                 max(0, solution.schedule[i][1] - self.problem.due_dates[i]),
             )
+
+    def get_task_start_or_end_variable(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> LinearExprT:
+        if start_or_end == StartOrEnd.START:
+            return self.variables["starts"][task]
+        if start_or_end == StartOrEnd.END:
+            return self.variables["starts"][task] + self.problem.processing_times[task]
