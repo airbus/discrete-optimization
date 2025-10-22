@@ -43,3 +43,28 @@ class WarmStartCallback(Callback):
                 sol, _ = res[-1]
             solver_.set_warm_start(sol)
             logger.info(f"Warm-start done")
+
+
+class WarmStartCallbackLastRun(WarmStartCallback):
+    """Only works for Cp-sat solver"""
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: SolverDO
+    ) -> Optional[bool]:
+        from discrete_optimization.generic_tools.ortools_cpsat_tools import (
+            OrtoolsCpSatSolver,
+        )
+
+        solver_ = None
+        if isinstance(solver, LexicoSolver):
+            if isinstance(solver.subsolver, WarmstartMixin):
+                solver_ = solver.subsolver
+        if isinstance(solver, WarmstartMixin):
+            solver_ = solver
+        if isinstance(solver, BaseLnsCp):
+            solver_ = solver.subsolver
+        solver_: OrtoolsCpSatSolver
+        if solver_.solver is not None:
+            solver_.set_warm_start_from_previous_run()
+        else:
+            super().on_step_end(step, res, solver)
