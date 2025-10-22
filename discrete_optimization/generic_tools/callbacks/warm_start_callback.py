@@ -7,6 +7,7 @@ from typing import Optional
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
+from discrete_optimization.generic_tools.lns_cp import BaseLnsCp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -32,10 +33,13 @@ class WarmStartCallback(Callback):
                 solver_ = solver.subsolver
         if isinstance(solver, WarmstartMixin):
             solver_ = solver
+        if isinstance(solver, BaseLnsCp):
+            solver_ = solver.subsolver
         if solver_ is not None:
+            sol = None
             if self.warm_start_best_solution:
                 sol, _ = res.get_best_solution_fit()
             if self.warm_start_last_solution:
                 sol, _ = res[-1]
             solver_.set_warm_start(sol)
-            logger.debug(f"Warm-start done")
+            logger.info(f"Warm-start done")
