@@ -5,6 +5,10 @@ from typing import List, Optional
 
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -18,8 +22,10 @@ from discrete_optimization.generic_tools.do_problem import (
     TypeObjective,
 )
 
+Task = int
 
-class WTSolution(Solution):
+
+class WTSolution(SchedulingSolution[Task]):
     def __init__(
         self,
         problem: "WeightedTardinessProblem",
@@ -51,8 +57,14 @@ class WTSolution(Solution):
     def copy(self) -> "Solution":
         return self.lazy_copy()
 
+    def get_end_time(self, task: Task) -> int:
+        return self.schedule[task][1]
 
-class WeightedTardinessProblem(Problem):
+    def get_start_time(self, task: Task) -> int:
+        return self.schedule[task][0]
+
+
+class WeightedTardinessProblem(SchedulingProblem[Task]):
     """
     Represents a single instance of the single-machine weighted tardiness problem.
     """
@@ -68,6 +80,7 @@ class WeightedTardinessProblem(Problem):
         if not (len(processing_times) == len(weights) == len(due_dates) == num_jobs):
             raise ValueError(f"All lists must contain {num_jobs} elements.")
         self.num_jobs = num_jobs
+        self.tasks_list = list(range(self.num_jobs))
         self.processing_times = processing_times
         self.weights = weights
         self.due_dates = due_dates
@@ -84,6 +97,9 @@ class WeightedTardinessProblem(Problem):
             f"WeightedTardinessProblem(num_jobs={self.num_jobs}, "
             f"processing_times=..., weights=..., due_dates=...)"
         )
+
+    def get_makespan_upper_bound(self) -> int:
+        return sum(self.processing_times)
 
     def evaluate(self, variable: WTSolution) -> dict[str, float]:
         return {
