@@ -84,10 +84,16 @@ class NeighborBuilderSubPart(NeighborBuilder[Task]):
             )
         else:
             task_of_interest = self.problem.tasks_list
-        task_of_interest = task_of_interest[
-            self.current_sub_part * nb_job_sub : (self.current_sub_part + 1)
-            * nb_job_sub
-        ]
+        if self.current_sub_part * nb_job_sub >= n_jobs:
+            # For small problems, we can have some border effect, finally leading to a bug
+            # in the subsequent code (if len(subtasks) == 0:
+            #                           subtasks = [task_of_interest[-1]])
+            task_of_interest = task_of_interest[-nb_job_sub:]
+        else:
+            task_of_interest = task_of_interest[
+                self.current_sub_part * nb_job_sub : (self.current_sub_part + 1)
+                * nb_job_sub
+            ]
         if subtasks is None:
             subtasks = task_of_interest
         else:
