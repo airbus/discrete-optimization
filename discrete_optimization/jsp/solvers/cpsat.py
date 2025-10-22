@@ -86,6 +86,7 @@ class CpSatJspSolver(
         self.minimize_variable(objective)
 
     def set_warm_start(self, solution: JobShopSolution) -> None:
+        self.cp_model.clear_hints()
         for job_index in range(len(solution.schedule)):
             for subjob_index in range(len(solution.schedule[job_index])):
                 self.cp_model.AddHint(
