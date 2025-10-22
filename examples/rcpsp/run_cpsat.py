@@ -37,6 +37,7 @@ def solve_makespan_with_cp_sat(problem: RcpspProblem):
         parameters_cp=parameters_cp,
         time_limit=10,
     )
+    print(solver.status_solver)
     solution, fit = result_storage.get_best_solution_fit()
     plot_task_gantt(rcpsp_problem=problem, rcpsp_sol=solution, title="Makespan optim")
     plot_ressource_view(
@@ -67,8 +68,8 @@ def solve_resource_with_cp_sat(problem: RcpspProblem):
 
 def cpsat_single_mode_makespan_optimization():
     files_available = get_data_available()
-    file = [f for f in files_available if "j1201_7.sm" in f][0]
-    file = [f for f in files_available if "j1010_2.mm" in f][0]
+    file = [f for f in files_available if "j1201_3.sm" in f][0]
+    # file = [f for f in files_available if "j1010_2.mm" in f][0]
 
     rcpsp_problem = parse_file(file)
     solve_makespan_with_cp_sat(rcpsp_problem)
