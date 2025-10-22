@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_cpsat_jsp():
-    file_path = get_data_available()[1]
+    file_path = get_data_available()[4]
     # file_path = [f for f in get_data_available() if "abz6" in f][0]
     problem = parse_file(file_path)
     print("File path ", file_path)
