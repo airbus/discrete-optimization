@@ -133,6 +133,16 @@ class TrivialPostProcessSolution(PostProcessSolution):
         return result_storage
 
 
+class ReinitModelCallback(Callback):
+    """For some subsolver, it may be needed to reinit the model at each lns step."""
+
+    def on_step_end(
+        self, step: int, res: ResultStorage, solver: SolverDO
+    ) -> Optional[bool]:
+        solver: BaseLns
+        solver.subsolver.init_model()
+
+
 class BaseLns(SolverDO, WarmstartMixin):
     """Base class for Large Neighborhood Search solvers."""
 
