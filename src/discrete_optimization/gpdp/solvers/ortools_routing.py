@@ -254,6 +254,7 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
         # use or not the distance callback function to evaluate the cost of each edge.
         # Whatever the cost function you want to optimize (via the list_parameters_cost argument),
         # these cost are still included in the objective function
+        cost_per_vehicle_used = kwargs.get("cost_per_vehicle_used", 0)
         if use_matrix:
             matrix_distance_int = kwargs.get("matrix", None)
             if matrix_distance_int is None:
@@ -316,6 +317,9 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
                 except:
                     # Works for >=ortools9.2
                     routing.SetVehicleUsedWhenEmpty(True, v)
+        if cost_per_vehicle_used > 0:
+            for v in range(self.problem.number_vehicle):
+                routing.SetFixedCostOfVehicle(cost_per_vehicle_used, v)
         logger.info("routing init")
         if use_matrix:
             # Create and register a transit callback.
@@ -715,18 +719,22 @@ class OrtoolsGpdpSolver(GpdpSolver, WarmstartMixin):
                     mini, maxi = self.problem.time_windows_nodes[node]
                     if mini is not None and maxi is not None:
                         time_dimension.SetCumulVarSoftLowerBound(
-                            index, math.floor(self.factor_multiplier_time * mini), 10000
+                            index,
+                            math.floor(self.factor_multiplier_time * mini),
+                            1000000,
                         )
                         time_dimension.SetCumulVarSoftUpperBound(
-                            index, math.floor(self.factor_multiplier_time * maxi), 10000
+                            index,
+                            math.floor(self.factor_multiplier_time * maxi),
+                            1000000,
                         )
                     elif mini is not None:
                         time_dimension.SetCumulVarSoftLowerBound(
-                            index, self.factor_multiplier_time * mini, 10000
+                            index, self.factor_multiplier_time * mini, 1000000
                         )
                     elif maxi is not None:
                         time_dimension.SetCumulVarSoftUpperBound(
-                            index, self.factor_multiplier_time * maxi, 10000
+                            index, self.factor_multiplier_time * maxi, 1000000
                         )
 
             for vehicle in range(self.problem.number_vehicle):
