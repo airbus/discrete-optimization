@@ -27,6 +27,7 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.graph_api import Graph
 from discrete_optimization.tsp.problem import Point2DTspProblem
 from discrete_optimization.vrp.problem import Customer2DVrpProblem
+from discrete_optimization.vrptw.problem import VRPTWProblem
 
 logger = logging.getLogger(__name__)
 
@@ -839,6 +840,86 @@ class ProxyClass:
             nodes_target={gpdp_target_node},
             origin_vehicle={0: gpdp_origin_node},
             target_vehicle={0: gpdp_target_node},
+            list_pickup_deliverable=empty_pickup_delivery,
+            resources_set=empty_resources,
+            capacities=empty_capacities,
+            resources_flow_node=empty_flow,
+            resources_flow_edges=empty_flow,
+            distance_delta=distance_delta,
+            time_delta=time_delta,
+            time_windows_nodes=time_windows_nodes,
+            compute_graph=compute_graph,
+        )
+
+    @staticmethod
+    def from_vrptw_to_gpdp(
+        vrptw_problem: VRPTWProblem, compute_graph: bool = False
+    ) -> GpdpProblem:
+        # A TSP-TW is a single-vehicle problem
+        nb_vehicle = vrptw_problem.nb_vehicles
+
+        # Node mapping: TSP-TW customers -> GPDP transportation nodes
+        # We create new virtual nodes for the vehicle's start and end points
+        # to fit the GPDP model, even though they both represent the same depot.
+
+        # Original customer nodes from TSP-TW
+        tsptw_customers = vrptw_problem.customers
+        nb_customers = len(tsptw_customers)
+        # GPDP nodes for transportation (customers)
+        gpdp_customer_nodes = list(range(nb_customers))
+        # Create virtual start/end nodes for the vehicle
+        gpdp_origin_node = nb_customers
+        gpdp_target_node = nb_customers + 1
+        # Map GPDP nodes back to original TSP-TW nodes
+        gpdp_to_tsptw_map = {
+            gpdp_customer_nodes[i]: tsptw_customers[i] for i in range(nb_customers)
+        }
+        gpdp_to_tsptw_map[gpdp_origin_node] = vrptw_problem.depot_node
+        gpdp_to_tsptw_map[gpdp_target_node] = vrptw_problem.depot_node
+        all_gpdp_nodes = gpdp_customer_nodes + [gpdp_origin_node, gpdp_target_node]
+        # Build distance and time matrices for GPDP nodes
+        distance_delta: dict[Node, dict[Node, float]] = {n: {} for n in all_gpdp_nodes}
+        time_delta: dict[Node, dict[Node, float]] = {n: {} for n in all_gpdp_nodes}
+        for u in all_gpdp_nodes:
+            for v in all_gpdp_nodes:
+                if u == v:
+                    continue
+                original_u = gpdp_to_tsptw_map[u]
+                original_v = gpdp_to_tsptw_map[v]
+                dist = vrptw_problem.distance_matrix[original_u, original_v]
+                distance_delta[u][v] = dist
+                time_delta[u][v] = (
+                    dist
+                    + vrptw_problem.service_times[
+                        original_v
+                    ]  # In TSP-TW, the matrix value is effectively the travel time
+                )
+
+        # Map time windows to GPDP nodes
+        time_windows_nodes = {
+            gpdp_node: vrptw_problem.time_windows[original_node]
+            for gpdp_node, original_node in gpdp_to_tsptw_map.items()
+        }
+
+        # TSP-TW has no explicit resources, capacities, or pickup/delivery pairs
+        empty_resources = {"demand"}
+        empty_capacities = {
+            i: {"demand": (0, vrptw_problem.vehicle_capacity)}
+            for i in range(nb_vehicle)
+        }
+        empty_flow = {
+            gpdp_node: {"demand": vrptw_problem.demands[original_node]}
+            for gpdp_node, original_node in gpdp_to_tsptw_map.items()
+        }
+        empty_pickup_delivery = []
+
+        return GpdpProblem(
+            number_vehicle=nb_vehicle,
+            nodes_transportation=set(gpdp_customer_nodes),
+            nodes_origin={gpdp_origin_node},
+            nodes_target={gpdp_target_node},
+            origin_vehicle={i: gpdp_origin_node for i in range(nb_vehicle)},
+            target_vehicle={i: gpdp_target_node for i in range(nb_vehicle)},
             list_pickup_deliverable=empty_pickup_delivery,
             resources_set=empty_resources,
             capacities=empty_capacities,
