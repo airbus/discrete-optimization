@@ -28,64 +28,111 @@ local: true
 
 ### Prerequisites
 
-#### Minizinc 2.6+
+#### Minizinc 2.8+ [optional]
 
-You need to install [minizinc](https://www.minizinc.org/) (version greater than 2.6) and update the `PATH` environment variable
+If you want to use the minizinc based solver of the library,
+you need to install [minizinc](https://www.minizinc.org/) (version greater than 2.8) and update the `PATH` environment variable
 so that it can be found by Python.
 See [minizinc documentation](https://www.minizinc.org/doc-latest/en/installation.html) for more details.
 
-#### Python 3.7+ environment
+#### Python 3.10+ environment [deprecated]
+
+:::{attention} You can skip this step if you choose to manage the project with uv as now recommended.
+Indeed uv will automatically create the virtual environment.
+Go directly to Section ["Managing the project with uv"](#Managing-the-project-with-uv) in that case.
+:::
 
 The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
-greater than 3.7.
+greater than 3.10.
 This can be achieved for instance either by using [conda](https://docs.conda.io/en/latest/) or by using [pyenv](https://github.com/pyenv/pyenv) (or [pyenv-win](https://github.com/pyenv-win/pyenv-win) on windows)
-and [venv](https://docs.python.org/fr/3/library/venv.html) module.
+and [venv](https://docs.python.org/fr/3/library/venv.html) module, or by using [uv](https://docs.astral.sh/uv/).
 
-The following examples show how to create a virtual environment with Python version 3.8.13 with the mentioned methods.
+The following examples show how to create a virtual environment with Python version 3.12 with the mentioned methods.
 
-##### With conda (all platforms)
+##### With conda
 
 ```shell
-conda create -n do-env python=3.8.13
+conda create -n do-env python=3.12
 conda activate do-env
 ```
 
-##### With pyenv + venv (Linux/MacOS)
+##### With pyenv + venv
 
 ```shell
-pyenv install 3.8.13
-pyenv shell 3.8.13
+pyenv install 3.12
+pyenv shell 3.12
 python -m venv do-venv
-source do-venv/bin/activate
+source do-venv/bin/activate  # do-venv\Scripts\activate on windows
 ```
 
-##### With pyenv-win + venv (Windows)
+##### With uv
+
+*NB: use the command below only if you want to install manually (e.g. with `uv pip`) the library.
+Else go directly to Section ["Managing the project with uv"](#Managing-the-project-with-uv).*
 
 ```shell
-pyenv install 3.8.13
-pyenv shell 3.8.13
-python -m venv do-venv
-do-venv\Scripts\activate
+uv venv do-venv --python 3.12
+source do-venv/bin/activate  # do-venv\Scripts\activate on windows
 ```
 
-### Installing from source in developer mode
+
+### Installing the library from source in developer mode
+
+#### With pip [deprecated]
+
+:::{attention}
+The preferred process is now using [uv for managing the project](#Managing-the-project-with-uv)
+but you can still install it with pip.
+:::
 
 We use the option `--editable` (or `-e`) of `pip install`.
+We can also install
+- dependencies for testing via `--group test` (see [[dependency-groups]](https://packaging.python.org/en/latest/specifications/dependency-groups/#dependency-groups) in pyproject.toml),
+- dependencies for building doc via `--group doc`,
+- other dev dependencies via `--group dev`,
+- optional dependencies to make use of all solvers, by using the corresponding extras.
 
-> **Note**: you need a version of pip >=21.3 to be able to install in editable mode a project using a `pyproject.toml` file.
+Update the following command if you do not need all features from extras and dependency groups,
+and want not to install corresponding dependencies.
 
 ```shell
 git clone https://github.com/airbus/discrete-optimization.git
 cd discrete-optimization
 pip install -U pip
-pip install -e .
+pip install -e .[gurobi, quantum, dashboard, optuna, toulbar] --group test --group dev --group doc
 ```
 
+:::{note}
+- pip version must be >= 25.1 to use `--group` option.
+- "toulbar" extra will not work on windows.
+:::
 
-If you want to be able to launch unit tests, you need also the corresponding extra dependencies:
+#### Managing the project with uv
+
+We can also let `uv` manage the project. This is now the preferred process.
+
+You can install all dependencies (including dependency groups and extras) via
+
 ```shell
-pip install -e .[test]
+uv sync --python=3.12 --all-extras
 ```
+
+Notes:
+- You can skip the python version, it will choose the current python or a version specified in the file ".python-version" if existing.
+- If you want to avoid some extras (like "toulbar" on windows), you can specify the ones you need:
+    ```shell
+    uv sync --extra gurobi --extra dashboard
+    ```
+
+You can actually even skip this step as any call to `uv run` will install necessary dependencies
+(but do not forget to add your extras to the first `uv run` in that case).
+
+To learn how to add/update dependencies with uv, refer to its documentation.
+
+:::{important}
+In the following sections, we assume that you chose to use `uv`.
+Else, you generally only need to remove `uv run ` or `uvx ` from the commands.
+:::
 
 
 ### Building the docs locally
@@ -93,14 +140,6 @@ pip install -e .[test]
 The documentation is using [Sphinx](https://www.sphinx-doc.org/en/master/index.html) to generate
 the html pages, and in particular the autogenerated API doc from in-code docstrings.
 
-
-#### Install the documentation dependencies
-
-See [above](#installing-from-source-in-developer-mode) to install discrete-optimization in developer mode, and then
-
-```shell
-pip install -r docs/requirements.txt
-```
 
 #### Define environment variables for notebook github links
 
@@ -129,19 +168,19 @@ On Linux or Mac, or with [git-bash](https://gitforwindows.org/) on windows, make
 cd docs
 # generate api doc source files
 rm source/api/discrete_optimization*.rst
-sphinx-apidoc -o source/api -f -T ../src/discrete_optimization
+uv run sphinx-apidoc -o source/api -f -T ../src/discrete_optimization
 # generate available notebooks list
-python generate_nb_index.py
+uv run python generate_nb_index.py
 # remove previous build
 rm -rf build
 # build doc html pages
-sphinx-build -M html source build
+uv run sphinx-build -M html source build
 ```
 
 The index of the built documentation is then available at `build/html/index.html`
 from the `docs/` repository. You can for instance browse the documentation by running
 ```shell
-python -m http.server -d build/html
+uv run python -m http.server -d build/html
 ```
 and go to [http://localhost:8000/](http://localhost:8000/). Doing this, rather than just opening `index.html` directly in you browser,
 make javascript work properly.
@@ -167,14 +206,9 @@ without the previous `rm [...]`.
 
 The unit tests are gathered in `tests/` folder and run with [pytest](https://docs.pytest.org/).
 
-Install the library in developer mode with "test" extra dependencies
-```shell
-pip install -e .[test]
-```
-
 Then, from the "discrete-optimization" root directory, run unit tests with:
 ```shell
-pytest tests -vv
+uv run pytest tests -v
 ```
 
 ### Running notebooks as tests
@@ -182,8 +216,7 @@ pytest tests -vv
 One can test programmatically that notebooks are not broken thanks to [nbmake](https://github.com/treebeardtech/nbmake) extension for pytest.
 
 ```shell
-pip install nbmake
-pytest --nbmake notebooks -vv
+uv run pytest --nbmake notebooks -v
 ```
 
 ## Guidelines to follow when preparing a contribution
@@ -258,19 +291,17 @@ In order to generate properly the API doc, some guidelines should be followed:
 - Docstrings should follow [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) docstrings
 (see this [example](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google)),
 parsed thanks to [napoleon extension](https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html?highlight=napoleon#module-sphinx.ext.napoleon).
+This can be checked thanks to [ruff](https://docs.astral.sh/ruff/) tool via the option `--select="D"`:
+
+    ```shell
+    uvx ruff check --select="D" src/discrete_optimization/path/to/your/files
+    ```
 
 - As we use type annotations in the code, types hints should not be added to the docstrings in order to avoid duplicates,
 and potentially inconsistencies.
 
 - You should use [annotations](https://peps.python.org/pep-0484/) to explicit the types of public variables and of the inputs, outputs of public methods/functions.
 
-- Docstrings should also follow [PEP-257](https://peps.python.org/pep-0257/) which can be checked
-thanks to [pydocstyle](https://www.pydocstyle.org/en/stable/) tool.
-
-    ```shell
-    pip install pydocstyle
-    pydocstyle discrete_optimization
-    ```
 
 #### Doc pages
 

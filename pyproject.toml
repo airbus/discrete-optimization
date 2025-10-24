@@ -53,12 +53,11 @@ dependencies = [
     "clingo>=5.6",
     "didppy>=0.8.0",
     "setuptools",
-    "pandas>=2"
+    "pandas>=2",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "scikit-learn>=1.0", "optuna"]
 quantum = [
     "qiskit>=1.0.2",
     "qiskit-algorithms>=0.3.0",
@@ -68,6 +67,13 @@ quantum = [
 ]
 toulbar = ["pytoulbar2>=0.0.0.4"]
 dashboard = ["dash", "plotly", "dash_bootstrap_components", "pandas[hdf5]"]
+gurobi = [
+    "gurobipy>=12.0.3",
+]
+optuna = [
+    "optuna>=4.5.0",
+]
+
 
 [project.urls]
 documentation = "https://airbus.github.io/discrete-optimization"
@@ -87,7 +93,29 @@ disallow_untyped_defs = true
 addopts = "--import-mode=importlib"
 testpaths = ["tests"]
 
+[tool.ruff.lint]
+# On top of the Google convention, disable `D417`, which requires
+# documentation for every function parameter.
+ignore = ["D417"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [dependency-groups]
 dev = [
     "jupyter>=1.1.1",
 ]
+doc = [
+    "myst-parser>=3.0.1",
+    "sphinx>=7.4.7",
+    "sphinx-rtd-theme>=3.0.2",
+]
+test = [
+    "nbmake>=1.5.5",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "scikit-learn>=1.6.1",
+]
+
+[tool.uv]
+default-groups = "all"
