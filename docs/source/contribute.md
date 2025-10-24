@@ -129,7 +129,7 @@ On Linux or Mac, or with [git-bash](https://gitforwindows.org/) on windows, make
 cd docs
 # generate api doc source files
 rm source/api/discrete_optimization*.rst
-sphinx-apidoc -o source/api -f -T ../discrete_optimization
+sphinx-apidoc -o source/api -f -T ../src/discrete_optimization
 # generate available notebooks list
 python generate_nb_index.py
 # remove previous build

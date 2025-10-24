@@ -231,7 +231,6 @@ jobs:
           node-version: 22
       - name: install optal
         run: |
-          cd tests
           optal_dir=$(python -c "
           import discrete_optimization.generic_tools.hub_solver.optal as optal
           import os
@@ -248,7 +247,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/discrete_optimization_data
-          key: data-${{ hashFiles('discrete_optimization/datasets.py') }}
+          key: data-${{ hashFiles('src/discrete_optimization/datasets.py') }}
       - name: Fetch data for tests
         if: steps.cache-data.outputs.cache-hit != 'true'
         run: |
@@ -270,12 +269,8 @@ jobs:
         run: |
           # configure minizinc
           ${{ matrix.minizinc_config_cmdline }}
-          # create a tmp directory from which running the tests
-          # so that "--cov discrete_optimization" look for package installed via the wheel
-          # instead of the source directory in the repository (which would lead to a coverage of 0%)
-          mkdir -p tmp && cd tmp
           # show library path used
-          pytest -s ../tests/show_do_path.py
+          pytest -s tests/show_do_path.py
           # run test suite
           MPLBACKEND="agg" NUMBA_BOUNDSCHECK=1 pytest \
             --cov discrete_optimization  \
@@ -283,8 +278,7 @@ jobs:
             --cov-report html:coverage_html \
             --cov-report term \
             -v --durations=0 --durations-min=10 \
-            ../tests
-          cd ..
+            tests
       - name: Upload coverage report as artifact
         if: ${{ matrix.coverage }}
         uses: actions/upload-artifact@v4
