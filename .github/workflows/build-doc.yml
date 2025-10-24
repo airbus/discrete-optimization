@@ -105,7 +105,7 @@ jobs:
           # move to documentation directory
           cd docs
           # generate api doc source files
-          sphinx-apidoc -o source/api -f -T ../discrete_optimization
+          sphinx-apidoc -o source/api -f -T ../src/discrete_optimization
           # generate available notebooks list
           python generate_nb_index.py
           # build doc html pages
