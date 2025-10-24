@@ -1,6 +1,74 @@
 # Installation
 
-## Prerequisites
+## Python 3.10+ environment
+
+The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
+greater than 3.10.
+This can be achieved for instance either by using [conda](https://docs.conda.io/en/latest/), or by using [pyenv](https://github.com/pyenv/pyenv) (or [pyenv-win](https://github.com/pyenv-win/pyenv-win) on windows)
+and [venv](https://docs.python.org/fr/3/library/venv.html) module, or by using [uv](https://docs.astral.sh/uv/).
+
+The following examples show how to create a virtual environment with Python version 3.12 with the mentioned methods.
+
+#### With conda
+
+```shell
+conda create -n do-env python=3.12
+conda activate do-env
+```
+
+#### With pyenv + venv
+
+```shell
+pyenv install 3.12
+pyenv shell 3.12
+python -m venv do-venv
+source do-venv/bin/activate  # do-venv\Scripts\activate on windows
+```
+
+#### With uv
+
+```shell
+uv venv do-venv --python 3.12
+source do-venv/bin/activate  # do-venv\Scripts\activate on windows
+```
+
+
+
+## Pip install discrete-optimization library
+
+Install discrete-optimization with pip:
+
+```shell
+pip install discrete-optimization
+```
+
+or via the faster `uv pip` if you already installed [uv](https://docs.astral.sh/uv/):
+
+```shell
+uv pip install discrete-optimization
+```
+
+You can also make full use of uv project management capabilities by using `uv add`.
+Please refer to uv doc.
+
+
+## Optional dependencies
+
+### Package extras
+
+Several extras are available:
+- *gurobi*: to use [gurobi](https://www.gurobi.com/) based solvers.
+  It will install the python api for gurobi with a minimal license which does not allow to use it on "real" models.
+  You need to install an appropriate license if you want to make full use of it.
+- *quantum*: to use [qiskit](https://www.ibm.com/quantum/qiskit) based solvers.
+- *toulbar*: to use [pytoulbar2](https://toulbar2.github.io/toulbar2/) based solvers.
+- *optuna*: to use our utility functions to generate and launch [optuna](https://optuna.org/) studies (hyperparameters optimization).
+- *dashboard*: to use the d-o [dashboard](dashboard.md)
+
+You can install them all via:
+```shell
+pip install discrete-optimization[gurobi, qunatum, toulbar, optuna, dashboard]
+```
 
 ### Minizinc 2.8+
 
@@ -58,53 +126,10 @@ export PATH="~/AppData/Local/Programs/MiniZinc":$PATH
 minizinc --version
 ```
 
-### Python 3.7+ environment
 
-The use of a virtual environment is recommended, and you will need to ensure that the environment use a Python version
-greater than 3.7.
-This can be achieved for instance either by using [conda](https://docs.conda.io/en/latest/) or by using [pyenv](https://github.com/pyenv/pyenv) (or [pyenv-win](https://github.com/pyenv-win/pyenv-win) on windows)
-and [venv](https://docs.python.org/fr/3/library/venv.html) module.
+### Gurobi
 
-The following examples show how to create a virtual environment with Python version 3.8.13 with the mentioned methods.
-
-#### With conda (all platforms)
-
-```shell
-conda create -n do-env python=3.8.13
-conda activate do-env
-```
-
-#### With pyenv + venv (Linux/MacOS)
-
-```shell
-pyenv install 3.8.13
-pyenv shell 3.8.13
-python -m venv do-venv
-source do-venv/bin/activate
-```
-
-#### With pyenv-win + venv (Windows)
-
-```shell
-pyenv install 3.8.13
-pyenv shell 3.8.13
-python -m venv do-venv
-do-venv\Scripts\activate
-```
-
-### Gurobi [optional]
-
-
-Optionally, install [gurobi](https://www.gurobi.com/) with its python binding (gurobipy)
-and an appropriate license, if you want to try solvers that make use of gurobi. The version of gurobi must be at least 9.0.
+If you want to try solvers using gurobi, install [gurobi](https://www.gurobi.com/) with its python binding (gurobipy)
+and an appropriate license.
 
 > **NB**: If you just do `pip install gurobipy`, you get a minimal license which does not allow to use it on "real" models.
-
-
-## Pip install discrete-optimization library
-
-Install discrete-optimization from pip:
-
-```shell
-pip install discrete-optimization
-```

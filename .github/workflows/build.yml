@@ -91,7 +91,6 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest"]
         python-version: ["3.10", "3.13"]
-        wo_gurobi: ["", "without gurobi"]
         include:
           - os: "ubuntu-latest"
             minizinc_config_cmdline: export PATH=$PATH:$(pwd)/bin/squashfs-root/usr/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/bin/squashfs-root/usr/lib
@@ -125,17 +124,7 @@ jobs:
           - coverage: true  # coverage only for one entry of the matrix
             os: "ubuntu-latest"
             python-version: "3.13"
-            wo_gurobi: ""
         exclude:
-          - os: "windows-latest"
-            wo_gurobi: "without gurobi"
-          - os: "macos-15-intel"
-            wo_gurobi: "without gurobi"
-          - os: "macos-latest"
-            wo_gurobi: "without gurobi"
-          - os: "ubuntu-latest"
-            wo_gurobi: "without gurobi"
-            python-version: "3.10"
           - os: "macos-latest"
             python-version: "3.10"
           - os: "macos-15-intel"
@@ -158,11 +147,13 @@ jobs:
         with:
           name: dist
           path: dist
-      - name: Install only discrete-optimization
+      - name: Install only discrete-optimization without extras
         run: |
           python -m pip install -U pip
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
           pip install ${wheelfile}
+      - name: Check all imports are working
+        run: python tests/test_import_all_submodules.py
       - name: Check minizinc based solvers fails without minizinc binary
         run: |
           python -c "
@@ -210,16 +201,11 @@ jobs:
       - name: Install test dependencies
         run: |
           wheelfile=$(ls ./dist/discrete_optimization*.whl)
-          pip install "${wheelfile}[test, quantum, dashboard]"
-          if [ "${{ startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macos') || matrix.python-version == '3.13' }}" == false ]; then
+          pip install "${wheelfile}[quantum, dashboard, optuna, gurobi]" --group test
+          if [ "${{ startsWith(matrix.os, 'windows') }}" == false ]; then
             echo "install toulbar2"
             pip install "${wheelfile}[toulbar]"
             python -c "import pytoulbar2"
-          fi
-          if [ "${{ matrix.wo_gurobi }}" != "without gurobi" ]; then
-            echo "install gurobi"
-            pip install gurobipy
-            python -c "import gurobipy"
           fi
       - uses: actions/setup-node@v6
         with:
