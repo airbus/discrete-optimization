@@ -73,10 +73,6 @@ dashboard = ["dash", "plotly", "dash_bootstrap_components", "pandas[hdf5]"]
 documentation = "https://airbus.github.io/discrete-optimization"
 repository = "https://github.com/airbus/discrete-optimization"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["discrete_optimization*"]
-
 [tool.setuptools_scm]
 
 [tool.mypy]
