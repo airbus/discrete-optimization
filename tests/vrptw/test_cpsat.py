@@ -7,7 +7,7 @@ from discrete_optimization.vrptw.problem import VRPTWProblem, VRPTWSolution
 from discrete_optimization.vrptw.solvers.cpsat import CpSatVRPTWSolver
 
 
-def run_cpsat():
+def test_cpsat():
     file = [f for f in get_data_available() if "C1_2_1.TXT" in f][0]
     problem = parse_vrptw_file(file)
     solver = CpSatVRPTWSolver(problem=problem)
@@ -19,8 +19,4 @@ def run_cpsat():
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol = res[-1][0]
-    print(problem.evaluate(sol), problem.satisfy(sol))
-
-
-if __name__ == "__main__":
-    run_cpsat()
+    assert problem.satisfy(sol)

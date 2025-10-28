@@ -92,6 +92,7 @@ BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-cod
 
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
+VRPTW_DATASET_PREFIX = "homberger_200_customer_instances"
 
 
 def get_data_home(data_home: Optional[str] = None) -> str:
@@ -370,10 +371,14 @@ def fetch_datasets_from_repo(
 ) -> None:
     """Fetch all datasets stored in g-poveda repo."""
     url_repo = "https://github.com/g-poveda/do-data"
-    sha_url_repo = "38bb03e4e5859a205cbb133132eaabca03592e74"
+    sha_url_repo = "5ec2258f710937c07ccf292ce98b2947616431f1"
     url = f"{url_repo}/archive/{sha_url_repo}.zip"
     if dataset_prefixes is None:
-        dataset_prefixes = [FJSP_DATASET_PREFIX, MIS_DATASET_PREFIX]
+        dataset_prefixes = [
+            FJSP_DATASET_PREFIX,
+            MIS_DATASET_PREFIX,
+            VRPTW_DATASET_PREFIX,
+        ]
     try:
         local_file_path, headers = urlretrieve(url)
         for dataset_prefix in dataset_prefixes:
@@ -401,7 +406,8 @@ def _extract_dataset_from_zipped_repo(
             if name.startswith(dataset_prefix_in_zip):
                 zipf.extract(name, path=dataset_dir)
         for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
-            os.replace(src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}")
+            shutil.move(src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}")
+            # os.replace(src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}")
         os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
 
 

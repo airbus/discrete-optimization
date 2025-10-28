@@ -11,15 +11,12 @@ from discrete_optimization.vrptw.solvers.ortools_routing import OrtoolsVrpTwSolv
 logging.basicConfig(level=logging.INFO)
 
 
-def run_ortools():
+def test_ortools_vrptw():
     file = [f for f in get_data_available() if "R1_2_1.TXT" in f][0]
     problem = parse_vrptw_file(file)
     solver = OrtoolsVrpTwSolver(problem=problem)
     solver.init_model(time_limit=20, cost_per_vehicle=10000000)
     res = solver.solve()
     sol = res[-1][0]
-    print(problem.evaluate(sol), problem.satisfy(sol))
-
-
-if __name__ == "__main__":
-    run_ortools()
+    # Can't be sure of satisfiability here
+    assert sol is not None
