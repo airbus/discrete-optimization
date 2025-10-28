@@ -1,12 +1,41 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import os
+
 import numpy as np
 
+from discrete_optimization.datasets import get_data_home
 from discrete_optimization.vrptw.problem import VRPTWProblem
 
 
-def parse_solomon(file_path: str) -> VRPTWProblem:
+def get_data_available(
+    data_folder: str | None = None, data_home: str | None = None
+) -> list[str]:
+    """Get datasets available for vrp.
+
+    Params:
+        data_folder: folder where datasets for vrp whould be find.
+            If None, we look in "vrp" subdirectory of `data_home`.
+        data_home: root directory for all datasets. Is None, set by
+            default to "~/discrete_optimization_data "
+
+    """
+    if data_folder is None:
+        data_home = get_data_home(data_home=data_home)
+        data_folder = f"{data_home}/homberger_200_customer_instances"
+
+    try:
+        datasets = [
+            os.path.abspath(os.path.join(data_folder, f))
+            for f in os.listdir(data_folder)
+        ]
+    except FileNotFoundError:
+        datasets = []
+    return datasets
+
+
+def parse_vrptw_file(file_path: str) -> VRPTWProblem:
     """
     Parses a Solomon-style VRPTW instance file.
 
@@ -26,7 +55,7 @@ def parse_solomon(file_path: str) -> VRPTWProblem:
 
     # Read customer info
     customer_data = []
-    # Lines are structured, starting from line 9 (index 8)
+    # Lines are structured, starting from line 9
     # CUST NO.  XCOORD.   YCOORD.    DEMAND   READY TIME  DUE DATE   SERVICE TIME
     for line in lines[9:]:
         if line.strip():
