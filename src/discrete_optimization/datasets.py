@@ -92,7 +92,7 @@ BPPC_ZIP = "https://site.unibo.it/operations-research/en/research/library-of-cod
 
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
-VRPTW_DATASET_PREFIX = "homberger_200_customer_instances"
+VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
 
 
 def get_data_home(data_home: Optional[str] = None) -> str:
@@ -371,7 +371,7 @@ def fetch_datasets_from_repo(
 ) -> None:
     """Fetch all datasets stored in g-poveda repo."""
     url_repo = "https://github.com/g-poveda/do-data"
-    sha_url_repo = "5ec2258f710937c07ccf292ce98b2947616431f1"
+    sha_url_repo = "f078cf0ee5440aeae72af9b6c5c83c14acbb2888"
     url = f"{url_repo}/archive/{sha_url_repo}.zip"
     if dataset_prefixes is None:
         dataset_prefixes = [
@@ -402,13 +402,22 @@ def _extract_dataset_from_zipped_repo(
         dataset_dir = f"{data_home}/{dataset_prefix}"
         os.makedirs(dataset_dir, exist_ok=True)
         dataset_prefix_in_zip = f"{rootdir}/{dataset_prefix}/"
+        filename_to_move = []
         for name in namelist:
             if name.startswith(dataset_prefix_in_zip):
                 zipf.extract(name, path=dataset_dir)
-        for datafile in glob.glob(f"{dataset_dir}/{dataset_prefix_in_zip}/*"):
-            shutil.move(src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}")
-            # os.replace(src=datafile, dst=f"{dataset_dir}/{os.path.basename(datafile)}")
-        os.removedirs(f"{dataset_dir}/{dataset_prefix_in_zip}")
+                filename_to_move.append(name)
+        for datafile in filename_to_move:
+            if os.path.isdir(datafile):
+                continue
+            if len(os.path.basename(datafile)) == 0:
+                continue
+            destination = os.path.join(
+                dataset_dir, str(datafile).replace(dataset_prefix_in_zip, "")
+            )
+            if not os.path.exists(os.path.dirname(destination)):
+                os.makedirs(os.path.dirname(destination))
+            os.replace(src=os.path.join(dataset_dir, datafile), dst=destination)
 
 
 def fetch_data_from_jsplib_repo(data_home: Optional[str] = None):
