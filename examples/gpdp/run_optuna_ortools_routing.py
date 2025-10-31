@@ -40,9 +40,6 @@ nb_vehicles = 1
 nb_clusters = 100
 
 
-# logging.basicConfig(level=logging.DEBUG)
-
-
 def objective(trial: Trial):
     gpdp: GpdpProblem = create_selective_tsp(
         nb_nodes=nb_nodes, nb_vehicles=nb_vehicles, nb_clusters=nb_clusters
@@ -99,22 +96,22 @@ def objective(trial: Trial):
     return fit
 
 
-# create study + database to store it
-study = optuna.create_study(
-    study_name=f"selective-tsp-ortools-{nb_nodes}nodes-v3",
-    direction="minimize",
-    sampler=optuna.samplers.TPESampler(seed=SEED),
-    storage="sqlite:///example.db",
-    load_if_exists=True,
-)
-study.set_metric_names(["distance"])
-study.enqueue_trial({"first_solution_strategy": "SWEEP"})
-study.optimize(objective, n_trials=10)
+if __name__ == "__main__":
+    # create study + database to store it
+    study = optuna.create_study(
+        study_name=f"selective-tsp-ortools-{nb_nodes}nodes-v3",
+        direction="minimize",
+        sampler=optuna.samplers.TPESampler(seed=SEED),
+        storage="sqlite:///example.db",
+        load_if_exists=True,
+    )
+    study.set_metric_names(["distance"])
+    study.enqueue_trial({"first_solution_strategy": "SWEEP"})
+    study.optimize(objective, n_trials=10)
 
-
-pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
-complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
-print("Study statistics: ")
-print("  Number of finished trials: ", len(study.trials))
-print("  Number of pruned trials: ", len(pruned_trials))
-print("  Number of complete trials: ", len(complete_trials))
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+    print("Study statistics: ")
+    print("  Number of finished trials: ", len(study.trials))
+    print("  Number of pruned trials: ", len(pruned_trials))
+    print("  Number of complete trials: ", len(complete_trials))

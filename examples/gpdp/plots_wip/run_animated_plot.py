@@ -2,17 +2,27 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import logging
 import os
 from copy import deepcopy
 from functools import reduce
 from typing import Optional
 
-import cartopy
-import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
 from discrete_optimization.gpdp.problem import GpdpProblem
+
+logger = logging.getLogger(__name__)
+
+
+# additional dependencies
+try:
+    import cartopy
+except ImportError:
+    logger.warning("This example needs cartopy installed.")
+else:
+    import cartopy.crs as ccrs
 
 
 class VehicleStatus:
