@@ -1,3 +1,7 @@
+#  Copyright (c) 2025 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 import os
 
 from discrete_optimization.maximum_independent_set.parser import dimacs_parser
