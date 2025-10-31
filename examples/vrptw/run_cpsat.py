@@ -11,11 +11,11 @@ def run_cpsat():
     file = [f for f in get_data_available() if "C1_2_1.TXT" in f][0]
     problem = parse_vrptw_file(file)
     solver = CpSatVRPTWSolver(problem=problem)
-    solver.init_model(scaling=10, cost_per_vehicle=1000)
+    solver.init_model(scaling=1, cost_per_vehicle=1000)
     res = solver.solve(
         callbacks=[],
         parameters_cp=ParametersCp.default_cpsat(),
-        time_limit=10,
+        time_limit=100,
         ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
     sol = res[-1][0]

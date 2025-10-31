@@ -5,6 +5,14 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.allocation import (
+    AllocationProblem,
+    AllocationSolution,
+)
+from discrete_optimization.generic_tasks_tools.scheduling import (
+    SchedulingProblem,
+    SchedulingSolution,
+)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -13,12 +21,14 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveRegister,
     Problem,
     Solution,
-    TypeAttribute,
     TypeObjective,
 )
 
+Task = int
+UnaryResource = int
 
-class VRPTWSolution(Solution):
+
+class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryResource]):
     """
     Solution class for the VRPTW problem.
 
@@ -41,14 +51,20 @@ class VRPTWSolution(Solution):
         capacity_violation (float): Total violation of vehicle capacities.
     """
 
+    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        return task in self.routes[unary_resource]
+
+    problem: "VRPTWProblem"
+
     def __init__(
         self,
         problem: "VRPTWProblem",
         routes: Optional[List[List[int]]] = None,
+        scaling: float = 1.0,
     ):
         self.problem = problem
         self.routes = routes if routes is not None else []
-
+        self.scaling = scaling
         # Detailed schedule (filled by evaluation)
         self.arrival_times: Dict[int, List[float]] = {}
         self.start_service_times: Dict[int, List[float]] = {}
@@ -111,8 +127,27 @@ class VRPTWSolution(Solution):
             f"Routes:\n{route_str}"
         )
 
+    def get_end_time(self, task: Task) -> int:
+        if getattr(self, "_times", None) is not None:
+            t = getattr(self, "_times")[task]
+            return t
+        if len(self.arrival_times) == 0:
+            self.problem.evaluate(self)
+        for v in range(len(self.routes)):
+            for j in range(len(self.routes[v])):
+                if self.routes[v][j] == task:
+                    return int(self.scaling * (self.start_service_times[v][j])) + int(
+                        self.scaling * self.problem.service_times[task]
+                    )
+        if task == self.problem.depot_node:
+            return 0
+        return None
 
-class VRPTWProblem(Problem):
+    def get_start_time(self, task: Task) -> int:
+        return self.get_end_time(task)
+
+
+class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResource]):
     """
     Vehicle Routing Problem with Time Windows (VRPTW) Problem class.
 
@@ -124,6 +159,9 @@ class VRPTWProblem(Problem):
     - Customers with service times.
     - Objectives: 1) Minimize number of vehicles, 2) Minimize total distance.
     """
+
+    def get_makespan_upper_bound(self) -> int:
+        return round(1000 ** self.time_windows[self.depot_node][1])
 
     def __init__(
         self,
@@ -148,6 +186,10 @@ class VRPTWProblem(Problem):
             [i for i in range(self.nb_nodes) if i != self.depot_node]
         )
         self.nb_customers = len(self.customers)
+
+        # For Schedulind and allocation mixin.
+        self.tasks_list = self.customers
+        self.unary_resources_list = list(range(self.nb_vehicles))
 
     def get_attribute_register(self) -> EncodingRegister:
         # VRPTW is complex to encode with simple registers.
