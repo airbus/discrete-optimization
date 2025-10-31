@@ -110,22 +110,22 @@ def objective(trial: Trial):
     return fit
 
 
-# create study + database to store it
-study = optuna.create_study(
-    study_name=f"selective-tsp-ortools-{nb_nodes}nodes-pruning-v2",
-    direction="minimize",
-    sampler=optuna.samplers.TPESampler(seed=SEED),
-    pruner=optuna.pruners.HyperbandPruner(min_resource=1, max_resource=200),
-    storage="sqlite:///example.db",
-    load_if_exists=True,
-)
-study.set_metric_names(["distance"])
-study.optimize(objective, n_trials=100)
+if __name__ == "__main__":
+    # create study + database to store it
+    study = optuna.create_study(
+        study_name=f"selective-tsp-ortools-{nb_nodes}nodes-pruning-v2",
+        direction="minimize",
+        sampler=optuna.samplers.TPESampler(seed=SEED),
+        pruner=optuna.pruners.HyperbandPruner(min_resource=1, max_resource=200),
+        storage="sqlite:///example.db",
+        load_if_exists=True,
+    )
+    study.set_metric_names(["distance"])
+    study.optimize(objective, n_trials=100)
 
-
-pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
-complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
-print("Study statistics: ")
-print("  Number of finished trials: ", len(study.trials))
-print("  Number of pruned trials: ", len(pruned_trials))
-print("  Number of complete trials: ", len(complete_trials))
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+    print("Study statistics: ")
+    print("  Number of finished trials: ", len(study.trials))
+    print("  Number of pruned trials: ", len(pruned_trials))
+    print("  Number of complete trials: ", len(complete_trials))

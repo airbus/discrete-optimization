@@ -272,6 +272,17 @@ Can include a nice thumbnail.
 ![Notebook_thumbnail](https://airbus.github.io/scikit-decide/maze.png)
 ```
 
+### Examples
+
+With regards to examples that are not notebooks, such python scripts should be stored in exmaples/ directory.
+Be aware that all the examples are imported in the test suite (to check that the imports at least are still working
+with current version of the library), so you should:
+- wrap any actual (and memory/time-consuming) statements in a `if __name__=="__main_":` block to avoid running really the examples when importing them
+  (cf this [explanation](https://docs.python.org/3/library/__main__.html#idiomatic-usage)),
+- wrap any import of additional depedencies in a `try: ... except ImportError: ...` block,
+  and potentially raise a warning when the dependency is not installed, to avoid having the import test fail
+  (cf management of cartopy dependency in "examples/gpdp/plots_wip/run_animated_plot.py").
+
 ### Adding unit tests
 
 - Whenever adding some code, think to add some tests to the `tests/` folder.
