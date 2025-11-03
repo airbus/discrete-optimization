@@ -141,26 +141,25 @@ def test_mode_constraint_multimode(random_seed):
     assert problem.is_multimode
 
     solver = CpSatRcpspSolver(problem=problem)
+    solver.init_model()
 
     task = 2
     print(problem.mode_details[task])
-    mode = 1
-    for _ in range(10):
-        # at least 1 of 10 solution has a different mode
-        sol: RcpspSolution = solver.solve(
-            callbacks=[NbIterationStopper(nb_iteration_max=1)]
-        ).get_best_solution()
-        if sol.get_mode(task) != mode:
-            break
 
-    assert not sol.get_mode(task) == mode
-    solver.add_constraint_on_task_mode(task, mode)
-    for _ in range(3):
-        # all 3 solutions have the fixed mode
-        sol = solver.solve(
-            callbacks=[NbIterationStopper(nb_iteration_max=1)]
-        ).get_best_solution()
-        assert sol.get_mode(task) == mode
+    mode = 1
+    constraints = solver.add_constraint_on_task_mode(task, mode)
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert sol.get_mode(task) == mode
+
+    solver.remove_constraints(constraints)
+    mode = 3
+    constraints = solver.add_constraint_on_task_mode(task, mode)
+    sol = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)]
+    ).get_best_solution()
+    assert sol.get_mode(task) == mode
 
     mode_nok = 15
     with pytest.raises(ValueError):
